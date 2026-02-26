@@ -1,28 +1,33 @@
 {
-  "name": "dashboard",
+  "name": "strydeos-dashboard",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:spires": "node scripts/seed-spires-user.js",
+    "seed:clinic": "npx tsx scripts/seed-clinic.ts",
+    "promote:superadmin": "npx tsx scripts/promote-superadmin.ts",
+    "setup:superadmin": "npx tsx scripts/setup-superadmin.ts"
   },
   "dependencies": {
     "firebase": "^12.9.0",
-    "lucide-react": "^0.575.0",
-    "next": "16.1.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "recharts": "^3.7.0"
+    "lucide-react": "^0.474.0",
+    "motion": "^12.34.3",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "dotenv": "^17.3.1",
+    "firebase-admin": "^13.6.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

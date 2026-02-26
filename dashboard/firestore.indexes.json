@@ -1,0 +1,65 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "metrics_weekly",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "clinicianId", "order": "ASCENDING" },
+        { "fieldPath": "weekStart", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "clinicians",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "active", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "appointments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "dateTime", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "appointments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "clinicianId", "order": "ASCENDING" },
+        { "fieldPath": "dateTime", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "outcome_scores",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "patientId", "order": "ASCENDING" },
+        { "fieldPath": "recordedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "comms_log",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sentAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "reviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "calls",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

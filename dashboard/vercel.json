@@ -1,5 +1,15 @@
 {
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/pms/sync",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/metrics/compute",
+      "schedule": "0 2 * * *"
+    }
+  ]
 }

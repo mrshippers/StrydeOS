@@ -1,30 +1,25 @@
 @import "tailwindcss";
 
 @theme inline {
+  --color-cloud-dancer: #F0EEE9;
+  --color-cloud-light: #F7F5F1;
+  --color-cloud-dark: #E6E4DF;
   --color-navy: #0B2545;
   --color-navy-mid: #132D5E;
-  --color-blue: #1C54F2;
-  --color-blue-bright: #2E6BFF;
-  --color-blue-glow: #4B8BF5;
+  --color-blue: #1A5CDB;
+  --color-blue-bright: #2E7DF0;
+  --color-blue-glow: #3B90FF;
   --color-teal: #0891B2;
   --color-purple: #8B5CF6;
-
-  --color-cloud: #F2F1EE;
-  --color-cloud-light: #F9F8F6;
-  --color-cloud-dark: #E8E6E0;
-  --color-cream: #FAF9F7;
-
   --color-ink: #111827;
   --color-muted: #6B7280;
-  --color-border: #E2DFDA;
-
   --color-success: #059669;
   --color-warn: #F59E0B;
-  --color-danger: #EF4444;
+  --color-danger: #DC2626;
+  --color-border: #DDD9D3;
 
-  --font-heading: "DM Serif Display", serif;
+  --font-display: "DM Serif Display", serif;
   --font-body: "Outfit", sans-serif;
-  --font-sans: "Outfit", sans-serif;
 
   --shadow-card: 0 2px 12px rgba(11, 37, 69, 0.06);
   --shadow-elevated: 0 8px 32px rgba(11, 37, 69, 0.10);
@@ -46,19 +41,20 @@ html {
 
 body {
   font-family: var(--font-body);
-  background: var(--color-cloud);
+  background: var(--color-cloud-dancer, #0B2545);
   color: var(--color-ink);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
 }
 
 ::selection {
-  background: rgba(28, 84, 242, 0.15);
+  background: rgba(26, 92, 219, 0.15);
 }
 
-.font-heading {
-  font-family: var(--font-heading);
+.font-display {
+  font-family: var(--font-display);
 }
 
 .font-body {
@@ -85,11 +81,6 @@ body {
 
 .recharts-tooltip-wrapper {
   outline: none !important;
-}
-
-.recharts-cartesian-grid line {
-  stroke: var(--color-border) !important;
-  stroke-dasharray: 4 4 !important;
 }
 
 ::-webkit-scrollbar {

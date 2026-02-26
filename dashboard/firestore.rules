@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isClinicMember(clinicId) {
+      return isAuthenticated() && getUserData().clinicId == clinicId;
+    }
+
+    function isClinicOwnerOrAdmin(clinicId) {
+      let user = getUserData();
+      return isAuthenticated()
+        && user.clinicId == clinicId
+        && user.role in ['owner', 'admin'];
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && getUserData().role == 'superadmin';
+    }
+
+    // ─── Users (flat, for auth lookup) ─────────────────────────────────
+    // Users can write their own doc (e.g. one-click "Make me Super Admin" in Settings).
+    match /users/{uid} {
+      allow read: if isAuthenticated() && (request.auth.uid == uid || isSuperAdmin());
+      allow create, update: if isAuthenticated() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    // ─── Clinics ───────────────────────────────────────────────────────
+    match /clinics/{clinicId} {
+      allow read: if isClinicMember(clinicId) || isSuperAdmin();
+      allow update: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+      allow create, delete: if isSuperAdmin();
+
+      // Clinicians
+      match /clinicians/{clinicianId} {
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow write: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+      }
+
+      // Patients
+      match /patients/{patientId} {
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow write: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+      }
+
+      // Appointments
+      match /appointments/{appointmentId} {
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
+      // Outcome Scores — clinicians can create for their patients
+      match /outcome_scores/{scoreId} {
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow create: if isClinicMember(clinicId);
+        allow update, delete: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+      }
+
+      // Weekly Metrics — read-only, computed server-side
+      match /metrics_weekly/{weekId} {
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
+      // Comms Log — owners/admins only
+      match /comms_log/{logId} {
+        allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
+      // Reviews
+      match /reviews/{reviewId} {
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
+      // Integration Config — server-side only, never exposed to client
+      match /integrations_config/{configId} {
+        allow read, write: if false;
+      }
+    }
+  }
+}

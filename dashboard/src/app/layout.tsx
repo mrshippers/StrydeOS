@@ -1,23 +1,30 @@
 import type { Metadata } from "next";
-import { Outfit, DM_Serif_Display } from "next/font/google";
-import Sidebar from "@/components/Sidebar";
+import { DM_Serif_Display, Outfit } from "next/font/google";
+import { AuthProvider } from "@/hooks/useAuth";
+import AppShell from "@/components/AppShell";
+import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const dmSerif = DM_Serif_Display({
+  weight: "400",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-display",
+  display: "swap",
 });
 
-const dmSerif = DM_Serif_Display({
-  variable: "--font-dm-serif",
+const outfit = Outfit({
   subsets: ["latin"],
-  weight: "400",
+  variable: "--font-body",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "StrydeOS Dashboard",
-  description: "Clinical performance intelligence by StrydeOS",
+  title: {
+    default: "StrydeOS — Clinical Performance Dashboard",
+    template: "%s — StrydeOS",
+  },
+  description:
+    "The operational interface for StrydeOS — the clinical performance platform for private physiotherapy practices.",
 };
 
 export default function RootLayout({
@@ -26,14 +33,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${outfit.variable} ${dmSerif.variable} font-sans antialiased`}>
-        <Sidebar />
-        <main className="lg:pl-60 min-h-screen">
-          <div className="mx-auto max-w-5xl px-6 py-10 pt-16 lg:pt-10">
-            {children}
-          </div>
-        </main>
+    <html lang="en" className={`${dmSerif.variable} ${outfit.variable}`}>
+      <body className="font-body antialiased">
+        <AuthProvider>
+          <ToastProvider>
+            <AppShell>{children}</AppShell>
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );
