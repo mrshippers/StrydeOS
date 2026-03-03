@@ -2,9 +2,12 @@
 
 import { FlaskConical, X } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function DemoBanner() {
+  const { user } = useAuth();
   const [dismissed, setDismissed] = useState(false);
+  const isDemoUser = user?.uid === "demo";
 
   if (dismissed) return null;
 
@@ -19,18 +22,20 @@ export default function DemoBanner() {
       <div className="flex items-center gap-2.5">
         <FlaskConical size={14} className="text-blue shrink-0" />
         <span className="text-blue font-medium">
-          Viewing demo data —
+          {isDemoUser ? "You're viewing the demo — " : "Viewing demo data — "}
           <span className="font-normal text-muted ml-1">
-            connect Firebase to see your clinic&apos;s live numbers.
+            {isDemoUser
+              ? "explore the platform with sample data. Sign in to use your own clinic."
+              : "connect Firebase to see your clinic's live numbers."}
           </span>
         </span>
       </div>
       <div className="flex items-center gap-3 shrink-0">
         <a
-          href="/settings"
+          href={isDemoUser ? "/login" : "/settings"}
           className="text-[12px] font-semibold text-blue hover:text-blue-bright transition-colors"
         >
-          Connect now →
+          {isDemoUser ? "Sign in →" : "Connect now →"}
         </a>
         <button
           onClick={() => setDismissed(true)}

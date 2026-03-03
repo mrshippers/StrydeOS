@@ -1,8 +1,10 @@
 # StrydeOS Changelog
 
-## v0.3.0 — Intelligence, Continuity Engine & Receptionist (25 Feb 2026)
+## v0.3.0 — Intelligence, Pulse & Ava (25 Feb 2026)
 
-### Intelligence Deep-Dive (New)
+Three domains: **Intelligence** (analytics), **Pulse** (continuity & comms), **Ava** (voice AI receptionist).
+
+### Intelligence (New)
 Revenue analytics, DNA pattern analysis, referral attribution, clinical outcome tracking, and reputation monitoring — delivered as a tabbed analytics workspace replacing the previous module catalogue.
 
 - **Revenue tab** — per-clinician revenue bar chart, revenue by condition with horizontal progress bars, insurance mix percentages
@@ -11,7 +13,7 @@ Revenue analytics, DNA pattern analysis, referral attribution, clinical outcome 
 - **Outcomes tab** — NPRS and PSFS 6-week trend lines, per-measure improvement cards with directional indicators
 - **Reputation tab** — NPS score with promoter/passive/detractor segmentation and monthly trend, Google Review count with velocity chart
 
-### Continuity Comms Engine (New)
+### Pulse — Continuity & Comms (New)
 Patient communication orchestration layer with sequence management and send logging.
 
 - **Comms Sequences view** — all 6 trigger-based sequences (HEP reminder, rebooking prompt, pre-auth collection, discharge review, 90-day and 180-day reactivation) with per-sequence stats: sent, opened, clicked, rebooked
@@ -28,8 +30,8 @@ Individual patient detail pages accessible from any patient list.
 - **Visual course progress** — percentage bar with numbered session indicator dots
 - **Activity timeline** — chronological feed of sessions, HEP updates, outcome measure recordings, and comms sent
 
-### Receptionist Dashboard (Upgraded)
-Transformed from a static empty state into a live call intelligence dashboard with configuration panel.
+### Ava — Receptionist (Upgraded)
+Transformed from a static empty state into a live call intelligence dashboard with configuration panel. *Ava has been asked to stop ending internal standups with "Is there anything else I can help with?" — she has declined.*
 
 - **Call Dashboard** — today's call count, booking rate, missed calls, average duration
 - **7-day volume chart** — bar chart of AI-handled calls per day
@@ -49,7 +51,7 @@ Abstracted HEP adapter following the same plugin pattern as PMS integrations.
 - Quick-link buttons to patient view and intelligence deep-dive for selected clinician
 
 ### Patient Navigation (Enhanced)
-- Patient cards across Continuity and Clinician pages now link to individual patient profiles
+- Patient cards across Pulse and Clinician pages now link to individual patient profiles
 - Send Reminder button preserved with click propagation handling
 
 ---

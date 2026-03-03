@@ -8,6 +8,38 @@ import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 
 const LAST_EMAIL_KEY = "strydeos_last_email";
 
+function LoginHeader({ onTryDemo }: { onTryDemo: () => void }) {
+  return (
+    <header
+      className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 py-4 z-10"
+      style={{ background: "#0B2545" }}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className="h-9 w-9 rounded-[10px] flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, #0B2545, #1A5CDB)" }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 13L8 3l5 10" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M5.5 9h5" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </div>
+        <span className="text-[18px] font-bold tracking-tight text-white">
+          Stryde<span style={{ color: "#3B90FF" }}>OS</span>
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={onTryDemo}
+        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white/90 hover:text-white transition-colors border border-white/20 hover:border-white/40"
+      >
+        Try demo
+        <ArrowRight size={14} />
+      </button>
+    </header>
+  );
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { user, loading: authLoading, signIn, enterDemoMode, isFirebaseConfigured } = useAuth();
@@ -77,8 +109,11 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0B2545" }}>
-        <Loader2 size={24} className="animate-spin text-white/40" />
+      <div className="min-h-screen flex flex-col" style={{ background: "#0B2545" }}>
+        <LoginHeader onTryDemo={enterDemoMode} />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 size={24} className="animate-spin text-white/40" />
+        </div>
       </div>
     );
   }
@@ -87,49 +122,38 @@ export default function LoginPage() {
 
   if (!isFirebaseConfigured) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#0B2545" }}>
-        <div className="w-full max-w-[400px]">
-          <div className="flex items-center justify-center gap-3 mb-10">
+      <div className="min-h-screen flex flex-col px-4" style={{ background: "#0B2545" }}>
+        <LoginHeader onTryDemo={enterDemoMode} />
+        <div className="flex-1 flex items-center justify-center pt-4">
+          <div className="w-full max-w-[400px]">
             <div
-              className="h-11 w-11 rounded-[12px] flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #0B2545, #1A5CDB)" }}
+              className="rounded-2xl p-8 text-center"
+              style={{
+                background: "#132D5E",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+              }}
             >
-              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                <path d="M3 13L8 3l5 10" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M5.5 9h5" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
+              <h1 className="font-display text-[24px] text-white leading-tight mb-2">
+                No Firebase config
+              </h1>
+              <p className="text-sm text-white/50 mb-6">
+                Add your Firebase keys to <code className="text-white/70">.env.local</code> to sign in. Or try the dashboard with demo data.
+              </p>
+              <button
+                type="button"
+                onClick={enterDemoMode}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
+                style={{ background: "#1A5CDB" }}
+              >
+                Enter dashboard (demo)
+                <ArrowRight size={14} />
+              </button>
             </div>
-            <span className="text-[22px] font-bold tracking-tight text-white">
-              Stryde<span style={{ color: "#3B90FF" }}>OS</span>
-            </span>
-          </div>
-          <div
-            className="rounded-2xl p-8 text-center"
-            style={{
-              background: "#132D5E",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-            }}
-          >
-            <h1 className="font-display text-[24px] text-white leading-tight mb-2">
-              No Firebase config
-            </h1>
-            <p className="text-sm text-white/50 mb-6">
-              Add your Firebase keys to <code className="text-white/70">.env.local</code> to sign in. Or try the dashboard with demo data.
+            <p className="text-center text-[11px] text-white/20 mt-6">
+              StrydeOS — Clinical Performance Platform
             </p>
-            <button
-              type="button"
-              onClick={enterDemoMode}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
-              style={{ background: "#1A5CDB" }}
-            >
-              Enter dashboard (demo)
-              <ArrowRight size={14} />
-            </button>
           </div>
-          <p className="text-center text-[11px] text-white/20 mt-6">
-            StrydeOS — Clinical Performance Platform
-          </p>
         </div>
       </div>
     );
@@ -147,34 +171,16 @@ export default function LoginPage() {
       {!success ? (
         <motion.div
           key="login"
-          className="min-h-screen flex items-center justify-center px-4"
+          className="min-h-screen flex flex-col px-4"
           style={{ background: "#0B2545" }}
           exit={shouldReduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
           transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          <div className="w-full max-w-[400px]">
-            {/* Logo */}
-            <motion.div
-              className="flex items-center justify-center gap-3 mb-10"
-              {...fadeUp}
-              transition={{ duration: 0.4, delay: stagger * 0, ease: [0.2, 0.8, 0.2, 1] }}
-            >
-              <div
-                className="h-11 w-11 rounded-[12px] flex items-center justify-center"
-                style={{ background: "linear-gradient(135deg, #0B2545, #1A5CDB)" }}
-              >
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 13L8 3l5 10" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M5.5 9h5" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-              </div>
-              <span className="text-[22px] font-bold tracking-tight text-white">
-                Stryde<span style={{ color: "#3B90FF" }}>OS</span>
-              </span>
-            </motion.div>
-
-            {/* Card */}
-            <motion.div
+          <LoginHeader onTryDemo={enterDemoMode} />
+          <div className="flex-1 flex items-center justify-center pt-4">
+            <div className="w-full max-w-[400px]">
+              {/* Card */}
+              <motion.div
               className="rounded-2xl p-8"
               style={{
                 background: "#132D5E",
@@ -272,14 +278,15 @@ export default function LoginPage() {
               </form>
             </motion.div>
 
-            {/* Footer */}
-            <motion.p
-              className="text-center text-[11px] text-white/20 mt-6"
-              {...fadeUp}
-              transition={{ duration: 0.4, delay: stagger * 2, ease: [0.2, 0.8, 0.2, 1] }}
-            >
-              StrydeOS — Clinical Performance Platform
-            </motion.p>
+              {/* Footer */}
+              <motion.p
+                className="text-center text-[11px] text-white/20 mt-6"
+                {...fadeUp}
+                transition={{ duration: 0.4, delay: stagger * 2, ease: [0.2, 0.8, 0.2, 1] }}
+              >
+                StrydeOS — Clinical Performance Platform
+              </motion.p>
+            </div>
           </div>
         </motion.div>
       ) : (

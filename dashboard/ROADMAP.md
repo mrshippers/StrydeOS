@@ -1,13 +1,15 @@
 # StrydeOS Product Roadmap
 
+Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analytics), **Pulse** (continuity & comms).
+
 ## Current State — v0.3.0 (25 Feb 2026)
 
 | Module | Status | Notes |
 |--------|--------|-------|
 | Dashboard (KPIs) | Live | Demo data, Firestore-ready |
-| Intelligence (Analytics) | Live | Revenue, DNA, referrals, outcomes, reputation |
-| Continuity (Comms Engine) | Live | Sequences, send log, patient board |
-| Receptionist (Voice AI) | Live (Demo) | Call dashboard, config panel, mock data |
+| **Intelligence** (Analytics) | Live | Revenue, DNA, referrals, outcomes, reputation |
+| **Pulse** (Continuity / Comms) | Live | Sequences, send log, patient board |
+| **Ava** (Voice AI Receptionist) | Live (Demo) | Call dashboard, config panel, mock data |
 | PMS Layer (WriteUpp) | Built | Adapter, client, mappers, API routes |
 | HEP Layer (Physitrack) | Built | Adapter, client, factory |
 | Patient Profiles | Live | Timeline, stats, course progress |
@@ -46,7 +48,7 @@ Priority: First automated patient messages sent from Spires.
 | n8n workflow: discharge → Google Review prompt (SMS, 48-72h) | P1 |
 | Comms pause logic: auto-pause if patient rebooks | P0 |
 | Log all sends to Firestore `comms_log` subcollection | P0 |
-| Continuity page: switch from demo to real comms data | P0 |
+| Pulse page: switch from demo to real comms data | P0 |
 
 ---
 
@@ -63,7 +65,7 @@ Priority: First automated patient messages sent from Spires.
 
 ---
 
-## v0.7.0 — "Receptionist Goes Live"
+## v0.7.0 — "Ava Goes Live"
 
 | Task | Priority |
 |------|----------|
@@ -95,7 +97,7 @@ Priority: First automated patient messages sent from Spires.
 
 ## Beyond v1.0 — Feature Backlog
 
-- **WhatsApp comms channel** (Business API, phase 2 of Continuity)
+- **WhatsApp comms channel** (Business API, phase 2 of Pulse)
 - **Jane App adapter** (growing UK footprint)
 - **Power Diary adapter** (solo/small practice volume)
 - **Pabau adapter** (medspa/aesthetics crossover for future vertical)

@@ -17,6 +17,7 @@ import {
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import DemoBanner from "@/components/ui/DemoBanner";
+import { useAuth } from "@/hooks/useAuth";
 import { useClinicians } from "@/hooks/useClinicians";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
 import {
@@ -221,6 +222,7 @@ function MiniSparkline({ data, color, higherIsBetter }: { data: number[]; color:
 }
 
 export default function IntelligencePage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("revenue");
   const [selectedClinician, setSelectedClinician] = useState("all");
   const [expandedClinician, setExpandedClinician] = useState<string | null>(null);
@@ -259,7 +261,7 @@ export default function IntelligencePage() {
         onClinicianChange={setSelectedClinician}
       />
 
-      {usedDemo && <DemoBanner />}
+      {(user?.uid === "demo" || usedDemo) && <DemoBanner />}
 
       {/* Summary stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">

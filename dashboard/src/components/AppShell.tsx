@@ -10,6 +10,7 @@ import FirstLoginTour from "@/components/FirstLoginTour";
 import CommandPalette from "@/components/CommandPalette";
 import TopProgressBar, { ProgressProvider } from "@/components/TopProgressBar";
 import StagingBanner from "@/components/StagingBanner";
+import SplashScreen from "@/components/SplashScreen";
 
 const CHROMELESS_PATHS = ["/login"];
 const IS_STAGING = process.env.NEXT_PUBLIC_APP_ENV === "staging";
@@ -22,6 +23,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
       <ProgressProvider>
+        <SplashScreen />
         <StagingBanner />
         {isChromeless || !user ? (
           children

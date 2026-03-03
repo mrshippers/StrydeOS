@@ -1,9 +1,11 @@
 name: Scheduled Crons
 
+# Schedule disabled until CRON_SECRET is set in GitHub repo secrets and Vercel env.
+# Otherwise the job fails every 15 min (401) and you get spammed. Re-enable when ready.
 on:
-  schedule:
-    - cron: '*/15 * * * *'  # pipeline/run — every 15 minutes
-    - cron: '0 */6 * * *'   # metrics/compute — every 6 hours
+  # schedule:
+  #   - cron: '*/15 * * * *'  # pipeline/run — every 15 minutes
+  #   - cron: '0 */6 * * *'   # metrics/compute — every 6 hours
   workflow_dispatch:          # allow manual trigger from GitHub UI
 
 jobs:

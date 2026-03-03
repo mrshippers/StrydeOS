@@ -154,7 +154,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Demo data banner */}
-      {usedDemo && <DemoBanner />}
+      {(user?.uid === "demo" || usedDemo) && <DemoBanner />}
 
       {/* Week navigation + clinician filter row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-tour="clinician-filter">

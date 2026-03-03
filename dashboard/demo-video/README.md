@@ -17,7 +17,7 @@ Two ways to get a downloadable Loom/Higglefield-style demo video:
 | 0–3s | Show **login** page. Say: “Sign in to your clinic dashboard.” |
 | 3–6s | Click **Sign in** (or “Enter dashboard (demo)” if no Firebase). |
 | 6–10s | On **dashboard**: “Weekly stats, clinician performance, and targets at a glance.” |
-| 10–13s | Click **Intelligence** or **Continuity** in the sidebar. “Drill into insights and continuity.” |
+| 10–13s | Click **Intelligence** or **Pulse** in the sidebar. “Drill into insights and continuity.” |
 | 13–15s | End on dashboard or sidebar. “StrydeOS — clinical performance, simplified.” |
 
 ---
