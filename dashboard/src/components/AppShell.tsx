@@ -9,8 +9,10 @@ import OnboardingWidget from "@/components/OnboardingWidget";
 import FirstLoginTour from "@/components/FirstLoginTour";
 import CommandPalette from "@/components/CommandPalette";
 import TopProgressBar, { ProgressProvider } from "@/components/TopProgressBar";
+import StagingBanner from "@/components/StagingBanner";
 
 const CHROMELESS_PATHS = ["/login"];
+const IS_STAGING = process.env.NEXT_PUBLIC_APP_ENV === "staging";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -20,6 +22,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
       <ProgressProvider>
+        <StagingBanner />
         {isChromeless || !user ? (
           children
         ) : (
@@ -27,7 +30,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Sidebar />
             <TopProgressBar />
             <main className="lg:pl-60 min-h-screen">
-              <div className="mx-auto max-w-[1200px] px-6 py-8 pt-16 lg:pt-8">
+              <div className={`mx-auto max-w-[1200px] px-6 py-8 lg:pt-8 ${IS_STAGING ? "pt-24" : "pt-16"}`}>
                 <PageTransition>{children}</PageTransition>
               </div>
             </main>
