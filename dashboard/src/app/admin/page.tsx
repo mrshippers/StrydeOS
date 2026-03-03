@@ -145,7 +145,7 @@ export default function AdminPage() {
   const onboardingCount = clinics.filter((c) => c.status === "onboarding").length;
   const staleCount = clinics.filter((c) => {
     const hrs = hoursSince(c.pmsLastSyncAt ?? undefined);
-    return c.onboarding?.pmsConnected && hrs !== null && hrs > 48;
+    return c.onboarding?.pmsConnected && hrs !== null && hrs > 1;
   }).length;
 
   if (authLoading || loading) {
@@ -204,7 +204,7 @@ export default function AdminPage() {
           <p className={`font-display text-[28px] leading-none ${staleCount > 0 ? "text-danger" : "text-navy"}`}>
             {staleCount}
           </p>
-          <p className="text-[11px] text-muted mt-1">&gt; 48h since sync</p>
+          <p className="text-[11px] text-muted mt-1">&gt; 1h since sync</p>
         </div>
       </div>
 
@@ -229,7 +229,7 @@ export default function AdminPage() {
             <tbody>
               {clinics.map((clinic) => {
                 const syncHours = hoursSince(clinic.pmsLastSyncAt ?? undefined);
-                const isStale = clinic.onboarding?.pmsConnected && syncHours !== null && syncHours > 48;
+                const isStale = clinic.onboarding?.pmsConnected && syncHours !== null && syncHours > 1;
                 const obSteps = clinic.onboarding
                   ? [clinic.onboarding.pmsConnected, clinic.onboarding.cliniciansConfirmed, clinic.onboarding.targetsSet].filter(Boolean).length
                   : 0;
