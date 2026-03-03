@@ -5,6 +5,7 @@ import { buildClinicianMap } from "@/lib/pipeline/sync-clinicians";
 import { syncAppointments } from "@/lib/pipeline/sync-appointments";
 import { syncPatients } from "@/lib/pipeline/sync-patients";
 import { computePatientFields } from "@/lib/pipeline/compute-patients";
+import { triggerCommsSequences } from "@/lib/comms/trigger-sequences";
 import type { PMSIntegrationConfig } from "@/types/pms";
 
 const WEBHOOK_SECRET = process.env.WRITEUPP_WEBHOOK_SECRET;
@@ -77,6 +78,12 @@ export async function POST(request: NextRequest) {
 
       const s5 = await computePatientFields(db, clinicId);
 
+      // Trigger comms sequences after patient fields are recomputed
+      const commsResult = await triggerCommsSequences(db, clinicId).catch((e) => ({
+        fired: 0, skipped: 0,
+        errors: [e instanceof Error ? e.message : String(e)],
+      }));
+
       results.push({
         clinicId,
         event,
@@ -84,6 +91,7 @@ export async function POST(request: NextRequest) {
           { stage: s2.stage, ok: s2.ok, count: s2.count },
           { stage: s3.stage, ok: s3.ok, count: s3.count },
           { stage: s5.stage, ok: s5.ok, count: s5.count },
+          { stage: "trigger-comms", ok: commsResult.errors.length === 0, count: commsResult.fired },
         ],
       });
     }

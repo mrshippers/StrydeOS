@@ -11,12 +11,9 @@ import DemoBanner from "@/components/ui/DemoBanner";
 import { useClinicians } from "@/hooks/useClinicians";
 import { usePatients } from "@/hooks/usePatients";
 import { useToast } from "@/components/ui/Toast";
-import {
-  getDemoCommsSequences,
-  getDemoCommsLog,
-  getDemoCommsStats,
-} from "@/hooks/useDemoComms";
+import { getDemoCommsSequences } from "@/hooks/useDemoComms";
 import { useDemoPatients } from "@/hooks/useDemoData";
+import { useCommsLog } from "@/hooks/useCommsLog";
 import { formatPercent, daysSince } from "@/lib/utils";
 import {
   Users,
@@ -88,8 +85,7 @@ function ContinuityPage() {
   const clinicianMap = Object.fromEntries(clinicians.map((c) => [c.id, c]));
 
   const sequences = getDemoCommsSequences();
-  const commsLog = getDemoCommsLog();
-  const commsStats = getDemoCommsStats();
+  const { commsLog, commsStats } = useCommsLog();
   const allPatients = useDemoPatients();
   const patientMap = Object.fromEntries(allPatients.map((p) => [p.id, p]));
 

@@ -23,7 +23,7 @@ import * as fs from "fs";
 
 const JOE_EMAIL = process.env.JOE_EMAIL ?? "joe@spiresphysiotherapy.com";
 const JOE_UID_OVERRIDE = process.env.JOE_UID ?? process.argv[2] ?? "";
-const CLINIC_ID = "clinic-spires-physiotherapy-london";
+const CLINIC_ID = "clinic-spires";
 const CLINIC_NAME = "Spires Physiotherapy London";
 
 function loadEnvLocal(): void {

@@ -13,6 +13,7 @@ build
 .env.local
 .env*.local
 scripts/serviceAccountKey.json
+scripts/*firebase-adminsdk*.json
 
 # Debug and IDE
 npm-debug.log*

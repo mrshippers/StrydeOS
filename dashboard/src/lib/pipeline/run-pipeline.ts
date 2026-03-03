@@ -10,6 +10,7 @@ import { syncHep } from "./sync-hep";
 import { computePatientFields } from "./compute-patients";
 import { computeWeeklyMetricsForClinic } from "@/lib/metrics/compute-weekly";
 import { syncReviews } from "./sync-reviews";
+import { triggerCommsSequences } from "@/lib/comms/trigger-sequences";
 import type {
   PipelineResult,
   StageResult,
@@ -108,6 +109,27 @@ export async function runPipeline(
   // ── Stage 5: Compute Patient Fields ──────────────────────────────────────
   const s5 = await computePatientFields(db, clinicId);
   stages.push(s5);
+
+  // ── Stage 5b: Trigger Comms Sequences via n8n ────────────────────────────
+  const commsStart = Date.now();
+  try {
+    const commsResult = await triggerCommsSequences(db, clinicId);
+    stages.push({
+      stage: "trigger-comms",
+      ok: commsResult.errors.length === 0,
+      count: commsResult.fired,
+      errors: commsResult.errors,
+      durationMs: Date.now() - commsStart,
+    });
+  } catch (err) {
+    stages.push({
+      stage: "trigger-comms",
+      ok: false,
+      count: 0,
+      errors: [err instanceof Error ? err.message : String(err)],
+      durationMs: Date.now() - commsStart,
+    });
+  }
 
   // ── Stage 6: Compute Weekly Metrics ──────────────────────────────────────
   const metricsStart = Date.now();
