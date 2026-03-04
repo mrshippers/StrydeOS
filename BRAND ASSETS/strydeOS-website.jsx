@@ -89,14 +89,14 @@ const globalStyles = `
   .section-chip {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 4px 14px;
-    background: ${C.blue}12; border: 1px solid ${C.blue}25;
+    background: ${C.blue}10; border: 1px solid ${C.blue}20;
     border-radius: 50px; font-size: 11px; font-weight: 600;
     color: ${C.blue}; letter-spacing: 0.1em; text-transform: uppercase;
     margin-bottom: 16px;
   }
 
   .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-  .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 48px rgba(26,92,219,0.11); }
+  .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 48px rgba(28,84,242,0.11); }
 
   input[type="range"] {
     -webkit-appearance: none; width: 100%; height: 5px;
@@ -106,6 +106,20 @@ const globalStyles = `
     -webkit-appearance: none; width: 20px; height: 20px;
     border-radius: 50%; background: ${C.blue}; cursor: pointer;
     box-shadow: 0 0 0 4px ${C.blue}20;
+  }
+
+  body { transition: background 0.3s ease, color 0.2s ease; }
+
+  @media (max-width: 768px) {
+    .hero-grid        { grid-template-columns: 1fr !important; }
+    .product-grid     { grid-template-columns: 1fr !important; }
+    .pricing-grid     { grid-template-columns: 1fr !important; }
+    .results-grid     { grid-template-columns: 1fr 1fr !important; }
+    .holistic-grid    { grid-template-columns: 1fr !important; }
+    .roi-grid         { grid-template-columns: 1fr !important; }
+    .whyus-grid       { grid-template-columns: 1fr !important; }
+    .footer-top       { flex-direction: column !important; gap: 32px !important; }
+    .nav-links        { display: none !important; }
   }
 `;
 
@@ -118,57 +132,108 @@ const RadialGlow = ({ color = C.blue, size = 600, opacity = 0.12, style = {} }) 
   }} />
 );
 
+/* ─── MonolithMark ───────────────────────────────────────────────────────── */
+let _mmId = 0;
+const _uid = (p) => `${p}-${++_mmId}`;
+
+const MonolithMark = ({ size = 44 }) => {
+  const id       = _uid("m");
+  const gCont    = `${id}-c`;
+  const gRad     = `${id}-r`;
+  const gTopface = `${id}-t`;
+  const gRim     = `${id}-m`;
+  const gBorder  = `${id}-b`;
+  const cPillar  = `${id}-p`;
+  const cAbove   = `${id}-a`;
+  const small    = size <= 24;
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none"
+      xmlns="http://www.w3.org/2000/svg" role="img" aria-label="StrydeOS">
+      <defs>
+        <linearGradient id={gCont} x1="0.1" y1="0" x2="0.85" y2="1">
+          <stop offset="0%"    stopColor="#2E6BFF" stopOpacity="0.58"/>
+          <stop offset="100%"  stopColor="#091D3E" stopOpacity="0.72"/>
+        </linearGradient>
+        <radialGradient id={gRad} cx="28%" cy="24%" r="60%">
+          <stop offset="0%"    stopColor="#6AABFF" stopOpacity="0.42"/>
+          <stop offset="100%"  stopColor="#1C54F2" stopOpacity="0"/>
+        </radialGradient>
+        <linearGradient id={gTopface} x1="0.05" y1="1" x2="0.35" y2="0">
+          <stop offset="0%"    stopColor="white" stopOpacity="0.55"/>
+          <stop offset="100%"  stopColor="white" stopOpacity="0.97"/>
+        </linearGradient>
+        <linearGradient id={gRim} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"    stopColor="white" stopOpacity="0"/>
+          <stop offset="28%"   stopColor="white" stopOpacity="0.60"/>
+          <stop offset="65%"   stopColor="white" stopOpacity="0.12"/>
+          <stop offset="100%"  stopColor="white" stopOpacity="0"/>
+        </linearGradient>
+        <linearGradient id={gBorder} x1="0.1" y1="0" x2="0.4" y2="1">
+          <stop offset="0%"    stopColor="#7ABBFF" stopOpacity="0.65"/>
+          <stop offset="100%"  stopColor="#1C54F2" stopOpacity="0.06"/>
+        </linearGradient>
+        <clipPath id={cPillar}><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+        <clipPath id={cAbove}><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+      </defs>
+      <rect width="100" height="100" rx="24" fill={`url(#${gCont})`}/>
+      <rect width="100" height="100" rx="24" fill={`url(#${gRad})`}/>
+      <rect width="100" height="100" rx="24" fill="none" stroke={`url(#${gBorder})`} strokeWidth="1.2"/>
+      {!small && (
+        <path d="M 17 21 Q 50 12 83 21" stroke={`url(#${gRim})`} strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+      )}
+      <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07"/>
+      <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10"/>
+      <g clipPath={`url(#${cPillar})`}>
+        <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth={small ? 3.0 : 2.0} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth={small ? 3.5 : 2.5} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth={small ? 4.2 : 3.2} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </g>
+      <rect x="35" y="20" width="22" height="60" rx="5" fill={`url(#${gTopface})`} clipPath={`url(#${cAbove})`}/>
+      <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round"/>
+    </svg>
+  );
+};
+
 /* ─── Nav ─────────────────────────────────────────────────────────────────── */
-const Nav = () => {
+const Nav = ({ darkMode, setDarkMode }) => {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", fn);
     return () => window.removeEventListener("scroll", fn);
   }, []);
+
+  const navBg  = scrolled
+    ? darkMode ? "rgba(11,37,69,0.95)"    : "rgba(242,241,238,0.94)"
+    : "transparent";
+  const navBdr = scrolled
+    ? darkMode ? "1px solid rgba(255,255,255,0.07)" : `1px solid ${C.border}`
+    : "none";
+  const linkColor   = darkMode ? "rgba(255,255,255,0.7)" : C.ink;
+  const wordColor   = darkMode ? "white"    : C.navy;
+  const wordAccent  = darkMode ? C.blueGlow : C.blue;
+
   return (
     <nav style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
       padding: "0 24px", transition: "all 0.3s ease",
-      background: scrolled ? "rgba(242,241,238,0.94)" : "transparent",
+      background: navBg,
       backdropFilter: scrolled ? "blur(20px)" : "none",
-      borderBottom: scrolled ? `1px solid ${C.border}` : "none",
+      borderBottom: navBdr,
     }}>
       <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 70 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="nav-cont" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stopColor="#2E6BFF" stopOpacity="0.58"/><stop offset="100%" stopColor="#091D3E" stopOpacity="0.72"/></linearGradient>
-              <radialGradient id="nav-rad" cx="28%" cy="24%" r="60%"><stop offset="0%" stopColor="#6AABFF" stopOpacity="0.42"/><stop offset="100%" stopColor="#1C54F2" stopOpacity="0"/></radialGradient>
-              <linearGradient id="nav-top" x1="0.05" y1="1" x2="0.35" y2="0"><stop offset="0%" stopColor="white" stopOpacity="0.55"/><stop offset="100%" stopColor="white" stopOpacity="0.97"/></linearGradient>
-              <linearGradient id="nav-rim" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="white" stopOpacity="0"/><stop offset="28%" stopColor="white" stopOpacity="0.60"/><stop offset="65%" stopColor="white" stopOpacity="0.12"/><stop offset="100%" stopColor="white" stopOpacity="0"/></linearGradient>
-              <linearGradient id="nav-brd" x1="0.1" y1="0" x2="0.4" y2="1"><stop offset="0%" stopColor="#7ABBFF" stopOpacity="0.65"/><stop offset="100%" stopColor="#1C54F2" stopOpacity="0.06"/></linearGradient>
-              <clipPath id="nav-pc"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
-              <clipPath id="nav-ac"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
-            </defs>
-            <rect width="100" height="100" rx="24" fill="url(#nav-cont)"/>
-            <rect width="100" height="100" rx="24" fill="url(#nav-rad)"/>
-            <rect width="100" height="100" rx="24" fill="none" stroke="url(#nav-brd)" strokeWidth="1.2"/>
-            <path d="M 17 21 Q 50 12 83 21" stroke="url(#nav-rim)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-            <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07"/>
-            <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10"/>
-            <g clipPath="url(#nav-pc)">
-              <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"/>
-            </g>
-            <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#nav-top)" clipPath="url(#nav-ac)"/>
-            <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round"/>
-          </svg>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17, color: C.navy, letterSpacing: "-0.02em" }}>
-            Stryde<span style={{ color: C.blue }}>OS</span>
+          <MonolithMark size={34} />
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17, color: wordColor, letterSpacing: "-0.02em" }}>
+            Stryde<span style={{ color: wordAccent }}>OS</span>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+        <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: 32 }}>
           {[["Products","#products"],["How it works","#how-it-works"],["Results","#results"],["Pricing","#pricing"]].map(([label, href]) => (
             <a key={label} href={href} style={{
-              color: C.ink, fontSize: 14, fontWeight: 500,
+              color: linkColor, fontSize: 14, fontWeight: 500,
               textDecoration: "none", opacity: 0.65, transition: "opacity 0.2s",
             }}
               onMouseEnter={e => e.target.style.opacity = 1}
@@ -177,16 +242,32 @@ const Nav = () => {
           ))}
         </div>
 
-        <a href="#early-access" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }}>
-          Get Early Access
-        </a>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            onClick={() => setDarkMode(d => !d)}
+            style={{
+              background: "transparent",
+              border: `1px solid ${darkMode ? "rgba(255,255,255,0.15)" : C.border}`,
+              borderRadius: 8, width: 34, height: 34,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", color: darkMode ? "rgba(255,255,255,0.6)" : C.muted,
+              fontSize: 15, transition: "all 0.2s",
+            }}
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? "☀" : "☾"}
+          </button>
+          <a href="#early-access" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }}>
+            Get Early Access
+          </a>
+        </div>
       </div>
     </nav>
   );
 };
 
 /* ─── Hero ─────────────────────────────────────────────────────────────────── */
-const Hero = () => {
+const Hero = ({ darkMode }) => {
   const [count1, setCount1] = useState(0);
   const [count2, setCount2] = useState(0);
   const [count3, setCount3] = useState(0);
@@ -208,13 +289,21 @@ const Hero = () => {
     go(3, setCount3, 800);
   }, []);
 
+  const head   = darkMode ? "white"   : C.navy;
+  const muted  = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const italic = darkMode ? C.blueGlow : C.blue;
+  const heroBg = darkMode
+    ? `linear-gradient(160deg, ${C.navy} 0%, ${C.navyMid} 60%, ${C.navy} 100%)`
+    : `linear-gradient(160deg, ${C.cloudLight} 0%, ${C.cloudDancer} 50%, ${C.cloudDark} 100%)`;
+
   return (
     <section style={{
       position: "relative", overflow: "hidden",
       minHeight: "100vh",
       display: "flex", flexDirection: "column", justifyContent: "center",
       padding: "120px 24px 80px",
-      background: `linear-gradient(160deg, ${C.cloudLight} 0%, ${C.cloudDancer} 50%, ${C.cloudDark} 100%)`,
+      background: heroBg,
+      transition: "background 0.3s ease",
     }}>
       <RadialGlow color={C.blue} size={900} opacity={0.07} style={{ top: -250, right: -200 }} />
       <RadialGlow color={C.teal} size={600} opacity={0.06} style={{ bottom: -100, left: -150 }} />
@@ -225,7 +314,7 @@ const Hero = () => {
       }} />
 
       <div style={{ maxWidth: 1160, margin: "0 auto", width: "100%", position: "relative", zIndex: 2 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+        <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
 
           {/* Left */}
           <div style={{ animation: "fadeUp 0.8s ease forwards" }}>
@@ -234,17 +323,17 @@ const Hero = () => {
               Now in early access · Private practice
             </div>
 
-            <h1 className="serif" style={{ fontSize: 60, lineHeight: 1.0, color: C.navy, marginBottom: 10, fontWeight: 400, letterSpacing: "-0.01em" }}>
+            <h1 className="serif" style={{ fontSize: 60, lineHeight: 1.0, color: head, marginBottom: 10, fontWeight: 400, letterSpacing: "-0.01em" }}>
               The Clinic OS
             </h1>
-            <h1 className="serif" style={{ fontSize: 60, lineHeight: 1.0, color: C.navy, marginBottom: 28, fontWeight: 400, letterSpacing: "-0.01em" }}>
-              for <span style={{ fontStyle: "italic", color: C.blue }}>private practice.</span>
+            <h1 className="serif" style={{ fontSize: 60, lineHeight: 1.0, color: head, marginBottom: 28, fontWeight: 400, letterSpacing: "-0.01em" }}>
+              for <span style={{ fontStyle: "italic", color: italic }}>private practice.</span>
             </h1>
 
-            <p style={{ fontSize: 18, lineHeight: 1.7, color: C.muted, marginBottom: 20, maxWidth: 500 }}>
+            <p style={{ fontSize: 18, lineHeight: 1.7, color: muted, marginBottom: 20, maxWidth: 500 }}>
               Solo clinics and partnerships running at full capacity. Fewer gaps. More completed courses of treatment. No extra headcount.
             </p>
-            <p style={{ fontSize: 15, lineHeight: 1.7, color: C.muted, marginBottom: 40, maxWidth: 480, fontStyle: "italic", borderLeft: `3px solid ${C.blue}40`, paddingLeft: 16 }}>
+            <p style={{ fontSize: 15, lineHeight: 1.7, color: muted, marginBottom: 40, maxWidth: 480, fontStyle: "italic", borderLeft: `3px solid ${C.blue}40`, paddingLeft: 16 }}>
               StrydeOS is how the best-run private clinics operate now.
             </p>
 
@@ -259,10 +348,10 @@ const Hero = () => {
             <div style={{ display: "flex", gap: 28 }}>
               {[
                 { label: "GDPR Compliant" },
-                { label: "GDPR Compliant · Secure Hosting" },
-                { label: "No lock-in" },
+                { label: "UK Secure Hosting" },
+                { label: "No lock-in contracts" },
               ].map(({ label }) => (
-                <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.muted, fontWeight: 500 }}>
+                <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: muted, fontWeight: 500 }}>
                   <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2.5 6.5l3 3 5-5" stroke={C.success} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   {label}
                 </div>
@@ -294,8 +383,8 @@ const Hero = () => {
                 {/* Three product indicators */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 18 }}>
                   {[
-                    { name: "Receptionist", status: "Active", calls: "12 today", color: C.blue },
-                    { name: "Continuity", status: "Active", calls: "8 follow-ups", color: C.teal },
+                    { name: "Ava", status: "Active", calls: "12 today", color: C.blue },
+                    { name: "Pulse", status: "Active", calls: "8 follow-ups", color: C.teal },
                     { name: "Intelligence", status: "Active", calls: "91% util.", color: "#8B5CF6" },
                   ].map(({ name, status, calls, color }) => (
                     <div key={name} style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "12px 14px", border: `1px solid ${color}30` }}>
@@ -404,22 +493,29 @@ const Hero = () => {
 };
 
 /* ─── Holistic Section ──────────────────────────────────────────────────────── */
-const HolisticSection = () => (
-  <section id="how-it-works" style={{ padding: "100px 24px", background: C.cream }}>
+const HolisticSection = ({ darkMode }) => {
+  const bgAlt  = darkMode ? C.navyMid : C.cream;
+  const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
+  const bdr    = darkMode ? "rgba(255,255,255,0.07)" : C.border;
+  const txt    = darkMode ? "rgba(255,255,255,0.85)" : C.ink;
+  const muted  = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const head   = darkMode ? "white" : C.navy;
+  return (
+  <section id="how-it-works" style={{ padding: "100px 24px", background: bgAlt, transition: "background 0.3s ease" }}>
     <div style={{ maxWidth: 1160, margin: "0 auto" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+      <div className="holistic-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
         <div>
           <div className="section-chip">One Operating System</div>
-          <h2 className="serif" style={{ fontSize: 44, color: C.navy, fontWeight: 400, lineHeight: 1.1, marginBottom: 24 }}>
+          <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginBottom: 24 }}>
             Every gap closed.
           </h2>
-          <p style={{ fontSize: 16, lineHeight: 1.8, color: C.muted, marginBottom: 20 }}>
+          <p style={{ fontSize: 16, lineHeight: 1.8, color: muted, marginBottom: 20 }}>
             The clinics consistently running at capacity aren't doing anything extraordinary. They answer every call. They follow up after every session. They know their numbers.
           </p>
-          <p style={{ fontSize: 16, lineHeight: 1.8, color: C.muted, marginBottom: 32 }}>
+          <p style={{ fontSize: 16, lineHeight: 1.8, color: muted, marginBottom: 32 }}>
             They've just built the infrastructure to make it happen — without hiring more people to do it.
           </p>
-          <p style={{ fontSize: 16, lineHeight: 1.8, color: C.ink, fontWeight: 500 }}>
+          <p style={{ fontSize: 16, lineHeight: 1.8, color: txt, fontWeight: 500 }}>
             StrydeOS packages that infrastructure for any private clinic, from day one.
           </p>
         </div>
@@ -433,9 +529,10 @@ const HolisticSection = () => (
           ].map(({ name, desc, icon, color, n }, i) => (
             <div key={name} className="card-hover" style={{
               display: "flex", alignItems: "center", gap: 20,
-              background: "white", borderRadius: 16, padding: "20px 24px",
-              border: `1px solid ${C.border}`,
-              boxShadow: "0 2px 12px rgba(11,37,69,0.04)",
+              background: bgCard, borderRadius: 16, padding: "20px 24px",
+              border: `1px solid ${bdr}`,
+              boxShadow: darkMode ? "none" : "0 2px 12px rgba(11,37,69,0.04)",
+              transition: "background 0.3s ease",
             }}>
               <div style={{
                 width: 48, height: 48, borderRadius: 14, flexShrink: 0,
@@ -444,8 +541,8 @@ const HolisticSection = () => (
                 fontSize: 22,
               }}>{icon}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: C.navy, marginBottom: 3 }}>{name}</div>
-                <div style={{ fontSize: 13, color: C.muted }}>{desc}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: head, marginBottom: 3 }}>{name}</div>
+                <div style={{ fontSize: 13, color: muted }}>{desc}</div>
               </div>
               <div style={{
                 width: 32, height: 32, borderRadius: "50%",
@@ -466,20 +563,27 @@ const HolisticSection = () => (
       </div>
     </div>
   </section>
-);
+  );
+};
 
 /* ─── Integrations ──────────────────────────────────────────────────────────── */
-const Integrations = () => (
-  <section style={{ padding: "80px 24px", background: C.cloudDancer, borderTop: `1px solid ${C.border}` }}>
+const Integrations = ({ darkMode }) => {
+  const bg     = darkMode ? C.navy    : C.cloudDancer;
+  const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
+  const bdr    = darkMode ? "rgba(255,255,255,0.07)" : C.border;
+  const muted  = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const head   = darkMode ? "white" : C.navy;
+  return (
+  <section style={{ padding: "80px 24px", background: bg, borderTop: `1px solid ${bdr}`, transition: "background 0.3s ease" }}>
     <div style={{ maxWidth: 1160, margin: "0 auto" }}>
 
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: 52 }}>
         <div className="section-chip">Works With Your Stack</div>
-        <h2 className="serif" style={{ fontSize: 40, color: C.navy, fontWeight: 400, marginBottom: 16 }}>
+        <h2 className="serif" style={{ fontSize: 40, color: head, fontWeight: 400, marginBottom: 16 }}>
           The pitch isn't "switch to StrydeOS."
         </h2>
-        <p style={{ fontSize: 16, color: C.muted, maxWidth: 560, margin: "0 auto", lineHeight: 1.75 }}>
+        <p style={{ fontSize: 16, color: muted, maxWidth: 560, margin: "0 auto", lineHeight: 1.75 }}>
           Cliniko and WriteUpp own the PMS layer — appointments, notes, billing. StrydeOS sits <em>above</em> that. It connects to whatever you're already running and extends it, not replaces it.
         </p>
       </div>
@@ -504,7 +608,7 @@ const Integrations = () => (
                 { name: "Cliniko", icon: "🗂️", desc: "Appointments · Notes · Billing" },
                 { name: "WriteUpp", icon: "📋", desc: "Appointments · Notes · Billing" },
                 { name: "Jane App", icon: "🏥", desc: "Appointments · Notes · Billing" },
-                { name: "Other PMS", icon: "⚙️", desc: "Via API or webhook" },
+                { name: "Other PMS", icon: "⚙️", desc: "Via API — speak to us" },
               ].map(({ name, icon, desc }) => (
                 <div key={name} style={{
                   background: "rgba(255,255,255,0.06)", borderRadius: 14, padding: "14px 22px",
@@ -572,23 +676,31 @@ const Integrations = () => (
           },
         ].map(({ q, a, icon }) => (
           <div key={q} className="card-hover" style={{
-            background: "white", borderRadius: 16, padding: "24px 26px",
-            border: `1px solid ${C.border}`,
-            boxShadow: "0 2px 12px rgba(11,37,69,0.04)",
+            background: bgCard, borderRadius: 16, padding: "24px 26px",
+            border: `1px solid ${bdr}`,
+            boxShadow: darkMode ? "none" : "0 2px 12px rgba(11,37,69,0.04)",
+            transition: "background 0.3s ease",
           }}>
             <div style={{ fontSize: 26, marginBottom: 12 }}>{icon}</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, marginBottom: 10 }}>{q}</div>
-            <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.65 }}>{a}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: head, marginBottom: 10 }}>{q}</div>
+            <div style={{ fontSize: 13, color: muted, lineHeight: 1.65 }}>{a}</div>
           </div>
         ))}
       </div>
     </div>
   </section>
-);
+  );
+};
 
 /* ─── Products ──────────────────────────────────────────────────────────────── */
-const Products = () => {
+const Products = ({ darkMode }) => {
   const [active, setActive] = useState(0);
+  const bg    = darkMode ? C.navy    : C.cloudDancer;
+  const muted = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const head  = darkMode ? "white"   : C.navy;
+  const txt   = darkMode ? "rgba(255,255,255,0.85)" : C.ink;
+  const bdr   = darkMode ? "rgba(255,255,255,0.12)" : C.border;
+  const tabInactiveBg = darkMode ? "rgba(255,255,255,0.04)" : "transparent";
 
   const products = [
     {
@@ -608,7 +720,7 @@ const Products = () => {
           <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${C.blue}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🤖</div>
             <div>
-              <div style={{ color: "white", fontWeight: 600, fontSize: 13 }}>StrydeOS Receptionist</div>
+              <div style={{ color: "white", fontWeight: 600, fontSize: 13 }}>StrydeOS Ava</div>
               <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34D399" }} />
                 <span style={{ color: "#34D399" }}>Live · Spires MSK</span>
@@ -727,14 +839,14 @@ const Products = () => {
   const p = products[active];
 
   return (
-    <section id="products" style={{ padding: "100px 24px", background: C.cloudDancer }}>
+    <section id="products" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
       <div style={{ maxWidth: 1160, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
           <div className="section-chip">Products</div>
-          <h2 className="serif" style={{ fontSize: 44, color: C.navy, fontWeight: 400 }}>
+          <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400 }}>
             Three products. One platform.
           </h2>
-          <p style={{ color: C.muted, fontSize: 16, marginTop: 14, maxWidth: 480, margin: "14px auto 0" }}>
+          <p style={{ color: muted, fontSize: 16, marginTop: 14, maxWidth: 480, margin: "14px auto 0" }}>
             Each solves a specific, expensive problem. Use one or all three.
           </p>
         </div>
@@ -744,10 +856,10 @@ const Products = () => {
           {products.map((pr, i) => (
             <button key={pr.id} onClick={() => setActive(i)} style={{
               padding: "11px 22px", borderRadius: 50, cursor: "pointer",
-              background: active === i ? pr.color : "transparent",
-              color: active === i ? "white" : C.muted,
+              background: active === i ? pr.color : tabInactiveBg,
+              color: active === i ? "white" : muted,
               fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500,
-              border: `1.5px solid ${active === i ? pr.color : C.border}`,
+              border: `1.5px solid ${active === i ? pr.color : bdr}`,
               transition: "all 0.3s",
             }}>
               {pr.icon} {pr.label}
@@ -756,7 +868,7 @@ const Products = () => {
         </div>
 
         {/* Panel */}
-        <div key={active} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 72, alignItems: "center", animation: "fadeIn 0.4s ease" }}>
+        <div key={active} className="product-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 72, alignItems: "center", animation: "fadeIn 0.4s ease" }}>
           <div>
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 6,
@@ -769,16 +881,16 @@ const Products = () => {
               {p.eyebrow}
             </div>
 
-            <h3 className="serif" style={{ fontSize: 36, color: C.navy, fontWeight: 400, lineHeight: 1.15, marginBottom: 20 }}>
+            <h3 className="serif" style={{ fontSize: 36, color: head, fontWeight: 400, lineHeight: 1.15, marginBottom: 20 }}>
               {p.headline}
             </h3>
 
             {p.body.split("\n\n").map((para, i) => (
-              <p key={i} style={{ color: C.muted, lineHeight: 1.75, marginBottom: 14, fontSize: 15 }}>{para}</p>
+              <p key={i} style={{ color: muted, lineHeight: 1.75, marginBottom: 14, fontSize: 15 }}>{para}</p>
             ))}
 
             <div style={{ padding: "14px 18px", borderLeft: `3px solid ${p.color}`, marginBottom: 24, marginTop: 8 }}>
-              <p style={{ color: C.ink, fontSize: 13.5, lineHeight: 1.65 }}>{p.proof}</p>
+              <p style={{ color: txt, fontSize: 13.5, lineHeight: 1.65 }}>{p.proof}</p>
             </div>
 
             <p style={{ fontSize: 14, color: p.color, fontWeight: 600, fontStyle: "italic", marginBottom: 24 }}>"{p.tagline}"</p>
@@ -789,7 +901,7 @@ const Products = () => {
                   <div style={{ width: 20, height: 20, borderRadius: "50%", background: `${p.color}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke={p.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </div>
-                  <span style={{ fontSize: 14, color: C.ink }}>{b}</span>
+                  <span style={{ fontSize: 14, color: txt }}>{b}</span>
                 </div>
               ))}
             </div>
@@ -829,7 +941,7 @@ const Results = () => (
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 48 }}>
+      <div className="results-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 48 }}>
         {[
           { stat: "67%→4%", label: "Missed call rate", note: "Solo MSK practice" },
           { stat: "84%", label: "Course completion rate", note: "vs 61% industry avg" },
@@ -885,7 +997,7 @@ const Results = () => (
 );
 
 /* ─── ROI Calculator ─────────────────────────────────────────────────────────── */
-const ROICalc = () => {
+const ROICalc = ({ darkMode }) => {
   const [sessions, setSessions] = useState(80);
   const [dna, setDna] = useState(12);
   const [fee, setFee] = useState(75);
@@ -897,24 +1009,30 @@ const ROICalc = () => {
   const dropLoss = Math.round(sessions * (dropout / 100) * fee * 1.8 * 52);
   const total = dnaLoss + callLoss + dropLoss;
 
+  const bgAlt  = darkMode ? C.navy    : C.cream;
+  const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
+  const bdr    = darkMode ? "rgba(255,255,255,0.07)" : C.border;
+  const muted  = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const head   = darkMode ? "white"   : C.navy;
+
   return (
-    <section style={{ padding: "100px 24px", background: C.cream }}>
+    <section style={{ padding: "100px 24px", background: bgAlt, transition: "background 0.3s ease" }}>
       <div style={{ maxWidth: 920, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
           <div className="section-chip">ROI Calculator</div>
-          <h2 className="serif" style={{ fontSize: 42, color: C.navy, fontWeight: 400 }}>
+          <h2 className="serif" style={{ fontSize: 42, color: head, fontWeight: 400 }}>
             What's inefficiency actually costing you?
           </h2>
-          <p style={{ color: C.muted, marginTop: 14, fontSize: 15 }}>
+          <p style={{ color: muted, marginTop: 14, fontSize: 15 }}>
             Dial in your clinic's numbers. The losses are probably larger than you think.
           </p>
         </div>
 
-        <div style={{ background: "white", borderRadius: 24, overflow: "hidden", boxShadow: "0 24px 60px rgba(11,37,69,0.07)" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+        <div style={{ background: bgCard, borderRadius: 24, overflow: "hidden", boxShadow: darkMode ? `0 24px 60px ${C.navy}60` : "0 24px 60px rgba(11,37,69,0.07)", border: darkMode ? `1px solid ${bdr}` : "none", transition: "background 0.3s ease" }}>
+          <div className="roi-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
             {/* Controls */}
-            <div style={{ padding: 40, borderRight: `1px solid ${C.border}` }}>
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: C.navy, marginBottom: 30 }}>Your clinic</h3>
+            <div style={{ padding: 40, borderRight: `1px solid ${bdr}` }}>
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: head, marginBottom: 30 }}>Your clinic</h3>
               {[
                 { label: "Weekly patient sessions", val: sessions, set: setSessions, min: 20, max: 200, step: 5, disp: `${sessions}` },
                 { label: "DNA / no-show rate", val: dna, set: setDna, min: 2, max: 30, step: 1, disp: `${dna}%` },
@@ -924,7 +1042,7 @@ const ROICalc = () => {
               ].map(({ label, val, set, min, max, step, disp }) => (
                 <div key={label} style={{ marginBottom: 26 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                    <label style={{ fontSize: 13, color: C.muted, fontWeight: 500 }}>{label}</label>
+                    <label style={{ fontSize: 13, color: muted, fontWeight: 500 }}>{label}</label>
                     <div style={{ fontSize: 15, fontWeight: 700, color: C.blue, background: `${C.blue}10`, padding: "2px 12px", borderRadius: 8 }}>{disp}</div>
                   </div>
                   <input type="range" min={min} max={max} step={step} value={val} onChange={e => set(Number(e.target.value))} />
@@ -970,30 +1088,37 @@ const ROICalc = () => {
 };
 
 /* ─── Pricing ────────────────────────────────────────────────────────────────── */
-const Pricing = () => (
-  <section id="pricing" style={{ padding: "100px 24px", background: C.cloudDancer }}>
+const Pricing = ({ darkMode }) => {
+  const bg     = darkMode ? C.navyMid  : C.cloudDancer;
+  const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
+  const bdr    = darkMode ? "rgba(255,255,255,0.07)" : C.border;
+  const muted  = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const head   = darkMode ? "white"    : C.navy;
+  const txt    = darkMode ? "rgba(255,255,255,0.75)" : C.ink;
+  return (
+  <section id="pricing" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
     <div style={{ maxWidth: 1100, margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: 52 }}>
         <div className="section-chip">Pricing</div>
-        <h2 className="serif" style={{ fontSize: 42, color: C.navy, fontWeight: 400 }}>
+        <h2 className="serif" style={{ fontSize: 42, color: head, fontWeight: 400 }}>
           Start with one. Scale to all three.
         </h2>
-        <p style={{ color: C.muted, marginTop: 14, fontSize: 15, maxWidth: 440, margin: "14px auto 0" }}>
+        <p style={{ color: muted, marginTop: 14, fontSize: 15, maxWidth: 440, margin: "14px auto 0" }}>
           No pressure to take the whole platform on day one. Pick the product that solves your biggest problem right now.
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 18, marginBottom: 32 }}>
+      <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 18, marginBottom: 32 }}>
         {[
           {
-            name: "Receptionist", monthly: "£500/mo", setup: "from £1,500", highlight: false, color: C.blue,
+            name: "Ava", monthly: "£500/mo", setup: "from £1,500", highlight: false, color: C.blue,
             tagline: "Stop losing patients at the door",
             features: ["24/7 inbound call handling", "Live calendar booking", "No-show recovery", "SMS confirmations", "Emergency routing"],
           },
           {
             name: "Growth OS", monthly: "£1,200/mo", setup: "from £3,500", highlight: true, color: C.blue,
             tagline: "The full front-of-house stack",
-            features: ["Ava (24/7)", "Pulse follow-up flows", "Intelligence dashboard", "Bupa/AXA verification", "Priority support"],
+            features: ["Ava (24/7)", "Pulse follow-up flows", "Intelligence dashboard", "Insurance pre-auth (Bupa/AXA/Vitality)", "Priority support"],
           },
           {
             name: "Intelligence", monthly: "£400/mo", setup: "from £1,000", highlight: false, color: "#8B5CF6",
@@ -1002,11 +1127,12 @@ const Pricing = () => (
           },
         ].map(({ name, monthly, setup, highlight, color, tagline, features }) => (
           <div key={name} className="card-hover" style={{
-            background: highlight ? C.navy : "white",
+            background: highlight ? C.navy : bgCard,
             borderRadius: 22, padding: 34,
-            border: highlight ? `2px solid ${C.blue}` : `1px solid ${C.border}`,
+            border: highlight ? `2px solid ${C.blue}` : `1px solid ${bdr}`,
             position: "relative",
-            boxShadow: highlight ? `0 32px 64px ${C.navy}25` : "0 2px 12px rgba(11,37,69,0.04)",
+            boxShadow: highlight ? `0 32px 64px ${C.navy}25` : "none",
+            transition: "background 0.3s ease",
           }}>
             {highlight && (
               <div style={{
@@ -1017,12 +1143,12 @@ const Pricing = () => (
               }}>Most Popular</div>
             )}
 
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: highlight ? color : color, marginBottom: 6 }}>StrydeOS</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: highlight ? "white" : C.navy, marginBottom: 4 }}>{name}</div>
-            <div style={{ fontSize: 13, color: highlight ? "rgba(255,255,255,0.45)" : C.muted, marginBottom: 24 }}>{tagline}</div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color, marginBottom: 6 }}>StrydeOS</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: highlight ? "white" : head, marginBottom: 4 }}>{name}</div>
+            <div style={{ fontSize: 13, color: highlight ? "rgba(255,255,255,0.45)" : muted, marginBottom: 24 }}>{tagline}</div>
 
-            <div className="serif" style={{ fontSize: 34, color: highlight ? "white" : C.navy, fontWeight: 400, marginBottom: 4 }}>{monthly}</div>
-            <div style={{ fontSize: 12, color: highlight ? "rgba(255,255,255,0.35)" : C.muted, marginBottom: 28 }}>Setup {setup}</div>
+            <div className="serif" style={{ fontSize: 34, color: highlight ? "white" : head, fontWeight: 400, marginBottom: 4 }}>{monthly}</div>
+            <div style={{ fontSize: 12, color: highlight ? "rgba(255,255,255,0.35)" : muted, marginBottom: 28 }}>Setup {setup}</div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 28 }}>
               {features.map(f => (
@@ -1031,7 +1157,7 @@ const Pricing = () => (
                     <circle cx="7.5" cy="7.5" r="6.5" fill={highlight ? `${color}35` : `${color}15`}/>
                     <path d="M4.5 7.5l2 2 4-4" stroke={highlight ? "#60A5FA" : color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  <span style={{ fontSize: 13, color: highlight ? "rgba(255,255,255,0.75)" : C.ink }}>{f}</span>
+                  <span style={{ fontSize: 13, color: highlight ? "rgba(255,255,255,0.75)" : txt }}>{f}</span>
                 </div>
               ))}
             </div>
@@ -1044,15 +1170,23 @@ const Pricing = () => (
         ))}
       </div>
 
-      <p style={{ textAlign: "center", fontSize: 13, color: C.muted, fontStyle: "italic" }}>
+      <p style={{ textAlign: "center", fontSize: 13, color: muted, fontStyle: "italic" }}>
         Currently in early access · No lock-in contracts · Onboarding & training included
       </p>
     </div>
   </section>
-);
+  );
+};
 
 /* ─── Why StrydeOS ───────────────────────────────────────────────────────────── */
-const WhyUs = () => {
+const WhyUs = ({ darkMode }) => {
+  const bgAlt    = darkMode ? C.navy    : C.cream;
+  const bgCard0  = darkMode ? "rgba(255,255,255,0.04)" : "white";
+  const bgCard1  = darkMode ? "rgba(255,255,255,0.02)" : C.cloudDancer;
+  const bdr      = darkMode ? "rgba(255,255,255,0.07)" : C.border;
+  const muted    = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const head     = darkMode ? "white"   : C.navy;
+  const italic   = darkMode ? C.blueGlow : C.blue;
   const pillars = [
     {
       n: "01",
@@ -1093,21 +1227,21 @@ We have clients who call us before they hire. We intend to keep it that way. If 
   ];
 
   return (
-    <section style={{ padding: "110px 24px", background: C.cream }}>
+    <section style={{ padding: "110px 24px", background: bgAlt, transition: "background 0.3s ease" }}>
       <div style={{ maxWidth: 1160, margin: "0 auto" }}>
 
         {/* Header */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "end", marginBottom: 80 }}>
+        <div className="whyus-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "end", marginBottom: 80 }}>
           <div>
             <div className="section-chip">Why StrydeOS</div>
-            <h2 className="serif" style={{ fontSize: 50, color: C.navy, fontWeight: 400, lineHeight: 1.0, marginTop: 16 }}>
+            <h2 className="serif" style={{ fontSize: 50, color: head, fontWeight: 400, lineHeight: 1.0, marginTop: 16 }}>
               Clinical software,
               <br />
-              <span style={{ fontStyle: "italic", color: C.blue }}>built by clinicians.</span>
+              <span style={{ fontStyle: "italic", color: italic }}>built by clinicians.</span>
             </h2>
           </div>
           <div>
-            <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.8 }}>
+            <p style={{ fontSize: 16, color: muted, lineHeight: 1.8 }}>
               There's no shortage of software that promises to transform your practice. Most of it is built by people who've never set foot in a clinic. StrydeOS is the exception — and we think that matters.
             </p>
           </div>
@@ -1117,13 +1251,13 @@ We have clients who call us before they hire. We intend to keep it that way. If 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
           {pillars.map(({ n, title, color, body }, i) => (
             <div key={n} style={{
-              background: i % 2 === 0 ? "white" : C.cloudDancer,
+              background: i % 2 === 0 ? bgCard0 : bgCard1,
               padding: "52px 56px",
               position: "relative",
               transition: "background 0.3s ease",
             }}
               onMouseEnter={e => e.currentTarget.style.background = `${color}08`}
-              onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? "white" : C.cloudDancer}
+              onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? bgCard0 : bgCard1}
             >
               {/* Number */}
               <div style={{
@@ -1138,7 +1272,7 @@ We have clients who call us before they hire. We intend to keep it that way. If 
               <div style={{ width: 36, height: 3, background: color, borderRadius: 2, marginBottom: 28 }} />
 
               <h3 className="serif" style={{
-                fontSize: 24, color: C.navy, fontWeight: 400, lineHeight: 1.25,
+                fontSize: 24, color: head, fontWeight: 400, lineHeight: 1.25,
                 marginBottom: 24, maxWidth: 380,
               }}>
                 {title}
@@ -1146,7 +1280,7 @@ We have clients who call us before they hire. We intend to keep it that way. If 
 
               {body.split("\n\n").map((para, pi) => (
                 <p key={pi} style={{
-                  fontSize: 14.5, color: C.muted, lineHeight: 1.85,
+                  fontSize: 14.5, color: muted, lineHeight: 1.85,
                   marginBottom: pi < body.split("\n\n").length - 1 ? 16 : 0,
                 }}>
                   {para}
@@ -1159,7 +1293,7 @@ We have clients who call us before they hire. We intend to keep it that way. If 
         {/* Bottom proof bar */}
         <div style={{
           display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr",
-          borderTop: `1px solid ${C.border}`,
+          borderTop: `1px solid ${bdr}`,
           marginTop: 60,
         }}>
           {[
@@ -1169,8 +1303,8 @@ We have clients who call us before they hire. We intend to keep it that way. If 
             { stat: "Always", label: "a human on the other end — not a ticket system" },
           ].map(({ stat, label }) => (
             <div key={label} style={{ padding: "36px 0 0", paddingRight: 32 }}>
-              <div className="serif" style={{ fontSize: 36, color: C.navy, marginBottom: 8 }}>{stat}</div>
-              <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.65, maxWidth: 180 }}>{label}</div>
+              <div className="serif" style={{ fontSize: 36, color: head, marginBottom: 8 }}>{stat}</div>
+              <div style={{ fontSize: 13, color: muted, lineHeight: 1.65, maxWidth: 180 }}>{label}</div>
             </div>
           ))}
         </div>
@@ -1215,7 +1349,7 @@ const EarlyAccess = () => (
           <a href="#pricing" className="btn-ghost" style={{ padding: "10px 20px", fontSize: 13 }}>See Pricing</a>
         </div>
         <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 12, marginTop: 4 }}>
-          15 minutes · No obligation · Private practices worldwide
+          15 minutes · No obligation · UK private practice · MSK · Allied health
         </div>
       </div>
 
@@ -1223,8 +1357,8 @@ const EarlyAccess = () => (
       <div style={{ display: "flex", justifyContent: "center", gap: 40, marginTop: 56, paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
         {[
           { v: "5 days", l: "Average setup time" },
-          { v: "GDPR", l: "Compliant · Secure hosting" },
-          { v: "91", l: "Net Promoter Score" },
+          { v: "GDPR", l: "Compliant · UK secure hosting" },
+          { v: "3 clinics", l: "Active UK early-access practices" },
         ].map(({ v, l }) => (
           <div key={l} style={{ textAlign: "center" }}>
             <div className="serif" style={{ fontSize: 26, color: "white" }}>{v}</div>
@@ -1240,37 +1374,12 @@ const EarlyAccess = () => (
 const Footer = () => (
   <footer style={{ background: "#060F1E", padding: "52px 24px 28px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
     <div style={{ maxWidth: 1160, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 44 }}>
+      <div className="footer-top" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 44 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
-              <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="ft-cont" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stopColor="#2E6BFF" stopOpacity="0.58"/><stop offset="100%" stopColor="#091D3E" stopOpacity="0.72"/></linearGradient>
-                  <radialGradient id="ft-rad" cx="28%" cy="24%" r="60%"><stop offset="0%" stopColor="#6AABFF" stopOpacity="0.42"/><stop offset="100%" stopColor="#1C54F2" stopOpacity="0"/></radialGradient>
-                  <linearGradient id="ft-top" x1="0.05" y1="1" x2="0.35" y2="0"><stop offset="0%" stopColor="white" stopOpacity="0.55"/><stop offset="100%" stopColor="white" stopOpacity="0.97"/></linearGradient>
-                  <linearGradient id="ft-rim" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="white" stopOpacity="0"/><stop offset="28%" stopColor="white" stopOpacity="0.60"/><stop offset="65%" stopColor="white" stopOpacity="0.12"/><stop offset="100%" stopColor="white" stopOpacity="0"/></linearGradient>
-                  <linearGradient id="ft-brd" x1="0.1" y1="0" x2="0.4" y2="1"><stop offset="0%" stopColor="#7ABBFF" stopOpacity="0.65"/><stop offset="100%" stopColor="#1C54F2" stopOpacity="0.06"/></linearGradient>
-                  <clipPath id="ft-pc"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
-                  <clipPath id="ft-ac"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
-                </defs>
-                <rect width="100" height="100" rx="24" fill="url(#ft-cont)"/>
-                <rect width="100" height="100" rx="24" fill="url(#ft-rad)"/>
-                <rect width="100" height="100" rx="24" fill="none" stroke="url(#ft-brd)" strokeWidth="1.2"/>
-                <path d="M 17 21 Q 50 12 83 21" stroke="url(#ft-rim)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07"/>
-                <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10"/>
-                <g clipPath="url(#ft-pc)">
-                  <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"/>
-                </g>
-                <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#ft-top)" clipPath="url(#ft-ac)"/>
-                <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round"/>
-              </svg>
-            </div>
+            <MonolithMark size={32} />
             <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 16, color: "white", letterSpacing: "-0.02em" }}>
-              Stryde<span style={{ color: C.blue }}>OS</span>
+              Stryde<span style={{ color: C.blueGlow }}>OS</span>
             </div>
           </div>
           <p style={{ color: "rgba(255,255,255,0.28)", fontSize: 13, maxWidth: 240, lineHeight: 1.65 }}>
@@ -1297,7 +1406,7 @@ const Footer = () => (
         </div>
       </div>
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 20, display: "flex", justifyContent: "space-between" }}>
-        <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 12 }}>© 2025 StrydeOS Ltd. All rights reserved.</div>
+        <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 12 }}>© 2026 StrydeOS Ltd. All rights reserved.</div>
         <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 12 }}>Built by clinicians, for clinicians.</div>
       </div>
     </div>
@@ -1306,18 +1415,29 @@ const Footer = () => (
 
 /* ─── App ────────────────────────────────────────────────────────────────────── */
 export default function App() {
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("strydeos-theme");
+    if (saved === "dark") setDarkMode(true);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("strydeos-theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
+
   return (
     <>
       <style>{globalStyles}</style>
-      <Nav />
-      <Hero />
-      <HolisticSection />
-      <Integrations />
-      <Products />
+      <Nav darkMode={darkMode} setDarkMode={setDarkMode} />
+      <Hero darkMode={darkMode} />
+      <HolisticSection darkMode={darkMode} />
+      <Integrations darkMode={darkMode} />
+      <Products darkMode={darkMode} />
       <Results />
-      <ROICalc />
-      <Pricing />
-      <WhyUs />
+      <ROICalc darkMode={darkMode} />
+      <Pricing darkMode={darkMode} />
+      <WhyUs darkMode={darkMode} />
       <EarlyAccess />
       <Footer />
     </>
