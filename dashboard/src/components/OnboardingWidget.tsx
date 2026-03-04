@@ -134,7 +134,7 @@ export default function OnboardingWidget() {
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.25, ease: [0.2, 0.8, 0.2, 1] }}
             onClick={() => setModalOpen(true)}
-            className="fixed bottom-6 left-6 lg:left-[calc(15rem+1.5rem)] z-50 flex items-center gap-3 pl-3 pr-4 py-2.5 rounded-full shadow-[var(--shadow-elevated)] hover:shadow-lg transition-shadow"
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-3 pl-3 pr-4 py-2.5 rounded-full shadow-[var(--shadow-elevated)] hover:shadow-lg transition-shadow"
             style={{
               background: "#0B2545",
               border: "1px solid rgba(255,255,255,0.1)",

@@ -84,13 +84,13 @@ export function handleApiError(error: unknown): NextResponse {
   );
 }
 
-const CRON_SECRET = process.env.CRON_SECRET;
+const CRON_SECRET = process.env.CRON_SECRET?.trim() ?? "";
 
 export function verifyCronRequest(request: NextRequest): void {
   if (!CRON_SECRET) {
     throw new ApiAuthError("CRON_SECRET not configured", 500);
   }
-  const auth = request.headers.get("authorization");
+  const auth = request.headers.get("authorization")?.trim();
   if (auth !== `Bearer ${CRON_SECRET}`) {
     throw new ApiAuthError("Invalid cron secret", 401);
   }
