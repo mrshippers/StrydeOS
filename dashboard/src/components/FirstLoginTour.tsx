@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Compass } from "lucide-react";
 import { doc, updateDoc } from "firebase/firestore";
@@ -47,7 +47,34 @@ const TOUR_STEPS: TourStepDef[] = [
   },
 ];
 
+const DEMO_TOUR_COMPLETED_KEY = "strydeos_demo_tour_completed";
+
 type Phase = "welcome" | "touring" | "done";
+
+function isDemoTourCompleted(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return localStorage.getItem(DEMO_TOUR_COMPLETED_KEY) === "true";
+  } catch {
+    return true;
+  }
+}
+
+function setDemoTourCompleted(): void {
+  try {
+    localStorage.setItem(DEMO_TOUR_COMPLETED_KEY, "true");
+  } catch {
+    // ignore
+  }
+}
+
+export function clearDemoTourCompleted(): void {
+  try {
+    localStorage.removeItem(DEMO_TOUR_COMPLETED_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 export default function FirstLoginTour() {
   const { user, firebaseUser, refreshClinicProfile } = useAuth();
@@ -55,11 +82,29 @@ export default function FirstLoginTour() {
   const [currentStep, setCurrentStep] = useState(0);
   const [dismissed, setDismissed] = useState(false);
 
-  const shouldShow = user && user.firstLogin === false && !dismissed;
+  const isDemo = user?.uid === "demo";
+  const demoFirstTime = isDemo && !isDemoTourCompleted() && !dismissed;
+  const realUserFirstTime = user && !isDemo && user.firstLogin === false && !dismissed;
+  const shouldShow = demoFirstTime || realUserFirstTime;
+
+  // For first-time demo visitors, auto-start the step tour after a short delay so they get the walkthrough without clicking.
+  useEffect(() => {
+    if (!demoFirstTime || phase !== "welcome") return;
+    const t = setTimeout(() => {
+      setPhase("touring");
+      setCurrentStep(0);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [demoFirstTime, phase]);
 
   const finishTour = useCallback(
     async (tourCompleted: boolean) => {
       setDismissed(true);
+
+      if (user?.uid === "demo") {
+        setDemoTourCompleted();
+        return;
+      }
 
       if (!db || !user?.uid) return;
 
@@ -174,9 +219,11 @@ export default function FirstLoginTour() {
                 </div>
 
                 <p className="text-[15px] text-white/80 leading-relaxed">
-                  Welcome to StrydeOS, {firstName}. This is {clinicName}&apos;s unique
-                  clinical operating system, designed to optimise your practice from
-                  just &lsquo;good&rsquo; to industry-leading, whether big or small.
+                  {isDemo ? (
+                    <>You&apos;re viewing the demo. This is {clinicName}&apos;s clinical operating system — the same dashboard real clinics use to optimise performance.</>
+                  ) : (
+                    <>Welcome to StrydeOS, {firstName}. This is {clinicName}&apos;s unique clinical operating system, designed to optimise your practice from just &lsquo;good&rsquo; to industry-leading, whether big or small.</>
+                  )}
                 </p>
                 <p className="text-[14px] text-white/50 mt-3">
                   Would you like a tour, or are you happy to explore on your own?

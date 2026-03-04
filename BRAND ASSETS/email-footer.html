@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StrydeOS — Email Signatures</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#0B2545; --blue:#1C54F2; --blue-glow:#4B8BF5;
+    --cream:#FAF9F7; --ink:#111827; --muted:#6B7280; --border:#E2DFDA;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Outfit', sans-serif; background: var(--navy); color: white; padding: 48px 40px; }
+  .container { max-width: 860px; margin: 0 auto; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 48px; }
+  .section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blue-glow); margin-bottom: 6px; }
+  .section-title { font-size: 28px; font-weight: 700; color: white; margin-bottom: 6px; }
+  .section-desc { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 32px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .card-cream { background: var(--cream); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+  .option-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  .version-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 50px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; text-transform: uppercase; }
+  .copy-hint { margin-top: 28px; padding: 14px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; font-size: 12px; color: rgba(255,255,255,0.35); line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="h-c" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient>
+          <radialGradient id="h-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+          <linearGradient id="h-t" x1="0.05" y1="1" x2="0.35" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0.55"/><stop offset="100%" stop-color="white" stop-opacity="0.97"/></linearGradient>
+          <linearGradient id="h-m" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0"/><stop offset="28%" stop-color="white" stop-opacity="0.60"/><stop offset="65%" stop-color="white" stop-opacity="0.12"/><stop offset="100%" stop-color="white" stop-opacity="0"/></linearGradient>
+          <linearGradient id="h-b" x1="0.1" y1="0" x2="0.4" y2="1"><stop offset="0%" stop-color="#7ABBFF" stop-opacity="0.65"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0.06"/></linearGradient>
+          <clipPath id="h-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+          <clipPath id="h-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+        </defs>
+        <rect width="100" height="100" rx="24" fill="url(#h-c)"/>
+        <rect width="100" height="100" rx="24" fill="url(#h-r)"/>
+        <rect width="100" height="100" rx="24" fill="none" stroke="url(#h-b)" stroke-width="1.2"/>
+        <path d="M 17 21 Q 50 12 83 21" stroke="url(#h-m)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+        <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/>
+        <g clip-path="url(#h-p)">
+          <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#h-t)" clip-path="url(#h-a)"/>
+        <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+      </svg>
+      <span style="font-weight:700;font-size:17px;letter-spacing:-0.02em">Stryde<span style="color:var(--blue-glow)">OS</span></span>
+    </div>
+    <span class="version-badge">Email Signatures · v1.0</span>
+  </div>
+
+  <div class="section-label">04 — Email Signatures</div>
+  <div class="section-title">Email Footer</div>
+  <div class="section-desc">Founder signature (personal) and system signature (automated comms).</div>
+
+  <div class="grid-2">
+
+    <!-- OPTION A: FOUNDER -->
+    <div class="card-cream">
+      <div class="option-label">Option A · Founder</div>
+      <div style="border-top:3px solid var(--blue);padding-top:16px;display:flex;gap:14px;align-items:flex-start">
+        <svg width="44" height="44" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+          <defs>
+            <linearGradient id="fa-c" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient>
+            <radialGradient id="fa-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+            <linearGradient id="fa-t" x1="0.05" y1="1" x2="0.35" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0.55"/><stop offset="100%" stop-color="white" stop-opacity="0.97"/></linearGradient>
+            <clipPath id="fa-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+            <clipPath id="fa-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+          </defs>
+          <rect width="100" height="100" rx="24" fill="url(#fa-c)"/>
+          <rect width="100" height="100" rx="24" fill="url(#fa-r)"/>
+          <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+          <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/>
+          <g clip-path="url(#fa-p)">
+            <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+          <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#fa-t)" clip-path="url(#fa-a)"/>
+          <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+        </svg>
+        <div style="border-left:2px solid var(--blue);padding-left:12px">
+          <div style="font-weight:600;font-size:14px;color:var(--ink)">Jamal</div>
+          <div style="font-size:12px;color:var(--muted)">Founder · StrydeOS</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Spires Physiotherapy · London</div>
+          <div style="font-size:12px;margin-top:6px"><a href="https://strydeos.com" style="color:var(--blue);text-decoration:none">strydeos.com</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTION B: SYSTEM -->
+    <div class="card-cream">
+      <div class="option-label">Option B · System</div>
+      <div style="border-top:3px solid var(--blue);padding-top:16px;text-align:center">
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px">
+          <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="sb-c" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient>
+              <radialGradient id="sb-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+              <clipPath id="sb-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+              <clipPath id="sb-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+            </defs>
+            <rect width="100" height="100" rx="24" fill="url(#sb-c)"/>
+            <rect width="100" height="100" rx="24" fill="url(#sb-r)"/>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+            <g clip-path="url(#sb-p)">
+              <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.85" clip-path="url(#sb-a)"/>
+            <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+          </svg>
+          <span style="font-weight:700;font-size:14px;color:var(--navy);letter-spacing:-0.02em">Stryde<span style="color:var(--blue)">OS</span></span>
+        </div>
+        <div style="font-size:11px;color:var(--muted)">The Clinic OS for private practice</div>
+        <div style="font-size:11px;margin-top:6px"><a href="https://strydeos.com" style="color:var(--blue);text-decoration:none">strydeos.com</a></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="copy-hint">
+    <strong style="color:rgba(255,255,255,0.6)">Usage:</strong> Copy the signature block and paste into Gmail → Settings → Signature. Both options use the canonical Monolith mark — Option A for personal outbound, Option B for system/automated emails.
+  </div>
+
+  <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:20px;margin-top:48px;display:flex;justify-content:space-between">
+    <div style="font-size:11px;color:rgba(255,255,255,0.2)">© 2026 StrydeOS Ltd. All rights reserved.</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.2)">Email Signatures v1.0 · Confidential</div>
+  </div>
+
+</div>
+</body>
+</html>

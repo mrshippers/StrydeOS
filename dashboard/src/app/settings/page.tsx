@@ -63,9 +63,17 @@ function RetriggerTourButton() {
   const [done, setDone] = useState(false);
 
   async function handleRetrigger() {
-    if (!user?.uid || !db) return;
+    if (!user?.uid) return;
     setLoading(true);
     try {
+      if (user.uid === "demo") {
+        const { clearDemoTourCompleted } = await import("@/components/FirstLoginTour");
+        clearDemoTourCompleted();
+        setDone(true);
+        setTimeout(() => window.location.replace("/dashboard"), 800);
+        return;
+      }
+      if (!db) return;
       await updateDoc(doc(db, "users", user.uid), {
         firstLogin: false,
         tourCompleted: false,
@@ -74,7 +82,6 @@ function RetriggerTourButton() {
       });
       await refreshClinicProfile();
       setDone(true);
-      // Small delay then reload so the tour fires
       setTimeout(() => window.location.replace("/dashboard"), 800);
     } catch (err) {
       console.error("[RetriggerTour]", err);
