@@ -1,0 +1,158 @@
+{
+  "name": "04 · Drop-Off Risk Flagging (Pulse)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every 6 hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "notes": "Runs every 6 hours to check for patients at risk of drop-off."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.APP_URL }}/api/pipeline/run?clinicId={{ $env.RETELL_CLINIC_ID }}&report=churn_risk",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $env.N8N_COMMS_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-at-risk",
+      "name": "Fetch at-risk patients",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "notes": "Fetches patients flagged as churnRisk=true from the StrydeOS pipeline.\nThe pipeline sets churnRisk when: >14 days since last session, no future appointment, 2+ sessions completed."
+    },
+    {
+      "parameters": {
+        "jsCode": "const patients = $json.patients ?? [];\nconst now = Date.now();\n\n// Filter to patients with high drop-off probability\nconst atRisk = patients.filter(p => {\n  if (!p.churnRisk) return false;\n  const lastSession = p.lastSessionDate ? new Date(p.lastSessionDate).getTime() : null;\n  const daysSince = lastSession ? Math.floor((now - lastSession) / 86_400_000) : null;\n  return daysSince === null || daysSince >= 14;\n});\n\nreturn atRisk.map(p => {\n  const lastSession = p.lastSessionDate ? new Date(p.lastSessionDate).getTime() : null;\n  const daysSince = lastSession ? Math.floor((now - lastSession) / 86_400_000) : null;\n  \n  // Risk level: amber = 14–28 days, red = >28 days\n  const riskLevel = daysSince !== null && daysSince > 28 ? 'red' : 'amber';\n\n  return {\n    patientId: p.id,\n    patientName: p.name,\n    patientPhone: p.contact?.phone ?? null,\n    patientEmail: p.contact?.email ?? null,\n    clinicianName: p.clinicianName ?? 'their physiotherapist',\n    daysSinceLastSession: daysSince,\n    sessionCount: p.sessionCount,\n    riskLevel,\n    clinicId: p.clinicId ?? $env.RETELL_CLINIC_ID,\n  };\n});"
+      },
+      "id": "classify-risk",
+      "name": "Classify risk level",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.riskLevel }}",
+              "operation": "notEmpty"
+            }
+          ]
+        }
+      },
+      "id": "has-risk",
+      "name": "Any at-risk patients?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.APP_URL }}/api/n8n/callback",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $env.N8N_COMMS_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"clinicId\": \"{{ $json.clinicId }}\",\n  \"patientId\": \"{{ $json.patientId }}\",\n  \"sequenceType\": \"rebooking_prompt\",\n  \"channel\": \"sms\",\n  \"executionId\": \"{{ $execution.id }}\",\n  \"outcome\": \"no_action\"\n}",
+        "options": {}
+      },
+      "id": "trigger-rebooking",
+      "name": "Trigger rebooking sequence",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 200],
+      "notes": "Fires the rebooking_prompt comms sequence for each at-risk patient.\nThe StrydeOS app handles deduplication (won't re-send within 7 days)."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.riskLevel }}",
+              "operation": "equals",
+              "value2": "red"
+            }
+          ]
+        }
+      },
+      "id": "filter-red",
+      "name": "Red risk only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 1,
+      "position": [1120, 400],
+      "notes": "Red risk patients (>28 days) get a Slack/email alert to the clinic owner in addition to the patient SMS."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"text\": \":red_circle: *Drop-off alert (Pulse)* — {{ $json.patientName }} hasn't been in for {{ $json.daysSinceLastSession }} days ({{ $json.sessionCount }} sessions completed). Clinician: {{ $json.clinicianName }}. Rebooking SMS sent.\"\n}",
+        "options": {}
+      },
+      "id": "slack-alert",
+      "name": "Slack alert (owner)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 400],
+      "notes": "Optional: sends a Slack message to the clinic owner's workspace.\nSet SLACK_WEBHOOK_URL in n8n env vars (Slack → Incoming Webhooks → Create new webhook)."
+    }
+  ],
+  "connections": {
+    "Every 6 hours": {
+      "main": [[{ "node": "Fetch at-risk patients", "type": "main", "index": 0 }]]
+    },
+    "Fetch at-risk patients": {
+      "main": [[{ "node": "Classify risk level", "type": "main", "index": 0 }]]
+    },
+    "Classify risk level": {
+      "main": [[{ "node": "Any at-risk patients?", "type": "main", "index": 0 }]]
+    },
+    "Any at-risk patients?": {
+      "main": [
+        [
+          { "node": "Trigger rebooking sequence", "type": "main", "index": 0 },
+          { "node": "Red risk only", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Red risk only": {
+      "main": [[{ "node": "Slack alert (owner)", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "description": "Every 6 hours: identifies patients who haven't rebooked in >14 days and flags them as drop-off risk (Pulse module).\n\nAmber risk (14–28 days): triggers rebooking_prompt SMS sequence\nRed risk (>28 days): same + optional Slack alert to clinic owner\n\nRequired env vars:\n  APP_URL                  — StrydeOS Vercel URL\n  RETELL_CLINIC_ID         — Firestore clinic document ID\n  N8N_COMMS_WEBHOOK_SECRET — shared auth secret\n  SLACK_WEBHOOK_URL        — optional, for owner alerts"
+  }
+}

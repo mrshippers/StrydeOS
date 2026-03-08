@@ -1,0 +1,108 @@
+{
+  "name": "02 · Patient Record Sync (Post-Call)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ava-call-log",
+        "options": { "rawBody": true },
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-trigger",
+      "name": "Retell Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "notes": "Shares the same Retell webhook as the call logger. In n8n, multiple workflows can listen on the same webhook path — or use n8n's webhook trigger with routing."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "and": [
+            {
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "call_analyzed",
+              "operator": { "type": "string", "operation": "equals" }
+            },
+            {
+              "leftValue": "={{ $json.call.call_analysis?.call_summary?.toLowerCase().includes('book') || $json.call.call_analysis?.custom_analysis_data?.outcome === 'booked' }}",
+              "rightValue": "true",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "filter-booked",
+      "name": "Only booked calls",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Only proceed when a booking was made. Tweak the condition based on how your Retell agent signals a successful booking in the analysis data."
+    },
+    {
+      "parameters": {
+        "jsCode": "const call = $json.call;\nconst analysis = call.call_analysis ?? {};\nconst custom = analysis.custom_analysis_data ?? {};\n\n// Extract patient details from custom analysis data or transcript summary\nconst now = new Date().toISOString();\n\nreturn [{\n  clinicId: call.metadata?.clinicId ?? $env.RETELL_CLINIC_ID,\n  patientName: custom.patientName ?? 'Unknown (via Ava)',\n  patientEmail: custom.patientEmail ?? null,\n  patientPhone: call.from_number ?? custom.patientPhone ?? null,\n  appointmentType: custom.appointmentType ?? 'initial_assessment',\n  insuranceFlag: custom.insurance_flag ?? false,\n  insurerName: custom.insurer ?? null,\n  callId: call.call_id,\n  callSummary: analysis.call_summary ?? null,\n  source: 'strydeos_receptionist',\n  createdAt: now,\n  updatedAt: now,\n}];"
+      },
+      "id": "extract-patient",
+      "name": "Extract patient details",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "notes": "Extracts patient details from the Retell call analysis.\n\nFor best results, configure your Retell agent with a custom data collection schema:\n  patientName, patientEmail, appointmentType, insurance_flag, insurer\nThese appear in call.call_analysis.custom_analysis_data."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.APP_URL }}/api/pipeline/run",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $env.N8N_COMMS_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"clinicId\": \"{{ $json.clinicId }}\",\n  \"source\": \"receptionist\",\n  \"patientData\": {\n    \"name\": \"{{ $json.patientName }}\",\n    \"email\": \"{{ $json.patientEmail }}\",\n    \"phone\": \"{{ $json.patientPhone }}\",\n    \"appointmentType\": \"{{ $json.appointmentType }}\",\n    \"insuranceFlag\": {{ $json.insuranceFlag }},\n    \"insurerName\": \"{{ $json.insurerName ?? '' }}\",\n    \"callId\": \"{{ $json.callId }}\",\n    \"source\": \"strydeos_receptionist\"\n  }\n}",
+        "options": {}
+      },
+      "id": "create-patient",
+      "name": "Upsert patient record",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300],
+      "notes": "Posts to /api/pipeline/run on the StrydeOS app, which handles patient creation/update.\n\nRequired env vars:\n  APP_URL — your Vercel deployment URL (e.g. https://strydeos.vercel.app)\n  N8N_COMMS_WEBHOOK_SECRET — shared secret for authentication"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\": true}"
+      },
+      "id": "respond-ok",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Retell Webhook": {
+      "main": [[{ "node": "Only booked calls", "type": "main", "index": 0 }]]
+    },
+    "Only booked calls": {
+      "main": [[{ "node": "Extract patient details", "type": "main", "index": 0 }]]
+    },
+    "Extract patient details": {
+      "main": [[{ "node": "Upsert patient record", "type": "main", "index": 0 }]]
+    },
+    "Upsert patient record": {
+      "main": [[{ "node": "Respond 200", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "description": "Creates or updates a patient record in Firestore when Ava books a new appointment.\n\nRequired env vars:\n  RETELL_CLINIC_ID         — Firestore clinic document ID\n  APP_URL                  — StrydeOS Vercel URL\n  N8N_COMMS_WEBHOOK_SECRET — shared auth secret\n\nOptional improvement: configure Retell agent with a custom data extraction schema\nso patient name, email, insurance info appear in call_analysis.custom_analysis_data."
+  }
+}

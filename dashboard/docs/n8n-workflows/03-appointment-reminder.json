@@ -1,0 +1,152 @@
+{
+  "name": "03 · Appointment Reminder Sequence",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ava-call-log",
+        "options": { "rawBody": true },
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-trigger",
+      "name": "Retell Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "and": [
+            {
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "call_analyzed",
+              "operator": { "type": "string", "operation": "equals" }
+            },
+            {
+              "leftValue": "={{ ($json.call.call_analysis?.call_summary ?? '').toLowerCase().includes('book') || $json.call.call_analysis?.custom_analysis_data?.outcome === 'booked' }}",
+              "rightValue": "true",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "filter-booked",
+      "name": "Booking confirmed?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const call = $json.call;\nconst custom = call.call_analysis?.custom_analysis_data ?? {};\n\nconst patientName = custom.patientName ?? 'Patient';\nconst patientPhone = call.from_number ?? custom.patientPhone ?? null;\nconst patientEmail = custom.patientEmail ?? null;\nconst appointmentDate = custom.appointmentDate ?? null;\nconst appointmentTime = custom.appointmentTime ?? null;\nconst clinicianName = custom.clinicianName ?? 'our physiotherapist';\nconst appointmentType = custom.appointmentType === 'follow_up' ? 'follow-up appointment' : 'initial assessment';\n\n// SMS body\nconst smsBody = `Hi ${patientName}, this is a confirmation from Spires Physiotherapy. Your ${appointmentType} with ${clinicianName} is confirmed${appointmentDate ? ` for ${appointmentDate}` : ''}${appointmentTime ? ` at ${appointmentTime}` : ''}. Reply CANCEL to cancel (24h notice required). See you soon.`;\n\n// Email body (plain text)\nconst emailBody = `Hi ${patientName},\\n\\nGreat news — your ${appointmentType} at Spires Physiotherapy has been confirmed.\\n\\n${appointmentDate ? `Date: ${appointmentDate}` : ''}\\n${appointmentTime ? `Time: ${appointmentTime}` : ''}\\nClinician: ${clinicianName}\\n\\nWhat to bring:\\n- Comfortable clothing that allows access to the area being treated\\n- Any relevant scans, X-rays, or letters from your GP\\n\\nAddress: Compayne Gardens, West Hampstead, London NW6 3DD\\nNearest station: West Hampstead (Jubilee/Thameslink/Overground — 5 min walk)\\n\\nIf you need to cancel or rebook, please give us 24 hours' notice. You can call us on 020 7794 0202 and Ava will help.\\n\\nSee you soon,\\nThe Spires Physiotherapy team`;\n\nreturn [{\n  patientName,\n  patientPhone,\n  patientEmail,\n  smsBody,\n  emailBody,\n  emailSubject: `Appointment confirmed — Spires Physiotherapy${appointmentDate ? `, ${appointmentDate}` : ''}`,\n  callId: call.call_id,\n  hasPhone: !!patientPhone,\n  hasEmail: !!patientEmail,\n}];"
+      },
+      "id": "build-messages",
+      "name": "Build confirmation messages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.hasPhone }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "has-phone",
+      "name": "Has phone number?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "from": "={{ $env.TWILIO_PHONE_NUMBER }}",
+        "to": "={{ $json.patientPhone }}",
+        "message": "={{ $json.smsBody }}"
+      },
+      "id": "send-sms",
+      "name": "Send SMS (Twilio)",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1120, 200],
+      "notes": "Requires Twilio credentials in n8n and TWILIO_PHONE_NUMBER env var."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.hasEmail }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "has-email",
+      "name": "Has email?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "resource": "email",
+        "toEmail": "={{ $json.patientEmail }}",
+        "fromEmail": "ava@spiresphysiotherapy.com",
+        "subject": "={{ $json.emailSubject }}",
+        "text": "={{ $json.emailBody }}"
+      },
+      "id": "send-email",
+      "name": "Send email (Resend)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1120, 400],
+      "notes": "Configure with Resend SMTP credentials. From address must be a verified Resend domain."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\": true}"
+      },
+      "id": "respond-ok",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Retell Webhook": {
+      "main": [[{ "node": "Booking confirmed?", "type": "main", "index": 0 }]]
+    },
+    "Booking confirmed?": {
+      "main": [[{ "node": "Build confirmation messages", "type": "main", "index": 0 }]]
+    },
+    "Build confirmation messages": {
+      "main": [
+        [
+          { "node": "Has phone number?", "type": "main", "index": 0 },
+          { "node": "Has email?", "type": "main", "index": 0 },
+          { "node": "Respond 200", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Has phone number?": {
+      "main": [[{ "node": "Send SMS (Twilio)", "type": "main", "index": 0 }]]
+    },
+    "Has email?": {
+      "main": [[{ "node": "Send email (Resend)", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "description": "Sends SMS and/or email appointment confirmation immediately after Ava books a call.\n\nRequired n8n credentials:\n  Twilio — for SMS (add TWILIO_PHONE_NUMBER as env var)\n  Resend / SMTP — for email\n\nNote: Retell agent must extract patientPhone, patientEmail, appointmentDate,\nappointmentTime, and clinicianName into custom_analysis_data for full personalisation.\nWithout these, messages will be generic but still send."
+  }
+}
