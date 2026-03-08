@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
-import path from "path";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const nextConfig: NextConfig = {
-  outputFileTracingRoot: path.join(__dirname),
+  outputFileTracingRoot: resolve(__dirname, ".."),
   serverExternalPackages: [
     "firebase-admin",
     "@google-cloud/firestore",
