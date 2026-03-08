@@ -10,32 +10,40 @@ export function usePatients(clinicianId?: string) {
   const { user } = useAuth();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  const isDemo = user?.uid === "demo";
   const demoPatients = useDemoPatients(clinicianId);
   const clinicId = user?.clinicId ?? null;
 
   useEffect(() => {
+    setError(null);
+
+    if (isDemo) {
+      setPatients(demoPatients);
+      setLoading(false);
+      return () => {};
+    }
+
     const cid = clinicianId && clinicianId !== "all" ? clinicianId : null;
 
     const unsubscribe = subscribePatients(
       clinicId,
       cid,
       (data) => {
-        if (data.length === 0) {
-          setPatients(demoPatients);
-        } else {
-          setPatients(data);
-        }
+        setPatients(data);
         setLoading(false);
       },
-      () => {
-        setPatients(demoPatients);
+      (err) => {
+        console.error("[usePatients]", err);
+        setError("Failed to load patients.");
+        setPatients([]);
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [clinicId, clinicianId, demoPatients]);
+  }, [clinicId, clinicianId, demoPatients, isDemo]);
 
   const active = useMemo(
     () =>
@@ -59,5 +67,5 @@ export function usePatients(clinicianId?: string) {
     [patients]
   );
 
-  return { patients, active, churnRisk, postDischarge, loading };
+  return { patients, active, churnRisk, postDischarge, loading, error };
 }

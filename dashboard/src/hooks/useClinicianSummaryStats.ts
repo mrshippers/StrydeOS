@@ -16,35 +16,46 @@ export interface ClinicianSummaryRow {
 
 /**
  * Returns the latest weekly stats for each active clinician.
- * Falls back to demo data when Firestore is unavailable or empty.
+ * Falls back to demo data only when in explicit demo mode.
  */
 export function useClinicianSummaryStats(): {
   rows: ClinicianSummaryRow[];
   usedDemo: boolean;
   loading: boolean;
+  error: string | null;
 } {
   const { user } = useAuth();
   const { clinicians, loading: cliniciansLoading } = useClinicians();
   const [rows, setRows] = useState<ClinicianSummaryRow[]>([]);
   const [usedDemo, setUsedDemo] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const clinicId = user?.clinicId ?? null;
+  const isDemo = user?.uid === "demo";
 
   useEffect(() => {
     if (cliniciansLoading) return;
 
-    if (!db || !clinicId || clinicians.length === 0) {
+    if (isDemo) {
       setRows(getDemoLatestWeekStats());
       setUsedDemo(true);
       setLoading(false);
       return;
     }
 
+    if (!db || !clinicId || clinicians.length === 0) {
+      setRows([]);
+      setUsedDemo(false);
+      setLoading(false);
+      if (!db) setError("Database not configured. Add Firebase credentials in Settings.");
+      return;
+    }
+
     const activeClinicians = clinicians.filter((c: Clinician) => c.active);
     if (activeClinicians.length === 0) {
-      setRows(getDemoLatestWeekStats());
-      setUsedDemo(true);
+      setRows([]);
+      setUsedDemo(false);
       setLoading(false);
       return;
     }
@@ -66,13 +77,8 @@ export function useClinicianSummaryStats(): {
           stats: latestByClinicianId[c.id],
         }));
 
-      if (built.length === 0) {
-        setRows(getDemoLatestWeekStats());
-        setUsedDemo(true);
-      } else {
-        setRows(built);
-        setUsedDemo(false);
-      }
+      setRows(built);
+      setUsedDemo(false);
       setLoading(false);
     }
 
@@ -93,7 +99,9 @@ export function useClinicianSummaryStats(): {
           }
           tryFlush();
         },
-        () => {
+        (err) => {
+          console.error("[useClinicianSummaryStats]", err);
+          setError("Failed to load clinician stats.");
           tryFlush();
         }
       );
@@ -102,7 +110,7 @@ export function useClinicianSummaryStats(): {
     }
 
     return () => unsubs.forEach((u) => u());
-  }, [clinicId, clinicians, cliniciansLoading]);
+  }, [clinicId, clinicians, cliniciansLoading, isDemo]);
 
-  return { rows, usedDemo, loading };
+  return { rows, usedDemo, loading, error };
 }

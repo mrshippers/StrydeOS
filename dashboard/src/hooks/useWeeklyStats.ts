@@ -13,6 +13,7 @@ export function useWeeklyStats(clinicianId: string) {
   const [error, setError] = useState<string | null>(null);
   const [usedDemo, setUsedDemo] = useState(false);
 
+  const isDemo = user?.uid === "demo";
   const demoStats = useDemoWeeklyStats(clinicianId);
   const clinicId = user?.clinicId ?? null;
 
@@ -20,29 +21,30 @@ export function useWeeklyStats(clinicianId: string) {
     setLoading(true);
     setError(null);
 
+    if (isDemo) {
+      setStats(demoStats);
+      setUsedDemo(true);
+      setLoading(false);
+      return () => {};
+    }
+
     const unsubscribe = subscribeWeeklyStats(
       clinicId,
       clinicianId,
       (data) => {
-        if (data.length === 0) {
-          setStats(demoStats);
-          setUsedDemo(true);
-        } else {
-          setStats(data);
-          setUsedDemo(false);
-        }
+        setStats(data);
+        setUsedDemo(false);
         setLoading(false);
       },
       (err) => {
         console.error("Firestore error:", err);
-        setStats(demoStats);
-        setUsedDemo(true);
+        setError("Failed to load weekly stats. Check your connection and try again.");
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [clinicId, clinicianId, demoStats]);
+  }, [clinicId, clinicianId, demoStats, isDemo]);
 
   return { stats, loading, error, usedDemo };
 }
