@@ -171,6 +171,7 @@ function ReceptionistContent() {
   const [promptExpanded, setPromptExpanded] = useState(false);
   const [expandedCallId, setExpandedCallId] = useState<string | null>(null);
   const [digestExpanded, setDigestExpanded] = useState(false);
+  const [callsError, setCallsError] = useState<string | null>(null);
 
   // Stats derived from live/demo calls
   const todaysCalls = useMemo(() => {
