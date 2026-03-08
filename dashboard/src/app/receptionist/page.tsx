@@ -30,6 +30,7 @@ import {
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import DemoBanner from "@/components/ui/DemoBanner";
+import ErrorBanner from "@/components/ui/ErrorBanner";
 import { formatPercent } from "@/lib/utils";
 import { useCallLogs } from "@/hooks/useCallLogs";
 import type { VoiceInteraction } from "@/lib/firebase/voiceInteractions";
@@ -225,6 +226,7 @@ function ReceptionistContent() {
         accentColor="#1C54F2"
       />
 
+      {callsError && <ErrorBanner message={callsError} onRetry={() => window.location.reload()} />}
       {isDemo && <DemoBanner />}
 
       {/* Active call indicator */}

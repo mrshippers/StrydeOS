@@ -10,31 +10,38 @@ export function useClinicians() {
   const { user } = useAuth();
   const [clinicians, setClinicians] = useState<Clinician[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  const isDemo = user?.uid === "demo";
   const demoClinicians = useDemoClinicians();
   const clinicId = user?.clinicId ?? null;
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
+
+    if (isDemo) {
+      setClinicians(demoClinicians);
+      setLoading(false);
+      return () => {};
+    }
 
     const unsubscribe = subscribeClinicians(
       clinicId,
       (data) => {
-        if (data.length === 0) {
-          setClinicians(demoClinicians);
-        } else {
-          setClinicians(data);
-        }
+        setClinicians(data);
         setLoading(false);
       },
-      () => {
-        setClinicians(demoClinicians);
+      (err) => {
+        console.error("[useClinicians]", err);
+        setError("Failed to load clinicians.");
+        setClinicians([]);
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [clinicId, demoClinicians]);
+  }, [clinicId, demoClinicians, isDemo]);
 
-  return { clinicians, loading };
+  return { clinicians, loading, error };
 }

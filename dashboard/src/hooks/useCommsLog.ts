@@ -12,17 +12,28 @@ export interface UseCommsLogResult {
   commsStats: CommsStats;
   loading:    boolean;
   isDemo:     boolean;
+  error:      string | null;
 }
 
 export function useCommsLog(): UseCommsLogResult {
   const { user } = useAuth();
   const clinicId = user?.clinicId ?? null;
+  const isDemo = user?.uid === "demo";
 
   const [commsLog, setCommsLog] = useState<CommsLogEntry[]>([]);
   const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
+
+    if (isDemo) {
+      setCommsLog([]);
+      setLoading(false);
+      return () => {};
+    }
+
     const unsub = subscribeCommsLog(
       clinicId,
       (data) => {
@@ -31,23 +42,29 @@ export function useCommsLog(): UseCommsLogResult {
       },
       (err) => {
         console.error("[useCommsLog]", err);
+        setError("Failed to load comms log.");
         setLoading(false);
       }
     );
     return unsub;
-  }, [clinicId]);
+  }, [clinicId, isDemo]);
 
-  const hasRealData = !loading && commsLog.length > 0;
-
-  // Fall back to demo data until real comms exist
-  const resolvedLog   = hasRealData ? commsLog   : getDemoCommsLog();
-  const resolvedStats = hasRealData ? deriveStats(commsLog) : getDemoCommsStats();
+  if (isDemo) {
+    return {
+      commsLog:   getDemoCommsLog(),
+      commsStats: getDemoCommsStats(),
+      loading,
+      isDemo:     true,
+      error:      null,
+    };
+  }
 
   return {
-    commsLog:   resolvedLog,
-    commsStats: resolvedStats,
+    commsLog,
+    commsStats: deriveStats(commsLog),
     loading,
-    isDemo:     !hasRealData,
+    isDemo:     false,
+    error,
   };
 }
 

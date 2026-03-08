@@ -10,7 +10,7 @@ import { SkeletonCard, SkeletonTable } from "@/components/ui/EmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useClinicians } from "@/hooks/useClinicians";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
-import { getDemoLatestWeekStats } from "@/hooks/useDemoData";
+import { useClinicianSummaryStats } from "@/hooks/useClinicianSummaryStats";
 import {
   formatPercent,
   formatRate,
@@ -43,9 +43,10 @@ function CliniciansPage() {
   const effectiveId = isClinicianView ? user!.clinicianId! : (selectedId ?? "all");
   const { clinicians, loading: clLoading } = useClinicians();
   const { stats, loading: statsLoading } = useWeeklyStats(effectiveId);
+  const { rows: allSummaryRows } = useClinicianSummaryStats();
   const clinicianRows = isClinicianView
-    ? getDemoLatestWeekStats().filter((r) => r.clinicianId === user?.clinicianId)
-    : getDemoLatestWeekStats();
+    ? allSummaryRows.filter((r) => r.clinicianId === user?.clinicianId)
+    : allSummaryRows;
 
   useEffect(() => {
     if (isClinicianView && user?.clinicianId) setSelectedId(user.clinicianId);

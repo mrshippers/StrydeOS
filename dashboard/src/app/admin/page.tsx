@@ -109,9 +109,18 @@ export default function AdminPage() {
   }, [authLoading, user, router]);
 
   useEffect(() => {
-    if (!db || !isFirebaseConfigured) {
+    const isDemo = user?.uid === "demo";
+
+    if (isDemo) {
       setClinics(DEMO_CLINICS);
       setUsedDemo(true);
+      setLoading(false);
+      return () => {};
+    }
+
+    if (!db || !isFirebaseConfigured) {
+      setClinics([]);
+      setUsedDemo(false);
       setLoading(false);
       return () => {};
     }
@@ -119,27 +128,23 @@ export default function AdminPage() {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        if (snapshot.empty) {
-          setClinics(DEMO_CLINICS);
-          setUsedDemo(true);
-        } else {
-          const data = snapshot.docs.map((d) => ({
-            id: d.id,
-            ...(d.data() as Omit<ClinicProfile, "id">),
-          }));
-          setClinics(data);
-          setUsedDemo(false);
-        }
+        const data = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as Omit<ClinicProfile, "id">),
+        }));
+        setClinics(data);
+        setUsedDemo(false);
         setLoading(false);
       },
-      () => {
-        setClinics(DEMO_CLINICS);
-        setUsedDemo(true);
+      (err) => {
+        console.error("[AdminPage]", err);
+        setClinics([]);
+        setUsedDemo(false);
         setLoading(false);
       }
     );
     return () => unsubscribe();
-  }, []);
+  }, [user?.uid]);
 
   const liveCount = clinics.filter((c) => c.status === "live").length;
   const onboardingCount = clinics.filter((c) => c.status === "onboarding").length;

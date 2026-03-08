@@ -9,6 +9,7 @@ import TrendChart from "@/components/ui/TrendChart";
 import { AlertBanner } from "@/components/ui/AlertFlag";
 import CliniciansTable from "@/components/ui/CliniciansTable";
 import DemoBanner from "@/components/ui/DemoBanner";
+import ErrorBanner from "@/components/ui/ErrorBanner";
 import { SkeletonCard } from "@/components/ui/EmptyState";
 import DailySnapshot from "@/components/ui/DailySnapshot";
 import InsightNudge from "@/components/ui/InsightNudge";
@@ -111,9 +112,9 @@ export default function DashboardPage() {
   );
   const [weekOffset, setWeekOffset] = useState(0);
   const effectiveClinician = isClinicianView ? user!.clinicianId! : selectedClinician;
-  const { stats, loading, usedDemo } = useWeeklyStats(effectiveClinician);
+  const { stats, loading, usedDemo, error: statsError } = useWeeklyStats(effectiveClinician);
   const { clinicians } = useClinicians();
-  const { rows: clinicianRows, usedDemo: summaryUsedDemo } = useClinicianSummaryStats();
+  const { rows: clinicianRows, usedDemo: summaryUsedDemo, error: summaryError } = useClinicianSummaryStats();
   const { patients } = usePatients();
   const { startLoading, stopLoading } = useProgress();
   const router = useRouter();
@@ -193,7 +194,9 @@ export default function DashboardPage() {
         <InsightNudge stats={latest} previousStats={previous} />
       )}
 
-      {/* Demo data banner */}
+      {/* Error / Demo data banner */}
+      {statsError && <ErrorBanner message={statsError} onRetry={() => window.location.reload()} />}
+      {summaryError && <ErrorBanner message={summaryError} onRetry={() => window.location.reload()} />}
       {(user?.uid === "demo" || usedDemo) && <DemoBanner />}
 
       {/* Week navigation + clinician filter row */}

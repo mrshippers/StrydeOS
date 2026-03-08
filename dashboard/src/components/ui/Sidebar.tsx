@@ -25,8 +25,8 @@ import {
 } from "lucide-react";
 import { LogoNav } from "@/components/MonolithLogo";
 import { useTheme } from "@/components/ThemeProvider";
-import { getDemoLatestWeekStats } from "@/hooks/useDemoData";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
+import { useClinicianSummaryStats } from "@/hooks/useClinicianSummaryStats";
 import { usePatients } from "@/hooks/usePatients";
 import { computeAlerts, getInitials } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,13 +51,15 @@ function alertHash(clinicianName: string, alert: AlertFlagProps): string {
 }
 
 function useAlerts() {
-  const { stats, usedDemo } = useWeeklyStats("all");
+  const { stats } = useWeeklyStats("all");
+  const { rows: summaryRows } = useClinicianSummaryStats();
 
   const rows = useMemo(() => {
-    if (usedDemo || stats.length === 0) return getDemoLatestWeekStats();
+    if (summaryRows.length > 0) return summaryRows;
+    if (stats.length === 0) return [];
     const latest = stats[stats.length - 1];
     return [{ clinicianName: latest.clinicianName, stats: latest }];
-  }, [usedDemo, stats]);
+  }, [summaryRows, stats]);
 
   const allAlerts = useMemo(() => {
     return rows.flatMap(({ clinicianName, stats }) =>

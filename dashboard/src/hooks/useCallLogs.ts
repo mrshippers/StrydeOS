@@ -165,20 +165,31 @@ export interface UseCallLogsResult {
   isDemo: boolean;
   isLoading: boolean;
   activeCall: VoiceInteraction | null;
+  error: string | null;
 }
 
 export function useCallLogs(): UseCallLogsResult {
   const { user } = useAuth();
   const [calls, setCalls] = useState<VoiceInteraction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasLiveData, setHasLiveData] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  const isDemo = user?.uid === "demo";
   const retellConfigured = process.env.NEXT_PUBLIC_RETELL_CONFIGURED === "true";
 
   useEffect(() => {
-    if (!isFirebaseConfigured || !db || !user?.clinicId || !retellConfigured) {
+    setError(null);
+
+    if (isDemo) {
       setCalls(DEMO_CALLS);
       setIsLoading(false);
+      return;
+    }
+
+    if (!isFirebaseConfigured || !db || !user?.clinicId || !retellConfigured) {
+      setCalls([]);
+      setIsLoading(false);
+      if (!retellConfigured) setError("Voice AI (Ava) is not configured. Set up Retell in Settings.");
       return;
     }
 
@@ -186,32 +197,27 @@ export function useCallLogs(): UseCallLogsResult {
       db,
       user.clinicId,
       (liveCalls) => {
-        if (liveCalls.length > 0) {
-          setCalls(liveCalls);
-          setHasLiveData(true);
-        } else {
-          // No calls today yet — show demo until first real call arrives
-          setCalls(DEMO_CALLS);
-          setHasLiveData(false);
-        }
+        setCalls(liveCalls);
         setIsLoading(false);
       },
-      () => {
-        // On error fall back to demo
-        setCalls(DEMO_CALLS);
+      (err) => {
+        console.error("[useCallLogs]", err);
+        setError("Failed to load call logs. Check your connection and try again.");
+        setCalls([]);
         setIsLoading(false);
       }
     );
 
     return () => unsub();
-  }, [user?.clinicId, retellConfigured]);
+  }, [user?.clinicId, retellConfigured, isDemo]);
 
   const activeCall = calls.find((c) => c.callStatus === "ongoing") ?? null;
 
   return {
     calls,
-    isDemo: !retellConfigured || !hasLiveData,
+    isDemo,
     isLoading,
     activeCall,
+    error,
   };
 }
