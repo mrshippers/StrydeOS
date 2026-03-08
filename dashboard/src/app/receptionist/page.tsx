@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment, Component, type ReactNode } from "react";
 import {
   Settings,
   Clock,
@@ -14,6 +14,7 @@ import {
   Moon,
   PoundSterling,
   Radio,
+  AlertCircle,
 } from "lucide-react";
 import { SPIRES_AVA_PROMPT } from "@/lib/retell/ava-prompt";
 import {
@@ -106,8 +107,66 @@ function buildVolumeBuckets(calls: VoiceInteraction[]) {
   return ordered.map((day) => ({ day, calls: counts[day] ?? 0 }));
 }
 
-export default function ReceptionistPage() {
-  const { calls, isDemo, isLoading, activeCall, error: callsError } = useCallLogs();
+// ─── Error Boundary ───────────────────────────────────────────────────────────
+
+interface BoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class AvaErrorBoundary extends Component<{ children: ReactNode }, BoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): BoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("[Ava] Render error:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="space-y-4">
+          <PageHeader
+            title="Ava"
+            subtitle="AI call handling"
+            accentColor="#1C54F2"
+          />
+          <div className="rounded-[var(--radius-card)] border border-danger/20 bg-danger/5 p-8 flex flex-col items-center gap-4 text-center">
+            <AlertCircle size={32} className="text-danger opacity-60" />
+            <div>
+              <p className="font-display text-lg text-navy mb-1">
+                Ava failed to load
+              </p>
+              <p className="text-sm text-muted max-w-sm">
+                {this.state.error?.message
+                  ? `Error: ${this.state.error.message}`
+                  : "An unexpected error occurred. Check your Retell and Firebase configuration."}
+              </p>
+            </div>
+            <button
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="text-sm font-semibold text-blue hover:underline"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ─── Page content ─────────────────────────────────────────────────────────────
+
+function ReceptionistContent() {
+  const { calls, isDemo, isLoading, activeCall } = useCallLogs();
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [promptExpanded, setPromptExpanded] = useState(false);
   const [expandedCallId, setExpandedCallId] = useState<string | null>(null);
@@ -334,9 +393,9 @@ export default function ReceptionistPage() {
                     const hasTranscript = !!call.transcript;
 
                     return (
-                      <>
+                      // Fragment with key — required for multi-element map returns
+                      <Fragment key={call.id}>
                         <tr
-                          key={call.id}
                           className={`border-b border-border/50 transition-colors ${
                             hasTranscript
                               ? "cursor-pointer hover:bg-cloud-light/40"
@@ -400,7 +459,6 @@ export default function ReceptionistPage() {
                         </tr>
                         {isExpanded && call.transcript && (
                           <tr
-                            key={`${call.id}-transcript`}
                             className="border-b border-border/50 bg-warn/5"
                           >
                             <td colSpan={6} className="px-4 pb-4 pt-2">
@@ -430,7 +488,7 @@ export default function ReceptionistPage() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })}
                   {todaysCalls.length === 0 && (
@@ -652,5 +710,15 @@ export default function ReceptionistPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Page export ──────────────────────────────────────────────────────────────
+
+export default function ReceptionistPage() {
+  return (
+    <AvaErrorBoundary>
+      <ReceptionistContent />
+    </AvaErrorBoundary>
   );
 }
