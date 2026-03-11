@@ -1,0 +1,307 @@
+WUID,Patient Name,Appointment Type,Hospital Number,NHS Number,Start Time,Duration (min.),Date,Status,With,Location,Cost,Create Date,Description
+WU3597840,Todd Hepworth,Follow up,,,09:00,45,02/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,04/12/2025,L Sciatica
+WU3500716,Tsebo Makuwa,Follow up,,,09:45,45,02/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,04/12/2025,"L ACL
+L ATFL"
+WU3610171,Christine Opie,AXA Follow-up,,,10:30,45,02/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,12/12/2025,"R Hip impingement
+Neck Rv"
+WU2591885,Theodora Bloom,Follow up,,,12:00,45,02/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,09/12/2025,Previously seeing Joe Korge
+WU2988232,Julia Woodford,Bupa Follow-up,,,12:45,45,02/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,19/12/2025,Lx Decompression
+WU3666112,Gaurav Patney,Initial Appointment,,,13:30,45,02/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,30/12/2025,He advised she has pain in his right shoulder.
+WU3666850,Rahul Loney,Initial Appointment,,,15:45,45,02/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,01/01/2026,
+WU3668098,Mo Habib,Initial Appointment,,,09:45,45,03/01/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,03/01/2026,
+WU2925066,Lars Lowe Sjoesund,AXA Follow-up,,,09:00,45,05/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,01/12/2025,
+WU3604463,James Hatcher,Follow up,,,09:45,45,05/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,08/12/2025,"Lx
+?Psoas"
+WU3665563,Sophie Gallagher,Initial Appointment,,,10:30,45,05/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,30/12/2025,
+WU3475986,Richard Kent,Follow up,,,12:45,45,05/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,22/12/2025,L Serratus
+WU3614514,Srini Parthasarathy,Bupa Follow-up,,,13:30,45,05/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,28/12/2025,
+WU2953264,Curtis Rayment,AXA Initial,,,14:15,45,05/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,30/12/2025,
+WU3578280,Anthony Bissett,Bupa Follow-up,,,16:30,45,05/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,15/12/2025,R Ant Sh
+WU3149588,Thomas Denney,Bupa Follow-up,,,09:00,45,06/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,09/12/2025,
+WU1796230,Tony Solomon,Follow up,,,10:30,45,06/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,16/12/2025,R Supra Impingement
+WU3669094,Victoria Rennoldson,Initial Appointment,,,12:45,45,06/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,04/01/2026,Ankle pain
+WU2799464,Henry George Sugiura,Follow up,,,13:30,45,06/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,02/12/2025,L OA Knee
+WU3647542,Madeleine Bialke,Follow up,,,15:00,45,06/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,22/12/2025,
+WU3575062,Ria Amin,AXA Follow-up,,,15:45,45,06/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,06/01/2026,
+WU3570149,Daisy Genever,Follow up,,,19:00,45,06/01/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,09/12/2025,
+WU3653310,Molly Tarring,Initial Appointment,,,09:45,45,07/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,15/12/2025,
+WU3528173,Michal Ribak,Follow up,,,12:45,45,07/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,10/12/2025,Plantar Heel PAIN - ?short run
+WU3426533,William Jones,AXA Follow-up,,,13:30,45,07/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,40.00,10/12/2025,
+WU3043287,Taha Hashim,Bupa Follow-up,,,14:15,45,07/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,50.00,17/12/2025,ACLR
+WU3666182,Chanel van der Merwe,WPA Initial,,,15:00,45,07/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,31/12/2025,
+WU3636922,Georgi Pojarliev,AXA Follow-up,,,16:30,45,07/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,40.00,05/01/2026,
+WU2980084,Nick Cohen,AXA Follow-up,,,17:15,45,07/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,40.00,05/01/2026,
+WU2433513,Chloe Walters,Follow up,,,18:00,45,07/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,17/12/2025,?Running
+WU3002338,Harry Glynn,Follow up,,,09:00,45,08/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,20/11/2025,
+WU3447962,Andrew de Csilléry,Follow up,,,10:30,45,08/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,29/12/2025,
+WU3610171,Christine Opie,AXA Follow-up,,,11:15,45,08/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,06/01/2026,Right hand/arm - stiff and I'm running into some weird clumsiness
+WU3673805,Mathieu Pynoo,Initial Appointment,,,12:45,45,08/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,06/01/2026,
+WU3671684,Ladybeth Pedraza,Initial Appointment,,,13:30,45,08/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,06/01/2026,"£60 Cash
+£15 Card"
+WU3575362,Arminda Murrizi,Aviva Follow-up,,,14:15,45,08/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,45.00,12/12/2025,"Neck C5-6 Osteophyte
+Late Cancel, email sent to rebook"
+WU2864459,Gillian Rose,Follow up,,,15:00,45,08/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,07/01/2026,Have recently got some back pain that needs addressing
+WU3615857,Matt Jacobs,AXA Follow-up,,,16:30,45,08/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,12/12/2025,R achilles
+WU2619585,Jeremy Kay,Bupa Initial,,,17:15,45,08/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,65.00,06/01/2026,
+WU3326155,Will Parsons,Bupa Follow-up,,,18:00,45,08/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,21/11/2025,"L Hip
+Lx BL"
+WU3636064,Rebecca Eggeling,Follow up,,,09:00,45,09/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,06/01/2026,
+WU3571199,Andy Tye,Follow up,,,09:45,45,09/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,12/12/2025,Lx
+WU3504318,Rika Doe,Follow up,,,10:30,45,09/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,01/12/2025,L Scapulohumeral Dysfunction
+WU3652920,Quentin Louy,AXA Follow-up,,,12:00,45,09/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,22/12/2025,R ACL Sprain
+WU3399533,Gabriel Cooper-Winnick,Follow up,,,12:45,45,09/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,19/12/2025,
+WU3450165,Adam Isaacs,Bupa Follow-up,,,13:30,45,09/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,19/12/2025,R PTTD
+WU1887748,Ben Smith,Follow up,,,15:00,45,09/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,12/12/2025,L Knee Full Thickness Cartilage
+WU3614504,Keith Spedding,Follow up,,,15:45,45,09/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,19/12/2025,"L Neck
+?L lateral delt pain"
+WU3459296,Sam Stewart,Bupa Follow-up,,,16:30,45,09/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,16/12/2025,"R Ant sh
+L Cuff/ABD"
+WU1786848,Thomas McGrath,Follow up,,,11:00,45,13/01/2026,Complete,Joe Korge,Spires Physiotherapy West Hampstead,75.00,12/01/2026,
+WU3682191,Nicolas Suarez Tezanos,Initial Appointment,,,18:15,45,13/01/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,12/01/2026,"Allianz, leg pain.
+Policy no: P000497133
+Group no: 21188"
+WU3682761,Rosa Porreca,Bupa Initial,,,19:00,45,13/01/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,65.00,12/01/2026,"Bupa , details added
+She is looking to book an initial consultation for a shoulder issue."
+WU3664116,Ellen Hodgetts,AXA Initial,,,09:00,45,14/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,50.00,31/12/2025,Meniscus
+WU3681518,Raphael Chantreau Majerus,Initial Appointment,,,09:45,45,14/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,12/01/2026,
+WU3666182,Chanel van der Merwe,WPA Follow-up,,,12:45,45,14/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,07/01/2026,
+WU3558201,Christina Vale,Follow up,,,17:15,45,14/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,17/12/2025,Shoulder
+WU1783220,Nick Matthews,Follow up,,,18:00,45,14/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,12/11/2025,Running Repairs
+WU3660928,Arman Tadjrishi,Follow up,,,09:00,45,15/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,22/12/2025,L Laterjet
+WU3674405,Jamie Thorn,Initial Appointment,,,09:45,45,15/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,07/01/2026,
+WU2367440,Tiago Nobre,Follow up,,,10:30,45,15/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,29/12/2025,R Ankle Sprain
+WU3483437,Joe Smith,AXA Follow-up,,,11:15,45,15/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,07/01/2026,Rescheduled from 9th - still tender post-op
+WU3575062,Ria Amin,AXA Follow-up,,,13:30,45,15/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,19/12/2025,R Ant Sh
+WU3622409,Carolyn Frame,Follow up,,,14:15,45,15/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,16/12/2025,R Medial Meniscus
+WU3351565,Rebecca Dannie,Follow up,,,16:30,45,15/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,06/01/2026,
+WU3474146,Fanny Dunner,Bupa Follow-up,,,17:15,45,15/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,18/12/2025,"Lx
+Ankle BL Rv"
+WU3506610,Daniel Harrison,Bupa Follow-up,,,09:00,45,16/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,18/12/2025,"L FHL
+NEW BUPA CODE"
+WU3571199,Andy Tye,Follow up,,,09:45,45,16/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,19/12/2025,
+WU3690101,Sam Belchak,Initial Appointment,,,10:30,45,16/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,16/01/2026,L Cuboid
+WU3666112,Gaurav Patney,Follow up,,,12:00,45,16/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,02/01/2026,"Cigna
+R Upper Back"
+WU3615857,Matt Jacobs,AXA Follow-up,,,12:45,45,16/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,16/01/2026,
+WU3671123,Barbara Prata,Initial Appointment,,,13:30,45,16/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,13/01/2026,
+WU3685838,Elena Bennett,Initial Appointment,,,15:45,45,16/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,14/01/2026,
+WU3652920,Quentin Louy,AXA Follow-up,,,16:30,45,16/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,22/12/2025,R ACL Sprain
+WU3648600,Jennifer Middleton,Bupa Follow-up,,,09:00,45,19/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,22/12/2025,L Ankle Sprain
+WU3561069,Tavish Westwood,Follow up,,,10:30,45,19/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,29/12/2025,"BL Peroneal Neuropathy
+Big toe and calf"
+WU3467030,Muttaqee Dar,Bupa Follow-up,,,11:15,45,19/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,22/12/2025,R Medial Meniscus
+WU3574086,Joe Bain,Follow up,,,12:45,45,19/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,29/12/2025,Hamstring and Biceps
+WU3679741,Amos Daw,Initial Appointment,,,15:00,45,19/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,09/01/2026,"leg pain, long term knee injury & ankle pain"
+WU3687081,Sophie Gallagher,Follow up,,,16:30,45,19/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,14/01/2026,R ITB/Quad tendon
+WU3503133,Kira Hughes,Follow up,,,17:15,45,19/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,24/11/2025,L Medial Meniscus
+WU3637445,Alex Lucas,Follow up,,,18:00,45,19/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,17/12/2025,Ankle
+WU3693056,Aoife Matchett,Initial Appointment,,,09:00,45,20/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,19/01/2026,
+WU3694903,Alex Milojevic,Initial Appointment,,,09:45,45,20/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,19/01/2026,Neck
+WU3691476,Rahi Thoufique,Initial Appointment,,,17:30,45,20/01/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,16/01/2026,
+WU3684500,Marc Crown,Initial Appointment,,,17:15,45,21/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,13/01/2026,
+WU3537925,Anne Conet Nguyen-Ba,Follow up,,,09:00,45,22/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,15/12/2025,R High Ankle Sprain Final?
+WU3669094,Victoria Rennoldson,Follow up,,,10:30,45,22/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,06/01/2026,R PTTD
+WU2600054,Lynn Summerfield-Mann,Follow up,,,11:15,45,22/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,07/01/2026,
+WU3530404,Natalie Beecroft,Follow up,,,16:30,45,22/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,12/12/2025,R PFPS
+WU2619585,Jeremy Kay,Bupa Follow-up,,,17:15,45,22/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,08/01/2026,NEW CODE
+WU3578903,Daria Larionova,Bupa Follow-up,,,18:00,45,22/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,29/12/2025,L Sciatica
+WU3526470,Robert Middlemiss,Bupa Follow-up,,,09:00,45,23/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,22/12/2025,"L Hip
+Running Rv"
+WU3623857,Mandeep Jagpal,Bupa Follow-up,,,09:45,45,23/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,22/01/2026,Knee pain
+WU3704866,Clare MacNamara,Initial Appointment,,,10:30,45,23/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,22/01/2026,ankles and wrists affected by arthritis
+WU3450165,Adam Isaacs,Bupa Follow-up,,,15:00,45,23/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,09/01/2026,R PTTD before Japan after Barca
+WU3500716,Tsebo Makuwa,Follow up,,,09:45,45,26/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,02/01/2026,"L ACL
+L ATFL"
+WU3705275,Alex van Leeuwen,Initial Appointment,,,11:15,45,26/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,23/01/2026,R Shoulder boxing injury
+WU2367440,Tiago Nobre,Follow up,,,14:15,45,26/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,26/01/2026,
+WU2988232,Julia Woodford,Bupa Follow-up,,,16:30,45,26/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,10/01/2026,
+WU3709719,Nik Constantinou,Follow up,,,18:00,45,26/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,26/01/2026,
+WU1796230,Tony Solomon,Follow up,,,10:30,45,27/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,06/01/2026,"R Sh
+Yoga and Gym movement Rv"
+WU3710048,Cameron Baker,Initial Appointment,,,15:00,45,27/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,26/01/2026,
+WU3436663,Jonathan Walik,Bupa Follow-up,,,15:45,45,27/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,29/12/2025,"BL Patella
+Lx"
+WU3695099,Sunneva Rose,Bupa Initial,,,18:15,45,27/01/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,65.00,21/01/2026,Anterior Talofibular ligament
+WU3682191,Nicolas Suarez Tezanos,Follow up,,,19:00,45,27/01/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,13/01/2026,
+WU3695527,Miguel Fresneda,Initial Appointment,,,19:45,45,27/01/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,19/01/2026,Hip flexor injury left leg
+WU3711085,Gideon Bloom,Initial Appointment,,,09:45,45,28/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,27/01/2026,Herniated disc L4-L5
+WU2419649,Mike Greatwood,Follow up,,,11:00,45,28/01/2026,Complete,Joe Korge,Spires Physiotherapy West Hampstead,75.00,20/01/2026,
+WU2865657,Michael Abrahams,Follow up,,,12:45,45,28/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,31/12/2025,Knee
+WU3653310,Molly Tarring,Follow up,,,13:30,45,28/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,07/01/2026,Hamstring
+WU2484634,Youssef Khader,Follow up,,,14:15,45,28/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,10/12/2025,
+WU3666182,Chanel van der Merwe,WPA Follow-up,,,15:00,45,28/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,14/01/2026,
+WU3713864,Krishan Kataria,Bupa Initial,,,16:30,45,28/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,65.00,28/01/2026,
+WU3666328,Cathy Dean,Follow up,,,17:15,45,28/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,06/01/2026,Rebooked from 21st January
+WU3573938,Saikat Chatterjee,Bupa Follow-up,,,18:00,45,28/01/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,50.00,31/12/2025,S&C planning
+WU3666112,Gaurav Patney,Follow up,,,09:00,45,29/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,16/01/2026,R Scap/Neck
+WU3674405,Jamie Thorn,Follow up,,,09:45,45,29/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,15/01/2026,R Lx
+WU3636064,Rebecca Eggeling,Follow up,,,11:15,45,29/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,09/01/2026,R Quad Tendon
+WU3716917,Mehdi Jaber,Initial Appointment,,,16:30,45,29/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,29/01/2026,
+WU3647542,Madeleine Bialke,Follow up,,,09:00,45,30/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,06/01/2026,L Ulnar Nerve
+WU3571199,Andy Tye,Follow up,,,09:45,45,30/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,16/01/2026,
+WU1887748,Ben Smith,Follow up,,,13:30,45,30/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,09/01/2026,L Quad
+WU3395113,Haydn Baker,Bupa Follow-up,,,15:00,45,30/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,19/12/2025,L Achilles
+WU3718569,Artem Perez,Initial Appointment,,,15:45,45,30/01/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,30/01/2026,Abductor Muscle/Leg
+WU2925066,Lars Lowe Sjoesund,AXA Follow-up,,,09:00,45,02/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,05/01/2026,L hip
+WU3604463,James Hatcher,Follow up,,,09:45,45,02/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,05/01/2026,"Psoas BL
+Facet Joint L1/2"
+WU2626302,Joshua Campbell,AXA Initial,,,10:30,45,02/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,31/01/2026,
+WU3679741,Amos Daw,Follow up,,,14:15,45,02/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,19/01/2026,R Knee
+WU3578280,Anthony Bissett,Bupa Follow-up,,,16:30,45,02/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,05/01/2026,R Sh
+WU3453038,Alex Stuckey,Follow up,,,17:15,45,02/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,25/11/2025,Free Weights Rv in gym
+WU3504318,Rika Doe,Follow up,,,11:45,45,03/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,09/01/2026,L Scapulohumeral Dysfunction
+WU3724435,Bozhidara Ruskova,Initial Appointment,,,15:45,45,03/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,03/02/2026,
+WU3287001,Benjamin Swain,Follow up,,,16:30,45,03/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,02/12/2025,L Ankle
+WU3682761,Rosa Porreca,Bupa Follow-up,,,18:15,45,03/02/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,50.00,13/01/2026,
+WU3400360,Amiin Abdi Barkhadle,Follow up,,,19:45,45,03/02/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,03/02/2026,
+WU3664116,Ellen Hodgetts,AXA Follow-up,,,09:00,45,04/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,40.00,14/01/2026,Meniscus - running?
+WU3681518,Raphael Chantreau Majerus,Follow up,,,09:45,45,04/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,14/01/2026,Lx Discogenic Pain
+WU3348380,Katie Williams,Follow up,,,12:45,45,04/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,31/12/2025,ACL - Ski prep
+WU2799464,Henry George Sugiura,Follow up,,,13:30,45,04/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,06/01/2026,L Knee OA
+WU3528173,Michal Ribak,Follow up,,,14:15,45,04/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,07/01/2026,Plantar Heel Pain
+WU3723440,Mustafa Musawi,Initial Appointment,,,15:00,45,04/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,03/02/2026,Rebooked appointment
+WU3715581,Johnny Sweeney,Initial Appointment,,,16:30,45,04/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,29/01/2026,MRI Lx Spine
+WU3684500,Marc Crown,Follow up,,,17:15,45,04/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,21/01/2026,LBP
+WU2433513,Chloe Walters,Follow up,,,18:00,45,04/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,07/01/2026,Soleus/PTTD Running capacity
+WU3149588,Thomas Denney,Bupa Follow-up,,,09:00,45,05/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,06/01/2026,BL Knee Meniscus
+WU3660928,Arman Tadjrishi,Follow up,,,09:45,45,05/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,15/01/2026,L Laterjet
+WU3571199,Andy Tye,Follow up,,,10:30,45,05/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,30/01/2026,
+WU2970619,Sonia Cronin,Bupa Follow-up,,,11:15,45,05/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,30/01/2026,Paid for session she missed
+WU3623857,Mandeep Jagpal,Bupa Follow-up,,,12:45,45,05/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,05/02/2026,
+WU2591885,Theodora Bloom,Follow up,,,17:15,45,05/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,02/01/2026,"L Achilles
+R Lx"
+WU3494762,Lucy Botkai,Bupa Follow-up,,,18:00,45,05/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,29/01/2026,
+WU3705275,Alex van Leeuwen,Follow up,,,09:45,45,09/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,26/01/2026,R post cuff and Bicep tendon
+WU3561069,Tavish Westwood,Follow up,,,10:30,45,09/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,19/01/2026,BL Peroneal Neuropathy
+WU3467030,Muttaqee Dar,Bupa Follow-up,,,11:15,45,09/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,19/01/2026,R Medial Meniscus
+WU2367440,Tiago Nobre,Follow up,,,14:15,45,09/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,26/01/2026,Post R Ankle MRI?
+WU3665563,Sophie Gallagher,Follow up,,,16:30,45,09/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,19/01/2026,R Patella Tendon
+WU3637445,Alex Lucas,Follow up,,,18:00,45,09/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,19/01/2026,R ATFL/CFL
+WU2970619,Sonia Cronin,Bupa Follow-up,,,09:00,45,10/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,05/02/2026,R THR
+WU3732633,Andrea Lewis,Initial Appointment,,,10:30,45,10/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,09/02/2026,
+WU3636064,Rebecca Eggeling,Follow up,,,12:00,45,10/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,29/01/2026,R Knee post MRI
+WU3734405,Manisha Tulsiani,AXA Initial,,,12:45,45,10/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,10/02/2026,
+WU2988232,Julia Woodford,Bupa Follow-up,,,16:30,45,10/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,26/01/2026,Spinal Decompression
+WU3400360,Amiin Abdi Barkhadle,Follow up,,,17:30,45,10/02/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,03/02/2026,
+WU3733372,Jan Fonseka,Aviva Initial,,,18:15,45,10/02/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,55.00,09/02/2026,Back pain and sciatica
+WU3729886,Roshny Tanna,Bupa Initial,,,19:00,45,10/02/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,65.00,06/02/2026,
+WU3735741,Narinder Moss,Initial Appointment,,,19:45,45,10/02/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,10/02/2026,
+WU3711085,Gideon Bloom,Follow up,,,09:00,45,11/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,28/01/2026,Lumbar Discogenic
+WU3720168,Judith van Gestel,Initial Appointment,,,12:45,45,11/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,01/02/2026,L Knee patellofemoral
+WU2626302,Joshua Campbell,AXA Follow-up,,,13:30,45,11/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,40.00,31/01/2026,
+WU3426533,William Jones,AXA Follow-up,,,14:15,45,11/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,40.00,07/01/2026,
+WU3636922,Georgi Pojarliev,AXA Follow-up,,,16:30,45,11/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,40.00,07/01/2026,Rescheduled from 28/01
+WU3736373,Divya Sarwal,Initial Appointment,,,17:15,45,11/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,11/02/2026,CIGNA
+WU3488441,Moses Kwaku,Bupa Follow-up,,,18:00,45,11/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,50.00,21/01/2026,
+WU3710048,Cameron Baker,Follow up,,,09:00,45,12/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,27/01/2026,R wrist flexor strain
+WU2600054,Lynn Summerfield-Mann,Follow up,,,10:30,45,12/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,22/01/2026,L PF
+WU3483437,Joe Smith,AXA Follow-up,,,11:15,45,12/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,15/01/2026,Running Volume Rv
+WU3669094,Victoria Rennoldson,Follow up,,,12:45,45,12/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,22/01/2026,R PTTD
+WU3738394,William Connock,Initial Appointment,,,13:30,45,12/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,12/02/2026,
+WU3725052,Anna Burgess,AXA Initial,,,15:00,45,12/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,03/02/2026,
+WU3156482,Hannah Daniels,Initial Appointment,,,16:30,45,12/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,11/02/2026,Lower back issue post-partum
+WU3571199,Andy Tye,Follow up,,,12:45,45,13/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,07/02/2026,
+WU3725122,Katie Hanbury,Initial Appointment,,,13:30,45,13/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,08/02/2026,
+WU3530404,Natalie Beecroft,Follow up,,,15:00,45,13/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,22/01/2026,R PFPS
+WU3575062,Ria Amin,AXA Follow-up,,,15:45,45,13/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,06/02/2026,
+WU3494762,Lucy Botkai,Bupa Follow-up,,,16:30,45,13/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,05/02/2026,Disc Bulge
+WU3695527,Miguel Fresneda,Follow up,,,09:00,45,14/02/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,27/01/2026,
+WU3537925,Anne Conet Nguyen-Ba,Follow up,,,09:00,45,16/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,22/01/2026,R High Ankle Sprain
+WU3693056,Aoife Matchett,Follow up,,,09:45,45,16/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,09/02/2026,
+WU2970619,Sonia Cronin,Bupa Follow-up,,,10:30,45,16/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,10/02/2026,
+WU3740291,Dean Bracken,Initial Appointment,,,12:45,45,16/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,13/02/2026,
+WU3744081,Keagan Smith,Initial Appointment,,,16:30,45,16/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,16/02/2026,Shoulder blade and spine pain
+WU3503133,Kira Hughes,Follow up,,,17:15,45,16/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,19/01/2026,L Meniscus
+WU2591023,Stephen Jedd,Initial Appointment,,,18:00,45,16/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,02/02/2026,Neck pain
+WU3739557,Vanna Barca,Initial Appointment,,,09:45,45,17/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,12/02/2026,
+WU3570149,Daisy Genever,Follow up,,,18:15,45,17/02/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,06/01/2026,
+WU3695099,Sunneva Rose,Bupa Follow-up,,,19:00,45,17/02/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,50.00,27/01/2026,
+WU3666182,Chanel van der Merwe,WPA Follow-up,,,12:45,45,18/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,14/01/2026,
+WU3738107,Alice Garrigou-Grandchamp,Initial Appointment,,,15:00,45,18/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,11/02/2026,
+WU3733372,Jan Fonseka,Aviva Follow-up,,,18:00,45,18/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,45.00,12/02/2026,Neck pain and sciatica
+WU3674405,Jamie Thorn,Follow up,,,09:00,45,19/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,29/01/2026,R Lx
+WU3571199,Andy Tye,Follow up,,,11:15,45,19/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,13/02/2026,Rv Symptoms post flare up
+WU2619585,Jeremy Kay,Bupa Follow-up,,,12:45,45,19/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,23/01/2026,
+WU2250681,Winsy Ng,Follow up,,,13:30,45,19/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,13/02/2026,
+WU1887748,Ben Smith,Follow up,,,09:00,45,20/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,30/01/2026,L Knee
+WU3578903,Daria Larionova,Bupa Follow-up,,,10:30,45,20/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,22/01/2026,L Disk Bulge
+WU3399533,Gabriel Cooper-Winnick,Follow up,,,15:45,45,20/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,17/02/2026,Back issue
+WU3614504,Keith Spedding,Follow up,,,16:30,45,20/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,09/02/2026,
+WU3500716,Tsebo Makuwa,Follow up,,,09:45,45,23/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,26/01/2026,L ACL/ATFL
+WU3751322,Ambra Grisotto,Aviva Initial,,,11:15,45,23/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,55.00,20/02/2026,MPFL reconstruction
+WU3281144,Christopher Ward,Bupa Follow-up,,,18:00,45,23/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,15/12/2025,Running Review
+WU3759215,Ian Harcus,Initial Appointment,,,10:15,45,24/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,24/02/2026,
+WU3758866,Max Mackenzie,Initial Appointment,,,12:00,45,24/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,23/02/2026,
+WU3734405,Manisha Tulsiani,AXA Follow-up,,,12:45,45,24/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,10/02/2026,L Sh Impingement
+WU3436663,Jonathan Walik,Bupa Follow-up,,,15:45,45,24/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,27/01/2026,BL Patella/SIJ
+WU3733372,Jan Fonseka,Aviva Follow-up,,,18:15,45,24/02/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,45.00,18/02/2026,Cx/Lx sp follow up
+WU3682761,Rosa Porreca,Bupa Follow-up,,,19:00,45,24/02/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,50.00,14/02/2026,
+WU3043287,Taha Hashim,Bupa Follow-up,,,09:00,45,25/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,50.00,07/01/2026,ACLR
+WU3711085,Gideon Bloom,Follow up,,,09:45,45,25/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,11/02/2026,Lx Sp
+WU2626302,Joshua Campbell,AXA Follow-up,,,13:30,45,25/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,40.00,31/01/2026,
+WU1783220,Nick Matthews,Follow up,,,18:00,45,25/02/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,14/01/2026,Running outdoor
+WU3660928,Arman Tadjrishi,Follow up,,,09:00,45,26/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,05/02/2026,L Laterjet 14 weeks
+WU3679741,Amos Daw,Follow up,,,10:30,45,26/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,02/02/2026,R knee
+WU3751322,Ambra Grisotto,Aviva Follow-up,,,11:15,45,26/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,45.00,23/02/2026,MPFL R
+WU3725052,Anna Burgess,AXA Follow-up,,,15:00,45,26/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,12/02/2026,Back Pain
+WU2988232,Julia Woodford,Bupa Follow-up,,,16:30,45,26/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,10/02/2026,Lumbar Decomp
+WU3762476,Lucy Proctor,Initial Appointment,,,17:15,45,26/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,25/02/2026,
+WU3710048,Cameron Baker,Follow up,,,09:00,45,27/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,12/02/2026,R Wrist strain
+WU3571199,Andy Tye,Follow up,,,09:45,45,27/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,13/02/2026,
+WU2494550,Harriet Still,Initial Appointment,,,10:30,45,27/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,23/02/2026,
+WU2619585,Jeremy Kay,Bupa Follow-up,,,12:00,45,27/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,19/02/2026,R sh Labrum
+WU3666112,Gaurav Patney,Follow up,,,12:45,45,27/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,24/02/2026,CIGNA
+WU3765243,Neave Ahmadi,Initial Appointment,,,13:30,45,27/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,26/02/2026,Pain in side of hip
+WU3483223,Neville Bilimoria,AXA Initial,,,15:00,45,27/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,23/02/2026,
+WU3669094,Victoria Rennoldson,Follow up,,,15:45,45,27/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,12/02/2026,R PTTD G1
+WU3648600,Jennifer Middleton,Bupa Follow-up,,,16:30,45,27/02/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,26/02/2026,
+WU3447962,Andrew de Csilléry,Follow up,,,09:00,45,02/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,08/01/2026,BL Achilles
+WU3561069,Tavish Westwood,Follow up,,,10:30,45,02/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,09/02/2026,BL Peroneal Neuropathy
+WU3751322,Ambra Grisotto,Aviva Follow-up,,,11:15,45,02/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,45.00,23/02/2026,MPFL Recon
+WU3768161,Sam Fisher,Initial Appointment,,,17:15,45,02/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,01/03/2026,Running ankle pain
+WU3768524,Jeremy Stein,Bupa Follow-up,,,18:00,45,02/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,02/03/2026,Transfer over BUPA details
+WU3647542,Madeleine Bialke,Follow up,,,09:00,45,03/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,30/01/2026,L Sh and Hand Nerve
+WU3769319,Grace Tanner,Initial Appointment,,,09:45,45,03/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,02/03/2026,
+WU2970619,Sonia Cronin,Bupa Follow-up,,,10:30,45,03/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,16/02/2026,R THR
+WU2387470,Jessica Goldsmith,Initial Appointment,,,12:00,45,03/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,02/03/2026,
+WU3771250,Estefany H Lopez,Initial Appointment,,,19:45,45,03/03/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,03/03/2026,
+WU2283505,George Lavender,Follow up,,,09:00,45,04/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,21/01/2026,
+WU3664116,Ellen Hodgetts,AXA Follow-up,,,09:45,45,04/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,40.00,04/02/2026,Ski Prep Running
+WU3528173,Michal Ribak,Follow up,,,13:30,45,04/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,04/02/2026,Plantar Heel Pain - Allianz
+WU2484634,Youssef Khader,Follow up,,,14:15,45,04/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,28/01/2026,
+WU3720168,Judith van Gestel,Follow up,,,15:00,45,04/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,11/02/2026,PFP
+WU3573938,Saikat Chatterjee,Bupa Follow-up,,,18:15,45,04/03/2026,Booked,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,50.00,28/01/2026,S&C
+WU2214548,Janis Susskind,Initial Appointment,,,09:00,45,05/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,02/03/2026,
+WU3530404,Natalie Beecroft,Follow up,,,17:15,45,05/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,13/02/2026,R PFPS
+WU3326155,Will Parsons,Bupa Follow-up,,,18:00,45,05/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,08/01/2026,Dyno hip strength
+WU3445042,Chloe Keenan,Follow up,,,09:00,45,06/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,28/02/2026,Follow up from previous sessions
+WU3571199,Andy Tye,Follow up,,,09:45,45,06/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,27/02/2026,
+WU3775483,Lottie Etterley,Initial Appointment,,,10:30,45,06/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,05/03/2026,Ankle injury running
+WU3578280,Anthony Bissett,Bupa Follow-up,,,12:00,45,06/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,02/03/2026,
+WU3751322,Ambra Grisotto,Aviva Follow-up,,,13:30,45,06/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,45.00,23/02/2026,MPFL R
+WU2591885,Theodora Bloom,Follow up,,,16:30,45,06/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,05/02/2026,Disc Protrusion L4-S1
+WU3733372,Jan Fonseka,Aviva Follow-up,,,09:45,45,07/03/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,45.00,18/02/2026,Cx/Lx Sp
+WU3771250,Estefany H Lopez,Follow up,,,10:30,45,07/03/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,03/03/2026,
+WU3773866,Louise Flaherty,Initial Appointment,,,11:15,45,07/03/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,04/03/2026,Tight neck and right shoulder
+WU2925066,Lars Lowe Sjoesund,AXA Follow-up,,,09:00,45,09/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,02/02/2026,LL HEP Rv
+WU3467030,Muttaqee Dar,Bupa Follow-up,,,10:30,45,09/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,09/02/2026,R Medial Meniscus
+WU2970619,Sonia Cronin,Bupa Follow-up,,,11:15,45,09/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,07/03/2026,
+WU3751322,Ambra Grisotto,Aviva Follow-up,,,13:30,45,09/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,45.00,23/02/2026,MPFL Right
+WU3103793,Anastasia Chew,Bupa Follow-up,,,14:15,45,09/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,09/03/2026,
+WU3693056,Aoife Matchett,Follow up,,,16:30,45,09/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,09/03/2026,
+WU3637445,Alex Lucas,Follow up,,,17:15,45,09/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,09/02/2026,R ATFL
+WU3779665,Grace Langham,Initial Appointment,,,18:00,45,09/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,08/03/2026,
+WU3542482,Evie Clark,Follow up,,,09:00,45,10/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,19/02/2026,
+WU3759215,Ian Harcus,Follow up,,,09:45,45,10/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,25/02/2026,
+WU3758866,Max Mackenzie,Follow up,,,12:00,45,10/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,75.00,24/02/2026,L ITBS
+WU3734405,Manisha Tulsiani,AXA Follow-up,,,12:45,45,10/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,40.00,24/02/2026,L Sh impingement
+WU3768524,Jeremy Stein,Bupa Follow-up,,,16:30,45,10/03/2026,Complete,Max Hubbard,Spires Physiotherapy West Hampstead,50.00,10/03/2026,Leg pain review
+WU3570149,Daisy Genever,Follow up,,,18:15,45,10/03/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,17/02/2026,
+WU3769160,Maria Gorniok,Initial Appointment,,,19:45,45,10/03/2026,Complete,Andrew Henry,Spires Physiotherapy West Hampstead,75.00,02/03/2026,IT band issues
+WU3666182,Chanel van der Merwe,WPA Follow-up,,,09:00,45,11/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,18/02/2026,Hip + Tibia
+WU3254752,Shefali Saxena,Bupa Initial,,,09:45,45,11/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,65.00,05/03/2026,
+WU2799464,Henry George Sugiura,Follow up,,,13:15,45,11/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,04/02/2026,
+WU3426533,William Jones,AXA Follow-up,,,14:00,45,11/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,40.00,11/02/2026,LBP
+WU3774238,Isaac Gewargis,Initial Appointment,,,14:45,45,11/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,04/03/2026,Ligament knee injury
+WU3348380,Katie Williams,Follow up,,,16:30,45,11/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,01/03/2026,
+WU3666328,Cathy Dean,Follow up,,,17:15,45,11/03/2026,Complete,Jamal Ofori-Adu,Spires Physiotherapy West Hampstead,75.00,23/02/2026,Knees
