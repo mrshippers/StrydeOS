@@ -24,7 +24,9 @@ import {
   Sun,
   Lock,
   CreditCard,
+  HelpCircle,
 } from "lucide-react";
+import HelpPanel from "@/components/HelpPanel";
 import { LogoNav } from "@/components/MonolithLogo";
 import { useTheme } from "@/components/ThemeProvider";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
@@ -125,6 +127,7 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const { allAlerts, unreadCount, readHashes, markAllRead } = useAlerts();
@@ -383,6 +386,22 @@ export default function Sidebar() {
                   </Link>
                 );
               })}
+              <button
+                onClick={() => setHelpOpen(true)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  helpOpen
+                    ? "text-white"
+                    : "text-white/45 hover:text-white/75 hover:bg-white/[0.04]"
+                }`}
+                style={helpOpen ? {
+                  background: "rgba(255,255,255,0.08)",
+                  borderLeft: "3px solid #1C54F2",
+                  paddingLeft: 9,
+                } : undefined}
+              >
+                <HelpCircle size={16} strokeWidth={helpOpen ? 2 : 1.5} />
+                Help
+              </button>
               {isSuperAdmin && (
                 <Link
                   href="/admin"
@@ -490,6 +509,8 @@ export default function Sidebar() {
           )}
         </div>
       </aside>
+
+      <HelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />
     </>
   );
 }
