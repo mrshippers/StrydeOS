@@ -8,3 +8,7 @@ node_modules/
 dist/
 out/
 .vercel
+
+# Firebase service account keys
+*-firebase-adminsdk-*.json
+serviceAccountKey.json

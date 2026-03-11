@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { AlertCircle, Loader2, ArrowRight, Check } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
@@ -25,8 +25,9 @@ function LoginHeader({ onTryDemo }: { onTryDemo: () => void }) {
   );
 }
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading, signIn, enterDemoMode, isFirebaseConfigured } = useAuth();
   const shouldReduce = useReducedMotion();
 
@@ -51,9 +52,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.replace(user.role === "superadmin" ? "/admin" : "/dashboard");
+      const next = searchParams.get("next");
+      const dest = next && next.startsWith("/") && !next.startsWith("//")
+        ? next
+        : user.role === "superadmin" ? "/admin" : "/dashboard";
+      router.replace(dest);
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, router, searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -273,5 +278,13 @@ export default function LoginPage() {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageInner />
+    </Suspense>
   );
 }

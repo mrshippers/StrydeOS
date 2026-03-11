@@ -1,0 +1,32 @@
+Here’s a corrected, very tight Spires London knowledge block for Ava.
+
+***
+
+**Clinic facts – Spires Physiotherapy London**
+
+- Trading name: **Spires Physiotherapy** (London clinic) [spiresphysiotherapy](https://spiresphysiotherapy.com)
+- Clinic location: **45 Mill Lane, London NW6 1NB** (West Hampstead area) [find-and-update.company-information.service.gov](https://find-and-update.company-information.service.gov.uk/company/14803014)
+- Nearest stations: **West Hampstead** (Jubilee, Overground, Thameslink – short walk) [spiresphysiotherapy](https://spiresphysiotherapy.com/locations/spires-physiotherapy-west-hampstead/)
+- Phone: **020 7118 1278** (main clinic line) [spiresphysiotherapy](https://spiresphysiotherapy.com/locations/spires-physiotherapy-west-hampstead/)
+- Email: **info@spiresphysiotherapy.com** [spiresphysiotherapy](https://spiresphysiotherapy.com/meet-the-team/)
+- Website: **spiresphysiotherapy.com** [spiresphysiotherapy](https://spiresphysiotherapy.com)
+
+**Appointments and pricing**
+
+- All standard physiotherapy appointments are **45 minutes**.  
+- Each 45‑minute session (initial or follow‑up) is **£75**, whether in‑clinic or online (London clinic policy you provided).  
+- Patients can self‑fund or attend via major UK health insurers; they must obtain **pre‑authorisation** from their insurer before booking. [spiresphysiotherapy](https://spiresphysiotherapy.com/prices/)
+
+**Team (London)**
+
+- **Andrew** – Physiotherapist based in the London / West Hampstead clinic, with a background in sports injuries and NHS work. [spiresphysiotherapy](https://spiresphysiotherapy.com)
+- Other Spires clinicians work across Oxfordshire and London; Ava should refer to “one of our physiotherapists” unless a specific clinician has been requested. [spiresphysiotherapy](https://spiresphysiotherapy.com/meet-the-team/)
+
+**Key policies**
+
+- Aim for **24 hours’ notice** for cancellations; late cancellations may be charged at the clinic’s discretion. Ava should explain this gently when relevant.  
+- Insurance patients: remind them to bring or email their **authorisation number** and insurer details; back office confirms cover before or after the call. [spiresphysiotherapy](https://spiresphysiotherapy.com/prices/)
+
+***
+
+Paste this in as the knowledge‑base / FAQ content for the Spires instance. You can tweak exact wording (e.g. if you want to explicitly state “all appointments are 45 minutes and £75”) but the structure is now correct and London‑specific.

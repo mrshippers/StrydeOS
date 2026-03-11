@@ -198,13 +198,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setFirebaseUser(fbUser);
             const profile = await fetchUserProfile(fbUser);
             setUser(profile);
+            if (profile) {
+              document.cookie = "__session=1; path=/; SameSite=Lax";
+            } else {
+              document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
+            }
           } else {
             setFirebaseUser(null);
             setUser(null);
+            document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
           }
         } catch {
           setFirebaseUser(null);
           setUser(null);
+          document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
         } finally {
           setLoading(false);
         }
@@ -284,6 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (auth) await fbSignOut(auth);
     setUser(null);
     setFirebaseUser(null);
+    document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
   }, []);
 
   const refreshClinicProfile = useCallback(async () => {
@@ -296,6 +304,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const enterDemoMode = useCallback(() => {
     setUser(DEMO_USER);
     setFirebaseUser(null);
+    document.cookie = "__session=1; path=/; SameSite=Lax";
   }, []);
 
   return (

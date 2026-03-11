@@ -38,11 +38,13 @@ The tier model forces a linear journey: **Intelligence → Intelligence + Ava �
 
 ## Working backwards from £380–500 full-stack target
 
-**£449/month** for the full StrydeOS stack (Studio tier, 2–4 clinicians) is the sweet spot. Why you're not undercutting yourself:
+The **recommended** Studio Full Stack (2–4 clinicians) price is **£399/month** (see table and section below). The £380–500 band is justified as follows:
 
-- At £449, a 3-clinician practice earning £250–300k/year spends **£5,388 annually** — roughly **1.8–2.2% of revenue**. That's above current UK clinic software spend (~0.5–1.5%) but well under the 3–6% healthcare IT benchmark. It feels like a stretch but a justifiable one. It's also **less than a part-time receptionist** (£12–15k/year), which is your strongest sales line.
+- **£449** is where the maths sit: a 3-clinician practice earning £250–300k/year would spend **£5,388 annually** — roughly **1.8–2.2% of revenue**. That's above current UK clinic software spend (~0.5–1.5%) but well under the 3–6% healthcare IT benchmark. It's also **less than a part-time receptionist** (£12–15k/year), which is your strongest sales line. So the *analytical* sweet spot is in this range.
 - **At £380**, you're pricing below the fragmented stack cost (Cliniko £76 + Norango £190 + Physitrack £30 + manual follow-up time = £296+ before you factor in the owner's time). That's too cheap — you're giving away margin for no reason.
 - **At £500**, you're bumping against the psychological ceiling where a UK clinic owner starts thinking "that's a car payment." The jump from their current £150/month total software spend to £500 is a 3.3x increase. Possible but harder to close on a 15-minute call.
+
+Within that band, **£399 is the chosen target**; the next section explains why not £449.
 
 ---
 
@@ -73,7 +75,9 @@ The full stack discount is roughly **15–20%** versus buying all three individu
 
 ## Why £399 for Studio Full Stack, not £449
 
-At £399 you land **under the £400 psychological barrier**, which matters more than the £50 in margin. You're still 2.6x what they currently spend on software, but the "under £400" framing is easier to say on a call. If you want to push it, £429 works too — odd numbers feel more considered than round ones.
+The revenue-ratio and receptionist-comparison logic above still holds at £399: a £250k practice pays ~£4,788/year (~1.9% of revenue), still under a part-time receptionist. So we are not undercutting the rationale — we are choosing a price *within* the justified band.
+
+**Recommendation: £399.** At £399 you land **under the £400 psychological barrier**, which matters more than the £50 in margin. You're still 2.6x what they currently spend on software, but the "under £400" framing is easier to say on a call. If you want to push it, £429 works too — odd numbers feel more considered than round ones.
 
 ---
 

@@ -57,11 +57,11 @@ function getAdminApp(): App {
     process.env.HOME || process.env.USERPROFILE || "",
     ".config", "gcloud", "application_default_credentials.json"
   );
-  if (fs.existsSync(adcPath)) {
+  if (fs.existsSync(adcPath) && projectId) {
     try {
       _app = initializeApp({
         credential: applicationDefault(),
-        projectId: projectId || "clinical-tracker-spires",
+        projectId,
       });
       return _app;
     } catch {
