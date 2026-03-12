@@ -55,11 +55,11 @@ export default function EmptyStateCard({
 
   return (
     <div
-      className="rounded-[var(--radius-card)] p-8 flex flex-col items-center text-center"
+      className="group rounded-[var(--radius-card)] p-8 flex flex-col items-center text-center transition-all duration-200 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
       style={{ background: bg, border: `1px solid ${border}` }}
     >
       <div
-        className="w-12 h-12 rounded-[var(--radius-inner)] flex items-center justify-center mb-4"
+        className="w-12 h-12 rounded-[var(--radius-inner)] flex items-center justify-center mb-4 transition-transform duration-200 group-hover:scale-110"
         style={{ background: iconBg }}
       >
         <Icon size={22} style={{ color: accentColor }} strokeWidth={1.5} />
@@ -71,7 +71,7 @@ export default function EmptyStateCard({
       {actionLabel && actionHref && (
         <Link
           href={actionHref}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
           style={{
             background: accentColor,
             color: "white",

@@ -239,17 +239,15 @@ export default function CliniciansTable({ rows, onRowClick }: CliniciansTablePro
                     if (onRowClick) onRowClick(row.clinicianId);
                     setExpandedId(expandedId === row.clinicianId ? null : row.clinicianId);
                   }}
-                  className="border-b border-border/50 cursor-pointer transition-colors"
+                  className="group border-b border-border/50 cursor-pointer transition-colors hover:bg-blue/[0.04] active:bg-blue/[0.06]"
                   style={{
                     height: 52,
                     borderLeft: hasAlert ? "3px solid #F59E0B" : undefined,
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(28,84,242,0.04)"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ""}
                 >
                   <td className="px-5 py-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-navy flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-navy flex items-center justify-center text-[10px] font-bold text-white shrink-0 transition-shadow duration-200 group-hover:ring-2 group-hover:ring-blue/20">
                         {getInitials(row.clinicianName)}
                       </div>
                       <span className="text-sm font-medium text-navy">

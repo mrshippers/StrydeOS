@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutGrid,
   Users,
@@ -318,7 +319,6 @@ export default function Sidebar() {
             {NAV_ITEMS.map((item) => {
               const isActive = pathname === item.href || (item.href === "/dashboard" && pathname === "/");
               const badge = item.href === "/continuity" && pulseBadge > 0 ? pulseBadge : 0;
-              // null moduleKey = always accessible (Dashboard, Clinicians)
               const isLocked = item.moduleKey !== null && !hasModule(item.moduleKey);
               const href = isLocked ? "/billing" : item.href;
 
@@ -327,32 +327,40 @@ export default function Sidebar() {
                   key={item.label}
                   href={href}
                   onClick={() => setMobileOpen(false)}
-                  className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors active:scale-[0.98] ${
                     isLocked
                       ? "text-white/25 hover:text-white/40 hover:bg-white/[0.03]"
                       : isActive
                         ? "text-white"
                         : "text-white/45 hover:text-white/75 hover:bg-white/[0.04]"
                   }`}
-                  style={!isLocked && isActive ? {
-                    background: "rgba(255,255,255,0.08)",
-                    borderLeft: `3px solid ${item.accent}`,
-                    paddingLeft: 9,
-                  } : undefined}
                   title={isLocked ? `${item.label} — not included in your plan` : undefined}
                 >
-                  <item.icon size={16} strokeWidth={isActive ? 2 : 1.5} />
-                  <span className="flex-1">{item.label}</span>
-                  {isLocked ? (
-                    <Lock size={11} className="text-white/20" />
-                  ) : badge > 0 ? (
-                    <span
-                      className="min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                      style={{ background: item.accent }}
-                    >
-                      {badge}
-                    </span>
-                  ) : null}
+                  {!isLocked && isActive && (
+                    <motion.div
+                      layoutId="nav-active-indicator"
+                      className="absolute inset-0 rounded-lg"
+                      style={{
+                        background: "rgba(255,255,255,0.08)",
+                        borderLeft: `3px solid ${item.accent}`,
+                      }}
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-[1] flex items-center gap-3 w-full">
+                    <item.icon size={16} strokeWidth={isActive ? 2 : 1.5} />
+                    <span className="flex-1">{item.label}</span>
+                    {isLocked ? (
+                      <Lock size={11} className="text-white/20" />
+                    ) : badge > 0 ? (
+                      <span
+                        className="min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                        style={{ background: item.accent }}
+                      >
+                        {badge}
+                      </span>
+                    ) : null}
+                  </span>
                 </Link>
               );
             })}
@@ -370,55 +378,79 @@ export default function Sidebar() {
                     key={item.label}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors active:scale-[0.98] ${
                       isActive
                         ? "text-white"
                         : "text-white/45 hover:text-white/75 hover:bg-white/[0.04]"
                     }`}
-                    style={isActive ? {
-                      background: "rgba(255,255,255,0.08)",
-                      borderLeft: "3px solid #1C54F2",
-                      paddingLeft: 9,
-                    } : undefined}
                   >
-                    <item.icon size={16} strokeWidth={isActive ? 2 : 1.5} />
-                    {item.label}
+                    {isActive && (
+                      <motion.div
+                        layoutId="system-active-indicator"
+                        className="absolute inset-0 rounded-lg"
+                        style={{
+                          background: "rgba(255,255,255,0.08)",
+                          borderLeft: "3px solid #1C54F2",
+                        }}
+                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-[1] flex items-center gap-3">
+                      <item.icon size={16} strokeWidth={isActive ? 2 : 1.5} />
+                      {item.label}
+                    </span>
                   </Link>
                 );
               })}
               <button
                 onClick={() => setHelpOpen(true)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors active:scale-[0.98] ${
                   helpOpen
                     ? "text-white"
                     : "text-white/45 hover:text-white/75 hover:bg-white/[0.04]"
                 }`}
-                style={helpOpen ? {
-                  background: "rgba(255,255,255,0.08)",
-                  borderLeft: "3px solid #1C54F2",
-                  paddingLeft: 9,
-                } : undefined}
               >
-                <HelpCircle size={16} strokeWidth={helpOpen ? 2 : 1.5} />
-                Help
+                {helpOpen && (
+                  <motion.div
+                    layoutId="system-active-indicator"
+                    className="absolute inset-0 rounded-lg"
+                    style={{
+                      background: "rgba(255,255,255,0.08)",
+                      borderLeft: "3px solid #1C54F2",
+                    }}
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-[1] flex items-center gap-3">
+                  <HelpCircle size={16} strokeWidth={helpOpen ? 2 : 1.5} />
+                  Help
+                </span>
               </button>
               {isSuperAdmin && (
                 <Link
                   href="/admin"
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors active:scale-[0.98] ${
                     pathname === "/admin"
                       ? "text-white"
                       : "text-white/45 hover:text-white/75 hover:bg-white/[0.04]"
                   }`}
-                  style={pathname === "/admin" ? {
-                    background: "rgba(255,255,255,0.08)",
-                    borderLeft: "3px solid #1C54F2",
-                    paddingLeft: 9,
-                  } : undefined}
                 >
-                  <Shield size={16} strokeWidth={pathname === "/admin" ? 2 : 1.5} />
-                  Stryde Super User
+                  {pathname === "/admin" && (
+                    <motion.div
+                      layoutId="system-active-indicator"
+                      className="absolute inset-0 rounded-lg"
+                      style={{
+                        background: "rgba(255,255,255,0.08)",
+                        borderLeft: "3px solid #1C54F2",
+                      }}
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-[1] flex items-center gap-3">
+                    <Shield size={16} strokeWidth={pathname === "/admin" ? 2 : 1.5} />
+                    Stryde Super User
+                  </span>
                 </Link>
               )}
             </div>

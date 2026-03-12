@@ -5,9 +5,11 @@ import { motion, useReducedMotion } from "motion/react";
 import { MonolithHero } from "@/components/MonolithLogo";
 
 const SPLASH_SEEN_KEY = "strydeos_splash_seen";
-const DISPLAY_MS = 1500;
-const FADE_IN_MS = 300;
-const FADE_OUT_MS = 300;
+
+const REVEAL_MS = 2000;
+const HOLD_MS = 500;
+const EXIT_MS = 500;
+const TOTAL_MS = REVEAL_MS + HOLD_MS;
 
 function getSplashSeen(): boolean {
   try {
@@ -45,7 +47,7 @@ export default function SplashScreen() {
 
     timeoutId.current = setTimeout(() => {
       setExiting(true);
-    }, DISPLAY_MS);
+    }, TOTAL_MS);
     return () => {
       if (timeoutId.current) clearTimeout(timeoutId.current);
       timeoutId.current = null;
@@ -68,32 +70,99 @@ export default function SplashScreen() {
 
   if (!visible) return null;
 
-  const fadeInDuration = prefersReducedMotion ? 0 : FADE_IN_MS / 1000;
-  const fadeOutDuration = prefersReducedMotion ? 0 : FADE_OUT_MS / 1000;
+  const dur = prefersReducedMotion ? 0 : 1;
+  const exitDur = prefersReducedMotion ? 0 : EXIT_MS / 1000;
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--color-navy)]"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--color-navy)] overflow-hidden"
       initial={{ opacity: 1 }}
       animate={{ opacity: exiting ? 0 : 1 }}
-      transition={{
-        duration: fadeOutDuration,
-        ease: "easeOut",
-      }}
+      transition={{ duration: exitDur, ease: "easeInOut" }}
       onAnimationComplete={() => {
         if (exiting) handleExitComplete();
       }}
     >
+      {/* Phase 1: Radial glow bloom (0-800ms) — mirrors the SVG's radial light source #6AABFF */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
+        className="absolute rounded-full"
+        style={{
+          width: 400,
+          height: 400,
+          background:
+            "radial-gradient(circle, rgba(106,171,255,0.22) 0%, rgba(28,84,242,0.08) 50%, transparent 70%)",
+          filter: "blur(40px)",
+        }}
+        initial={{ opacity: 0, scale: 0 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{
-          duration: fadeInDuration,
-          ease: "easeOut",
+          duration: 0.8 * dur,
+          ease: [0.2, 0.6, 0.3, 1],
         }}
-        className="flex items-center justify-center"
+      />
+
+      {/* Glow breathing pulse (1.4s-2.5s) */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{
+          width: 400,
+          height: 400,
+          background:
+            "radial-gradient(circle, rgba(106,171,255,0.15) 0%, transparent 65%)",
+          filter: "blur(50px)",
+        }}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: [0, 0, 0.6, 0.3, 0.5, 0], scale: [0.9, 0.9, 1.05, 1, 1.03, 0.95] }}
+        transition={{
+          duration: 2.5 * dur,
+          ease: "easeInOut",
+          times: [0, 0.5, 0.65, 0.75, 0.85, 1],
+        }}
+      />
+
+      {/* Phase 1: Monolith mark fade-in + scale (0-800ms with spring settle) */}
+      <motion.div
+        className="relative flex items-center justify-center"
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{
+          duration: 0.8 * dur,
+          ease: [0.16, 1, 0.3, 1],
+        }}
       >
         <MonolithHero />
+      </motion.div>
+
+      {/* Phase 2: Diagonal shimmer sweep (800ms-1400ms) — references the rim highlight + diagonal cut edge */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 1, 1, 0] }}
+        transition={{
+          duration: 0.8 * dur,
+          delay: 0.7 * dur,
+          ease: "easeInOut",
+          times: [0, 0.15, 0.7, 1],
+        }}
+      >
+        <motion.div
+          className="absolute"
+          style={{
+            width: "200%",
+            height: "200%",
+            top: "-50%",
+            left: "-50%",
+            background:
+              "linear-gradient(135deg, transparent 42%, rgba(255,255,255,0.06) 46%, rgba(255,255,255,0.18) 49%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.18) 51%, rgba(255,255,255,0.06) 54%, transparent 58%)",
+          }}
+          initial={{ x: "-40%", y: "-40%" }}
+          animate={{ x: "40%", y: "40%" }}
+          transition={{
+            duration: 0.7 * dur,
+            delay: 0.75 * dur,
+            ease: [0.4, 0, 0.2, 1],
+          }}
+        />
       </motion.div>
     </motion.div>
   );

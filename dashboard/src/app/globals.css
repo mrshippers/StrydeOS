@@ -154,6 +154,17 @@ html.dark .animate-skeleton .bg-black\/\[0\.06\] {
   background: var(--color-muted);
 }
 
+/* ─── Focus ring — subtle brand-coloured glow ────────────────────────────────── */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-cloud-dancer), 0 0 0 4px rgba(28, 84, 242, 0.3);
+  border-radius: inherit;
+}
+
+html.dark :focus-visible {
+  box-shadow: 0 0 0 2px var(--color-navy), 0 0 0 4px rgba(75, 139, 245, 0.35);
+}
+
 /* ─── Tabular numbers — column-align all numeric values ─────────────────────── */
 .tabular-nums {
   font-variant-numeric: tabular-nums;

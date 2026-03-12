@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
@@ -104,6 +105,12 @@ function formatSyncTime(dateStr: string | undefined): { label: string; staleness
   return { label, staleness };
 }
 
+const staggerItem = (delay: number) => ({
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.35, ease: [0.2, 0.8, 0.2, 1] as const, delay },
+});
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const isClinicianView = user?.role === "clinician" && !!user?.clinicianId;
@@ -144,9 +151,9 @@ export default function DashboardPage() {
   const trendWindow = stats.slice(Math.max(0, weekIndex - 5), weekIndex + 1);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       {/* Welcome greeting + sync indicator */}
-      <div className="mb-2">
+      <motion.div className="mb-2" {...staggerItem(0)}>
         <div className="flex items-start justify-between">
           <div>
             <h1 className="font-display text-[32px] text-navy leading-tight relative">
@@ -187,7 +194,7 @@ export default function DashboardPage() {
         {isCurrentWeek && !loading && (
           <DailySnapshot stats={latest} patients={patients} />
         )}
-      </div>
+      </motion.div>
 
       {/* Rule-based insight nudge — current week only */}
       {isCurrentWeek && !loading && (
@@ -200,13 +207,13 @@ export default function DashboardPage() {
       {(user?.uid === "demo" || usedDemo) && <DemoBanner />}
 
       {/* Week navigation + clinician filter row */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-tour="clinician-filter">
+      <motion.div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-tour="clinician-filter" {...staggerItem(0.06)}>
         {/* Week picker */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setWeekOffset((o) => o - 1)}
             disabled={weekOffset <= -(stats.length - 1)}
-            className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-muted hover:text-navy hover:border-navy/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white shadow-[var(--shadow-card)]"
+            className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-muted hover:text-navy hover:border-navy/20 transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed bg-white shadow-[var(--shadow-card)] active:scale-95"
           >
             <ChevronLeft size={14} />
           </button>
@@ -229,7 +236,7 @@ export default function DashboardPage() {
           <button
             onClick={() => setWeekOffset((o) => Math.min(0, o + 1))}
             disabled={isCurrentWeek}
-            className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-muted hover:text-navy hover:border-navy/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed bg-white shadow-[var(--shadow-card)]"
+            className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-muted hover:text-navy hover:border-navy/20 transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed bg-white shadow-[var(--shadow-card)] active:scale-95"
           >
             <ChevronRight size={14} />
           </button>
@@ -242,10 +249,10 @@ export default function DashboardPage() {
             <div className="flex gap-1.5">
               <button
                 onClick={() => setSelectedClinician("all")}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 active:scale-[0.97] ${
                   selectedClinician === "all"
-                    ? "bg-navy text-white"
-                    : "border border-border text-muted hover:text-navy hover:border-navy/20 bg-white"
+                    ? "bg-navy text-white shadow-sm"
+                    : "border border-border text-muted hover:text-navy hover:border-navy/20 hover:shadow-sm bg-white"
                 }`}
               >
                 All
@@ -254,10 +261,10 @@ export default function DashboardPage() {
                 <button
                   key={c.id}
                   onClick={() => setSelectedClinician(c.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 active:scale-[0.97] ${
                     selectedClinician === c.id
-                      ? "bg-navy text-white"
-                      : "border border-border text-muted hover:text-navy hover:border-navy/20 bg-white"
+                      ? "bg-navy text-white shadow-sm"
+                      : "border border-border text-muted hover:text-navy hover:border-navy/20 hover:shadow-sm bg-white"
                   }`}
                 >
                   {c.name.split(" ")[0]}
@@ -266,13 +273,13 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Alert section — before the numbers, so priority context lands first */}
       {!loading && alerts.length > 0 && <AlertBanner alerts={alerts} />}
 
       {/* Stat cards — row 1 */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="stat-cards">
+      <motion.section className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="stat-cards" {...staggerItem(0.1)}>
         {loading ? (
           <>
             <SkeletonCard />
@@ -315,10 +322,10 @@ export default function DashboardPage() {
             />
           </>
         ) : null}
-      </section>
+      </motion.section>
 
       {/* Stat cards — row 2 */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" {...staggerItem(0.18)}>
         {loading ? (
           <>
             <SkeletonCard />
@@ -391,23 +398,25 @@ export default function DashboardPage() {
             />
           </>
         ) : null}
-      </section>
+      </motion.section>
 
       {/* 6-Week Trend Chart — shows window ending at selected week */}
       {!loading && trendWindow.length > 0 && (
-        <TrendChart
-          data={trendWindow}
-          lines={[
-            { key: "followUpRate", color: "#4B8BF5", label: "Follow-up Rate" },
-            { key: "physitrackRate", color: "#0891B2", label: "Physitrack Rate" },
-            { key: "utilisationRate", color: "#8B5CF6", label: "Utilisation" },
-          ]}
-        />
+        <motion.div {...staggerItem(0.26)}>
+          <TrendChart
+            data={trendWindow}
+            lines={[
+              { key: "followUpRate", color: "#4B8BF5", label: "Follow-up Rate" },
+              { key: "physitrackRate", color: "#0891B2", label: "Physitrack Rate" },
+              { key: "utilisationRate", color: "#8B5CF6", label: "Utilisation" },
+            ]}
+          />
+        </motion.div>
       )}
 
       {/* Clinician mini-table — real Firestore data, demo fallback */}
       {!loading && !isClinicianView && clinicianRows.length > 0 && (
-        <div>
+        <motion.div {...staggerItem(0.32)}>
           <div className="flex items-center gap-2 mb-3">
             <h3 className="font-display text-lg text-navy">
               Clinician Summary — This Week
@@ -422,7 +431,7 @@ export default function DashboardPage() {
             rows={clinicianRows}
             onRowClick={(id) => router.push(`/clinicians?id=${id}`)}
           />
-        </div>
+        </motion.div>
       )}
     </div>
   );

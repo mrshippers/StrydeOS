@@ -19,7 +19,7 @@ const TREND_COLORS: Record<string, string> = {
   flat: "#6B7280",
 };
 
-function useCountUp(rawTarget: string | number, duration = 800): string {
+function useCountUp(rawTarget: string | number, duration = 800): { display: string; ref: React.RefObject<HTMLElement | null> } {
   const target = String(rawTarget);
   const numericPart = parseFloat(target.replace(/[^0-9.\-]/g, ""));
   const isNumeric = !isNaN(numericPart);
@@ -30,6 +30,9 @@ function useCountUp(rawTarget: string | number, duration = 800): string {
   const [display, setDisplay] = useState(target);
   const rafRef = useRef<number>(0);
   const startRef = useRef<number>(0);
+  const hasAnimated = useRef(false);
+  const elRef = useRef<HTMLElement | null>(null);
+  const reducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const animate = useCallback(() => {
     const now = performance.now();
@@ -45,18 +48,51 @@ function useCountUp(rawTarget: string | number, duration = 800): string {
     }
   }, [numericPart, prefix, suffix, decimals, duration]);
 
-  useEffect(() => {
-    if (!isNumeric) {
+  const startAnimation = useCallback(() => {
+    if (hasAnimated.current || !isNumeric || reducedMotion) {
       setDisplay(target);
       return;
     }
+    hasAnimated.current = true;
     setDisplay(`${prefix}${(0).toFixed(decimals)}${suffix}`);
     startRef.current = performance.now();
     rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [target, isNumeric, prefix, suffix, decimals, animate]);
+  }, [target, isNumeric, prefix, suffix, decimals, animate, reducedMotion]);
 
-  return display;
+  useEffect(() => {
+    const el = elRef.current;
+    if (!el || !isNumeric) {
+      setDisplay(target);
+      return;
+    }
+
+    if (reducedMotion) {
+      setDisplay(target);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          startAnimation();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [target, isNumeric, startAnimation, reducedMotion]);
+
+  useEffect(() => {
+    hasAnimated.current = false;
+  }, [target]);
+
+  return { display, ref: elRef };
 }
 
 function Sparkline({ data, status }: { data: number[]; status: string }) {
@@ -117,7 +153,7 @@ export default function StatCard({
   sparklineData,
 }: StatCardProps) {
   const dotStyle = STATUS_COLORS[status] ?? STATUS_COLORS.neutral;
-  const animatedValue = useCountUp(value);
+  const { display: animatedValue, ref: countRef } = useCountUp(value);
 
   const TrendIcon = trend === "up"
     ? ChevronUp
@@ -136,8 +172,8 @@ export default function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`relative rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden transition-all duration-200 flex flex-col ${
-        onClick ? "cursor-pointer hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5" : ""
+      className={`group relative rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden transition-all duration-200 flex flex-col ${
+        onClick ? "cursor-pointer hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5 active:scale-[0.98] active:shadow-[var(--shadow-card)]" : "hover:shadow-[var(--shadow-elevated)]"
       }`}
     >
       {/* Status dot — top right */}
@@ -163,7 +199,7 @@ export default function StatCard({
 
         <div className="flex items-end justify-between mb-1">
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-5xl text-navy leading-none tabular-nums">
+            <span ref={countRef as React.RefObject<HTMLSpanElement>} className="font-display text-5xl text-navy leading-none tabular-nums">
               {animatedValue}
             </span>
             {unit && (
@@ -209,18 +245,18 @@ export default function StatCard({
             <Link
               href={action.href}
               onClick={(e) => e.stopPropagation()}
-              className="text-[11px] font-semibold transition-colors hover:underline"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold transition-colors hover:underline"
               style={{ color: "#1C54F2" }}
             >
-              {action.label} →
+              {action.label} <span className="inline-block transition-transform duration-150 group-hover:translate-x-0.5">→</span>
             </Link>
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); action.onClick?.(); }}
-              className="text-[11px] font-semibold transition-colors hover:underline"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold transition-colors hover:underline"
               style={{ color: "#1C54F2" }}
             >
-              {action.label} →
+              {action.label} <span className="inline-block transition-transform duration-150 group-hover:translate-x-0.5">→</span>
             </button>
           )}
         </div>
