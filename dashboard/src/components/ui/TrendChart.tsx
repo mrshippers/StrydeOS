@@ -74,7 +74,7 @@ export default function TrendChart({
 
   return (
     <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-      <h3 className="font-display text-lg text-navy mb-1">6-Week Trend</h3>
+      <h3 className="font-display text-lg text-navy mb-1">90-Day Rolling Trend</h3>
       <p className="text-xs text-muted mb-4">
         Rolling performance across selected metrics
       </p>

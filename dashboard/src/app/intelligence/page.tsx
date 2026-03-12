@@ -355,7 +355,7 @@ export default function IntelligencePage() {
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
         <div className="p-6 pb-0">
           <h3 className="font-display text-lg text-navy mb-1">Clinician Performance</h3>
-          <p className="text-xs text-muted mb-4">6-week trends — click a row to see patient-level breakdown</p>
+          <p className="text-xs text-muted mb-4">90-day rolling trends — click a row to see patient-level breakdown</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -902,7 +902,7 @@ export default function IntelligencePage() {
                       </div>
                     </div>
                     <p className="text-xs text-muted">
-                      {first.avgScore.toFixed(1)} &rarr; {last.avgScore.toFixed(1)} over 6 weeks ({last.patientCount} patients).{" "}
+                      {first.avgScore.toFixed(1)} &rarr; {last.avgScore.toFixed(1)} over 90-day window ({last.patientCount} patients).{" "}
                       {improved ? "Trending in the right direction." : "Needs attention."}
                     </p>
                   </div>

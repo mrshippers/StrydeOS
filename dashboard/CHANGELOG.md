@@ -10,7 +10,7 @@ Revenue analytics, DNA pattern analysis, referral attribution, clinical outcome 
 - **Revenue tab** — per-clinician revenue bar chart, revenue by condition with horizontal progress bars, insurance mix percentages
 - **DNA Analysis tab** — no-show rate by day of week and by time slot, colour-coded risk thresholds, actionable insight cards
 - **Referral Attribution tab** — sortable table: source, type, referred count, conversion rate, total revenue, average course length
-- **Outcomes tab** — NPRS and PSFS 6-week trend lines, per-measure improvement cards with directional indicators
+- **Outcomes tab** — NPRS and PSFS 90-day trend lines, per-measure improvement cards with directional indicators
 - **Reputation tab** — NPS score with promoter/passive/detractor segmentation and monthly trend, Google Review count with velocity chart
 
 ### Pulse — Continuity & Comms (New)
@@ -92,7 +92,7 @@ Abstracted HEP adapter following the same plugin pattern as PMS integrations.
 
 ## v0.1.0 — Sprint 0 (Initial Build)
 
-- Dashboard UI with demo data, stat cards, 6-week trend charts
+- Dashboard UI with demo data, stat cards, 90-day rolling trend charts
 - Firebase Auth flow with email/password sign-in
 - Settings page with onboarding widget
 - Sidebar navigation with notification bell

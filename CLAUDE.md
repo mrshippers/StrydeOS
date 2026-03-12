@@ -149,7 +149,7 @@ StrydeOS is built and validated at Spires first.
 
 These eight metrics are validated from live Spires data. They are the canonical set for the dashboard.
 
-1. **Follow-up rate** — follow-ups booked ÷ initial assessments (weekly + rolling 6 weeks)
+1. **Follow-up rate** — follow-ups booked ÷ initial assessments (weekly + rolling 90-day window)
 2. **HEP compliance** — patients given a programme ÷ patients seen
 3. **Programme assignment rate** — initial programme assigned at first contact
 4. **Course completion rate** — patients completing full prescribed course

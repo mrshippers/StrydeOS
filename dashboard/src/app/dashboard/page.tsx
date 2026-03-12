@@ -400,7 +400,7 @@ export default function DashboardPage() {
         ) : null}
       </motion.section>
 
-      {/* 6-Week Trend Chart — shows window ending at selected week */}
+      {/* 90-day trend chart — shows window ending at selected week */}
       {!loading && trendWindow.length > 0 && (
         <motion.div {...staggerItem(0.26)}>
           <TrendChart

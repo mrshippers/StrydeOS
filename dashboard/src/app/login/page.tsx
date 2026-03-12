@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { sendPasswordResetEmail } from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
+import { getFirebaseAuth } from "@/lib/firebase";
 import { AlertCircle, Loader2, ArrowRight, Check } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
@@ -37,6 +39,9 @@ function LoginPageInner() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [rememberedEmail, setRememberedEmail] = useState<string | null>(null);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
 
   useEffect(() => {
     try {
@@ -94,6 +99,39 @@ function LoginPageInner() {
         );
       }
       setSubmitting(false);
+    }
+  }
+
+  async function handleForgotPassword(e: React.MouseEvent) {
+    e.preventDefault();
+    setError(null);
+    setResetError(null);
+    setResetSent(false);
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes("@")) {
+      setResetError("Enter your email above, then click Forgot password.");
+      return;
+    }
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      setResetError("Sign-in is not configured.");
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, trimmed);
+      setResetSent(true);
+    } catch (err: unknown) {
+      const code = err instanceof Error && "code" in err ? (err as { code: string }).code : "";
+      if (code === "auth/user-not-found") {
+        setResetError("No account found with that email.");
+      } else if (code === "auth/invalid-email") {
+        setResetError("Please enter a valid email address.");
+      } else {
+        setResetError(err instanceof Error ? err.message : "Could not send reset email. Try again.");
+      }
+    } finally {
+      setResetLoading(false);
     }
   }
 
@@ -185,7 +223,7 @@ function LoginPageInner() {
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => { setEmail(e.target.value); setResetError(null); setResetSent(false); }}
                       required
                       autoFocus={!isReturning}
                       autoComplete="email"
@@ -195,13 +233,23 @@ function LoginPageInner() {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
-                      Password
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest">
+                        Password
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        disabled={resetLoading}
+                        className="text-[11px] font-semibold text-blue hover:underline disabled:opacity-50"
+                      >
+                        {resetLoading ? "Sending…" : "Forgot password?"}
+                      </button>
+                    </div>
                     <input
                       type="password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => { setPassword(e.target.value); setResetError(null); setResetSent(false); }}
                       required
                       autoFocus={isReturning}
                       autoComplete="current-password"
@@ -209,6 +257,18 @@ function LoginPageInner() {
                       className="w-full px-4 py-3 rounded-xl text-sm text-navy placeholder-muted border border-border bg-cloud-light focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue transition-all"
                     />
                   </div>
+
+                  {resetSent && (
+                    <div className="p-3.5 rounded-xl bg-success/10 border border-success/20 text-[13px] text-success">
+                      Check your email for a link to reset your password.
+                    </div>
+                  )}
+                  {resetError && (
+                    <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-danger/10 border border-danger/20">
+                      <AlertCircle size={14} className="text-danger mt-0.5 shrink-0" />
+                      <p className="text-[13px] text-danger">{resetError}</p>
+                    </div>
+                  )}
 
                   <AnimatePresence>
                     {error && (
@@ -282,9 +342,5 @@ function LoginPageInner() {
 }
 
 export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginPageInner />
-    </Suspense>
-  );
+  return <LoginPageInner />;
 }

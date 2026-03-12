@@ -1,27 +1,23 @@
 /**
  * setup-stripe-products.ts
  *
- * Creates all StrydeOS products and prices in Stripe.
- * Idempotent — safe to run multiple times.
+ * Creates all StrydeOS products and prices in Stripe to match the pricing model:
+ *   - 3 modules (Intelligence, Ava, Pulse) × 3 tiers × 2 intervals = 18 prices
+ *   - 1 Full Stack bundle × 3 tiers × 2 intervals = 6 prices
+ *   - 1 Ava one-time setup fee = 1 price
+ *   Total: 25 prices across 5 products
  *
- * Products created:
- *   Intelligence, Pulse, Ava, Full Stack (all 3), Ava Setup Fee (one-time)
+ * Usage (from dashboard dir, with STRIPE_SECRET_KEY in .env.local):
+ *   npx tsx scripts/setup-stripe-products.ts
  *
- * Prices per subscription product:
- *   3 tiers (Solo/Studio/Clinic) × 2 periods (monthly/annual) = 6 prices each
- *
- * Pricing (£, from pricing breakdown model v2.0):
- *   Solo:   Intelligence £79  | Pulse £99  | Ava £149 | Full Stack £279
- *   Studio: Intelligence £129 | Pulse £149 | Ava £199 | Full Stack £399
- *   Clinic: Intelligence £199 | Pulse £229 | Ava £299 | Full Stack £599
- *   Annual: 20% discount applied to all above
- *   Ava setup fee: £250 one-time (all tiers)
- *
- * Usage:
- *   STRIPE_SECRET_KEY=sk_test_... npx ts-node --skip-project scripts/setup-stripe-products.ts
- *
- * After running, copy the printed env var block into .env.local.
+ * The script loads .env.local and is idempotent — won't duplicate products/prices.
+ * After running, copy the printed env block into .env.local (and STRIPE_WEBHOOK_SECRET for webhooks).
  */
+
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
 import Stripe from "stripe";
 
@@ -33,113 +29,130 @@ if (!SECRET_KEY) {
 
 const stripe = new Stripe(SECRET_KEY, { apiVersion: "2026-02-25.clover" });
 
-// ─── Pricing table (pence) ────────────────────────────────────────────────────
+// ─── Pricing table (pence, GBP) ───────────────────────────────────────────────
+// Annual = 20% off monthly × 12
 
-const MONTHLY_PRICES = {
-  intelligence: { solo: 7900,  studio: 12900, clinic: 19900 },
-  pulse:        { solo: 9900,  studio: 14900, clinic: 22900 },
-  ava:          { solo: 14900, studio: 19900, clinic: 29900 },
-  fullstack:    { solo: 27900, studio: 39900, clinic: 59900 },
+const PRICING = {
+  intelligence: {
+    solo:   { month:  7900, year:  75840 },
+    studio: { month: 12900, year: 123840 },
+    clinic: { month: 19900, year: 191040 },
+  },
+  ava: {
+    solo:   { month: 14900, year: 143040 },
+    studio: { month: 19900, year: 191040 },
+    clinic: { month: 29900, year: 287040 },
+  },
+  pulse: {
+    solo:   { month:  9900, year:  95040 },
+    studio: { month: 14900, year: 143040 },
+    clinic: { month: 22900, year: 219840 },
+  },
+  fullstack: {
+    solo:   { month: 27900, year: 267840 },
+    studio: { month: 39900, year: 383040 },
+    clinic: { month: 59900, year: 575040 },
+  },
 } as const;
 
-const ANNUAL_DISCOUNT = 0.20;
-const AVA_SETUP_FEE = 25000; // £250 one-time
+const TIER_LABELS = { solo: "Solo (1 clinician)", studio: "Studio (2–4 clinicians)", clinic: "Clinic (5+ clinicians)" };
+const TIERS = ["solo", "studio", "clinic"] as const;
+const INTERVALS = ["month", "year"] as const;
 
-type ModuleId = keyof typeof MONTHLY_PRICES;
-type TierId = "solo" | "studio" | "clinic";
-
-const MODULES: { id: ModuleId; name: string; description: string; envPrefix: string }[] = [
+const PRODUCTS = [
   {
-    id: "intelligence",
+    key: "intelligence" as const,
     name: "StrydeOS — Intelligence",
-    description:
-      "Clinical performance dashboard. 8 validated KPIs, revenue analytics, DNA rate analysis, outcome measure trends, and NPS tracking.",
-    envPrefix: "STRIPE_PRICE_INTELLIGENCE",
+    description: "Clinical performance dashboard. 8 validated KPIs, revenue analytics, DNA rate analysis, outcome measure trends, and NPS tracking.",
   },
   {
-    id: "pulse",
-    name: "StrydeOS — Pulse",
-    description:
-      "Patient continuity engine. Post-session follow-up sequences, dropout prevention, outcome tracking, and referral prompts.",
-    envPrefix: "STRIPE_PRICE_PULSE",
-  },
-  {
-    id: "ava",
+    key: "ava" as const,
     name: "StrydeOS — Ava",
-    description:
-      "AI voice receptionist. 24/7 inbound call handling, direct calendar booking, no-show recovery, and PMS write-back.",
-    envPrefix: "STRIPE_PRICE_AVA",
+    description: "AI voice receptionist powered by Retell AI. 24/7 inbound call handling, direct PMS booking, cancellation recovery.",
   },
   {
-    id: "fullstack",
+    key: "pulse" as const,
+    name: "StrydeOS — Pulse",
+    description: "Patient retention engine. Automated follow-up sequences, dropout prevention, outcome tracking, referral prompts.",
+  },
+  {
+    key: "fullstack" as const,
     name: "StrydeOS — Full Stack",
-    description:
-      "Intelligence + Pulse + Ava. One system for every metric, every call, every patient. Best value bundle.",
-    envPrefix: "STRIPE_PRICE_FULLSTACK",
+    description: "All three modules: Intelligence + Ava + Pulse. Best value — one system, every metric, every call, every patient.",
   },
 ];
 
-const TIERS: TierId[] = ["solo", "studio", "clinic"];
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+function envVarName(product: string, tier: string, interval: string): string {
+  return `STRIPE_PRICE_${product.toUpperCase()}_${tier.toUpperCase()}_${interval.toUpperCase()}`;
+}
 
-async function getOrCreateProduct(moduleId: string, name: string, description: string): Promise<Stripe.Product> {
+async function getOrCreateProduct(key: string, name: string, description: string): Promise<Stripe.Product> {
   const existing = await stripe.products.search({
-    query: `metadata["strydeos_module"]:"${moduleId}"`,
+    query: `metadata["strydeos_key"]:"${key}"`,
     limit: 1,
   });
   if (existing.data.length > 0) {
-    console.log(`  ↳ Product exists: ${name} (${existing.data[0].id})`);
+    console.log(`  ↳ Product exists: ${existing.data[0].id}`);
     return existing.data[0];
   }
   const product = await stripe.products.create({
     name,
     description,
-    metadata: { strydeos_module: moduleId },
+    metadata: { strydeos_key: key },
   });
-  console.log(`  ↳ Created product: ${name} (${product.id})`);
+  console.log(`  ↳ Created product: ${product.id}`);
   return product;
 }
 
-async function getOrCreatePrice(
+async function getOrCreateRecurringPrice(
   productId: string,
-  unitAmount: number,
-  currency: string,
-  interval: "month" | "year" | null,
-  metadata: Record<string, string>
+  amount: number,
+  interval: "month" | "year",
+  metadataKey: string,
+  nickname: string
 ): Promise<Stripe.Price> {
-  const existingList = await stripe.prices.list({ product: productId, active: true, limit: 100 });
-
-  const match = existingList.data.find((p) => {
-    if (p.unit_amount !== unitAmount || p.currency !== currency) return false;
-    if (interval === null) return p.type === "one_time";
-    return p.type === "recurring" && p.recurring?.interval === interval;
-  });
-
+  const existing = await stripe.prices.list({ product: productId, active: true, limit: 100 });
+  const match = existing.data.find(
+    (p) => p.recurring?.interval === interval && p.unit_amount === amount && p.currency === "gbp"
+  );
   if (match) {
+    console.log(`    ↳ Price exists: ${match.id}  (${nickname})`);
     return match;
   }
-
-  const priceData: Stripe.PriceCreateParams = {
+  const price = await stripe.prices.create({
     product: productId,
-    unit_amount: unitAmount,
-    currency,
-    metadata,
-  };
+    unit_amount: amount,
+    currency: "gbp",
+    recurring: { interval },
+    nickname,
+    metadata: { strydeos_price_key: metadataKey },
+  });
+  console.log(`    ↳ Created price: ${price.id}  (${nickname})`);
+  return price;
+}
 
-  if (interval !== null) {
-    priceData.recurring = { interval };
+async function getOrCreateOneTimePrice(
+  productId: string,
+  amount: number,
+  nickname: string
+): Promise<Stripe.Price> {
+  const existing = await stripe.prices.list({ product: productId, active: true, limit: 10 });
+  const match = existing.data.find((p) => !p.recurring && p.unit_amount === amount && p.currency === "gbp");
+  if (match) {
+    console.log(`    ↳ Price exists: ${match.id}  (${nickname})`);
+    return match;
   }
-
-  return await stripe.prices.create(priceData);
-}
-
-function annualAmount(monthly: number): number {
-  return Math.round(monthly * 12 * (1 - ANNUAL_DISCOUNT));
-}
-
-function fmt(pence: number): string {
-  return `£${(pence / 100).toFixed(0)}`;
+  const price = await stripe.prices.create({
+    product: productId,
+    unit_amount: amount,
+    currency: "gbp",
+    nickname,
+    metadata: { strydeos_price_key: "ava_setup" },
+  });
+  console.log(`    ↳ Created price: ${price.id}  (${nickname})`);
+  return price;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -149,75 +162,44 @@ async function main() {
 
   const envLines: string[] = [];
 
-  // ── Subscription products (Intelligence, Pulse, Ava, Full Stack) ─────────
-  for (const mod of MODULES) {
-    console.log(`\n📦  ${mod.name}`);
-    const product = await getOrCreateProduct(mod.id, mod.name, mod.description);
+  // ── Module + Full Stack recurring prices ──
+  for (const product of PRODUCTS) {
+    console.log(`\n📦  ${product.name}`);
+    const stripeProduct = await getOrCreateProduct(product.key, product.name, product.description);
+    const pricing = PRICING[product.key];
 
     for (const tier of TIERS) {
-      const monthlyAmt = MONTHLY_PRICES[mod.id][tier];
-      const annualAmt = annualAmount(monthlyAmt);
-      const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
-
-      // Monthly
-      const monthlyPrice = await getOrCreatePrice(
-        product.id,
-        monthlyAmt,
-        "gbp",
-        "month",
-        { strydeos_module: mod.id, strydeos_tier: tier, strydeos_period: "monthly" }
-      );
-      console.log(
-        `     ${tierLabel} monthly: ${fmt(monthlyAmt)}/mo → ${monthlyPrice.id}`
-      );
-      envLines.push(`${mod.envPrefix}_${tier.toUpperCase()}_MONTHLY=${monthlyPrice.id}`);
-
-      // Annual (billed as single yearly charge)
-      const annualPrice = await getOrCreatePrice(
-        product.id,
-        annualAmt,
-        "gbp",
-        "year",
-        { strydeos_module: mod.id, strydeos_tier: tier, strydeos_period: "annual" }
-      );
-      console.log(
-        `     ${tierLabel} annual:  ${fmt(annualAmt)}/yr (${fmt(monthlyAmt * 12)} - 20%) → ${annualPrice.id}`
-      );
-      envLines.push(`${mod.envPrefix}_${tier.toUpperCase()}_ANNUAL=${annualPrice.id}`);
+      for (const interval of INTERVALS) {
+        const amount = pricing[tier][interval];
+        const varName = envVarName(product.key, tier, interval);
+        const gbp = (amount / 100).toFixed(2);
+        const intervalLabel = interval === "month" ? "/mo" : "/yr";
+        const nickname = `${product.key} · ${TIER_LABELS[tier]} · £${gbp}${intervalLabel}`;
+        const price = await getOrCreateRecurringPrice(stripeProduct.id, amount, interval, varName.toLowerCase(), nickname);
+        envLines.push(`${varName}=${price.id}`);
+      }
     }
   }
 
-  // ── Ava one-time setup fee ─────────────────────────────────────────────────
-  console.log(`\n💰  Ava Setup Fee (one-time)`);
-  const avaProduct = (
-    await stripe.products.search({
-      query: 'metadata["strydeos_module"]:"ava"',
-      limit: 1,
-    })
-  ).data[0];
+  // ── Ava setup fee (one-time) ──
+  console.log(`\n💳  Ava — Setup Fee (one-time)`);
+  const avaSetupProduct = await getOrCreateProduct(
+    "ava_setup",
+    "StrydeOS — Ava Setup Fee",
+    "One-time onboarding and configuration fee for the Ava AI voice receptionist module."
+  );
+  const avaSetupPrice = await getOrCreateOneTimePrice(avaSetupProduct.id, 25000, "Ava setup fee · £250");
+  envLines.push(`STRIPE_PRICE_AVA_SETUP=${avaSetupPrice.id}`);
 
-  if (avaProduct) {
-    const setupPrice = await getOrCreatePrice(
-      avaProduct.id,
-      AVA_SETUP_FEE,
-      "gbp",
-      null,
-      { strydeos_module: "ava", strydeos_price_type: "setup" }
-    );
-    console.log(`     £250 one-time setup fee → ${setupPrice.id}`);
-    envLines.push(`STRIPE_PRICE_AVA_SETUP=${setupPrice.id}`);
-  }
-
-  // ── Print env var block ────────────────────────────────────────────────────
-  console.log("\n" + "─".repeat(72));
-  console.log("✅  Done. Copy these into .env.local:\n");
+  // ── Output ──
+  console.log("\n" + "─".repeat(60));
+  console.log("✅  Done. Copy this block into your .env.local:\n");
   console.log(envLines.join("\n"));
-  console.log("\n" + "─".repeat(72));
+  console.log("\n" + "─".repeat(60));
   console.log("\nNext steps:");
-  console.log("  1. Paste the price IDs above into .env.local");
-  console.log("  2. Forward webhooks:");
-  console.log("       stripe listen --forward-to localhost:3000/api/billing/webhooks");
-  console.log("  3. Copy the whsec_... into STRIPE_WEBHOOK_SECRET in .env.local");
+  console.log("  1. Paste the block above into .env.local (keep STRIPE_SECRET_KEY and add STRIPE_WEBHOOK_SECRET).");
+  console.log("  2. Local dev: run 'stripe listen --forward-to localhost:3000/api/billing/webhooks' and set STRIPE_WEBHOOK_SECRET=whsec_... from the output.");
+  console.log("  3. Production: add the same price IDs + STRIPE_WEBHOOK_SECRET in Vercel; register the webhook URL in Stripe Dashboard (customer.subscription.*, invoice.payment_failed).");
   console.log("  4. Restart dev server: npm run dev\n");
 }
 

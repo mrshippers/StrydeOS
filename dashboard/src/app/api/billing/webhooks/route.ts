@@ -93,6 +93,50 @@ function resolveCustomerId(customer: Stripe.Subscription["customer"]): string {
   return typeof customer === "string" ? customer : customer.id;
 }
 
+const ACTIVE_SUB_STATUSES = ["active", "trialing"] as const;
+
+/** Collect all line items from every active/trialing subscription for this customer. */
+async function getAllActiveSubscriptionItems(customerId: string): Promise<Array<{ price: { id: string } }>> {
+  const stripe = getStripe();
+  const subs = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 100,
+  });
+
+  const items: Array<{ price: { id: string } }> = [];
+  for (const sub of subs.data) {
+    if (!ACTIVE_SUB_STATUSES.includes(sub.status as (typeof ACTIVE_SUB_STATUSES)[number])) continue;
+    for (const item of sub.items.data) {
+      const priceId = typeof item.price === "string" ? item.price : item.price.id;
+      items.push({ price: { id: priceId } });
+    }
+  }
+  return items;
+}
+
+/** First active/trialing subscription for this customer, or null. */
+async function getPrimaryActiveSubscription(
+  customerId: string
+): Promise<{ id: string; status: string; billing_cycle_anchor: number } | null> {
+  const stripe = getStripe();
+  const subs = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 100,
+  });
+  const active = subs.data.find((s) =>
+    ACTIVE_SUB_STATUSES.includes(s.status as (typeof ACTIVE_SUB_STATUSES)[number])
+  );
+  return active
+    ? {
+        id: active.id,
+        status: active.status,
+        billing_cycle_anchor: active.billing_cycle_anchor ?? 0,
+      }
+    : null;
+}
+
 async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
   const customerId = resolveCustomerId(subscription.customer);
 
@@ -102,11 +146,9 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
     return;
   }
 
-  const items = subscription.items.data.map((item) => ({
-    price: { id: typeof item.price === "string" ? item.price : item.price.id },
-  }));
-
-  const updatedFlags = flagsFromSubscriptionItems(items);
+  // Merge all active/trialing subscriptions so "add another module" (second sub) doesn't overwrite the first
+  const allItems = await getAllActiveSubscriptionItems(customerId);
+  const updatedFlags = flagsFromSubscriptionItems(allItems);
   const status = subscription.status as StripeSubscriptionStatus;
   const now = new Date().toISOString();
 
@@ -120,14 +162,13 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         stripeCustomerId: customerId,
         subscriptionId: subscription.id,
         subscriptionStatus: status,
-        // billing_cycle_anchor is the anchor timestamp in Stripe v20 (replaces current_period_end)
         currentPeriodEnd: new Date(subscription.billing_cycle_anchor * 1000).toISOString(),
       },
       updatedAt: now,
     });
 
   console.log(
-    `[Billing webhook] Clinic ${clinic.id} — sub ${subscription.id} ${status}. Flags:`,
+    `[Billing webhook] Clinic ${clinic.id} — sub ${subscription.id} ${status} (merged ${allItems.length} items). Flags:`,
     updatedFlags
   );
 }
@@ -141,28 +182,36 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     return;
   }
 
-  const now = new Date().toISOString();
+  // Recompute flags from any remaining active subscriptions (customer may have multiple subs)
+  const allItems = await getAllActiveSubscriptionItems(customerId);
+  const updatedFlags = allItems.length > 0
+    ? flagsFromSubscriptionItems(allItems)
+    : { intelligence: false, continuity: false, receptionist: false };
+
+  const primary = allItems.length > 0 ? await getPrimaryActiveSubscription(customerId) : null;
   const db = getAdminDb();
+  const now = new Date().toISOString();
 
   await db
     .collection("clinics")
     .doc(clinic.id)
     .update({
-      featureFlags: {
-        intelligence: false,
-        continuity: false,
-        receptionist: false,
-      },
+      featureFlags: updatedFlags,
       billing: {
         stripeCustomerId: customerId,
-        subscriptionId: subscription.id,
-        subscriptionStatus: "canceled",
-        currentPeriodEnd: new Date(subscription.billing_cycle_anchor * 1000).toISOString(),
+        subscriptionId: primary?.id ?? subscription.id,
+        subscriptionStatus: (primary?.status as StripeSubscriptionStatus) ?? "canceled",
+        currentPeriodEnd: primary
+          ? new Date(primary.billing_cycle_anchor * 1000).toISOString()
+          : new Date(subscription.billing_cycle_anchor * 1000).toISOString(),
       },
       updatedAt: now,
     });
 
-  console.log(`[Billing webhook] Clinic ${clinic.id} — subscription canceled, all modules revoked`);
+  console.log(
+    `[Billing webhook] Clinic ${clinic.id} — sub ${subscription.id} deleted. Remaining items: ${allItems.length}. Flags:`,
+    updatedFlags
+  );
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {

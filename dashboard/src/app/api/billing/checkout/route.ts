@@ -1,14 +1,15 @@
 /**
  * POST /api/billing/checkout
  *
- * Creates a Stripe Checkout Session for a new module subscription.
- * Use this when the clinic has no active subscription yet.
- * For managing an existing subscription, use /api/billing/portal.
+ * Creates a Stripe Checkout Session for module subscriptions.
  *
  * Body:
- *   modules: Array<"intelligence" | "pulse" | "ava"> | "fullstack"
- *   tier:    "solo" | "studio" | "clinic"   (default: "studio")
- *   period:  "monthly" | "annual"           (default: "monthly")
+ *   {
+ *     modules: Array<"intelligence" | "pulse" | "ava" | "fullstack">
+ *     tier: "solo" | "studio" | "clinic"          (default: "studio")
+ *     interval: "month" | "year"                  (default: "month")
+ *     includeAvaSetup?: boolean                   (adds £250 one-time fee if ava or fullstack selected)
+ *   }
  *
  * Returns: { url: string }
  *
@@ -21,16 +22,18 @@ import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard"
 import { getStripe } from "@/lib/stripe";
 import {
   getPriceId,
-  getAvaSetupPriceId,
+  getAvaSetupFeePriceId,
   MODULE_KEYS,
   TIER_KEYS,
-  PERIOD_KEYS,
+  INTERVAL_KEYS,
   type ModuleKey,
   type TierKey,
-  type PeriodKey,
+  type BillingInterval,
 } from "@/lib/billing";
 
 const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
+
+type CheckoutProduct = ModuleKey | "fullstack";
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,26 +47,19 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
 
-    // Tier and period
-    const tier: TierKey = (TIER_KEYS as readonly string[]).includes(body.tier)
-      ? (body.tier as TierKey)
-      : "studio";
-
-    const period: PeriodKey = (PERIOD_KEYS as readonly string[]).includes(body.period)
-      ? (body.period as PeriodKey)
-      : "monthly";
-
-    // Module selection: either "fullstack" or an array of ModuleKey
-    const isFullStack = body.modules === "fullstack" || body.fullstack === true;
-    const modules: ModuleKey[] = isFullStack
-      ? []
-      : ((body.modules ?? []) as string[]).filter((m): m is ModuleKey =>
-          (MODULE_KEYS as readonly string[]).includes(m)
-        );
-
-    if (!isFullStack && modules.length === 0) {
+    // Validate modules
+    const validProducts: readonly string[] = [...MODULE_KEYS, "fullstack"];
+    const modules: CheckoutProduct[] = (body.modules ?? []).filter((m: string) =>
+      validProducts.includes(m)
+    );
+    if (modules.length === 0) {
       return NextResponse.json({ error: "At least one module must be selected" }, { status: 400 });
     }
+
+    // Validate tier and interval (default to studio/month)
+    const tier: TierKey = TIER_KEYS.includes(body.tier) ? body.tier : "studio";
+    const interval: BillingInterval = INTERVAL_KEYS.includes(body.interval) ? body.interval : "month";
+    const includeAvaSetup: boolean = !!body.includeAvaSetup;
 
     const stripe = getStripe();
     const db = getAdminDb();
@@ -90,28 +86,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build line items
-    const lineItems: { price: string; quantity: 1 }[] = [];
+    // Build recurring line items
+    const lineItems: { price: string; quantity: number }[] = modules.map((module) => ({
+      price: getPriceId(module, tier, interval),
+      quantity: 1,
+    }));
 
-    if (isFullStack) {
-      lineItems.push({ price: getPriceId("fullstack", tier, period), quantity: 1 });
-    } else {
-      for (const module of modules) {
-        lineItems.push({ price: getPriceId(module, tier, period), quantity: 1 });
-      }
-    }
-
-    // Ava requires a one-time setup fee as a separate line item
-    const includesAva = isFullStack || modules.includes("ava");
-    if (includesAva) {
-      try {
-        lineItems.push({ price: getAvaSetupPriceId(), quantity: 1 });
-      } catch {
-        // Setup fee env var not configured — skip (warn in dev)
-        if (process.env.NODE_ENV !== "production") {
-          console.warn("[Billing checkout] STRIPE_PRICE_AVA_SETUP not set — skipping setup fee");
-        }
-      }
+    // Add Ava one-time setup fee when Ava or Full Stack is selected
+    const needsAvaSetup = includeAvaSetup && modules.some((m) => m === "ava" || m === "fullstack");
+    if (needsAvaSetup) {
+      lineItems.push({ price: getAvaSetupFeePriceId(), quantity: 1 });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -120,9 +104,9 @@ export async function POST(request: NextRequest) {
       line_items: lineItems,
       success_url: `${APP_URL}/billing?checkout=success`,
       cancel_url: `${APP_URL}/billing?checkout=canceled`,
-      metadata: { clinicId, tier, period },
+      metadata: { clinicId, tier, interval },
       subscription_data: {
-        metadata: { clinicId, tier, period },
+        metadata: { clinicId, tier, interval },
       },
     });
 

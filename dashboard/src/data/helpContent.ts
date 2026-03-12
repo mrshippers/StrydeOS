@@ -19,7 +19,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     question: "What is Follow-up Rate?",
     answer:
       "Follow-up rate measures how many patients who come in for an initial assessment go on to book a follow-up appointment. A low rate is typically the single biggest revenue leak in a private practice — it means patients are discharging themselves after one session rather than completing a course of treatment.",
-    formula: "Follow-ups booked ÷ Initial assessments (weekly or rolling 6-week window)",
+    formula: "Follow-ups booked ÷ Initial assessments (weekly or rolling 90-day window)",
     clinicNote:
       "Relevant to all practice types. The KPI target at Spires is to improve the current average of ~2.4 sessions per patient.",
     tags: ["follow-up", "retention", "revenue", "initial assessment"],

@@ -1,29 +1,26 @@
 /**
  * Billing helpers — module/price mapping and Stripe↔Firestore entitlement sync.
  *
- * Pricing tiers (per clinic, not per seat):
- *   Solo   — 1 clinician
- *   Studio — 2–4 clinicians
- *   Clinic — 5+ clinicians
+ * Pricing model (from pricing breakdown model.html):
+ *   Three tiers:  solo (1 clinician) | studio (2-4) | clinic (5+)
+ *   Two intervals: month | year (year = 20% off)
+ *   Four products: intelligence | pulse | ava | fullstack (all-three bundle)
+ *   One-time fee:  Ava setup £250
  *
- * Module key → Firestore featureFlags key:
+ * Env var naming: STRIPE_PRICE_{PRODUCT}_{TIER}_{INTERVAL}
+ *   e.g. STRIPE_PRICE_INTELLIGENCE_STUDIO_MONTH
+ *        STRIPE_PRICE_FULLSTACK_CLINIC_YEAR
+ *        STRIPE_PRICE_AVA_SETUP  (one-time)
+ *
+ * Module key → Firestore featureFlags field:
  *   intelligence → featureFlags.intelligence
  *   pulse        → featureFlags.continuity
  *   ava          → featureFlags.receptionist
- *   fullstack    → all three flags
- *
- * Required env vars (server-side only):
- *   STRIPE_PRICE_{MODULE}_{TIER}_{PERIOD}
- *   e.g. STRIPE_PRICE_INTELLIGENCE_STUDIO_MONTHLY
- *   MODULE: INTELLIGENCE | PULSE | AVA | FULLSTACK
- *   TIER:   SOLO | STUDIO | CLINIC
- *   PERIOD: MONTHLY | ANNUAL
- *   STRIPE_PRICE_AVA_SETUP  — one-time setup fee
  */
 
 import type { FeatureFlags } from "@/types";
 
-// ─── Keys ─────────────────────────────────────────────────────────────────────
+// ─── Core types ──────────────────────────────────────────────────────────────
 
 export const MODULE_KEYS = ["intelligence", "pulse", "ava"] as const;
 export type ModuleKey = (typeof MODULE_KEYS)[number];
@@ -31,57 +28,75 @@ export type ModuleKey = (typeof MODULE_KEYS)[number];
 export const TIER_KEYS = ["solo", "studio", "clinic"] as const;
 export type TierKey = (typeof TIER_KEYS)[number];
 
-export const PERIOD_KEYS = ["monthly", "annual"] as const;
-export type PeriodKey = (typeof PERIOD_KEYS)[number];
+export const INTERVAL_KEYS = ["month", "year"] as const;
+export type BillingInterval = (typeof INTERVAL_KEYS)[number];
+
+export type ProductKey = ModuleKey | "fullstack";
 
 /** Map module key → FeatureFlags key in Firestore clinic doc. */
 export const MODULE_TO_FLAG: Record<ModuleKey, keyof FeatureFlags> = {
   intelligence: "intelligence",
-  pulse:        "continuity",
-  ava:          "receptionist",
+  pulse: "continuity",
+  ava: "receptionist",
 };
 
-// ─── Pricing table (£/mo, matching pricing breakdown model v2.0) ─────────────
+// ─── Pricing table (in pence, GBP) ───────────────────────────────────────────
 
-export const MONTHLY_PRICES: Record<ModuleKey | "fullstack", Record<TierKey, number>> = {
-  intelligence: { solo: 79,  studio: 129, clinic: 199 },
-  pulse:        { solo: 99,  studio: 149, clinic: 229 },
-  ava:          { solo: 149, studio: 199, clinic: 299 },
-  fullstack:    { solo: 279, studio: 399, clinic: 599 },
+/** Annual = 20% off (monthly × 12 × 0.8). Values in pence. */
+export const MODULE_PRICING: Record<
+  ProductKey,
+  Record<TierKey, { month: number; year: number }>
+> = {
+  intelligence: {
+    solo:   { month:  7900, year:  75840 }, // £79   → £758.40/yr
+    studio: { month: 12900, year: 123840 }, // £129  → £1,238.40/yr
+    clinic: { month: 19900, year: 191040 }, // £199  → £1,910.40/yr
+  },
+  ava: {
+    solo:   { month: 14900, year: 143040 }, // £149  → £1,430.40/yr
+    studio: { month: 19900, year: 191040 }, // £199  → £1,910.40/yr
+    clinic: { month: 29900, year: 287040 }, // £299  → £2,870.40/yr
+  },
+  pulse: {
+    solo:   { month:  9900, year:  95040 }, // £99   → £950.40/yr
+    studio: { month: 14900, year: 143040 }, // £149  → £1,430.40/yr
+    clinic: { month: 22900, year: 219840 }, // £229  → £2,198.40/yr
+  },
+  fullstack: {
+    solo:   { month: 27900, year: 267840 }, // £279  → £2,678.40/yr
+    studio: { month: 39900, year: 383040 }, // £399  → £3,830.40/yr
+    clinic: { month: 59900, year: 575040 }, // £599  → £5,750.40/yr
+  },
 };
 
-export const ANNUAL_DISCOUNT = 0.20;
-export const AVA_SETUP_FEE = 250;
+/** Ava one-time setup fee (pence). */
+export const AVA_SETUP_FEE_PENCE = 25000; // £250
 
-/** Monthly price with 20% annual discount (total yearly charge). */
-export function annualTotal(monthlyPrice: number): number {
-  return Math.round(monthlyPrice * 12 * (1 - ANNUAL_DISCOUNT));
-}
+// ─── Stripe Price ID helpers ──────────────────────────────────────────────────
 
-/** Effective monthly rate when billed annually. */
-export function annualMonthlyEquivalent(monthlyPrice: number): number {
-  return Math.round(monthlyPrice * (1 - ANNUAL_DISCOUNT));
-}
-
-// ─── Stripe Price IDs ────────────────────────────────────────────────────────
-
-/**
- * Returns the Stripe Price ID for a given module/fullstack, tier, and period.
- * Throws if the env var is not set.
- */
-export function getPriceId(
-  module: ModuleKey | "fullstack",
+/** Returns the env var name for a given product/tier/interval combination. */
+export function getPriceEnvVar(
+  product: ProductKey,
   tier: TierKey,
-  period: PeriodKey
+  interval: BillingInterval
 ): string {
-  const envKey = `STRIPE_PRICE_${module.toUpperCase()}_${tier.toUpperCase()}_${period.toUpperCase()}`;
-  const id = process.env[envKey];
-  if (!id) throw new Error(`${envKey} env var is not set`);
+  return `STRIPE_PRICE_${product.toUpperCase()}_${tier.toUpperCase()}_${interval.toUpperCase()}`;
+}
+
+/** Returns the Stripe Price ID for a given combination (throws if env var missing). */
+export function getPriceId(
+  product: ProductKey,
+  tier: TierKey,
+  interval: BillingInterval
+): string {
+  const varName = getPriceEnvVar(product, tier, interval);
+  const id = process.env[varName];
+  if (!id) throw new Error(`${varName} env var is not set`);
   return id;
 }
 
-/** Returns the Ava one-time setup fee Price ID. */
-export function getAvaSetupPriceId(): string {
+/** Returns the Stripe Price ID for the Ava one-time setup fee. */
+export function getAvaSetupFeePriceId(): string {
   const id = process.env.STRIPE_PRICE_AVA_SETUP;
   if (!id) throw new Error("STRIPE_PRICE_AVA_SETUP env var is not set");
   return id;
@@ -90,52 +105,54 @@ export function getAvaSetupPriceId(): string {
 // ─── Entitlement reconciliation ──────────────────────────────────────────────
 
 /**
- * Given subscription items from Stripe, return the full FeatureFlags object.
- * Handles both individual module prices and Full Stack bundle prices.
- * Full Stack price → all three flags set to true.
+ * Builds a map of ALL known Stripe Price IDs → the FeatureFlags keys they activate.
+ * Individual module prices → [that module's flag]
+ * Full Stack prices        → [intelligence, continuity, receptionist]
  */
-export function flagsFromSubscriptionItems(
-  items: Array<{ price: { id: string } }>
-): Partial<FeatureFlags> {
-  // Build reverse map: priceId → flag(s) to activate
-  const priceToFlags: Record<string, Array<keyof FeatureFlags>> = {};
+function buildPriceToFlagsMap(): Record<string, Array<keyof FeatureFlags>> {
+  const map: Record<string, Array<keyof FeatureFlags>> = {};
 
-  const modules: Array<{ key: ModuleKey | "fullstack"; flag?: keyof FeatureFlags }> = [
-    { key: "intelligence", flag: "intelligence" },
-    { key: "pulse",        flag: "continuity"  },
-    { key: "ava",          flag: "receptionist" },
-    { key: "fullstack" }, // no single flag — activates all three
-  ];
-
-  for (const mod of modules) {
+  for (const module of MODULE_KEYS) {
     for (const tier of TIER_KEYS) {
-      for (const period of PERIOD_KEYS) {
-        const envKey = `STRIPE_PRICE_${mod.key.toUpperCase()}_${tier.toUpperCase()}_${period.toUpperCase()}`;
-        const priceId = process.env[envKey];
-        if (!priceId) continue;
-
-        if (mod.key === "fullstack") {
-          priceToFlags[priceId] = ["intelligence", "continuity", "receptionist"];
-        } else if (mod.flag) {
-          priceToFlags[priceId] = [mod.flag];
-        }
+      for (const interval of INTERVAL_KEYS) {
+        const priceId = process.env[getPriceEnvVar(module, tier, interval)];
+        if (priceId) map[priceId] = [MODULE_TO_FLAG[module]];
       }
     }
   }
 
-  // Start all false; flip true for each matched price
+  for (const tier of TIER_KEYS) {
+    for (const interval of INTERVAL_KEYS) {
+      const priceId = process.env[getPriceEnvVar("fullstack", tier, interval)];
+      if (priceId) {
+        map[priceId] = ["intelligence", "continuity", "receptionist"];
+      }
+    }
+  }
+
+  return map;
+}
+
+/**
+ * Given a list of subscription items (from a Stripe subscription),
+ * return the full FeatureFlags object with modules set to true/false
+ * based on which price IDs are active.
+ */
+export function flagsFromSubscriptionItems(
+  items: Array<{ price: { id: string } }>
+): Partial<FeatureFlags> {
+  const priceToFlags = buildPriceToFlagsMap();
+
   const flags: Partial<FeatureFlags> = {
     intelligence: false,
-    continuity:   false,
+    continuity: false,
     receptionist: false,
   };
 
   for (const item of items) {
-    const activatedFlags = priceToFlags[item.price.id];
-    if (activatedFlags) {
-      for (const flag of activatedFlags) {
-        flags[flag] = true;
-      }
+    const flagKeys = priceToFlags[item.price.id];
+    if (flagKeys) {
+      for (const key of flagKeys) flags[key] = true;
     }
   }
 
@@ -172,6 +189,12 @@ export function trialDaysRemaining(trialStartedAt: string | null): number | null
 
 // ─── Display metadata ────────────────────────────────────────────────────────
 
+export const TIER_LABELS: Record<TierKey, { label: string; detail: string }> = {
+  solo:   { label: "Solo",   detail: "1 clinician" },
+  studio: { label: "Studio", detail: "2–4 clinicians" },
+  clinic: { label: "Clinic", detail: "5+ clinicians" },
+};
+
 export const MODULE_DISPLAY: Record<
   ModuleKey,
   { name: string; description: string; color: string; flagKey: keyof FeatureFlags }
@@ -179,14 +202,14 @@ export const MODULE_DISPLAY: Record<
   intelligence: {
     name: "Intelligence",
     description:
-      "Clinical performance dashboard. 8 validated KPIs, revenue analytics, outcome measure trends, DNA analysis, and reputation tracking.",
+      "Clinical performance dashboard. 8 validated KPIs, revenue analytics, outcome measures, DNA analysis, and reputation tracking.",
     color: "#8B5CF6",
     flagKey: "intelligence",
   },
   pulse: {
     name: "Pulse",
     description:
-      "Patient continuity engine. Post-session follow-up sequences, dropout prevention, outcome tracking, and referral prompts.",
+      "Patient retention engine. Automated rebooking sequences, HEP reminders, churn risk detection, and comms log.",
     color: "#0891B2",
     flagKey: "continuity",
   },
@@ -199,8 +222,7 @@ export const MODULE_DISPLAY: Record<
   },
 };
 
-export const TIER_DISPLAY: Record<TierKey, { label: string; detail: string }> = {
-  solo:   { label: "Solo",   detail: "1 clinician"     },
-  studio: { label: "Studio", detail: "2–4 clinicians"  },
-  clinic: { label: "Clinic", detail: "5+ clinicians"   },
-};
+/** Format pence to a human-readable GBP string. e.g. 12900 → "£129" */
+export function formatGBP(pence: number): string {
+  return `£${(pence / 100).toLocaleString("en-GB", { maximumFractionDigits: 0 })}`;
+}

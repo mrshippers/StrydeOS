@@ -381,7 +381,7 @@ const Hero = () => {
                   ))}
                 </div>
                 <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "12px 14px" }}>
-                  <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Patient Retention — 6 weeks</div>
+                  <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Patient Retention — 90 days</div>
                   <svg viewBox="0 0 280 50" style={{ width: "100%", overflow: "visible" }}>
                     <defs>
                       <linearGradient id="heroG1" x1="0" y1="0" x2="0" y2="1">
@@ -700,7 +700,7 @@ const Products = () => {
       proof: "Not to manage people. To understand where your clinic is thriving and where it isn't. The best-run clinics already know these numbers.",
       tagline: "Real-time. Actionable. Built for practice owners, not analysts.",
       cta: "Start with Intelligence",
-      bullets: ["Per-clinician KPI views", "Patient retention & completion rates", "Utilisation and DNA tracking", "6-week rolling trend charts", "Automatic alert flags when metrics drift"],
+      bullets: ["Per-clinician KPI views", "Patient retention & completion rates", "Utilisation and DNA tracking", "90-day rolling trend charts", "Automatic alert flags when metrics drift"],
       visual: (
         <div style={{ background: C.navy, borderRadius: 18, padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -988,7 +988,7 @@ const Pricing = () => {
       features: [
         "Per-clinician KPI dashboard (follow-up rate, HEP compliance, utilisation, DNA rate, revenue per session)",
         "Clinic-wide rollup view",
-        "6-week rolling trend charts",
+        "90-day rolling trend charts",
         "Alert flags when metrics drift below target",
         "NPS tracking and Google Review pipeline",
         "WriteUpp / Cliniko integration (read)",

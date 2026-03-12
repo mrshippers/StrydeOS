@@ -320,7 +320,7 @@ function ContinuityPage() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState module="pulse" heading="No recent discharges" subtext="Post-discharge patients within the last 6 weeks will appear here." />
+                  <EmptyState module="pulse" heading="No recent discharges" subtext="Post-discharge patients within the last 90 days will appear here." />
                 )}
               </div>
             </div>

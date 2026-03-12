@@ -60,7 +60,7 @@ function CliniciansPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Clinician Performance"
-        subtitle="Per-clinician KPI breakdown with 6-week trends"
+        subtitle="Per-clinician KPI breakdown with 90-day rolling trends"
       />
 
       {/* Full clinician table */}

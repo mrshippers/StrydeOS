@@ -57,7 +57,7 @@ If you want the PS3 swagger: **Pulse**. If you want the Apple Design Award energ
 - Missing: discharge pathway view, referral prompt trigger logic.
 
 **Intelligence — Frontend Gaps:**
-- The KPI table is functional but not rich enough. Needs sparkline trends inline per metric (not just a number — show the 6-week direction).
+- The KPI table is functional but not rich enough. Needs sparkline trends inline per metric (not just a number — show the 90-day direction).
 - No drill-down preview. Clicking a clinician should expand to show their patient-level data: which patients dropped off, which completed, which are mid-course.
 - No benchmark comparison. Show "your clinic vs. similar practices" even if the benchmark is anonymised Spires data initially.
 - Missing: exportable weekly report preview, alert configuration UI, goal-setting interface per clinician.
