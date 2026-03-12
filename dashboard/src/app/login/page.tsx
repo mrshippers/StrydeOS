@@ -41,6 +41,8 @@ function LoginPageInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [clinicName, setClinicName] = useState("");
+  const [profession, setProfession] = useState("");
+  const [clinicSize, setClinicSize] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -92,6 +94,8 @@ function LoginPageInner() {
           clinicName: clinicName.trim(),
           email: email.trim(),
           password,
+          profession,
+          clinicSize,
         }),
       });
 
@@ -435,9 +439,49 @@ function LoginPageInner() {
                               onChange={(e) => setClinicName(e.target.value)}
                               required
                               autoFocus
-                              placeholder="Spires Physiotherapy"
+                              placeholder="Your clinic name"
                               className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-navy placeholder-muted border border-border bg-cloud-light focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue transition-all"
                             />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                              Profession
+                            </label>
+                            <select
+                              value={profession}
+                              onChange={(e) => setProfession(e.target.value)}
+                              required
+                              className="w-full px-4 py-3 rounded-xl text-sm text-navy border border-border bg-cloud-light focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue transition-all appearance-none"
+                            >
+                              <option value="" disabled>Select...</option>
+                              <option value="physiotherapist">Physiotherapist</option>
+                              <option value="osteopath">Osteopath</option>
+                              <option value="chiropractor">Chiropractor</option>
+                              <option value="sports_therapist">Sports Therapist</option>
+                              <option value="personal_trainer_medical">Personal Trainer (Medical)</option>
+                              <option value="gp_primary_care">GP / Primary Care</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                              Clinic size
+                            </label>
+                            <select
+                              value={clinicSize}
+                              onChange={(e) => setClinicSize(e.target.value)}
+                              required
+                              className="w-full px-4 py-3 rounded-xl text-sm text-navy border border-border bg-cloud-light focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue transition-all appearance-none"
+                            >
+                              <option value="" disabled>Select...</option>
+                              <option value="solo">Solo (1 practitioner)</option>
+                              <option value="small">Small (2–5)</option>
+                              <option value="midsize">Mid-size (6–10)</option>
+                              <option value="large">Large (10+)</option>
+                            </select>
                           </div>
                         </div>
 

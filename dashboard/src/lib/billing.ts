@@ -179,7 +179,8 @@ export function isTrialActive(trialStartedAt: string | null, clinicId?: string):
   return Date.now() < endsAt.getTime();
 }
 
-export function trialDaysRemaining(trialStartedAt: string | null): number | null {
+export function trialDaysRemaining(trialStartedAt: string | null, clinicId?: string): number | null {
+  if (clinicId === "demo-clinic") return TRIAL_DURATION_DAYS;
   const endsAt = getTrialEndsAt(trialStartedAt);
   if (!endsAt) return null;
   const ms = endsAt.getTime() - Date.now();

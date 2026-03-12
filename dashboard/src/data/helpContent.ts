@@ -120,7 +120,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     answer:
       "Pulse is the patient continuity engine. It monitors patient engagement signals — appointment gaps, missed follow-ups, programme inactivity — and flags patients who are at risk of dropping off before they've completed their treatment. The idea is to catch the silent self-discharge before it happens, rather than discovering the patient is gone when you look at your diary two weeks later.",
     clinicNote:
-      "Pulse requires WriteUpp or Cliniko data via the OpenClaw bridge to function. Churn-risk calculations use a rolling window — newly onboarded clinics may take 4–6 weeks before the risk scores stabilise.",
+      "Pulse requires WriteUpp or Cliniko data to function. Churn-risk calculations use a rolling window — newly onboarded clinics may take 4–6 weeks before the risk scores stabilise.",
     tags: ["pulse", "continuity", "retention", "churn", "patient risk"],
   },
   {
@@ -156,7 +156,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     category: "general",
     question: "Where does StrydeOS get its data from?",
     answer:
-      "StrydeOS pulls from three primary sources: your PMS (WriteUpp or Cliniko) for appointments and patient records via the OpenClaw API bridge; Physitrack for home exercise programme data; and directly from StrydeOS features like Ava call logs and Pulse engagement scores. Data is stored in Firestore (London region, EU data residency) and is partitioned by clinic — meaning your data is never mixed with another practice's.",
+      "StrydeOS pulls from three primary sources: your PMS (WriteUpp or Cliniko) for appointments and patient records; Physitrack for home exercise programme data; and directly from StrydeOS features like Ava call logs and Pulse engagement scores. Data is stored securely in a London-region data centre with EU data residency, partitioned by clinic — meaning your data is never mixed with another practice's.",
     tags: ["data", "source", "writeupp", "cliniko", "physitrack", "firestore", "gdpr"],
   },
   {

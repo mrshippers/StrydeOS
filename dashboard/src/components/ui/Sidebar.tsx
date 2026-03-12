@@ -467,7 +467,7 @@ export default function Sidebar() {
               <Command size={12} />
               <span className="flex-1 text-left">Quick search</span>
               <kbd className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-white/8 border border-white/10">
-                {"\u2318"}K
+                {typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform) ? "⌘" : "Ctrl+"}K
               </kbd>
             </button>
           </div>
@@ -481,7 +481,7 @@ export default function Sidebar() {
               {theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}
               <span className="flex-1 text-left">{theme === "dark" ? "Light mode" : "Dark mode"}</span>
               <kbd className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-white/8 border border-white/10">
-                {"\u2318"}D
+                {typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform) ? "⌘" : "Ctrl+"}D
               </kbd>
             </button>
           </div>

@@ -117,6 +117,7 @@ const PMS_PROVIDERS: PmsProviderOption[] = [
 
 function RetriggerTourButton() {
   const { user, refreshClinicProfile } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -128,7 +129,7 @@ function RetriggerTourButton() {
         const { clearDemoTourCompleted } = await import("@/components/FirstLoginTour");
         clearDemoTourCompleted();
         setDone(true);
-        setTimeout(() => window.location.replace("/dashboard"), 800);
+        setTimeout(() => router.push("/dashboard"), 800);
         return;
       }
       if (!db) return;
@@ -140,7 +141,7 @@ function RetriggerTourButton() {
       });
       await refreshClinicProfile();
       setDone(true);
-      setTimeout(() => window.location.replace("/dashboard"), 800);
+      setTimeout(() => router.push("/dashboard"), 800);
     } catch (err) {
       console.error("[RetriggerTour]", err);
     } finally {

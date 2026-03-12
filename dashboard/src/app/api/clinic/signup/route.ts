@@ -26,10 +26,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { clinicName, email, password } = body as {
+    const { clinicName, email, password, profession, clinicSize } = body as {
       clinicName?: string;
       email?: string;
       password?: string;
+      profession?: string;
+      clinicSize?: string;
     };
 
     if (!clinicName?.trim() || !email?.trim() || !password) {
@@ -162,6 +164,8 @@ export async function POST(request: NextRequest) {
         subscriptionStatus: null,
         currentPeriodEnd: null,
       },
+      profession: profession?.trim() || null,
+      clinicSize: clinicSize?.trim() || null,
       trialStartedAt: now,
       createdAt: now,
       updatedAt: now,
