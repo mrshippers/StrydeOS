@@ -243,7 +243,7 @@ const Nav = () => {
             >{label}</a>
           ))}
         </div>
-        <a href="/login?mode=signup" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }}>
+        <a href="https://portal.strydeos.com/login?mode=signup" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }}>
           Start free trial
         </a>
       </div>
@@ -311,7 +311,7 @@ const Hero = () => {
               StrydeOS connects the clinical data you are already generating to the commercial outcomes you are currently guessing at.
             </p>
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 52 }}>
-              <a href="/login?mode=signup" className="btn-primary">
+              <a href="https://portal.strydeos.com/login?mode=signup" className="btn-primary">
                 Start free trial
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </a>
@@ -796,7 +796,7 @@ const Products = () => {
                 </div>
               ))}
             </div>
-            <a href="/login?mode=signup" className="btn-primary" style={{ background: p.color }}>
+            <a href="https://portal.strydeos.com/login?mode=signup" className="btn-primary" style={{ background: p.color }}>
               Start free trial →
             </a>
           </div>
@@ -953,7 +953,7 @@ const ROICalc = () => {
                     Most practices recover their StrydeOS cost within 90 days
                   </div>
                 </div>
-                <a href="/login?mode=signup" className="btn-primary" style={{ width: "100%", justifyContent: "center", borderRadius: 14 }}>
+                <a href="https://portal.strydeos.com/login?mode=signup" className="btn-primary" style={{ width: "100%", justifyContent: "center", borderRadius: 14 }}>
                   Start free trial →
                 </a>
               </div>
@@ -1162,7 +1162,7 @@ const Pricing = () => {
                   ))}
                 </div>
 
-                <a href="/login?mode=signup" style={{
+                <a href="https://portal.strydeos.com/login?mode=signup" style={{
                   display: "flex", alignItems: "center", justifyContent: "center",
                   width: "100%", padding: "13px 0", borderRadius: 14,
                   background: isHighlight ? C.blue : "transparent",
@@ -1324,7 +1324,7 @@ const EarlyAccess = () => (
         No switching required. StrydeOS connects to Cliniko, WriteUpp, and most major PMS. Start with one product, add the rest when you're ready.
       </p>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-        <a href="/login?mode=signup" className="btn-primary" style={{ fontSize: 16, padding: "16px 44px" }}>
+        <a href="https://portal.strydeos.com/login?mode=signup" className="btn-primary" style={{ fontSize: 16, padding: "16px 44px" }}>
           Start free trial →
         </a>
         <div style={{ display: "flex", gap: 24 }}>
