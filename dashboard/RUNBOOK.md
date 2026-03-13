@@ -14,17 +14,21 @@ All variables must be set in the Vercel dashboard under **Settings → Environme
 | `SENTRY_AUTH_TOKEN` | CI only | Sentry auth token for source map upload during builds |
 | `SENTRY_ORG` | CI only | Sentry organisation slug |
 | `SENTRY_PROJECT` | CI only | Sentry project slug |
-| `CRON_SECRET` | **Yes** | Shared secret Vercel uses to authenticate cron invocations. Must match the `Authorization: Bearer <secret>` header Vercel sends. Generate with `openssl rand -hex 32`. |
+| `CRON_SECRET` | **Yes** | Shared secret Vercel uses to authenticate cron invocations. Generate with `openssl rand -hex 32`. |
 | `CSV_INBOUND_SECRET` | Yes | Shared secret for inbound email-to-CSV webhook (Mailgun/SendGrid/n8n). |
 | `INGEST_EMAIL_DOMAIN` | Yes | Domain for ingest addresses — `ingest.strydeos.com` |
+| `APP_URL` | **Yes** | Full app URL — `https://app.strydeos.com` (no trailing slash). Used by Stripe checkout/portal return URLs. |
 | `FIREBASE_*` | Yes | Firebase Admin SDK credentials |
+| `STRIPE_SECRET_KEY` | **Yes** | Stripe secret key — use `sk_live_...` in production |
+| `STRIPE_WEBHOOK_SECRET` | **Yes** | Stripe webhook signing secret — `whsec_...` from Stripe Dashboard |
+| `STRIPE_PRICE_*` | **Yes** | Per-module/tier/interval price IDs — see Stripe section below |
 
 ### Confirming `CRON_SECRET` is set
 
-1. In Vercel dashboard → Project → Settings → Environment Variables
+1. Vercel dashboard → Project → Settings → Environment Variables
 2. Verify `CRON_SECRET` exists for **Production** environment
-3. After any change, redeploy for it to take effect (Vercel caches env at build/deploy time)
-4. To test: `curl -X POST https://app.strydeos.com/api/pipeline/run -H "Authorization: Bearer <secret>"` — should return `200` with pipeline results, not `500 CRON_SECRET not configured`
+3. After any change, redeploy (Vercel caches env at build time)
+4. To test: `curl -X POST https://app.strydeos.com/api/pipeline/run -H "Authorization: Bearer <secret>"` — should return `200`, not `500 CRON_SECRET not configured`
 
 ---
 
@@ -103,16 +107,198 @@ Error monitoring is live on all API routes and the client bundle.
 |---|---|
 | API routes (server) | All unhandled exceptions via `handleApiError()` |
 | Pipeline cron | Per-clinic failures captured with `clinicId` tag |
+| Billing webhook | Stripe errors tagged with `stripeEvent` |
 | Client bundle | Unhandled JS errors + 5% session replay |
 
 **DSN:** set `NEXT_PUBLIC_SENTRY_DSN` in Vercel — use the project DSN from sentry.io → Project Settings → Client Keys.
 
-**Key alerts to configure in Sentry:**
-- Issue alert: any new error in `pipeline_cron` tag → Slack/email
-- Issue alert: `CRON_SECRET not configured` (error text) → immediate page
-- Performance alert: p95 API response > 10s → warning
+**Source maps:** set `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` for readable production stack traces.
 
-**Source maps:** set `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` env vars for CI builds to enable readable stack traces in production.
+### Alert 1 — Pipeline cron failures
+
+1. sentry.io → **Alerts** → **Create Alert** → **Issues**
+2. Conditions:
+   - **When:** A new issue is created
+   - **If:** `source` tag **equals** `pipeline_cron`
+3. Actions: send to your email or Slack channel
+4. Name: `pipeline_cron — new failure`
+
+### Alert 2 — CRON_SECRET not configured
+
+1. sentry.io → **Alerts** → **Create Alert** → **Issues**
+2. Conditions:
+   - **When:** An issue is seen more than 0 times in 1 hour
+   - **Filter:** Issue title **contains** `CRON_SECRET not configured`
+3. Actions: send to email (or page via PagerDuty/Opsgenie)
+4. Name: `CRON_SECRET misconfigured — immediate`
+
+### Alert 3 — Performance (p95 > 10s)
+
+1. sentry.io → **Alerts** → **Create Alert** → **Performance**
+2. Metric: `p95(transaction.duration)` **>** `10000ms`
+3. Environment: Production
+4. Actions: email warning
+5. Name: `p95 API latency > 10s`
+
+---
+
+## Stripe — Billing Setup
+
+### Environment variables required
+
+```
+STRIPE_SECRET_KEY=sk_live_...          # Production key from Stripe Dashboard → API Keys
+STRIPE_WEBHOOK_SECRET=whsec_...        # Set after registering webhook endpoint (see below)
+APP_URL=https://app.strydeos.com       # Required for checkout/portal return URLs
+
+# Per-module/tier/interval price IDs (create products in Stripe first)
+# Pattern: STRIPE_PRICE_{MODULE}_{TIER}_{INTERVAL}
+STRIPE_PRICE_INTELLIGENCE_SOLO_MONTH=price_...
+STRIPE_PRICE_INTELLIGENCE_STUDIO_MONTH=price_...
+STRIPE_PRICE_INTELLIGENCE_CLINIC_MONTH=price_...
+STRIPE_PRICE_INTELLIGENCE_SOLO_YEAR=price_...
+STRIPE_PRICE_INTELLIGENCE_STUDIO_YEAR=price_...
+STRIPE_PRICE_INTELLIGENCE_CLINIC_YEAR=price_...
+STRIPE_PRICE_AVA_SOLO_MONTH=price_...
+STRIPE_PRICE_AVA_STUDIO_MONTH=price_...
+STRIPE_PRICE_AVA_CLINIC_MONTH=price_...
+STRIPE_PRICE_AVA_SOLO_YEAR=price_...
+STRIPE_PRICE_AVA_STUDIO_YEAR=price_...
+STRIPE_PRICE_AVA_CLINIC_YEAR=price_...
+STRIPE_PRICE_AVA_SETUP=price_...       # £250 one-time
+STRIPE_PRICE_PULSE_SOLO_MONTH=price_...
+STRIPE_PRICE_PULSE_STUDIO_MONTH=price_...
+STRIPE_PRICE_PULSE_CLINIC_MONTH=price_...
+STRIPE_PRICE_PULSE_SOLO_YEAR=price_...
+STRIPE_PRICE_PULSE_STUDIO_YEAR=price_...
+STRIPE_PRICE_PULSE_CLINIC_YEAR=price_...
+STRIPE_PRICE_FULLSTACK_SOLO_MONTH=price_...
+STRIPE_PRICE_FULLSTACK_STUDIO_MONTH=price_...
+STRIPE_PRICE_FULLSTACK_CLINIC_MONTH=price_...
+STRIPE_PRICE_FULLSTACK_SOLO_YEAR=price_...
+STRIPE_PRICE_FULLSTACK_STUDIO_YEAR=price_...
+STRIPE_PRICE_FULLSTACK_CLINIC_YEAR=price_...
+```
+
+> **Note:** `STRIPE_PRICE_*` IDs come from Stripe Dashboard → Products → each product's price row. Run `scripts/setup-stripe-products.ts` to create all products programmatically.
+
+### Webhook endpoint
+
+Register a webhook in **Stripe Dashboard → Developers → Webhooks → Add endpoint**:
+
+- **URL:** `https://app.strydeos.com/api/billing/webhooks`
+- **Events to listen to:**
+  - `customer.subscription.created`
+  - `customer.subscription.updated`
+  - `customer.subscription.deleted`
+  - `invoice.payment_failed`
+- After saving, copy the **Signing secret** (`whsec_...`) → set as `STRIPE_WEBHOOK_SECRET` in Vercel
+
+### Customer Portal
+
+Configure in **Stripe Dashboard → Settings → Billing → Customer Portal**:
+
+- Enable: **Allow customers to update subscriptions** (add/remove items)
+- Enable: **Allow customers to cancel subscriptions**
+- Enable: **Show invoices**
+- Set **Business information** (name, URL, privacy, ToS links)
+- Return URL: `https://app.strydeos.com/billing`
+
+The portal is triggered from Settings → Billing → **Manage subscription** button. It calls `POST /api/billing/portal` which returns a Stripe session URL and redirects.
+
+### Checkout flow
+
+`POST /api/billing/checkout` accepts:
+```json
+{
+  "modules": ["intelligence"],
+  "tier": "studio",
+  "interval": "month",
+  "includeAvaSetup": false
+}
+```
+Returns `{ url }` — redirect the user to the Stripe-hosted checkout page.
+
+### Testing locally
+
+```bash
+# Install Stripe CLI
+brew install stripe/stripe-cli/stripe
+
+# Forward webhooks to local
+stripe listen --forward-to localhost:3000/api/billing/webhooks
+
+# Trigger a test event
+stripe trigger customer.subscription.created
+```
+
+---
+
+## Integration Health (Admin)
+
+Tracks per-clinic, per-provider sync health from the `integration_health` Firestore collection.
+
+**Page:** `/admin/integration-health` — superadmin only.
+
+**API:** `GET /api/admin/integration-health`
+
+Query params:
+- `days` (default: 30) — lookback window
+- `clinicId` (optional) — filter to a specific clinic
+
+Returns per-clinic `ProviderHealthStats`:
+- `successRate` — % of syncs that completed without error
+- `avgDurationMs`
+- `lastSuccessAt` / `lastFailureAt`
+- `lastErrors` — last error message(s)
+- `status` — `healthy` / `degraded` / `down`
+  - `healthy`: ≥95% success rate, no 3-in-a-row failures
+  - `degraded`: 70–95% success rate
+  - `down`: <70% success rate or 3 consecutive failures
+
+**Where populated:** The pipeline writes `IntegrationHealthEntry` docs to `clinics/{clinicId}/integration_health/{entryId}` after each sync attempt (Firestore rules: server-side write only).
+
+**When to use:**
+- Check before contacting a clinic about stale data
+- Identify which provider is causing failures (`source: pipeline_cron` in Sentry maps to entries here)
+- Validate a new PMS integration is syncing correctly after onboarding
+
+---
+
+## WriteUpp Probe (Admin Diagnostic)
+
+Diagnostic endpoint to validate WriteUpp API field names without touching production data.
+
+```
+POST /api/debug/writeupp-probe
+Authorization: Bearer <Firebase ID token>
+Content-Type: application/json
+
+{ "clinicId": "<clinicId>" }
+```
+
+**Auth:** `owner`, `admin`, or `superadmin`. Non-superadmin can only probe their own clinic.
+
+**Returns:**
+```json
+{
+  "ok": true,
+  "summary": {
+    "dateFrom": "2026-03-06",
+    "dateTo": "2026-03-13",
+    "totalReturned": 12,
+    "keyShape": [
+      { "keys": ["id", "startTime", "clinicianId", ...], "sample": { "id": "string", ... } }
+    ],
+    "confirmedFields": ["id", "startTime", ...]
+  }
+}
+```
+
+**When to use:**
+- WriteUpp field names have changed (after an API version bump)
+- Verifying a clinic's API key is valid
+- Debugging stale/missing appointment data before touching the mapper
 
 ---
 
@@ -150,16 +336,37 @@ Same auth as `/api/pipeline/run`.
 
 ---
 
+## Firestore Rules — Deploying
+
+Rules live in `dashboard/firestore.rules`. Deploy them after every change.
+
+```bash
+# First-time or after token expiry
+cd dashboard
+firebase login --reauth
+
+# Set active project (one-time per machine)
+firebase use --add
+# Select your project from the list, give it an alias (e.g. "production")
+
+# Deploy rules only
+firebase deploy --only firestore:rules
+```
+
+To verify rules are live: Firebase Console → Firestore → Rules tab — check the "Last modified" timestamp.
+
+---
+
 ## Incident Response
 
 ### Pipeline failures showing in Sentry
 
 1. Check Sentry → Issues → filter by `source: pipeline_cron`
 2. Identify which `clinicId` is affected
-3. Check clinic's PMS credentials in Firestore `clinics` collection → `pmsConfig`
-4. Test the connection via Settings → PMS → Test connection
-5. If PMS credentials expired, ask the clinic owner to reconnect in Settings
-6. Trigger a manual sync via CLI (above) once credentials are fixed
+3. Check Integration Health page (`/admin/integration-health`) for the affected clinic
+4. Check clinic's PMS credentials in Firestore `clinics` collection → `pmsConfig`
+5. Run WriteUpp probe (`POST /api/debug/writeupp-probe`) to validate API key and field shape
+6. Trigger a manual sync via CLI once credentials are fixed
 
 ### Cron not running
 
@@ -167,6 +374,19 @@ Same auth as `/api/pipeline/run`.
 2. If last run was >5h ago, check Vercel deployment status (crons only run on active deployments)
 3. If deployment is healthy but cron is skipped, check Vercel cron logs for auth failures
 4. Verify `CRON_SECRET` is set and matches
+
+### Stripe webhook not firing
+
+1. Stripe Dashboard → Developers → Webhooks → select the endpoint → check **Recent deliveries**
+2. If deliveries are failing: check `STRIPE_WEBHOOK_SECRET` in Vercel matches the endpoint's signing secret
+3. If URL is wrong: update the endpoint URL in Stripe Dashboard to `https://app.strydeos.com/api/billing/webhooks`
+4. Retry the failed delivery from the Stripe Dashboard if needed (safe — webhook handler is idempotent)
+
+### Billing portal not opening
+
+- Verify `APP_URL=https://app.strydeos.com` is set in Vercel
+- Verify Customer Portal is configured in Stripe Dashboard → Settings → Billing → Customer Portal
+- The clinic must have a `billing.stripeCustomerId` in Firestore — if not, they haven't checked out yet
 
 ### High DNA rate spike at a clinic
 
