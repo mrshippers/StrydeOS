@@ -136,11 +136,17 @@ export default function CompliancePage() {
 
   return (
     <div className="min-h-screen bg-cloud-dancer">
-      <PageHeader
-        title="Compliance"
-        subtitle="Subject Access Requests and data privacy management"
-        icon={Shield}
-        actions={
+      <div className="max-w-6xl mx-auto px-6 pt-8">
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-blue/10 flex items-center justify-center">
+                <Shield size={20} className="text-blue" />
+              </div>
+              <h1 className="font-display text-[32px] text-navy leading-tight">Compliance</h1>
+            </div>
+            <p className="text-sm text-muted">Subject Access Requests and data privacy management</p>
+          </div>
           <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue hover:opacity-90 transition-opacity"
@@ -148,10 +154,10 @@ export default function CompliancePage() {
             <Plus size={16} />
             New Request
           </button>
-        }
-      />
+        </div>
+      </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 pb-8">
         {requests.length === 0 && !loading ? (
           <div className="text-center py-16">
             <div className="h-16 w-16 rounded-xl bg-muted/10 flex items-center justify-center mx-auto mb-4">

@@ -173,10 +173,13 @@ function LoginPageInner() {
       
       if (code === "auth/multi-factor-auth-required") {
         const mfaError = err as MultiFactorError;
-        setMfaResolver(mfaError.resolver);
-        setMfaRequired(true);
-        setSubmitting(false);
-        return;
+        const resolver = (mfaError as any).resolver || (mfaError.customData as any)?.resolver;
+        if (resolver) {
+          setMfaResolver(resolver);
+          setMfaRequired(true);
+          setSubmitting(false);
+          return;
+        }
       }
       
       if (code === "auth/user-not-found" || code === "auth/wrong-password" || code === "auth/invalid-credential") {

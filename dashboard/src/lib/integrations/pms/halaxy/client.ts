@@ -122,7 +122,7 @@ export async function halaxyFetchAll<T>(
   let nextUrl: string | null = path;
 
   while (nextUrl) {
-    const bundle = await halaxyFetch<FHIRBundle<T>>(config, nextUrl);
+    const bundle: FHIRBundle<T> = await halaxyFetch<FHIRBundle<T>>(config, nextUrl);
 
     const entries = bundle.entry ?? [];
     for (const entry of entries) {

@@ -113,13 +113,9 @@ export async function clinikoFetchAll<T>(
   let nextUrl: string | null = path;
 
   while (nextUrl) {
-    const response = await clinikoFetch<{
-      [key: string]: T[];
-      links?: { next?: string };
-      total_entries?: number;
-    }>(config, nextUrl);
+    const response: Record<string, any> = await clinikoFetch<Record<string, any>>(config, nextUrl);
 
-    const items = response[resourceKey];
+    const items = response[resourceKey] as T[] | undefined;
     if (Array.isArray(items)) {
       results.push(...items);
     }

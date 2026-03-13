@@ -91,12 +91,7 @@ export async function zandaFetchAll<T>(
   let nextUrl: string | null = path;
 
   while (nextUrl) {
-    const response = await zandaFetch<{
-      [key: string]: T[] | unknown;
-      data?: T[];
-      links?: { next?: string | null };
-      meta?: { current_page?: number; last_page?: number; next_page_url?: string | null };
-    }>(config, nextUrl);
+    const response: Record<string, any> = await zandaFetch<Record<string, any>>(config, nextUrl);
 
     const items = (response[resourceKey] ?? response.data) as T[] | undefined;
     if (Array.isArray(items)) {

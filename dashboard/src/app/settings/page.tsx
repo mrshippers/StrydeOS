@@ -44,6 +44,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Upload,
+  Shield,
 } from "lucide-react";
 import type { ClinicProfile, PmsProvider, HepProvider } from "@/types";
 import type { CanonicalField } from "@/lib/csv-import/types";
@@ -1025,7 +1026,7 @@ const cp = user?.clinicProfile ?? null;
       )}
 
       {/* Two-Factor Authentication */}
-      {user?.uid !== "demo" && (
+      {user && user.uid !== "demo" && (
         <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-xl bg-blue/10 flex items-center justify-center">
