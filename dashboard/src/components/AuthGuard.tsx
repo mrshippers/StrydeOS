@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
 const PUBLIC_PATHS = ["/login"];
+const MFA_EXEMPT_PATHS = ["/login", "/mfa-setup"];
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -13,14 +14,23 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isMfaExempt = MFA_EXEMPT_PATHS.some((p) => pathname.startsWith(p));
 
   useEffect(() => {
     if (loading) return;
 
     if (!user && !isPublicPath) {
       router.replace("/login");
+      return;
     }
-  }, [user, loading, isPublicPath, router]);
+
+    if (user && !isMfaExempt) {
+      const mfaRequired = user.clinicProfile?.compliance?.mfaRequired ?? false;
+      if (mfaRequired && !user.mfaEnrolled) {
+        router.replace("/mfa-setup");
+      }
+    }
+  }, [user, loading, isPublicPath, isMfaExempt, router]);
 
   if (loading || (!user && !isPublicPath)) {
     return (

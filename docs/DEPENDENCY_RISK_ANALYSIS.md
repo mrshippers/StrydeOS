@@ -347,11 +347,59 @@ Email-to-CSV ingest pathway: `import-{clinicId}@ingest.strydeos.com`
 
 ---
 
+## 11. Manual Setup: Uptime Robot and Halaxy SLA
+
+### Uptime Robot — Partner Status Page Monitoring (~30 min)
+
+Proactive alerts when a partner’s status page reports an outage so you can triage before clients report issues.
+
+**Steps:**
+
+1. **Sign up:** [uptimerobot.com](https://uptimerobot.com) — free tier supports 50 monitors.
+2. **Add HTTP(S) monitors** for each partner status page:
+   - **Cliniko:** `https://status.cliniko.com` — Check interval: 5 min. Alert when HTTP status ≠ 200 or response time &gt; 30s.
+   - **Zanda:** `https://status.zandahealth.com` — Same settings.
+   - **Physitrack:** `https://status.physitrack.com` — Same settings.
+3. **Alert contacts:** Add email and/or Slack webhook (Uptime Robot → Alert Contacts → Add). Assign these contacts to all three monitors.
+4. **Optional:** Add a monitor for StrydeOS app (e.g. `https://app.strydeos.com`) to detect our own downtime.
+
+**Note:** WriteUpp and Halaxy do not publish a public status page URL; skip them until one is available.
+
+---
+
+### Halaxy — Request SLA / Status Page (email)
+
+Halaxy does not publish uptime or a status page. Requesting formal documentation closes the transparency gap for sales and support.
+
+**Steps:**
+
+1. **Identify contact:** Halaxy support (e.g. [support@halaxy.com](mailto:support@halaxy.com) or in-app Help).
+2. **Send a short request** (adapt as needed):
+
+   **Subject:** Status page and SLA documentation for integration partners
+
+   **Body:**
+
+   > Hi,
+   >
+   > We integrate with Halaxy’s API (StrydeOS — clinical performance analytics for practices). For our dependency risk documentation and customer assurance we’re collecting:
+   >
+   > - A public status page URL (if available), or
+   > - Any SLA or uptime documentation you can share with integration partners.
+   >
+   > Could you point us to either, or confirm the best contact for partner/technical enquiries?
+   >
+   > Thanks,
+
+3. **Record outcome:** Update this doc and the Halaxy row in the Risk Matrix (Section 3) with any URL or SLA summary they provide.
+
+---
+
 **Next Actions:**
-1. Add API response time logging to all adapters (P0)
-2. Set up Uptime Robot monitoring for partner status pages (P1)
-3. Request Halaxy SLA documentation (P1)
-4. Build integration health dashboard for admin view (P1)
+1. ~~Add API response time logging to all adapters (P0)~~ — Done: pipeline stage-level health logging + Integration Health dashboard.
+2. Set up Uptime Robot monitoring for partner status pages (P1) — use Section 11 steps.
+3. Request Halaxy SLA documentation (P1) — use Section 11 email template.
+4. ~~Build integration health dashboard for admin view (P1)~~ — Done: `/admin/integration-health`.
 
 ---
 

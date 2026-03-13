@@ -2,10 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  multiFactor,
+  PhoneMultiFactorGenerator,
+  TotpMultiFactorGenerator,
+  MultiFactorError,
+  type MultiFactorResolver,
+} from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { getFirebaseAuth } from "@/lib/firebase";
-import { AlertCircle, Loader2, ArrowRight, Check, Building2 } from "lucide-react";
+import { AlertCircle, Loader2, ArrowRight, Check, Building2, Shield } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
 import { trackCTAClick } from "@/lib/funnel-events";
@@ -51,6 +59,10 @@ function LoginPageInner() {
   const [resetSent, setResetSent] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaResolver, setMfaResolver] = useState<MultiFactorResolver | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaVerifying, setMfaVerifying] = useState(false);
 
   useEffect(() => {
     try {
@@ -137,7 +149,15 @@ function LoginPageInner() {
     setSubmitting(true);
 
     try {
-      await signIn(email.trim(), password);
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        setError("Firebase is not configured.");
+        setSubmitting(false);
+        return;
+      }
+
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      
       try {
         localStorage.setItem(LAST_EMAIL_KEY, email.trim());
       } catch {
@@ -150,6 +170,15 @@ function LoginPageInner() {
           ? (err as { code: string }).code
           : "";
       const message = err instanceof Error ? err.message : String(err);
+      
+      if (code === "auth/multi-factor-auth-required") {
+        const mfaError = err as MultiFactorError;
+        setMfaResolver(mfaError.resolver);
+        setMfaRequired(true);
+        setSubmitting(false);
+        return;
+      }
+      
       if (code === "auth/user-not-found" || code === "auth/wrong-password" || code === "auth/invalid-credential") {
         setError("Invalid email or password.");
       } else if (code === "auth/too-many-requests") {
@@ -165,6 +194,52 @@ function LoginPageInner() {
         );
       }
       setSubmitting(false);
+    }
+  }
+
+  async function handleMfaVerify(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaResolver || mfaCode.length !== 6) return;
+
+    setError(null);
+    setMfaVerifying(true);
+
+    try {
+      const selectedFactor = mfaResolver.hints.find(
+        (hint) => hint.factorId === TotpMultiFactorGenerator.FACTOR_ID
+      );
+
+      if (!selectedFactor) {
+        setError("TOTP factor not found. Please contact support.");
+        setMfaVerifying(false);
+        return;
+      }
+
+      const assertion = TotpMultiFactorGenerator.assertionForSignIn(
+        selectedFactor.uid,
+        mfaCode
+      );
+
+      await mfaResolver.resolveSignIn(assertion);
+
+      try {
+        localStorage.setItem(LAST_EMAIL_KEY, email.trim());
+      } catch {
+        // localStorage unavailable
+      }
+      
+      setSuccess(true);
+    } catch (err: unknown) {
+      console.error("[MFA verify error]", err);
+      const code = err instanceof Error && "code" in err ? (err as { code: string }).code : "";
+      
+      if (code === "auth/invalid-verification-code") {
+        setError("Invalid code. Please try again.");
+      } else {
+        setError("Verification failed. Please try again.");
+      }
+      setMfaVerifying(false);
+      setMfaCode("");
     }
   }
 
@@ -304,18 +379,99 @@ function LoginPageInner() {
                       exit={{ opacity: 0, x: -8 }}
                       transition={{ duration: 0.15 }}
                     >
-                      <div className="text-center mb-6">
-                        <h1 className="font-display text-[24px] text-navy leading-tight">
-                          {isReturning ? "Welcome back" : "Sign in"}
-                        </h1>
-                        <p className="text-sm text-muted mt-1.5">
-                          {isReturning
-                            ? `Signing in as ${rememberedEmail}`
-                            : "Sign in to your clinic dashboard"}
-                        </p>
-                      </div>
+                      {mfaRequired ? (
+                        <>
+                          <div className="text-center mb-6">
+                            <div className="h-12 w-12 rounded-xl bg-blue/10 flex items-center justify-center mx-auto mb-3">
+                              <Shield size={24} className="text-blue" />
+                            </div>
+                            <h1 className="font-display text-[24px] text-navy leading-tight">
+                              Enter verification code
+                            </h1>
+                            <p className="text-sm text-muted mt-1.5">
+                              Enter the 6-digit code from your authenticator app
+                            </p>
+                          </div>
 
-                      <form onSubmit={handleSignin} className="space-y-5">
+                          <form onSubmit={handleMfaVerify} className="space-y-5">
+                            <div>
+                              <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                                Verification Code
+                              </label>
+                              <input
+                                type="text"
+                                value={mfaCode}
+                                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
+                                maxLength={6}
+                                autoFocus
+                                required
+                                placeholder="000000"
+                                className="w-full px-4 py-3 rounded-xl text-sm text-navy text-center font-mono placeholder-muted border border-border bg-cloud-light focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue transition-all"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && mfaCode.length === 6) handleMfaVerify(e as any);
+                                }}
+                              />
+                            </div>
+
+                            {error && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-danger/10 border border-danger/20">
+                                  <AlertCircle size={14} className="text-danger mt-0.5 shrink-0" />
+                                  <p className="text-[13px] text-danger">{error}</p>
+                                </div>
+                              </motion.div>
+                            )}
+
+                            <motion.button
+                              type="submit"
+                              disabled={mfaVerifying || mfaCode.length !== 6}
+                              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-blue transition-colors duration-200 hover:opacity-90 disabled:opacity-50"
+                              whileTap={shouldReduce ? {} : { scale: 0.97 }}
+                            >
+                              {mfaVerifying ? (
+                                <Loader2 size={16} className="animate-spin" />
+                              ) : (
+                                <>
+                                  Verify
+                                  <ArrowRight size={14} />
+                                </>
+                              )}
+                            </motion.button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMfaRequired(false);
+                                setMfaResolver(null);
+                                setMfaCode("");
+                                setError(null);
+                              }}
+                              className="w-full text-sm text-muted hover:text-navy transition-colors"
+                            >
+                              ← Back to sign in
+                            </button>
+                          </form>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-center mb-6">
+                            <h1 className="font-display text-[24px] text-navy leading-tight">
+                              {isReturning ? "Welcome back" : "Sign in"}
+                            </h1>
+                            <p className="text-sm text-muted mt-1.5">
+                              {isReturning
+                                ? `Signing in as ${rememberedEmail}`
+                                : "Sign in to your clinic dashboard"}
+                            </p>
+                          </div>
+
+                          <form onSubmit={handleSignin} className="space-y-5">
                         <div>
                           <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
                             Email
@@ -402,14 +558,16 @@ function LoginPageInner() {
                             </>
                           )}
                         </motion.button>
-                      </form>
+                          </form>
 
-                      <p className="text-center text-[12px] text-muted mt-5">
-                        Don&apos;t have an account?{" "}
-                        <button type="button" onClick={() => switchMode("signup")} className="text-blue font-semibold hover:underline">
-                          Start your free trial
-                        </button>
-                      </p>
+                          <p className="text-center text-[12px] text-muted mt-5">
+                            Don&apos;t have an account?{" "}
+                            <button type="button" onClick={() => switchMode("signup")} className="text-blue font-semibold hover:underline">
+                              Start your free trial
+                            </button>
+                          </p>
+                        </>
+                      )}
                     </motion.div>
                   ) : (
                     <motion.div

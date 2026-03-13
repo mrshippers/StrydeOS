@@ -19,6 +19,7 @@ import {
   UserCircle,
   ExternalLink,
   Shield,
+  Activity,
   CheckCheck,
   Command,
   Moon,
@@ -427,31 +428,58 @@ export default function Sidebar() {
                 </span>
               </button>
               {isSuperAdmin && (
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileOpen(false)}
-                  className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors active:scale-[0.98] ${
-                    pathname === "/admin"
+                <>
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileOpen(false)}
+                    className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors active:scale-[0.98] ${
+                      pathname === "/admin"
                       ? "text-white"
                       : "text-white/45 hover:text-white/75 hover:bg-white/[0.04]"
-                  }`}
-                >
-                  {pathname === "/admin" && (
-                    <motion.div
-                      layoutId="system-active-indicator"
-                      className="absolute inset-0 rounded-lg"
-                      style={{
-                        background: "rgba(255,255,255,0.08)",
-                        borderLeft: "3px solid #1C54F2",
-                      }}
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-[1] flex items-center gap-3">
-                    <Shield size={16} strokeWidth={pathname === "/admin" ? 2 : 1.5} />
-                    Stryde Super User
-                  </span>
-                </Link>
+                    }`}
+                  >
+                    {pathname === "/admin" && (
+                      <motion.div
+                        layoutId="system-active-indicator"
+                        className="absolute inset-0 rounded-lg"
+                        style={{
+                          background: "rgba(255,255,255,0.08)",
+                          borderLeft: "3px solid #1C54F2",
+                        }}
+                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-[1] flex items-center gap-3">
+                      <Shield size={16} strokeWidth={pathname === "/admin" ? 2 : 1.5} />
+                      Stryde Super User
+                    </span>
+                  </Link>
+                  <Link
+                    href="/admin/integration-health"
+                    onClick={() => setMobileOpen(false)}
+                    className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors active:scale-[0.98] ${
+                      pathname === "/admin/integration-health"
+                        ? "text-white"
+                        : "text-white/45 hover:text-white/75 hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    {pathname === "/admin/integration-health" && (
+                      <motion.div
+                        layoutId="system-active-indicator-integration-health"
+                        className="absolute inset-0 rounded-lg"
+                        style={{
+                          background: "rgba(255,255,255,0.08)",
+                          borderLeft: "3px solid #1C54F2",
+                        }}
+                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-[1] flex items-center gap-3">
+                      <Activity size={16} strokeWidth={pathname === "/admin/integration-health" ? 2 : 1.5} />
+                      Integration Health
+                    </span>
+                  </Link>
+                </>
               )}
             </div>
           </div>

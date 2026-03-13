@@ -25,6 +25,7 @@
     "lucide-react": "^0.474.0",
     "motion": "^12.34.3",
     "next": "^15.1.0",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.0",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/node": "^22",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "csv-parse": "^6.1.0",

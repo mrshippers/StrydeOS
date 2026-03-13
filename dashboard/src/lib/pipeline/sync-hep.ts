@@ -68,11 +68,32 @@ export async function syncHep(
           );
           const latest = sorted[0];
 
+          // Pull adherence data when adapter supports it (e.g. Physitrack V2)
+          let hepAdherence: {
+            adherencePercent: number;
+            sessionsCompleted: number;
+            lastSessionAt?: string;
+          } | undefined;
+          if (hepAdapter.getAdherence && latest.externalId) {
+            const adherence = await hepAdapter.getAdherence(
+              lookupId,
+              latest.externalId
+            );
+            if (adherence) {
+              hepAdherence = {
+                adherencePercent: adherence.adherencePercent,
+                sessionsCompleted: adherence.sessionsCompleted,
+                lastSessionAt: adherence.lastSessionAt,
+              };
+            }
+          }
+
           return {
             patientDocId: patient.id,
             pmsExternalId: patient.pmsExternalId,
             programmeId: latest.externalId,
             completionPercent: latest.completionPercent,
+            hepAdherence,
           };
         })
       );
@@ -87,15 +108,25 @@ export async function syncHep(
         }
         if (!result.value) continue;
 
-        const { patientDocId, pmsExternalId, programmeId, completionPercent } =
-          result.value;
+        const {
+          patientDocId,
+          pmsExternalId,
+          programmeId,
+          completionPercent,
+          hepAdherence,
+        } = result.value;
 
-        // Update patient doc with HEP programme info
-        batch.update(patientsRef.doc(patientDocId), {
+        const patientUpdate: Record<string, unknown> = {
           hepProgramId: programmeId,
           hepCompletionPercent: completionPercent,
           updatedAt: new Date().toISOString(),
-        });
+        };
+        if (hepAdherence) {
+          patientUpdate.hepAdherence = hepAdherence;
+        }
+
+        // Update patient doc with HEP programme info and optional adherence
+        batch.update(patientsRef.doc(patientDocId), patientUpdate);
         batchCount++;
 
         // Mark hepAssigned on this patient's recent completed appointments

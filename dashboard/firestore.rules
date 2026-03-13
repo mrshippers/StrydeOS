@@ -103,6 +103,11 @@ service cloud.firestore {
       match /integrations_config/{configId} {
         allow read, write: if false;
       }
+
+      // Integration Health — pipeline logs; server-side only, dashboard reads via API
+      match /integration_health/{entryId} {
+        allow read, write: if false;
+      }
     }
   }
 }

@@ -12,5 +12,9 @@ out/
 # Firebase service account keys
 *-firebase-adminsdk-*.json
 serviceAccountKey.json
+
+# Stripe / secrets (backup codes, etc.)
+stripe_backup_code.txt
+*_backup_code*.txt
 StrydeOS_SaaS_Subscription_Agreement_v2.docx
 Private Practice Barometer - BM Public.pdf

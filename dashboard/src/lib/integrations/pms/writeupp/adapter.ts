@@ -66,16 +66,11 @@ export function createWriteUppAdapter(config: WriteUppConfig): PMSAdapter {
       return { externalId: String(data?.id ?? (data as { externalId?: string }).externalId ?? "") };
     },
 
-    async updateAppointmentStatus(_externalId: string, _status: AppointmentStatus) {
-      // WriteUpp status update endpoint — implement when API docs confirm route
-      try {
-        await writeUppFetch(config, `/appointments/${_externalId}/status`, {
-          method: "PATCH",
-          body: JSON.stringify({ status: _status }),
-        });
-      } catch {
-        // No-op if endpoint not available
-      }
+    async updateAppointmentStatus(externalId: string, status: AppointmentStatus) {
+      await writeUppFetch(config, `/appointments/${encodeURIComponent(externalId)}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
     },
 
     async getClinicians() {
