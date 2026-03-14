@@ -37,6 +37,12 @@ service cloud.firestore {
       allow create, delete: if false;
     }
 
+    // ─── User Preferences ──────────────────────────────────────────────
+    // Each user can read/write only their own preferences doc.
+    match /user_preferences/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
     // ─── Clinics ───────────────────────────────────────────────────────
     match /clinics/{clinicId} {
       allow read: if isClinicMember(clinicId) || isSuperAdmin();
@@ -78,6 +84,13 @@ service cloud.firestore {
       match /comms_log/{logId} {
         allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
         allow write: if false;
+      }
+
+      // Sequence Definitions — owners can toggle active; pipeline seeds (write=false, update allowed for owners)
+      match /sequence_definitions/{defId} {
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow update: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow create, delete: if false;
       }
 
       // Reviews

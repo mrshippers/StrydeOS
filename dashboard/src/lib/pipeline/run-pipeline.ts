@@ -11,6 +11,7 @@ import { computePatientFields } from "./compute-patients";
 import { computeWeeklyMetricsForClinic } from "@/lib/metrics/compute-weekly";
 import { syncReviews } from "./sync-reviews";
 import { triggerCommsSequences } from "@/lib/comms/trigger-sequences";
+import { computeAttribution } from "./compute-attribution";
 import type {
   PipelineResult,
   StageResult,
@@ -38,6 +39,10 @@ export async function runPipeline(
     .collection("clinics")
     .doc(clinicId)
     .collection(INTEGRATIONS_CONFIG);
+
+  // Load pipeline config for lastFullRunAt (used by attribution stage)
+  const pipelineSnap = await configBase.doc(PIPELINE_DOC_ID).get();
+  const lastFullRunAt = pipelineSnap.data()?.lastFullRunAt as string | undefined;
 
   // ── Load PMS config ──────────────────────────────────────────────────────
   const pmsSnap = await configBase.doc(PMS_DOC_ID).get();
@@ -133,6 +138,21 @@ export async function runPipeline(
       count: 0,
       errors: [err instanceof Error ? err.message : String(err)],
       durationMs: Date.now() - commsStart,
+    });
+  }
+
+  // ── Stage 5c: Revenue Attribution ────────────────────────────────────────
+  const attrStart = Date.now();
+  try {
+    const attrResult = await computeAttribution(db, clinicId, lastFullRunAt);
+    stages.push(attrResult);
+  } catch (err) {
+    stages.push({
+      stage: "compute-attribution",
+      ok: false,
+      count: 0,
+      errors: [err instanceof Error ? err.message : String(err)],
+      durationMs: Date.now() - attrStart,
     });
   }
 

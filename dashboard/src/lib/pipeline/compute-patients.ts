@@ -1,6 +1,8 @@
 import type { Firestore, WriteBatch } from "firebase-admin/firestore";
 import type { StageResult } from "./types";
 import { INTEGRATIONS_CONFIG, PIPELINE_DOC_ID, DEFAULT_COURSE_LENGTH } from "./types";
+import { computeRiskScore } from "./compute-risk-score";
+import type { LifecycleState } from "@/types";
 
 const MAX_BATCH_SIZE = 500;
 const CHURN_RISK_DAYS = 14;
@@ -51,7 +53,7 @@ export async function computePatientFields(
     // Index appointments by patientId (using pmsExternalId stored as patientId in appointments)
     const apptsByPatient = new Map<
       string,
-      { dateTime: string; status: string }[]
+      { dateTime: string; status: string; followUpBooked: boolean; isInitialAssessment: boolean }[]
     >();
     for (const doc of appointmentsSnap.docs) {
       const data = doc.data();
@@ -61,6 +63,8 @@ export async function computePatientFields(
       apptsByPatient.get(pid)!.push({
         dateTime: data.dateTime as string,
         status: data.status as string,
+        followUpBooked: (data.followUpBooked as boolean) ?? false,
+        isInitialAssessment: (data.isInitialAssessment as boolean) ?? false,
       });
     }
 
@@ -113,6 +117,46 @@ export async function computePatientFields(
         }
       }
 
+      // ── Risk score + lifecycle state ────────────────────────────────────────
+      const lastAppt = completed.length > 0 ? completed[completed.length - 1] : null;
+      // First 3 SLOTS (all statuses sorted by dateTime) — used to detect early DNAs
+      const firstThreeSlots = [...appointments]
+        .sort((a, b) => a.dateTime.localeCompare(b.dateTime))
+        .slice(0, 3);
+      const dnaInFirstThree = firstThreeSlots.filter((a) => a.status === "dna").length;
+
+      // Appointments in last 4 weeks
+      const fourWeeksAgo = new Date(now.getTime() - 28 * 86_400_000).toISOString();
+      const recentAppts = appointments.filter((a) => a.dateTime >= fourWeeksAgo);
+      const recentScheduled = recentAppts.filter(
+        (a) => a.status === "scheduled" || a.status === "completed" || a.status === "dna"
+      ).length;
+      const recentAttended = recentAppts.filter((a) => a.status === "completed").length;
+
+      const priorLifecycleState = (data.lifecycleState as LifecycleState | undefined) ?? null;
+      const lastSequenceSentAt = (data.lastSequenceSentAt as string | undefined) ?? null;
+
+      const riskResult = computeRiskScore({
+        sessionCount,
+        courseLength,
+        lastSessionDate,
+        nextSessionDate,
+        discharged,
+        churnRisk,
+        insuranceFlag: (data.insuranceFlag as boolean) ?? false,
+        hepProgramId: data.hepProgramId as string | undefined,
+        hepComplianceData: !!(data.hepComplianceData),
+        isInitialAssessmentWithNoFollowUp:
+          sessionCount === 1 && lastAppt?.isInitialAssessment && !lastAppt?.followUpBooked,
+        followUpBookedAtLastSession: lastAppt?.followUpBooked ?? false,
+        dnasInFirstThreeSessions: dnaInFirstThree,
+        sessionsAttendedLast4Weeks: recentAttended,
+        sessionsScheduledLast4Weeks: recentScheduled,
+        priorLifecycleState,
+        lastSequenceSentAt,
+        now,
+      });
+
       const update: Record<string, unknown> = {
         sessionCount,
         lastSessionDate: lastSessionDate ?? null,
@@ -120,6 +164,12 @@ export async function computePatientFields(
         discharged,
         churnRisk,
         courseLength,
+        // New retention fields (additive)
+        lifecycleState: riskResult.lifecycleState,
+        riskScore: riskResult.riskScore,
+        riskFactors: riskResult.riskFactors,
+        sessionThresholdAlert: riskResult.sessionThresholdAlert,
+        lifecycleUpdatedAt: nowIso,
         updatedAt: nowIso,
       };
 
