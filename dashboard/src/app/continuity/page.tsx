@@ -15,6 +15,11 @@ import { useToast } from "@/components/ui/Toast";
 import { useDemoPatients } from "@/hooks/useDemoData";
 import { useSequences } from "@/hooks/useSequences";
 import { useCommsLog } from "@/hooks/useCommsLog";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { SessionThresholdStrip } from "@/components/pulse/SessionThresholdStrip";
+import { PatientBoard } from "@/components/pulse/PatientBoard";
+import { SequenceCard } from "@/components/pulse/SequenceCard";
+import { CustomisePanel } from "@/components/pulse/CustomisePanel";
 import { formatPercent, daysSince } from "@/lib/utils";
 import {
   Users,
@@ -32,6 +37,7 @@ import {
   Zap,
   X,
   Smartphone,
+  SlidersHorizontal,
 } from "lucide-react";
 
 const SEQUENCE_PREVIEWS: Record<string, { channel: "sms" | "email"; subject?: string; body: string }> = {
@@ -81,18 +87,20 @@ function ContinuityPage() {
   const [activeView, setActiveView] = useState<View>("patients");
   const [previewSequenceType, setPreviewSequenceType] = useState<string | null>(null);
   const { clinicians } = useClinicians();
-  const { active, churnRisk, postDischarge, loading } = usePatients(selectedClinician);
+  const { patients, active, churnRisk, postDischarge, sessionAlerts, loading } = usePatients(selectedClinician);
   const { toast } = useToast();
   const clinicianMap = Object.fromEntries(clinicians.map((c) => [c.id, c]));
 
   const { sequences, toggleSequence } = useSequences();
   const { user } = useAuth();
-  const { commsLog, commsStats, isDemo: commsIsDemo } = useCommsLog();
+  const { commsLog, commsStats, statsBySequence, isDemo: commsIsDemo } = useCommsLog();
+  const { preferences, updatePreferences } = useUserPreferences();
+  const [customiseOpen, setCustomiseOpen] = useState(false);
   const allPatients = useDemoPatients();
   const patientMap = Object.fromEntries(allPatients.map((p) => [p.id, p]));
 
   async function handleSendReminder(patientId: string) {
-    const patient = [...active, ...churnRisk, ...postDischarge].find((p) => p.id === patientId);
+    const patient = patients.find((p) => p.id === patientId);
     if (!patient) return;
 
     const to = patient.contact.phone ?? patient.contact.email;
@@ -174,208 +182,71 @@ function ContinuityPage() {
       </div>
 
       {/* View tabs */}
-      <div className="flex items-center gap-1 bg-cloud-light rounded-xl p-1 border border-border">
-        {([
-          { id: "patients" as const, label: "Patient Board", icon: Users },
-          { id: "sequences" as const, label: "Comms Sequences", icon: Zap },
-          { id: "log" as const, label: "Send Log", icon: Send },
-        ]).map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveView(id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-              activeView === id
-                ? "bg-white text-navy shadow-[var(--shadow-card)]"
-                : "text-muted hover:text-navy"
-            }`}
-          >
-            <Icon size={14} />
-            {label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1 bg-cloud-light rounded-xl p-1 border border-border flex-1">
+          {([
+            { id: "patients" as const, label: "Patient Board", icon: Users },
+            { id: "sequences" as const, label: "Comms Sequences", icon: Zap },
+            { id: "log" as const, label: "Send Log", icon: Send },
+          ]).map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveView(id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeView === id
+                  ? "bg-white text-navy shadow-[var(--shadow-card)]"
+                  : "text-muted hover:text-navy"
+              }`}
+            >
+              <Icon size={14} />
+              {label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setCustomiseOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-white text-sm font-medium text-muted hover:text-navy transition-colors shadow-[var(--shadow-card)]"
+        >
+          <SlidersHorizontal size={14} />
+          Customise
+        </button>
       </div>
 
       {/* Patient Board */}
       {activeView === "patients" && (
-        <div className="animate-fade-in space-y-5">
-          {/* At-Risk Alert Panel — shown when churn risks exist */}
-          {!loading && churnRisk.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-[var(--radius-card)] border border-warn/30 bg-warn/5 p-5"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle size={16} className="text-warn" />
-                <h3 className="text-sm font-semibold text-warn">
-                  {churnRisk.length} patient{churnRisk.length !== 1 ? "s" : ""} at risk of dropping off
-                </h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {churnRisk.map((p) => {
-                  const daysSinceLast = p.lastSessionDate ? daysSince(p.lastSessionDate) : 0;
-                  const clinician = clinicianMap[p.clinicianId];
-                  const urgency = daysSinceLast > 21 ? "danger" : "warn";
-                  return (
-                    <motion.div
-                      key={p.id}
-                      initial={{ opacity: 0, scale: 0.97 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.25 }}
-                      className={`rounded-xl border p-4 bg-white flex items-start justify-between gap-3 ${
-                        urgency === "danger" ? "border-danger/30" : "border-warn/30"
-                      }`}
-                    >
-                      <div className="flex items-start gap-2.5 min-w-0">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 ${
-                          urgency === "danger" ? "bg-danger" : "bg-warn"
-                        }`}>
-                          {p.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-navy truncate">{p.name}</p>
-                          {clinician && <p className="text-[11px] text-muted truncate">{clinician.name}</p>}
-                          <p className={`text-[11px] font-medium mt-0.5 ${urgency === "danger" ? "text-danger" : "text-warn"}`}>
-                            Last seen {daysSinceLast}d ago · {p.sessionCount}/{p.courseLength} sessions
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleSendReminder(p.id)}
-                        className="text-[11px] font-semibold text-blue hover:text-blue-bright transition-colors whitespace-nowrap shrink-0"
-                      >
-                        Re-engage →
-                      </button>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </motion.div>
+        <div className="animate-fade-in space-y-4">
+          {!loading && sessionAlerts.length > 0 && preferences && (
+            <SessionThresholdStrip
+              patients={sessionAlerts}
+              clinicianMap={clinicianMap}
+              onSendEarlyIntervention={handleSendReminder}
+            />
           )}
 
-          <div className="flex items-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-blue" />
-              <span className="text-muted">
-                <span className="font-semibold text-navy">{active.length}</span> active
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-warn" />
-              <span className="text-muted">
-                <span className="font-semibold text-navy">{churnRisk.length}</span> churn risks
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-muted" />
-              <span className="text-muted">
-                <span className="font-semibold text-navy">{postDischarge.length}</span> post-discharge
-              </span>
-            </div>
-          </div>
-
           {loading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((col) => (
-                <div key={col} className="space-y-3">
-                  {[1, 2, 3].map((row) => (
-                    <div key={row} className="rounded-xl bg-white border border-border p-4 shadow-[var(--shadow-card)]">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="w-9 h-9 rounded-full skeleton-shimmer shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="h-3.5 w-28 skeleton-shimmer rounded-md mb-1.5" />
-                          <div className="h-2.5 w-20 skeleton-shimmer rounded-md" />
-                        </div>
-                        {row === 1 && <div className="h-5 w-24 skeleton-shimmer rounded-full shrink-0" />}
-                      </div>
-                      <div className="mb-3">
-                        <div className="flex justify-between mb-1">
-                          <div className="h-2.5 w-28 skeleton-shimmer rounded-md" />
-                          <div className="h-2.5 w-8 skeleton-shimmer rounded-md" />
-                        </div>
-                        <div className="h-1.5 w-full skeleton-shimmer rounded-full" />
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="h-2.5 w-24 skeleton-shimmer rounded-md" />
-                        <div className="h-2.5 w-20 skeleton-shimmer rounded-md" />
-                      </div>
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-[12px] bg-white border border-border p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full skeleton-shimmer shrink-0" />
+                    <div className="flex-1">
+                      <div className="h-3.5 w-32 skeleton-shimmer rounded mb-1.5" />
+                      <div className="h-2.5 w-24 skeleton-shimmer rounded" />
                     </div>
-                  ))}
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Users size={14} className="text-blue" />
-                  <h3 className="text-sm font-semibold text-navy">Active</h3>
-                </div>
-                {active.length > 0 ? (
-                  <div className="space-y-3">
-                    {active.map((p, i) => (
-                      <motion.div
-                        key={p.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: i * 0.04 }}
-                      >
-                        <PatientRow patient={p} clinician={clinicianMap[p.clinicianId]} onSendReminder={handleSendReminder} />
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState module="pulse" heading="No active patients" subtext="All patients are either at risk or post-discharge." />
-                )}
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle size={14} className="text-warn" />
-                  <h3 className="text-sm font-semibold text-warn">Churn Risk</h3>
-                </div>
-                {churnRisk.length > 0 ? (
-                  <div className="space-y-3">
-                    {churnRisk.map((p, i) => (
-                      <motion.div
-                        key={p.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: i * 0.04 }}
-                      >
-                        <PatientRow patient={p} clinician={clinicianMap[p.clinicianId]} onSendReminder={handleSendReminder} />
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState module="pulse" heading="No churn risks" subtext="All patients with 2+ sessions have active rebookings." />
-                )}
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle size={14} className="text-muted" />
-                  <h3 className="text-sm font-semibold text-muted">Post-Discharge</h3>
-                </div>
-                {postDischarge.length > 0 ? (
-                  <div className="space-y-3">
-                    {postDischarge.map((p, i) => (
-                      <motion.div
-                        key={p.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: i * 0.04 }}
-                      >
-                        <PatientRow patient={p} clinician={clinicianMap[p.clinicianId]} />
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState module="pulse" heading="No recent discharges" subtext="Post-discharge patients within the last 90 days will appear here." />
-                )}
-              </div>
-            </div>
+            preferences && (
+              <PatientBoard
+                patients={patients}
+                clinicianMap={clinicianMap}
+                visibleSegments={preferences.visibleSegments}
+                visibleMetrics={preferences.visibleMetrics}
+                onSendReminder={handleSendReminder}
+              />
+            )
           )}
         </div>
       )}
@@ -386,78 +257,23 @@ function ContinuityPage() {
           <p className="text-xs text-muted">
             Each sequence triggers automatically based on patient events from your PMS. Toggle on/off per sequence. Timing and channel are configurable per clinic.
           </p>
-          {sequences.map((seq) => (
-            <div
-              key={seq.type}
-              className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5 transition-all hover:shadow-[var(--shadow-elevated)]"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue/10 flex items-center justify-center shrink-0">
-                    {seq.channel === "sms" ? <MessageSquare size={16} className="text-blue" /> : <Mail size={16} className="text-blue" />}
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-navy">{seq.name}</h4>
-                    <p className="text-xs text-muted">{seq.description}</p>
-                    {SEQUENCE_PREVIEWS[seq.type] && (
-                      <button
-                        onClick={() => setPreviewSequenceType(seq.type)}
-                        className="text-[11px] font-semibold text-blue hover:text-blue-bright transition-colors mt-1"
-                      >
-                        Preview message →
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    const next = !seq.enabled;
-                    toggleSequence(seq.type, next);
-                    toast(`${seq.name} ${next ? "enabled" : "disabled"}`, "success");
+          {sequences
+            .filter((seq) => !preferences || preferences.visibleSequenceTypes.includes(seq.sequenceType))
+            .map((seq) => {
+              const seqStats = statsBySequence[seq.sequenceType] ?? { sent: 0, opened: 0, clicked: 0, rebooked: 0, attributedRevenuePence: 0 };
+              return (
+                <SequenceCard
+                  key={seq.id}
+                  definition={seq}
+                  stats={seqStats}
+                  showRevenue={preferences?.showRevenue ?? false}
+                  onToggle={(active) => {
+                    toggleSequence(seq.id, active);
+                    toast(`${seq.name} ${active ? "enabled" : "disabled"}`, "success");
                   }}
-                  className="shrink-0"
-                >
-                  {seq.enabled ? (
-                    <ToggleRight size={28} className="text-success" />
-                  ) : (
-                    <ToggleLeft size={28} className="text-muted" />
-                  )}
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1.5 mb-3">
-                <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue/10 text-blue">
-                  {channelIcon(seq.channel)}
-                  {seq.channel.toUpperCase()}
-                </span>
-                <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cloud-dark text-muted">
-                  <Clock size={10} />
-                  {seq.delayHours < 24 ? `${seq.delayHours}h delay` : `${Math.round(seq.delayHours / 24)}d delay`}
-                </span>
-              </div>
-
-              {seq.sent > 0 && (
-                <div className="grid grid-cols-4 gap-3 pt-3 border-t border-border/50">
-                  <div className="text-center">
-                    <p className="font-display text-lg text-navy">{seq.sent}</p>
-                    <p className="text-[10px] text-muted flex items-center justify-center gap-1"><Send size={9} /> Sent</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-display text-lg text-navy">{seq.opened}</p>
-                    <p className="text-[10px] text-muted flex items-center justify-center gap-1"><Eye size={9} /> Opened</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-display text-lg text-navy">{seq.clicked}</p>
-                    <p className="text-[10px] text-muted flex items-center justify-center gap-1"><MousePointer size={9} /> Clicked</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-display text-lg text-navy">{seq.rebooked}</p>
-                    <p className="text-[10px] text-muted flex items-center justify-center gap-1"><CalendarCheck size={9} /> Rebooked</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+                />
+              );
+            })}
         </div>
       )}
 
@@ -521,6 +337,15 @@ function ContinuityPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {preferences && (
+        <CustomisePanel
+          open={customiseOpen}
+          onClose={() => setCustomiseOpen(false)}
+          preferences={preferences}
+          onUpdate={updatePreferences}
+        />
       )}
 
       {/* Channel preview modal */}

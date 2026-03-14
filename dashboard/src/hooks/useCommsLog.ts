@@ -3,16 +3,19 @@
 import { useState, useEffect } from "react";
 import { subscribeCommsLog } from "@/lib/queries";
 import { useAuth } from "@/hooks/useAuth";
-import type { CommsLogEntry } from "@/types";
+import type { CommsLogEntry, SequenceType } from "@/types";
 import type { CommsStats } from "@/types/comms";
 import { getDemoCommsLog, getDemoCommsStats } from "@/hooks/useDemoComms";
 
 export interface UseCommsLogResult {
-  commsLog:   CommsLogEntry[];
-  commsStats: CommsStats;
-  loading:    boolean;
-  isDemo:     boolean;
-  error:      string | null;
+  commsLog:                    CommsLogEntry[];
+  commsStats:                  CommsStats;
+  statsBySequence:             Record<string, { sent: number; opened: number; clicked: number; rebooked: number; attributedRevenuePence: number }>;
+  totalAttributedRevenuePence: number;
+  attributedThisMonthPence:    number;
+  loading:                     boolean;
+  isDemo:                      boolean;
+  error:                       string | null;
 }
 
 export function useCommsLog(): UseCommsLogResult {
@@ -51,17 +54,21 @@ export function useCommsLog(): UseCommsLogResult {
 
   if (isDemo) {
     return {
-      commsLog:   getDemoCommsLog(),
-      commsStats: getDemoCommsStats(),
+      commsLog:                    getDemoCommsLog(),
+      commsStats:                  getDemoCommsStats(),
+      statsBySequence:             {},
+      totalAttributedRevenuePence: 0,
+      attributedThisMonthPence:    0,
       loading,
-      isDemo:     true,
-      error:      null,
+      isDemo:                      true,
+      error:                       null,
     };
   }
 
   return {
     commsLog,
     commsStats: deriveStats(commsLog),
+    ...deriveSequenceStats(commsLog),
     loading,
     isDemo:     false,
     error,
@@ -82,4 +89,43 @@ function deriveStats(log: CommsLogEntry[]): CommsStats {
     clickRate:            clicked  / total,
     conversionToRebook:   rebooked / total,
   };
+}
+
+function deriveSequenceStats(log: CommsLogEntry[]): {
+  statsBySequence:             Record<string, { sent: number; opened: number; clicked: number; rebooked: number; attributedRevenuePence: number }>;
+  totalAttributedRevenuePence: number;
+  attributedThisMonthPence:    number;
+} {
+  const statsBySequence: Record<string, { sent: number; opened: number; clicked: number; rebooked: number; attributedRevenuePence: number }> = {};
+
+  const now = new Date();
+  const thisYear  = now.getFullYear();
+  const thisMonth = now.getMonth();
+  let totalAttributedRevenuePence = 0;
+  let attributedThisMonthPence    = 0;
+
+  for (const entry of log) {
+    const key = entry.sequenceType as SequenceType;
+    if (!statsBySequence[key]) {
+      statsBySequence[key] = { sent: 0, opened: 0, clicked: 0, rebooked: 0, attributedRevenuePence: 0 };
+    }
+    const group = statsBySequence[key];
+    group.sent   += 1;
+    if (entry.openedAt)            group.opened  += 1;
+    if (entry.clickedAt)           group.clicked += 1;
+    if (entry.outcome === "booked") group.rebooked += 1;
+
+    const revenue = entry.attributedRevenuePence ?? 0;
+    group.attributedRevenuePence += revenue;
+    totalAttributedRevenuePence  += revenue;
+
+    if (revenue > 0) {
+      const sentDate = new Date(entry.sentAt);
+      if (sentDate.getFullYear() === thisYear && sentDate.getMonth() === thisMonth) {
+        attributedThisMonthPence += revenue;
+      }
+    }
+  }
+
+  return { statsBySequence, totalAttributedRevenuePence, attributedThisMonthPence };
 }

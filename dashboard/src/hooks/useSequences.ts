@@ -1,36 +1,30 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
-  doc,
-  getDoc,
-  setDoc,
+  collection,
   onSnapshot,
+  doc,
+  updateDoc,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
-import { DEFAULT_SEQUENCES } from "@/types/comms";
-import type { CommsSequenceConfig } from "@/types/comms";
+import type { SequenceDefinition } from "@/types/comms";
 
-export interface SequenceWithStats extends CommsSequenceConfig {
+export interface SequenceWithStats extends SequenceDefinition {
   sent: number;
   opened: number;
   clicked: number;
   rebooked: number;
-}
-
-interface FirestoreSequenceDoc {
-  enabled: Record<string, boolean>;
+  attributedRevenuePence: number;
 }
 
 export function useSequences() {
   const { user } = useAuth();
   const clinicId = user?.clinicId ?? null;
 
-  const [enabledMap, setEnabledMap] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(DEFAULT_SEQUENCES.map((s) => [s.type, s.enabled]))
-  );
+  const [definitions, setDefinitions] = useState<SequenceDefinition[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,14 +33,14 @@ export function useSequences() {
       return;
     }
 
-    const ref = doc(db, "clinics", clinicId, "settings", "comms_sequences");
+    const ref = collection(db, "clinics", clinicId, "sequence_definitions");
     const unsub: Unsubscribe = onSnapshot(
       ref,
       (snap) => {
-        if (snap.exists()) {
-          const data = snap.data() as FirestoreSequenceDoc;
-          setEnabledMap((prev) => ({ ...prev, ...data.enabled }));
-        }
+        const defs = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() } as SequenceDefinition))
+          .sort((a, b) => a.priority - b.priority);
+        setDefinitions(defs);
         setLoading(false);
       },
       () => setLoading(false)
@@ -56,32 +50,35 @@ export function useSequences() {
   }, [clinicId]);
 
   const toggleSequence = useCallback(
-    async (type: string, newEnabled: boolean) => {
+    async (definitionId: string, active: boolean) => {
       // Optimistic update
-      setEnabledMap((prev) => ({ ...prev, [type]: newEnabled }));
+      setDefinitions((prev) =>
+        prev.map((d) => (d.id === definitionId ? { ...d, active } : d))
+      );
 
       if (!db || !clinicId) return;
 
-      const ref = doc(db, "clinics", clinicId, "settings", "comms_sequences");
+      const ref = doc(db, "clinics", clinicId, "sequence_definitions", definitionId);
       try {
-        const snap = await getDoc(ref);
-        const existing = snap.exists() ? (snap.data() as FirestoreSequenceDoc).enabled ?? {} : {};
-        await setDoc(ref, { enabled: { ...existing, [type]: newEnabled } }, { merge: true });
+        await updateDoc(ref, { active });
       } catch {
         // Revert on failure
-        setEnabledMap((prev) => ({ ...prev, [type]: !newEnabled }));
+        setDefinitions((prev) =>
+          prev.map((d) => (d.id === definitionId ? { ...d, active: !active } : d))
+        );
       }
     },
     [clinicId]
   );
 
-  const sequences: SequenceWithStats[] = DEFAULT_SEQUENCES.map((s) => ({
-    ...s,
-    enabled: enabledMap[s.type] ?? s.enabled,
+  // Merge definitions with zero stats (stats come from useCommsLog)
+  const sequences: SequenceWithStats[] = definitions.map((d) => ({
+    ...d,
     sent: 0,
     opened: 0,
     clicked: 0,
     rebooked: 0,
+    attributedRevenuePence: 0,
   }));
 
   return { sequences, toggleSequence, loading };

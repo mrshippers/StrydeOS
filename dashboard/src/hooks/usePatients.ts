@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { subscribePatients } from "@/lib/queries";
 import { useAuth } from "@/hooks/useAuth";
 import { useDemoPatients } from "./useDemoData";
-import type { Patient } from "@/types";
+import type { Patient, LifecycleState } from "@/types";
 
 export function usePatients(clinicianId?: string) {
   const { user } = useAuth();
@@ -67,5 +67,20 @@ export function usePatients(clinicianId?: string) {
     [patients]
   );
 
-  return { patients, active, churnRisk, postDischarge, loading, error };
+  const byLifecycleState = useMemo(() => {
+    const map = new Map<LifecycleState, Patient[]>();
+    for (const p of patients) {
+      const state = p.lifecycleState ?? "ACTIVE";
+      const existing = map.get(state) ?? [];
+      map.set(state, [...existing, p]);
+    }
+    return map;
+  }, [patients]);
+
+  const sessionAlerts = useMemo(
+    () => patients.filter((p) => p.sessionThresholdAlert === true),
+    [patients]
+  );
+
+  return { patients, active, churnRisk, postDischarge, byLifecycleState, sessionAlerts, loading, error };
 }
