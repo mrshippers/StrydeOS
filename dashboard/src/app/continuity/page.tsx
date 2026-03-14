@@ -5,8 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
-import PatientRow from "@/components/ui/PatientRow";
-import EmptyState from "@/components/ui/EmptyState";
 import DemoBanner from "@/components/ui/DemoBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useClinicians } from "@/hooks/useClinicians";
@@ -23,17 +21,10 @@ import { CustomisePanel } from "@/components/pulse/CustomisePanel";
 import { formatPercent, daysSince } from "@/lib/utils";
 import {
   Users,
-  AlertTriangle,
-  CheckCircle,
   Mail,
   MessageSquare,
   Send,
-  Clock,
-  ToggleLeft,
-  ToggleRight,
   Eye,
-  MousePointer,
-  CalendarCheck,
   Zap,
   X,
   Smartphone,
