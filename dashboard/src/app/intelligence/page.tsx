@@ -287,6 +287,8 @@ export default function IntelligencePage() {
     benchmarks,
     loading: intelligenceLoading,
     usedDemo,
+    outcomesDemoFallback,
+    reputationDemoFallback,
     error: intelligenceError,
   } = useIntelligenceData(selectedClinician);
 
@@ -371,6 +373,13 @@ export default function IntelligencePage() {
               </tr>
             </thead>
             <tbody>
+              {clinicianKpis.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-sm text-muted">
+                    Per-clinician performance data will appear once metrics are computed from appointment records.
+                  </td>
+                </tr>
+              )}
               {clinicianKpis.map((c) => {
                 const isExpanded = expandedClinician === c.clinicianId;
                 return (
@@ -552,29 +561,36 @@ export default function IntelligencePage() {
             {/* Revenue by clinician */}
             <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
               <h3 className="font-display text-lg text-navy mb-1">Revenue by Clinician</h3>
-              <p className="text-xs text-muted mb-4">This week&apos;s total revenue attributed per clinician</p>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={revByClinician} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="4 4" stroke="#E2DFDA" vertical={false} />
-                  <XAxis dataKey="clinicianName" tick={{ fontSize: 12, fill: "#6B7280" }} tickLine={false} axisLine={{ stroke: "#E2DFDA" }} />
-                  <YAxis
-                    tickFormatter={(v: number) => `£${(v / 100).toFixed(0)}`}
-                    tick={{ fontSize: 11, fill: "#6B7280" }}
-                    tickLine={false}
-                    axisLine={false}
-                    width={60}
-                  />
-                  <Tooltip
-                    content={<ChartTooltip />}
-                    formatter={(v: number) => [`£${(v / 100).toFixed(0)}`, "Revenue"]}
-                  />
-                  <Bar dataKey="totalRevenuePence" name="Revenue" radius={[6, 6, 0, 0]}>
-                    {revByClinician.map((_, i) => (
-                      <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <p className="text-xs text-muted mb-4">Total revenue attributed per clinician across the reporting period</p>
+              {revByClinician.length === 0 ? (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-cloud-light border border-border text-sm text-muted">
+                  <PoundSterling size={16} className="shrink-0 text-purple" />
+                  <span>Revenue data will appear once per-clinician metrics are computed from your appointment data.</span>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={revByClinician} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                    <CartesianGrid strokeDasharray="4 4" stroke="#E2DFDA" vertical={false} />
+                    <XAxis dataKey="clinicianName" tick={{ fontSize: 12, fill: "#6B7280" }} tickLine={false} axisLine={{ stroke: "#E2DFDA" }} />
+                    <YAxis
+                      tickFormatter={(v: number) => `£${(v / 100).toFixed(0)}`}
+                      tick={{ fontSize: 11, fill: "#6B7280" }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={60}
+                    />
+                    <Tooltip
+                      content={<ChartTooltip />}
+                      formatter={(v: number) => [`£${(v / 100).toFixed(0)}`, "Revenue"]}
+                    />
+                    <Bar dataKey="totalRevenuePence" name="Revenue" radius={[6, 6, 0, 0]}>
+                      {revByClinician.map((_, i) => (
+                        <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
             {/* Revenue by condition */}
@@ -672,43 +688,50 @@ export default function IntelligencePage() {
             {/* DNA insights */}
             <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
               <h3 className="font-display text-lg text-navy mb-3">Insights</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {(() => {
-                  const worstDay = [...dnaByDay].sort((a, b) => b.dnaRate - a.dnaRate)[0];
-                  const worstSlot = [...dnaBySlot].sort((a, b) => b.dnaRate - a.dnaRate)[0];
-                  const totalDna = dnaByDay.reduce((s, d) => s + d.dnaCount, 0);
-                  return [
-                    {
-                      icon: AlertTriangle,
-                      color: "#EF4444",
-                      title: "Highest DNA day",
-                      text: `${worstDay.day} at ${formatPercent(worstDay.dnaRate)} — ${worstDay.dnaCount} of ${worstDay.totalAppointments} appointments`,
-                    },
-                    {
-                      icon: AlertTriangle,
-                      color: "#F59E0B",
-                      title: "Highest DNA slot",
-                      text: `${worstSlot.slot} at ${formatPercent(worstSlot.dnaRate)} — consider SMS reminders 2h before`,
-                    },
-                    {
-                      icon: TrendingUp,
-                      color: "#059669",
-                      title: "Weekly total",
-                      text: `${totalDna} DNAs this week out of ${dnaByDay.reduce((s, d) => s + d.totalAppointments, 0)} appointments`,
-                    },
-                  ];
-                })().map((insight) => (
-                  <div key={insight.title} className="flex items-start gap-3 p-4 rounded-xl bg-cloud-light border border-border">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${insight.color}15` }}>
-                      <insight.icon size={14} style={{ color: insight.color }} />
+              {dnaByDay.length === 0 || dnaByDay.every((d) => d.dnaCount === 0) ? (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-cloud-light border border-border text-sm text-muted">
+                  <AlertTriangle size={16} className="shrink-0 text-purple" />
+                  <span>No DNA events recorded in the current period. Insights will appear once appointment data includes no-show events.</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {(() => {
+                    const worstDay = [...dnaByDay].sort((a, b) => b.dnaRate - a.dnaRate)[0];
+                    const worstSlot = [...dnaBySlot].sort((a, b) => b.dnaRate - a.dnaRate)[0];
+                    const totalDna = dnaByDay.reduce((s, d) => s + d.dnaCount, 0);
+                    return [
+                      {
+                        icon: AlertTriangle,
+                        color: "#EF4444",
+                        title: "Highest DNA day",
+                        text: worstDay ? `${worstDay.day} at ${formatPercent(worstDay.dnaRate)} — ${worstDay.dnaCount} of ${worstDay.totalAppointments} appointments` : "No data",
+                      },
+                      {
+                        icon: AlertTriangle,
+                        color: "#F59E0B",
+                        title: "Highest DNA slot",
+                        text: worstSlot ? `${worstSlot.slot} at ${formatPercent(worstSlot.dnaRate)} — consider SMS reminders 2h before` : "No data",
+                      },
+                      {
+                        icon: TrendingUp,
+                        color: "#059669",
+                        title: "Weekly total",
+                        text: `${totalDna} DNAs this week out of ${dnaByDay.reduce((s, d) => s + d.totalAppointments, 0)} appointments`,
+                      },
+                    ];
+                  })().map((insight) => (
+                    <div key={insight.title} className="flex items-start gap-3 p-4 rounded-xl bg-cloud-light border border-border">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${insight.color}15` }}>
+                        <insight.icon size={14} style={{ color: insight.color }} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-navy">{insight.title}</p>
+                        <p className="text-xs text-muted leading-relaxed">{insight.text}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-navy">{insight.title}</p>
-                      <p className="text-xs text-muted leading-relaxed">{insight.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -718,44 +741,51 @@ export default function IntelligencePage() {
             <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
               <h3 className="font-display text-lg text-navy mb-1">Referral Source Attribution</h3>
               <p className="text-xs text-muted mb-4">Where your patients come from and the revenue they generate</p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Source</th>
-                      <th className="text-left py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Type</th>
-                      <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Referred</th>
-                      <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Booked</th>
-                      <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Conv. %</th>
-                      <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Revenue</th>
-                      <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Avg Course</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {referrals
-                      .sort((a, b) => b.totalRevenuePence - a.totalRevenuePence)
-                      .map((r) => (
-                        <tr key={r.source} className="border-b border-border/50 hover:bg-cloud-light/50 transition-colors">
-                          <td className="py-3 px-3 font-medium text-navy">{r.source}</td>
-                          <td className="py-3 px-3">
-                            <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue/10 text-blue">
-                              {r.type.replace("_", " ")}
-                            </span>
-                          </td>
-                          <td className="py-3 px-3 text-right text-navy">{r.patientsReferred}</td>
-                          <td className="py-3 px-3 text-right text-navy">{r.convertedToBooking}</td>
-                          <td className="py-3 px-3 text-right">
-                            <span className={`font-semibold ${r.patientsReferred > 0 && r.convertedToBooking / r.patientsReferred >= 0.8 ? "text-success" : r.patientsReferred > 0 ? "text-warn" : "text-muted"}`}>
-                              {r.patientsReferred > 0 ? formatPercent(r.convertedToBooking / r.patientsReferred) : "—"}
-                            </span>
-                          </td>
-                          <td className="py-3 px-3 text-right font-bold text-navy">{formatPence(r.totalRevenuePence)}</td>
-                          <td className="py-3 px-3 text-right text-muted">{r.avgCourseLength.toFixed(1)} sessions</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
+              {referrals.length === 0 ? (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-cloud-light border border-border text-sm text-muted">
+                  <GitBranch size={16} className="shrink-0 text-purple" />
+                  <span>Referral data will populate once patients have a referral source set in your PMS. This is derived from the patient record.</span>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Source</th>
+                        <th className="text-left py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Type</th>
+                        <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Referred</th>
+                        <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Booked</th>
+                        <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Conv. %</th>
+                        <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Revenue</th>
+                        <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Avg Course</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {referrals
+                        .sort((a, b) => b.totalRevenuePence - a.totalRevenuePence)
+                        .map((r) => (
+                          <tr key={r.source} className="border-b border-border/50 hover:bg-cloud-light/50 transition-colors">
+                            <td className="py-3 px-3 font-medium text-navy">{r.source}</td>
+                            <td className="py-3 px-3">
+                              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue/10 text-blue">
+                                {r.type.replace("_", " ")}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-right text-navy">{r.patientsReferred}</td>
+                            <td className="py-3 px-3 text-right text-navy">{r.convertedToBooking}</td>
+                            <td className="py-3 px-3 text-right">
+                              <span className={`font-semibold ${r.patientsReferred > 0 && r.convertedToBooking / r.patientsReferred >= 0.8 ? "text-success" : r.patientsReferred > 0 ? "text-warn" : "text-muted"}`}>
+                                {r.patientsReferred > 0 ? formatPercent(r.convertedToBooking / r.patientsReferred) : "—"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-right font-bold text-navy">{formatPence(r.totalRevenuePence)}</td>
+                            <td className="py-3 px-3 text-right text-muted">{r.avgCourseLength.toFixed(1)} sessions</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             {/* Referral insight */}
@@ -799,6 +829,20 @@ export default function IntelligencePage() {
 
         {activeTab === "outcomes" && (
           <div className="space-y-6">
+            {outcomesDemoFallback && !usedDemo && (
+              <div
+                className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm"
+                style={{ background: "rgba(139, 92, 246, 0.06)", border: "1px solid rgba(139, 92, 246, 0.15)" }}
+              >
+                <Activity size={14} className="text-purple shrink-0" />
+                <span className="text-purple font-medium">
+                  Showing sample data
+                  <span className="font-normal text-muted ml-1">
+                    — outcome scores will appear here once clinicians begin recording them via the form below.
+                  </span>
+                </span>
+              </div>
+            )}
             {/* Correlation insight */}
             <div className="rounded-[var(--radius-card)] border border-purple/20 bg-purple/5 p-5">
               <div className="flex items-start gap-3">
@@ -932,6 +976,20 @@ export default function IntelligencePage() {
 
         {activeTab === "reputation" && (
           <div className="space-y-6">
+            {reputationDemoFallback && !usedDemo && (
+              <div
+                className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm"
+                style={{ background: "rgba(139, 92, 246, 0.06)", border: "1px solid rgba(139, 92, 246, 0.15)" }}
+              >
+                <Star size={14} className="text-purple shrink-0" />
+                <span className="text-purple font-medium">
+                  Showing sample data
+                  <span className="font-normal text-muted ml-1">
+                    — NPS and review data will appear here once your review collection integration is connected.
+                  </span>
+                </span>
+              </div>
+            )}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* NPS */}
               <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">

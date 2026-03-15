@@ -93,12 +93,14 @@ export async function syncAppointments(
       (a, b) => a.dateTime.localeCompare(b.dateTime)
     );
 
-    // Also check existing appointments to avoid misclassifying repeats
+    // Also check existing appointments to avoid misclassifying repeats.
+    // Include both pms_sync and strydeos_receptionist (Ava bookings) sources
+    // so that patients booked by Ava are not re-classified as first-timers.
     const existingApptSnap = await db
       .collection("clinics")
       .doc(clinicId)
       .collection("appointments")
-      .where("source", "==", "pms_sync")
+      .where("source", "in", ["pms_sync", "strydeos_receptionist"])
       .select("patientId")
       .get();
     const patientsWithHistory = new Set<string>();
@@ -138,7 +140,11 @@ export async function syncAppointments(
 
       patientExternalIds.add(pms.patientExternalId);
 
-      // Merge to preserve hepAssigned / hepProgramId set by Stage 4
+      // Merge to preserve hepAssigned / hepProgramId set by Stage 4,
+      // and bookedBy set by Ava booking route.
+      // Note: source is always set to "pms_sync" here — the bookedBy field
+      // (set by /api/bookings/create) is the canonical origin indicator and
+      // is preserved by merge since we don't include it in docData.
       const docData: Record<string, unknown> = {
         patientId: pms.patientExternalId,
         clinicianId,
@@ -151,6 +157,7 @@ export async function syncAppointments(
         followUpBooked: false,
         source: "pms_sync" as const,
         pmsExternalId: pms.externalId,
+        pmsWriteStatus: "success",
         updatedAt: now,
       };
 

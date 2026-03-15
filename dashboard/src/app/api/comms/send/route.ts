@@ -19,6 +19,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyApiRequest, requireClinic, handleApiError } from "@/lib/auth-guard";
 import { getTwilio, getTwilioPhone } from "@/lib/twilio";
 import { getResend } from "@/lib/resend";
 import type { SequenceType, CommsChannel, CommsLogEntry } from "@/types";
@@ -45,74 +46,82 @@ function resolveTemplate(template: string, vars: Record<string, string>): string
 }
 
 export async function POST(request: NextRequest) {
-  let body: SendCommsBody;
   try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+    const user = await verifyApiRequest(request);
 
-  const { clinicId, patientId, patientName, sequenceType, channel, to, subject } = body;
-  if (!clinicId || !patientId || !sequenceType || !channel || !to || !body.body) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-  }
-
-  const templateVars = { Name: patientName, ...(body.templateVars ?? {}) };
-  const resolvedBody = resolveTemplate(body.body, templateVars);
-
-  const now = new Date().toISOString();
-  let success = false;
-  let errorDetail: string | null = null;
-
-  try {
-    if (channel === "sms") {
-      const twilio = getTwilio();
-      await twilio.messages.create({
-        body: resolvedBody,
-        from: getTwilioPhone(),
-        to,
-      });
-      success = true;
-    } else if (channel === "email") {
-      if (!subject) {
-        return NextResponse.json({ error: "subject required for email channel" }, { status: 400 });
-      }
-      const fromEmail = process.env.RESEND_FROM_EMAIL ?? "noreply@strydeos.com";
-      const resend = getResend();
-      const { error } = await resend.emails.send({
-        from: fromEmail,
-        to,
-        subject: resolveTemplate(subject, templateVars),
-        text: resolvedBody,
-      });
-      if (error) throw new Error(error.message);
-      success = true;
-    } else {
-      return NextResponse.json({ error: `Unsupported channel: ${channel}` }, { status: 400 });
+    let body: SendCommsBody;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
-  } catch (err) {
-    errorDetail = err instanceof Error ? err.message : String(err);
-    Sentry.captureException(err, { tags: { sequenceType, channel } });
-  }
 
-  // Log the attempt to Firestore regardless of success/failure
-  try {
-    const db = getAdminDb();
-    const entry: Omit<CommsLogEntry, "id"> = {
-      patientId,
-      sequenceType,
-      channel,
-      sentAt: now,
-      outcome: success ? "no_action" : "no_action", // outcome updated later (via webhook/manual)
-    };
-    await db.collection("clinics").doc(clinicId).collection("comms_log").add(entry);
-  } catch (logErr) {
-    Sentry.captureException(logErr, { tags: { context: "comms_log_write" } });
-  }
+    const { clinicId, patientId, patientName, sequenceType, channel, to, subject } = body;
+    if (!clinicId || !patientId || !sequenceType || !channel || !to || !body.body) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
 
-  if (!success) {
-    return NextResponse.json({ error: errorDetail ?? "Send failed" }, { status: 500 });
-  }
+    requireClinic(user, clinicId);
 
-  return NextResponse.json({ ok: true, sentAt: now });
+    const templateVars = { Name: patientName, ...(body.templateVars ?? {}) };
+    const resolvedBody = resolveTemplate(body.body, templateVars);
+
+    const now = new Date().toISOString();
+    let success = false;
+    let errorDetail: string | null = null;
+
+    try {
+      if (channel === "sms") {
+        const twilio = getTwilio();
+        await twilio.messages.create({
+          body: resolvedBody,
+          from: getTwilioPhone(),
+          to,
+        });
+        success = true;
+      } else if (channel === "email") {
+        if (!subject) {
+          return NextResponse.json({ error: "subject required for email channel" }, { status: 400 });
+        }
+        const fromEmail = process.env.RESEND_FROM_EMAIL ?? "noreply@strydeos.com";
+        const resend = getResend();
+        const { error } = await resend.emails.send({
+          from: fromEmail,
+          to,
+          subject: resolveTemplate(subject, templateVars),
+          text: resolvedBody,
+        });
+        if (error) throw new Error(error.message);
+        success = true;
+      } else {
+        return NextResponse.json({ error: `Unsupported channel: ${channel}` }, { status: 400 });
+      }
+    } catch (err) {
+      errorDetail = err instanceof Error ? err.message : String(err);
+      Sentry.captureException(err, { tags: { sequenceType, channel } });
+    }
+
+    // Log the attempt to Firestore regardless of success/failure
+    try {
+      const db = getAdminDb();
+      const entry: Omit<CommsLogEntry, "id"> = {
+        patientId,
+        sequenceType,
+        channel,
+        sentAt: now,
+        outcome: success ? "no_action" : "no_action", // outcome updated later (via webhook/manual)
+      };
+      await db.collection("clinics").doc(clinicId).collection("comms_log").add(entry);
+    } catch (logErr) {
+      Sentry.captureException(logErr, { tags: { context: "comms_log_write" } });
+    }
+
+    if (!success) {
+      return NextResponse.json({ error: errorDetail ?? "Send failed" }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, sentAt: now });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

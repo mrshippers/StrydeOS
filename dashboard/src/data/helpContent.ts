@@ -128,10 +128,20 @@ export const HELP_ENTRIES: HelpEntry[] = [
     category: "modules",
     question: "What does the Ava module do?",
     answer:
-      "Ava is the AI voice receptionist. She handles inbound calls, qualifies new patient enquiries, checks appointment availability, and books directly into your PMS diary — using a natural, human-sounding voice. Ava runs 24/7, meaning no more missed calls out of hours. She's built on Retell AI and ElevenLabs for the voice layer, with n8n handling the automation logic and WriteUpp/Cliniko receiving confirmed bookings via webhook.",
+      "Ava is the AI voice receptionist. She handles inbound calls, qualifies new patient enquiries, checks appointment availability, and books directly into your PMS diary — using a natural, human-sounding voice. Ava runs 24/7, meaning no more missed calls out of hours. She's built on Retell AI and ElevenLabs for the voice layer, with n8n handling the automation logic. Ava works with your PMS at the deepest level it supports — from real-time booking to intelligent call handling — so your front desk is covered regardless of your software.",
     clinicNote:
-      "Ava is voice-first — there is no chatbot or text-based interface. She integrates with WriteUpp and Cliniko. If your clinic uses TM3 (Blue Zinc), full Ava integration is on the roadmap but not yet available.",
+      "Ava is voice-first — there is no chatbot or text-based interface. See 'How does Ava work with different PMS systems?' for tier-by-tier capabilities.",
     tags: ["ava", "receptionist", "voice", "ai", "booking", "calls", "phone"],
+  },
+  {
+    id: "ava-pms-tiers",
+    category: "modules",
+    question: "How does Ava work with different PMS systems?",
+    answer:
+      "The bottleneck is never Ava's AI engine — it can fire tool calls to any API endpoint. The bottleneck is what each PMS exposes. Ava adapts to your clinic's existing system.\n\nTier 1 — Live booking (real-time in-call): Cliniko. Open API, well-documented, supports availability lookups and appointment creation via REST. Ava can query slots and book while the patient is still on the phone. This is the flagship integration and the one we demo.\n\nTier 2 — Smart capture + async booking: WriteUpp, Jane. They have APIs but with tighter rate limits or less granular availability endpoints. Ava captures the patient's details, preferred times, and insurance info live on the call, then n8n fires the actual booking asynchronously within minutes. Patient gets a confirmation SMS/email shortly after hanging up.\n\nTier 3 — Intelligent triage + handoff: TM3, Physitrack, Heidi. Limited or no public booking API. Ava handles the full front-desk conversation — triage, insurance verification, red-flag screening — packages it into a structured summary, and delivers it to the clinic's inbox or dashboard for a human to action. Still saves 5–10 minutes per call, still filters out the noise.",
+    clinicNote:
+      "Ava works with your PMS at the deepest level it supports — from real-time booking to intelligent call handling — so your front desk is covered regardless of your software.",
+    tags: ["ava", "pms", "cliniko", "writeupp", "jane", "tm3", "physitrack", "heidi", "integration", "tiers", "booking"],
   },
 
   // ─── General ─────────────────────────────────────────────────────────────────

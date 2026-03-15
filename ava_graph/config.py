@@ -10,6 +10,7 @@ from twilio.rest import Client as TwilioClient
 # Environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 CLINIKO_API_KEY = os.getenv("CLINIKO_API_KEY", "")
+CLINIKO_PRACTICE_ID = os.getenv("CLINIKO_PRACTICE_ID", "")
 WRITEUPP_API_KEY = os.getenv("WRITEUPP_API_KEY", "")
 JANE_API_KEY = os.getenv("JANE_API_KEY", "")
 TM3_API_KEY = os.getenv("TM3_API_KEY", "")

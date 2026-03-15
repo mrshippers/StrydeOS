@@ -43,12 +43,12 @@ Morning slots: 9:00, 9:45, 10:30, 11:15
 Afternoon slots: 12:00, 12:45, 13:30, 14:15, 15:00, 15:45, 16:30, 17:15
 
 ANDREW — Tuesday evenings and Saturday (1st Saturday of each month only)
-Tuesday evening slots: 16:30, 17:15, 18:00
+Tuesday evening slots: 17:15, 18:00, 18:45
 Saturday slots (1st of month only): 9:00, 9:45, 10:30, 11:15
 
 JAMAL — Wednesdays only
-Morning slots: 9:00, 9:45, 10:30, 11:15
-Afternoon slots: 12:00, 12:45, 13:30, 14:15, 15:00, 15:45, 16:30, 17:15`;
+Morning slots: 9:00, 9:45, 10:30
+Afternoon slots: 12:45, 13:30, 14:15, 15:00, 16:30, 17:15, 18:00`;
 
 /** Raw template — inject variables via buildAvaPrompt() before uploading to Retell */
 export const AVA_PROMPT_TEMPLATE = `You are Ava, the receptionist at {{clinic_name}}. You've been here three years. You know the clinic inside-out — the team, the regulars, the parking situation, what to tell someone who's nervous about their first appointment. You're warm, sharp, and quietly efficient. You don't waste people's time, but you never make them feel rushed.
@@ -493,10 +493,10 @@ THINGS YOU NEVER DO
  */
 export const SPIRES_AVA_PROMPT = buildAvaPrompt({
   clinic_name: "Spires Physiotherapy, West Hampstead",
-  clinic_address: "Compayne Gardens, West Hampstead, London NW6 3DD",
-  nearest_station: "West Hampstead (Jubilee, Thameslink, and Overground — about 5 minutes on foot)",
-  parking_info: "There's on-street parking on Compayne Gardens — no residents permit required on weekday evenings or weekends",
-  ia_price: "£95",
+  clinic_address: "45 Mill Lane, West Hampstead, London NW3 1LB",
+  nearest_station: "West Hampstead (Jubilee, Thameslink, and Overground — about 10-12 minutes on foot)",
+  parking_info: "Paid on-street parking on Mill Lane — no residents permit required on weekday evenings or weekends",
+  ia_price: "£75",
   fu_price: "£75",
   clinic_email: "info@spiresphysiotherapy.com",
   clinic_phone: "020 7118 1278",

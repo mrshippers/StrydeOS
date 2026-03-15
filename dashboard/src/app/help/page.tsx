@@ -126,7 +126,7 @@ function AccordionCard({
                 </div>
               )}
 
-              <p className="mt-4 text-[13.5px] text-muted dark:text-white/50 leading-relaxed">
+              <p className="mt-4 text-[13.5px] text-muted dark:text-white/50 leading-relaxed whitespace-pre-line">
                 {highlight(entry.answer, query)}
               </p>
 

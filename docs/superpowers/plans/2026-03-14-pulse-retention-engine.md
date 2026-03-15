@@ -736,7 +736,7 @@ export async function triggerCommsSequences(
       const triggerDate = getTriggerDate(patient, def.sequenceType);
       if (!triggerDate) { skipped++; continue; }
 
-      if (!isEligible(patient, def.sequenceType)) { skipped++; continue; }
+      if (!isEligible(patient, def.sequenceType, now)) { skipped++; continue; }
 
       // ── Step progression ──────────────────────────────────────────────
       const nextStep = getNextStep(def, priorLogs, triggerDate, now);
@@ -944,8 +944,13 @@ function getTriggerDate(
 
 function isEligible(
   patient: Record<string, unknown>,
-  sequenceType: SequenceType
+  sequenceType: SequenceType,
+  now: Date
 ): boolean {
+  const lastSession  = patient.lastSessionDate ? new Date(patient.lastSessionDate as string) : null;
+  const hoursAgo     = lastSession
+    ? (now.getTime() - lastSession.getTime()) / 3_600_000
+    : Infinity;
   const sessionCount = (patient.sessionCount as number) ?? 0;
 
   switch (sequenceType) {
@@ -955,14 +960,9 @@ function isEligible(
     case "rebooking_prompt":
       return patient.churnRisk === true && sessionCount >= 2;
 
-    case "hep_reminder": {
-      // Only fire within 20–48h of last session (spec Section 5.2)
-      // Lower bound (20h / ~1 day) is handled by daysAfterTrigger: 1 in the step definition
-      // Upper bound (48h / 2 days): do not fire if last session was >2 days ago
-      const lastSess = patient.lastSessionDate ? new Date(patient.lastSessionDate as string) : null;
-      const hoursAgo = lastSess ? (now.getTime() - lastSess.getTime()) / 3_600_000 : Infinity;
-      return !!(patient.hepProgramId) && !patient.nextSessionDate && hoursAgo <= 48;
-    }
+    case "hep_reminder":
+      // Last session was 20–48 h ago; patient has no next appointment booked
+      return hoursAgo >= 20 && hoursAgo <= 48 && !patient.nextSessionDate;
 
     case "review_prompt":
       return patient.discharged === true;

@@ -93,7 +93,7 @@ function AccordionItem({
                   {entry.formula}
                 </div>
               )}
-              <p className="text-[12.5px] text-white/55 leading-relaxed">
+              <p className="text-[12.5px] text-white/55 leading-relaxed whitespace-pre-line">
                 {highlight(entry.answer, query)}
               </p>
               {entry.clinicNote && (

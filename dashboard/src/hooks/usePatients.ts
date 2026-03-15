@@ -15,6 +15,25 @@ export function usePatients(clinicianId?: string) {
   const isDemo = user?.uid === "demo";
   const demoPatients = useDemoPatients(clinicianId);
   const clinicId = user?.clinicId ?? null;
+  const userRole = user?.role ?? "clinician";
+  const userClinicianId = user?.clinicianId ?? null;
+
+  // Resolve the effective clinicianId filter:
+  // - If an explicit clinicianId is passed (e.g. from a dropdown), use it (unless "all")
+  // - If no clinicianId is passed and user is a clinician, auto-scope to their own patients
+  // - Owners/admins with no explicit filter see all patients
+  const effectiveClinicianId = useMemo(() => {
+    if (clinicianId && clinicianId !== "all") return clinicianId;
+    if (clinicianId === "all") {
+      // Explicit "all" — only owners/admins should see all
+      if (userRole === "owner" || userRole === "admin" || userRole === "superadmin") return null;
+      // Clinicians requesting "all" get scoped to themselves
+      return userClinicianId;
+    }
+    // No clinicianId passed — auto-scope for clinicians
+    if (userRole === "clinician" && userClinicianId) return userClinicianId;
+    return null;
+  }, [clinicianId, userRole, userClinicianId]);
 
   useEffect(() => {
     setError(null);
@@ -25,11 +44,9 @@ export function usePatients(clinicianId?: string) {
       return () => {};
     }
 
-    const cid = clinicianId && clinicianId !== "all" ? clinicianId : null;
-
     const unsubscribe = subscribePatients(
       clinicId,
-      cid,
+      effectiveClinicianId,
       (data) => {
         setPatients(data);
         setLoading(false);
@@ -43,7 +60,7 @@ export function usePatients(clinicianId?: string) {
     );
 
     return () => unsubscribe();
-  }, [clinicId, clinicianId, demoPatients, isDemo]);
+  }, [clinicId, effectiveClinicianId, demoPatients, isDemo]);
 
   const active = useMemo(
     () =>

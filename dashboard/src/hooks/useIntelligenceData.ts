@@ -406,7 +406,12 @@ export interface IntelligenceData {
   clinicianKpis: ClinicianKpiRow[];
   benchmarks: BenchmarkComparison[];
   loading: boolean;
+  /** True when the entire page is showing demo data (demo user) */
   usedDemo: boolean;
+  /** True when outcomes tab is showing demo fallback (no real outcome_scores yet) */
+  outcomesDemoFallback: boolean;
+  /** True when reputation tab is showing demo fallback (no real reviews yet) */
+  reputationDemoFallback: boolean;
   error: string | null;
 }
 
@@ -475,19 +480,6 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     };
   }, [clinicId, isDemo]);
 
-  // Subscribe to per-clinician stats separately (for sparklines in clinicianKpis)
-  const [perClinicianStats, setPerClinicianStats] = useState<WeeklyStats[]>([]);
-  useEffect(() => {
-    if (isDemo || !clinicId) return;
-    // We query each clinician's stats. Since we don't know clinicians upfront here,
-    // we collect all docs by subscribing to the "all" aggregate which is already done above.
-    // The clinicianKpis derivation needs per-clinician records — these are separate docs.
-    // Use the patients array to get clinicianIds and subscribe to each.
-    // Simpler: re-query metrics_weekly without clinicianId filter using a raw query.
-    // We'll use the existing subscribeWeeklyStats per clinician once we know clinician IDs.
-    // This is handled reactively when patients loads.
-  }, [clinicId, isDemo, patients]);
-
   // Collect all unique clinicianIds from patients for per-clinician stat subscriptions
   const clinicianIds = useMemo(
     () => [...new Set(patients.map((p) => p.clinicianId).filter(Boolean))],
@@ -542,6 +534,8 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     benchmarks: getDemoBenchmarks(),
     loading: false,
     usedDemo: true,
+    outcomesDemoFallback: true,
+    reputationDemoFallback: true,
     error: null,
   }), []);
 
@@ -563,7 +557,9 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
         nps: { score: 0, promoters: 0, passives: 0, detractors: 0, totalResponses: 0, trend: [] },
         reviewVelocity: { platform: "Google", totalReviews: 0, avgRating: 0, monthlyVelocity: [] },
         clinicianKpis: [], benchmarks: getDemoBenchmarks(),
-        loading: false, usedDemo: false, error: firestoreError,
+        loading: false, usedDemo: false,
+        outcomesDemoFallback: false, reputationDemoFallback: false,
+        error: firestoreError,
       };
     }
 
@@ -587,20 +583,26 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     const reviewVelocity = deriveReviewVelocity(reviews);
     const clinicianKpis = deriveClinicianKpis(flatPerClinicianStats, patients);
 
+    // Fall back to demo data when real data is empty for specific sections
+    const outcomesDemoFallback = outcomeTrends.length === 0;
+    const reputationDemoFallback = reviews.length === 0;
+
     return {
       revByClinician,
       revByCondition,
       dnaByDay,
       dnaBySlot,
       referrals,
-      outcomeTrends,
-      nps,
-      reviewVelocity,
+      outcomeTrends: outcomesDemoFallback ? getDemoOutcomeTrends() : outcomeTrends,
+      nps: reputationDemoFallback ? getDemoNps() : nps,
+      reviewVelocity: reputationDemoFallback ? getDemoReviewVelocity() : reviewVelocity,
       clinicianKpis,
       benchmarks: getDemoBenchmarks(),
       loading,
       error: null,
       usedDemo: false,
+      outcomesDemoFallback,
+      reputationDemoFallback,
     };
   }, [allStats, flatPerClinicianStats, patients, reviews, outcomeScores, loading, isDemo, selectedClinician, firestoreError, DEMO_RESULT]);
 

@@ -36,8 +36,7 @@ export function useWeeklyStats(clinicianId: string) {
         setUsedDemo(false);
         setLoading(false);
       },
-      (err) => {
-        console.error("Firestore error:", err);
+      () => {
         setError("Failed to load weekly stats. Check your connection and try again.");
         setLoading(false);
       }
