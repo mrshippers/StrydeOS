@@ -11,10 +11,10 @@ from ava_graph.graph.nodes import (
     extract_intent,
     check_availability,
     propose_slot,
-    route_after_confirmation,
     confirm_booking,
     send_confirmation,
 )
+from ava_graph.graph.nodes.route_after_confirmation import route_after_confirmation
 from ava_graph.graph.edges import (
     should_check_availability,
     should_propose_slot,
@@ -93,13 +93,14 @@ def build_ava_graph() -> StateGraph:
 
     logger.info("Ava graph structure built. Compiling with MemorySaver checkpointer...")
 
-    # Compile with checkpointer and interrupt_before checkpoint
+    # Compile with checkpointer and interrupt_after checkpoint
+    # Interrupt after propose_slot so we can wait for patient confirmation before routing
     compiled_graph = graph.compile(
         checkpointer=_checkpointer,
-        interrupt_before=["confirm_booking"],
+        interrupt_after=["propose_slot"],
     )
 
-    logger.info("Ava graph compiled successfully with interrupt_before=['confirm_booking']")
+    logger.info("Ava graph compiled successfully with interrupt_after=['propose_slot']")
 
     return compiled_graph
 

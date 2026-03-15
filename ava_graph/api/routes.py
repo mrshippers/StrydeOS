@@ -203,6 +203,7 @@ async def handle_patient_confirmed(
         raise HTTPException(status_code=400, detail=f"Invalid payload: {str(e)}")
 
     # Prepare state update for confirmation
+    # Only update patient_confirmed flag; other fields will be loaded from checkpoint
     confirmation_state: AvaState = {
         "patient_name": "",
         "patient_phone": "",
@@ -224,22 +225,73 @@ async def handle_patient_confirmed(
         from ava_graph.graph.builder import build_ava_graph
 
         graph = build_ava_graph()
-        result = await graph.ainvoke(
-            confirmation_state,
-            config={"configurable": {"thread_id": webhook.session_id}},
-        )
+        config = {"configurable": {"thread_id": webhook.session_id}}
+
+        # When resuming from checkpoint, we need to update the state with patient_confirmed
+        # and then continue the graph execution from where it left off
+        try:
+            # Get the current state from checkpoint
+            state_snapshot = graph.get_state(config)
+            if state_snapshot and state_snapshot.values:
+                # Update the checkpoint state with patient_confirmed flag
+                existing_state = dict(state_snapshot.values)
+                existing_state["patient_confirmed"] = webhook.confirmed
+                logger.debug(f"Loaded state from checkpoint for session {webhook.session_id}")
+
+                # Update the checkpoint with the new state
+                graph.update_state(config, existing_state)
+
+                # Now invoke with empty dict to continue from the interrupt point
+                result = await graph.ainvoke(
+                    None,  # Use None to indicate we're continuing from checkpoint
+                    config=config,
+                )
+            else:
+                # No checkpoint found, use confirmation_state with just the confirmed flag
+                logger.warning(f"No checkpoint found for session {webhook.session_id}, using minimal state")
+                result = await graph.ainvoke(
+                    confirmation_state,
+                    config=config,
+                )
+        except (AttributeError, TypeError) as e:
+            # get_state or update_state might not exist, fall back to using confirmation_state
+            logger.debug(f"Could not use checkpoint methods, falling back to state dict: {e}")
+            result = await graph.ainvoke(
+                confirmation_state,
+                config=config,
+            )
 
         booking_id = result.get("booking_id", "")
 
-        logger.info(
-            f"Graph resumed and completed for session {webhook.session_id}. "
-            f"Booking ID: {booking_id}"
-        )
+        # Determine status based on booking outcome
+        if booking_id:
+            status = "confirmed"
+            logger.info(
+                f"Graph resumed and completed for session {webhook.session_id}. "
+                f"Booking ID: {booking_id}"
+            )
+        else:
+            # If no booking_id, check if we're still waiting for confirmation or if graph ended
+            # If patient_confirmed is True but no booking_id, it's an error
+            # If patient_confirmed is False, we're back in the proposal loop
+            patient_confirmed_final = result.get("patient_confirmed", False)
+            if patient_confirmed_final and not booking_id:
+                status = "error"
+                logger.error(
+                    f"Graph completed but booking failed for session {webhook.session_id}"
+                )
+            else:
+                # Still in rejection loop or graph ended without confirmation
+                status = "awaiting_confirmation"
+                logger.info(
+                    f"Graph resumed for session {webhook.session_id}. "
+                    f"Patient not confirmed, remaining in proposal loop"
+                )
 
         return {
             "session_id": webhook.session_id,
             "booking_id": booking_id,
-            "status": "confirmed",
+            "status": status,
         }
     except Exception as e:
         logger.error(f"Graph invocation failed for session {webhook.session_id}: {e}")

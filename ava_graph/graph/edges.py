@@ -2,7 +2,7 @@
 
 import logging
 from ava_graph.graph.state import AvaState
-from ava_graph.graph.nodes import route_after_confirmation
+from ava_graph.graph.nodes.route_after_confirmation import _route_after_confirmation_edge
 
 logger = logging.getLogger(__name__)
 
@@ -49,10 +49,9 @@ def should_propose_slot(state: AvaState) -> bool:
 
 def route_after_confirmation_edge(state: AvaState) -> str:
     """
-    Route after patient confirmation using the route_after_confirmation node.
+    Route after patient confirmation using the internal edge function.
 
-    This is a conditional edge that delegates routing logic to the
-    route_after_confirmation node function, which returns:
+    This is a conditional edge that determines the next step:
     - "confirm_booking" if patient_confirmed=True
     - "propose_slot" if patient declined but more attempts available
     - "end" if max attempts reached or no more slots
@@ -63,4 +62,4 @@ def route_after_confirmation_edge(state: AvaState) -> str:
     Returns:
         str: One of "confirm_booking", "propose_slot", or "end"
     """
-    return route_after_confirmation(state)
+    return _route_after_confirmation_edge(state)
