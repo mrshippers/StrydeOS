@@ -22,8 +22,11 @@ def _format_datetime_readable(iso_datetime: str) -> str:
     try:
         dt = datetime.fromisoformat(iso_datetime)
         day_name = dt.strftime("%A")
-        time_str = dt.strftime("%-I:%M %p" if datetime.now().isoformat()[0:4] != "2025" else "%I:%M %p")
-        return f"{day_name} at {time_str}"
+        # Use lstrip to remove leading zero cross-platform
+        hour_str = dt.strftime("%I:%M %p").lstrip("0")
+        if hour_str.startswith(":"):  # Handle "0X:MM" → "X:MM"
+            hour_str = hour_str[1:]
+        return f"{day_name} at {hour_str}"
     except (ValueError, TypeError) as e:
         logger.warning(f"Failed to parse datetime {iso_datetime}: {e}")
         return iso_datetime

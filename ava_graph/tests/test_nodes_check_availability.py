@@ -197,7 +197,7 @@ async def test_check_availability_fallback_to_first_5_if_no_preference_match():
     state = AvaState(
         patient_name="John Doe",
         requested_service="Physio",
-        preferred_time="Sunday evening",  # No Sunday slots in list
+        preferred_time="Sunday",  # No Sunday slots in list (all are Monday 2026-03-16)
         clinic_id="clinic_001",
         pms_type="writeupp",
         available_slots=[],
