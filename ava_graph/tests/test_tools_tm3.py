@@ -20,7 +20,7 @@ async def test_get_tm3_availability_returns_slots():
                 ]
             }
         )
-        mock_response.raise_for_status = AsyncMock()
+        mock_response.raise_for_status = lambda: None
         mock_client.get = AsyncMock(return_value=mock_response)
         mock_client_factory.return_value = mock_client
 
@@ -41,7 +41,7 @@ async def test_get_tm3_availability_empty_slots():
         mock_client = AsyncMock()
         mock_response = AsyncMock()
         mock_response.json = AsyncMock(return_value={"slots": []})
-        mock_response.raise_for_status = AsyncMock()
+        mock_response.raise_for_status = lambda: None
         mock_client.get = AsyncMock(return_value=mock_response)
         mock_client_factory.return_value = mock_client
 
@@ -60,7 +60,7 @@ async def test_book_tm3_appointment_returns_booking_id():
         mock_client = AsyncMock()
         mock_response = AsyncMock()
         mock_response.json = AsyncMock(return_value={"appointmentId": "tm3_12345"})
-        mock_response.raise_for_status = AsyncMock()
+        mock_response.raise_for_status = lambda: None
         mock_client.post = AsyncMock(return_value=mock_response)
         mock_client_factory.return_value = mock_client
 
@@ -83,7 +83,7 @@ async def test_book_tm3_appointment_with_email():
         mock_client = AsyncMock()
         mock_response = AsyncMock()
         mock_response.json = AsyncMock(return_value={"appointmentId": "tm3_67890"})
-        mock_response.raise_for_status = AsyncMock()
+        mock_response.raise_for_status = lambda: None
         mock_client.post = AsyncMock(return_value=mock_response)
         mock_client_factory.return_value = mock_client
 
