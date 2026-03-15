@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Info,
   BookOpen,
+  ExternalLink,
 } from "lucide-react";
 import {
   HELP_ENTRIES,
@@ -252,9 +253,22 @@ function PanelContent({ onClose }: { onClose: () => void }) {
 
       {/* Footer */}
       <div
-        className="px-5 py-4 border-t shrink-0"
+        className="px-5 py-4 border-t space-y-2 shrink-0"
         style={{ borderColor: "rgba(255,255,255,0.08)" }}
       >
+        <a
+          href="https://strydeos.notion.site/StrydeOS-Client-Setup-Guide"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-[12px] font-medium text-white/50 hover:text-white/80 transition-colors group"
+          style={{
+            background: "rgba(5,150,105,0.08)",
+            border: "1px solid rgba(5,150,105,0.15)",
+          }}
+        >
+          <span className="text-[#34d399]">Setup Guide (Notion)</span>
+          <ExternalLink size={11} className="text-[#34d399]/50 group-hover:text-[#34d399] transition-colors" />
+        </a>
         <button
           onClick={handleViewFullHelp}
           className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-[12.5px] font-medium text-white/60 hover:text-white transition-colors group"

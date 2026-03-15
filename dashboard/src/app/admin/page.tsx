@@ -15,21 +15,34 @@ import {
   Shield,
   AlertTriangle,
   Clock,
-  Users,
   ExternalLink,
   Loader2,
   CheckCircle2,
-  XCircle,
   Wifi,
   WifiOff,
+  Eye,
 } from "lucide-react";
-import type { ClinicProfile } from "@/types";
+import type { ClinicProfile, StripeSubscriptionStatus } from "@/types";
 
 function hoursSince(dateStr: string | undefined): number | null {
   if (!dateStr) return null;
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return null;
   return Math.round((Date.now() - d.getTime()) / (1000 * 60 * 60));
+}
+
+function subStatusBadge(status: StripeSubscriptionStatus | null | undefined): { label: string; bg: string; text: string } {
+  switch (status) {
+    case "active":              return { label: "Active",      bg: "bg-success/10", text: "text-success" };
+    case "trialing":            return { label: "Trial",       bg: "bg-blue/10",    text: "text-blue" };
+    case "past_due":            return { label: "Past Due",    bg: "bg-warn/10",    text: "text-warn" };
+    case "canceled":            return { label: "Canceled",    bg: "bg-danger/10",  text: "text-danger" };
+    case "paused":              return { label: "Paused",      bg: "bg-muted/10",   text: "text-muted" };
+    case "incomplete":          return { label: "Incomplete",  bg: "bg-warn/10",    text: "text-warn" };
+    case "incomplete_expired":  return { label: "Expired",     bg: "bg-danger/10",  text: "text-danger" };
+    case "unpaid":              return { label: "Unpaid",      bg: "bg-danger/10",  text: "text-danger" };
+    default:                    return { label: "No sub",      bg: "bg-border",     text: "text-muted" };
+  }
 }
 
 const DEMO_CLINICS: ClinicProfile[] = [
@@ -46,6 +59,7 @@ const DEMO_CLINICS: ClinicProfile[] = [
     targets: { followUpRate: 2.9, physitrackRate: 95, utilisationRate: 85, dnaRate: 5, courseCompletionTarget: 80 },
     brandConfig: {},
     onboarding: { pmsConnected: true, cliniciansConfirmed: true, targetsSet: true },
+    billing: { stripeCustomerId: "cus_demo1", subscriptionId: "sub_demo1", subscriptionStatus: "active", currentPeriodEnd: "2026-04-01T00:00:00Z" },
     createdAt: "2025-10-01T00:00:00Z",
     updatedAt: new Date().toISOString(),
   },
@@ -62,6 +76,7 @@ const DEMO_CLINICS: ClinicProfile[] = [
     targets: { followUpRate: 2.5, physitrackRate: 90, utilisationRate: 80, dnaRate: 5, courseCompletionTarget: 80 },
     brandConfig: {},
     onboarding: { pmsConnected: false, cliniciansConfirmed: true, targetsSet: false },
+    billing: { stripeCustomerId: "cus_demo2", subscriptionId: "sub_demo2", subscriptionStatus: "trialing", currentPeriodEnd: "2026-03-31T00:00:00Z" },
     createdAt: "2026-02-15T00:00:00Z",
     updatedAt: "2026-02-20T00:00:00Z",
   },
@@ -78,6 +93,7 @@ const DEMO_CLINICS: ClinicProfile[] = [
     targets: { followUpRate: 3.0, physitrackRate: 92, utilisationRate: 80, dnaRate: 5, courseCompletionTarget: 80 },
     brandConfig: {},
     onboarding: { pmsConnected: true, cliniciansConfirmed: true, targetsSet: true },
+    billing: { stripeCustomerId: "cus_demo3", subscriptionId: "sub_demo3", subscriptionStatus: "past_due", currentPeriodEnd: null },
     createdAt: "2025-08-20T00:00:00Z",
     updatedAt: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(),
   },
@@ -94,13 +110,14 @@ const DEMO_CLINICS: ClinicProfile[] = [
     targets: { followUpRate: 2.8, physitrackRate: 90, utilisationRate: 85, dnaRate: 5, courseCompletionTarget: 80 },
     brandConfig: {},
     onboarding: { pmsConnected: true, cliniciansConfirmed: true, targetsSet: true },
+    billing: { stripeCustomerId: "cus_demo4", subscriptionId: null, subscriptionStatus: "canceled", currentPeriodEnd: null },
     createdAt: "2025-06-01T00:00:00Z",
     updatedAt: "2026-01-10T00:00:00Z",
   },
 ];
 
 export default function AdminPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, startImpersonation, impersonating, stopImpersonation } = useAuth();
   const router = useRouter();
   const [clinics, setClinics] = useState<ClinicProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -217,10 +234,18 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Clinics table */}
+        {/* Clinics table */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
-        <div className="px-6 py-4 border-b border-border">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <h3 className="font-display text-lg text-navy">All Clinics</h3>
+          {impersonating && (
+            <button
+              onClick={() => { stopImpersonation(); }}
+              className="text-[11px] font-semibold text-warn hover:text-danger transition-colors"
+            >
+              Stop impersonation
+            </button>
+          )}
         </div>
 
         <div className="overflow-x-auto">
@@ -229,6 +254,7 @@ export default function AdminPage() {
               <tr className="border-b border-border">
                 <th className="px-6 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">Clinic</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">Billing</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">PMS</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">Last Sync</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">Onboarding</th>
@@ -242,6 +268,7 @@ export default function AdminPage() {
                 const obSteps = clinic.onboarding
                   ? [clinic.onboarding.pmsConnected, clinic.onboarding.cliniciansConfirmed, clinic.onboarding.targetsSet].filter(Boolean).length
                   : 0;
+                const subBadge = subStatusBadge(clinic.billing?.subscriptionStatus);
 
                 return (
                   <tr key={clinic.id} className="border-b border-border/50 hover:bg-cloud-light/50 transition-colors">
@@ -267,6 +294,11 @@ export default function AdminPage() {
                           clinic.status === "paused" ? "bg-warn" : "bg-muted"
                         }`} />
                         {clinic.status.charAt(0).toUpperCase() + clinic.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-1 rounded-full ${subBadge.bg} ${subBadge.text}`}>
+                        {subBadge.label}
                       </span>
                     </td>
                     <td className="px-4 py-4">
@@ -310,11 +342,13 @@ export default function AdminPage() {
                     <td className="px-4 py-4">
                       <button
                         onClick={() => {
-                          // TODO: implement clinic impersonation (superadmin only)
+                          startImpersonation(clinic);
+                          router.push("/dashboard");
                         }}
                         className="flex items-center gap-1 text-[11px] font-semibold text-blue hover:text-blue-bright transition-colors"
                       >
-                        View <ExternalLink size={10} />
+                        <Eye size={11} />
+                        View
                       </button>
                     </td>
                   </tr>

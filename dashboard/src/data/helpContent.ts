@@ -187,7 +187,6 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "StrydeOS currently supports WriteUpp, Cliniko, Halaxy, and Zanda (Power Diary) with full API integration. TM3 (Blue Zinc) and Pabau are on the integration roadmap. If you're using a different PMS, contact us — we prioritise integrations based on user demand and can often build custom adapters for practices with specific needs.",
     tags: ["tm3", "pabau", "jane", "blue zinc", "pms", "integration", "support"],
   },
-];
 
   // ─── Setup Guides ─────────────────────────────────────────────────────────────
   {
@@ -330,6 +329,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "For subscription queries — payment failures, plan changes, invoice requests, or cancellations — go to Settings → Billing. You can view your current plan, update your payment method, and download invoices directly from there.\n\nIf your subscription shows as 'Past due', update your payment method in Settings → Billing → Update Card. StrydeOS automatically retries failed payments for up to 7 days before access is restricted.\n\nFor any billing issue that can't be resolved in-app, contact support@strydeos.com with your clinic name and a description of the issue. Include your invoice number if you have it.",
     tags: ["billing", "subscription", "payment", "invoice", "stripe", "past due"],
   },
+];
 
 export const CATEGORY_LABELS: Record<HelpCategory, string> = {
   metrics: "Core Metrics",

@@ -12,6 +12,10 @@ import {
   RefreshCw,
   Phone,
   HelpCircle,
+  Zap,
+  AlertCircle,
+  ExternalLink,
+  Play,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -22,10 +26,17 @@ import {
   type HelpEntry,
 } from "@/data/helpContent";
 
+const NOTION_SETUP_GUIDE_URL = "https://strydeos.notion.site/StrydeOS-Client-Setup-Guide";
+
 const CATEGORY_META: Record<
   HelpCategory,
   { icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; accent: string; description: string }
 > = {
+  setup: {
+    icon: Zap,
+    accent: "#059669",
+    description: "Step-by-step guides to get StrydeOS configured and running in your clinic.",
+  },
   metrics: {
     icon: BarChart3,
     accent: "#1C54F2",
@@ -41,6 +52,11 @@ const CATEGORY_META: Record<
     accent: "#8B5CF6",
     description: "Data sources, sync schedules, integrations, and account management.",
   },
+  troubleshooting: {
+    icon: AlertCircle,
+    accent: "#F59E0B",
+    description: "Diagnose and fix common issues with data, connections, and features.",
+  },
 };
 
 function highlight(text: string, query: string): React.ReactNode {
@@ -55,6 +71,38 @@ function highlight(text: string, query: string): React.ReactNode {
     ) : (
       part
     )
+  );
+}
+
+function VideoEmbed({ videoId }: { videoId: string }) {
+  const [playing, setPlaying] = useState(false);
+  const thumb = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+
+  return (
+    <div className="mt-4 rounded-xl overflow-hidden border border-border" style={{ aspectRatio: "16/9" }}>
+      {playing ? (
+        <iframe
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+          title="Help video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="w-full h-full"
+        />
+      ) : (
+        <button
+          onClick={() => setPlaying(true)}
+          className="relative w-full h-full group"
+          aria-label="Play video"
+        >
+          <img src={thumb} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-navy/40 group-hover:bg-navy/30 transition-colors flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+              <Play size={18} className="text-navy ml-0.5" fill="currentColor" />
+            </div>
+          </div>
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -107,9 +155,7 @@ function AccordionCard({
             transition={{ duration: 0.22, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div
-              className="px-5 pb-5 border-t border-border dark:border-white/[0.06]"
-            >
+            <div className="px-5 pb-5 border-t border-border dark:border-white/[0.06]">
               {entry.formula && (
                 <div
                   className="mt-4 mb-3 px-3 py-2 rounded-lg text-[12px] font-mono"
@@ -129,6 +175,8 @@ function AccordionCard({
               <p className="mt-4 text-[13.5px] text-muted dark:text-white/50 leading-relaxed whitespace-pre-line">
                 {highlight(entry.answer, query)}
               </p>
+
+              {entry.videoId && <VideoEmbed videoId={entry.videoId} />}
 
               {entry.clinicNote && (
                 <div
@@ -262,12 +310,39 @@ export default function HelpPage() {
           </span>
         </div>
         <h1 className="font-display text-[36px] text-navy dark:text-white leading-tight mb-2">
-          Metrics &amp; Guides
+          Guides &amp; Support
         </h1>
         <p className="text-[14px] text-muted max-w-[520px] leading-relaxed">
-          Plain-English definitions for every KPI in StrydeOS, module guides, and answers to common questions. Use the search or browse by category.
+          Setup walkthroughs, metric definitions, module guides, and troubleshooting. Use the search or browse by category.
         </p>
       </div>
+
+      {/* Notion setup guide callout */}
+      <a
+        href={NOTION_SETUP_GUIDE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-between gap-4 mb-8 px-5 py-4 rounded-xl border border-[#059669]/20 bg-[#059669]/05 hover:bg-[#059669]/10 transition-colors group"
+        style={{ background: "rgba(5,150,105,0.04)" }}
+      >
+        <div className="flex items-center gap-3.5">
+          <div className="w-9 h-9 rounded-lg bg-[#059669]/12 flex items-center justify-center shrink-0">
+            <BookOpen size={16} className="text-[#059669]" />
+          </div>
+          <div>
+            <p className="text-[13.5px] font-semibold text-ink dark:text-white/80">
+              Full Setup Guide
+            </p>
+            <p className="text-[11.5px] text-muted mt-0.5">
+              Step-by-step Notion doc — PMS connection, clinician mapping, first 30 days
+            </p>
+          </div>
+        </div>
+        <ExternalLink
+          size={14}
+          className="text-[#059669]/60 group-hover:text-[#059669] transition-colors shrink-0"
+        />
+      </a>
 
       {/* Search + filters */}
       <div
@@ -283,7 +358,7 @@ export default function HelpPage() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search metrics, modules, integrations…"
+            placeholder="Search setup guides, metrics, troubleshooting…"
             className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[13.5px] text-ink dark:text-white placeholder:text-muted outline-none bg-cloud-light dark:bg-white/[0.04] border border-border dark:border-white/[0.08] focus:border-blue/40 transition-colors"
           />
         </div>

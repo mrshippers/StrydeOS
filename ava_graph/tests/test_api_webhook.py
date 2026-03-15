@@ -15,7 +15,7 @@ def test_webhook_call_started():
         "preferred_time": "14:00",
     }
     response = client.post(
-        "/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko",
+        "/api/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko",
         json=payload,
     )
     assert response.status_code == 200
@@ -38,7 +38,7 @@ def test_webhook_patient_confirmed():
         "preferred_time": "10:00",
     }
     response = client.post(
-        "/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko",
+        "/api/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko",
         json=payload_start,
     )
     assert response.status_code == 200
@@ -49,7 +49,7 @@ def test_webhook_patient_confirmed():
         "confirmed": True,
     }
     response = client.post(
-        "/webhook/ava?webhook_type=patient_confirmed",
+        "/api/webhook/ava?webhook_type=patient_confirmed",
         json=payload_confirm,
     )
     assert response.status_code == 200
@@ -67,7 +67,7 @@ def test_webhook_missing_required_params_call_started():
         "patient_phone": "07700000002",
     }
     response = client.post(
-        "/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko",
+        "/api/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko",
         json=payload,
     )
     assert response.status_code == 400
@@ -81,7 +81,7 @@ def test_webhook_missing_required_params_patient_confirmed():
         "confirmed": True,
     }
     response = client.post(
-        "/webhook/ava?webhook_type=patient_confirmed",
+        "/api/webhook/ava?webhook_type=patient_confirmed",
         json=payload,
     )
     assert response.status_code == 400
@@ -96,7 +96,7 @@ def test_webhook_invalid_webhook_type():
         "patient_phone": "07700000003",
     }
     response = client.post(
-        "/webhook/ava?webhook_type=invalid_type&clinic_id=clinic_1&pms_type=cliniko",
+        "/api/webhook/ava?webhook_type=invalid_type&clinic_id=clinic_1&pms_type=cliniko",
         json=payload,
     )
     assert response.status_code == 400

@@ -202,6 +202,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [impersonation, setImpersonation] = useState<ImpersonationState | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = sessionStorage.getItem(IMPERSONATION_KEY);
+      return raw ? (JSON.parse(raw) as ImpersonationState) : null;
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
     if (!isFirebaseConfigured) {
@@ -329,10 +338,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     document.cookie = "__session=1; path=/; SameSite=Lax";
   }, []);
 
+  const startImpersonation = useCallback((clinic: ClinicProfile) => {
+    const state: ImpersonationState = { clinicId: clinic.id, clinicProfile: clinic };
+    try { sessionStorage.setItem(IMPERSONATION_KEY, JSON.stringify(state)); } catch { /* ignore */ }
+    setImpersonation(state);
+  }, []);
+
+  const stopImpersonation = useCallback(() => {
+    try { sessionStorage.removeItem(IMPERSONATION_KEY); } catch { /* ignore */ }
+    setImpersonation(null);
+  }, []);
+
+  // When impersonating, override clinicId + clinicProfile on the user object
+  const effectiveUser: AuthUser | null = user && impersonation
+    ? { ...user, clinicId: impersonation.clinicId, clinicProfile: impersonation.clinicProfile }
+    : user;
+
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: effectiveUser,
         firebaseUser,
         loading,
         signIn,
@@ -340,6 +365,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshClinicProfile,
         enterDemoMode,
         isFirebaseConfigured,
+        impersonating: !!impersonation,
+        impersonationTarget: impersonation?.clinicProfile ?? null,
+        startImpersonation,
+        stopImpersonation,
       }}
     >
       {children}

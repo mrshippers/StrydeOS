@@ -1,0 +1,657 @@
+2026-03-15 20:13:01,713 - root - INFO - Ava Booking Agent FastAPI application initialized
+2026-03-15 20:13:01,720 - root - INFO - GET /
+2026-03-15 20:13:01,722 - root - INFO - GET / - 200
+2026-03-15 20:13:01,724 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-03-15 20:13:01,725 - root - INFO - GET /health
+2026-03-15 20:13:01,726 - root - INFO - GET /health - 200
+2026-03-15 20:13:01,726 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-03-15 20:13:01,727 - root - INFO - GET /
+2026-03-15 20:13:01,728 - root - INFO - GET / - 200
+2026-03-15 20:13:01,728 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-03-15 20:13:20,114 - root - INFO - Ava Booking Agent FastAPI application initialized
+2026-03-15 20:13:21,854 - root - INFO - POST /webhook/ava
+2026-03-15 20:13:21,856 - root - INFO - POST /webhook/ava - 404
+2026-03-15 20:13:21,858 - httpx - INFO - HTTP Request: POST http://testserver/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 404 Not Found"
+2026-03-15 20:13:21,994 - root - INFO - POST /webhook/ava
+2026-03-15 20:13:21,995 - root - INFO - POST /webhook/ava - 404
+2026-03-15 20:13:21,996 - httpx - INFO - HTTP Request: POST http://testserver/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 404 Not Found"
+2026-03-15 20:13:22,001 - root - INFO - POST /webhook/ava
+2026-03-15 20:13:22,001 - root - INFO - POST /webhook/ava - 404
+2026-03-15 20:13:22,001 - httpx - INFO - HTTP Request: POST http://testserver/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 404 Not Found"
+2026-03-15 20:13:22,004 - root - INFO - POST /webhook/ava
+2026-03-15 20:13:22,005 - root - INFO - POST /webhook/ava - 404
+2026-03-15 20:13:22,006 - httpx - INFO - HTTP Request: POST http://testserver/webhook/ava?webhook_type=patient_confirmed "HTTP/1.1 404 Not Found"
+2026-03-15 20:13:22,009 - root - INFO - POST /webhook/ava
+2026-03-15 20:13:22,010 - root - INFO - POST /webhook/ava - 404
+2026-03-15 20:13:22,010 - httpx - INFO - HTTP Request: POST http://testserver/webhook/ava?webhook_type=invalid_type&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 404 Not Found"
+2026-03-15 20:13:22,440 - ava_graph.graph.builder - INFO - Ava graph structure built. Compiling with MemorySaver checkpointer...
+2026-03-15 20:13:22,457 - ava_graph.graph.builder - INFO - Ava graph compiled successfully with interrupt_before=['confirm_booking']
+2026-03-15 20:13:22,459 - ava_graph.graph.builder - INFO - Ava graph structure built. Compiling with MemorySaver checkpointer...
+2026-03-15 20:13:22,469 - ava_graph.graph.builder - INFO - Ava graph compiled successfully with interrupt_before=['confirm_booking']
+2026-03-15 20:13:22,471 - root - INFO - GET /
+2026-03-15 20:13:22,492 - root - INFO - GET / - 200
+2026-03-15 20:13:22,493 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-03-15 20:13:22,495 - root - INFO - GET /health
+2026-03-15 20:13:22,496 - root - INFO - GET /health - 200
+2026-03-15 20:13:22,496 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-03-15 20:13:22,497 - root - INFO - GET /
+2026-03-15 20:13:22,497 - root - INFO - GET / - 200
+2026-03-15 20:13:22,498 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-03-15 20:13:22,500 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=writeupp, date_range=2026-03-15 to 2026-03-29, preference=Tuesday
+2026-03-15 20:13:22,500 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 2 available slots after filtering (total: 2)
+2026-03-15 20:13:22,502 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=cliniko, date_range=2026-03-15 to 2026-03-29, preference=Tuesday
+2026-03-15 20:13:22,502 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 1 available slots after filtering (total: 1)
+2026-03-15 20:13:22,503 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=jane, date_range=2026-03-15 to 2026-03-29, preference=
+2026-03-15 20:13:22,503 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 1 available slots after filtering (total: 1)
+2026-03-15 20:13:22,505 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=tm3, date_range=2026-03-15 to 2026-03-29, preference=
+2026-03-15 20:13:22,505 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 1 available slots after filtering (total: 1)
+2026-03-15 20:13:22,506 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=writeupp, date_range=2026-03-15 to 2026-03-29, preference=Tuesday
+2026-03-15 20:13:22,506 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 2 available slots after filtering (total: 4)
+2026-03-15 20:13:22,508 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=writeupp, date_range=2026-03-15 to 2026-03-29, preference=afternoon
+2026-03-15 20:13:22,508 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 2 available slots after filtering (total: 4)
+2026-03-15 20:13:22,509 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=writeupp, date_range=2026-03-15 to 2026-03-29, preference=Sunday
+2026-03-15 20:13:22,509 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 5 available slots after filtering (total: 10)
+2026-03-15 20:13:22,510 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=writeupp, date_range=2026-03-15 to 2026-03-29, preference=
+2026-03-15 20:13:22,510 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 2 available slots after filtering (total: 2)
+2026-03-15 20:13:22,511 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=unknown_pms, date_range=2026-03-15 to 2026-03-29, preference=
+2026-03-15 20:13:22,511 - ava_graph.graph.nodes.check_availability - ERROR - Unknown PMS type: unknown_pms
+2026-03-15 20:13:22,513 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient John Doe in clinic clinic_001 via writeupp at 2026-03-16T14:00:00
+2026-03-15 20:13:22,513 - ava_graph.graph.nodes.confirm_booking - INFO - Successfully booked appointment with ID booking_12345 for patient John Doe via writeupp
+2026-03-15 20:13:22,514 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Jane Smith in clinic clinic_002 via cliniko at 2026-03-17T10:00:00
+2026-03-15 20:13:22,514 - ava_graph.graph.nodes.confirm_booking - INFO - Successfully booked appointment with ID cliniko_456 for patient Jane Smith via cliniko
+2026-03-15 20:13:22,515 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Alice Brown in clinic clinic_003 via jane at 2026-03-18T14:30:00
+2026-03-15 20:13:22,515 - ava_graph.graph.nodes.confirm_booking - INFO - Successfully booked appointment with ID jane_789 for patient Alice Brown via jane
+2026-03-15 20:13:22,516 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Bob Wilson in clinic clinic_004 via tm3 at 2026-03-19T11:00:00
+2026-03-15 20:13:22,516 - ava_graph.graph.nodes.confirm_booking - INFO - Successfully booked appointment with ID tm3_012 for patient Bob Wilson via tm3
+2026-03-15 20:13:22,516 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Unknown PMS in clinic clinic_005 via unknown_pms at 2026-03-20T15:00:00
+2026-03-15 20:13:22,517 - ava_graph.graph.nodes.confirm_booking - ERROR - Unknown PMS type: unknown_pms
+2026-03-15 20:13:22,517 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Carol Davis in clinic clinic_001 via writeupp at 2026-03-16T14:00:00
+2026-03-15 20:13:22,517 - ava_graph.graph.nodes.confirm_booking - INFO - Successfully booked appointment with ID booking_success for patient Carol Davis via writeupp
+2026-03-15 20:13:22,518 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Eve Evans in clinic clinic_001 via writeupp at 2026-03-16T14:00:00
+2026-03-15 20:13:22,518 - ava_graph.graph.nodes.confirm_booking - ERROR - Booking failed for patient Eve Evans in clinic clinic_001: API Error: WriteUpp is down
+2026-03-15 20:13:22,519 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=John Doe, service=Physiotherapy Assessment, time=Tuesday afternoon
+2026-03-15 20:13:22,520 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=Jane Smith, service=Follow-up Assessment, time=Wednesday morning
+2026-03-15 20:13:22,520 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=Bob Johnson, service=Assessment, time=Monday
+2026-03-15 20:13:22,521 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=Alice Wonder, service=, time=
+2026-03-15 20:13:22,522 - ava_graph.graph.nodes.propose_slot - INFO - Proposing slot for patient John Doe (attempt 0)
+2026-03-15 20:13:22,522 - ava_graph.graph.nodes.propose_slot - INFO - Selected slot at index 0: 2026-03-16T14:00:00
+2026-03-15 20:13:22,522 - ava_graph.graph.nodes.propose_slot - INFO - Formatted time: Monday at 2:00 PM
+2026-03-15 20:13:22,523 - ava_graph.graph.nodes.propose_slot - INFO - LLM generated response: I have Tuesday at 2pm available, does that work for you?
+2026-03-15 20:13:22,523 - ava_graph.graph.nodes.propose_slot - INFO - propose_slot complete: proposed 2026-03-16T14:00:00, attempt_count now 1
+2026-03-15 20:13:22,545 - ava_graph.graph.nodes.propose_slot - INFO - Proposing slot for patient Alice Smith (attempt 2)
+2026-03-15 20:13:22,553 - ava_graph.graph.nodes.propose_slot - INFO - Selected slot at index 0: 2026-03-17T09:00:00
+2026-03-15 20:13:22,554 - ava_graph.graph.nodes.propose_slot - INFO - Formatted time: Tuesday at 9:00 AM
+2026-03-15 20:13:22,554 - ava_graph.graph.nodes.propose_slot - INFO - LLM generated response: How about Monday at 9am?
+2026-03-15 20:13:22,554 - ava_graph.graph.nodes.propose_slot - INFO - propose_slot complete: proposed 2026-03-17T09:00:00, attempt_count now 3
+2026-03-15 20:13:22,557 - ava_graph.graph.nodes.propose_slot - INFO - Proposing slot for patient Bob Brown (attempt 0)
+2026-03-15 20:13:22,588 - ava_graph.graph.nodes.propose_slot - WARNING - No available slots for Bob Brown
+2026-03-15 20:13:22,595 - ava_graph.graph.nodes.propose_slot - INFO - Proposing slot for patient Carol Davis (attempt 1)
+2026-03-15 20:13:22,595 - ava_graph.graph.nodes.propose_slot - INFO - Selected slot at index 1: 2026-03-18T11:00:00
+2026-03-15 20:13:22,596 - ava_graph.graph.nodes.propose_slot - INFO - Formatted time: Wednesday at 11:00 AM
+2026-03-15 20:13:22,596 - ava_graph.graph.nodes.propose_slot - INFO - LLM generated response: How about 11am?
+2026-03-15 20:13:22,596 - ava_graph.graph.nodes.propose_slot - INFO - propose_slot complete: proposed 2026-03-18T11:00:00, attempt_count now 2
+2026-03-15 20:13:22,598 - ava_graph.graph.nodes.propose_slot - INFO - Proposing slot for patient Eve Evans (attempt 0)
+2026-03-15 20:13:22,598 - ava_graph.graph.nodes.propose_slot - INFO - Selected slot at index 0: 2026-03-19T13:00:00
+2026-03-15 20:13:22,598 - ava_graph.graph.nodes.propose_slot - INFO - Formatted time: Thursday at 1:00 PM
+2026-03-15 20:13:22,598 - ava_graph.graph.nodes.propose_slot - INFO - LLM generated response: How about Thursday at 1pm?
+2026-03-15 20:13:22,598 - ava_graph.graph.nodes.propose_slot - INFO - propose_slot complete: proposed 2026-03-19T13:00:00, attempt_count now 1
+2026-03-15 20:13:22,600 - ava_graph.graph.nodes.route_after_confirmation - INFO - Routing after confirmation: confirmed=True, attempt_count=1
+2026-03-15 20:13:22,600 - ava_graph.graph.nodes.route_after_confirmation - INFO - Patient confirmed slot. Routing to confirm_booking.
+2026-03-15 20:13:22,600 - ava_graph.graph.nodes.route_after_confirmation - INFO - Routing after confirmation: confirmed=False, attempt_count=1
+2026-03-15 20:13:22,600 - ava_graph.graph.nodes.route_after_confirmation - INFO - Patient declined slot. Routing back to propose_slot. attempt_count=1
+2026-03-15 20:13:22,601 - ava_graph.graph.nodes.route_after_confirmation - INFO - Routing after confirmation: confirmed=False, attempt_count=5
+2026-03-15 20:13:22,601 - ava_graph.graph.nodes.route_after_confirmation - WARNING - Max attempts reached or no more slots. attempt_count=5, has_more_slots=False. Ending call.
+2026-03-15 20:13:22,602 - ava_graph.graph.nodes.send_confirmation - INFO - SMS sent successfully. SID: sms_id_123, Patient: John Doe, Slot: Monday, March 16 at 2:00 PM
+2026-03-15 20:13:22,605 - ava_graph.graph.nodes.send_confirmation - INFO - SMS sent successfully. SID: sms_id_456, Patient: Jane Smith, Slot: Monday, March 16 at 2:00 PM
+2026-03-15 20:13:22,606 - ava_graph.graph.nodes.send_confirmation - WARNING - No patient phone number provided, skipping SMS
+2026-03-15 20:13:22,607 - ava_graph.graph.nodes.send_confirmation - INFO - SMS sent successfully. SID: sms_id_999, Patient: Alice Wonder, Slot: Friday, March 20 at 4:00 PM
+2026-03-15 20:13:22,609 - ava_graph.tools.cliniko - INFO - Cliniko: found 1 available slots
+2026-03-15 20:13:22,611 - ava_graph.tools.cliniko - INFO - Cliniko booking created: apt_12345
+2026-03-15 20:13:22,612 - ava_graph.tools.jane - INFO - Querying Jane availability for clinic clinic_001, start_date: 2026-03-16, duration: 60min
+2026-03-15 20:13:22,612 - ava_graph.tools.jane - INFO - Found 1 available slots for clinic clinic_001
+2026-03-15 20:13:22,623 - ava_graph.tools.jane - INFO - Booking Jane appointment for John Doe at 2026-03-16T14:00:00 in clinic clinic_001
+2026-03-15 20:13:22,623 - ava_graph.tools.jane - INFO - Successfully booked appointment with ID: jane_12345
+2026-03-15 20:13:22,627 - ava_graph.tools.tm3 - INFO - Querying TM3 availability for clinic clinic_001 on 2026-03-16
+2026-03-15 20:13:22,627 - ava_graph.tools.tm3 - INFO - Found 2 available slots for clinic clinic_001
+2026-03-15 20:13:22,628 - ava_graph.tools.tm3 - INFO - Querying TM3 availability for clinic clinic_001 on 2026-03-16
+2026-03-15 20:13:22,628 - ava_graph.tools.tm3 - INFO - Found 0 available slots for clinic clinic_001
+2026-03-15 20:13:22,629 - ava_graph.tools.tm3 - INFO - Booking TM3 appointment for John Doe at 2026-03-16T14:00:00 in clinic clinic_001
+2026-03-15 20:13:22,629 - ava_graph.tools.tm3 - INFO - Successfully booked TM3 appointment tm3_12345 for John Doe
+2026-03-15 20:13:22,630 - ava_graph.tools.tm3 - INFO - Booking TM3 appointment for Jane Smith at 2026-03-16T15:00:00 in clinic clinic_001
+2026-03-15 20:13:22,630 - ava_graph.tools.tm3 - INFO - Successfully booked TM3 appointment tm3_67890 for Jane Smith
+2026-03-15 20:13:22,692 - ava_graph.tools.twilio_sms - INFO - SMS sent successfully. SID: SM1234567890, To: +447700000000, Patient: John Doe
+2026-03-15 20:13:22,694 - ava_graph.tools.twilio_sms - INFO - SMS sent successfully. SID: SM1234567890, To: +447700000000, Patient: Jane Smith
+2026-03-15 20:13:22,695 - ava_graph.tools.twilio_sms - INFO - SMS sent successfully. SID: SM1234567890, To: +447700000000, Patient: John Doe
+2026-03-15 20:13:22,696 - ava_graph.tools.writeupp - INFO - Retrieved 1 available slots for clinic clinic_001
+2026-03-15 20:13:22,698 - ava_graph.tools.writeupp - INFO - Successfully created WriteUpp appointment write_12345 for patient John Doe
+2026-03-15 20:13:57,857 - root - INFO - Ava Booking Agent FastAPI application initialized
+2026-03-15 20:13:57,874 - root - INFO - GET /
+2026-03-15 20:13:57,881 - root - INFO - GET / - 200
+2026-03-15 20:13:57,882 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-03-15 20:13:57,885 - root - INFO - GET /health
+2026-03-15 20:13:57,885 - root - INFO - GET /health - 200
+2026-03-15 20:13:57,886 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-03-15 20:13:57,888 - root - INFO - GET /
+2026-03-15 20:13:57,888 - root - INFO - GET / - 200
+2026-03-15 20:13:57,889 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-03-15 20:13:57,890 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:13:59,236 - ava_graph.graph.builder - INFO - Ava graph structure built. Compiling with MemorySaver checkpointer...
+2026-03-15 20:13:59,252 - ava_graph.graph.builder - INFO - Ava graph compiled successfully with interrupt_before=['confirm_booking']
+2026-03-15 20:13:59,261 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=John Doe, service=Physio, time=14:00
+2026-03-15 20:13:59,264 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_1, pms_type=cliniko, date_range=2026-03-15 to 2026-03-29, preference=14:00
+2026-03-15 20:13:59,753 - ava_graph.tools.cliniko - ERROR - Cliniko API error: Illegal header value b'Bearer '
+2026-03-15 20:13:59,753 - ava_graph.graph.nodes.check_availability - ERROR - check_availability error: Illegal header value b'Bearer '
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        pool_request.request
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 86, in handle_async_request
+    await self._send_request_headers(**kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 144, in _send_request_headers
+    with map_exceptions({h11.LocalProtocolError: LocalProtocolError}):
+         ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.LocalProtocolError: Illegal header value b'Bearer '
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/joa/Desktop/StrydeOS/ava_graph/graph/nodes/check_availability.py", line 130, in check_availability
+    available_slots = await get_cliniko_availability(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/Users/joa/Desktop/StrydeOS/ava_graph/tools/cliniko.py", line 40, in get_cliniko_availability
+    response = await client.get(
+               ^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1768, in get
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+    ...<9 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.LocalProtocolError: Illegal header value b'Bearer '
+2026-03-15 20:13:59,787 - ava_graph.api.routes - INFO - Graph invocation complete for call call_123. Returning at interrupt point.
+2026-03-15 20:13:59,787 - root - INFO - POST /api/webhook/ava - 200
+2026-03-15 20:13:59,792 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 200 OK"
+2026-03-15 20:13:59,794 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:13:59,797 - ava_graph.graph.builder - INFO - Ava graph structure built. Compiling with MemorySaver checkpointer...
+2026-03-15 20:13:59,806 - ava_graph.graph.builder - INFO - Ava graph compiled successfully with interrupt_before=['confirm_booking']
+2026-03-15 20:13:59,807 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=Jane Smith, service=Massage, time=10:00
+2026-03-15 20:13:59,808 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_1, pms_type=cliniko, date_range=2026-03-15 to 2026-03-29, preference=10:00
+2026-03-15 20:13:59,912 - ava_graph.tools.cliniko - ERROR - Cliniko API error: Illegal header value b'Bearer '
+2026-03-15 20:13:59,912 - ava_graph.graph.nodes.check_availability - ERROR - check_availability error: Illegal header value b'Bearer '
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        pool_request.request
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 86, in handle_async_request
+    await self._send_request_headers(**kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 144, in _send_request_headers
+    with map_exceptions({h11.LocalProtocolError: LocalProtocolError}):
+         ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.LocalProtocolError: Illegal header value b'Bearer '
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/joa/Desktop/StrydeOS/ava_graph/graph/nodes/check_availability.py", line 130, in check_availability
+    available_slots = await get_cliniko_availability(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/Users/joa/Desktop/StrydeOS/ava_graph/tools/cliniko.py", line 40, in get_cliniko_availability
+    response = await client.get(
+               ^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1768, in get
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+    ...<9 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.LocalProtocolError: Illegal header value b'Bearer '
+2026-03-15 20:13:59,914 - ava_graph.api.routes - INFO - Graph invocation complete for call call_456. Returning at interrupt point.
+2026-03-15 20:13:59,915 - root - INFO - POST /api/webhook/ava - 200
+2026-03-15 20:13:59,915 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 200 OK"
+2026-03-15 20:13:59,916 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:13:59,918 - ava_graph.graph.builder - INFO - Ava graph structure built. Compiling with MemorySaver checkpointer...
+2026-03-15 20:13:59,927 - ava_graph.graph.builder - INFO - Ava graph compiled successfully with interrupt_before=['confirm_booking']
+2026-03-15 20:13:59,929 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=, service=, time=
+2026-03-15 20:13:59,930 - ava_graph.api.routes - INFO - Graph resumed and completed for session call_456. Booking ID: 
+2026-03-15 20:13:59,930 - root - INFO - POST /api/webhook/ava - 200
+2026-03-15 20:13:59,930 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=patient_confirmed "HTTP/1.1 200 OK"
+2026-03-15 20:13:59,932 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:13:59,939 - ava_graph.api.routes - ERROR - Failed to validate call_started payload: 1 validation error for CallStartedWebhook
+patient_name
+  Field required [type=missing, input_value={'call_id': 'call_789', '...t_phone': '07700000002'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2026-03-15 20:13:59,939 - root - INFO - POST /api/webhook/ava - 400
+2026-03-15 20:13:59,939 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 400 Bad Request"
+2026-03-15 20:13:59,941 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:13:59,941 - ava_graph.api.routes - ERROR - Failed to validate patient_confirmed payload: 1 validation error for PatientConfirmedWebhook
+session_id
+  Field required [type=missing, input_value={'confirmed': True}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2026-03-15 20:13:59,942 - root - INFO - POST /api/webhook/ava - 400
+2026-03-15 20:13:59,944 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=patient_confirmed "HTTP/1.1 400 Bad Request"
+2026-03-15 20:13:59,946 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:13:59,946 - ava_graph.api.routes - ERROR - Invalid webhook_type: invalid_type
+2026-03-15 20:13:59,946 - root - INFO - POST /api/webhook/ava - 400
+2026-03-15 20:13:59,947 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=invalid_type&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 400 Bad Request"
+2026-03-15 20:14:13,104 - root - INFO - Ava Booking Agent FastAPI application initialized
+2026-03-15 20:14:13,992 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:14:13,996 - ava_graph.graph.builder - INFO - Ava graph structure built. Compiling with MemorySaver checkpointer...
+2026-03-15 20:14:14,009 - ava_graph.graph.builder - INFO - Ava graph compiled successfully with interrupt_before=['confirm_booking']
+2026-03-15 20:14:14,018 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=John Doe, service=Physio, time=14:00
+2026-03-15 20:14:14,019 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_1, pms_type=cliniko, date_range=2026-03-15 to 2026-03-29, preference=14:00
+2026-03-15 20:14:14,448 - ava_graph.tools.cliniko - ERROR - Cliniko API error: Illegal header value b'Bearer '
+2026-03-15 20:14:14,448 - ava_graph.graph.nodes.check_availability - ERROR - check_availability error: Illegal header value b'Bearer '
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        pool_request.request
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 86, in handle_async_request
+    await self._send_request_headers(**kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 144, in _send_request_headers
+    with map_exceptions({h11.LocalProtocolError: LocalProtocolError}):
+         ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.LocalProtocolError: Illegal header value b'Bearer '
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/joa/Desktop/StrydeOS/ava_graph/graph/nodes/check_availability.py", line 130, in check_availability
+    available_slots = await get_cliniko_availability(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/Users/joa/Desktop/StrydeOS/ava_graph/tools/cliniko.py", line 40, in get_cliniko_availability
+    response = await client.get(
+               ^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1768, in get
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+    ...<9 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.LocalProtocolError: Illegal header value b'Bearer '
+2026-03-15 20:14:14,460 - ava_graph.api.routes - INFO - Graph invocation complete for call call_123. Returning at interrupt point.
+2026-03-15 20:14:14,461 - root - INFO - POST /api/webhook/ava - 200
+2026-03-15 20:14:14,463 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 200 OK"
+2026-03-15 20:14:14,467 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:14:14,470 - ava_graph.graph.builder - INFO - Ava graph structure built. Compiling with MemorySaver checkpointer...
+2026-03-15 20:14:14,481 - ava_graph.graph.builder - INFO - Ava graph compiled successfully with interrupt_before=['confirm_booking']
+2026-03-15 20:14:14,482 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=Jane Smith, service=Massage, time=10:00
+2026-03-15 20:14:14,483 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_1, pms_type=cliniko, date_range=2026-03-15 to 2026-03-29, preference=10:00
+2026-03-15 20:14:14,798 - ava_graph.tools.cliniko - ERROR - Cliniko API error: Illegal header value b'Bearer '
+2026-03-15 20:14:14,799 - ava_graph.graph.nodes.check_availability - ERROR - check_availability error: Illegal header value b'Bearer '
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        pool_request.request
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 86, in handle_async_request
+    await self._send_request_headers(**kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_async/http11.py", line 144, in _send_request_headers
+    with map_exceptions({h11.LocalProtocolError: LocalProtocolError}):
+         ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.LocalProtocolError: Illegal header value b'Bearer '
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/joa/Desktop/StrydeOS/ava_graph/graph/nodes/check_availability.py", line 130, in check_availability
+    available_slots = await get_cliniko_availability(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/Users/joa/Desktop/StrydeOS/ava_graph/tools/cliniko.py", line 40, in get_cliniko_availability
+    response = await client.get(
+               ^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1768, in get
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+    ...<9 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.LocalProtocolError: Illegal header value b'Bearer '
+2026-03-15 20:14:14,819 - ava_graph.api.routes - INFO - Graph invocation complete for call call_456. Returning at interrupt point.
+2026-03-15 20:14:14,820 - root - INFO - POST /api/webhook/ava - 200
+2026-03-15 20:14:14,821 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 200 OK"
+2026-03-15 20:14:14,822 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:14:14,823 - ava_graph.graph.builder - INFO - Ava graph structure built. Compiling with MemorySaver checkpointer...
+2026-03-15 20:14:14,836 - ava_graph.graph.builder - INFO - Ava graph compiled successfully with interrupt_before=['confirm_booking']
+2026-03-15 20:14:14,837 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=, service=, time=
+2026-03-15 20:14:14,838 - ava_graph.api.routes - INFO - Graph resumed and completed for session call_456. Booking ID: 
+2026-03-15 20:14:14,838 - root - INFO - POST /api/webhook/ava - 200
+2026-03-15 20:14:14,839 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=patient_confirmed "HTTP/1.1 200 OK"
+2026-03-15 20:14:14,841 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:14:14,842 - ava_graph.api.routes - ERROR - Failed to validate call_started payload: 1 validation error for CallStartedWebhook
+patient_name
+  Field required [type=missing, input_value={'call_id': 'call_789', '...t_phone': '07700000002'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2026-03-15 20:14:14,842 - root - INFO - POST /api/webhook/ava - 400
+2026-03-15 20:14:14,843 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=call_started&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 400 Bad Request"
+2026-03-15 20:14:14,844 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:14:14,844 - ava_graph.api.routes - ERROR - Failed to validate patient_confirmed payload: 1 validation error for PatientConfirmedWebhook
+session_id
+  Field required [type=missing, input_value={'confirmed': True}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+2026-03-15 20:14:14,845 - root - INFO - POST /api/webhook/ava - 400
+2026-03-15 20:14:14,845 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=patient_confirmed "HTTP/1.1 400 Bad Request"
+2026-03-15 20:14:14,846 - root - INFO - POST /api/webhook/ava
+2026-03-15 20:14:14,846 - ava_graph.api.routes - ERROR - Invalid webhook_type: invalid_type
+2026-03-15 20:14:14,846 - root - INFO - POST /api/webhook/ava - 400
+2026-03-15 20:14:14,847 - httpx - INFO - HTTP Request: POST http://testserver/api/webhook/ava?webhook_type=invalid_type&clinic_id=clinic_1&pms_type=cliniko "HTTP/1.1 400 Bad Request"
+2026-03-15 20:14:15,029 - ava_graph.graph.builder - INFO - Ava graph structure built. Compiling with MemorySaver checkpointer...
+2026-03-15 20:14:15,048 - ava_graph.graph.builder - INFO - Ava graph compiled successfully with interrupt_before=['confirm_booking']
+2026-03-15 20:14:15,049 - ava_graph.graph.builder - INFO - Ava graph structure built. Compiling with MemorySaver checkpointer...
+2026-03-15 20:14:15,065 - ava_graph.graph.builder - INFO - Ava graph compiled successfully with interrupt_before=['confirm_booking']
+2026-03-15 20:14:15,068 - root - INFO - GET /
+2026-03-15 20:14:15,069 - root - INFO - GET / - 200
+2026-03-15 20:14:15,070 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-03-15 20:14:15,071 - root - INFO - GET /health
+2026-03-15 20:14:15,071 - root - INFO - GET /health - 200
+2026-03-15 20:14:15,072 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-03-15 20:14:15,073 - root - INFO - GET /
+2026-03-15 20:14:15,074 - root - INFO - GET / - 200
+2026-03-15 20:14:15,074 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-03-15 20:14:15,075 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=writeupp, date_range=2026-03-15 to 2026-03-29, preference=Tuesday
+2026-03-15 20:14:15,075 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 2 available slots after filtering (total: 2)
+2026-03-15 20:14:15,076 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=cliniko, date_range=2026-03-15 to 2026-03-29, preference=Tuesday
+2026-03-15 20:14:15,076 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 1 available slots after filtering (total: 1)
+2026-03-15 20:14:15,077 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=jane, date_range=2026-03-15 to 2026-03-29, preference=
+2026-03-15 20:14:15,077 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 1 available slots after filtering (total: 1)
+2026-03-15 20:14:15,078 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=tm3, date_range=2026-03-15 to 2026-03-29, preference=
+2026-03-15 20:14:15,078 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 1 available slots after filtering (total: 1)
+2026-03-15 20:14:15,079 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=writeupp, date_range=2026-03-15 to 2026-03-29, preference=Tuesday
+2026-03-15 20:14:15,079 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 2 available slots after filtering (total: 4)
+2026-03-15 20:14:15,080 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=writeupp, date_range=2026-03-15 to 2026-03-29, preference=afternoon
+2026-03-15 20:14:15,080 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 2 available slots after filtering (total: 4)
+2026-03-15 20:14:15,081 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=writeupp, date_range=2026-03-15 to 2026-03-29, preference=Sunday
+2026-03-15 20:14:15,081 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 5 available slots after filtering (total: 10)
+2026-03-15 20:14:15,082 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=writeupp, date_range=2026-03-15 to 2026-03-29, preference=
+2026-03-15 20:14:15,082 - ava_graph.graph.nodes.check_availability - INFO - check_availability: found 2 available slots after filtering (total: 2)
+2026-03-15 20:14:15,082 - ava_graph.graph.nodes.check_availability - INFO - check_availability: clinic_id=clinic_001, pms_type=unknown_pms, date_range=2026-03-15 to 2026-03-29, preference=
+2026-03-15 20:14:15,083 - ava_graph.graph.nodes.check_availability - ERROR - Unknown PMS type: unknown_pms
+2026-03-15 20:14:15,084 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient John Doe in clinic clinic_001 via writeupp at 2026-03-16T14:00:00
+2026-03-15 20:14:15,084 - ava_graph.graph.nodes.confirm_booking - INFO - Successfully booked appointment with ID booking_12345 for patient John Doe via writeupp
+2026-03-15 20:14:15,085 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Jane Smith in clinic clinic_002 via cliniko at 2026-03-17T10:00:00
+2026-03-15 20:14:15,085 - ava_graph.graph.nodes.confirm_booking - INFO - Successfully booked appointment with ID cliniko_456 for patient Jane Smith via cliniko
+2026-03-15 20:14:15,086 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Alice Brown in clinic clinic_003 via jane at 2026-03-18T14:30:00
+2026-03-15 20:14:15,086 - ava_graph.graph.nodes.confirm_booking - INFO - Successfully booked appointment with ID jane_789 for patient Alice Brown via jane
+2026-03-15 20:14:15,087 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Bob Wilson in clinic clinic_004 via tm3 at 2026-03-19T11:00:00
+2026-03-15 20:14:15,087 - ava_graph.graph.nodes.confirm_booking - INFO - Successfully booked appointment with ID tm3_012 for patient Bob Wilson via tm3
+2026-03-15 20:14:15,088 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Unknown PMS in clinic clinic_005 via unknown_pms at 2026-03-20T15:00:00
+2026-03-15 20:14:15,088 - ava_graph.graph.nodes.confirm_booking - ERROR - Unknown PMS type: unknown_pms
+2026-03-15 20:14:15,089 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Carol Davis in clinic clinic_001 via writeupp at 2026-03-16T14:00:00
+2026-03-15 20:14:15,089 - ava_graph.graph.nodes.confirm_booking - INFO - Successfully booked appointment with ID booking_success for patient Carol Davis via writeupp
+2026-03-15 20:14:15,090 - ava_graph.graph.nodes.confirm_booking - INFO - Confirming booking for patient Eve Evans in clinic clinic_001 via writeupp at 2026-03-16T14:00:00
+2026-03-15 20:14:15,090 - ava_graph.graph.nodes.confirm_booking - ERROR - Booking failed for patient Eve Evans in clinic clinic_001: API Error: WriteUpp is down
+2026-03-15 20:14:15,091 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=John Doe, service=Physiotherapy Assessment, time=Tuesday afternoon
+2026-03-15 20:14:15,092 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=Jane Smith, service=Follow-up Assessment, time=Wednesday morning
+2026-03-15 20:14:15,094 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=Bob Johnson, service=Assessment, time=Monday
+2026-03-15 20:14:15,095 - ava_graph.graph.nodes.extract_intent - INFO - Intent extracted: patient=Alice Wonder, service=, time=
+2026-03-15 20:14:15,098 - ava_graph.graph.nodes.propose_slot - INFO - Proposing slot for patient John Doe (attempt 0)
+2026-03-15 20:14:15,098 - ava_graph.graph.nodes.propose_slot - INFO - Selected slot at index 0: 2026-03-16T14:00:00
+2026-03-15 20:14:15,098 - ava_graph.graph.nodes.propose_slot - INFO - Formatted time: Monday at 2:00 PM
+2026-03-15 20:14:15,098 - ava_graph.graph.nodes.propose_slot - INFO - LLM generated response: I have Tuesday at 2pm available, does that work for you?
+2026-03-15 20:14:15,098 - ava_graph.graph.nodes.propose_slot - INFO - propose_slot complete: proposed 2026-03-16T14:00:00, attempt_count now 1
+2026-03-15 20:14:15,099 - ava_graph.graph.nodes.propose_slot - INFO - Proposing slot for patient Alice Smith (attempt 2)
+2026-03-15 20:14:15,099 - ava_graph.graph.nodes.propose_slot - INFO - Selected slot at index 0: 2026-03-17T09:00:00
+2026-03-15 20:14:15,099 - ava_graph.graph.nodes.propose_slot - INFO - Formatted time: Tuesday at 9:00 AM
+2026-03-15 20:14:15,100 - ava_graph.graph.nodes.propose_slot - INFO - LLM generated response: How about Monday at 9am?
+2026-03-15 20:14:15,100 - ava_graph.graph.nodes.propose_slot - INFO - propose_slot complete: proposed 2026-03-17T09:00:00, attempt_count now 3
+2026-03-15 20:14:15,101 - ava_graph.graph.nodes.propose_slot - INFO - Proposing slot for patient Carol Davis (attempt 1)
+2026-03-15 20:14:15,101 - ava_graph.graph.nodes.propose_slot - INFO - Selected slot at index 1: 2026-03-18T11:00:00
+2026-03-15 20:14:15,101 - ava_graph.graph.nodes.propose_slot - INFO - Formatted time: Wednesday at 11:00 AM
+2026-03-15 20:14:15,101 - ava_graph.graph.nodes.propose_slot - INFO - LLM generated response: How about 11am?
+2026-03-15 20:14:15,101 - ava_graph.graph.nodes.propose_slot - INFO - propose_slot complete: proposed 2026-03-18T11:00:00, attempt_count now 2
+2026-03-15 20:14:15,102 - ava_graph.graph.nodes.propose_slot - INFO - Proposing slot for patient Eve Evans (attempt 0)
+2026-03-15 20:14:15,102 - ava_graph.graph.nodes.propose_slot - INFO - Selected slot at index 0: 2026-03-19T13:00:00
+2026-03-15 20:14:15,102 - ava_graph.graph.nodes.propose_slot - INFO - Formatted time: Thursday at 1:00 PM
+2026-03-15 20:14:15,102 - ava_graph.graph.nodes.propose_slot - INFO - LLM generated response: How about Thursday at 1pm?
+2026-03-15 20:14:15,102 - ava_graph.graph.nodes.propose_slot - INFO - propose_slot complete: proposed 2026-03-19T13:00:00, attempt_count now 1
+2026-03-15 20:14:15,103 - ava_graph.graph.nodes.route_after_confirmation - INFO - Routing after confirmation: confirmed=True, attempt_count=1
+2026-03-15 20:14:15,103 - ava_graph.graph.nodes.route_after_confirmation - INFO - Patient confirmed slot. Routing to confirm_booking.
+2026-03-15 20:14:15,103 - ava_graph.graph.nodes.route_after_confirmation - INFO - Routing after confirmation: confirmed=False, attempt_count=1
+2026-03-15 20:14:15,103 - ava_graph.graph.nodes.route_after_confirmation - INFO - Patient declined slot. Routing back to propose_slot. attempt_count=1
+2026-03-15 20:14:15,104 - ava_graph.graph.nodes.route_after_confirmation - INFO - Routing after confirmation: confirmed=False, attempt_count=5
+2026-03-15 20:14:15,104 - ava_graph.graph.nodes.route_after_confirmation - WARNING - Max attempts reached or no more slots. attempt_count=5, has_more_slots=False. Ending call.
+2026-03-15 20:14:15,104 - ava_graph.graph.nodes.send_confirmation - INFO - SMS sent successfully. SID: sms_id_123, Patient: John Doe, Slot: Monday, March 16 at 2:00 PM
+2026-03-15 20:14:15,105 - ava_graph.graph.nodes.send_confirmation - INFO - SMS sent successfully. SID: sms_id_456, Patient: Jane Smith, Slot: Monday, March 16 at 2:00 PM
+2026-03-15 20:14:15,106 - ava_graph.graph.nodes.send_confirmation - WARNING - No patient phone number provided, skipping SMS
+2026-03-15 20:14:15,107 - ava_graph.graph.nodes.send_confirmation - INFO - SMS sent successfully. SID: sms_id_999, Patient: Alice Wonder, Slot: Friday, March 20 at 4:00 PM
+2026-03-15 20:14:15,108 - ava_graph.tools.cliniko - INFO - Cliniko: found 1 available slots
+2026-03-15 20:14:15,110 - ava_graph.tools.cliniko - INFO - Cliniko booking created: apt_12345
+2026-03-15 20:14:15,113 - ava_graph.tools.jane - INFO - Querying Jane availability for clinic clinic_001, start_date: 2026-03-16, duration: 60min
+2026-03-15 20:14:15,113 - ava_graph.tools.jane - INFO - Found 1 available slots for clinic clinic_001
+2026-03-15 20:14:15,116 - ava_graph.tools.jane - INFO - Booking Jane appointment for John Doe at 2026-03-16T14:00:00 in clinic clinic_001
+2026-03-15 20:14:15,116 - ava_graph.tools.jane - INFO - Successfully booked appointment with ID: jane_12345
+2026-03-15 20:14:15,117 - ava_graph.tools.tm3 - INFO - Querying TM3 availability for clinic clinic_001 on 2026-03-16
+2026-03-15 20:14:15,117 - ava_graph.tools.tm3 - INFO - Found 2 available slots for clinic clinic_001
+2026-03-15 20:14:15,207 - ava_graph.tools.tm3 - INFO - Querying TM3 availability for clinic clinic_001 on 2026-03-16
+2026-03-15 20:14:15,208 - ava_graph.tools.tm3 - INFO - Found 0 available slots for clinic clinic_001
+2026-03-15 20:14:15,211 - ava_graph.tools.tm3 - INFO - Booking TM3 appointment for John Doe at 2026-03-16T14:00:00 in clinic clinic_001
+2026-03-15 20:14:15,211 - ava_graph.tools.tm3 - INFO - Successfully booked TM3 appointment tm3_12345 for John Doe
+2026-03-15 20:14:15,213 - ava_graph.tools.tm3 - INFO - Booking TM3 appointment for Jane Smith at 2026-03-16T15:00:00 in clinic clinic_001
+2026-03-15 20:14:15,213 - ava_graph.tools.tm3 - INFO - Successfully booked TM3 appointment tm3_67890 for Jane Smith
+2026-03-15 20:14:15,215 - ava_graph.tools.twilio_sms - INFO - SMS sent successfully. SID: SM1234567890, To: +447700000000, Patient: John Doe
+2026-03-15 20:14:15,220 - ava_graph.tools.twilio_sms - INFO - SMS sent successfully. SID: SM1234567890, To: +447700000000, Patient: Jane Smith
+2026-03-15 20:14:15,221 - ava_graph.tools.twilio_sms - INFO - SMS sent successfully. SID: SM1234567890, To: +447700000000, Patient: John Doe
+2026-03-15 20:14:15,222 - ava_graph.tools.writeupp - INFO - Retrieved 1 available slots for clinic clinic_001
+2026-03-15 20:14:15,223 - ava_graph.tools.writeupp - INFO - Successfully created WriteUpp appointment write_12345 for patient John Doe
