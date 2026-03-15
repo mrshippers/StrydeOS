@@ -55,9 +55,12 @@ service cloud.firestore {
         allow write: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
       }
 
-      // Patients
+      // Patients — clinicians can only read their own patients
       match /patients/{patientId} {
-        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow read: if isSuperAdmin()
+          || isClinicOwnerOrAdmin(clinicId)
+          || (isClinicMember(clinicId)
+              && resource.data.clinicianId == getUserData().clinicianId);
         allow write: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
       }
 
@@ -110,6 +113,12 @@ service cloud.firestore {
         allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
         allow create: if isClinicOwnerOrAdmin(clinicId);
         allow update, delete: if false;
+      }
+
+      // Call Log — Ava voice agent call records; readable by clinic members, written by server webhook
+      match /call_log/{callId} {
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow write: if false;
       }
 
       // Integration Config — server-side only, never exposed to client

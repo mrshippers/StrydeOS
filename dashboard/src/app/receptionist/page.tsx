@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Fragment, Component, type ReactNode } from "react";
+import { useState, useMemo, Fragment, Component, type ReactNode, useEffect } from "react";
 import {
   Settings,
   Clock,
@@ -14,6 +14,7 @@ import {
   Moon,
   Radio,
   AlertCircle,
+  Lock,
 } from "lucide-react";
 import { SPIRES_AVA_PROMPT } from "@/lib/retell/ava-prompt";
 import {
@@ -32,6 +33,8 @@ import DemoBanner from "@/components/ui/DemoBanner";
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import { formatPercent } from "@/lib/utils";
 import { useCallLogs } from "@/hooks/useCallLogs";
+import { useAuth } from "@/hooks/useAuth";
+import { useAvaConfig } from "@/hooks/useAvaConfig";
 import type { VoiceInteraction } from "@/lib/firebase/voiceInteractions";
 
 type View = "dashboard" | "config";
@@ -166,10 +169,40 @@ class AvaErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
 
 function ReceptionistContent() {
   const { calls, isDemo, isLoading, activeCall, error: callsError } = useCallLogs();
+  const { user } = useAuth();
+  const { config, rules, loading: configLoading, saving, toggleEnabled, toggleRule, updateConfigField, save, createOrUpdateAgent } = useAvaConfig(user?.clinicId);
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [promptExpanded, setPromptExpanded] = useState(false);
   const [expandedCallId, setExpandedCallId] = useState<string | null>(null);
   const [digestExpanded, setDigestExpanded] = useState(false);
+  const [configDraft, setConfigDraft] = useState(config);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [agentError, setAgentError] = useState<string | null>(null);
+
+  // Update local draft when config changes
+  useEffect(() => {
+    setConfigDraft(config);
+  }, [config]);
+
+  // Debounced save on config field changes
+  const handleConfigChange = (field: keyof typeof config, value: string) => {
+    const newDraft = { ...configDraft, [field]: value };
+    setConfigDraft(newDraft);
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+    const timer = setTimeout(() => {
+      save({ config: newDraft })
+        .then(() => {
+          // Trigger agent update after config save
+          createOrUpdateAgent().catch((err) => {
+            console.error("[Agent update error]", err);
+            setAgentError(err instanceof Error ? err.message : "Failed to update agent");
+          });
+        })
+        .catch((err) => console.error("[Config save error]", err));
+    }, 500);
+    setDebounceTimer(timer);
+  };
 
   // Stats derived from live/demo calls
   const todaysCalls = useMemo(() => {
@@ -560,102 +593,220 @@ function ReceptionistContent() {
       )}
 
       {activeView === "config" && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in">
+          {agentError && (
+            <ErrorBanner
+              message={`Agent update failed: ${agentError}`}
+              onRetry={() => {
+                setAgentError(null);
+                createOrUpdateAgent().catch((err) => {
+                  setAgentError(err instanceof Error ? err.message : "Failed to update agent");
+                });
+              }}
+            />
+          )}
+          {/* Master On/Off Switch */}
           <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-            <h3 className="font-display text-lg text-navy mb-4">
-              Ava Configuration
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                    Voice Provider
-                  </label>
-                  <div className="flex items-center gap-3 p-3 rounded-xl border border-success/20 bg-success/5">
-                    <Mic size={16} className="text-success" />
-                    <span className="text-sm font-medium text-navy">
-                      Retell AI
-                    </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-success/10 text-success ml-auto">
-                      Connected
-                    </span>
-                  </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue/10 flex items-center justify-center">
+                  <Mic size={18} className="text-blue" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                    Clinic Phone Number
-                  </label>
-                  <div className="px-3 py-2.5 rounded-lg border border-border bg-cloud-light text-sm text-navy">
-                    020 7794 0202
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                    Operating Hours
-                  </label>
-                  <div className="px-3 py-2.5 rounded-lg border border-border bg-cloud-light text-sm text-navy">
-                    24/7 (after-hours calls logged for morning callback)
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                    Webhook Endpoint
-                  </label>
-                  <div className="px-3 py-2.5 rounded-lg border border-border bg-cloud-light text-sm text-navy font-mono text-xs break-all">
-                    /api/webhooks/retell
-                  </div>
+                  <h3 className="font-display text-lg text-navy">Ava is {config.enabled ? "ACTIVE" : "PAUSED"}</h3>
+                  <p className="text-xs text-muted">
+                    {config.enabled ? `Handling calls at ${config.phone}` : "Not currently answering calls"}
+                  </p>
                 </div>
               </div>
+              <button
+                onClick={() => {
+                  toggleEnabled()
+                    .then(() => createOrUpdateAgent().catch((err) => {
+                      console.error("[Agent update error]", err);
+                      setAgentError(err instanceof Error ? err.message : "Failed to update agent");
+                    }))
+                    .catch(console.error);
+                }}
+                disabled={saving}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                  config.enabled ? "bg-success" : "bg-muted/20"
+                } ${saving ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <span
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                    config.enabled ? "translate-x-7" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
 
-              <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-navy">
-                  Call Handling Rules
-                </h4>
-                {[
-                  {
-                    label: "New patient booking",
-                    desc: "Capture name, complaint, insurance, preferred clinician",
-                    enabled: true,
-                  },
-                  {
-                    label: "Cancellation recovery",
-                    desc: "Offer to rebook before confirming cancellation",
-                    enabled: true,
-                  },
-                  {
-                    label: "No-show follow-up",
-                    desc: "Automated call within 2h of missed appointment",
-                    enabled: true,
-                  },
-                  {
-                    label: "Emergency routing",
-                    desc: "Red-flag triage — direct to 999/A&E for urgent symptoms",
-                    enabled: true,
-                  },
-                  {
-                    label: "FAQ handling",
-                    desc: "Location, parking, pricing, what to bring",
-                    enabled: true,
-                  },
-                ].map((rule) => (
+          {/* Call Handling Rules */}
+          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+            <h3 className="font-display text-lg text-navy mb-4">Call Handling Rules</h3>
+            <div className="space-y-3">
+              {[
+                {
+                  key: "new_patient_booking",
+                  label: "New patient booking",
+                  desc: "Capture name, complaint, insurance, preferred clinician",
+                },
+                {
+                  key: "cancellation_recovery",
+                  label: "Cancellation recovery",
+                  desc: "Offer to rebook before confirming cancellation",
+                },
+                {
+                  key: "noshow_followup",
+                  label: "No-show follow-up",
+                  desc: "Automated call within 2h of missed appointment",
+                },
+                {
+                  key: "emergency_routing",
+                  label: "Emergency routing",
+                  desc: "Red-flag triage — direct to 999/A&E for urgent symptoms",
+                  locked: true,
+                },
+                {
+                  key: "faq_handling",
+                  label: "FAQ handling",
+                  desc: "Location, parking, pricing, what to bring",
+                },
+              ].map((rule) => {
+                const ruleKey = rule.key as keyof typeof rules;
+                const isEnabled = rules[ruleKey];
+                const isLocked = rule.locked;
+
+                return (
                   <div
-                    key={rule.label}
-                    className="flex items-start gap-3 p-3 rounded-xl border border-border/50"
+                    key={rule.key}
+                    className={`flex items-start gap-3 p-4 rounded-xl border transition-colors ${
+                      isEnabled ? "border-success/30 bg-success/5" : "border-border/50 hover:border-border"
+                    }`}
                   >
-                    <CheckCircle
-                      size={16}
-                      className="text-success shrink-0 mt-0.5"
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-navy">
-                        {rule.label}
-                      </p>
+                    {isLocked ? (
+                      <div className="relative">
+                        <div className="w-5 h-5 rounded border-2 border-success bg-success flex items-center justify-center">
+                          <CheckCircle size={12} className="text-white" />
+                        </div>
+                        <Lock size={10} className="absolute -bottom-1 -right-1 text-success bg-white rounded-full p-0.5" />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => toggleRule(ruleKey).catch(console.error)}
+                        disabled={saving}
+                        className="relative inline-flex h-5 w-8 items-center rounded-full transition-colors"
+                        style={{
+                          background: isEnabled ? "#16A34A" : "#E2DFDA",
+                        }}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            isEnabled ? "translate-x-3.5" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
+                    )}
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-navy">{rule.label}</p>
                       <p className="text-[11px] text-muted">{rule.desc}</p>
+                      {isLocked && (
+                        <p className="text-[10px] text-success font-semibold mt-1">Locked for patient safety</p>
+                      )}
                     </div>
                   </div>
-                ))}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Clinic Details */}
+          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+            <h3 className="font-display text-lg text-navy mb-4">Clinic Details</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                  Clinic Phone Number (Ava's number)
+                </label>
+                <input
+                  type="tel"
+                  value={configDraft.phone}
+                  onChange={(e) => handleConfigChange("phone", e.target.value)}
+                  disabled={saving}
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                  Clinic Address
+                </label>
+                <input
+                  type="text"
+                  value={configDraft.address}
+                  onChange={(e) => handleConfigChange("address", e.target.value)}
+                  disabled={saving}
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                  placeholder="45 Mill Lane, West Hampstead..."
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                  Initial Assessment Price (£)
+                </label>
+                <input
+                  type="number"
+                  value={configDraft.ia_price}
+                  onChange={(e) => handleConfigChange("ia_price", e.target.value)}
+                  disabled={saving}
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                  Follow-up Price (£)
+                </label>
+                <input
+                  type="number"
+                  value={configDraft.fu_price}
+                  onChange={(e) => handleConfigChange("fu_price", e.target.value)}
+                  disabled={saving}
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                  Nearest Station
+                </label>
+                <input
+                  type="text"
+                  value={configDraft.nearest_station}
+                  onChange={(e) => handleConfigChange("nearest_station", e.target.value)}
+                  disabled={saving}
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                  placeholder="West Hampstead (Jubilee, Thameslink...)"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                  Parking Information
+                </label>
+                <input
+                  type="text"
+                  value={configDraft.parking_info}
+                  onChange={(e) => handleConfigChange("parking_info", e.target.value)}
+                  disabled={saving}
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                  placeholder="Paid on-street parking, no permit required evenings..."
+                />
               </div>
             </div>
+            {saving && (
+              <p className="text-[11px] text-muted mt-3 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue animate-pulse" />
+                Saving...
+              </p>
+            )}
           </div>
 
           {/* Ava system prompt preview */}

@@ -142,3 +142,70 @@ export function subscribeToRecentCalls(
     (err) => onError?.(err)
   );
 }
+
+/**
+ * Subscribe to today's ElevenLabs call_log entries for a clinic (real-time).
+ * Maps call_log format to VoiceInteraction format.
+ * Returns an unsubscribe function.
+ */
+export function subscribeTodaysElevenLabsCalls(
+  db: Firestore,
+  clinicId: string,
+  onData: (calls: VoiceInteraction[]) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const colRef = collection(
+    db,
+    "clinics",
+    clinicId,
+    "call_log"
+  );
+
+  const q = query(
+    colRef,
+    where("startTimestamp", ">=", todayStart.getTime()),
+    orderBy("startTimestamp", "desc"),
+    limit(100)
+  );
+
+  return onSnapshot(
+    q,
+    (snap) => {
+      const calls = snap.docs.map((doc) => {
+        const data = doc.data();
+        // Map call_log format to VoiceInteraction format
+        return {
+          id: doc.id,
+          callId: doc.id,
+          agentId: data.agentId || "",
+          callType: "phone_call" as const,
+          callStatus: data.event === "conversation.ended" ? "analyzed" : "ongoing",
+          callerPhone: data.callerPhone,
+          toNumber: null,
+          patientId: null,
+          reasonForCall: data.reasonForCall,
+          outcome: data.outcome || null,
+          urgency: null,
+          callSummary: data.callSummary,
+          userSentiment: null,
+          callSuccessful: data.outcome === "booked" || data.outcome === "resolved",
+          inVoicemail: data.outcome === "voicemail",
+          transcript: data.transcript,
+          transcriptUrl: null,
+          recordingUrl: null,
+          durationSeconds: data.durationSeconds,
+          startTimestamp: data.startTimestamp,
+          endTimestamp: null,
+          disconnectionReason: null,
+          createdAt: null,
+          updatedAt: null,
+        } as VoiceInteraction;
+      });
+      onData(calls);
+    },
+    (err) => onError?.(err)
+  );
+}

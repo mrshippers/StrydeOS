@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import {
   subscribeToTodaysCalls,
+  subscribeTodaysElevenLabsCalls,
   type VoiceInteraction,
 } from "@/lib/firebase/voiceInteractions";
 
@@ -175,7 +176,6 @@ export function useCallLogs(): UseCallLogsResult {
   const [error, setError] = useState<string | null>(null);
 
   const isDemo = user?.uid === "demo";
-  const retellConfigured = process.env.NEXT_PUBLIC_RETELL_CONFIGURED === "true";
 
   useEffect(() => {
     setError(null);
@@ -186,14 +186,15 @@ export function useCallLogs(): UseCallLogsResult {
       return;
     }
 
-    if (!isFirebaseConfigured || !db || !user?.clinicId || !retellConfigured) {
+    if (!isFirebaseConfigured || !db || !user?.clinicId) {
       setCalls([]);
       setIsLoading(false);
-      if (!retellConfigured) setError("Voice AI (Ava) is not configured. Set up Retell in Settings.");
+      setError("Voice AI (Ava) is not configured. Set up in Settings.");
       return;
     }
 
-    const unsub = subscribeToTodaysCalls(
+    // Try ElevenLabs call_log first (new), then fall back to Retell voiceInteractions (legacy)
+    const unsub = subscribeTodaysElevenLabsCalls(
       db,
       user.clinicId,
       (liveCalls) => {
@@ -209,7 +210,7 @@ export function useCallLogs(): UseCallLogsResult {
     );
 
     return () => unsub();
-  }, [user?.clinicId, retellConfigured, isDemo]);
+  }, [user?.clinicId, isDemo]);
 
   const activeCall = calls.find((c) => c.callStatus === "ongoing") ?? null;
 
