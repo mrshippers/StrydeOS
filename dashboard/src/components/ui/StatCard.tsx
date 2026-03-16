@@ -4,20 +4,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import type { StatCardProps } from "@/types";
 import { ChevronUp, ChevronDown, Minus, AlertTriangle } from "lucide-react";
+import { statusColors, trendColors, colors } from "@/lib/brand";
 
-const STATUS_COLORS: Record<string, { dot: string; glow: string }> = {
-  ok:      { dot: "#059669", glow: "rgba(5,150,105,0.45)" },
-  warn:    { dot: "#F59E0B", glow: "rgba(245,158,11,0.45)" },
-  danger:  { dot: "#EF4444", glow: "rgba(239,68,68,0.45)" },
-  neutral: { dot: "#6B7280", glow: "rgba(107,114,128,0.2)" },
-};
-
-const TREND_COLORS: Record<string, string> = {
-  up:   "#059669",
-  down: "#EF4444",
-  warn: "#F59E0B",
-  flat: "#6B7280",
-};
+const STATUS_COLORS = statusColors;
+const TREND_COLORS = trendColors;
 
 function useCountUp(rawTarget: string | number, duration = 800): { display: string; ref: React.RefObject<HTMLElement | null> } {
   const target = String(rawTarget);
@@ -99,10 +89,10 @@ function Sparkline({ data, status }: { data: number[]; status: string }) {
   if (data.length < 2) return null;
 
   const lineColor =
-    status === "ok"      ? "#059669" :
-    status === "danger"  ? "#EF4444" :
-    status === "warn"    ? "#F59E0B" :
-    "#6B7280";
+    status === "ok"      ? colors.success :
+    status === "danger"  ? colors.danger :
+    status === "warn"    ? colors.warn :
+    colors.muted;
 
   const W = 48;
   const H = 20;
@@ -166,7 +156,7 @@ export default function StatCard({
   const trendColor = TREND_COLORS[trend ?? "flat"];
 
   const progressFill = status === "warn" || status === "danger"
-    ? "#F59E0B"
+    ? colors.warn
     : undefined;
 
   return (
@@ -246,7 +236,7 @@ export default function StatCard({
               href={action.href}
               onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-1 text-[11px] font-semibold transition-colors hover:underline"
-              style={{ color: "#1C54F2" }}
+              style={{ color: colors.blue }}
             >
               {action.label} <span className="inline-block transition-transform duration-150 group-hover:translate-x-0.5">→</span>
             </Link>
@@ -254,7 +244,7 @@ export default function StatCard({
             <button
               onClick={(e) => { e.stopPropagation(); action.onClick?.(); }}
               className="inline-flex items-center gap-1 text-[11px] font-semibold transition-colors hover:underline"
-              style={{ color: "#1C54F2" }}
+              style={{ color: colors.blue }}
             >
               {action.label} <span className="inline-block transition-transform duration-150 group-hover:translate-x-0.5">→</span>
             </button>
@@ -269,7 +259,7 @@ export default function StatCard({
             className="h-full rounded-r-[2px] transition-all duration-700 ease-out"
             style={{
               width: `${Math.min(Math.max(progress, 0), 100)}%`,
-              background: progressFill ?? "linear-gradient(90deg, #0891B2, #4B8BF5)",
+              background: progressFill ?? `linear-gradient(90deg, ${colors.teal}, ${colors.blueGlow})`,
             }}
           />
         </div>

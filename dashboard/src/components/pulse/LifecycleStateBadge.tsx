@@ -2,14 +2,14 @@ import type { FC } from "react";
 import type { LifecycleState } from "@/types";
 
 const STATE_STYLES: Record<LifecycleState, { bg: string; text: string; label: string }> = {
-  NEW:        { bg: "bg-[#1C54F2]/10", text: "text-[#1C54F2]", label: "New" },
-  ONBOARDING: { bg: "bg-[#1C54F2]/10", text: "text-[#1C54F2]", label: "Onboarding" },
-  ACTIVE:     { bg: "bg-[#10B981]/10", text: "text-[#10B981]", label: "Active" },
-  AT_RISK:    { bg: "bg-[#F59E0B]/10", text: "text-[#F59E0B]", label: "At Risk" },
-  LAPSED:     { bg: "bg-orange-100",   text: "text-orange-600", label: "Lapsed" },
-  RE_ENGAGED: { bg: "bg-[#0891B2]/10", text: "text-[#0891B2]", label: "Re-engaged" },
-  DISCHARGED: { bg: "bg-gray-100",     text: "text-gray-500",  label: "Discharged" },
-  CHURNED:    { bg: "bg-[#EF4444]/10", text: "text-[#EF4444]", label: "Churned" },
+  NEW:        { bg: "bg-blue/10",    text: "text-blue",    label: "New" },
+  ONBOARDING: { bg: "bg-blue/10",   text: "text-blue",    label: "Onboarding" },
+  ACTIVE:     { bg: "bg-success/10", text: "text-success", label: "Active" },
+  AT_RISK:    { bg: "bg-warn/10",    text: "text-warn",    label: "At Risk" },
+  LAPSED:     { bg: "bg-warn/10",    text: "text-warn",    label: "Lapsed" },
+  RE_ENGAGED: { bg: "bg-teal/10",    text: "text-teal",    label: "Re-engaged" },
+  DISCHARGED: { bg: "bg-muted/10",   text: "text-muted",   label: "Discharged" },
+  CHURNED:    { bg: "bg-danger/10",  text: "text-danger",  label: "Churned" },
 };
 
 interface Props {

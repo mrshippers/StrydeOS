@@ -8,10 +8,10 @@ interface Props {
 export const RiskScoreBadge: FC<Props> = ({ score, size = "md" }) => {
   const colour =
     score >= 60
-      ? { bg: "bg-[#EF4444]/10", text: "text-[#EF4444]" }
+      ? { bg: "bg-danger/10", text: "text-danger" }
       : score >= 40
-      ? { bg: "bg-[#F59E0B]/10", text: "text-[#F59E0B]" }
-      : { bg: "bg-[#10B981]/10", text: "text-[#10B981]" };
+      ? { bg: "bg-warn/10", text: "text-warn" }
+      : { bg: "bg-success/10", text: "text-success" };
 
   const sizeClass = size === "sm" ? "text-[11px] px-1.5 py-0.5" : "text-xs px-2 py-1";
 

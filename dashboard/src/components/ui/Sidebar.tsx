@@ -39,6 +39,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import type { AlertFlagProps } from "@/types";
 import type { ModuleKey } from "@/lib/billing";
+import { colors } from "@/lib/brand";
 
 type NavItem = {
   label: string;
@@ -49,11 +50,11 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", icon: LayoutGrid, href: "/dashboard", accent: "#1C54F2", moduleKey: null },
-  { label: "Clinicians", icon: Users, href: "/clinicians", accent: "#1C54F2", moduleKey: null },
-  { label: "Pulse", icon: RefreshCw, href: "/continuity", accent: "#0891B2", moduleKey: "pulse" },
-  { label: "Ava", icon: Phone, href: "/receptionist", accent: "#1C54F2", moduleKey: "ava" },
-  { label: "Intelligence", icon: BarChart3, href: "/intelligence", accent: "#8B5CF6", moduleKey: "intelligence" },
+  { label: "Dashboard", icon: LayoutGrid, href: "/dashboard", accent: colors.blue, moduleKey: null },
+  { label: "Clinicians", icon: Users, href: "/clinicians", accent: colors.blue, moduleKey: null },
+  { label: "Pulse", icon: RefreshCw, href: "/continuity", accent: colors.teal, moduleKey: "pulse" },
+  { label: "Ava", icon: Phone, href: "/receptionist", accent: colors.blue, moduleKey: "ava" },
+  { label: "Intelligence", icon: BarChart3, href: "/intelligence", accent: colors.purple, moduleKey: "intelligence" },
 ];
 
 const SYSTEM_ITEMS = [
@@ -186,7 +187,7 @@ export default function Sidebar() {
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
         className="fixed top-4 left-4 z-50 lg:hidden rounded-xl p-2.5 shadow-md border border-white/10"
-        style={{ background: "#0B2545" }}
+        style={{ background: colors.navy }}
         aria-label="Toggle menu"
       >
         {mobileOpen ? <X size={18} color="white" /> : <Menu size={18} color="white" />}
@@ -204,7 +205,7 @@ export default function Sidebar() {
       <aside
         className={`fixed top-0 left-0 z-40 h-full w-60 flex flex-col transition-transform duration-200 ease-out
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
-        style={{ background: theme === "dark" ? "#0D1F3C" : "#0B2545" }}
+        style={{ background: theme === "dark" ? "#0D1F3C" : colors.navy }}
       >
         {/* Logo + notification bell row */}
         <div className="px-5 pt-5 pb-4 flex items-center justify-between">
@@ -232,7 +233,7 @@ export default function Sidebar() {
               {unreadCount > 0 && (
                 <span
                   className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                  style={{ background: "#EF4444" }}
+                  style={{ background: colors.danger }}
                 >
                   {unreadCount}
                 </span>
@@ -241,7 +242,7 @@ export default function Sidebar() {
 
             {notifOpen && (
               <div className="absolute left-0 top-full mt-2 w-72 rounded-xl shadow-[var(--shadow-elevated)] overflow-hidden z-50 animate-fade-in"
-                style={{ background: "#132D5E", border: "1px solid rgba(255,255,255,0.08)" }}>
+                style={{ background: colors.navyMid, border: "1px solid rgba(255,255,255,0.08)" }}>
                 <div className="px-4 py-3 border-b border-white/8 flex items-center justify-between">
                   <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
                     Alerts this week
@@ -274,12 +275,12 @@ export default function Sidebar() {
                           <div className="relative mt-1.5 shrink-0">
                             <div
                               className="w-1.5 h-1.5 rounded-full"
-                              style={{ background: alert.severity === "danger" ? "#EF4444" : "#F59E0B" }}
+                              style={{ background: alert.severity === "danger" ? colors.danger : colors.warn }}
                             />
                             {isUnread && (
                               <div
                                 className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
-                                style={{ background: "#4B8BF5" }}
+                                style={{ background: colors.blueGlow }}
                               />
                             )}
                           </div>
@@ -301,7 +302,7 @@ export default function Sidebar() {
                     href="/dashboard"
                     onClick={() => { setNotifOpen(false); setMobileOpen(false); }}
                     className="text-[11px] font-semibold hover:text-white transition-colors flex items-center gap-1"
-                    style={{ color: "#4B8BF5" }}
+                    style={{ color: colors.blueGlow }}
                   >
                     View all on dashboard <ExternalLink size={10} />
                   </Link>
@@ -391,7 +392,7 @@ export default function Sidebar() {
                         className="absolute inset-0 rounded-lg"
                         style={{
                           background: "rgba(255,255,255,0.08)",
-                          borderLeft: "3px solid #1C54F2",
+                          borderLeft: `3px solid ${colors.blue}`,
                         }}
                         transition={{ type: "spring", stiffness: 350, damping: 30 }}
                       />
@@ -417,7 +418,7 @@ export default function Sidebar() {
                     className="absolute inset-0 rounded-lg"
                     style={{
                       background: "rgba(255,255,255,0.08)",
-                      borderLeft: "3px solid #1C54F2",
+                      borderLeft: `3px solid ${colors.blue}`,
                     }}
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                   />
@@ -444,7 +445,7 @@ export default function Sidebar() {
                         className="absolute inset-0 rounded-lg"
                         style={{
                           background: "rgba(255,255,255,0.08)",
-                          borderLeft: "3px solid #1C54F2",
+                          borderLeft: `3px solid ${colors.blue}`,
                         }}
                         transition={{ type: "spring", stiffness: 350, damping: 30 }}
                       />
@@ -469,7 +470,7 @@ export default function Sidebar() {
                         className="absolute inset-0 rounded-lg"
                         style={{
                           background: "rgba(255,255,255,0.08)",
-                          borderLeft: "3px solid #1C54F2",
+                          borderLeft: `3px solid ${colors.blue}`,
                         }}
                         transition={{ type: "spring", stiffness: 350, damping: 30 }}
                       />
@@ -542,7 +543,7 @@ export default function Sidebar() {
           {profileOpen && (
             <div
               className="mt-1 rounded-xl overflow-hidden animate-fade-in"
-              style={{ background: "#132D5E", border: "1px solid rgba(255,255,255,0.08)" }}
+              style={{ background: colors.navyMid, border: "1px solid rgba(255,255,255,0.08)" }}
             >
               <div className="px-4 py-3 border-b border-white/8">
                 <p className="text-[12px] font-semibold text-white">{clinicName}</p>

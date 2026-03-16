@@ -116,7 +116,10 @@ export async function POST(req: NextRequest) {
       clinician_availability: clinicData.availability || "",
     });
 
-    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://localhost:3000"}/api/webhooks/elevenlabs`;
+    if (!process.env.NEXT_PUBLIC_APP_URL) {
+      throw new Error("NEXT_PUBLIC_APP_URL env var is not set — required for ElevenLabs webhook delivery");
+    }
+    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/elevenlabs`;
 
     const agentConfig: ElevenAgentsConfig = {
       name: `${clinicData.name || "Clinic"} - Ava`,

@@ -2,34 +2,21 @@
 
 import type { ElementType } from "react";
 import Link from "next/link";
+import { moduleColors, hexToRgba } from "@/lib/brand";
 
-const MODULE_BG: Record<string, string> = {
-  ava:          "rgba(28,84,242,0.05)",
-  pulse:        "rgba(8,145,178,0.05)",
-  intelligence: "rgba(139,92,246,0.05)",
-  default:      "rgba(28,84,242,0.05)",
-};
+const MODULES = ["ava", "pulse", "intelligence", "default"] as const;
 
-const MODULE_BORDER: Record<string, string> = {
-  ava:          "rgba(28,84,242,0.12)",
-  pulse:        "rgba(8,145,178,0.12)",
-  intelligence: "rgba(139,92,246,0.12)",
-  default:      "rgba(28,84,242,0.12)",
-};
+const MODULE_BG: Record<string, string> = Object.fromEntries(
+  MODULES.map((m) => [m, hexToRgba(moduleColors[m], 0.05)])
+);
 
-const MODULE_ICON_BG: Record<string, string> = {
-  ava:          "rgba(28,84,242,0.10)",
-  pulse:        "rgba(8,145,178,0.10)",
-  intelligence: "rgba(139,92,246,0.10)",
-  default:      "rgba(28,84,242,0.10)",
-};
+const MODULE_BORDER: Record<string, string> = Object.fromEntries(
+  MODULES.map((m) => [m, hexToRgba(moduleColors[m], 0.12)])
+);
 
-const MODULE_COLOR: Record<string, string> = {
-  ava:          "#1C54F2",
-  pulse:        "#0891B2",
-  intelligence: "#8B5CF6",
-  default:      "#1C54F2",
-};
+const MODULE_ICON_BG: Record<string, string> = Object.fromEntries(
+  MODULES.map((m) => [m, hexToRgba(moduleColors[m], 0.10)])
+);
 
 interface EmptyStateCardProps {
   icon: ElementType;
@@ -51,7 +38,7 @@ export default function EmptyStateCard({
   const bg = MODULE_BG[module];
   const border = MODULE_BORDER[module];
   const iconBg = MODULE_ICON_BG[module];
-  const accentColor = MODULE_COLOR[module];
+  const accentColor = moduleColors[module];
 
   return (
     <div

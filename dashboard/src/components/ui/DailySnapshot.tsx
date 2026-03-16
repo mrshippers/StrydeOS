@@ -2,6 +2,7 @@
 
 import type { WeeklyStats } from "@/types";
 import type { Patient } from "@/types";
+import { colors } from "@/lib/brand";
 
 interface DailySnapshotProps {
   stats: WeeklyStats | null;
@@ -23,7 +24,7 @@ export default function DailySnapshot({ stats, patients }: DailySnapshotProps) {
     {
       icon: "📅",
       label: `${stats.appointmentsTotal} appointments this week`,
-      color: "#1C54F2",
+      color: colors.blue,
     },
   ];
 
@@ -31,7 +32,7 @@ export default function DailySnapshot({ stats, patients }: DailySnapshotProps) {
     chips.push({
       icon: "⚠️",
       label: `${churnCount} patient${churnCount !== 1 ? "s" : ""} at churn risk`,
-      color: "#F59E0B",
+      color: colors.warn,
     });
   }
 
@@ -39,7 +40,7 @@ export default function DailySnapshot({ stats, patients }: DailySnapshotProps) {
     chips.push({
       icon: "📋",
       label: `DNA rate ${Math.round(stats.dnaRate * 100)}% — above target`,
-      color: "#EF4444",
+      color: colors.danger,
     });
   }
 

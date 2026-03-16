@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
 import type { WeeklyStats, MetricStatus } from "@/types";
 import { getInitials, formatPercent, formatRate } from "@/lib/utils";
+import { ragColors, colors } from "@/lib/brand";
 
 interface ClinicianRow {
   clinicianId: string;
@@ -52,12 +53,7 @@ function getCourseCompletionRAG(rate: number): MetricStatus {
   return "danger";
 }
 
-const RAG_BADGE: Record<MetricStatus, { bg: string; text: string }> = {
-  ok:      { bg: "rgba(5,150,105,0.09)",  text: "#059669" },
-  warn:    { bg: "rgba(245,158,11,0.09)", text: "#F59E0B" },
-  danger:  { bg: "rgba(239,68,68,0.09)",  text: "#EF4444" },
-  neutral: { bg: "rgba(107,114,128,0.09)", text: "#6B7280" },
-};
+const RAG_BADGE = ragColors;
 
 function RagBadge({ value, status }: { value: string; status: MetricStatus }) {
   const style = RAG_BADGE[status];
@@ -111,12 +107,12 @@ function HeaderTooltip({ text }: { text: string }) {
       {open && (
         <div
           className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-56 px-3 py-2.5 rounded-lg text-[11px] leading-relaxed text-white shadow-lg animate-fade-in"
-          style={{ background: "#0B2545" }}
+          style={{ background: colors.navy }}
         >
           {text}
           <div
             className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45"
-            style={{ background: "#0B2545" }}
+            style={{ background: colors.navy }}
           />
         </div>
       )}
@@ -242,7 +238,7 @@ export default function CliniciansTable({ rows, onRowClick }: CliniciansTablePro
                   className="group border-b border-border/50 cursor-pointer transition-colors hover:bg-blue/[0.04] active:bg-blue/[0.06]"
                   style={{
                     height: 52,
-                    borderLeft: hasAlert ? "3px solid #F59E0B" : undefined,
+                    borderLeft: hasAlert ? `3px solid ${colors.warn}` : undefined,
                   }}
                 >
                   <td className="px-5 py-2">

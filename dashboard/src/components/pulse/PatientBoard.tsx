@@ -9,6 +9,7 @@ import { LifecycleStateBadge } from "./LifecycleStateBadge";
 import { RiskFactorPanel } from "./RiskFactorPanel";
 import EmptyState from "@/components/ui/EmptyState";
 import { daysSince } from "@/lib/utils";
+import { colors } from "@/lib/brand";
 
 interface Props {
   patients: Patient[];
@@ -66,14 +67,14 @@ export const PatientBoard: FC<Props> = ({
                 isCollapsed ? next.delete(state) : next.add(state);
                 return next;
               })}
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-cloud-light transition-colors"
             >
               <div className="flex items-center gap-2.5">
-                {isCollapsed ? <ChevronRight size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+                {isCollapsed ? <ChevronRight size={14} className="text-muted" /> : <ChevronDown size={14} className="text-muted" />}
                 <LifecycleStateBadge state={state} />
-                <span className="text-xs text-gray-500">{group.length} patient{group.length !== 1 ? "s" : ""}</span>
+                <span className="text-xs text-muted">{group.length} patient{group.length !== 1 ? "s" : ""}</span>
                 {avgRisk > 0 && group[0]?.riskScore !== undefined && (
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-[10px] text-muted/60">
                     · avg risk <RiskScoreBadge score={Math.round(avgRisk)} size="sm" />
                   </span>
                 )}
@@ -89,7 +90,7 @@ export const PatientBoard: FC<Props> = ({
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-border/50">
                     {group.map((p) => {
                       const clinician = clinicianMap[p.clinicianId];
                       const isExpanded = expanded.has(p.id);
@@ -99,18 +100,31 @@ export const PatientBoard: FC<Props> = ({
                         <div key={p.id} className="px-4 py-3">
                           <div
                             className="flex items-center gap-3 cursor-pointer"
+                            role="button"
+                            tabIndex={0}
+                            aria-expanded={isExpanded}
                             onClick={() => setExpanded((prev) => {
                               const next = new Set(prev);
                               isExpanded ? next.delete(p.id) : next.add(p.id);
                               return next;
                             })}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setExpanded((prev) => {
+                                  const next = new Set(prev);
+                                  isExpanded ? next.delete(p.id) : next.add(p.id);
+                                  return next;
+                                });
+                              }
+                            }}
                           >
-                            <div className="w-8 h-8 rounded-full bg-[#1C54F2]/10 flex items-center justify-center text-[10px] font-bold text-[#1C54F2] shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-blue/10 flex items-center justify-center text-[10px] font-bold text-blue shrink-0">
                               {p.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-[#0B2545] truncate">{p.name}</p>
-                              <p className="text-[11px] text-gray-400">
+                              <p className="text-sm font-semibold text-navy truncate">{p.name}</p>
+                              <p className="text-[11px] text-muted/60">
                                 {visibleMetrics.includes("sessions") && `${p.sessionCount}/${p.courseLength} sessions`}
                                 {visibleMetrics.includes("clinician") && clinician ? ` · ${clinician.name}` : ""}
                                 {visibleMetrics.includes("lastVisit") && lastSeen !== null ? ` · Last ${lastSeen}d ago` : ""}
@@ -122,7 +136,7 @@ export const PatientBoard: FC<Props> = ({
                               )}
                               <button
                                 onClick={(e) => { e.stopPropagation(); onSendReminder(p.id); }}
-                                className="text-[11px] font-semibold text-[#1C54F2] hover:text-[#2E6BFF] transition-colors"
+                                className="text-[11px] font-semibold text-blue hover:text-blue-bright transition-colors"
                               >
                                 Re-engage →
                               </button>

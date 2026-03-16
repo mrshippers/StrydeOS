@@ -28,12 +28,6 @@ export async function POST(req: NextRequest) {
   try {
     const payload: ElevenLabsWebhookPayload = await req.json();
 
-    console.log("[ElevenLabs webhook]", {
-      event: payload.event,
-      conversation_id: payload.conversation_id,
-      agent_id: payload.agent_id,
-    });
-
     // Webhook events we care about:
     // - conversation.started: call initiated
     // - conversation.ended: call completed

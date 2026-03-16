@@ -19,6 +19,7 @@
  */
 
 import type { FeatureFlags } from "@/types";
+import { moduleColors } from "@/lib/brand";
 
 // ─── Core types ──────────────────────────────────────────────────────────────
 
@@ -202,21 +203,21 @@ export const MODULE_DISPLAY: Record<
     name: "Intelligence",
     description:
       "Clinical performance dashboard. 8 validated KPIs, revenue analytics, outcome measures, DNA analysis, and reputation tracking.",
-    color: "#8B5CF6",
+    color: moduleColors.intelligence,
     flagKey: "intelligence",
   },
   pulse: {
     name: "Pulse",
     description:
       "Patient retention engine. Automated rebooking sequences, HEP reminders, churn risk detection, and comms log.",
-    color: "#0891B2",
+    color: moduleColors.pulse,
     flagKey: "continuity",
   },
   ava: {
     name: "Ava",
     description:
       "AI voice receptionist powered by Retell AI. Handles inbound calls, books appointments 24/7, and logs all interactions.",
-    color: "#1C54F2",
+    color: moduleColors.ava,
     flagKey: "receptionist",
   },
 };
