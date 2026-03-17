@@ -19,5 +19,8 @@ stripe_backup_code.txt
 StrydeOS_SaaS_Subscription_Agreement_v2.docx
 Private Practice Barometer - BM Public.pdf
 
+# Firebase
+firebase-debug.log
+
 # Git worktrees
 .worktrees/
