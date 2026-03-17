@@ -90,7 +90,8 @@ function aggregateWeek(
   const uniquePatients = new Set(
     appointments.map((a) => a.patientId).filter(Boolean)
   ).size;
-  const followUpRate = uniquePatients > 0 ? total / uniquePatients : 0;
+  // Follow-up rate: follow-ups ÷ initial assessments (true rate, not appointments-per-patient)
+  const followUpRate = initialAssessments > 0 ? followUps / initialAssessments : 0;
 
   const physitrackRate = total > 0 ? withHep / total : 0;
   const hepComplianceRate = physitrackRate;

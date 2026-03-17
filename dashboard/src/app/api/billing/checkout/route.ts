@@ -91,15 +91,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Build recurring line items
-    const lineItems: { price: string; quantity: number }[] = modules.map((module) => ({
-      price: getPriceId(module, tier, interval),
-      quantity: 1,
-    }));
+    const lineItems: { price: string; quantity: number }[] = modules.map((module) => {
+      try {
+        return {
+          price: getPriceId(module, tier, interval),
+          quantity: 1,
+        };
+      } catch (e) {
+        const varName = `STRIPE_PRICE_${module.toUpperCase()}_${tier.toUpperCase()}_${interval.toUpperCase()}`;
+        throw new Error(`Missing or invalid Stripe configuration: ${varName} is not set`);
+      }
+    });
 
     // Add Ava one-time setup fee when Ava or Full Stack is selected
     const needsAvaSetup = includeAvaSetup && modules.some((m) => m === "ava" || m === "fullstack");
     if (needsAvaSetup) {
-      lineItems.push({ price: getAvaSetupFeePriceId(), quantity: 1 });
+      try {
+        lineItems.push({ price: getAvaSetupFeePriceId(), quantity: 1 });
+      } catch (e) {
+        throw new Error("Ava module is not properly configured. Contact support.");
+      }
     }
 
     const session = await stripe.checkout.sessions.create({
