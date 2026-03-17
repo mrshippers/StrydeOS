@@ -2,18 +2,19 @@
  * UK MSK Clinical Benchmarks for StrydeOS.
  *
  * Sources:
+ * - UK Private Practice Barometer 2026 (715 UK clinic owners)
  * - HCPC Standards of Proficiency for Physiotherapists
  * - CSP (Chartered Society of Physiotherapy) clinical guidelines
  * - MACP (Manipulation Association of Chartered Physiotherapists)
  * - NICE CG177 (exercise as first-line intervention for MSK)
- * - Private MSK practice governance frameworks
  *
- * All financial calculations assume £75 fixed rate for both IAs and FUs.
+ * Financial calculations use £65 blended session rate (UK median:
+ * £74 initial assessment + £63 follow-up = ~£65 weighted average).
  */
 
 import type { MetricStatus } from "@/types";
 
-const SESSION_RATE_PENCE = 7500;
+const SESSION_RATE_PENCE = 6500;
 
 export interface MetricBenchmark {
   key: string;
@@ -35,17 +36,17 @@ export const BENCHMARKS: Record<string, MetricBenchmark> = {
       "Mean number of follow-up appointments booked per initial assessment. Measures patient retention through a treatment course.",
     ownerExplainer:
       "How many follow-up sessions each new patient books on average. Higher = patients are staying for the full treatment course.",
-    ukBenchmarkRange: "2.5–4.0 (CSP MSK pathway: 4–6 sessions typical; private practice norm 3–4 FUs per IA)",
+    ukBenchmarkRange: "4.0–5.5 (UK median 5.0 sessions per episode; top quartile 6+)",
     thresholds: {
-      green: "≥ 2.9",
-      amber: "2.3–2.8",
-      red: "< 2.3",
+      green: "≥ 4.0",
+      amber: "3.0–3.9",
+      red: "< 3.0",
     },
     clinicalSignificance:
       "Low FU rate indicates patients dropping off before reaching recovery milestones. HCPC Standard 6 requires practitioners to practise safely and effectively, which includes adequate treatment completion. Incomplete courses raise risk of re-injury, chronic pain development, and poor long-term outcomes.",
     financialSignificance:
-      "Each missed FU = £75 lost. At target 2.9 FU/IA, revenue per patient journey = £75 (IA) + 2.9 × £75 = £292.50. A clinician at 2.5 yields £262.50 — a gap of £30/patient. With ~8 IAs/week, that's ~£240/week or ~£12,480/year unrealised revenue.",
-    sources: ["HCPC Standard 6", "CSP MSK Pathway Guidance", "Private MSK governance frameworks"],
+      "Each missed FU = £65 lost. At target 4.0 FU/IA, revenue per patient journey = £65 (IA) + 4.0 × £65 = £325. A clinician at 3.0 yields £260 — a gap of £65/patient. With ~8 IAs/week, that's ~£520/week or ~£27,040/year unrealised revenue.",
+    sources: ["UK Private Practice Barometer 2026", "HCPC Standard 6", "CSP MSK Pathway Guidance"],
   },
 
   hepCompliance: {
@@ -114,18 +115,18 @@ export const BENCHMARKS: Record<string, MetricBenchmark> = {
     definition:
       "Percentage of scheduled appointments where the patient did not attend (Did Not Attend). Includes no-shows and same-day cancellations without rebooking.",
     ownerExplainer:
-      "How often patients simply don't turn up. Each no-show is a £75 slot you can't fill. Below 5% is excellent; above 12% needs intervention.",
-    ukBenchmarkRange: "<5% excellent; 5–8% acceptable; >12% requires intervention (NHS avg ~8%)",
+      "How often patients simply don't turn up. Each no-show is a £65 slot you can't fill. Below 6% is excellent; above 10% needs intervention.",
+    ukBenchmarkRange: "≤6% with automation (UK benchmark); 7–10% typical without; >10% requires intervention",
     thresholds: {
-      green: "≤ 5%",
-      amber: "6–12%",
-      red: "> 12%",
+      green: "≤ 6%",
+      amber: "7–10%",
+      red: "> 10%",
     },
     clinicalSignificance:
       "High DNA rate disrupts treatment continuity, delays recovery, and may indicate poor patient engagement or communication issues. HCPC expects clinicians to maintain therapeutic relationships that support attendance.",
     financialSignificance:
-      "Each DNA = £75 lost with no replacement. A clinician with 25 appointments/week at 12% DNA loses ~3 slots = £225/week = £11,700/year. Reducing from 12% to 5% recovers ~£8,775/year per clinician.",
-    sources: ["NHS DNA benchmarking data", "CSP private practice guidelines"],
+      "Each DNA = £65 lost with no replacement. A clinician with 25 appointments/week at 11% DNA loses ~3 slots = £195/week = £10,140/year. Reducing from 11% to 6% recovers ~£5,070/year per clinician.",
+    sources: ["UK Private Practice Barometer 2026", "CSP private practice guidelines"],
   },
 
   caseload: {
@@ -152,8 +153,8 @@ export const BENCHMARKS: Record<string, MetricBenchmark> = {
 // ─── Threshold evaluation functions ─────────────────────────────────────────
 
 export function getFollowUpBenchmarkStatus(rate: number): MetricStatus {
-  if (rate >= 2.9) return "ok";
-  if (rate >= 2.3) return "warn";
+  if (rate >= 4.0) return "ok";
+  if (rate >= 3.0) return "warn";
   return "danger";
 }
 
@@ -176,8 +177,8 @@ export function getCourseCompletionBenchmarkStatus(rate: number): MetricStatus {
 }
 
 export function getDnaBenchmarkStatus(rate: number): MetricStatus {
-  if (rate <= 0.05) return "ok";
-  if (rate <= 0.12) return "warn";
+  if (rate <= 0.06) return "ok";
+  if (rate <= 0.10) return "warn";
   return "danger";
 }
 

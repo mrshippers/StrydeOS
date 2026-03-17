@@ -399,10 +399,10 @@ const Hero = ({ darkMode }) => {
                 {/* KPI row */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
                   {[
-                    { label: "Follow-up Rate", value: "78%", bar: 78, status: "warn" },
+                    { label: "Rebooking Rate", value: "80%", bar: 80, status: "ok" },
                     { label: "HEP Compliance", value: "84%", bar: 84, status: "ok" },
-                    { label: "Utilisation", value: "91%", bar: 91, status: "ok" },
-                    { label: "No-show Rate", value: "4.2%", bar: 42, status: "ok" },
+                    { label: "Utilisation", value: "76%", bar: 76, status: "ok" },
+                    { label: "No-show Rate", value: "5.8%", bar: 42, status: "ok" },
                   ].map(({ label, value, bar, status }) => (
                     <div key={label} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 12 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>

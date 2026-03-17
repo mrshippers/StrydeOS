@@ -363,10 +363,10 @@ const Hero = () => {
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
                   {[
-                    { label: "Follow-up Rate", value: "78%", bar: 78, status: "warn" },
+                    { label: "Rebooking Rate", value: "80%", bar: 80, status: "ok" },
                     { label: "HEP Compliance", value: "84%", bar: 84, status: "ok" },
-                    { label: "Utilisation", value: "91%", bar: 91, status: "ok" },
-                    { label: "No-show Rate", value: "4.2%", bar: 42, status: "ok" },
+                    { label: "Utilisation", value: "76%", bar: 76, status: "ok" },
+                    { label: "No-show Rate", value: "5.8%", bar: 42, status: "ok" },
                   ].map(({ label, value, bar, status }) => (
                     <div key={label} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 12 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
@@ -832,9 +832,9 @@ const Results = () => (
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 48 }}>
         {[
-          { stat: "67%→4%", label: "Missed call rate", note: "Solo MSK practice, 6 months post-launch" },
-          { stat: "84%", label: "HEP compliance rate", note: "vs 61% industry average" },
-          { stat: "£800/mo", label: "Saved on call-handling", note: "vs Moneypenny & live agent costs" },
+          { stat: "67%→4%", label: "Missed call rate", note: "Spires MSK pilot, 6 months post-launch" },
+          { stat: "84%", label: "HEP compliance rate", note: "Spires MSK pilot, first 90 days" },
+          { stat: "11%→6%", label: "DNA rate with automation", note: "UK private practice benchmarks" },
           { stat: "< 3 months", label: "Typical payback period", note: "Conservative estimate, all tiers" },
         ].map(({ stat, label, note }) => (
           <div key={label} style={{
@@ -887,10 +887,10 @@ const Results = () => (
 /* ─── ROI Calculator ─────────────────────────────────────────────────────────── */
 const ROICalc = () => {
   const [sessions, setSessions] = useState(150);
-  const [dna, setDna] = useState(10);
+  const [dna, setDna] = useState(11);
   const [fee, setFee] = useState(65);
   const [missedCalls, setMissedCalls] = useState(30);
-  const [dropout, setDropout] = useState(22);
+  const [dropout, setDropout] = useState(20);
 
   const dnaLoss  = Math.round(sessions * (dna / 100) * fee * 12);
   const callLoss = Math.round(sessions * (missedCalls / 100) * fee * 0.25 * 12);

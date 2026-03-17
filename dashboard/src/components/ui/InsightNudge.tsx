@@ -21,7 +21,7 @@ function computeInsight(
   previous: WeeklyStats | null
 ): string | null {
   // DNA rate more than 2× week average (vs previous)
-  if (previous && stats.dnaRate > previous.dnaRate * 2 && stats.dnaRate > 0.08) {
+  if (previous && stats.dnaRate > previous.dnaRate * 2 && stats.dnaRate > 0.10) {
     return `DNA rate is ${Math.round(stats.dnaRate * 100)}% this week — more than double last week's ${Math.round(previous.dnaRate * 100)}%. Consider sending additional reminders before afternoon slots.`;
   }
 

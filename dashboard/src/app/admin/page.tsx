@@ -57,7 +57,7 @@ const DEMO_CLINICS: ClinicProfile[] = [
     pmsLastSyncAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     trialStartedAt: null,
     featureFlags: { intelligence: true, continuity: true, receptionist: false },
-    targets: { followUpRate: 2.9, physitrackRate: 95, utilisationRate: 85, dnaRate: 5, courseCompletionTarget: 80 },
+    targets: { followUpRate: 4.0, physitrackRate: 95, utilisationRate: 75, dnaRate: 6, courseCompletionTarget: 80 },
     brandConfig: {},
     onboarding: { pmsConnected: true, cliniciansConfirmed: true, targetsSet: true },
     billing: { stripeCustomerId: "cus_demo1", subscriptionId: "sub_demo1", subscriptionStatus: "active", currentPeriodEnd: "2026-04-01T00:00:00Z" },

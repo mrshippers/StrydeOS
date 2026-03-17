@@ -23,7 +23,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Follow-up rate measures how many patients who come in for an initial assessment go on to book a follow-up appointment. A low rate is typically the single biggest revenue leak in a private practice — it means patients are discharging themselves after one session rather than completing a course of treatment.",
     formula: "Follow-ups booked ÷ Initial assessments (weekly or rolling 90-day window)",
     clinicNote:
-      "Relevant to all practice types. The KPI target at Spires is to improve the current average of ~2.4 sessions per patient.",
+      "Relevant to all practice types. The UK median is 5.0 sessions per episode of care. A follow-up rate below 3.0 is in the bottom quartile nationally.",
     tags: ["follow-up", "retention", "revenue", "initial assessment"],
   },
   {
@@ -64,7 +64,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     category: "metrics",
     question: "What is Utilisation?",
     answer:
-      "Utilisation measures how efficiently a clinician's available appointment slots are being filled. A fully booked diary is 100% — but sustainable high performance typically sits between 80–90%. Below 70% signals a booking or referral problem; above 95% consistently suggests the clinician is overloaded with no buffer for emergencies or admin.",
+      "Utilisation measures how efficiently a clinician's available appointment slots are being filled. A fully booked diary is 100% — but sustainable high performance sits between 70–80%. The UK average is 72%. Above 80%, begin monitoring clinician wellbeing — burnout risk increases. Below 65% signals a booking or referral problem.",
     formula: "Booked slots ÷ Available slots (expressed as %)",
     clinicNote:
       "Available slots should be defined as the slots a clinician has opened for booking, not their total contracted hours. Most PMS systems (WriteUpp, Cliniko, TM3) can provide this directly.",
@@ -75,10 +75,10 @@ export const HELP_ENTRIES: HelpEntry[] = [
     category: "metrics",
     question: "What is DNA Rate?",
     answer:
-      "Did-Not-Attend (DNA) rate measures the proportion of booked appointments where the patient simply didn't show up with no prior notice. DNAs are a direct revenue loss — the slot is gone, it can't be filled at the last moment, and the clinician's time is wasted. High DNA rates (above 8–10%) often point to poor reminder workflows, incorrect contact details, or long booking lead times.",
+      "Did-Not-Attend (DNA) rate measures the proportion of booked appointments where the patient simply didn't show up with no prior notice. DNAs are a direct revenue loss — the slot is gone, it can't be filled at the last moment, and the clinician's time is wasted. The UK average DNA rate without automated reminders is 11%, dropping to around 6% with automation. Above 10% requires intervention — check reminder workflows, contact details, and booking lead times.",
     formula: "Did-not-attend appointments ÷ Total booked appointments (expressed as %)",
     clinicNote:
-      "Ava (the AI receptionist module) directly targets DNA reduction through automated reminders and confirmations. If you're using Ava, expect this metric to trend down as the reminder cadence takes effect.",
+      "Ava (the AI receptionist module) directly targets DNA reduction through automated reminders and confirmations. Clinics with automated reminders typically see DNA rates drop from around 11% to 6%. If you're using Ava, expect this metric to trend down as the reminder cadence takes effect.",
     tags: ["dna", "did not attend", "no show", "cancellation", "reminder"],
   },
   {
@@ -176,7 +176,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     category: "general",
     question: "How are metric targets and thresholds set?",
     answer:
-      "StrydeOS ships with evidence-based default thresholds derived from validated clinical benchmarks and real data from Spires Physiotherapy (the pilot clinic). For example, a follow-up rate below 60% triggers a warning flag. Clinic-specific targets will be configurable in a future Settings update. For now, the defaults represent strong performance benchmarks for UK private practice.",
+      "StrydeOS ships with evidence-based default thresholds derived from UK private practice benchmarks. For example, the follow-up rate target of 4.0 FU per IA reflects the UK median of 5.0 sessions per episode. Clinic-specific targets are configurable in Settings → KPI Targets.",
     tags: ["targets", "thresholds", "benchmarks", "kpi", "alerts"],
   },
   {
@@ -224,7 +224,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     category: "setup",
     question: "How do I configure my KPI targets?",
     answer:
-      "Go to Settings → KPI Targets. StrydeOS ships with evidence-based defaults for UK private physiotherapy practice:\n\n• Follow-up Rate: 75%+\n• HEP Compliance: 80%+\n• Utilisation: 85%+\n• DNA Rate: <5%\n• Course Completion: 70%+\n\nAdjust these to match your clinic's current baseline and growth ambitions. Targets drive the performance indicators on the Intelligence dashboard — red/amber/green thresholds are calculated relative to what you set here.\n\nRecommendation: Start with the defaults for your first 4 weeks. Once you have a baseline reading of your actual performance, adjust targets to be challenging but achievable.",
+      "Go to Settings → KPI Targets. StrydeOS ships with evidence-based defaults aligned to UK private practice benchmarks:\n\n• Follow-up Rate: 4.0+ FU per IA (UK median: 5.0 sessions per episode)\n• HEP Compliance: 80%+\n• Utilisation: 75%+ (UK average: 72%)\n• DNA Rate: <6% (UK average with automation: 6.3%)\n• Course Completion: 70%+\n\nAdjust these to match your clinic's current baseline and growth ambitions. Targets drive the performance indicators on the Intelligence dashboard — red/amber/green thresholds are calculated relative to what you set here.\n\nRecommendation: Start with the defaults for your first 4 weeks. Once you have a baseline reading of your actual performance, adjust targets to be challenging but achievable.",
     clinicNote:
       "If you're onboarding from a position of strong existing performance, set targets higher from the start. The defaults are designed for clinics that are establishing a measurement baseline for the first time.",
     tags: ["targets", "kpi", "settings", "thresholds", "follow-up", "hep", "utilisation"],

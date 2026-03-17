@@ -20,17 +20,17 @@ interface CliniciansTableProps {
 type SortKey = "name" | "followUp" | "completion" | "utilisation" | "dna" | "sessions" | "revenue";
 
 const COLUMN_TOOLTIPS: Record<string, string> = {
-  followUp: "Mean FU sessions per IA. UK MSK benchmark: 2.9\u20133.2. Below 2.0 signals patient drop-off risk.",
+  followUp: "Mean FU sessions per IA. UK median: 4.0 FU/IA (5.0 sessions per episode). Below 3.0 signals patient drop-off risk.",
   completion: "% of patients given a home exercise programme vs patients seen. UK private MSK benchmark: 70\u201385%.",
-  utilisation: "% of booked slots attended. Target >85%. Below 75% suggests scheduling inefficiency.",
-  dna: "Did Not Attend %. <6% excellent, >10% requires intervention.",
+  utilisation: "% of booked slots attended. UK average: 72%. Green \u226575%. Above 80% monitor clinician wellbeing.",
+  dna: "Did Not Attend %. \u22646% with automation is excellent, >10% requires intervention.",
   sessions: "Total billable appointments this clinician delivered in the week.",
   revenue: "Gross revenue = sessions \u00D7 avg revenue per session. Uses actual revenuePerSessionPence from weekly stats.",
 };
 
 function getFollowUpRAG(rate: number): MetricStatus {
-  if (rate >= 2.9) return "ok";
-  if (rate >= 2.0) return "warn";
+  if (rate >= 4.0) return "ok";
+  if (rate >= 3.0) return "warn";
   return "danger";
 }
 
@@ -41,8 +41,8 @@ function getDnaRAG(rate: number): MetricStatus {
 }
 
 function getUtilisationRAG(rate: number): MetricStatus {
-  if (rate > 0.85) return "ok";
-  if (rate >= 0.75) return "warn";
+  if (rate >= 0.75) return "ok";
+  if (rate >= 0.65) return "warn";
   return "danger";
 }
 

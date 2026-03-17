@@ -197,9 +197,9 @@ function RetriggerTourButton() {
 
 function fallbackTargets(cp: ClinicProfile | null) {
   return {
-    followUpRate: cp?.targets?.followUpRate ?? 2.9,
+    followUpRate: cp?.targets?.followUpRate ?? 4.0,
     physitrackRate: cp?.targets?.physitrackRate ?? 95,
-    utilisationRate: cp?.targets?.utilisationRate ?? 85,
+    utilisationRate: cp?.targets?.utilisationRate ?? 75,
   };
 }
 
@@ -225,9 +225,9 @@ const cp = user?.clinicProfile ?? null;
 
   const [clinicName, setClinicName] = useState("");
   const [timezone, setTimezone] = useState("Europe/London");
-  const [followUpTarget, setFollowUpTarget] = useState("2.9");
+  const [followUpTarget, setFollowUpTarget] = useState("4.0");
   const [physitrackTarget, setPhysitrackTarget] = useState("95");
-  const [utilisationTarget, setUtilisationTarget] = useState("85");
+  const [utilisationTarget, setUtilisationTarget] = useState("75");
   const [saving, setSaving] = useState(false);
 
   const savedValues = useMemo(() => {

@@ -205,7 +205,7 @@ export async function computeWeeklyMetricsForClinic(
   if (!clinicDoc.exists) return { written: 0 };
   const clinicData = clinicDoc.data();
   const targets = {
-    followUpRate: clinicData?.targets?.followUpRate ?? 2.9,
+    followUpRate: clinicData?.targets?.followUpRate ?? 4.0,
     physitrackRate: clinicData?.targets?.physitrackRate ?? 95,
   };
   if (typeof targets.physitrackRate === "number" && targets.physitrackRate > 1) {
