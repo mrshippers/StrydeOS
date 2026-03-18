@@ -195,6 +195,93 @@ const MonolithMark = ({ size = 44 }) => {
   );
 };
 
+/* ─── Monolith Nav Dropdown ────────────────────────────────────────────────── */
+const NAV_SECTIONS = [
+  { label: "Products", href: "#products" },
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Results", href: "#results" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "About", href: "#about" },
+];
+
+const MonolithDropdown = ({ darkMode }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    if (open) {
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
+    }
+  }, [open]);
+
+  const bg = darkMode ? C.navyMid : "white";
+  const borderCol = darkMode ? "rgba(255,255,255,0.08)" : C.border;
+  const textColor = darkMode ? "rgba(255,255,255,0.65)" : C.ink;
+  const hoverBg = darkMode ? "rgba(255,255,255,0.06)" : `${C.blue}08`;
+  const labelColor = darkMode ? "rgba(255,255,255,0.35)" : C.muted;
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          background: "none", border: "none", cursor: "pointer", padding: 0,
+          transition: "transform 0.2s ease",
+          transform: open ? "none" : undefined,
+        }}
+        aria-label="Navigate to section"
+        aria-expanded={open}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}
+      >
+        <MonolithMark size={34} />
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute", left: 0, top: "calc(100% + 8px)",
+          width: 200, borderRadius: 12,
+          background: bg, border: `1px solid ${borderCol}`,
+          boxShadow: darkMode
+            ? "0 16px 48px rgba(0,0,0,0.4)"
+            : "0 16px 48px rgba(28,84,242,0.12)",
+          overflow: "hidden", zIndex: 200,
+          animation: "fadeIn 0.15s ease",
+        }}>
+          <div style={{ padding: "10px 12px 8px", borderBottom: `1px solid ${borderCol}` }}>
+            <p style={{ fontSize: 10, fontWeight: 600, color: labelColor, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Navigate
+            </p>
+          </div>
+          <div style={{ padding: "4px 0" }}>
+            {NAV_SECTIONS.map(({ label, href }) => (
+              <a
+                key={label}
+                href={href}
+                onClick={() => setOpen(false)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "9px 14px", fontSize: 13, fontWeight: 500,
+                  color: textColor, textDecoration: "none",
+                  transition: "background 0.15s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = hoverBg; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              >
+                {label}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 /* ─── Nav ─────────────────────────────────────────────────────────────────── */
 const Nav = ({ darkMode, setDarkMode }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -223,12 +310,14 @@ const Nav = ({ darkMode, setDarkMode }) => {
       borderBottom: navBdr,
     }}>
       <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 70 }}>
-        <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", cursor: "pointer" }}>
-          <MonolithMark size={34} />
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17, color: wordColor, letterSpacing: "-0.02em" }}>
-            Stryde<span style={{ color: wordAccent }}>OS</span>
-          </div>
-        </a>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <MonolithDropdown darkMode={darkMode} />
+          <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ textDecoration: "none", cursor: "pointer" }}>
+            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17, color: wordColor, letterSpacing: "-0.02em" }}>
+              Stryde<span style={{ color: wordAccent }}>OS</span>
+            </div>
+          </a>
+        </div>
 
         <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: 32 }}>
           {[["Products","#products"],["How it works","#how-it-works"],["Pricing","#pricing"],["About","#about"]].map(([label, href]) => (
