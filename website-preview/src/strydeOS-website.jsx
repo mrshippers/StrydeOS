@@ -1360,7 +1360,7 @@ const Pricing = ({ darkMode }) => {
               display: "inline-block", marginTop: 10, padding: "4px 10px", borderRadius: 6,
               background: "rgba(5,150,105,0.15)", color: C.success, fontSize: 11, fontWeight: 600,
             }}>Save £{prices.savings}/mo vs individual</div>
-            <a href="https://portal.strydeos.com/login?mode=signup" className="btn-primary" style={{ marginTop: 16, padding: "10px 24px", fontSize: 13 }}>
+            <a href={`https://portal.strydeos.com/checkout?module=fullstack&tier=${tier}&interval=month`} className="btn-primary" style={{ marginTop: 16, padding: "10px 24px", fontSize: 13 }}>
               Get Full Stack →
             </a>
           </div>
