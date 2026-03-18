@@ -13,7 +13,8 @@
     "seed:clinic": "npx tsx scripts/seed-clinic.ts",
     "promote:superadmin": "npx tsx scripts/promote-superadmin.ts",
     "setup:superadmin": "npx tsx scripts/setup-superadmin.ts",
-    "fix:joe": "npx tsx scripts/fix-joe-user.ts"
+    "fix:joe": "npx tsx scripts/fix-joe-user.ts",
+    "test": "npx tsx --test 'src/**/*.test.ts'"
   },
   "dependencies": {
     "@elevenlabs/client": "^0.15.1",

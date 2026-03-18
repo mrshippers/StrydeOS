@@ -226,7 +226,7 @@ export default function OnboardingWidget() {
                     {step.done ? (
                       <CheckCircle2 size={18} className="text-success shrink-0" />
                     ) : (
-                      <Circle size={18} className="text-muted/30 shrink-0" />
+                      <Circle size={18} className="text-muted/70 shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium ${step.done ? "text-success" : "text-navy"}`}>

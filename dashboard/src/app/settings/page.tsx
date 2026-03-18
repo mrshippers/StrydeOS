@@ -8,7 +8,6 @@ import {
   collection,
   addDoc,
   deleteDoc,
-  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
@@ -132,8 +131,8 @@ interface HepProviderOption {
 }
 
 const HEP_PROVIDERS: HepProviderOption[] = [
-  { id: "physitrack", label: "Physitrack", icon: "🏃", logo: "/integrations/physitrack.webp", comingSoon: false },
-  { id: "rehab_my_patient", label: "Rehab My Patient", icon: "💪", logo: "/integrations/rehab_my_patient.png", comingSoon: false, recentlyAdded: true },
+  { id: "physitrack", label: "Physitrack", icon: "🏃", logo: "/integrations/physitrack.svg", comingSoon: false },
+  { id: "rehab_my_patient", label: "Rehab My Patient", icon: "💪", logo: "/integrations/rehab_my_patient.svg", comingSoon: false, recentlyAdded: true },
   { id: "wibbi", label: "Wibbi", icon: "🎯", logo: "/integrations/wibbi.svg", comingSoon: false, recentlyAdded: true },
 ];
 
@@ -177,7 +176,7 @@ function RetriggerTourButton() {
         type="button"
         onClick={handleRetrigger}
         disabled={loading || done}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-border text-navy bg-white hover:bg-cloud-light transition-all disabled:opacity-50"
+        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-blue/30 text-blue bg-blue/5 hover:bg-blue/10 transition-all disabled:opacity-50"
       >
         {loading ? (
           <Loader2 size={14} className="animate-spin" />
@@ -188,7 +187,7 @@ function RetriggerTourButton() {
         )}
         {done ? "Heading to dashboard…" : loading ? "Resetting…" : "Replay welcome tour"}
       </button>
-      <p className="text-[11px] text-muted mt-1.5">
+      <p className="text-[11px] text-muted-strong mt-1.5">
         Resets your tour state and redirects to the dashboard so the welcome screen fires again.
       </p>
     </div>
@@ -297,6 +296,7 @@ const cp = user?.clinicProfile ?? null;
   const [hepTesting, setHepTesting] = useState(false);
 
   const [addingClinician, setAddingClinician] = useState(false);
+  const [submittingClinician, setSubmittingClinician] = useState(false);
   const [newClinicianName, setNewClinicianName] = useState("");
   const [newClinicianRole, setNewClinicianRole] = useState("Physiotherapist");
 
@@ -700,20 +700,29 @@ const cp = user?.clinicProfile ?? null;
   }
 
   async function handleAddClinician() {
-    if (!newClinicianName.trim()) return;
-    if (!clinicId || !db) {
+    if (!newClinicianName.trim() || submittingClinician) return;
+    if (!clinicId || !db || !firebaseUser) {
       toast("Clinician added (demo mode)", "success");
       setAddingClinician(false);
       setNewClinicianName("");
       return;
     }
+    setSubmittingClinician(true);
     try {
-      await addDoc(collection(db, "clinics", clinicId, "clinicians"), {
-        name: newClinicianName.trim(),
-        role: newClinicianRole,
-        active: true,
-        createdAt: serverTimestamp(),
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch("/api/clinicians/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: newClinicianName.trim(), role: newClinicianRole }),
       });
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = res.status === 403 && data.currentCount != null
+          ? `${data.error} (${data.currentCount}/${data.limit} seats used)`
+          : data.error ?? "Failed to add clinician";
+        toast(msg, "error");
+        return;
+      }
       toast(`${newClinicianName.trim()} added`, "success");
       setAddingClinician(false);
       setNewClinicianName("");
@@ -730,6 +739,8 @@ const cp = user?.clinicProfile ?? null;
       }
     } catch {
       toast("Failed to add clinician", "error");
+    } finally {
+      setSubmittingClinician(false);
     }
   }
 
@@ -943,10 +954,10 @@ const cp = user?.clinicProfile ?? null;
       <PageHeader title="Settings" subtitle="Manage your clinic configuration, targets, and team" />
 
       {/* Account / one-click Stryde Super User */}
-      <div className="rounded-[var(--radius-card)] bg-cloud-light border border-border p-4">
-        <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Account</p>
+      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4">
+        <p className="text-xs font-semibold text-muted-strong uppercase tracking-wide mb-2">Account</p>
         <p className="text-xs text-navy mb-1">
-          <span className="text-muted">Role:</span> <strong>{user?.role ?? "—"}</strong>
+          <span className="text-muted-strong">Role:</span> <strong>{user?.role ?? "—"}</strong>
         </p>
         {/* Retrigger tour */}
         <RetriggerTourButton />
@@ -1218,7 +1229,7 @@ const cp = user?.clinicProfile ?? null;
                 {step.done ? (
                   <CheckCircle2 size={18} className="text-success shrink-0" />
                 ) : (
-                  <Circle size={18} className="text-muted/40 shrink-0" />
+                  <Circle size={18} className="text-muted/70 shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium ${step.done ? "text-success" : "text-navy"}`}>
@@ -1406,7 +1417,7 @@ const cp = user?.clinicProfile ?? null;
                       pmsProvider === p.id
                         ? "border-blue bg-blue/5 text-blue"
                         : p.comingSoon
-                          ? "border-border/50 text-muted/50 cursor-default"
+                          ? "border-border/50 text-muted/70 cursor-default"
                           : "border-border hover:border-blue/30 text-navy"
                     }`}
                     title={p.comingSoon ? "Coming soon — integration in development" : undefined}
@@ -1904,7 +1915,7 @@ const cp = user?.clinicProfile ?? null;
 
         {importHistory.length === 0 ? (
           <div className="text-center py-8">
-            <FileText size={24} className="mx-auto text-muted/40 mb-2" />
+            <FileText size={24} className="mx-auto text-muted/70 mb-2" />
             <p className="text-sm text-muted">{historyLoaded ? "No imports yet" : "Loading..."}</p>
           </div>
         ) : (
@@ -2006,7 +2017,7 @@ const cp = user?.clinicProfile ?? null;
                       hepProvider === p.id
                         ? "border-teal bg-teal/5 text-teal"
                         : p.comingSoon
-                          ? "border-border/50 text-muted/50 cursor-default"
+                          ? "border-border/50 text-muted/70 cursor-default"
                           : "border-border hover:border-teal/30 text-navy"
                     }`}
                     title={p.comingSoon ? "Coming soon — integration in development" : undefined}
@@ -2204,12 +2215,12 @@ const cp = user?.clinicProfile ?? null;
             <div className="flex items-center gap-2">
               <button
                 onClick={handleAddClinician}
-                disabled={!newClinicianName.trim()}
+                disabled={!newClinicianName.trim() || submittingClinician}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
                 style={{ background: brand.blue }}
               >
                 <Check size={12} />
-                Add
+                {submittingClinician ? "Adding…" : "Add"}
               </button>
               <button
                 onClick={() => { setAddingClinician(false); setNewClinicianName(""); }}

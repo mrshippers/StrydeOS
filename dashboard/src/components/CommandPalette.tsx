@@ -258,7 +258,7 @@ export default function CommandPalette() {
                 ) : (
                   Object.entries(sections).map(([section, sectionItems]) => (
                     <div key={section}>
-                      <p className="px-4 pt-2 pb-1 text-[10px] font-semibold text-muted/50 uppercase tracking-widest">
+                      <p className="px-4 pt-2 pb-1 text-[10px] font-semibold text-muted/70 uppercase tracking-widest">
                         {sectionLabels[section] ?? section}
                       </p>
                       {sectionItems.map((item) => {

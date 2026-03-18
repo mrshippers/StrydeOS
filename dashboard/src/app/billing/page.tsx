@@ -60,8 +60,8 @@ function TierSelector({ value, onChange }: { value: TierKey; onChange: (t: TierK
             onClick={() => onChange(tier)}
             className={`flex-1 py-2.5 px-3 rounded-lg text-center transition-all duration-200 ${active ? "bg-blue text-white shadow-[0_2px_12px_rgba(28,84,242,0.35)]" : "bg-transparent"}`}
           >
-            <div className={`text-[13px] font-semibold ${active ? "text-white" : "text-muted"}`}>{label}</div>
-            <div className={`text-[10px] mt-0.5 ${active ? "text-white/80" : "text-muted"}`}>{detail}</div>
+            <div className={`text-[13px] font-semibold ${active ? "text-white" : "text-navy"}`}>{label}</div>
+            <div className={`text-[10px] mt-0.5 ${active ? "text-white/80" : "text-muted-strong"}`}>{detail}</div>
           </button>
         );
       })}
@@ -84,7 +84,7 @@ function IntervalToggle({ value, onChange }: { value: BillingInterval; onChange:
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                 active
                   ? "bg-white shadow-sm border border-border text-navy font-semibold"
-                  : "text-muted hover:text-navy"
+                  : "text-muted-strong hover:text-navy"
               }`}
             >
               <span className="text-[13px]">
@@ -207,7 +207,7 @@ function FullStackCard({ tier, interval, allActive, isLoading, onActivate }: Ful
 
       <div className="flex items-start justify-between gap-6 mt-1">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded mb-3 bg-cloud-dark text-muted">
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded mb-3 bg-cloud-dark text-navy">
             <Zap size={9} strokeWidth={2.5} /> Best value
           </div>
           <h3 className="text-[20px] text-navy font-display font-normal mb-1">
@@ -216,7 +216,7 @@ function FullStackCard({ tier, interval, allActive, isLoading, onActivate }: Ful
           <p className="text-[13px] text-muted mb-4">One system. Every metric. Every call. Every patient.</p>
           <div className="flex gap-4">
             {(["intelligence", "pulse", "ava"] as ModuleKey[]).map((m) => (
-              <div key={m} className="flex items-center gap-1.5 text-[12px] font-semibold text-muted">
+              <div key={m} className="flex items-center gap-1.5 text-[12px] font-semibold text-muted-strong">
                 <div className="w-2 h-2 rounded-full" style={{ background: MODULE_DISPLAY[m].color }} />
                 {MODULE_DISPLAY[m].name}
               </div>
@@ -407,7 +407,7 @@ export default function BillingPage() {
       {/* Subscription status row */}
       <div className="mb-8 flex items-center justify-between px-5 py-4 rounded-2xl bg-cloud-dark border border-border">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted mb-1">Subscription</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-strong mb-1">Subscription</p>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full shrink-0" style={{ background: statusDisplay.color }} />
             <span className="text-[14px] font-semibold text-navy">{statusDisplay.label}</span>

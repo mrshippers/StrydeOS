@@ -101,7 +101,7 @@ export default function InsightNudge({ stats, previousStats }: InsightNudgeProps
       <p className="text-sm text-muted flex-1 leading-relaxed">{message}</p>
       <button
         onClick={handleDismiss}
-        className="shrink-0 text-muted/40 hover:text-muted transition-colors mt-0.5"
+        className="shrink-0 text-muted/70 hover:text-muted transition-colors mt-0.5"
         aria-label="Dismiss insight"
       >
         <X size={14} />

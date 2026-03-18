@@ -65,7 +65,7 @@ export default function PageHeader({
           </h1>
         </div>
         {subtitle && (
-          <p className="text-[14px] text-muted-strong mt-1 leading-relaxed">{subtitle}</p>
+          <p className="text-[14px] text-navy/70 mt-1 leading-relaxed font-medium">{subtitle}</p>
         )}
       </div>
 

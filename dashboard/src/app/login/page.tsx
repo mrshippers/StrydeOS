@@ -343,19 +343,19 @@ function LoginPageInner() {
           <div className="flex-1 flex items-center justify-center pt-4">
             <div className="w-full max-w-[400px]">
               <motion.div
-                className="rounded-2xl p-8 bg-white border border-border shadow-[var(--shadow-elevated)]"
+                className="rounded-2xl p-6 bg-white border border-border shadow-[var(--shadow-elevated)]"
                 {...fadeUp}
                 transition={{ duration: 0.4, delay: stagger * 1, ease: [0.2, 0.8, 0.2, 1] }}
               >
                 {/* Mode toggle */}
-                <div className="flex rounded-xl bg-cloud-light p-1 mb-8">
+                <div className="flex rounded-xl bg-cloud-light p-1 mb-6">
                   <button
                     type="button"
                     onClick={() => switchMode("signin")}
                     className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
                       mode === "signin"
-                        ? "bg-white text-navy shadow-sm"
-                        : "text-muted hover:text-navy"
+                        ? "bg-white text-navy shadow-sm button-highlight"
+                        : "text-navy/50 hover:text-navy"
                     }`}
                   >
                     Sign in
@@ -365,8 +365,8 @@ function LoginPageInner() {
                     onClick={() => switchMode("signup")}
                     className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
                       mode === "signup"
-                        ? "bg-white text-navy shadow-sm"
-                        : "text-muted hover:text-navy"
+                        ? "bg-white text-navy shadow-sm button-highlight"
+                        : "text-navy/50 hover:text-navy"
                     }`}
                   >
                     Create account
@@ -391,14 +391,14 @@ function LoginPageInner() {
                             <h1 className="font-display text-[24px] text-navy leading-tight">
                               Enter verification code
                             </h1>
-                            <p className="text-sm text-muted mt-1.5">
+                            <p className="text-sm text-navy/60 mt-1.5">
                               Enter the 6-digit code from your authenticator app
                             </p>
                           </div>
 
                           <form onSubmit={handleMfaVerify} className="space-y-5">
                             <div>
-                              <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                              <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest mb-2">
                                 Verification Code
                               </label>
                               <input
@@ -467,7 +467,7 @@ function LoginPageInner() {
                             <h1 className="font-display text-[24px] text-navy leading-tight">
                               {isReturning ? "Welcome back" : "Sign in"}
                             </h1>
-                            <p className="text-sm text-muted mt-1.5">
+                            <p className="text-sm text-navy/60 mt-1.5">
                               {isReturning
                                 ? `Signing in as ${rememberedEmail}`
                                 : "Sign in to your clinic dashboard"}
@@ -476,7 +476,7 @@ function LoginPageInner() {
 
                           <form onSubmit={handleSignin} className="space-y-5">
                         <div>
-                          <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                          <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest mb-2">
                             Email
                           </label>
                           <input
@@ -493,7 +493,7 @@ function LoginPageInner() {
 
                         <div>
                           <div className="flex items-center justify-between mb-2">
-                            <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest">
+                            <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest">
                               Password
                             </label>
                             <button
@@ -584,14 +584,14 @@ function LoginPageInner() {
                         <h1 className="font-display text-[24px] text-navy leading-tight">
                           Start your free trial
                         </h1>
-                        <p className="text-sm text-muted mt-1.5">
+                        <p className="text-sm text-navy/60 mt-1.5">
                           14 days free — no credit card required
                         </p>
                       </div>
 
                       <form onSubmit={handleSignup} className="space-y-5">
                         <div>
-                          <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                          <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest mb-2">
                             Clinic name
                           </label>
                           <div className="relative">
@@ -610,7 +610,7 @@ function LoginPageInner() {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                            <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest mb-2">
                               Profession
                             </label>
                             <select
@@ -630,7 +630,7 @@ function LoginPageInner() {
                             </select>
                           </div>
                           <div>
-                            <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                            <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest mb-2">
                               Clinic size
                             </label>
                             <select
@@ -649,7 +649,7 @@ function LoginPageInner() {
                         </div>
 
                         <div>
-                          <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                          <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest mb-2">
                             Country / Region
                           </label>
                           <select
@@ -666,7 +666,7 @@ function LoginPageInner() {
                         </div>
 
                         <div>
-                          <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                          <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest mb-2">
                             Email
                           </label>
                           <input
@@ -681,7 +681,7 @@ function LoginPageInner() {
                         </div>
 
                         <div>
-                          <label className="block text-[11px] font-semibold text-muted uppercase tracking-widest mb-2">
+                          <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest mb-2">
                             Password
                           </label>
                           <input

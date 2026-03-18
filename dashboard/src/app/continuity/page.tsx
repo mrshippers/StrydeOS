@@ -185,7 +185,7 @@ function ContinuityPage() {
               onClick={() => setActiveView(id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 activeView === id
-                  ? "bg-white text-navy shadow-[var(--shadow-card)]"
+                  ? "bg-white text-navy shadow-[var(--shadow-card)] button-highlight"
                   : "text-muted hover:text-navy"
               }`}
             >

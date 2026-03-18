@@ -367,7 +367,7 @@ export default function IntelligencePage() {
             <thead>
               <tr className="border-b border-border bg-cloud-light/50">
                 <th className="text-left py-3 px-5 text-xs font-semibold text-muted uppercase tracking-wide">Clinician</th>
-                <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">Rebook Rate</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">Follow-Up Rate</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">Utilisation</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">DNA Rate</th>
                 <th className="text-right py-3 px-5 text-xs font-semibold text-muted uppercase tracking-wide">Active Pts</th>
@@ -400,8 +400,8 @@ export default function IntelligencePage() {
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-4">
-                          <span className={`font-semibold text-sm ${c.rebookRate >= 0.75 ? "text-success" : c.rebookRate >= 0.65 ? "text-warn" : "text-danger"}`}>
-                            {Math.round(c.rebookRate * 100)}%
+                          <span className={`font-semibold text-sm ${c.rebookRate >= 3.5 ? "text-success" : c.rebookRate >= 2.5 ? "text-warn" : "text-danger"}`}>
+                            {c.rebookRate.toFixed(1)}x
                           </span>
                           <MiniSparkline data={c.rebookTrend} color={brand.success} higherIsBetter />
                         </div>
@@ -497,6 +497,7 @@ export default function IntelligencePage() {
             const formatVal = (v: number) =>
               b.unit === "percent" ? `${Math.round(v * 100)}%` :
               b.unit === "pence" ? `£${(v / 100).toFixed(0)}` :
+              b.unit === "ratio" ? `${v.toFixed(1)}x` :
               String(v);
             const yourPct = b.higherIsBetter
               ? Math.min(100, (b.yourValue / b.peerTop25) * 100)
@@ -545,7 +546,7 @@ export default function IntelligencePage() {
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               activeTab === id
-                ? "bg-white text-navy shadow-[var(--shadow-card)]"
+                ? "bg-white text-navy shadow-[var(--shadow-card)] button-highlight"
                 : "text-muted hover:text-navy"
             }`}
           >
@@ -1043,7 +1044,7 @@ export default function IntelligencePage() {
                         <Star
                           key={s}
                           size={16}
-                          className={s <= Math.round(reviews.avgRating) ? "" : "text-muted/30"}
+                          className={s <= Math.round(reviews.avgRating) ? "" : "text-muted/60"}
                           style={s <= Math.round(reviews.avgRating) ? { color: brand.warning } : undefined}
                           fill={s <= Math.round(reviews.avgRating) ? brand.warning : brand.border}
                         />

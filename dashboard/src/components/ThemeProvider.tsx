@@ -24,7 +24,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 const STORAGE_KEY = "strydeos-app-theme";
-const WIPE_DURATION = 1100;
+const WIPE_DURATION = 2500;
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "light";

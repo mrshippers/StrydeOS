@@ -181,7 +181,7 @@ export default function IntegrationHealthPage() {
                 onClick={() => setDays(d)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   days === d
-                    ? "bg-white text-navy shadow-sm"
+                    ? "bg-white text-navy shadow-sm button-highlight"
                     : "text-muted hover:text-navy"
                 }`}
               >

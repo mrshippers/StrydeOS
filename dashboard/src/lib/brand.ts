@@ -4,8 +4,8 @@
  * Do not add colors not in the sheet.
  *
  * WCAG AA: ink/white on navy, blue on navy, and cloud surfaces meet contrast.
- * Muted (#6B7280) on light backgrounds: ~3.7:1 — use for large text (18px+) or
- * secondary UI; for body copy on light, prefer ink.
+ * Muted (#5C6370) on cloud-dancer: ~5.0:1 — passes AA for all text sizes.
+ * MutedStrong (#3F4752) on cloud-dancer: ~7.8:1 — passes AAA.
  */
 export const brand = {
   navy: "#0B2545",
@@ -20,8 +20,8 @@ export const brand = {
   cloudDark: "#E8E6E0",
   cream: "#FAF9F7",
   ink: "#111827",
-  muted: "#6B7280",
-  mutedStrong: "#4B5563",
+  muted: "#5C6370",
+  mutedStrong: "#3F4752",
   border: "#E2DFDA",
   success: "#059669",
   warning: "#F59E0B",

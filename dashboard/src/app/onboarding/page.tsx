@@ -423,7 +423,7 @@ export default function OnboardingPage() {
                 <div key={s.id} className="flex items-center gap-2 flex-1 last:flex-none">
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold transition-all duration-300 ${
-                      done ? "bg-success text-white" : active ? "bg-white text-navy" : "bg-white/10 text-white/40"
+                      done ? "bg-success text-white" : active ? "bg-white text-navy button-highlight" : "bg-white/10 text-white/40"
                     }`}
                   >
                     {done ? <Check size={13} /> : i + 1}

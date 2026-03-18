@@ -133,10 +133,12 @@ export async function POST(request: NextRequest) {
       courseCompletionTarget: 70,
     };
 
+    // All flags start false — trial grants temporary access, Stripe webhook
+    // sets flags to true when the clinic subscribes.
     const defaultFeatureFlags: FeatureFlags = {
-      intelligence: true,
-      continuity: true,
-      receptionist: plan === "growth" || plan === "scale",
+      intelligence: false,
+      continuity: false,
+      receptionist: false,
     };
 
     const defaultOnboarding: OnboardingState = {

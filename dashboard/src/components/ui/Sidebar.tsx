@@ -322,7 +322,7 @@ export default function Sidebar() {
               const isActive = pathname === item.href || (item.href === "/dashboard" && pathname === "/");
               const badge = item.href === "/continuity" && pulseBadge > 0 ? pulseBadge : 0;
               const isLocked = item.moduleKey !== null && !hasModule(item.moduleKey);
-              const href = isLocked ? "/billing" : item.href;
+              const href = item.href;
 
               return (
                 <Link

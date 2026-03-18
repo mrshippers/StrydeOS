@@ -208,11 +208,11 @@ export function getDemoClinicianKpis(): ClinicianKpiRow[] {
     {
       clinicianId: "c-alex",
       clinicianName: "Alex",
-      rebookRate: 0.79,
+      rebookRate: 2.9,
       utilisationRate: 0.88,
       dnaRate: 0.04,
       activePatients: 24,
-      rebookTrend: [0.71, 0.74, 0.76, 0.77, 0.78, 0.79],
+      rebookTrend: [2.4, 2.5, 2.6, 2.7, 2.8, 2.9],
       utilisationTrend: [0.82, 0.84, 0.87, 0.85, 0.88, 0.88],
       dnaTrend: [0.08, 0.06, 0.05, 0.05, 0.04, 0.04],
       drilldown: {
@@ -234,11 +234,11 @@ export function getDemoClinicianKpis(): ClinicianKpiRow[] {
     {
       clinicianId: "c-sam",
       clinicianName: "Sam",
-      rebookRate: 0.72,
+      rebookRate: 2.5,
       utilisationRate: 0.84,
       dnaRate: 0.07,
       activePatients: 23,
-      rebookTrend: [0.68, 0.69, 0.70, 0.70, 0.71, 0.72],
+      rebookTrend: [2.1, 2.2, 2.3, 2.3, 2.4, 2.5],
       utilisationTrend: [0.80, 0.81, 0.82, 0.83, 0.83, 0.84],
       dnaTrend: [0.09, 0.09, 0.08, 0.08, 0.07, 0.07],
       drilldown: {
@@ -257,11 +257,11 @@ export function getDemoClinicianKpis(): ClinicianKpiRow[] {
     {
       clinicianId: "c-james",
       clinicianName: "James",
-      rebookRate: 0.83,
+      rebookRate: 3.4,
       utilisationRate: 0.76,
       dnaRate: 0.03,
       activePatients: 21,
-      rebookTrend: [0.78, 0.80, 0.81, 0.82, 0.82, 0.83],
+      rebookTrend: [2.9, 3.0, 3.1, 3.2, 3.3, 3.4],
       utilisationTrend: [0.71, 0.72, 0.74, 0.75, 0.75, 0.76],
       dnaTrend: [0.06, 0.05, 0.04, 0.04, 0.03, 0.03],
       drilldown: {
@@ -288,13 +288,13 @@ export interface BenchmarkComparison {
   yourValue: number;
   peerMedian: number;
   peerTop25: number;
-  unit: "percent" | "number" | "pence";
+  unit: "percent" | "number" | "pence" | "ratio";
   higherIsBetter: boolean;
 }
 
 export function getDemoBenchmarks(): BenchmarkComparison[] {
   return [
-    { metric: "Rebook Rate", yourValue: 0.78, peerMedian: 0.65, peerTop25: 0.82, unit: "percent", higherIsBetter: true },
+    { metric: "Rebook Rate", yourValue: 2.9, peerMedian: 2.2, peerTop25: 3.5, unit: "ratio", higherIsBetter: true },
     { metric: "DNA Rate", yourValue: 0.05, peerMedian: 0.08, peerTop25: 0.04, unit: "percent", higherIsBetter: false },
     { metric: "Utilisation", yourValue: 0.83, peerMedian: 0.74, peerTop25: 0.90, unit: "percent", higherIsBetter: true },
     { metric: "NPS Score", yourValue: 72, peerMedian: 58, peerTop25: 78, unit: "number", higherIsBetter: true },

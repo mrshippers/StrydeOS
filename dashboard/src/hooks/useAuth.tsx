@@ -20,8 +20,8 @@ import { getFirebaseAuth, db, isFirebaseConfigured } from "@/lib/firebase";
 import type { AuthUser, ClinicProfile, UserRole, UserStatus, FeatureFlags, BillingState } from "@/types";
 
 const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
-  intelligence: true,
-  continuity: true,
+  intelligence: false,
+  continuity: false,
   receptionist: false,
 };
 
@@ -56,6 +56,12 @@ const DEMO_USER: AuthUser = {
       pmsConnected: false,
       cliniciansConfirmed: false,
       targetsSet: false,
+    },
+    billing: {
+      stripeCustomerId: null,
+      subscriptionId: null,
+      subscriptionStatus: "active",
+      currentPeriodEnd: null,
     },
     trialStartedAt: "2099-01-01T00:00:00.000Z",
     createdAt: new Date().toISOString(),

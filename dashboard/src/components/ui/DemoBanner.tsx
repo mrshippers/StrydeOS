@@ -33,7 +33,7 @@ export default function DemoBanner() {
         <FlaskConical size={14} className="text-blue shrink-0" />
         <span className="text-blue font-medium">
           {isDemoUser ? "You're viewing the demo — " : "Viewing demo data — "}
-          <span className="font-normal text-muted ml-1">
+          <span className="font-normal text-navy/50 ml-1">
             {isDemoUser
               ? "explore the platform with sample data. Sign in to use your own clinic."
               : "connect Firebase to see your clinic's live numbers."}

@@ -103,7 +103,7 @@ function HeaderTooltip({ text }: { text: string }) {
     <div ref={ref} className="relative inline-flex ml-0.5">
       <button
         onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-        className="text-muted/40 hover:text-muted transition-colors"
+        className="text-muted/70 hover:text-muted transition-colors"
         aria-label="Metric info"
       >
         <Info size={11} />
@@ -176,7 +176,7 @@ export default function CliniciansTable({ rows, onRowClick }: CliniciansTablePro
   });
 
   const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return <ChevronDown size={12} className="text-muted/40" />;
+    if (sortKey !== col) return <ChevronDown size={12} className="text-muted/70" />;
     return sortAsc ? <ChevronUp size={12} className="text-blue" /> : <ChevronDown size={12} className="text-blue" />;
   };
 
