@@ -1672,6 +1672,44 @@ const Footer = () => (
   </footer>
 );
 
+/* ─── Cookie Banner ──────────────────────────────────────────────────────────── */
+const CookieBanner = () => {
+  const [visible, setVisible] = useState(() => !localStorage.getItem("strydeos-cookies"));
+
+  const accept = () => {
+    localStorage.setItem("strydeos-cookies", "accepted");
+    setVisible(false);
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div style={{
+      position: "fixed", bottom: 20, left: 20, zIndex: 9999,
+      background: "rgba(11,37,69,0.95)", backdropFilter: "blur(12px)",
+      border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12,
+      padding: "14px 20px", maxWidth: 340,
+      display: "flex", alignItems: "center", gap: 14,
+      boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+      animation: "fadeUp 0.4s ease",
+    }}>
+      <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, lineHeight: 1.5, margin: 0 }}>
+        We use cookies to improve your experience.{" "}
+        <a href="/privacy" style={{ color: C.blueGlow, textDecoration: "none" }}>Privacy Policy</a>
+      </p>
+      <button onClick={accept} style={{
+        flexShrink: 0, padding: "6px 16px",
+        background: C.blue, color: "white", border: "none", borderRadius: 50,
+        fontSize: 12, fontWeight: 600, fontFamily: "'Outfit',sans-serif",
+        cursor: "pointer", transition: "background 0.2s",
+      }}
+        onMouseEnter={e => e.target.style.background = C.blueBright}
+        onMouseLeave={e => e.target.style.background = C.blue}
+      >OK</button>
+    </div>
+  );
+};
+
 /* ─── Main Site ───────────────────────────────────────────────────────────────── */
 const MainSite = () => (
   <>
@@ -1687,6 +1725,7 @@ const MainSite = () => (
     <WhyUs />
     <EarlyAccess />
     <Footer />
+    <CookieBanner />
   </>
 );
 
