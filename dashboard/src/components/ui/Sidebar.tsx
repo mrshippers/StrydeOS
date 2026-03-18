@@ -29,7 +29,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import HelpPanel from "@/components/HelpPanel";
-import { LogoNav } from "@/components/MonolithLogo";
+import { MonolithMark } from "@/components/MonolithLogo";
 import { useTheme } from "@/components/ThemeProvider";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
 import { useClinicianSummaryStats } from "@/hooks/useClinicianSummaryStats";
@@ -121,6 +121,118 @@ function usePulseBadge(): number {
   return churnRisk.length;
 }
 
+// ─── Monolith Dropdown ────────────────────────────────────────────────────────
+
+const DROPDOWN_NAV: { label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; href: string; accent: string; moduleKey: ModuleKey | null }[] = [
+  ...NAV_ITEMS,
+  { label: "Settings", icon: Settings, href: "/settings", accent: brand.blue, moduleKey: null },
+  { label: "Billing", icon: CreditCard, href: "/billing", accent: brand.blue, moduleKey: null },
+];
+
+function MonolithDropdown({
+  pathname,
+  hasModule,
+  pulseBadge,
+  onNavigate,
+}: {
+  pathname: string;
+  hasModule: (m: ModuleKey) => boolean;
+  pulseBadge: number;
+  onNavigate: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
+    }
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="group rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(28,84,242,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue/40"
+        aria-label="Navigate to page"
+        aria-expanded={open}
+      >
+        <MonolithMark size={34} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            transition={{ duration: 0.15, ease: [0.2, 0.8, 0.2, 1] }}
+            className="absolute left-0 top-full mt-2 w-52 rounded-xl shadow-[var(--shadow-elevated)] overflow-hidden z-50"
+            style={{ background: brand.navyMid, border: "1px solid rgba(255,255,255,0.08)" }}
+          >
+            <div className="px-3 py-2.5 border-b border-white/8">
+              <p className="text-[10px] font-semibold text-white/35 uppercase tracking-widest">
+                Navigate
+              </p>
+            </div>
+            <div className="py-1">
+              {DROPDOWN_NAV.map((item) => {
+                const isActive = pathname === item.href || (item.href === "/dashboard" && pathname === "/");
+                const isLocked = item.moduleKey !== null && !hasModule(item.moduleKey);
+                const badge = item.href === "/continuity" && pulseBadge > 0 ? pulseBadge : 0;
+
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => { setOpen(false); onNavigate(); }}
+                    className={`flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-150 ${
+                      isLocked
+                        ? "text-white/25 hover:text-white/40"
+                        : isActive
+                          ? "text-white bg-white/8"
+                          : "text-white/60 hover:text-white hover:bg-white/5"
+                    }`}
+                    title={isLocked ? `${item.label} — not included in your plan` : undefined}
+                  >
+                    <div
+                      className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+                      style={{
+                        background: isActive ? `${item.accent}20` : "transparent",
+                      }}
+                    >
+                      <item.icon size={14} strokeWidth={isActive ? 2 : 1.5} />
+                    </div>
+                    <span className="flex-1">{item.label}</span>
+                    {isLocked ? (
+                      <Lock size={10} className="text-white/20" />
+                    ) : isActive ? (
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: item.accent }} />
+                    ) : badge > 0 ? (
+                      <span
+                        className="min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                        style={{ background: item.accent }}
+                      >
+                        {badge}
+                      </span>
+                    ) : null}
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -209,18 +321,37 @@ export default function Sidebar() {
       >
         {/* Logo + notification bell row */}
         <div className="px-5 pt-5 pb-4 flex items-center justify-between">
-          <Link
-            href="/dashboard"
-            onClick={(e) => {
-              if (pathname === "/dashboard" || pathname === "/") {
-                e.preventDefault();
-                router.refresh();
-              }
-            }}
-            className="group transition-all duration-200 hover:-translate-y-0.5"
-          >
-            <LogoNav theme="dark" />
-          </Link>
+          <div className="flex items-center gap-2.5">
+            <MonolithDropdown
+              pathname={pathname}
+              hasModule={hasModule}
+              pulseBadge={pulseBadge}
+              onNavigate={() => setMobileOpen(false)}
+            />
+            <Link
+              href="/dashboard"
+              onClick={(e) => {
+                if (pathname === "/dashboard" || pathname === "/") {
+                  e.preventDefault();
+                  router.refresh();
+                }
+              }}
+              className="transition-all duration-200 hover:-translate-y-0.5"
+            >
+              <span
+                style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 17,
+                  letterSpacing: "-0.02em",
+                  color: "#FFFFFF",
+                  lineHeight: 1,
+                }}
+              >
+                Stryde<span style={{ color: "#4B8BF5" }}>OS</span>
+              </span>
+            </Link>
+          </div>
 
           {/* Notification bell */}
           <div ref={notifRef} className="relative" data-tour="notification-bell">
