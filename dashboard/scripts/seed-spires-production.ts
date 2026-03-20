@@ -800,6 +800,12 @@ async function main() {
       await userRef.update(userDoc);
       console.log("  Updated user doc:", u.firstName, u.lastName);
     }
+
+    // Stamp custom claims so verifyApiRequest reads from the JWT
+    const claims: Record<string, string> = { clinicId: CLINIC_ID, role: u.role };
+    if (u.clinicianId) claims.clinicianId = u.clinicianId;
+    await auth.setCustomUserClaims(uid, claims);
+    console.log("  Set custom claims for:", u.firstName, u.lastName);
   }
 
   // ── 4. Seed appointments (batched writes) ─────────────────────────────────

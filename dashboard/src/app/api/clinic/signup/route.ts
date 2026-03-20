@@ -7,7 +7,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb, getAdminAuth, setUserClaims } from "@/lib/firebase-admin";
+import { getAdminDb, getAdminAuth } from "@/lib/firebase-admin";
+import { setCustomClaims } from "@/lib/set-custom-claims";
 import type {
   UserRole,
   UserStatus,
@@ -213,7 +214,7 @@ export async function POST(request: NextRequest) {
     await batch.commit();
 
     // Set custom claims so subsequent API calls skip the Firestore read
-    await setUserClaims(uid!, { clinicId, role: "owner" });
+    await setCustomClaims(uid!, { clinicId, role: "owner" });
 
     // Fire server-side funnel event
     try {

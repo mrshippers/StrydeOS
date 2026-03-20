@@ -14,6 +14,7 @@
     "promote:superadmin": "npx tsx scripts/promote-superadmin.ts",
     "setup:superadmin": "npx tsx scripts/setup-superadmin.ts",
     "fix:joe": "npx tsx scripts/fix-joe-user.ts",
+    "migrate:claims": "npx tsx scripts/migrate-custom-claims.ts",
     "test": "npx tsx --test 'src/**/*.test.ts'"
   },
   "dependencies": {

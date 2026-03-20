@@ -19,6 +19,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, getAdminAuth } from "@/lib/firebase-admin";
+import { setCustomClaims } from "@/lib/set-custom-claims";
 import type {
   UserRole,
   UserStatus,
@@ -40,15 +41,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Optionally verify Firebase superadmin token
+    // Optionally verify Firebase superadmin token (reads from custom claims)
     const authHeader = request.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
       try {
         const adminAuth = getAdminAuth();
         const decoded = await adminAuth.verifyIdToken(token);
-        const userDoc = await getAdminDb().collection("users").doc(decoded.uid).get();
-        if (!userDoc.exists || userDoc.data()?.role !== "superadmin") {
+        if (decoded.role !== "superadmin") {
           return NextResponse.json({ error: "Superadmin role required" }, { status: 403 });
         }
       } catch {
@@ -226,6 +226,9 @@ export async function POST(request: NextRequest) {
     });
 
     await batch.commit();
+
+    // Stamp custom claims so verifyApiRequest reads from the JWT
+    await setCustomClaims(uid!, { clinicId, role: "owner" });
 
     // ── Password reset link ──────────────────────────────────────────────────────
     let passwordResetLink: string | null = null;
