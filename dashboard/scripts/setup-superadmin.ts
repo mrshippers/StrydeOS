@@ -110,6 +110,10 @@ async function main() {
     console.log("Created users/" + uid + " with role: superadmin");
   }
 
+  // Stamp custom claims so verifyApiRequest reads from the JWT
+  await auth.setCustomUserClaims(uid, { clinicId: "clinic-spires", role: "superadmin" });
+  console.log("Set custom claims for uid:", uid);
+
   console.log("\n✅ Done. Sign in with:");
   console.log("   Email:", EMAIL);
   console.log("   Password:", PASSWORD);

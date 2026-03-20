@@ -89,3 +89,21 @@ export function getAdminAuth(): Auth {
   }
   return _adminAuth;
 }
+
+/**
+ * Set custom claims on a Firebase Auth user token.
+ * These claims are embedded in the JWT and available via decoded token
+ * without a Firestore read — the primary perf + security win.
+ *
+ * Call this whenever clinicId, role, or clinicianId changes.
+ */
+export async function setUserClaims(
+  uid: string,
+  claims: { clinicId: string; role: string; clinicianId?: string }
+): Promise<void> {
+  await getAdminAuth().setCustomUserClaims(uid, {
+    clinicId: claims.clinicId,
+    role: claims.role,
+    ...(claims.clinicianId ? { clinicianId: claims.clinicianId } : {}),
+  });
+}

@@ -11,6 +11,17 @@ export interface VerifiedUser {
   role: UserRole;
 }
 
+/**
+ * Verify a Firebase ID token and extract identity from custom claims.
+ *
+ * Primary path: reads clinicId / role / clinicianId from the JWT custom
+ * claims (set via Admin SDK setCustomUserClaims). Zero Firestore reads.
+ *
+ * Fallback path: if custom claims are missing (pre-migration user whose
+ * token hasn't been refreshed yet), falls back to the Firestore user doc.
+ * This keeps the app working during the migration window — once every user
+ * has refreshed their token the fallback is never hit.
+ */
 export async function verifyApiRequest(
   request: NextRequest
 ): Promise<VerifiedUser> {
@@ -22,6 +33,21 @@ export async function verifyApiRequest(
   const token = authHeader.slice(7);
   const decoded = await getAdminAuth().verifyIdToken(token);
 
+  const claimsRole = decoded.role as UserRole | undefined;
+  const claimsClinicId = decoded.clinicId as string | undefined;
+
+  // Fast path — custom claims present
+  if (claimsRole && (claimsRole === "superadmin" || claimsClinicId)) {
+    return {
+      uid: decoded.uid,
+      email: decoded.email ?? "",
+      clinicId: claimsClinicId ?? "",
+      clinicianId: decoded.clinicianId as string | undefined,
+      role: claimsRole,
+    };
+  }
+
+  // Fallback — read from Firestore (pre-migration users)
   const userDoc = await getAdminDb()
     .collection("users")
     .doc(decoded.uid)
