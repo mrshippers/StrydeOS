@@ -25,6 +25,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // User authenticated but missing clinic assignment — broken profile
+    if (user && !user.clinicId && !isPublicPath) {
+      console.error("[AuthGuard] User has no clinicId — broken profile, redirecting to login", user.uid);
+      router.replace("/login");
+      return;
+    }
+
     if (user && !isMfaExempt) {
       const mfaRequired = user.clinicProfile?.compliance?.mfaRequired ?? false;
       if (mfaRequired && !user.mfaEnrolled) {

@@ -245,7 +245,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null);
             document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
           }
-        } catch {
+        } catch (err) {
+          console.error("[Auth] Failed to load user profile:", err);
           setFirebaseUser(null);
           setUser(null);
           document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";

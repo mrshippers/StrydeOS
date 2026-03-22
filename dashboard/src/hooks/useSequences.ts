@@ -26,6 +26,7 @@ export function useSequences() {
 
   const [definitions, setDefinitions] = useState<SequenceDefinition[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!db || !clinicId) {
@@ -43,7 +44,11 @@ export function useSequences() {
         setDefinitions(defs);
         setLoading(false);
       },
-      () => setLoading(false)
+      (err) => {
+        console.error("[useSequences] listener error:", err);
+        setError("Failed to load sequences.");
+        setLoading(false);
+      }
     );
 
     return unsub;
@@ -61,7 +66,9 @@ export function useSequences() {
       const ref = doc(db, "clinics", clinicId, "sequence_definitions", definitionId);
       try {
         await updateDoc(ref, { active });
-      } catch {
+      } catch (err) {
+        console.error("[useSequences] toggleSequence failed:", err);
+        setError("Failed to update sequence. Please try again.");
         // Revert on failure
         setDefinitions((prev) =>
           prev.map((d) => (d.id === definitionId ? { ...d, active: !active } : d))
@@ -81,5 +88,5 @@ export function useSequences() {
     attributedRevenuePence: 0,
   }));
 
-  return { sequences, toggleSequence, loading };
+  return { sequences, toggleSequence, loading, error };
 }

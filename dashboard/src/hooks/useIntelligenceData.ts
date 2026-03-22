@@ -507,13 +507,13 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     const unsubReviews = subscribeReviews(
       clinicId,
       (data) => { setReviews(data); setReviewsReady(true); },
-      () => { setReviewsReady(true); }
+      (err) => { console.error("[useIntelligenceData] reviews subscription error:", err); setReviewsReady(true); }
     );
 
     const unsubOutcomes = subscribeOutcomeScoresAll(
       clinicId,
       (data) => { setOutcomeScores(data); setOutcomesReady(true); },
-      () => { setOutcomesReady(true); }
+      (err) => { console.error("[useIntelligenceData] outcomes subscription error:", err); setOutcomesReady(true); }
     );
 
     return () => {
@@ -546,7 +546,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
           collected.set(cid, data);
           setPerClinicianStatsMap(new Map(collected));
         },
-        () => {}
+        (err) => { console.error("[useIntelligenceData] per-clinician stats error:", err); }
       );
       unsubs.push(unsub);
     }

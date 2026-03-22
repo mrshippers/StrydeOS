@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# ──────────────────────────────────────────────────────────────
+# Pre-commit hook: secret scanner
+#
+# Blocks commits that contain likely API keys, tokens, or secrets.
+# Install: git config core.hooksPath .githooks
+# ──────────────────────────────────────────────────────────────
+
+set -euo pipefail
+
+# Patterns that should never appear in committed code
+PATTERNS=(
+  'RETELL_API_KEY=\S+'
+  'ELEVENLABS_API_KEY=\S+'
+  'STRIPE_SECRET_KEY=sk_live_\S+'
+  'STRIPE_WEBHOOK_SECRET=whsec_\S+'
+  'FIREBASE_PRIVATE_KEY=\S+'
+  'RESEND_API_KEY=re_\S+'
+  'TWILIO_AUTH_TOKEN=\S+'
+  'CRON_SECRET=\S+'
+  'WRITEUPP_WEBHOOK_SECRET=\S+'
+  'N8N_COMMS_WEBHOOK_SECRET=\S+'
+  'sk_live_[a-zA-Z0-9]{20,}'
+  'sk_test_[a-zA-Z0-9]{20,}'
+  'whsec_[a-zA-Z0-9]{20,}'
+  're_[a-zA-Z0-9]{20,}'
+  '-----BEGIN (RSA |EC )?PRIVATE KEY-----'
+)
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -v '\.githooks/' || true)
+
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+FOUND=0
+
+for pattern in "${PATTERNS[@]}"; do
+  # Search staged file contents (not just diff) for secrets
+  MATCHES=$(echo "$STAGED" | xargs grep -lE "$pattern" 2>/dev/null || true)
+  if [ -n "$MATCHES" ]; then
+    if [ "$FOUND" -eq 0 ]; then
+      echo ""
+      echo "!! SECRET DETECTED — commit blocked !!"
+      echo ""
+    fi
+    FOUND=1
+    echo "  Pattern: $pattern"
+    echo "  Files:   $MATCHES"
+    echo ""
+  fi
+done
+
+if [ "$FOUND" -ne 0 ]; then
+  echo "Remove secrets from staged files before committing."
+  echo "If this is a false positive, commit with: git commit --no-verify"
+  echo ""
+  exit 1
+fi
+
+exit 0

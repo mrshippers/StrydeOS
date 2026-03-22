@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo, type FC } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, type FC } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown, ChevronRight, AlertCircle, Pencil } from "lucide-react";
 import type { Patient, LifecycleState, Clinician } from "@/types";
@@ -38,11 +38,18 @@ export const PatientBoard: FC<Props> = ({
   const [collapsed, setCollapsed] = useState<Set<LifecycleState>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { activeEvents } = useInsightEvents();
 
-  // Close dropdown on click outside
+  const openDropdown = useCallback((patientId: string, buttonEl: HTMLButtonElement) => {
+    const rect = buttonEl.getBoundingClientRect();
+    setDropdownPos({ top: rect.bottom + 4, left: rect.left });
+    setActiveDropdown(patientId);
+  }, []);
+
+  // Close dropdown on click outside or scroll
   useEffect(() => {
     if (!activeDropdown) return;
     function handleClickOutside(e: MouseEvent) {
@@ -50,8 +57,13 @@ export const PatientBoard: FC<Props> = ({
         setActiveDropdown(null);
       }
     }
+    function handleScroll() { setActiveDropdown(null); }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
   }, [activeDropdown]);
 
   // Map patientId → active PATIENT_DROPOUT_RISK events for badge display
@@ -143,11 +155,15 @@ export const PatientBoard: FC<Props> = ({
                               <div className="w-8 h-8 rounded-full bg-blue/10 flex items-center justify-center text-[10px] font-bold text-blue shrink-0">
                                 {p.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                               </div>
-                              <div className="flex-1 min-w-0 relative">
+                              <div className="flex-1 min-w-0">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setActiveDropdown(isDropdownOpen ? null : p.id);
+                                    if (isDropdownOpen) {
+                                      setActiveDropdown(null);
+                                    } else {
+                                      openDropdown(p.id, e.currentTarget);
+                                    }
                                   }}
                                   className="text-sm font-semibold text-navy truncate hover:text-teal transition-colors text-left"
                                 >
@@ -158,26 +174,6 @@ export const PatientBoard: FC<Props> = ({
                                   {visibleMetrics.includes("clinician") && clinician ? ` · ${clinician.name}` : ""}
                                   {visibleMetrics.includes("lastVisit") && lastSeen !== null ? ` · Last ${lastSeen}d ago` : ""}
                                 </p>
-
-                                {/* Action dropdown */}
-                                {isDropdownOpen && (
-                                  <div
-                                    ref={dropdownRef}
-                                    className="absolute left-0 top-full mt-1 z-30 min-w-[160px] rounded-[8px] border border-border bg-white shadow-[var(--shadow-elevated)] py-1"
-                                  >
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveDropdown(null);
-                                        setEditingPatient(p);
-                                      }}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-cloud-light transition-colors text-left"
-                                    >
-                                      <Pencil size={13} style={{ color: brand.teal }} />
-                                      Edit patient
-                                    </button>
-                                  </div>
-                                )}
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 {/* Intelligence flag badge */}
@@ -224,6 +220,30 @@ export const PatientBoard: FC<Props> = ({
           );
         })}
       </div>
+
+      {/* Fixed-position action dropdown (avoids overflow-hidden clipping) */}
+      {activeDropdown && dropdownPos && (() => {
+        const patient = patients.find((p) => p.id === activeDropdown);
+        if (!patient) return null;
+        return (
+          <div
+            ref={dropdownRef}
+            className="fixed z-50 min-w-[160px] rounded-[8px] border border-border bg-white shadow-[var(--shadow-elevated)] py-1"
+            style={{ top: dropdownPos.top, left: dropdownPos.left }}
+          >
+            <button
+              onClick={() => {
+                setActiveDropdown(null);
+                setEditingPatient(patient);
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-navy hover:bg-cloud-light transition-colors text-left"
+            >
+              <Pencil size={13} style={{ color: brand.teal }} />
+              Edit patient
+            </button>
+          </div>
+        );
+      })()}
 
       {/* Edit modal */}
       {editingPatient && clinicId && (

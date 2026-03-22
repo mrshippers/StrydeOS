@@ -102,6 +102,20 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Insight Events — Intelligence engine events; readable by clinic members, written by server pipeline
+      match /insight_events/{eventId} {
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow update: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow create, delete: if false;
+      }
+
+      // Milestones — first-run unlock events; owners/admins can read and update, written by server pipeline
+      match /milestones/{milestoneId} {
+        allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow update: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow create, delete: if false;
+      }
+
       // Audit Logs — owners/admins can read, write is server-only
       match /audit_logs/{logId} {
         allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
@@ -116,7 +130,7 @@ service cloud.firestore {
       }
 
       // Call Log — Ava voice agent call records; readable by clinic members, written by server webhook
-      match /call_log/{callId} {
+      match /calls/{callId} {
         allow read: if isClinicMember(clinicId) || isSuperAdmin();
         allow write: if false;
       }

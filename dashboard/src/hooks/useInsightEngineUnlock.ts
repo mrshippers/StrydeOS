@@ -67,15 +67,23 @@ export function useInsightEngineUnlock(): UseInsightEngineUnlockResult {
 
   const markDisplayed = useCallback(async () => {
     if (!db || !clinicId) return;
-    const ref = doc(db, "clinics", clinicId, "milestones", "insight_engine_unlocked");
-    await updateDoc(ref, { displayedAt: new Date().toISOString() });
+    try {
+      const ref = doc(db, "clinics", clinicId, "milestones", "insight_engine_unlocked");
+      await updateDoc(ref, { displayedAt: new Date().toISOString() });
+    } catch (err) {
+      console.error("[useInsightEngineUnlock] markDisplayed failed:", err);
+    }
   }, [clinicId]);
 
   const dismiss = useCallback(async () => {
     if (!db || !clinicId) return;
-    const ref = doc(db, "clinics", clinicId, "milestones", "insight_engine_unlocked");
-    await updateDoc(ref, { dismissedAt: new Date().toISOString() });
-    setShouldShow(false);
+    try {
+      const ref = doc(db, "clinics", clinicId, "milestones", "insight_engine_unlocked");
+      await updateDoc(ref, { dismissedAt: new Date().toISOString() });
+      setShouldShow(false);
+    } catch (err) {
+      console.error("[useInsightEngineUnlock] dismiss failed:", err);
+    }
   }, [clinicId]);
 
   return { shouldShow, data, markDisplayed, dismiss };

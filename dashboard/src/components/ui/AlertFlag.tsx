@@ -8,8 +8,10 @@ export default function AlertFlag({ metric, current, target, severity }: AlertFl
   const text = severity === "danger" ? "text-danger" : "text-warn";
   const border = severity === "danger" ? "border-danger/20" : "border-warn/20";
 
-  const formatted = current < 1 ? `${Math.round(current * 100)}%` : current.toFixed(1);
-  const targetFormatted = target < 1 ? `${Math.round(target * 100)}%` : target.toFixed(1);
+  const c = current ?? 0;
+  const t = target ?? 0;
+  const formatted = c < 1 ? `${Math.round(c * 100)}%` : c.toFixed(1);
+  const targetFormatted = t < 1 ? `${Math.round(t * 100)}%` : t.toFixed(1);
 
   return (
     <div
