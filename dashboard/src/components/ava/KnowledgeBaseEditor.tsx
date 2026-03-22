@@ -272,25 +272,7 @@ export default function KnowledgeBaseEditor({ clinicId }: KnowledgeBaseEditorPro
         </div>
       </div>
 
-      {/* ─── Keyframe animations ─── */}
-      <style jsx>{`
-        @keyframes kb-wave-drift {
-          0%, 100% { transform: translateX(-10%) scaleY(1); }
-          50% { transform: translateX(10%) scaleY(1.15); }
-        }
-        @keyframes kb-breathe {
-          0%, 100% { opacity: 0.6; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.1); }
-        }
-        @keyframes kb-slide-up {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes kb-flash {
-          0% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-      `}</style>
+      {/* Keyframes defined in globals.css: kb-wave-drift, kb-breathe, kb-slide-up, kb-flash */}
     </div>
   );
 }

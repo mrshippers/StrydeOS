@@ -306,3 +306,25 @@ html.dark .chevron-glyph {
   animation: button-highlight-glow 3.2s ease-in-out infinite;
 }
 
+/* ─── Knowledge Base — ambient animations ─── */
+
+@keyframes kb-wave-drift {
+  0%, 100% { transform: translateX(-10%) scaleY(1); }
+  50% { transform: translateX(10%) scaleY(1.15); }
+}
+
+@keyframes kb-breathe {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes kb-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes kb-flash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
