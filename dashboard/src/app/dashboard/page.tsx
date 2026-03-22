@@ -16,6 +16,9 @@ import DailySnapshot from "@/components/ui/DailySnapshot";
 import EmptyState from "@/components/ui/EmptyState";
 import InsightNudge from "@/components/ui/InsightNudge";
 import InsightBanner from "@/components/intelligence/InsightBanner";
+import { useInsightEvents } from "@/hooks/useInsightEvents";
+import { getGreeting, SESSION_GREETED_KEY } from "@/lib/greeting";
+import type { GreetingData } from "@/lib/greeting";
 
 const TrendChart = dynamic(
   () => import("@/components/ui/TrendChart"),
@@ -56,37 +59,6 @@ function computeTrendPercent(current: number, previous: number | undefined): num
   return ((current - previous) / previous) * 100;
 }
 
-const SESSION_GREETED_KEY = "strydeos_greeted";
-
-function getGreeting(firstName: string, isFirstMount: boolean): { greeting: string; subtext: string } {
-  const name = firstName || "";
-  const hour = new Date().getHours();
-
-  let greeting: string;
-  if (isFirstMount && name) {
-    greeting = `Welcome back, ${name}`;
-  } else if (hour >= 5 && hour < 12) {
-    greeting = name ? `Good morning, ${name}` : "Good morning";
-  } else if (hour >= 12 && hour < 17) {
-    greeting = name ? `Good afternoon, ${name}` : "Good afternoon";
-  } else if (hour >= 17 && hour < 22) {
-    greeting = name ? `Good evening, ${name}` : "Good evening";
-  } else {
-    greeting = name ? `Still up, ${name}?` : "Good night";
-  }
-
-  const day = new Date().toLocaleDateString("en-GB", { weekday: "long" });
-  const subtext =
-    hour < 9
-      ? `It's early. Here's where the clinic stands heading into ${day}.`
-      : hour < 12
-        ? `Here's your weekly overview for ${day}.`
-        : hour < 17
-          ? `Here's this week at a glance.`
-          : `End of day. Here's how this week shaped up.`;
-
-  return { greeting, subtext };
-}
 
 function formatSyncTime(dateStr: string | undefined): { label: string; staleness: "fresh" | "stale" | "very-stale" } | null {
   if (!dateStr) return null;
@@ -123,6 +95,7 @@ export default function DashboardPage() {
   const { clinicians } = useClinicians();
   const { rows: clinicianRows, usedDemo: summaryUsedDemo, error: summaryError } = useClinicianSummaryStats();
   const { patients } = usePatients();
+  const { unreadCount } = useInsightEvents();
   const { startLoading, stopLoading } = useProgress();
   const router = useRouter();
   const firstName = user?.firstName || "";
@@ -137,7 +110,6 @@ export default function DashboardPage() {
       return false;
     }
   });
-  const { greeting, subtext } = getGreeting(firstName, isFirstMount);
 
   useEffect(() => {
     if (loading) {
@@ -155,6 +127,16 @@ export default function DashboardPage() {
 
   const latest = stats.length > 0 ? stats[weekIndex] : null;
   const previous = weekIndex > 0 ? stats[weekIndex - 1] : null;
+
+  const greetingData: GreetingData = {
+    latest,
+    previous,
+    patients,
+    clinicians,
+    selectedClinician: effectiveClinician,
+    unreadInsightCount: unreadCount,
+  };
+  const { greeting, subtext } = getGreeting(firstName, isFirstMount, greetingData);
   const isCurrentWeek = weekOffset === 0;
 
   const alerts = latest ? computeAlerts(latest) : [];

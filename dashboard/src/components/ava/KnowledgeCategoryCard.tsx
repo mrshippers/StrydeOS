@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import type { KnowledgeEntry, KnowledgeCategory } from "@/lib/ava/ava-knowledge";
-import { CATEGORY_LABELS, CATEGORY_DESCRIPTIONS } from "@/lib/ava/ava-knowledge";
+import { CATEGORY_LABELS, CATEGORY_DESCRIPTIONS, CATEGORY_SUGGESTIONS } from "@/lib/ava/ava-knowledge";
 import KnowledgeEntryRow from "./KnowledgeEntryRow";
 
 interface KnowledgeCategoryCardProps {
@@ -79,11 +79,24 @@ export default function KnowledgeCategoryCard({
             />
           ))}
 
-          {/* Empty state */}
-          {entries.length === 0 && autoEntries.length === 0 && (
-            <p className="text-[11px] text-muted/60 italic py-2">
-              No entries yet. Add one below.
-            </p>
+          {/* Suggestions — shown when no user entries exist */}
+          {entries.length === 0 && (
+            <div className="space-y-2 mt-1">
+              {CATEGORY_SUGGESTIONS[category].map((suggestion, i) => (
+                <button
+                  key={i}
+                  onClick={() => onAddEntry(category, suggestion.title, suggestion.content)}
+                  className="w-full text-left rounded-lg border border-dashed border-border/40 px-3.5 py-2.5 hover:border-blue/30 hover:bg-blue/[0.02] transition-all group"
+                >
+                  <p className="text-[12px] text-muted/50 italic group-hover:text-muted/70 transition-colors">
+                    {suggestion.title}
+                  </p>
+                  <p className="text-[11px] text-muted/35 italic mt-0.5 line-clamp-1 group-hover:text-muted/50 transition-colors">
+                    {suggestion.content}
+                  </p>
+                </button>
+              ))}
+            </div>
           )}
 
           {/* Add entry button */}

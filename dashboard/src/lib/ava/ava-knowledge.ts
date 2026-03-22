@@ -52,6 +52,39 @@ export const CATEGORY_DESCRIPTIONS: Record<KnowledgeCategory, string> = {
   custom: "Seasonal hours, closures, promotions, or anything else Ava should know",
 };
 
+/** Placeholder suggestions shown in grey italic when a category is empty */
+export const CATEGORY_SUGGESTIONS: Record<KnowledgeCategory, Array<{ title: string; content: string }>> = {
+  services: [
+    { title: "Sports Physiotherapy", content: "We specialise in ACL recovery, rotator cuff injuries, and running-related conditions." },
+    { title: "Post-Surgical Rehab", content: "Rehabilitation programmes following knee, hip, or shoulder surgery." },
+  ],
+  team: [
+    { title: "Dr Sarah Chen", content: "Senior physio. Mon, Wed, Fri. Morning slots: 9:00, 9:45, 10:30. Afternoon: 14:00, 14:45, 15:30. Specialises in spinal conditions." },
+    { title: "James Okafor", content: "Sports physio. Tue, Thu, Sat (1st of month). Evening slots available Thursdays." },
+  ],
+  location: [
+    { title: "Bus Routes", content: "Routes 28 and 139 stop on the high street, 3 minutes' walk from the clinic." },
+    { title: "Accessibility", content: "Step-free access via the side entrance on Park Road. Lift to first floor." },
+  ],
+  pricing: [
+    { title: "Initial Assessment", content: "£85 for a 45-minute initial assessment." },
+    { title: "Follow-up", content: "£65 for a 45-minute follow-up session." },
+    { title: "Block Booking", content: "Book 5 sessions upfront for £280 (save £45)." },
+  ],
+  policies: [
+    { title: "Cancellation Policy", content: "24-hour notice required. Late cancellations may be charged at the full session rate." },
+    { title: "Late Arrivals", content: "If you arrive late, your session will still end at the scheduled time." },
+  ],
+  faqs: [
+    { title: "What should I wear?", content: "Comfortable clothing that lets the physio access the area being treated." },
+    { title: "Do I need a GP referral?", content: "No referral needed — you can book directly with us." },
+  ],
+  custom: [
+    { title: "Christmas Hours", content: "Closed 25–26 Dec and 1 Jan. Reduced hours 27–31 Dec (10:00–15:00)." },
+    { title: "New Service Launch", content: "We now offer shockwave therapy — mention it to patients who ask about tendon issues." },
+  ],
+};
+
 export const CATEGORY_ORDER: KnowledgeCategory[] = [
   "services",
   "team",
