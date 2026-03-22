@@ -1722,6 +1722,44 @@ reactivation_180d</pre>
         </div>
       </div>
     </div>
+
+    <div class="card" data-search="status health uptime operational degraded down ping live public">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-GET">GET</span>
+            <span class="card-path">/api/status</span>
+          </div>
+          <div class="card-desc">Live platform health — pings 17 services in parallel using real status page APIs (Statuspage, Google Cloud Status) and direct HTTP probes. 60s cache. Public endpoint, CORS enabled.</div>
+          <div class="card-tags"><span class="tag" style="background:#ECFDF5;color:#059669;">Public</span><span class="tag" style="background:#EFF6FF;color:#1C54F2;">CORS *</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Auth</h4><pre>None — public endpoint
+CORS: Access-Control-Allow-Origin: *</pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{
+  <span class="key">overall</span>: <span class="type">"operational"|"degraded"|"down"</span>,
+  <span class="key">checkedAt</span>: <span class="type">ISO 8601</span>,
+  <span class="key">services</span>: {
+    [key]: {
+      name, <span class="key">status</span>: <span class="type">"operational"|"degraded"|"down"</span>,
+      <span class="key">latency</span>: <span class="type">number</span> <span class="comment">← ms, -1 if unreachable</span>,
+      checkedAt, <span class="key">statusSource</span>: <span class="type">"statuspage"|"ping"</span>,
+      <span class="key">uptimeHistory</span>: <span class="type">number[]</span> <span class="comment">← 30 entries (1=up, 0.5=degraded, 0=down)</span>
+    }
+  }
+}
+
+<span class="comment">Services checked (17):</span>
+<span class="comment">Statuspage API: Vercel, Stripe, Twilio, Sentry, ElevenLabs</span>
+<span class="comment">Google Cloud:   Firebase / Firestore</span>
+<span class="comment">HTTP ping:      StrydeOS, Retell, Resend, n8n, WriteUpp,</span>
+<span class="comment">                Cliniko, Halaxy, Zanda, Physitrack, Heidi, Google Places</span></pre></div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -1730,7 +1768,7 @@ reactivation_180d</pre>
 <!-- ════════ Footer ════════ -->
 <footer class="footer">
   StrydeOS API Reference &middot; Internal documentation &middot; Do not share externally<br>
-  Generated March 2026 &middot; 37 endpoints across 6 business domains
+  Generated March 2026 &middot; 38 endpoints across 7 business domains
 </footer>
 
 <script>
