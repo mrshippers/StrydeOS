@@ -95,7 +95,7 @@ async function main() {
       trialStartedAt: now,
       targets: {
         followUpRate: 2.9,
-        physitrackRate: 95,
+        hepRate: 95,
         utilisationRate: 85,
         dnaRate: 5,
         courseCompletionTarget: 80,

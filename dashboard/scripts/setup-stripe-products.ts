@@ -55,7 +55,7 @@ const PRICING = {
   },
 } as const;
 
-const TIER_LABELS = { solo: "Solo (1 clinician)", studio: "Studio (2–4 clinicians)", clinic: "Clinic (5+ clinicians)" };
+const TIER_LABELS = { solo: "Solo (1 clinician)", studio: "Studio (2–4 clinicians)", clinic: "Clinic (6+ clinicians)" };
 const TIERS = ["solo", "studio", "clinic"] as const;
 const INTERVALS = ["month", "year"] as const;
 
@@ -190,6 +190,22 @@ async function main() {
   );
   const avaSetupPrice = await getOrCreateOneTimePrice(avaSetupProduct.id, 25000, "Ava setup fee · £250");
   envLines.push(`STRIPE_PRICE_AVA_SETUP=${avaSetupPrice.id}`);
+
+  // ── Extra Clinician Seat (per-seat add-on) ──
+  console.log(`\n👤  Extra Clinician Seat (per-seat add-on)`);
+  const seatProduct = await getOrCreateProduct(
+    "extra_seat",
+    "StrydeOS — Extra Clinician Seat",
+    "Additional clinician seat above the tier-included cap. £49/mo per seat (20% off annual)."
+  );
+  const seatMonthPrice = await getOrCreateRecurringPrice(
+    seatProduct.id, 4900, "month", "extra_seat_month", "Extra seat · £49/mo"
+  );
+  envLines.push(`STRIPE_PRICE_EXTRA_SEAT_MONTH=${seatMonthPrice.id}`);
+  const seatYearPrice = await getOrCreateRecurringPrice(
+    seatProduct.id, 47040, "year", "extra_seat_year", "Extra seat · £470.40/yr"
+  );
+  envLines.push(`STRIPE_PRICE_EXTRA_SEAT_YEAR=${seatYearPrice.id}`);
 
   // ── Output ──
   console.log("\n" + "─".repeat(60));

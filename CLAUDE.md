@@ -88,7 +88,8 @@ StrydeOS is built and validated at Spires first.
 - **White-label voice layer (future):** Vapify
 - **PMS integrations:** WriteUpp (primary), Cliniko, Halaxy, Zanda (Power Diary) — all live
 - **Roadmap:** TM3 (Blue Zinc), Pabau (requires API key), Jane App
-- **Clinical tools:** Physitrack (HEP data), Heidi Health (clinical docs — data enrichment, not a competitor)
+- **HEP integrations:** Physitrack (live), Rehab My Patient (live), Wibbi (pending — auth model needs rework)
+- **Clinical tools:** Heidi Health (clinical docs — data enrichment, not a competitor)
 - **PMS API bridge:** OpenClaw (handles PMS API access without official integration)
 
 ### Dev Environment
@@ -226,7 +227,7 @@ Irreversible = multi-tenant data modelling, real-time listener architecture, com
 
 ### Integrations
 - WriteUpp + Cliniko are primary PMS sources via webhook / OpenClaw bridge
-- Physitrack is the HEP data source
+- HEP data sources: Physitrack (live), Rehab My Patient (live), Wibbi (pending)
 - n8n handles all automation orchestration — don't replicate automation logic in the app
 
 ### Voice (Ava module)

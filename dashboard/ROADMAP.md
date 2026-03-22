@@ -16,8 +16,8 @@ Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analyt
 | PMS Layer (Halaxy)              | Built       | Adapter, client, mappers                      |
 | PMS Layer (Zanda/Power Diary)   | Built       | Adapter, client, mappers                      |
 | HEP Layer (Physitrack)          | Built       | Adapter, client, factory                      |
-| HEP Layer (Rehab My Patient)    | Built       | Adapter, client, mappers                      |
-| HEP Layer (Wibbi)               | Built       | Adapter, client, mappers                      |
+| HEP Layer (Rehab My Patient)    | Built       | Adapter, client, mappers (API validated)      |
+| HEP Layer (Wibbi)               | Pending     | Adapter stub — auth model needs rework        |
 | Patient Profiles                | Live        | Timeline, stats, course progress              |
 | Settings / Onboarding           | Live        | PMS connection, targets, clinician mgmt       |
 | Auth (Firebase)                 | Live        | Email/password, role-based, demo mode         |
@@ -37,7 +37,7 @@ Priority: Connect Spires Physiotherapy to live PMS data. Kill the demo banner.
 | Configure WriteUpp API key for Spires in production           | P0       | 30 min    |
 | Set up Vercel Cron for 15-min PMS sync                        | P0       | 1 session |
 | Validate real appointment data flowing through metrics engine | P0       | 1 session |
-| Connect Physitrack API key for HEP compliance tracking        | P1       | 1 session |
+| Connect HEP provider API key for compliance tracking          | P1       | 1 session |
 | Seed Spires clinicians (Andrew, Max, Jamal) in Firestore      | P0       | 30 min    |
 | Wire n8n webhooks for comms sequences (HEP reminder first)    | P1       | 1 session |
 | Resend or Twilio for email/SMS delivery                       | P1       | 1 session |

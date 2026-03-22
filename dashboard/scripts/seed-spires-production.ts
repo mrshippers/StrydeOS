@@ -404,8 +404,8 @@ interface MetricDoc {
   followUpRate: number;
   followUpTarget: number;
   hepComplianceRate: number;
-  physitrackRate: number;
-  physitrackTarget: number;
+  hepRate: number;
+  hepTarget: number;
   utilisationRate: number;
   dnaRate: number;
   courseCompletionRate: number;
@@ -421,7 +421,7 @@ interface MetricDoc {
   caveatNote?: string;
 }
 
-// Simulated HEP compliance arcs per clinician (no Physitrack CSV data)
+// Simulated HEP compliance arcs per clinician (no live HEP provider data)
 const HEP_ARCS: Record<string, number[]> = {
   "c-andrew": [0.55, 0.58, 0.61, 0.63, 0.65, 0.68, 0.70, 0.72, 0.74, 0.76, 0.78],
   "c-max":    [0.72, 0.74, 0.75, 0.76, 0.78, 0.79, 0.80, 0.81, 0.82, 0.83, 0.84],
@@ -493,7 +493,7 @@ function computeMetrics(appointments: AppointmentDoc[]): MetricDoc[] {
 
       const hepIdx = Math.min(wi, (HEP_ARCS[cid] || []).length - 1);
       const hepRate = (HEP_ARCS[cid] || [])[hepIdx] ?? 0.7;
-      const physitrackRate = Math.min(1, hepRate + 0.05);
+      const hepRate = Math.min(1, hepRate + 0.05);
 
       // HEP compliance: simulate improvement over time
       const baseCourseCompletion = cid === "c-joe" ? 1.0 : 0.65;
@@ -508,8 +508,8 @@ function computeMetrics(appointments: AppointmentDoc[]): MetricDoc[] {
         followUpRate,
         followUpTarget: 2.9,
         hepComplianceRate: hepRate,
-        physitrackRate,
-        physitrackTarget: 0.95,
+        hepRate,
+        hepTarget: 0.95,
         utilisationRate,
         dnaRate,
         courseCompletionRate: Math.round(courseCompletionRate * 100) / 100,
@@ -547,7 +547,7 @@ function computeAllMetric(weekMetrics: MetricDoc[], weekStart: string, now: stri
     totalIAs += m.initialAssessments;
     totalFUs += m.followUps;
     sumFU += m.followUpRate;
-    sumPT += m.physitrackRate;
+    sumPT += m.hepRate;
     sumUtil += m.utilisationRate;
     sumDNA += m.dnaRate;
     sumCC += m.courseCompletionRate;
@@ -563,8 +563,8 @@ function computeAllMetric(weekMetrics: MetricDoc[], weekStart: string, now: stri
     followUpRate: count > 0 ? Math.round((sumFU / count) * 100) / 100 : 0,
     followUpTarget: 2.9,
     hepComplianceRate: count > 0 ? Math.round((sumHEP / count) * 100) / 100 : 0,
-    physitrackRate: count > 0 ? Math.round((sumPT / count) * 100) / 100 : 0,
-    physitrackTarget: 0.95,
+    hepRate: count > 0 ? Math.round((sumPT / count) * 100) / 100 : 0,
+    hepTarget: 0.95,
     utilisationRate: count > 0 ? Math.round((sumUtil / count) * 100) / 100 : 0,
     dnaRate: count > 0 ? Math.round((sumDNA / count) * 100) / 100 : 0,
     courseCompletionRate: count > 0 ? Math.round((sumCC / count) * 100) / 100 : 0,
@@ -712,7 +712,7 @@ async function main() {
       featureFlags: { intelligence: true, continuity: true, receptionist: false },
       targets: {
         followUpRate: 2.9,
-        physitrackRate: 95,
+        hepRate: 95,
         utilisationRate: 85,
         dnaRate: 5,
         courseCompletionTarget: 80,

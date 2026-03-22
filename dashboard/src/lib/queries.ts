@@ -306,6 +306,37 @@ export async function recordOutcomeScores(
   );
 }
 
+// ─── Insight Events (subcollection) ──────────────────────────────────────────
+
+export function subscribeInsightEvents(
+  clinicId: string | null,
+  callback: (data: import("@/types/insight-events").InsightEvent[]) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  if (!db || !clinicId) {
+    callback([]);
+    return noopUnsubscribe();
+  }
+
+  const q = query(
+    clinicCollection(clinicId, "insight_events"),
+    orderBy("createdAt", "desc"),
+    limit(50)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<import("@/types/insight-events").InsightEvent, "id">),
+      }));
+      callback(data);
+    },
+    onError
+  );
+}
+
 // ─── Call Logs (subcollection) ───────────────────────────────────────────────
 
 export function subscribeCalls(

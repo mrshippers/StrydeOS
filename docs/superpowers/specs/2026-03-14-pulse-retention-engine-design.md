@@ -189,7 +189,7 @@ floor: 0
 
 **hepEngagement (weight 20%)**
 ```
-100 if hepProgramId present AND Physitrack compliance data received
+100 if hepProgramId present AND HEP provider compliance data received
 50  if hepProgramId present, no compliance data
 0   if no hepProgramId
 ```
@@ -554,7 +554,7 @@ Existing send log retained. Two additions per `comms_log` entry:
 |---|---|---|
 | Attendance | 30% | Sessions attended ÷ scheduled (last 4 weeks). Penalty: -20 if DNA in first 3 sessions. |
 | Treatment Progress | 25% | sessionCount ÷ courseLength. Bonus: +15 if follow-up booked at last appointment. Penalty: -25 if sessionCount < 3 AND no nextSessionDate (session-3 cliff). |
-| HEP Engagement | 20% | 100 if hepProgramId + Physitrack compliance data. 50 if hepProgramId only. 0 if no HEP assigned. |
+| HEP Engagement | 20% | 100 if hepProgramId + HEP provider compliance data. 50 if hepProgramId only. 0 if no HEP assigned. |
 | Sentiment | 15% | NPRS/PSFS outcome improvement maps to 0–100. NPS feeds in when available. Default: 50 (neutral). |
 | Static Risk | 10% | Baseline 70. -30 if insuranceFlag. -20 if first-session with no follow-up booked same-day. Floor 0. |
 

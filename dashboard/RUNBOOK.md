@@ -68,7 +68,7 @@ The 7-stage pipeline (`/lib/pipeline/run-pipeline.ts`) runs per-clinic:
 3. **Upsert** — write to Firestore `appointments` collection with `clinicId` partition
 4. **Compute metrics** — derive weekly KPIs from appointment data
 5. **Cache** — write computed metrics to `metrics_weekly` collection
-6. **Physitrack sync** — fetch HEP compliance data from Physitrack
+6. **HEP sync** — fetch HEP compliance data from connected HEP provider (Physitrack / Rehab My Patient)
 7. **n8n callback** — trigger any downstream automation flows
 
 The pipeline is idempotent — safe to re-run. All writes are upserts keyed on `{clinicId}_{appointmentId}`.

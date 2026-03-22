@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, type FC } from "react";
+import { useState, useMemo, type FC } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, AlertCircle } from "lucide-react";
 import type { Patient, LifecycleState, Clinician } from "@/types";
 import { RiskScoreBadge } from "./RiskScoreBadge";
 import { LifecycleStateBadge } from "./LifecycleStateBadge";
 import { RiskFactorPanel } from "./RiskFactorPanel";
 import EmptyState from "@/components/ui/EmptyState";
 import { daysSince } from "@/lib/utils";
+import { useInsightEvents } from "@/hooks/useInsightEvents";
+import { brand } from "@/lib/brand";
+import type { InsightEvent } from "@/types/insight-events";
 
 interface Props {
   patients: Patient[];
@@ -31,6 +34,18 @@ export const PatientBoard: FC<Props> = ({
 }) => {
   const [collapsed, setCollapsed] = useState<Set<LifecycleState>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const { activeEvents } = useInsightEvents();
+
+  // Map patientId → active PATIENT_DROPOUT_RISK events for badge display
+  const patientInsightMap = useMemo(() => {
+    const map = new Map<string, InsightEvent>();
+    for (const e of activeEvents) {
+      if (e.type === "PATIENT_DROPOUT_RISK" && e.patientId && !e.resolvedAt) {
+        map.set(e.patientId, e);
+      }
+    }
+    return map;
+  }, [activeEvents]);
 
   const grouped = SEGMENT_ORDER
     .filter((s) => visibleSegments.includes(s))
@@ -117,6 +132,24 @@ export const PatientBoard: FC<Props> = ({
                               </p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
+                              {/* Intelligence flag badge */}
+                              {patientInsightMap.has(p.id) && (() => {
+                                const evt = patientInsightMap.get(p.id)!;
+                                const days = (evt.metadata?.daysSinceLastSession as number) ?? "?";
+                                return (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                                    style={{ background: `${brand.purple}12`, color: brand.purple }}
+                                    title={evt.suggestedAction}
+                                  >
+                                    <AlertCircle size={10} />
+                                    No rebooking in {days}d
+                                    {evt.pulseActionId && (
+                                      <span className="ml-0.5 text-[9px] opacity-70">· nudged</span>
+                                    )}
+                                  </span>
+                                );
+                              })()}
                               {visibleMetrics.includes("riskScore") && p.riskScore !== undefined && (
                                 <RiskScoreBadge score={p.riskScore} />
                               )}

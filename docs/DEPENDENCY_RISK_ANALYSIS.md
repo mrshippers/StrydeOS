@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-StrydeOS integrates with 4 PMS platforms (WriteUpp, Cliniko, Halaxy, Zanda) and 1 HEP platform (Physitrack). Integration reliability is **mission-critical** — if a PMS API goes down, clinic data sync stops.
+StrydeOS integrates with 4 PMS platforms (WriteUpp, Cliniko, Halaxy, Zanda) and 3 HEP platforms (Physitrack, Rehab My Patient, Wibbi). Integration reliability is **mission-critical** — if a PMS API goes down, clinic data sync stops.
 
 **Key Findings:**
 - ✅ **Zanda (UK):** 99.99% uptime (90-day average) — **best in class**
@@ -122,7 +122,7 @@ StrydeOS integrates with 4 PMS platforms (WriteUpp, Cliniko, Halaxy, Zanda) and 
 - **Risk Level:** **Very Low** — ISO 27001/SOC 2 certified, AWS-hosted, formal SRE team
 
 **Mitigation:**
-- HEP data is **enrichment only** — if Physitrack API is unavailable, core dashboard metrics (follow-up rate, DNA, revenue) continue to compute from PMS data
+- HEP data is **enrichment only** — if the HEP provider API is unavailable, core dashboard metrics (follow-up rate, DNA, revenue) continue to compute from PMS data
 - Status page indicates proactive monitoring and transparency
 
 ---
@@ -136,6 +136,8 @@ StrydeOS integrates with 4 PMS platforms (WriteUpp, Cliniko, Halaxy, Zanda) and 
 | **WriteUpp** | Unknown | ⚠️ Pingdom | ❌ | 🟡 Low-Medium | Single-clinic data sync paused 4h (webhook fallback to cron) |
 | **Halaxy** | Unknown | ❌ | ❌ | 🟡 Medium | Single-clinic data sync paused 4h |
 | **Physitrack** | Unknown | ✅ Public | ❌ | 🟢 Very Low | HEP compliance metric unavailable (core metrics unaffected) |
+| **Rehab My Patient** | Unknown | ❌ | ❌ | 🟢 Very Low | HEP compliance metric unavailable (core metrics unaffected) |
+| **Wibbi** | Unknown | ✅ Public | ❌ | 🟢 Very Low | HEP compliance metric unavailable (core metrics unaffected; integration pending) |
 
 **Key Insight:**
 - No **single point of failure** — each integration affects only the clinics using that specific PMS

@@ -53,7 +53,7 @@ export const BENCHMARKS: Record<string, MetricBenchmark> = {
     key: "hepCompliance",
     label: "HEP Compliance",
     definition:
-      "Percentage of patients with an active home exercise programme (HEP) assigned via Physitrack. Proxy for NICE CG177 compliance.",
+      "Percentage of patients with an active home exercise programme (HEP) assigned via their HEP provider. Proxy for NICE CG177 compliance.",
     ownerExplainer:
       "What proportion of your patients have been given a home exercise programme. Should be near-universal for MSK patients.",
     ukBenchmarkRange: ">90% (HCPC Standard 13; CSP Quality Assurance Framework mandates HEP for MSK patients)",
@@ -93,10 +93,10 @@ export const BENCHMARKS: Record<string, MetricBenchmark> = {
     key: "courseCompletion",
     label: "HEP Compliance",
     definition:
-      "Percentage of patients who are assigned a home exercise programme (HEP) relative to patients seen. Measures whether clinicians are consistently prescribing structured self-management via platforms like Physitrack.",
+      "Percentage of patients who are assigned a home exercise programme (HEP) relative to patients seen. Measures whether clinicians are consistently prescribing structured self-management via their connected HEP provider.",
     ownerExplainer:
       "Are your clinicians giving patients something to do between sessions? If a patient leaves without a programme, they're relying entirely on in-clinic time — which slows recovery and weakens rebooking rationale. HEP compliance tells you who's prescribing and who isn't.",
-    ukBenchmarkRange: "70–85% typical in private MSK using Physitrack; >85% excellent",
+    ukBenchmarkRange: "70–85% typical in private MSK using HEP software; >85% excellent",
     thresholds: {
       green: "≥ 80%",
       amber: "65–79%",

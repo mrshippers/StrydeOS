@@ -96,7 +96,7 @@ export function createPhysitrackAdapter(config: HEPIntegrationConfig): HEPAdapte
             ([row.first_name, row.last_name].filter(Boolean).join(" ") ||
             "Unknown");
           return {
-            physitrackId: String(row.id),
+            externalId: String(row.id),
             patientName: name,
           };
         });

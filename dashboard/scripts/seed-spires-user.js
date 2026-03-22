@@ -70,7 +70,7 @@ async function main() {
       ownerEmail: TEST_EMAIL,
       status: "live",
       pms: { provider: null, connected: false },
-      targets: { followUpRate: 2.9, physitrackRate: 95, utilisationRate: 85 },
+      targets: { followUpRate: 2.9, hepRate: 95, utilisationRate: 85 },
       onboarding: { pmsConnected: false, cliniciansConfirmed: false, targetsSet: false },
       createdAt: now,
       updatedAt: now,

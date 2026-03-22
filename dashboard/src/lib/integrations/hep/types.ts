@@ -13,11 +13,11 @@ export interface HEPProgramme {
   completionPercent: number;
   lastAccessedAt?: string;
   deepLink?: string;
-  /** Populated by Physitrack V2 adherence endpoint */
+  /** Populated by providers that expose adherence data (e.g. Physitrack V2) */
   adherencePercent?: number;
-  /** Populated by Physitrack V2 adherence endpoint */
+  /** Populated by providers that expose adherence data (e.g. Physitrack V2) */
   sessionsCompleted?: number;
-  /** Populated by Physitrack V2 PROM results endpoint */
+  /** Populated by providers that expose PROM results (e.g. Physitrack V2) */
   promResults?: HEPPromResult[];
 }
 
@@ -28,7 +28,7 @@ export interface HEPAdherenceResult {
 }
 
 export interface HEPPatientRef {
-  physitrackId: string;
+  externalId: string;
   patientName: string;
 }
 
@@ -45,13 +45,13 @@ export interface HEPAdapter {
 
   getProgramme(externalId: string): Promise<HEPProgramme>;
 
-  /** Optional: Physitrack V2 only — adherence % and session count */
+  /** Optional — adherence % and session count (currently Physitrack only) */
   getAdherence?(patientExternalId: string, programmeCode: string): Promise<HEPAdherenceResult | null>;
 
-  /** Optional: Physitrack V2 only — patient list for ID cross-reference */
+  /** Optional — patient list for ID cross-reference (currently Physitrack only) */
   getPatients?(): Promise<HEPPatientRef[]>;
 
-  /** Optional: Physitrack V2 only — PROM scores for a programme */
+  /** Optional — PROM scores for a programme (currently Physitrack only) */
   getPromResults?(
     patientExternalId: string,
     programmeCode: string

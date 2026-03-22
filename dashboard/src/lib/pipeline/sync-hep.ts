@@ -6,10 +6,10 @@ const CONCURRENCY = 5;
 const MAX_BATCH_SIZE = 500;
 
 /**
- * Stage 4: Enrich appointments and patients with Physitrack HEP data.
+ * Stage 4: Enrich appointments and patients with HEP provider data.
  *
  * For each active (non-discharged) patient with a pmsExternalId:
- *  1. Query Physitrack for assigned programmes
+ *  1. Query the connected HEP provider for assigned programmes
  *  2. If programme exists: mark hepAssigned on recent appointments, set hepProgramId on patient
  *  3. Store completionPercent for metrics computation
  */

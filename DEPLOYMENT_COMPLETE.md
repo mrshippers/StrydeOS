@@ -60,7 +60,7 @@ All users can now log in at **https://www.strydeos.com/login**
 - **Real KPIs:** 9 weeks of metrics data (Jan 5 - Mar 2, 2026)
 - **No Demo Banner:** Because metrics_weekly exists and is populated
 - **Clinician List:** All 4 clinicians with real performance data
-- **Weekly Trends:** Follow-up rate, Physitrack usage, utilization, DNA rate, HEP compliance
+- **Weekly Trends:** Follow-up rate, HEP compliance, utilisation, DNA rate
 
 ### Patients Page
 - **12 real patients** with names, clinician assignments, insurance flags, session counts
