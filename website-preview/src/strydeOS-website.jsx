@@ -1730,6 +1730,10 @@ const Footer = () => (
               { label: "Pricing", href: "#pricing" },
               { label: "Contact", href: "#early-access" },
             ]},
+            { h: "Developers", links: [
+              { label: "API Reference", href: "/api-docs.html" },
+              { label: "Integrations", href: "#product-intelligence" },
+            ]},
             { h: "Legal", links: [
               { label: "Privacy Policy", href: "/privacy" },
               { label: "Security & GDPR", href: "/security" },
