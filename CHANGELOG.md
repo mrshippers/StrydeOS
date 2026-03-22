@@ -61,7 +61,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 ### Integrations Available (v1.2.0)
 - **PMS:** WriteUpp (real-time), Cliniko (daily), TM3 (CSV), Jane (CSV)
 - **HEP:** Physitrack V2 (programme existence only)
-- **Voice:** Retell AI + ElevenLabs (Ava module)
+- **Voice:** ElevenLabs + Twilio (Ava module)
 
 ---
 
@@ -89,7 +89,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 ### Integrations Available (v1.1.0)
 - **PMS:** WriteUpp (real-time webhook + daily cron), TM3 (CSV), Jane (CSV)
 - **HEP:** Physitrack V2 (programme existence only)
-- **Voice:** Retell AI + ElevenLabs (Ava module)
+- **Voice:** ElevenLabs + Twilio (Ava module)
 
 ---
 
@@ -112,7 +112,7 @@ StrydeOS launched with three core modules targeting private physiotherapy practi
   - Follow-up tracking (initial assessment → follow-up booking)
 
 - **Ava** (Royal Blue `#1C54F2`) — AI voice receptionist
-  - Retell AI + ElevenLabs voice synthesis
+  - ElevenLabs Conversational AI + Twilio telephony
   - Appointment booking via PMS integration
   - n8n webhook orchestration
 

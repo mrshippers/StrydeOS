@@ -56,7 +56,7 @@ Transformed from a static empty state into a live call intelligence dashboard wi
 - **Call Dashboard** — today's call count, booking rate, missed calls, average duration
 - **7-day volume chart** — bar chart of AI-handled calls per day
 - **Live call log** — table: time, patient, phone (masked), duration, clinician, outcome (booked/cancelled/info/missed/transferred)
-- **Configuration panel** — voice provider status (Retell AI), clinic phone number, operating hours, call handling rules with enabled indicators
+- **Configuration panel** — voice provider status (ElevenLabs), clinic phone number, operating hours, call handling rules with enabled indicators
 
 ### Physitrack / HEP Integration Layer (New)
 Abstracted HEP adapter following the same plugin pattern as PMS integrations.

@@ -504,14 +504,14 @@
   </div>
 
   <!-- Ava Voice Receptionist -->
-  <div class="section" data-search="ava voice retell elevenlabs booking call receptionist agent">
+  <div class="section" data-search="ava voice elevenlabs twilio booking call receptionist agent">
     <div class="section-title">
       <div class="section-icon" style="background:#EFF6FF;color:var(--blue);">📞</div>
       Ava — Voice Receptionist
     </div>
     <div class="biz-card">
       <h3>How Ava handles calls and bookings</h3>
-      <p>Ava is StrydeOS's AI voice receptionist, powered by Retell AI and ElevenLabs. When a patient calls, Ava answers, understands their request, and can book appointments directly into your PMS.</p>
+      <p>Ava is StrydeOS's AI voice receptionist, powered by ElevenLabs Conversational AI and Twilio telephony. When a patient calls, Ava answers, understands their request, and can book appointments directly into your PMS.</p>
       <p><strong>The booking flow:</strong> Patient calls → Ava converses → confirms booking details → n8n automation creates the appointment in your PMS → a copy is saved in StrydeOS for tracking. If the PMS write fails (e.g., the PMS is briefly offline), StrydeOS saves the booking locally and retries automatically.</p>
       <p>Call data — duration, outcome (booked, cancelled, escalated, voicemail), transcripts, and sentiment — flows into the Receptionist dashboard so you can see how Ava is performing.</p>
       <div class="biz-who"><strong>Who uses this:</strong> Automated — Ava handles calls; clinic owners view results in the dashboard</div>
@@ -519,7 +519,6 @@
         <span class="biz-endpoint">/api/ava/agent</span>
         <span class="biz-endpoint">/api/bookings/create</span>
         <span class="biz-endpoint">/api/bookings/retry-pms</span>
-        <span class="biz-endpoint">/api/webhooks/retell</span>
         <span class="biz-endpoint">/api/webhooks/elevenlabs</span>
       </div>
     </div>
@@ -668,9 +667,9 @@
               <td style="padding:8px 12px;">Stripe billing webhooks</td>
             </tr>
             <tr>
-              <td style="padding:8px 12px;font-weight:500;">Retell HMAC-SHA256</td>
-              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">x-retell-signature: &lt;hmac&gt;</td>
-              <td style="padding:8px 12px;">Retell AI voice webhooks</td>
+              <td style="padding:8px 12px;font-weight:500;">ElevenLabs Signature</td>
+              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">x-elevenlabs-signature: &lt;sig&gt;</td>
+              <td style="padding:8px 12px;">ElevenLabs voice webhooks</td>
             </tr>
           </tbody>
         </table>
@@ -1238,7 +1237,7 @@ type, status, notes, price, duration</span></pre>
   </div>
 
   <!-- ── Ava Voice ── -->
-  <div class="section" data-search="ava voice retell elevenlabs booking call agent">
+  <div class="section" data-search="ava voice elevenlabs twilio booking call agent">
     <div class="section-title">
       <div class="section-icon" style="background:#EFF6FF;color:var(--blue);">📞</div>
       Ava — Voice &amp; Bookings
@@ -1294,7 +1293,7 @@ type, status, notes, price, duration</span></pre>
 <span class="key">durationMinutes</span>:      <span class="type">number</span> <span class="comment">← default 45</span>
 <span class="key">appointmentType</span>:      <span class="type">string</span> <span class="comment">← optional</span>
 <span class="key">notes</span>:                <span class="type">string</span> <span class="comment">← optional</span>
-<span class="key">callId</span>:               <span class="type">string</span> <span class="comment">← Retell call ID</span>
+<span class="key">callId</span>:               <span class="type">string</span> <span class="comment">← ElevenLabs call ID</span>
 <span class="key">idempotencyKey</span>:       <span class="type">string</span> <span class="comment">← dedup key</span></pre>
           </div>
           <div class="detail-block">
@@ -1330,15 +1329,15 @@ type, status, notes, price, duration</span></pre>
       </div>
     </div>
 
-    <div class="card" data-search="retell webhook call started ended analyzed voice transcript">
+    <div class="card" data-search="elevenlabs webhook call started ended analyzed voice transcript">
       <div class="card-header" onclick="toggleCard(this)">
         <div class="card-expand">▶</div>
         <div class="card-info">
           <div class="card-title-row">
             <span class="method-badge method-POST">POST</span>
-            <span class="card-path">/api/webhooks/retell</span>
+            <span class="card-path">/api/webhooks/elevenlabs</span>
           </div>
-          <div class="card-desc">Retell AI webhook — receives call_started, call_ended, call_analyzed events. Persists call data to Firestore.</div>
+          <div class="card-desc">ElevenLabs webhook — receives call_started, call_ended, call_analyzed events. Persists call data to Firestore.</div>
           <div class="card-tags"><span class="tag tag-webhook">HMAC-SHA256</span></div>
         </div>
       </div>

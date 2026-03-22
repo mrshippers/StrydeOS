@@ -76,7 +76,7 @@ All users can now log in at **https://www.strydeos.com/login**
 
 ### Ava (Receptionist) Page
 - **Demo mode:** Call log is still mock data
-- **Next step:** Integrate Retell AI for live calls (v0.7)
+- **Next step:** Integrate ElevenLabs Conversational AI for live calls (v0.7)
 
 ---
 
@@ -89,7 +89,7 @@ All users can now log in at **https://www.strydeos.com/login**
 | **Patients** | ✅ Live with real data | 12 seeded patients |
 | **Pulse** | ✅ Live with real data | Patient board populated, comms log demo |
 | **Intelligence** | ⚠️ Demo charts | Uses getDemo*() functions, needs wiring |
-| **Ava** | ⚠️ Demo mode | Call log is mock, needs Retell integration |
+| **Ava** | ⚠️ Demo mode | Call log is mock, needs ElevenLabs integration |
 | **Auth** | ✅ Live | All 4 users can log in |
 | **PMS Pipeline** | ⚠️ Ready, not run | API route exists, needs WriteUpp config |
 
@@ -168,7 +168,7 @@ npm run fix:joe
 
 The only remaining areas that show demo data are:
 1. **Intelligence charts** (needs wiring to metrics_weekly)
-2. **Ava call log** (needs Retell integration)
+2. **Ava call log** (needs ElevenLabs integration)
 3. **Pulse comms log** (needs n8n workflows)
 
 These are the next steps in your roadmap (v0.5 for comms, v0.7 for Ava, and anytime for Intelligence wiring).

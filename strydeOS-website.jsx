@@ -1561,8 +1561,8 @@ const SecurityPolicyPage = () => {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
               { name: "Google Cloud (Firebase)", purpose: "Hosting, auth, database", region: "UK (eu-west2)" },
-              { name: "Retell AI", purpose: "Voice reception (Ava)", region: "EU/UK processing" },
-              { name: "ElevenLabs", purpose: "Voice synthesis", region: "EU processing" },
+              { name: "ElevenLabs", purpose: "Conversational AI voice agent (Ava)", region: "EU processing" },
+              { name: "Twilio", purpose: "Telephony & SIP trunking (Ava)", region: "EU/UK processing" },
               { name: "PMS & HEP Providers", purpose: "WriteUpp, Cliniko, Halaxy, Zanda, Physitrack, Rehab My Patient, Wibbi API sync", region: "UK hosted" },
             ].map(({ name, purpose, region }) => (
               <div key={name} style={{

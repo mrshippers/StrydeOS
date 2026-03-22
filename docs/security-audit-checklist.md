@@ -24,7 +24,7 @@
 - [ ] **Secret patterns covered:**
   - [ ] Stripe keys (`sk_live_*`, `sk_test_*`, `whsec_*`)
   - [ ] Firebase private keys (`-----BEGIN PRIVATE KEY-----`)
-  - [ ] API keys (provider-specific: Retell, ElevenLabs, Resend, Twilio, etc.)
+  - [ ] API keys (provider-specific: ElevenLabs, Twilio, Resend, etc.)
   - [ ] Webhook secrets
   - [ ] Cron/internal secrets
 - [ ] **No secrets in client-side code** — server-only env vars not prefixed with `NEXT_PUBLIC_`

@@ -27,7 +27,7 @@ Go to **https://www.strydeos.com/login** and sign in with your owner or admin ac
 - **Patients** — Browse patient list and details
 - **Pulse** — See patient board and comms log
 - **Intelligence** — Analytics (currently demo charts, wire next)
-- **Ava** — Voice AI receptionist (demo mode, Retell integration next)
+- **Ava** — Voice AI receptionist (demo mode, ElevenLabs integration next)
 - **Settings** — Configure PMS, targets, team
 
 ---

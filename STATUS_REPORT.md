@@ -98,7 +98,7 @@ Use credentials from your secure store (passwords must not be committed to the r
 | `/patients` | ✅ Real Data | patients (12 docs) |
 | `/continuity` (Pulse) | ✅ Real Data | patients + demo comms |
 | `/intelligence` | ⚠️ Demo Charts | Needs wiring to metrics_weekly |
-| `/receptionist` (Ava) | ⚠️ Demo Mode | Needs Retell integration |
+| `/receptionist` (Ava) | ⚠️ Demo Mode | Needs ElevenLabs integration |
 | `/settings` | ✅ Live | PMS config ready |
 | `/login` | ✅ Live | Firebase Auth |
 | `/onboarding` | ✅ Live | First-login tour |
@@ -182,7 +182,7 @@ From original plan (strydeos_audit_and_live_clinic_53172c0d.plan.md):
    - Insurance pre-auth
    - Discharge → review requests
 
-6. **Retell Integration** (v0.7)
+6. **ElevenLabs Integration** (v0.7)
    - Voice AI receptionist
    - Call logging to Firestore
    - Booking write-back
@@ -207,8 +207,8 @@ From original plan (strydeos_audit_and_live_clinic_53172c0d.plan.md):
 
 2. **Ava Call Log** — Demo mode
    - Uses DEMO_CALLS constant
-   - Retell integration not yet active
-   - Fix: Implement Retell API integration (v0.7)
+   - ElevenLabs integration not yet active
+   - Fix: Implement ElevenLabs API integration (v0.7)
 
 3. **Pulse Comms Log** — Demo data
    - Patient board shows real patients (12 seeded)

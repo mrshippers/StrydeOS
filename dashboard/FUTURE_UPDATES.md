@@ -10,9 +10,9 @@ Important reference for how n8n fits across StrydeOS and what to build next.
 |---------------|------|
 | **Pulse**     | n8n = delivery for all patient comms (HEP reminder, rebooking, pre-auth, discharge → review, NPS, etc.). App = rules + state; n8n = send + callback. |
 | **Intelligence** | Optional: n8n = *when* and *delivery* for reports/alerts (e.g. weekly KPI email, "metric dropped" Slack). Numbers stay in app/Firestore. |
-| **Ava**       | Retell = live call. n8n = post-call actions based on outcome (e.g. booking confirmed → confirmation email/SMS; cancel → recovery flow; no-show → outbound 2h later). |
+| **Ava**       | ElevenLabs = live call (Conversational AI) + Twilio = telephony/SIP. n8n = post-call actions based on outcome (e.g. booking confirmed → confirmation email/SMS; cancel → recovery flow; no-show → outbound 2h later). |
 
-**In short:** Pulse = n8n for comms; Intelligence = n8n for reports/alerts where useful; Ava = Retell for the call, n8n for what happens after.
+**In short:** Pulse = n8n for comms; Intelligence = n8n for reports/alerts where useful; Ava = ElevenLabs for the call, Twilio for telephony, n8n for what happens after.
 
 ---
 

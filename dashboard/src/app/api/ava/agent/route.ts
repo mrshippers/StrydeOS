@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { initializeApp, getApps } from "firebase-admin/app";
-import { buildAvaPrompt } from "@/lib/retell/ava-prompt";
+import { buildAvaCorePrompt } from "@/lib/retell/ava-core-prompt";
+import { compileKnowledgeDocument, type KnowledgeEntry } from "@/lib/retell/ava-knowledge";
 import { withRequestLog } from "@/lib/request-logger";
 
 // Ensure Firebase Admin is initialized
@@ -104,18 +105,21 @@ async function handler(req: NextRequest) {
       return NextResponse.json({ error: "Ava config not set up" }, { status: 400 });
     }
 
-    // Build system prompt with clinic-specific variables
-    const systemPrompt = buildAvaPrompt({
+    // Build behavioral-only system prompt (clinic knowledge is in the KB)
+    const corePrompt = buildAvaCorePrompt({
       clinic_name: clinicData.name || "Clinic",
-      clinic_address: avaConfig.config.address || "",
-      nearest_station: avaConfig.config.nearest_station || "",
-      parking_info: avaConfig.config.parking_info || "",
-      ia_price: avaConfig.config.ia_price || "85",
-      fu_price: avaConfig.config.fu_price || "65",
       clinic_email: clinicData.email || "info@clinic.com",
-      clinic_phone: avaConfig.config.phone || "",
-      clinician_availability: clinicData.availability || "",
+      clinic_phone: avaConfig.config?.phone || "",
     });
+
+    // If knowledge entries exist, compile and append as fallback context
+    // (primary path is ElevenLabs KB via /api/ava/knowledge, but we include
+    // a baseline in the system prompt so Ava always has access to key facts)
+    const knowledgeEntries: KnowledgeEntry[] = avaConfig.knowledge || [];
+    const knowledgeDoc = compileKnowledgeDocument(knowledgeEntries);
+    const systemPrompt = knowledgeDoc
+      ? `${corePrompt}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCLINIC KNOWLEDGE BASE\n\n${knowledgeDoc}`
+      : corePrompt;
 
     const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://localhost:3000"}/api/webhooks/elevenlabs`;
 

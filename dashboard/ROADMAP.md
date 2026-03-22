@@ -83,8 +83,8 @@ Priority: First automated patient messages sent from Spires.
 
 | Task                                                       | Priority |
 | ---------------------------------------------------------- | -------- |
-| Retell AI integration (voice agent provisioning)           | P0       |
-| Call routing: forward clinic landline to Retell agent      | P0       |
+| ElevenLabs Conversational AI integration (voice agent provisioning) | P0       |
+| Call routing: forward clinic landline to ElevenLabs agent via Twilio | P0       |
 | Booking intent → PMS write-back (new patient flow)         | P0       |
 | Cancellation recovery flow (rebook attempt before confirm) | P1       |
 | No-show outbound call (automated 2h after DNA)             | P1       |

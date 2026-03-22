@@ -49,7 +49,7 @@ Three modules. Names are **locked** — do not rename, do not alias.
 
 | Module | Colour | Hex | Function |
 |--------|--------|-----|----------|
-| **Ava** | Royal Blue | `#1C54F2` | AI voice receptionist (Retell AI + ElevenLabs + n8n) |
+| **Ava** | Royal Blue | `#1C54F2` | AI voice receptionist (ElevenLabs + Twilio + n8n) |
 | **Pulse** | Teal | `#0891B2` | Patient continuity / retention engine |
 | **Intelligence** | Purple | `#8B5CF6` | Clinical performance dashboard |
 
@@ -84,8 +84,8 @@ StrydeOS is built and validated at Spires first.
 
 ### Automation & Integrations
 - **Automation:** n8n
-- **Voice AI:** Retell AI + ElevenLabs
-- **White-label voice layer (future):** Vapify
+- **Voice AI:** ElevenLabs (Conversational AI) + Twilio (telephony/SIP)
+- **White-label voice layer (future):** Vapify (wraps ElevenLabs at reseller phase)
 - **PMS integrations:** WriteUpp (primary), Cliniko, Halaxy, Zanda (Power Diary) — all live
 - **Roadmap:** TM3 (Blue Zinc), Pabau (requires API key), Jane App
 - **HEP integrations:** Physitrack (live), Rehab My Patient (live), Wibbi (pending — auth model needs rework)
@@ -231,10 +231,10 @@ Irreversible = multi-tenant data modelling, real-time listener architecture, com
 - n8n handles all automation orchestration — don't replicate automation logic in the app
 
 ### Voice (Ava module)
-- Retell AI + ElevenLabs for voice
+- ElevenLabs Conversational AI for voice agent + Twilio for telephony/SIP
 - n8n for webhook routing
 - WriteUpp/Cliniko receive booking confirmations via webhook
-- White-label future path: Vapify wraps Retell at reseller phase
+- White-label future path: Vapify wraps ElevenLabs at reseller phase
 
 ---
 

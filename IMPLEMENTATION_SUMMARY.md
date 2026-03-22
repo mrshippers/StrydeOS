@@ -118,7 +118,7 @@ When Jamal or Joe log in, they will see:
 
 ### Ava (Receptionist) Page ⚠️
 - Call dashboard UI exists
-- **Currently shows demo call log** (next step: Retell integration in v0.7)
+- **Currently shows demo call log** (next step: ElevenLabs integration in v0.7)
 
 ---
 
@@ -206,7 +206,7 @@ When Jamal or Joe log in, they will see:
    - Insurance pre-auth collection
    - Discharge → Google Review prompts
 
-6. **Retell Integration** (v0.7 — "Ava Goes Live")
+6. **ElevenLabs Integration** (v0.7 — "Ava Goes Live")
    - Voice AI receptionist
    - Call routing and recording
    - Booking write-back to PMS

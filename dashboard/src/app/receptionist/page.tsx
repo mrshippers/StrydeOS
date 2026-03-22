@@ -16,7 +16,7 @@ import {
   AlertCircle,
   Lock,
 } from "lucide-react";
-import { SPIRES_AVA_PROMPT } from "@/lib/retell/ava-prompt";
+import KnowledgeBaseEditor from "@/components/ava/KnowledgeBaseEditor";
 import {
   ResponsiveContainer,
   BarChart,
@@ -172,7 +172,6 @@ function ReceptionistContent() {
   const { user } = useAuth();
   const { config, rules, loading: configLoading, saving, toggleEnabled, toggleRule, updateConfigField, save, createOrUpdateAgent } = useAvaConfig(user?.clinicId);
   const [activeView, setActiveView] = useState<View>("dashboard");
-  const [promptExpanded, setPromptExpanded] = useState(false);
   const [expandedCallId, setExpandedCallId] = useState<string | null>(null);
   const [digestExpanded, setDigestExpanded] = useState(false);
   const [configDraft, setConfigDraft] = useState(config);
@@ -807,47 +806,8 @@ function ReceptionistContent() {
             )}
           </div>
 
-          {/* Ava system prompt preview */}
-          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
-            <button
-              onClick={() => setPromptExpanded((v) => !v)}
-              className="w-full flex items-center justify-between p-6 text-left hover:bg-cloud-light/30 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue/10 flex items-center justify-center">
-                  <FileText size={15} className="text-blue" />
-                </div>
-                <div>
-                  <h3 className="font-display text-base text-navy">
-                    Ava System Prompt
-                  </h3>
-                  <p className="text-[11px] text-muted">
-                    Read-only · Spires Physiotherapy production prompt
-                  </p>
-                </div>
-              </div>
-              {promptExpanded ? (
-                <ChevronUp size={16} className="text-muted" />
-              ) : (
-                <ChevronDown size={16} className="text-muted" />
-              )}
-            </button>
-            {promptExpanded && (
-              <div className="border-t border-border px-6 pb-6 pt-4">
-                <pre className="text-[11px] text-muted leading-relaxed whitespace-pre-wrap font-mono bg-cloud-light rounded-xl p-4 max-h-[480px] overflow-y-auto border border-border/50">
-                  {SPIRES_AVA_PROMPT}
-                </pre>
-                <p className="text-[11px] text-muted mt-3">
-                  Spires-specific variables are pre-resolved. For other clinics,
-                  use{" "}
-                  <code className="text-navy bg-cloud-light px-1 py-0.5 rounded">
-                    buildAvaPrompt()
-                  </code>{" "}
-                  with clinic-level configuration.
-                </p>
-              </div>
-            )}
-          </div>
+          {/* Clinic Knowledge Base */}
+          <KnowledgeBaseEditor clinicId={user?.clinicId} />
         </div>
       )}
     </div>
