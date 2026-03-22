@@ -7,7 +7,7 @@ export default function DemoBanner() {
   if (user?.uid !== "demo") return null;
 
   return (
-    <div className="flex justify-center mb-5">
+    <div className="flex justify-end mb-5">
       <div
         className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full text-[13px] font-semibold tracking-wide"
         style={{
