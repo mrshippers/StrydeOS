@@ -40,7 +40,7 @@ const DEMO_INSIGHT_EVENTS: InsightEvent[] = [
     revenueImpact: 1170,
     suggestedAction: "Review Alex's patient board in Pulse — filter for churn-risk patients and check if rebooking prompts have been sent.",
     actionTarget: "owner",
-    createdAt: new Date().toISOString() as unknown as import("firebase/firestore").Timestamp,
+    createdAt: new Date().toISOString(),
     metadata: { clinicianName: "Alex Pemberton", midProgrammeCount: 9, avgSessionsRemaining: 2, revenuePerSession: 65 },
   },
   {
@@ -54,7 +54,7 @@ const DEMO_INSIGHT_EVENTS: InsightEvent[] = [
     revenueImpact: 520,
     suggestedAction: "Check if Sam had cancellations or schedule gaps this week. Consider a brief 1:1 to discuss rebooking patterns.",
     actionTarget: "owner",
-    createdAt: new Date(Date.now() - 3600_000).toISOString() as unknown as import("firebase/firestore").Timestamp,
+    createdAt: new Date(Date.now() - 3600_000).toISOString(),
     metadata: { clinicianName: "Sam Okoro", previousRate: 3.1, currentRate: 2.7, dropPercent: 14 },
   },
   {
@@ -67,7 +67,7 @@ const DEMO_INSIGHT_EVENTS: InsightEvent[] = [
     description: "11 out of 12 discharged patients completed their full programme this week. This is James's best course completion rate in the last 6 weeks.",
     suggestedAction: "Acknowledge this in your next team meeting — positive reinforcement drives consistency.",
     actionTarget: "owner",
-    createdAt: new Date(Date.now() - 7200_000).toISOString() as unknown as import("firebase/firestore").Timestamp,
+    createdAt: new Date(Date.now() - 7200_000).toISOString(),
     metadata: { clinicianName: "James Chen", completionRate: 0.92, completedCount: 11, totalDischarged: 12 },
   },
   {
@@ -83,7 +83,7 @@ const DEMO_INSIGHT_EVENTS: InsightEvent[] = [
     suggestedAction: "Pulse will send an automated rebooking prompt if the sequence is enabled.",
     actionTarget: "patient",
     pulseActionId: "comms-log-demo-1",
-    createdAt: new Date(Date.now() - 1800_000).toISOString() as unknown as import("firebase/firestore").Timestamp,
+    createdAt: new Date(Date.now() - 1800_000).toISOString(),
     metadata: { patientName: "James Whitfield", clinicianName: "Alex Pemberton", daysSinceLastVisit: 12, sessionsCompleted: 3, courseLength: 6 },
   },
   {
@@ -95,7 +95,7 @@ const DEMO_INSIGHT_EVENTS: InsightEvent[] = [
     description: "Only 43% of patients seen this week were assigned a home exercise programme. This is below the clinic target of 50%.",
     suggestedAction: "Review which clinicians are under-assigning programmes. Consider making HEP assignment part of the discharge checklist.",
     actionTarget: "owner",
-    createdAt: new Date(Date.now() - 10800_000).toISOString() as unknown as import("firebase/firestore").Timestamp,
+    createdAt: new Date(Date.now() - 10800_000).toISOString(),
     metadata: { currentCompliance: 0.43, targetCompliance: 0.50 },
   },
 ];
@@ -160,8 +160,12 @@ export function useInsightEvents(): UseInsightEventsResult {
   const markAsRead = useCallback(
     async (eventId: string) => {
       if (!db || !clinicId) return;
-      const ref = doc(db, "clinics", clinicId, "insight_events", eventId);
-      await updateDoc(ref, { readAt: new Date().toISOString() });
+      try {
+        const ref = doc(db, "clinics", clinicId, "insight_events", eventId);
+        await updateDoc(ref, { readAt: new Date().toISOString() });
+      } catch (err) {
+        console.error("[useInsightEvents] markAsRead failed:", err);
+      }
     },
     [clinicId]
   );
@@ -169,8 +173,12 @@ export function useInsightEvents(): UseInsightEventsResult {
   const dismiss = useCallback(
     async (eventId: string) => {
       if (!db || !clinicId) return;
-      const ref = doc(db, "clinics", clinicId, "insight_events", eventId);
-      await updateDoc(ref, { dismissedAt: new Date().toISOString() });
+      try {
+        const ref = doc(db, "clinics", clinicId, "insight_events", eventId);
+        await updateDoc(ref, { dismissedAt: new Date().toISOString() });
+      } catch (err) {
+        console.error("[useInsightEvents] dismiss failed:", err);
+      }
     },
     [clinicId]
   );

@@ -160,7 +160,7 @@ export default function FirstLoginTour() {
     finishTour(false);
   }, [finishTour]);
 
-  if (!shouldShow) return null;
+  if (!shouldShow || !user) return null;
 
   const firstName = user.firstName || user.email.split("@")[0];
   const clinicName = user.clinicProfile?.name || "your clinic";
