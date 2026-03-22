@@ -23,7 +23,7 @@ const CommandPalette = dynamic(
   { ssr: false }
 );
 
-const CHROMELESS_PATHS = ["/login"];
+const CHROMELESS_PATHS = ["/login", "/api-docs"];
 const IS_STAGING = process.env.NEXT_PUBLIC_APP_ENV === "staging";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {

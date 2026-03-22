@@ -27,6 +27,7 @@ import {
   Lock,
   CreditCard,
   HelpCircle,
+  FileText,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { LogoNav } from "@/components/MonolithLogo";
@@ -45,6 +46,7 @@ import { usePatients } from "@/hooks/usePatients";
 import { computeAlerts, getInitials } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
+import { useInsightEvents } from "@/hooks/useInsightEvents";
 import type { AlertFlagProps } from "@/types";
 import type { ModuleKey } from "@/lib/billing";
 import { brand } from "@/lib/brand";
@@ -68,6 +70,7 @@ const NAV_ITEMS: NavItem[] = [
 const SYSTEM_ITEMS = [
   { label: "Settings", icon: Settings, href: "/settings" },
   { label: "Billing", icon: CreditCard, href: "/billing" },
+  { label: "API Docs", icon: FileText, href: "/api-docs" },
 ];
 
 const READ_ALERTS_KEY = "strydeos_read_alerts";
@@ -142,7 +145,9 @@ export default function Sidebar() {
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const { allAlerts, unreadCount, readHashes, markAllRead } = useAlerts();
+  const { activeEvents: insightEvents, unreadCount: insightUnreadCount, markAsRead: markInsightRead } = useInsightEvents();
   const pulseBadge = usePulseBadge();
+  const totalBellCount = unreadCount + insightUnreadCount;
 
   const clinicName = user?.clinicProfile?.name ?? "My Clinic";
   const clinicStatus = user?.clinicProfile?.status ?? "live";
@@ -240,12 +245,12 @@ export default function Sidebar() {
               aria-label="Notifications"
             >
               <Bell size={15} className="text-white/50 hover:text-white/80 transition-colors" />
-              {unreadCount > 0 && (
+              {totalBellCount > 0 && (
                 <span
                   className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
                   style={{ background: brand.danger }}
                 >
-                  {unreadCount}
+                  {totalBellCount}
                 </span>
               )}
             </button>
@@ -307,14 +312,67 @@ export default function Sidebar() {
                     })}
                   </div>
                 )}
+                {/* Intelligence insight events */}
+                {insightEvents.length > 0 && (
+                  <>
+                    <div className="px-4 py-2.5 border-t border-white/8">
+                      <p className="text-[11px] font-semibold text-white/45 uppercase tracking-widest">
+                        Intelligence
+                      </p>
+                    </div>
+                    <div className="py-1 max-h-48 overflow-y-auto">
+                      {insightEvents.slice(0, 5).map((event) => {
+                        const isUnread = !event.readAt;
+                        const sevColor =
+                          event.severity === "critical" ? brand.danger :
+                          event.severity === "positive" ? brand.success :
+                          brand.warning;
+                        return (
+                          <Link
+                            key={event.id}
+                            href="/intelligence"
+                            onClick={() => {
+                              if (isUnread) markInsightRead(event.id);
+                              setNotifOpen(false);
+                              setMobileOpen(false);
+                            }}
+                            className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors"
+                          >
+                            <div className="relative mt-1.5 shrink-0">
+                              <div
+                                className="w-1.5 h-1.5 rounded-full"
+                                style={{ background: sevColor }}
+                              />
+                              {isUnread && (
+                                <div
+                                  className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
+                                  style={{ background: brand.purple }}
+                                />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className={`text-[13px] leading-tight truncate ${isUnread ? "font-semibold text-white" : "font-medium text-white/65"}`}>
+                                {event.title.length > 60 ? event.title.slice(0, 60) + "…" : event.title}
+                              </p>
+                              <p className={`text-[12px] mt-0.5 ${isUnread ? "text-white/55" : "text-white/35"}`}>
+                                {event.suggestedAction.length > 50 ? event.suggestedAction.slice(0, 50) + "…" : event.suggestedAction}
+                              </p>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+
                 <div className="px-4 py-2.5 border-t border-white/8">
                   <Link
-                    href="/dashboard"
+                    href={insightEvents.length > 0 ? "/intelligence" : "/dashboard"}
                     onClick={() => { setNotifOpen(false); setMobileOpen(false); }}
                     className="text-[11px] font-semibold hover:text-white transition-colors flex items-center gap-1"
                     style={{ color: brand.blueGlow }}
                   >
-                    View all on dashboard <ExternalLink size={10} />
+                    {insightEvents.length > 0 ? "View all insights" : "View all on dashboard"} <ExternalLink size={10} />
                   </Link>
                 </div>
               </div>
