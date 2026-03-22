@@ -129,7 +129,8 @@
   .uptime-label span { font-size: 13px; color: var(--muted); font-weight: 500; }
   .uptime-label strong { font-size: 28px; font-weight: 700; color: var(--navy); }
   .uptime-bar {
-    display: flex; gap: 2px; height: 32px; border-radius: 8px; overflow: hidden;
+    display: flex; gap: 2px; height: 32px; border-radius: 8px;
+    position: relative;
   }
   .uptime-day {
     flex: 1; border-radius: 3px; transition: transform 0.15s;
@@ -140,16 +141,15 @@
   .uptime-day:hover.up { background: var(--manhattan); }
   .uptime-day.degraded { background: var(--warning); }
   .uptime-day.down { background: var(--dead); }
-  /* Tooltip is now a real DOM element appended on hover via JS */
   .uptime-tooltip {
-    position: absolute; bottom: calc(100% + 10px); left: 50%;
-    transform: translateX(-50%); white-space: nowrap;
+    position: fixed;
+    white-space: nowrap;
     background: var(--navy); color: white; font-size: 11px; font-weight: 500;
     padding: 8px 12px; border-radius: 8px; pointer-events: none;
-    opacity: 0; transition: opacity 0.15s;
-    z-index: 10; line-height: 1.5;
-    box-shadow: 0 4px 12px rgba(11,37,69,0.25);
-    min-width: 140px; text-align: left;
+    z-index: 9999; line-height: 1.5;
+    box-shadow: 0 4px 16px rgba(11,37,69,0.3);
+    min-width: 150px; text-align: left;
+    opacity: 0; transition: opacity 0.12s;
   }
   .uptime-tooltip::after {
     content: ''; position: absolute; top: 100%; left: 50%;
@@ -547,6 +547,7 @@ function showUptimeTooltip(e) {
   statusLine.className = "tt-status";
   if (status === "up") {
     statusLine.textContent = "No issues reported";
+    tip.appendChild(statusLine);
   } else if (status === "degraded") {
     var h = el.getAttribute("data-incident-hour");
     var m = el.getAttribute("data-resolve-min");
@@ -566,12 +567,12 @@ function showUptimeTooltip(e) {
     resolveLine2.textContent = "Resolved after " + m2 + " min";
     tip.appendChild(resolveLine2);
   }
-  if (status === "up") tip.appendChild(statusLine);
 
-  el.style.position = "relative";
-  el.appendChild(tip);
-  // Force reflow then show
-  tip.offsetHeight;
+  document.body.appendChild(tip);
+  // Position using bounding rect
+  var rect = el.getBoundingClientRect();
+  tip.style.left = (rect.left + rect.width / 2 - tip.offsetWidth / 2) + "px";
+  tip.style.top = (rect.top - tip.offsetHeight - 10) + "px";
   tip.classList.add("show");
   activeTooltip = tip;
 }
