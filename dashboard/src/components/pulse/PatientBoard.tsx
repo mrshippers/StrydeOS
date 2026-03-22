@@ -7,6 +7,9 @@ import type { Patient, LifecycleState, Clinician } from "@/types";
 import { RiskScoreBadge } from "./RiskScoreBadge";
 import { LifecycleStateBadge } from "./LifecycleStateBadge";
 import { RiskFactorPanel } from "./RiskFactorPanel";
+import { ComplexityIndicators } from "./ComplexityIndicators";
+import { ComplexityPanel } from "./ComplexityPanel";
+import { ClinicalNotesPanel } from "./ClinicalNotesPanel";
 import { PatientEditModal } from "./PatientEditModal";
 import EmptyState from "@/components/ui/EmptyState";
 import { daysSince } from "@/lib/utils";
@@ -176,6 +179,10 @@ export const PatientBoard: FC<Props> = ({
                                 </p>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
+                                {/* Heidi complexity indicators */}
+                                {p.complexitySignals && (
+                                  <ComplexityIndicators signals={p.complexitySignals} />
+                                )}
                                 {/* Intelligence flag badge */}
                                 {patientInsightMap.has(p.id) && (() => {
                                   const evt = patientInsightMap.get(p.id)!;
@@ -208,6 +215,15 @@ export const PatientBoard: FC<Props> = ({
 
                             {isExpanded && p.riskFactors && (
                               <RiskFactorPanel factors={p.riskFactors} />
+                            )}
+                            {isExpanded && p.complexitySignals && (
+                              <ComplexityPanel
+                                signals={p.complexitySignals}
+                                updatedAt={p.complexityUpdatedAt}
+                              />
+                            )}
+                            {isExpanded && p.heidiPatientId && (
+                              <ClinicalNotesPanel patientId={p.id} />
                             )}
                           </div>
                         );
