@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
-import DemoBanner from "@/components/ui/DemoBanner";
+
 import { useAuth } from "@/hooks/useAuth";
 import { useClinicians } from "@/hooks/useClinicians";
 import { usePatients } from "@/hooks/usePatients";
@@ -141,8 +141,6 @@ function ContinuityPage() {
         onClinicianChange={setSelectedClinician}
         accentColor="#0891B2"
       />
-
-      {commsIsDemo && <DemoBanner />}
 
       {/* Comms summary stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -294,6 +292,11 @@ function ContinuityPage() {
                           <span className="text-xs font-medium text-muted">
                             {entry.sequenceType.replace(/_/g, " ")}
                           </span>
+                          {Boolean((entry as unknown as Record<string, unknown>).triggeredByIntelligence) && (
+                            <span className="ml-1.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: "#8B5CF612", color: "#8B5CF6" }}>
+                              Intelligence
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue/10 text-blue w-fit">

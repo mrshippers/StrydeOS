@@ -11,10 +11,16 @@ import TopProgressBar, { ProgressProvider } from "@/components/TopProgressBar";
 import StagingBanner from "@/components/StagingBanner";
 import SplashScreen from "@/components/SplashScreen";
 import TrialBanner from "@/components/TrialBanner";
+import DemoBanner from "@/components/ui/DemoBanner";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
 
 const FirstLoginTour = dynamic(
   () => import("@/components/FirstLoginTour"),
+  { ssr: false }
+);
+
+const InsightEngineUnlocked = dynamic(
+  () => import("@/components/InsightEngineUnlocked"),
   { ssr: false }
 );
 
@@ -52,11 +58,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <main id="main-content" className={`lg:pl-60 min-h-screen ${impersonating ? "mt-10" : ""}`}>
               <div className={`mx-auto max-w-[1200px] px-6 py-8 lg:pt-8 ${IS_STAGING ? "pt-24" : "pt-16"}`}>
                 <TrialBanner />
+                <DemoBanner />
                 <PageTransition>{children}</PageTransition>
               </div>
             </main>
             <OnboardingWidget />
             <FirstLoginTour />
+            <InsightEngineUnlocked />
             <CommandPalette />
           </>
         )}

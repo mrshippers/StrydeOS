@@ -4,7 +4,7 @@ import { use, useMemo } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
-import DemoBanner from "@/components/ui/DemoBanner";
+
 import { useDemoPatients } from "@/hooks/useDemoData";
 import { useClinicians } from "@/hooks/useClinicians";
 import { getDemoCommsLog } from "@/hooks/useDemoComms";
@@ -51,7 +51,7 @@ function buildTimeline(patientId: string): TimelineEvent[] {
     type: "hep",
     date: "2026-02-17",
     title: "HEP programme updated",
-    detail: "6 exercises assigned via Physitrack. Phase 2 - strengthening.",
+    detail: "6 exercises assigned. Phase 2 - strengthening.",
     icon: Clipboard,
     color: "#1C54F2",
   });
@@ -136,8 +136,6 @@ export default function PatientDetailPage({
         Back to Pulse
       </Link>
 
-      <DemoBanner />
-
       {/* Patient header */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
         <div className="flex items-start gap-4">
@@ -204,7 +202,7 @@ export default function PatientDetailPage({
           label="HEP Status"
           value={patient.hepProgramId ? "Active" : "None"}
           status={patient.hepProgramId ? "ok" : "warn"}
-          insight={patient.hepProgramId ? "Physitrack linked" : "No programme assigned"}
+          insight={patient.hepProgramId ? "HEP programme linked" : "No programme assigned"}
         />
       </div>
 

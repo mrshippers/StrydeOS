@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
-import DemoBanner from "@/components/ui/DemoBanner";
+
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useClinicians } from "@/hooks/useClinicians";
@@ -27,6 +27,7 @@ import { recordOutcomeScores } from "@/lib/queries";
 import { brand } from "@/lib/brand";
 import type { OutcomeMeasureType, Patient } from "@/types";
 import { formatPence, formatPercent, formatWeekDate } from "@/lib/utils";
+import InsightFeed from "@/components/intelligence/InsightFeed";
 import {
   PoundSterling,
   TrendingUp,
@@ -40,11 +41,13 @@ import {
   ChevronDown,
   ChevronUp,
   BarChart2,
+  Lightbulb,
 } from "lucide-react";
 
-type Tab = "revenue" | "dna" | "referrals" | "outcomes" | "reputation";
+type Tab = "insights" | "revenue" | "dna" | "referrals" | "outcomes" | "reputation";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
+  { id: "insights", label: "Insights", icon: Lightbulb },
   { id: "revenue", label: "Revenue", icon: PoundSterling },
   { id: "dna", label: "DNA Analysis", icon: AlertTriangle },
   { id: "referrals", label: "Referrals", icon: GitBranch },
@@ -267,7 +270,7 @@ function MiniSparkline({ data, color, higherIsBetter }: { data: number[]; color:
 
 export default function IntelligencePage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>("revenue");
+  const [activeTab, setActiveTab] = useState<Tab>("insights");
   const [selectedClinician, setSelectedClinician] = useState("all");
   const [expandedClinician, setExpandedClinician] = useState<string | null>(null);
   const { clinicians } = useClinicians();
@@ -320,8 +323,6 @@ export default function IntelligencePage() {
           onRetry={() => window.location.reload()}
         />
       )}
-      {user?.uid === "demo" && <DemoBanner />}
-
       {/* Summary stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
@@ -558,6 +559,10 @@ export default function IntelligencePage() {
 
       {/* Tab content */}
       <div className="animate-fade-in">
+        {activeTab === "insights" && (
+          <InsightFeed />
+        )}
+
         {activeTab === "revenue" && (
           <div className="space-y-6">
             {/* Revenue by clinician */}

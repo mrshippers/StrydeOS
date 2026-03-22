@@ -8,6 +8,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Clock, X } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { brand } from "@/lib/brand";
 
@@ -15,12 +16,16 @@ const DISMISS_KEY = "strydeos_trial_banner_dismissed";
 
 export default function TrialBanner() {
   const { trialActive, trialDaysRemaining } = useEntitlements();
+  const { user } = useAuth();
   const [dismissed, setDismissed] = useState(() => {
     try { return !!sessionStorage.getItem(DISMISS_KEY); }
     catch { return false; }
   });
 
-  if (!trialActive || dismissed) return null;
+  const isOwnerOrSuper = user?.role === "superadmin" || user?.role === "owner";
+  const isDemo = user?.uid === "demo";
+
+  if (!trialActive || dismissed || isOwnerOrSuper || isDemo) return null;
 
   const days = trialDaysRemaining;
   const urgent = days !== null && days <= 3;

@@ -9,12 +9,13 @@ import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import { AlertBanner } from "@/components/ui/AlertFlag";
 import CliniciansTable from "@/components/ui/CliniciansTable";
-import DemoBanner from "@/components/ui/DemoBanner";
+
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import { SkeletonCard } from "@/components/ui/EmptyState";
 import DailySnapshot from "@/components/ui/DailySnapshot";
 import EmptyState from "@/components/ui/EmptyState";
 import InsightNudge from "@/components/ui/InsightNudge";
+import InsightBanner from "@/components/intelligence/InsightBanner";
 
 const TrendChart = dynamic(
   () => import("@/components/ui/TrendChart"),
@@ -217,6 +218,9 @@ export default function DashboardPage() {
         )}
       </motion.div>
 
+      {/* Intelligence insight banner — #1 ranked unread event */}
+      {isCurrentWeek && !loading && <InsightBanner />}
+
       {/* Rule-based insight nudge — current week only */}
       {isCurrentWeek && !loading && (
         <InsightNudge stats={latest} previousStats={previous} />
@@ -225,8 +229,6 @@ export default function DashboardPage() {
       {/* Error / Demo data banner */}
       {statsError && <ErrorBanner message={statsError} onRetry={() => window.location.reload()} />}
       {summaryError && <ErrorBanner message={summaryError} onRetry={() => window.location.reload()} />}
-      {(user?.uid === "demo" || usedDemo) && <DemoBanner />}
-
       {/* Week navigation + clinician filter row */}
       <motion.div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-tour="clinician-filter" {...staggerItem(0.08)}>
         {/* Week picker */}
