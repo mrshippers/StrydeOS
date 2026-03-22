@@ -47,6 +47,7 @@ import { computeAlerts, getInitials } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { useInsightEvents } from "@/hooks/useInsightEvents";
+import { useSidebar } from "@/context/SidebarContext";
 import type { AlertFlagProps } from "@/types";
 import type { ModuleKey } from "@/lib/billing";
 import { brand } from "@/lib/brand";
@@ -152,15 +153,8 @@ export default function Sidebar() {
   const pulseBadge = usePulseBadge();
   const totalBellCount = unreadCount + insightUnreadCount;
 
-  // ─── Collapsible sidebar state ─────────────────────────────────────────────
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return sessionStorage.getItem("strydeos-sidebar-seen") === "1";
-    } catch {
-      return false;
-    }
-  });
+  // ─── Collapsible sidebar state (shared via context for layout sync) ────────
+  const { collapsed, setCollapsed } = useSidebar();
   const autoCollapseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHoveredRef = useRef(false);
@@ -276,7 +270,7 @@ export default function Sidebar() {
         />
       )}
 
-      {/* Desktop: floating MonolithMark — always visible when sidebar collapsed */}
+      {/* Desktop: floating MonolithMark — visible when sidebar collapsed */}
       <div
         className={`fixed top-5 left-5 z-[35] hidden lg:flex cursor-pointer transition-opacity duration-300 ${
           collapsed ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -287,16 +281,27 @@ export default function Sidebar() {
         <MonolithMark size={32} />
       </div>
 
-      {/* Sidebar */}
+      {/* Desktop: left-edge hover trigger strip when collapsed */}
+      <div
+        className={`fixed top-0 left-0 z-[36] hidden lg:block w-3 h-full ${
+          collapsed ? "" : "pointer-events-none"
+        }`}
+        onMouseEnter={handleSidebarEnter}
+      />
+
+      {/* Sidebar — desktop uses width animation (inline), mobile uses translate (overlay) */}
       <aside
         role="navigation"
         aria-label="Main navigation"
         onMouseEnter={handleSidebarEnter}
         onMouseLeave={handleSidebarLeave}
-        className={`fixed top-0 left-0 z-40 h-full w-60 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]
-          ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "lg:-translate-x-full" : "lg:translate-x-0"}`}
+        className={`fixed top-0 left-0 z-40 h-full overflow-hidden
+          w-60 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0 ${collapsed ? "lg:w-0" : "lg:w-60"}
+          transition-[width,transform] duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)]`}
         style={{ background: brand.navy }}
       >
+      <div className={`w-60 min-w-[240px] h-full flex flex-col transition-opacity duration-[250ms] ease-out ${collapsed ? "lg:opacity-0" : "lg:opacity-100"}`}>
         {/* Logo + notification bell row */}
         <div className="px-5 pt-5 pb-4 flex items-center justify-between">
           <Link
@@ -712,6 +717,7 @@ export default function Sidebar() {
             </div>
           )}
         </div>
+      </div>
       </aside>
 
       <HelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />
