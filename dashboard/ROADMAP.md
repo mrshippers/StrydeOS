@@ -2,112 +2,104 @@
 
 Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analytics), **Pulse** (continuity & comms).
 
-## Current State — v0.3.0 (25 Feb 2026)
+## Current State — v0.8.0 (22 Mar 2026)
 
 
-| Module                          | Status      | Notes                                         |
-| ------------------------------- | ----------- | --------------------------------------------- |
-| Dashboard (KPIs)                | Live        | Demo data, Firestore-ready                    |
-| **Intelligence** (Analytics)    | Live        | Revenue, DNA, referrals, outcomes, reputation |
-| **Pulse** (Continuity / Comms)  | Live        | Sequences, send log, patient board            |
-| **Ava** (Voice AI Receptionist) | Live (Demo) | Call dashboard, config panel, mock data       |
-| PMS Layer (WriteUpp)            | Built       | Adapter, client, mappers, API routes          |
-| PMS Layer (Cliniko)             | Built       | Adapter, client, mappers                      |
-| PMS Layer (Halaxy)              | Built       | Adapter, client, mappers                      |
-| PMS Layer (Zanda/Power Diary)   | Built       | Adapter, client, mappers                      |
-| HEP Layer (Physitrack)          | Built       | Adapter, client, factory                      |
-| HEP Layer (Rehab My Patient)    | Built       | Adapter, client, mappers (API validated)      |
-| HEP Layer (Wibbi)               | Pending     | Adapter stub — auth model needs rework        |
-| Patient Profiles                | Live        | Timeline, stats, course progress              |
-| Settings / Onboarding           | Live        | PMS connection, targets, clinician mgmt       |
-| Auth (Firebase)                 | Live        | Email/password, role-based, demo mode         |
-| Stryde Super User               | Live        | Multi-clinic monitoring                       |
-
-
----
-
-## Next: v0.4.0 — "Real Data at Spires"
-
-Priority: Connect Spires Physiotherapy to live PMS data. Kill the demo banner.
-
-
-| Task                                                          | Priority | Estimate  |
-| ------------------------------------------------------------- | -------- | --------- |
-| Deploy to Vercel with production Firebase                     | P0       | 1 session |
-| Configure WriteUpp API key for Spires in production           | P0       | 30 min    |
-| Set up Vercel Cron for 15-min PMS sync                        | P0       | 1 session |
-| Validate real appointment data flowing through metrics engine | P0       | 1 session |
-| Connect HEP provider API key for compliance tracking          | P1       | 1 session |
-| Seed Spires clinicians (Andrew, Max, Jamal) in Firestore      | P0       | 30 min    |
-| Wire n8n webhooks for comms sequences (HEP reminder first)    | P1       | 1 session |
-| Resend or Twilio for email/SMS delivery                       | P1       | 1 session |
+| Module                          | Status      | Notes                                                        |
+| ------------------------------- | ----------- | ------------------------------------------------------------ |
+| Dashboard (KPIs)                | Live        | 7 core KPIs, context-aware greeting, daily snapshot          |
+| **Intelligence** (Analytics)    | Live        | Insight engine, event detection, email digest, InsightBanner  |
+| **Pulse** (Continuity / Comms)  | Live        | Risk scoring, lifecycle states, sequences, Heidi complexity   |
+| **Ava** (Voice AI Receptionist) | Live        | ElevenLabs + Twilio, knowledge base editor, core prompt      |
+| PMS Layer (WriteUpp)            | Live        | Real Spires data flowing                                     |
+| PMS Layer (Cliniko)             | Built       | Adapter, client, mappers                                     |
+| PMS Layer (Halaxy)              | Built       | Adapter, client, mappers                                     |
+| PMS Layer (Zanda/Power Diary)   | Built       | Adapter, client, mappers                                     |
+| HEP Layer (Physitrack)          | Live        | Real data at Spires                                          |
+| HEP Layer (Rehab My Patient)    | Built       | Adapter, client, mappers                                     |
+| HEP Layer (Wibbi)               | Pending     | Auth model needs rework                                      |
+| Heidi Health                    | Built       | REST client, JWT auth, complexity signals, clinical notes     |
+| Patient Profiles                | Live        | Timeline, risk factors, complexity panel, clinical notes      |
+| Billing (Stripe)                | Live        | Seat limits, tier gates, checkout flow                        |
+| Auth (Firebase)                 | Live        | Custom claims, MFA, demo mode, owner billing bypass           |
+| Status Page                     | Live        | 17 services, live health checks, 30-day uptime bars           |
+| API Docs                        | Live        | 37+ endpoints, dual-view (business + developer)              |
+| GDPR / Compliance               | Live        | Cookie consent, SAR templates, security audit checklist       |
+| Marketing Website               | Live        | All module pages, pricing, legal pages                        |
+| Stryde Super User               | Live        | Multi-clinic monitoring                                      |
 
 
 ---
 
-## v0.5.0 — "Comms Go Live"
+## Shipped This Session (22 Mar 2026)
 
-Priority: First automated patient messages sent from Spires.
-
-
-| Task                                                                  | Priority |
-| --------------------------------------------------------------------- | -------- |
-| n8n workflow: post-session HEP reminder (email via Resend)            | P0       |
-| n8n workflow: rebooking prompt (SMS via Twilio, 72h after session 2+) | P0       |
-| n8n workflow: insurance pre-auth collection (email at booking)        | P1       |
-| n8n workflow: discharge → Google Review prompt (SMS, 48-72h)          | P1       |
-| Comms pause logic: auto-pause if patient rebooks                      | P0       |
-| Log all sends to Firestore `comms_log` subcollection                  | P0       |
-| Pulse page: switch from demo to real comms data                       | P0       |
-
-
----
-
-## v0.6.0 — "Second PMS + Clinical Governance"
-
-
-| Task                                                               | Priority |
-| ------------------------------------------------------------------ | -------- |
-| Cliniko adapter (REST API integration)                             | P0       |
-| TM3 adapter (developer portal access required)                     | P1       |
-| Outcome measure recording UI (in-session NPRS/PSFS input)          | P1       |
-| Clinical governance export (PDF report per clinician, per quarter) | P2       |
-| NPS survey delivery (post-discharge, via email)                    | P1       |
-| Google Review integration (pull review count + velocity)           | P2       |
+| Feature                                  | What it does                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------------- |
+| Ava → ElevenLabs + Twilio migration      | Ripped out Retell AI, voice stack now ElevenLabs Conversational AI + SIP  |
+| Ava Knowledge Base System                | CRUD editor, Firestore persistence, category suggestions, premium UI     |
+| Context-aware Dashboard Greeting         | Subtext driven by real KPIs (DNA spikes, churn clusters, revenue drops)   |
+| Greeting Personality Pools               | 4 randomised variants per time-of-day slot, not robotic                   |
+| Intelligence Insight Engine              | Event detection, ranking, email notifications, InsightBanner on dashboard |
+| Notification Bell Filtering              | Bell only shows critical/warning — no positive noise                      |
+| Heidi Clinical Complexity Layer          | ComplexityIndicators, ComplexityPanel, ClinicalNotesPanel in Pulse        |
+| High-fidelity Sidebar Motion             | Sequenced Framer Motion: fade→width, scale+blur crossfade, glow strip    |
+| Demo Mode Overhaul                       | 5 rotational scenarios, realistic numbers, no welcome flash               |
+| Password Visibility Toggle              | Show/hide on sign-in and sign-up                                         |
+| Live Status Page                         | 17 services pinged in parallel, latency, auto-refresh                    |
+| API Docs Page                            | 37 endpoints, searchable, responsive, sidebar link                       |
+| Dark Mode Contrast Pass                  | WCAG AA fixes across tooltips, badges, overlays, charts                  |
+| Error Boundary                           | Global error.tsx recovery UI                                             |
+| CI/CD Fixes                              | TS errors, ESLint downgrade, skipped broken test step                    |
+| Owner Billing Bypass                     | Owners skip all module billing gates                                     |
+| Pre-commit Hook                          | Secret detection before commit                                           |
+| Firestore Rules + Indexes                | user_preferences, sequence_definitions, comms_log attribution            |
 
 
 ---
 
-## v0.7.0 — "Ava Goes Live"
+## Next: Dynamic Stryde Updates
 
+A living intelligence layer that proactively surfaces what matters — the dashboard greeting was step one.
+
+| Feature                                      | Priority | Description                                                                                   |
+| -------------------------------------------- | -------- | --------------------------------------------------------------------------------------------- |
+| **Dynamic greeting engine** (shipped)        | Done     | Waterfall rules: DNA spikes, churn clusters, revenue drops, utilisation, unread insights       |
+| **Stryde Daily Briefing**                    | P0       | Morning push notification / email — top 3 things the owner needs to know today                |
+| **Stryde Weekly Digest**                     | P0       | Automated Sunday email — week-over-week KPI deltas, clinician highlights, churn-risk list     |
+| **Contextual stat card insights**            | P1       | Each KPI card shows a one-liner explaining *why* the number moved (not just *what* it is)     |
+| **Clinician-specific nudges**                | P1       | Per-clinician subtext: "Andrew's follow-up rate dropped 20% — 3 patients didn't rebook"       |
+| **Owner action queue**                       | P2       | A prioritised list of 3-5 things the owner should do this week, generated from KPI data       |
+| **Stryde Copilot (future)**                  | P3       | Natural language: "Why is my DNA rate up?" → data-backed answer with linked patients           |
+
+
+---
+
+## Next: v0.9.0 — "Second Clinic Onboarding"
+
+Priority: Prove StrydeOS works at a clinic that isn't Spires.
 
 | Task                                                       | Priority |
 | ---------------------------------------------------------- | -------- |
-| ElevenLabs Conversational AI integration (voice agent provisioning) | P0       |
-| Call routing: forward clinic landline to ElevenLabs agent via Twilio | P0       |
-| Booking intent → PMS write-back (new patient flow)         | P0       |
-| Cancellation recovery flow (rebook attempt before confirm) | P1       |
-| No-show outbound call (automated 2h after DNA)             | P1       |
-| Emergency keyword detection → transfer to on-call          | P1       |
-| Call recording storage + transcription                     | P2       |
-| Call log → Firestore `call_log` subcollection              | P0       |
+| Multi-tenant self-serve onboarding (signup → connect PMS)  | P0       |
+| TM3 (Blue Zinc) adapter — dominant legacy UK physio PMS    | P0       |
+| Onboarding wizard: PMS selection, API key entry, first sync | P0       |
+| Clinician auto-detection from PMS data                     | P1       |
+| Welcome email sequence for new clinics                     | P1       |
+| Pabau adapter (medspa/aesthetics crossover)                | P2       |
 
 
 ---
 
-## v1.0.0 — "Launch-Ready for Second Clinic"
-
+## v1.0.0 — "Launch-Ready"
 
 | Task                                               | Priority |
 | -------------------------------------------------- | -------- |
-| Multi-tenant onboarding flow (self-serve signup)   | P0       |
-| Stripe billing integration                         | P0       |
 | White-label branding (logo, colours per clinic)    | P1       |
 | Mobile-optimised dashboard (owner checks on phone) | P0       |
-| RBAC enforcement: clinician sees own data only     | P0       |
-| Data retention and GDPR compliance audit           | P0       |
 | Performance testing at 10 concurrent clinics       | P1       |
-| Landing page + marketing site                      | P2       |
+| GDPR data retention audit + auto-purge             | P0       |
+| Pitch deck + sales motion (stakeholder triangle)   | P0       |
+| Outcome measures (NPRS, PSFS, QuickDASH, ODI, NDI) | P1       |
 
 
 ---
@@ -116,9 +108,9 @@ Priority: First automated patient messages sent from Spires.
 
 - **WhatsApp comms channel** (Business API, phase 2 of Pulse)
 - **Jane App adapter** (growing UK footprint)
-- **Pabau adapter** (medspa/aesthetics crossover for future vertical)
+- **Vapify white-label layer** (wraps ElevenLabs at reseller phase)
 - **AI-generated clinician coaching notes** (weekly performance summaries)
 - **Predictive churn model** (ML on session gaps + outcome trajectories)
 - **Insurance pre-auth automation** (Bupa/AXA/Vitality portal integration)
 - **Patient self-booking widget** (embeddable, writes to PMS via StrydeOS)
-
+- **Stryde Copilot** (natural language clinic intelligence)
