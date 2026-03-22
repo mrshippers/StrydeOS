@@ -97,7 +97,7 @@ export const PatientBoard: FC<Props> = ({
               <button
                 onClick={() => setCollapsed((prev) => {
                   const next = new Set(prev);
-                  isCollapsed ? next.delete(state) : next.add(state);
+                  if (isCollapsed) { next.delete(state); } else { next.add(state); }
                   return next;
                 })}
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
@@ -136,7 +136,7 @@ export const PatientBoard: FC<Props> = ({
                               className="flex items-center gap-3 cursor-pointer"
                               onClick={() => setExpanded((prev) => {
                                 const next = new Set(prev);
-                                isExpanded ? next.delete(p.id) : next.add(p.id);
+                                if (isExpanded) { next.delete(p.id); } else { next.add(p.id); }
                                 return next;
                               })}
                             >

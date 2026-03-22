@@ -21,10 +21,10 @@ const TREND_COLORS: Record<string, string> = {
 
 function useCountUp(rawTarget: string | number, duration = 800): { display: string; ref: React.RefObject<HTMLElement | null> } {
   const target = String(rawTarget);
-  const numericPart = parseFloat(target.replace(/[^0-9.\-]/g, ""));
+  const numericPart = parseFloat(target.replace(/[^0-9.-]/g, ""));
   const isNumeric = !isNaN(numericPart);
-  const prefix = isNumeric ? target.match(/^[^0-9.\-]*/)?.[0] ?? "" : "";
-  const suffix = isNumeric ? target.match(/[^0-9.\-]*$/)?.[0] ?? "" : "";
+  const prefix = isNumeric ? target.match(/^[^0-9.-]*/)?.[0] ?? "" : "";
+  const suffix = isNumeric ? target.match(/[^0-9.-]*$/)?.[0] ?? "" : "";
   const decimals = target.includes(".") ? (target.split(".")[1]?.replace(/[^0-9]/g, "").length ?? 0) : 0;
 
   const [display, setDisplay] = useState(target);

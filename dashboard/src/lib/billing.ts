@@ -133,11 +133,11 @@ export function getExtraSeatPriceId(interval: BillingInterval): string {
 function buildPriceToFlagsMap(): Record<string, Array<keyof FeatureFlags>> {
   const map: Record<string, Array<keyof FeatureFlags>> = {};
 
-  for (const module of MODULE_KEYS) {
+  for (const mod of MODULE_KEYS) {
     for (const tier of TIER_KEYS) {
       for (const interval of INTERVAL_KEYS) {
-        const priceId = process.env[getPriceEnvVar(module, tier, interval)];
-        if (priceId) map[priceId] = [MODULE_TO_FLAG[module]];
+        const priceId = process.env[getPriceEnvVar(mod, tier, interval)];
+        if (priceId) map[priceId] = [MODULE_TO_FLAG[mod]];
       }
     }
   }

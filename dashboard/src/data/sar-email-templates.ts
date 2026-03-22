@@ -124,7 +124,7 @@ export function renderSarEmailTemplate(
   }
 ): SarEmailTemplate {
   let body = template.body;
-  let subject = template.subject;
+  const subject = template.subject;
 
   if (data.requestType) body = body.replace("{{REQUEST_TYPE}}", data.requestType);
   if (data.requestId) body = body.replace(/{{REQUEST_ID}}/g, data.requestId);

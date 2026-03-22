@@ -208,7 +208,7 @@ export default function Sidebar() {
       }
       try {
         sessionStorage.setItem("strydeos-sidebar-seen", "1");
-      } catch {}
+      } catch { /* sessionStorage may be unavailable */ }
     }, 4000);
     return () => {
       if (autoCollapseRef.current) clearTimeout(autoCollapseRef.current);

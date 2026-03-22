@@ -97,7 +97,7 @@ export function isDateParseable(dateStr: string, dateFormat: DateFormat): boolea
   }
 
   if (dateFormat === "uk") {
-    if (/^\d{2}[/\-]\d{2}[/\-]\d{4}$/.test(trimmed)) {
+    if (/^\d{2}[/-]\d{2}[/-]\d{4}$/.test(trimmed)) {
       const sep = trimmed.includes("/") ? "/" : "-";
       const [d, m, y] = trimmed.split(sep);
       return !isNaN(new Date(`${y}-${m}-${d}`).getTime());
@@ -106,7 +106,7 @@ export function isDateParseable(dateStr: string, dateFormat: DateFormat): boolea
   }
 
   if (dateFormat === "us") {
-    if (/^\d{2}[/\-]\d{2}[/\-]\d{4}$/.test(trimmed)) {
+    if (/^\d{2}[/-]\d{2}[/-]\d{4}$/.test(trimmed)) {
       const sep = trimmed.includes("/") ? "/" : "-";
       const [m, d, y] = trimmed.split(sep);
       return !isNaN(new Date(`${y}-${m}-${d}`).getTime());

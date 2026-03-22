@@ -72,7 +72,7 @@ export default function TrialBanner() {
         </Link>
         <button
           onClick={() => {
-            try { sessionStorage.setItem(DISMISS_KEY, "1"); } catch {}
+            try { sessionStorage.setItem(DISMISS_KEY, "1"); } catch { /* ignored */ }
             setDismissed(true);
           }}
           aria-label="Dismiss trial banner"
