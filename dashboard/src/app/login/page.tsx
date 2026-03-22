@@ -13,7 +13,7 @@ import {
 } from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { getFirebaseAuth } from "@/lib/firebase";
-import { AlertCircle, Loader2, ArrowRight, Check, Building2, Shield } from "lucide-react";
+import { AlertCircle, Loader2, ArrowRight, Check, Building2, Shield, Eye, EyeOff } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
 import { trackCTAClick } from "@/lib/funnel-events";
@@ -63,6 +63,7 @@ function LoginPageInner() {
   const [mfaResolver, setMfaResolver] = useState<MultiFactorResolver | null>(null);
   const [mfaCode, setMfaCode] = useState("");
   const [mfaVerifying, setMfaVerifying] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     try {
@@ -505,16 +506,26 @@ function LoginPageInner() {
                               {resetLoading ? "Sending…" : "Forgot password?"}
                             </button>
                           </div>
-                          <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => { setPassword(e.target.value); setResetError(null); setResetSent(false); }}
-                            required
-                            autoFocus={isReturning}
-                            autoComplete="current-password"
-                            placeholder="Enter your password"
-                            className="w-full px-4 py-3 rounded-xl text-sm text-navy placeholder-muted border border-border bg-cloud-light focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue transition-all"
-                          />
+                          <div className="relative">
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              value={password}
+                              onChange={(e) => { setPassword(e.target.value); setResetError(null); setResetSent(false); }}
+                              required
+                              autoFocus={isReturning}
+                              autoComplete="current-password"
+                              placeholder="Enter your password"
+                              className="w-full px-4 py-3 pr-11 rounded-xl text-sm text-navy placeholder-muted border border-border bg-cloud-light focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue transition-all"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-navy transition-colors"
+                              tabIndex={-1}
+                            >
+                              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
                         </div>
 
                         {resetSent && (
@@ -684,16 +695,26 @@ function LoginPageInner() {
                           <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest mb-2">
                             Password
                           </label>
-                          <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            minLength={8}
-                            autoComplete="new-password"
-                            placeholder="Minimum 8 characters"
-                            className="w-full px-4 py-3 rounded-xl text-sm text-navy placeholder-muted border border-border bg-cloud-light focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue transition-all"
-                          />
+                          <div className="relative">
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                              minLength={8}
+                              autoComplete="new-password"
+                              placeholder="Minimum 8 characters"
+                              className="w-full px-4 py-3 pr-11 rounded-xl text-sm text-navy placeholder-muted border border-border bg-cloud-light focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue transition-all"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-navy transition-colors"
+                              tabIndex={-1}
+                            >
+                              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
                         </div>
 
                         <AnimatePresence>
