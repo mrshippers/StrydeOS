@@ -475,7 +475,7 @@
   </div>
 
   <!-- PMS & HEP Integrations -->
-  <div class="section" data-search="pms writeupp cliniko halaxy zanda physitrack hep integration connect csv import sync">
+  <div class="section" data-search="pms writeupp cliniko halaxy zanda physitrack rehab-my-patient wibbi hep integration connect csv import sync">
     <div class="section-title">
       <div class="section-icon" style="background:#EDE9FE;color:var(--purple);">🔗</div>
       Practice Management &amp; HEP Integrations
@@ -485,7 +485,7 @@
       <p>StrydeOS connects to your existing Practice Management System (PMS) to pull in appointment data, clinician rosters, and patient records. Supported systems: <strong>WriteUpp, Cliniko, Halaxy, Zanda (Power Diary)</strong>. TM3 support is coming soon.</p>
       <p>You enter your PMS API key in Settings, test the connection, and StrydeOS starts syncing. Data refreshes automatically — WriteUpp pushes updates in real-time via webhooks; other systems sync on a schedule.</p>
       <p>For clinics without API access, you can upload CSV exports of your appointment or patient data. StrydeOS auto-detects common formats or lets you create a custom column mapping.</p>
-      <p>Home Exercise Programme (HEP) data flows in from <strong>Physitrack</strong> — tracking programme assignments, adherence, and completion rates per patient.</p>
+      <p>Home Exercise Programme (HEP) data flows in from your connected HEP provider (<strong>Physitrack, Rehab My Patient, or Wibbi</strong>) — tracking programme assignments, adherence, and completion rates per patient.</p>
       <div class="biz-who"><strong>Who uses this:</strong> Clinic owners connecting their PMS during onboarding, or uploading CSV exports</div>
       <div class="biz-endpoints">
         <span class="biz-endpoint">/api/pms/save-config</span>
@@ -1000,7 +1000,7 @@
   </div>
 
   <!-- ── PMS & HEP Integrations ── -->
-  <div class="section" data-search="pms writeupp cliniko halaxy zanda hep physitrack connect csv import schema sync disconnect">
+  <div class="section" data-search="pms writeupp cliniko halaxy zanda hep physitrack rehab-my-patient wibbi connect csv import schema sync disconnect">
     <div class="section-title">
       <div class="section-icon" style="background:#EDE9FE;color:var(--purple);">🔗</div>
       PMS &amp; HEP Integrations
@@ -1189,7 +1189,7 @@ type, status, notes, price, duration</span></pre>
       </div>
     </div>
 
-    <div class="card" data-search="hep physitrack save config api key">
+    <div class="card" data-search="hep physitrack rehab-my-patient wibbi save config api key">
       <div class="card-header" onclick="toggleCard(this)">
         <div class="card-expand">▶</div>
         <div class="card-info">
@@ -1197,11 +1197,11 @@ type, status, notes, price, duration</span></pre>
             <span class="method-badge method-POST">POST</span>
             <span class="card-path">/api/hep/save-config</span>
           </div>
-          <div class="card-desc">Save HEP integration credentials (Physitrack API key).</div>
+          <div class="card-desc">Save HEP integration credentials (API key for Physitrack, Rehab My Patient, or Wibbi).</div>
           <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
         </div>
       </div>
-      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Request Body</h4><pre><span class="key">provider</span>: <span class="type">"physitrack"</span> <span class="comment">← default</span>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Request Body</h4><pre><span class="key">provider</span>: <span class="type">"physitrack" | "rehab_my_patient" | "wibbi"</span> <span class="comment">← required</span>
 <span class="key">apiKey</span>:   <span class="type">string</span> <span class="required">← required</span></pre></div><div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }</pre></div></div></div>
     </div>
 
