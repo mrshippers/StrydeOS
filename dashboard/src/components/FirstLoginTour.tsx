@@ -189,9 +189,8 @@ export default function FirstLoginTour() {
                 delay: 0.12,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="w-full max-w-lg rounded-2xl overflow-hidden"
+              className="w-full max-w-lg rounded-2xl overflow-hidden bg-cream"
               style={{
-                background: "#fff",
                 boxShadow: "0 32px 80px rgba(0, 0, 0, 0.25)",
               }}
             >

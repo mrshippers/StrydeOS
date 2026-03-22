@@ -41,7 +41,7 @@ type View = "dashboard" | "config";
 
 const AVG_APPOINTMENT_VALUE = 85;
 
-// Map Retell outcome → display config
+// Map call outcome → display config
 const OUTCOME_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   booked: { bg: "bg-success/10", text: "text-success", label: "Booked" },
   follow_up_required: { bg: "bg-warn/10", text: "text-warn", label: "Cancelled" },
@@ -82,7 +82,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-border rounded-xl p-3 shadow-[var(--shadow-elevated)]">
+    <div className="bg-cream border border-border rounded-xl p-3 shadow-[var(--shadow-elevated)]">
       <p className="text-xs font-semibold text-navy">
         {label}: {payload[0].value} calls
       </p>
@@ -148,7 +148,7 @@ class AvaErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
               <p className="text-sm text-muted max-w-sm">
                 {this.state.error?.message
                   ? `Error: ${this.state.error.message}`
-                  : "An unexpected error occurred. Check your Retell and Firebase configuration."}
+                  : "An unexpected error occurred. Check your ElevenLabs and Firebase configuration."}
               </p>
             </div>
             <button

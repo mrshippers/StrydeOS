@@ -110,7 +110,7 @@ Business Associate shall indemnify and hold harmless Covered Entity from any cla
 Business Associate currently utilizes the following HIPAA-compliant subcontractors:
 - Google Cloud Platform (signed BAA on file)
 - Twilio / SendGrid (signed BAA on file)
-- Retell AI (signed BAA on file)
+- ElevenLabs (signed BAA on file)
 
 All subcontractors are required to enter into written agreements that contain terms substantially similar to those in this BAA.
 

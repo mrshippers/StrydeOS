@@ -70,6 +70,8 @@ html.dark {
   --color-muted: rgba(255,255,255,0.72);
   --color-muted-strong: rgba(255,255,255,0.85);
   --color-border: rgba(255,255,255,0.12);
+  --color-success: #10B981;
+  --color-danger: #F87171;
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.25);
   --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
@@ -261,6 +263,28 @@ html.dark .skeleton-shimmer {
   .animate-skeleton {
     animation: none;
   }
+}
+
+/* ─── Dark-mode Recharts overrides ──────────────────────────────────────────── */
+html.dark .recharts-cartesian-grid line {
+  stroke: rgba(255,255,255,0.08) !important;
+}
+
+html.dark .recharts-cartesian-axis-tick-value {
+  fill: rgba(255,255,255,0.70) !important;
+}
+
+html.dark .recharts-cartesian-axis-line {
+  stroke: rgba(255,255,255,0.08) !important;
+}
+
+html.dark .recharts-legend-item-text {
+  color: rgba(255,255,255,0.7) !important;
+}
+
+/* ─── Dark-mode chevron glyph ────────────────────────────────────────────────── */
+html.dark .chevron-glyph {
+  color: rgba(255,255,255,0.20);
 }
 
 /* ─── Theme wipe transition ──────────────────────────────────────────────────── */

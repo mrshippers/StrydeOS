@@ -225,9 +225,8 @@ export default function CommandPalette() {
               exit={{ opacity: 0, y: -4, scale: 0.98 }}
               transition={{ type: "spring", stiffness: 380, damping: 30 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg rounded-2xl overflow-hidden"
+              className="w-full max-w-lg rounded-2xl overflow-hidden bg-cream"
               style={{
-                background: "#fff",
                 boxShadow: "0 24px 64px rgba(0,0,0,0.2)",
                 border: "1px solid var(--color-border)",
               }}

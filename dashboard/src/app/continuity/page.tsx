@@ -10,7 +10,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClinicians } from "@/hooks/useClinicians";
 import { usePatients } from "@/hooks/usePatients";
 import { useToast } from "@/components/ui/Toast";
-import { useDemoPatients } from "@/hooks/useDemoData";
 import { useSequences } from "@/hooks/useSequences";
 import { useCommsLog } from "@/hooks/useCommsLog";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -87,8 +86,7 @@ function ContinuityPage() {
   const { commsLog, commsStats, statsBySequence, totalAttributedRevenuePence, isDemo: commsIsDemo } = useCommsLog();
   const { preferences, updatePreferences } = useUserPreferences();
   const [customiseOpen, setCustomiseOpen] = useState(false);
-  const allPatients = useDemoPatients();
-  const patientMap = Object.fromEntries(allPatients.map((p) => [p.id, p]));
+  const patientMap = Object.fromEntries(patients.map((p) => [p.id, p]));
 
   async function handleSendReminder(patientId: string) {
     const patient = patients.find((p) => p.id === patientId);
@@ -105,7 +103,7 @@ function ContinuityPage() {
     if (!clinicId) return;
 
     const REBOOKING_BODY =
-      "Hi [Name], we noticed you haven't booked your next appointment yet. You've made great progress — let's keep the momentum going. Reply to this message or call us on 020 7794 0202.";
+      "Hi [Name], we noticed you haven't booked your next appointment yet. You've made great progress — let's keep the momentum going. Reply to this message or call us on [Phone].";
 
     try {
       const res = await fetch("/api/comms/send", {

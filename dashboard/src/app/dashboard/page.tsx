@@ -13,6 +13,7 @@ import DemoBanner from "@/components/ui/DemoBanner";
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import { SkeletonCard } from "@/components/ui/EmptyState";
 import DailySnapshot from "@/components/ui/DailySnapshot";
+import EmptyState from "@/components/ui/EmptyState";
 import InsightNudge from "@/components/ui/InsightNudge";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
 import { usePatients } from "@/hooks/usePatients";
@@ -289,6 +290,27 @@ export default function DashboardPage() {
 
       {/* Alert section — before the numbers, so priority context lands first */}
       {!loading && alerts.length > 0 && <AlertBanner alerts={alerts} />}
+
+      {/* Empty state — shown when loading is done but no metrics exist */}
+      {!loading && !latest && (
+        <motion.div {...staggerItem(0.1)}>
+          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)]">
+            <EmptyState
+              heading="No performance data yet"
+              subtext="Metrics will populate as patient data flows in from your PMS. If you've just connected, allow up to 24 hours for the first sync to complete."
+              action={
+                <a
+                  href="/settings"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
+                  style={{ background: "#1C54F2" }}
+                >
+                  Check PMS connection →
+                </a>
+              }
+            />
+          </div>
+        </motion.div>
+      )}
 
       {/* Stat cards — row 1 */}
       <motion.section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4" data-tour="stat-cards" {...staggerItem(0.1)}>

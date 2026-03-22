@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ChevronDown, ChevronUp, Info } from "lucide-react";
+import { ChevronDown, ChevronUp, Info, Users } from "lucide-react";
 import type { WeeklyStats, MetricStatus } from "@/types";
 import { getInitials, formatPercent, formatRate } from "@/lib/utils";
 
@@ -52,20 +52,16 @@ function getCourseCompletionRAG(rate: number): MetricStatus {
   return "danger";
 }
 
-const RAG_BADGE: Record<MetricStatus, { bg: string; text: string }> = {
-  ok:      { bg: "rgba(5,150,105,0.09)",  text: "#059669" },
-  warn:    { bg: "rgba(245,158,11,0.09)", text: "#F59E0B" },
-  danger:  { bg: "rgba(239,68,68,0.09)",  text: "#EF4444" },
-  neutral: { bg: "rgba(107,114,128,0.09)", text: "#6B7280" },
+const RAG_CLASSES: Record<MetricStatus, string> = {
+  ok:      "bg-success/10 text-success",
+  warn:    "bg-warn/10 text-warn",
+  danger:  "bg-danger/10 text-danger",
+  neutral: "bg-muted/10 text-muted",
 };
 
 function RagBadge({ value, status }: { value: string; status: MetricStatus }) {
-  const style = RAG_BADGE[status];
   return (
-    <span
-      className="inline-flex px-2.5 py-0.5 rounded-md text-[13px] font-semibold tabular-nums"
-      style={{ backgroundColor: style.bg, color: style.text }}
-    >
+    <span className={`inline-flex px-2.5 py-0.5 rounded-md text-[13px] font-semibold tabular-nums ${RAG_CLASSES[status]}`}>
       {value}
     </span>
   );
@@ -110,13 +106,13 @@ function HeaderTooltip({ text }: { text: string }) {
       </button>
       {open && (
         <div
-          className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-56 px-3 py-2.5 rounded-lg text-[12px] leading-relaxed text-white/90 shadow-lg animate-fade-in"
-          style={{ background: "#0B2545" }}
+          className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-56 px-3 py-2.5 rounded-lg text-[12px] leading-relaxed text-white/90 shadow-lg animate-fade-in border border-white/10"
+          style={{ background: "#132D5E" }}
         >
           {text}
           <div
-            className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45"
-            style={{ background: "#0B2545" }}
+            className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 border-l border-t border-white/10"
+            style={{ background: "#132D5E" }}
           />
         </div>
       )}
@@ -137,6 +133,22 @@ export default function CliniciansTable({ rows, onRowClick }: CliniciansTablePro
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortAsc, setSortAsc] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-12 text-center">
+        <div className="flex justify-center mb-4">
+          <div className="w-12 h-12 rounded-full bg-blue/10 flex items-center justify-center">
+            <Users size={22} className="text-blue" />
+          </div>
+        </div>
+        <h3 className="font-display text-xl text-navy mb-2">No clinician data yet</h3>
+        <p className="text-sm text-muted max-w-md mx-auto leading-relaxed">
+          Clinician performance will appear here once your PMS is connected and appointment data starts syncing. This typically populates within 24 hours of your first sync.
+        </p>
+      </div>
+    );
+  }
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {

@@ -130,7 +130,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     category: "modules",
     question: "What does the Ava module do?",
     answer:
-      "Ava is the AI voice receptionist. She handles inbound calls, qualifies new patient enquiries, checks appointment availability, and books directly into your PMS diary — using a natural, human-sounding voice. Ava runs 24/7, meaning no more missed calls out of hours. She's built on Retell AI and ElevenLabs for the voice layer, with n8n handling the automation logic. Ava works with your PMS at the deepest level it supports — from real-time booking to intelligent call handling — so your front desk is covered regardless of your software.",
+      "Ava is the AI voice receptionist. She handles inbound calls, qualifies new patient enquiries, checks appointment availability, and books directly into your PMS diary — using a natural, human-sounding voice. Ava runs 24/7, meaning no more missed calls out of hours. She's built on ElevenLabs for the voice layer, with n8n handling the automation logic. Ava works with your PMS at the deepest level it supports — from real-time booking to intelligent call handling — so your front desk is covered regardless of your software.",
     clinicNote:
       "Ava is voice-first — there is no chatbot or text-based interface. See 'How does Ava work with different PMS systems?' for tier-by-tier capabilities.",
     tags: ["ava", "receptionist", "voice", "ai", "booking", "calls", "phone"],

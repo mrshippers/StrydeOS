@@ -80,7 +80,7 @@ export default function PageHeader({
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-border rounded-xl shadow-[var(--shadow-elevated)] py-1 z-50 animate-fade-in">
+            <div className="absolute right-0 top-full mt-2 w-56 bg-cream border border-border rounded-xl shadow-[var(--shadow-elevated)] py-1 z-50 animate-fade-in">
               <button
                 onClick={() => {
                   onClinicianChange("all");

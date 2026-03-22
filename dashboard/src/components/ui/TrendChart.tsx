@@ -31,7 +31,7 @@ function CustomTooltip({
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="bg-cloud-light border border-border rounded-xl p-3 shadow-[var(--shadow-elevated)]">
+    <div className="bg-cream border border-border rounded-xl p-3 shadow-[var(--shadow-elevated)]">
       <p className="font-display text-sm text-navy mb-2">
         {label}
       </p>

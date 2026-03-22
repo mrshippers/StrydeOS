@@ -30,7 +30,7 @@ const MODULE_BENEFITS: Record<ModuleKey, string[]> = {
     "Full comms log with open and click tracking",
   ],
   ava: [
-    "24/7 AI inbound call handling via Retell AI",
+    "24/7 AI inbound call handling via ElevenLabs",
     "Automatically books appointments into your PMS",
     "Full call log with outcomes and recording links",
   ],

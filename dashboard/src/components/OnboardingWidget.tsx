@@ -167,9 +167,8 @@ export default function OnboardingWidget() {
               exit={{ opacity: 0, y: 8, scale: 0.97 }}
               transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl p-0 overflow-hidden"
+              className="w-full max-w-md rounded-2xl p-0 overflow-hidden bg-cream"
               style={{
-                background: "#fff",
                 boxShadow: "0 24px 64px rgba(0,0,0,0.2)",
               }}
             >

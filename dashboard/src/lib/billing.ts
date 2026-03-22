@@ -294,7 +294,7 @@ export const MODULE_DISPLAY: Record<
   ava: {
     name: "Ava",
     description:
-      "AI voice receptionist powered by Retell AI. Handles inbound calls, books appointments 24/7, and logs all interactions.",
+      "AI voice receptionist powered by ElevenLabs. Handles inbound calls, books appointments 24/7, and logs all interactions.",
     color: "#1C54F2",
     flagKey: "receptionist",
   },

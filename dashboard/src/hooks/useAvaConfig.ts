@@ -35,7 +35,7 @@ export interface AvaSettings {
 
 const DEFAULT_CONFIG: AvaConfig = {
   enabled: false,
-  phone: "020 7794 0202",
+  phone: "",
   ia_price: "85",
   fu_price: "65",
   address: "",
