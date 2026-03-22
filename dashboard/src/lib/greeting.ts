@@ -168,6 +168,83 @@ function selectSubtext(data: GreetingData, day: string): string {
   return `Here\u2019s this week at a glance.`;
 }
 
+// ─── Greeting pools ─────────────────────────────────────────────────────────
+
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+type GreetingPool = { withName: string[]; withoutName: string[] };
+
+const GREETINGS_FIRST_MOUNT: GreetingPool = {
+  withName: [
+    "Welcome back, {name}",
+  ],
+  withoutName: [
+    "Welcome back",
+  ],
+};
+
+const GREETINGS_MORNING: GreetingPool = {
+  withName: [
+    "Morning, {name}. I've already read the numbers",
+    "Morning rounds, {name}",
+    "Morning, {name}. The data didn't sleep either",
+    "Early start, {name}. I like the commitment",
+  ],
+  withoutName: [
+    "Morning. I've already read the numbers",
+    "Morning rounds",
+    "Morning. The data didn't sleep either",
+    "Early start. I like the commitment",
+  ],
+};
+
+const GREETINGS_AFTERNOON: GreetingPool = {
+  withName: [
+    "Afternoon, {name}. The clinic's been busy \u2014 I've been busier",
+    "Afternoon clinic, {name}",
+    "Afternoon, {name}. Nothing's on fire. Mostly",
+    "Midday check-in, {name}. I've been expecting you",
+  ],
+  withoutName: [
+    "Afternoon. The clinic's been busy \u2014 I've been busier",
+    "Afternoon clinic",
+    "Afternoon. Nothing's on fire. Mostly",
+    "Midday check-in. I've been expecting you",
+  ],
+};
+
+const GREETINGS_EVENING: GreetingPool = {
+  withName: [
+    "Evening, {name}. Another one in the books",
+    "Post-clinic debrief, {name}",
+    "Shift's over, {name}. Let's see how it went",
+    "Evening, {name}. I saved you a summary",
+  ],
+  withoutName: [
+    "Evening. Another one in the books",
+    "Post-clinic debrief",
+    "Shift's over. Let's see how it went",
+    "Evening. I saved you a summary",
+  ],
+};
+
+const GREETINGS_LATE: GreetingPool = {
+  withName: [
+    "You're up late, {name}. So am I, apparently",
+    "After-hours, {name}. Dedication noted",
+    "Still here, {name}? Same",
+    "Burning the midnight oil, {name}. I'll keep you company",
+  ],
+  withoutName: [
+    "You're up late. So am I, apparently",
+    "After-hours. Dedication noted",
+    "Still here? Same",
+    "Burning the midnight oil. I'll keep you company",
+  ],
+};
+
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 const SESSION_GREETED_KEY = "strydeos_greeted";
@@ -180,18 +257,23 @@ export function getGreeting(
   const name = firstName || "";
   const hour = new Date().getHours();
 
-  let greeting: string;
-  if (isFirstMount && name) {
-    greeting = `Welcome back, ${name}`;
+  let pool: GreetingPool;
+  if (isFirstMount) {
+    pool = GREETINGS_FIRST_MOUNT;
   } else if (hour >= 5 && hour < 12) {
-    greeting = name ? `Good morning, ${name}` : "Good morning";
+    pool = GREETINGS_MORNING;
   } else if (hour >= 12 && hour < 17) {
-    greeting = name ? `Good afternoon, ${name}` : "Good afternoon";
+    pool = GREETINGS_AFTERNOON;
   } else if (hour >= 17 && hour < 22) {
-    greeting = name ? `Good evening, ${name}` : "Good evening";
+    pool = GREETINGS_EVENING;
   } else {
-    greeting = name ? `Still up, ${name}?` : "Good night";
+    pool = GREETINGS_LATE;
   }
+
+  const template = name
+    ? pickRandom(pool.withName)
+    : pickRandom(pool.withoutName);
+  const greeting = template.replace(/\{name\}/g, name);
 
   const day = new Date().toLocaleDateString("en-GB", { weekday: "long" });
   const subtext = selectSubtext(data, day);
