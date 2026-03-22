@@ -1,4 +1,5 @@
 import type { OutcomeMeasureType } from "@/types";
+import { getDemoRevPerSession, getDemoLatestAppts } from "./useDemoData";
 
 // ─── Revenue Intelligence ────────────────────────────────────────────────────
 
@@ -73,22 +74,32 @@ export interface ReviewVelocity {
 }
 
 // ─── Demo Data ───────────────────────────────────────────────────────────────
+// All revenue values are realistic for UK private physio practices.
+// A 3-clinician practice doing ~60 sessions/week at ~£65-85/session = £3,900-£5,100/week.
 
 export function getDemoRevenueByClinician(): RevenueByClinician[] {
+  const rps = getDemoRevPerSession();
+  // Clinician session splits: James 30%, Alex 38%, Sam 32% of total
+  const totalAppts = getDemoLatestAppts();
+  const jSessions = Math.round(totalAppts * 0.30);
+  const aSessions = Math.round(totalAppts * 0.38);
+  const sSessions = Math.round(totalAppts * 0.32);
+
   return [
-    { clinicianId: "c-james", clinicianName: "James", totalRevenuePence: 1620000, sessionsDelivered: 21, revenuePerSessionPence: 7720, insurancePct: 0.14 },
-    { clinicianId: "c-alex", clinicianName: "Alex", totalRevenuePence: 2040000, sessionsDelivered: 24, revenuePerSessionPence: 8500, insurancePct: 0.25 },
-    { clinicianId: "c-sam", clinicianName: "Sam", totalRevenuePence: 1794000, sessionsDelivered: 23, revenuePerSessionPence: 7800, insurancePct: 0.30 },
+    { clinicianId: "c-james", clinicianName: "James", totalRevenuePence: jSessions * rps, sessionsDelivered: jSessions, revenuePerSessionPence: rps, insurancePct: 0.14 },
+    { clinicianId: "c-alex", clinicianName: "Alex", totalRevenuePence: aSessions * rps, sessionsDelivered: aSessions, revenuePerSessionPence: rps, insurancePct: 0.25 },
+    { clinicianId: "c-sam", clinicianName: "Sam", totalRevenuePence: sSessions * rps, sessionsDelivered: sSessions, revenuePerSessionPence: rps, insurancePct: 0.30 },
   ];
 }
 
 export function getDemoRevenueByCondition(): RevenueByCondition[] {
+  const rps = getDemoRevPerSession();
   return [
-    { condition: "Low Back Pain", totalRevenuePence: 1890000, sessions: 24, avgSessionsPence: 7875 },
-    { condition: "Shoulder Impingement", totalRevenuePence: 1260000, sessions: 15, avgSessionsPence: 8400 },
-    { condition: "ACL Rehab (Post-Op)", totalRevenuePence: 1050000, sessions: 12, avgSessionsPence: 8750 },
-    { condition: "Neck Pain / Cervicogenic HA", totalRevenuePence: 780000, sessions: 10, avgSessionsPence: 7800 },
-    { condition: "Achilles Tendinopathy", totalRevenuePence: 474000, sessions: 7, avgSessionsPence: 6771 },
+    { condition: "Low Back Pain", totalRevenuePence: 24 * rps, sessions: 24, avgSessionsPence: rps },
+    { condition: "Shoulder Impingement", totalRevenuePence: 15 * rps, sessions: 15, avgSessionsPence: rps },
+    { condition: "ACL Rehab (Post-Op)", totalRevenuePence: 12 * rps, sessions: 12, avgSessionsPence: Math.round(rps * 1.1) },
+    { condition: "Neck Pain / Cervicogenic HA", totalRevenuePence: 10 * rps, sessions: 10, avgSessionsPence: rps },
+    { condition: "Achilles Tendinopathy", totalRevenuePence: 7 * rps, sessions: 7, avgSessionsPence: Math.round(rps * 0.92) },
   ];
 }
 
@@ -113,13 +124,14 @@ export function getDemoDnaBySlot(): DnaBySlot[] {
 }
 
 export function getDemoReferralSources(): ReferralSource[] {
+  const rps = getDemoRevPerSession();
   return [
-    { source: "Dr. Sarah Howell (GP)", type: "gp", patientsReferred: 8, convertedToBooking: 7, totalRevenuePence: 3920000, avgCourseLength: 5.6 },
-    { source: "Self-referred (Google)", type: "online", patientsReferred: 12, convertedToBooking: 10, totalRevenuePence: 4200000, avgCourseLength: 4.2 },
-    { source: "Mr. James Chen (Ortho)", type: "consultant", patientsReferred: 4, convertedToBooking: 4, totalRevenuePence: 2800000, avgCourseLength: 7.0 },
-    { source: "Word of Mouth", type: "word_of_mouth", patientsReferred: 6, convertedToBooking: 5, totalRevenuePence: 2100000, avgCourseLength: 4.8 },
-    { source: "Bupa Direct", type: "insurance", patientsReferred: 5, convertedToBooking: 5, totalRevenuePence: 3500000, avgCourseLength: 6.0 },
-    { source: "AXA Health", type: "insurance", patientsReferred: 3, convertedToBooking: 3, totalRevenuePence: 2100000, avgCourseLength: 5.5 },
+    { source: "Dr. Sarah Howell (GP)", type: "gp", patientsReferred: 8, convertedToBooking: 7, totalRevenuePence: 7 * 5.6 * rps, avgCourseLength: 5.6 },
+    { source: "Self-referred (Google)", type: "online", patientsReferred: 12, convertedToBooking: 10, totalRevenuePence: 10 * 4.2 * rps, avgCourseLength: 4.2 },
+    { source: "Mr. James Chen (Ortho)", type: "consultant", patientsReferred: 4, convertedToBooking: 4, totalRevenuePence: 4 * 7.0 * rps, avgCourseLength: 7.0 },
+    { source: "Word of Mouth", type: "word_of_mouth", patientsReferred: 6, convertedToBooking: 5, totalRevenuePence: 5 * 4.8 * rps, avgCourseLength: 4.8 },
+    { source: "Bupa Direct", type: "insurance", patientsReferred: 5, convertedToBooking: 5, totalRevenuePence: 5 * 6.0 * rps, avgCourseLength: 6.0 },
+    { source: "AXA Health", type: "insurance", patientsReferred: 3, convertedToBooking: 3, totalRevenuePence: 3 * 5.5 * rps, avgCourseLength: 5.5 },
   ];
 }
 
@@ -293,11 +305,12 @@ export interface BenchmarkComparison {
 }
 
 export function getDemoBenchmarks(): BenchmarkComparison[] {
+  const rps = getDemoRevPerSession();
   return [
     { metric: "Rebook Rate", yourValue: 2.9, peerMedian: 2.2, peerTop25: 3.5, unit: "ratio", higherIsBetter: true },
     { metric: "DNA Rate", yourValue: 0.05, peerMedian: 0.08, peerTop25: 0.04, unit: "percent", higherIsBetter: false },
     { metric: "Utilisation", yourValue: 0.83, peerMedian: 0.74, peerTop25: 0.90, unit: "percent", higherIsBetter: true },
     { metric: "NPS Score", yourValue: 72, peerMedian: 58, peerTop25: 78, unit: "number", higherIsBetter: true },
-    { metric: "Rev / Session", yourValue: 8340, peerMedian: 7500, peerTop25: 9000, unit: "pence", higherIsBetter: true },
+    { metric: "Rev / Session", yourValue: rps, peerMedian: 7500, peerTop25: 9000, unit: "pence", higherIsBetter: true },
   ];
 }

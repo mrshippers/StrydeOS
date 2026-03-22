@@ -1,5 +1,57 @@
 import type { WeeklyStats, Clinician, Patient } from "@/types";
 
+// ─── Scenario rotation ──────────────────────────────────────────────────────
+
+const DEMO_SCENARIO_KEY = "strydeos_demo_scenario";
+
+function getDemoScenarioIndex(): number {
+  try {
+    const stored = sessionStorage.getItem(DEMO_SCENARIO_KEY);
+    if (stored !== null) {
+      const idx = parseInt(stored, 10);
+      if (idx >= 0 && idx < SCENARIOS.length) return idx;
+    }
+  } catch { /* sessionStorage unavailable */ }
+  return 0;
+}
+
+// ─── Scenario definitions ────────────────────────────────────────────────────
+// Each scenario represents a realistic UK private physio practice snapshot.
+// Revenue per session in pence, rates as decimals.
+
+interface Scenario {
+  revPerSession: number;   // pence (£65 = 6500)
+  baseAppts: number;       // weekly total for "all"
+  fu: [number, number];    // follow-up rate [start, end] over 6 weeks
+  hep: [number, number];   // HEP rate
+  util: [number, number];  // utilisation rate
+  dna: [number, number];   // DNA rate (goes DOWN)
+  comp: [number, number];  // course completion rate
+}
+
+const SCENARIOS: Scenario[] = [
+  // 0: Steady mid-size practice
+  { revPerSession: 6500, baseAppts: 62, fu: [3.2, 4.0], hep: [0.88, 0.93], util: [0.70, 0.76], dna: [0.09, 0.05], comp: [0.72, 0.79] },
+  // 1: Newer practice, lower volume, higher rates
+  { revPerSession: 7500, baseAppts: 45, fu: [2.6, 3.4], hep: [0.78, 0.86], util: [0.60, 0.68], dna: [0.12, 0.08], comp: [0.64, 0.72] },
+  // 2: Established high-volume practice
+  { revPerSession: 5800, baseAppts: 78, fu: [3.6, 4.3], hep: [0.91, 0.96], util: [0.82, 0.89], dna: [0.06, 0.03], comp: [0.78, 0.84] },
+  // 3: Premium boutique, low volume
+  { revPerSession: 8500, baseAppts: 38, fu: [2.9, 3.6], hep: [0.82, 0.88], util: [0.65, 0.72], dna: [0.08, 0.05], comp: [0.70, 0.76] },
+  // 4: Growing practice, good momentum
+  { revPerSession: 6800, baseAppts: 58, fu: [3.4, 4.1], hep: [0.86, 0.93], util: [0.74, 0.82], dna: [0.07, 0.04], comp: [0.76, 0.82] },
+];
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 function ws(
   id: string,
   weekStart: string,
@@ -18,64 +70,121 @@ function ws(
     weekStart,
     clinicianId,
     clinicianName,
-    followUpRate,
+    followUpRate: round2(followUpRate),
     followUpTarget: 4.0,
-    hepComplianceRate: hepRate,
-    hepRate,
+    hepComplianceRate: round2(hepRate),
+    hepRate: round2(hepRate),
     hepTarget: 0.95,
-    appointmentsTotal,
-    utilisationRate,
-    dnaRate,
-    courseCompletionRate,
+    appointmentsTotal: Math.round(appointmentsTotal),
+    utilisationRate: round2(utilisationRate),
+    dnaRate: round2(dnaRate),
+    courseCompletionRate: round2(courseCompletionRate),
     revenuePerSessionPence,
     initialAssessments: Math.round(appointmentsTotal * 0.15),
     followUps: Math.round(appointmentsTotal * 0.85),
   };
 }
 
-const DEMO_WEEKLY_STATS_ALL: WeeklyStats[] = [
-  ws("d1", "2026-01-12", "all", "All Clinicians", 3.20, 0.88, 61, 0.70, 0.09, 0.72, 6500),
-  ws("d2", "2026-01-19", "all", "All Clinicians", 3.30, 0.89, 64, 0.71, 0.08, 0.74, 6500),
-  ws("d3", "2026-01-26", "all", "All Clinicians", 3.45, 0.90, 66, 0.72, 0.07, 0.76, 6500),
-  ws("d4", "2026-02-02", "all", "All Clinicians", 3.60, 0.91, 65, 0.73, 0.06, 0.77, 6500),
-  ws("d5", "2026-02-09", "all", "All Clinicians", 3.78, 0.92, 67, 0.74, 0.06, 0.78, 6500),
-  ws("d6", "2026-02-17", "all", "All Clinicians", 3.95, 0.93, 68, 0.76, 0.05, 0.79, 6500),
+const WEEK_STARTS = [
+  "2026-01-12",
+  "2026-01-19",
+  "2026-01-26",
+  "2026-02-02",
+  "2026-02-09",
+  "2026-02-17",
 ];
 
-const DEMO_CLINICIAN_STATS: Record<string, WeeklyStats[]> = {
-  "c-alex": [
-    ws("ca1", "2026-01-12", "c-alex", "Alex Pemberton", 2.20, 0.82, 22, 0.68, 0.12, 0.68, 6500),
-    ws("ca2", "2026-01-19", "c-alex", "Alex Pemberton", 2.35, 0.84, 23, 0.69, 0.11, 0.70, 6500),
-    ws("ca3", "2026-01-26", "c-alex", "Alex Pemberton", 2.50, 0.85, 23, 0.70, 0.10, 0.72, 6500),
-    ws("ca4", "2026-02-02", "c-alex", "Alex Pemberton", 2.65, 0.87, 22, 0.71, 0.09, 0.73, 6500),
-    ws("ca5", "2026-02-09", "c-alex", "Alex Pemberton", 2.80, 0.89, 23, 0.72, 0.08, 0.74, 6500),
-    ws("ca6", "2026-02-17", "c-alex", "Alex Pemberton", 2.95, 0.91, 24, 0.73, 0.07, 0.76, 6500),
-  ],
-  "c-sam": [
-    ws("cm1", "2026-01-12", "c-sam", "Sam Okoro", 3.50, 0.92, 20, 0.72, 0.07, 0.78, 6500),
-    ws("cm2", "2026-01-19", "c-sam", "Sam Okoro", 3.60, 0.93, 21, 0.73, 0.06, 0.79, 6500),
-    ws("cm3", "2026-01-26", "c-sam", "Sam Okoro", 3.72, 0.93, 22, 0.74, 0.06, 0.80, 6500),
-    ws("cm4", "2026-02-02", "c-sam", "Sam Okoro", 3.85, 0.94, 22, 0.75, 0.05, 0.81, 6500),
-    ws("cm5", "2026-02-09", "c-sam", "Sam Okoro", 3.95, 0.95, 22, 0.76, 0.05, 0.82, 6500),
-    ws("cm6", "2026-02-17", "c-sam", "Sam Okoro", 4.10, 0.95, 23, 0.77, 0.04, 0.83, 6500),
-  ],
-  "c-james": [
-    ws("cj1", "2026-01-12", "c-james", "James Chen", 4.00, 0.94, 19, 0.73, 0.06, 0.80, 6500),
-    ws("cj2", "2026-01-19", "c-james", "James Chen", 4.05, 0.94, 20, 0.74, 0.05, 0.81, 6500),
-    ws("cj3", "2026-01-26", "c-james", "James Chen", 4.10, 0.95, 21, 0.75, 0.05, 0.82, 6500),
-    ws("cj4", "2026-02-02", "c-james", "James Chen", 4.15, 0.95, 21, 0.76, 0.04, 0.83, 6500),
-    ws("cj5", "2026-02-09", "c-james", "James Chen", 4.22, 0.96, 22, 0.77, 0.04, 0.84, 6500),
-    ws("cj6", "2026-02-17", "c-james", "James Chen", 4.30, 0.96, 21, 0.78, 0.03, 0.85, 6500),
-  ],
-  "c-kate": [
-    { ...ws("ck1", "2026-01-12", "c-kate", "Kate Martin", 4.50, 1.00, 2, 0.20, 0.00, 1.00, 6500), statisticallyRepresentative: false, caveatNote: "Sample size < 10 patients; metrics are directionally indicative only" },
-    { ...ws("ck2", "2026-01-19", "c-kate", "Kate Martin", 4.50, 1.00, 2, 0.20, 0.00, 1.00, 6500), statisticallyRepresentative: false, caveatNote: "Sample size < 10 patients; metrics are directionally indicative only" },
-    { ...ws("ck3", "2026-01-26", "c-kate", "Kate Martin", 4.50, 1.00, 2, 0.20, 0.00, 1.00, 6500), statisticallyRepresentative: false, caveatNote: "Sample size < 10 patients; metrics are directionally indicative only" },
-    { ...ws("ck4", "2026-02-02", "c-kate", "Kate Martin", 4.50, 1.00, 2, 0.20, 0.00, 1.00, 6500), statisticallyRepresentative: false, caveatNote: "Sample size < 10 patients; metrics are directionally indicative only" },
-    { ...ws("ck5", "2026-02-09", "c-kate", "Kate Martin", 4.50, 1.00, 2, 0.20, 0.00, 1.00, 6500), statisticallyRepresentative: false, caveatNote: "Sample size < 10 patients; metrics are directionally indicative only" },
-    { ...ws("ck6", "2026-02-17", "c-kate", "Kate Martin", 4.50, 1.00, 2, 0.20, 0.00, 1.00, 6500), statisticallyRepresentative: false, caveatNote: "Sample size < 10 patients; metrics are directionally indicative only" },
-  ],
-};
+// Clinician performance multipliers relative to "all" aggregate
+// [followUp, hep, appts fraction, util, dna, completion]
+const CLINICIAN_PROFILES: {
+  id: string;
+  name: string;
+  role: string;
+  fuMul: number;
+  hepMul: number;
+  apptsFrac: number;
+  utilMul: number;
+  dnaMul: number;
+  compMul: number;
+  isPartTime?: boolean;
+}[] = [
+  { id: "c-james", name: "James Chen", role: "Owner / Lead Physio", fuMul: 1.12, hepMul: 1.03, apptsFrac: 0.30, utilMul: 1.02, dnaMul: 0.70, compMul: 1.06 },
+  { id: "c-alex", name: "Alex Pemberton", role: "Physiotherapist", fuMul: 0.78, hepMul: 0.94, apptsFrac: 0.38, utilMul: 0.96, dnaMul: 1.40, compMul: 0.92 },
+  { id: "c-sam", name: "Sam Okoro", role: "Physiotherapist", fuMul: 1.02, hepMul: 1.01, apptsFrac: 0.32, utilMul: 0.98, dnaMul: 1.10, compMul: 1.00 },
+];
+
+function generateWeeklyStats(scenario: Scenario): {
+  all: WeeklyStats[];
+  byClinician: Record<string, WeeklyStats[]>;
+} {
+  const all: WeeklyStats[] = [];
+  const byClinician: Record<string, WeeklyStats[]> = {};
+
+  for (const cp of CLINICIAN_PROFILES) {
+    byClinician[cp.id] = [];
+  }
+
+  for (let w = 0; w < 6; w++) {
+    const t = w / 5; // 0..1 over 6 weeks
+    const jitter = 1 + (w % 2 === 0 ? 0.01 : -0.01); // tiny week-to-week variance
+
+    const fu = lerp(scenario.fu[0], scenario.fu[1], t);
+    const hep = lerp(scenario.hep[0], scenario.hep[1], t);
+    const appts = lerp(scenario.baseAppts - 3, scenario.baseAppts + 3, t) * jitter;
+    const util = lerp(scenario.util[0], scenario.util[1], t);
+    const dna = lerp(scenario.dna[0], scenario.dna[1], t);
+    const comp = lerp(scenario.comp[0], scenario.comp[1], t);
+
+    all.push(
+      ws(`d${w + 1}`, WEEK_STARTS[w], "all", "All Clinicians", fu, hep, appts, util, dna, comp, scenario.revPerSession)
+    );
+
+    for (const cp of CLINICIAN_PROFILES) {
+      const cAppts = appts * cp.apptsFrac;
+      byClinician[cp.id].push(
+        ws(
+          `d${cp.id}-${w + 1}`,
+          WEEK_STARTS[w],
+          cp.id,
+          cp.name,
+          fu * cp.fuMul,
+          Math.min(1, hep * cp.hepMul),
+          cAppts,
+          Math.min(1, util * cp.utilMul),
+          Math.max(0, dna * cp.dnaMul),
+          Math.min(1, comp * cp.compMul),
+          scenario.revPerSession
+        )
+      );
+    }
+  }
+
+  // Kate: part-time, very small sample
+  byClinician["c-kate"] = WEEK_STARTS.map((ws_date, w) => ({
+    ...ws(`dc-kate-${w + 1}`, ws_date, "c-kate", "Kate Martin", 4.50, 1.0, 2, 0.20, 0.0, 1.0, scenario.revPerSession),
+    statisticallyRepresentative: false,
+    caveatNote: "Sample size < 10 patients; metrics are directionally indicative only",
+  }));
+
+  return { all, byClinician };
+}
+
+// ─── Memoised per-session cache ──────────────────────────────────────────────
+
+let cachedScenario = -1;
+let cachedAll: WeeklyStats[] = [];
+let cachedByClinician: Record<string, WeeklyStats[]> = {};
+
+function ensureGenerated(): void {
+  const idx = getDemoScenarioIndex();
+  if (idx === cachedScenario) return;
+  cachedScenario = idx;
+  const result = generateWeeklyStats(SCENARIOS[idx]);
+  cachedAll = result.all;
+  cachedByClinician = result.byClinician;
+}
+
+// ─── Clinicians ──────────────────────────────────────────────────────────────
 
 const DEMO_CLINICIANS: Clinician[] = [
   { id: "c-james", name: "James Chen", role: "Owner / Lead Physio", active: true },
@@ -83,6 +192,8 @@ const DEMO_CLINICIANS: Clinician[] = [
   { id: "c-sam", name: "Sam Okoro", role: "Physiotherapist", active: true },
   { id: "c-kate", name: "Kate Martin", role: "Owner / Admin", active: true },
 ];
+
+// ─── Patients ────────────────────────────────────────────────────────────────
 
 const now = new Date().toISOString();
 
@@ -101,9 +212,12 @@ const DEMO_PATIENTS: Patient[] = [
   { id: "p12", name: "Helen Corr", clinicianId: "c-james", contact: {}, insuranceFlag: false, preAuthStatus: "not_required", lastSessionDate: "2026-02-05", sessionCount: 6, courseLength: 6, discharged: true, churnRisk: false, createdAt: now, updatedAt: now },
 ];
 
+// ─── Public API ──────────────────────────────────────────────────────────────
+
 export function useDemoWeeklyStats(clinicianId: string): WeeklyStats[] {
-  if (clinicianId === "all") return DEMO_WEEKLY_STATS_ALL;
-  return DEMO_CLINICIAN_STATS[clinicianId] ?? [];
+  ensureGenerated();
+  if (clinicianId === "all") return cachedAll;
+  return cachedByClinician[clinicianId] ?? [];
 }
 
 export function useDemoClinicians(): Clinician[] {
@@ -120,9 +234,24 @@ export function getDemoLatestWeekStats(): {
   clinicianName: string;
   stats: WeeklyStats;
 }[] {
-  return Object.entries(DEMO_CLINICIAN_STATS).map(([cid, weeks]) => ({
-    clinicianId: cid,
-    clinicianName: weeks[weeks.length - 1].clinicianName,
-    stats: weeks[weeks.length - 1],
-  }));
+  ensureGenerated();
+  return Object.entries(cachedByClinician)
+    .filter(([id]) => id !== "c-kate")
+    .map(([cid, weeks]) => ({
+      clinicianId: cid,
+      clinicianName: weeks[weeks.length - 1].clinicianName,
+      stats: weeks[weeks.length - 1],
+    }));
+}
+
+/** Expose the current scenario's rev/session pence for intelligence data alignment */
+export function getDemoRevPerSession(): number {
+  return SCENARIOS[getDemoScenarioIndex()].revPerSession;
+}
+
+/** Expose the current scenario's latest-week total appointments */
+export function getDemoLatestAppts(): number {
+  ensureGenerated();
+  const latest = cachedAll[cachedAll.length - 1];
+  return latest?.appointmentsTotal ?? 62;
 }

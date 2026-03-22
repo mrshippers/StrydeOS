@@ -342,6 +342,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(DEMO_USER);
     setFirebaseUser(null);
     document.cookie = "__session=1; path=/; SameSite=Lax";
+    // Pick a random demo data scenario (0–4) for this session
+    try {
+      sessionStorage.setItem("strydeos_demo_scenario", String(Math.floor(Math.random() * 5)));
+    } catch { /* sessionStorage unavailable */ }
   }, []);
 
   const startImpersonation = useCallback((clinic: ClinicProfile) => {

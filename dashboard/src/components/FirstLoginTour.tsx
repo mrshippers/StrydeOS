@@ -83,7 +83,8 @@ export default function FirstLoginTour() {
   const [dismissed, setDismissed] = useState(false);
 
   const isDemo = user?.uid === "demo";
-  const demoFirstTime = isDemo && !isDemoTourCompleted() && !dismissed;
+  // Demo users get the DemoBanner instead — no tour overlay that flashes and disappears
+  const demoFirstTime = false;
   const realUserFirstTime = user && !isDemo && user.firstLogin === false && !dismissed;
   const shouldShow = demoFirstTime || realUserFirstTime;
 

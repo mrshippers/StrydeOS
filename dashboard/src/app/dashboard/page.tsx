@@ -58,17 +58,7 @@ function computeTrendPercent(current: number, previous: number | undefined): num
 
 const SESSION_GREETED_KEY = "strydeos_greeted";
 
-function getGreeting(firstName: string): { greeting: string; subtext: string } {
-  let isFirstMount = false;
-  try {
-    if (!sessionStorage.getItem(SESSION_GREETED_KEY)) {
-      isFirstMount = true;
-      sessionStorage.setItem(SESSION_GREETED_KEY, "1");
-    }
-  } catch {
-    // sessionStorage unavailable
-  }
-
+function getGreeting(firstName: string, isFirstMount: boolean): { greeting: string; subtext: string } {
   const name = firstName || "";
   const hour = new Date().getHours();
 
@@ -136,7 +126,18 @@ export default function DashboardPage() {
   const { startLoading, stopLoading } = useProgress();
   const router = useRouter();
   const firstName = user?.firstName || "";
-  const { greeting, subtext } = getGreeting(firstName);
+  const [isFirstMount] = useState(() => {
+    try {
+      if (!sessionStorage.getItem(SESSION_GREETED_KEY)) {
+        sessionStorage.setItem(SESSION_GREETED_KEY, "1");
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  });
+  const { greeting, subtext } = getGreeting(firstName, isFirstMount);
 
   useEffect(() => {
     if (loading) {
