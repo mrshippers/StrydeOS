@@ -6,6 +6,8 @@ import {
   onSnapshot,
   limit,
   addDoc,
+  doc,
+  updateDoc,
   type Unsubscribe,
   type QueryConstraint,
 } from "firebase/firestore";
@@ -124,6 +126,18 @@ export function subscribePatients(
     },
     onError
   );
+}
+
+// ─── Update Patient (subcollection) ─────────────────────────────────────────
+
+export async function updatePatient(
+  clinicId: string,
+  patientId: string,
+  data: Partial<Omit<Patient, "id">>
+): Promise<void> {
+  if (!db) throw new Error("Firestore not initialised");
+  const ref = doc(db, "clinics", clinicId, "patients", patientId);
+  await updateDoc(ref, { ...data, updatedAt: new Date().toISOString() });
 }
 
 // ─── Appointments (subcollection) ────────────────────────────────────────────

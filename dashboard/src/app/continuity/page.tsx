@@ -229,6 +229,7 @@ function ContinuityPage() {
               <PatientBoard
                 patients={patients}
                 clinicianMap={clinicianMap}
+                clinicId={user?.clinicId ?? null}
                 visibleSegments={preferences.visibleSegments}
                 visibleMetrics={preferences.visibleMetrics}
                 onSendReminder={handleSendReminder}

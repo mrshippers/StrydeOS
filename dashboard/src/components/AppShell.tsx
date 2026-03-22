@@ -55,7 +55,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </a>
             <Sidebar />
             <TopProgressBar />
-            <main id="main-content" className={`lg:pl-60 min-h-screen ${impersonating ? "mt-10" : ""}`}>
+            <main id="main-content" className={`lg:pl-14 min-h-screen ${impersonating ? "mt-10" : ""}`}>
               <div className={`mx-auto max-w-[1200px] px-6 py-8 lg:pt-8 ${IS_STAGING ? "pt-24" : "pt-16"}`}>
                 <TrialBanner />
                 <DemoBanner />

@@ -60,12 +60,12 @@ export default function PageHeader({
               />
             </span>
           )}
-          <h1 className="font-display text-[32px] text-navy leading-tight">
+          <h1 className="font-display text-[32px] text-navy dark:text-white leading-tight">
             {title}
           </h1>
         </div>
         {subtitle && (
-          <p className="text-[14px] text-navy/70 mt-1 leading-relaxed font-medium">{subtitle}</p>
+          <p className="text-[14px] text-navy/70 dark:text-white/60 mt-1 leading-relaxed font-medium">{subtitle}</p>
         )}
       </div>
 

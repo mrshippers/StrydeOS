@@ -545,11 +545,12 @@ export default function IntelligencePage() {
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition-all whitespace-nowrap ${
               activeTab === id
-                ? "bg-white text-navy shadow-[var(--shadow-card)] button-highlight"
-                : "text-muted hover:text-navy"
+                ? "font-semibold shadow-[var(--shadow-card)] button-highlight"
+                : "font-medium text-muted hover:text-ink"
             }`}
+            style={activeTab === id ? { background: "#FFFFFF", color: brand.navy } : undefined}
           >
             <Icon size={14} />
             {label}

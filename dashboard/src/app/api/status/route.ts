@@ -194,13 +194,10 @@ async function checkAllServices(): Promise<StatusResponse> {
     // Sentry — Atlassian Statuspage
     checkStatuspage("sentry", "https://status.sentry.io", seedHistory("sentry")),
 
-    // Retell AI — direct ping
-    pingService("retell", "https://api.retellai.com", seedHistory("retell")),
-
-    // ElevenLabs — Atlassian Statuspage
+    // ElevenLabs — Atlassian Statuspage (Conversational AI voice agent)
     checkStatuspage("elevenlabs", "https://status.elevenlabs.io", seedHistory("elevenlabs")),
 
-    // Twilio — Atlassian Statuspage
+    // Twilio — Atlassian Statuspage (telephony + SMS)
     checkStatuspage("twilio", "https://status.twilio.com", seedHistory("twilio")),
 
     // Resend — direct ping

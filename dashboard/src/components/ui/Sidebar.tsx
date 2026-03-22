@@ -30,7 +30,7 @@ import {
   FileText,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { LogoNav } from "@/components/MonolithLogo";
+import { LogoNav, MonolithMark } from "@/components/MonolithLogo";
 
 const HelpPanel = dynamic(
   () => import("@/components/HelpPanel"),
@@ -145,9 +145,26 @@ export default function Sidebar() {
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const { allAlerts, unreadCount, readHashes, markAllRead } = useAlerts();
-  const { activeEvents: insightEvents, unreadCount: insightUnreadCount, markAsRead: markInsightRead } = useInsightEvents();
+  const { activeEvents: allInsightEvents, markAsRead: markInsightRead } = useInsightEvents();
+  // Bell only shows critical/warning — positive events don't belong in alerts
+  const insightEvents = allInsightEvents.filter((e) => e.severity !== "positive");
+  const insightUnreadCount = insightEvents.filter((e) => !e.readAt).length;
   const pulseBadge = usePulseBadge();
   const totalBellCount = unreadCount + insightUnreadCount;
+
+  // ─── Collapsible sidebar state ─────────────────────────────────────────────
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return sessionStorage.getItem("strydeos-sidebar-seen") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const autoCollapseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isHoveredRef = useRef(false);
+  const initialMountRef = useRef(true);
 
   const clinicName = user?.clinicProfile?.name ?? "My Clinic";
   const clinicStatus = user?.clinicProfile?.status ?? "live";
@@ -177,6 +194,51 @@ export default function Sidebar() {
     await signOut();
     router.replace("/login");
   }
+
+  // Auto-collapse sidebar after 4s on first session visit
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("strydeos-sidebar-seen") === "1") return;
+    } catch {
+      return;
+    }
+    autoCollapseRef.current = setTimeout(() => {
+      if (!isHoveredRef.current) {
+        setCollapsed(true);
+      }
+      try {
+        sessionStorage.setItem("strydeos-sidebar-seen", "1");
+      } catch {}
+    }, 4000);
+    return () => {
+      if (autoCollapseRef.current) clearTimeout(autoCollapseRef.current);
+    };
+  }, []);
+
+  // Collapse sidebar on route change (skip initial mount)
+  useEffect(() => {
+    if (initialMountRef.current) {
+      initialMountRef.current = false;
+      return;
+    }
+    if (!isHoveredRef.current) {
+      setCollapsed(true);
+    }
+  }, [pathname]);
+
+  const handleSidebarEnter = useCallback(() => {
+    isHoveredRef.current = true;
+    if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+    if (autoCollapseRef.current) clearTimeout(autoCollapseRef.current);
+    setCollapsed(false);
+  }, []);
+
+  const handleSidebarLeave = useCallback(() => {
+    isHoveredRef.current = false;
+    leaveTimerRef.current = setTimeout(() => {
+      setCollapsed(true);
+    }, 400);
+  }, []);
 
   const statusLabel =
     clinicStatus === "live"
@@ -214,12 +276,25 @@ export default function Sidebar() {
         />
       )}
 
+      {/* Desktop: floating MonolithMark — always visible when sidebar collapsed */}
+      <div
+        className={`fixed top-5 left-5 z-[35] hidden lg:flex cursor-pointer transition-opacity duration-300 ${
+          collapsed ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onMouseEnter={handleSidebarEnter}
+        aria-hidden="true"
+      >
+        <MonolithMark size={32} />
+      </div>
+
       {/* Sidebar */}
       <aside
         role="navigation"
         aria-label="Main navigation"
-        className={`fixed top-0 left-0 z-40 h-full w-60 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
-          ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+        onMouseEnter={handleSidebarEnter}
+        onMouseLeave={handleSidebarLeave}
+        className={`fixed top-0 left-0 z-40 h-full w-60 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "lg:-translate-x-full" : "lg:translate-x-0"}`}
         style={{ background: brand.navy }}
       >
         {/* Logo + notification bell row */}
