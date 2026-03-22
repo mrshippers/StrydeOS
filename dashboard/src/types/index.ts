@@ -412,7 +412,7 @@ export interface CallLog {
   patientId?: string;
   callerPhone?: string;
   recordingUrl?: string;
-  retellCallId?: string;
+  voiceCallId?: string;
 }
 
 // ─── UI Component Types ──────────────────────────────────────────────────────

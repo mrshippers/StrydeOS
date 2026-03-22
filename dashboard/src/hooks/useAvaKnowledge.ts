@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "@/lib/firebase";
-import type { KnowledgeEntry, KnowledgeCategory } from "@/lib/retell/ava-knowledge";
+import type { KnowledgeEntry, KnowledgeCategory } from "@/lib/ava/ava-knowledge";
 
 interface UseAvaKnowledgeResult {
   entries: KnowledgeEntry[];

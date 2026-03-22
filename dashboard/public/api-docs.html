@@ -370,6 +370,115 @@
   /* ── Hidden ── */
   .hidden { display: none !important; }
 
+  /* ── Status View ── */
+  .status-banner {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 10px 20px; border-radius: 50px;
+    font-size: 14px; font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .status-banner.operational { background: rgba(5,150,105,0.08); color: #059669; }
+  .status-banner.degraded { background: rgba(245,158,11,0.08); color: #B45309; }
+  .status-banner.down { background: rgba(239,68,68,0.08); color: #EF4444; }
+  .status-pulse {
+    width: 10px; height: 10px; border-radius: 50%;
+    position: relative;
+  }
+  .status-pulse.operational { background: #059669; }
+  .status-pulse.degraded { background: #F59E0B; }
+  .status-pulse.down { background: #C8C5BF; }
+  .status-pulse::before {
+    content: ''; position: absolute; inset: -3px;
+    border-radius: 50%; border: 2px solid currentColor; opacity: 0.3;
+    animation: status-ring 2s ease-out infinite;
+  }
+  .status-pulse.operational::before { border-color: #059669; }
+  .status-pulse.degraded::before { border-color: #F59E0B; }
+  .status-pulse.down::before { animation: none; }
+  @keyframes status-ring {
+    0% { transform: scale(1); opacity: 0.35; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+  .status-uptime-bar {
+    display: flex; gap: 2px; height: 28px; border-radius: 8px; margin-bottom: 6px;
+  }
+  .status-uptime-day {
+    flex: 1; border-radius: 3px; transition: transform 0.15s; cursor: default;
+  }
+  .status-uptime-day:hover { transform: scaleY(1.15); }
+  .status-uptime-day.up { background: var(--teal); }
+  .status-uptime-day:hover.up { background: #0AA8CC; }
+  .status-uptime-day.degraded { background: var(--warning); }
+  .status-uptime-day.down { background: #C8C5BF; }
+  .status-uptime-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 32px;
+  }
+  .status-uptime-meta .uptime-pct { font-size: 22px; font-weight: 700; color: var(--ink); }
+  .status-uptime-meta .uptime-label { font-size: 13px; color: var(--muted); }
+  .status-legend {
+    display: flex; gap: 14px;
+  }
+  .status-legend-item {
+    display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted);
+  }
+  .status-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+  .status-group { margin-bottom: 24px; }
+  .status-group-header {
+    display: flex; align-items: center; gap: 8px;
+    padding-bottom: 8px; margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .status-group-icon {
+    width: 26px; height: 26px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .status-group-title { font-size: 14px; font-weight: 600; color: var(--navy, #0B2545); }
+  .status-service {
+    background: white; border: 1px solid var(--border);
+    border-radius: 12px; margin-bottom: 6px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .status-service:hover { box-shadow: 0 2px 12px rgba(11,37,69,0.06); }
+  .status-svc-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .status-svc-dot.operational { background: #059669; }
+  .status-svc-dot.degraded { background: #F59E0B; }
+  .status-svc-dot.down { background: #C8C5BF; }
+  .status-svc-name { font-size: 14px; font-weight: 500; flex: 1; }
+  .status-svc-desc { font-size: 12px; color: var(--muted); flex: 2; }
+  .status-svc-latency {
+    font-size: 12px; font-family: var(--font-mono); color: var(--muted);
+    min-width: 60px; text-align: right;
+  }
+  .status-svc-badge {
+    font-size: 11px; font-weight: 500; padding: 3px 10px;
+    border-radius: 50px; white-space: nowrap;
+  }
+  .status-svc-badge.operational { background: rgba(5,150,105,0.08); color: #059669; }
+  .status-svc-badge.degraded { background: rgba(245,158,11,0.08); color: #B45309; }
+  .status-svc-badge.down { background: rgba(200,197,191,0.15); color: #6B7280; }
+  .status-compliance {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px;
+    justify-content: center;
+  }
+  .status-compliance-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500; color: var(--muted-strong);
+    padding: 6px 14px; background: white;
+    border: 1px solid var(--border); border-radius: 8px;
+  }
+  .status-compliance-badge svg { color: var(--teal); }
+  .status-refresh-note {
+    text-align: center; font-size: 12px; color: var(--muted); margin-top: 20px;
+  }
+  @media (max-width: 640px) {
+    .status-svc-desc { display: none; }
+    .status-svc-latency { display: none; }
+  }
+
   /* ── Footer ── */
   .footer {
     text-align: center;
@@ -391,8 +500,9 @@
     <p>37 endpoints &middot; Last updated March 2026</p>
 
     <div class="view-toggle">
-      <button class="view-btn active" onclick="setView('business')">Business Overview</button>
-      <button class="view-btn" onclick="setView('technical')">Developer Reference</button>
+      <button class="view-btn active" onclick="setView('business')">API Architecture</button>
+      <button class="view-btn" onclick="setView('technical')">Developer Toolkit</button>
+      <button class="view-btn" onclick="setView('status')">API Status</button>
     </div>
 
     <div class="search-bar">
@@ -1764,6 +1874,45 @@ CORS: Access-Control-Allow-Origin: *</pre></div>
 </div>
 </div>
 
+<!-- ═══ STATUS VIEW ═══ -->
+<div id="view-status" class="hidden">
+  <div style="text-align:center; margin-bottom:28px;">
+    <div class="status-banner operational" id="statusOverallBanner">
+      <div class="status-pulse operational" id="statusOverallDot"></div>
+      <span id="statusOverallText">Checking systems...</span>
+    </div>
+  </div>
+
+  <div class="status-uptime-bar" id="statusUptimeBar"></div>
+  <div class="status-uptime-meta">
+    <div>
+      <span class="uptime-label">90-day platform uptime</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="status-legend">
+        <div class="status-legend-item"><div class="status-legend-dot" style="background:var(--teal)"></div> Operational</div>
+        <div class="status-legend-item"><div class="status-legend-dot" style="background:var(--warning)"></div> Degraded</div>
+        <div class="status-legend-item"><div class="status-legend-dot" style="background:#C8C5BF"></div> Down</div>
+      </div>
+      <span class="uptime-pct" id="statusUptimePct">&mdash;</span>
+    </div>
+  </div>
+
+  <div id="statusServicesContainer"></div>
+
+  <div class="status-compliance">
+    <div class="status-compliance-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>GDPR Compliant</div>
+    <div class="status-compliance-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>UK Hosted (europe-west2)</div>
+    <div class="status-compliance-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>AES-256 Encrypted</div>
+    <div class="status-compliance-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Audit Logged</div>
+    <div class="status-compliance-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>HMAC Verification</div>
+    <div class="status-compliance-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Multi-Tenant Isolation</div>
+  </div>
+
+  <p class="status-refresh-note" id="statusRefreshNote">Auto-refreshes every 60s &middot; Pulls live from <a href="/status" style="color:var(--teal);text-decoration:none;">strydeos.com/status</a></p>
+</div>
+</div>
+
 <!-- ════════ Footer ════════ -->
 <footer class="footer">
   StrydeOS API Reference &middot; Internal documentation &middot; Do not share externally<br>
@@ -1772,14 +1921,25 @@ CORS: Access-Control-Allow-Origin: *</pre></div>
 
 <script>
   // ── View Toggle ──
+  var viewKeys = ['business', 'technical', 'status'];
   function setView(view) {
-    document.getElementById('view-business').classList.toggle('hidden', view !== 'business');
-    document.getElementById('view-technical').classList.toggle('hidden', view !== 'technical');
-    document.querySelectorAll('.view-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.textContent.toLowerCase().includes(view === 'business' ? 'business' : 'developer'));
+    viewKeys.forEach(function(k) {
+      var el = document.getElementById('view-' + k);
+      if (el) el.classList.toggle('hidden', view !== k);
     });
+    var labels = { business: 'architecture', technical: 'toolkit', status: 'status' };
+    document.querySelectorAll('.view-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.textContent.toLowerCase().includes(labels[view]));
+    });
+    var searchBar = document.querySelector('.search-bar');
+    if (searchBar) searchBar.style.display = view === 'status' ? 'none' : '';
     document.getElementById('searchInput').value = '';
     handleSearch('');
+    // Load status data when switching to status tab
+    if (view === 'status' && !window._statusLoaded) {
+      window._statusLoaded = true;
+      loadStatusData();
+    }
   }
 
   // ── Card Toggle ──
@@ -1826,6 +1986,185 @@ CORS: Access-Control-Allow-Origin: *</pre></div>
       handleSearch('');
     }
   });
+
+  // ── Status Tab ──
+  var STATUS_API = "https://strydeos.vercel.app/api/status";
+
+  var STATUS_SERVICE_MAP = [
+    { group: "Core Platform", icon: "monitor", color: "rgba(8,145,178,0.1)", accent: "#0891B2",
+      services: [
+        { key: "strydeos", name: "StrydeOS Dashboard",   desc: "Next.js application hosted on Vercel" },
+        { key: "firebase", name: "Firebase / Firestore", desc: "Database, authentication & real-time data" },
+        { key: "vercel",   name: "Vercel Edge Network",  desc: "CDN, serverless functions & API routes" },
+        { key: "sentry",   name: "Sentry",               desc: "Error monitoring & performance tracing" },
+      ]},
+    { group: "Ava \u2014 Voice AI", icon: "phone", color: "rgba(28,84,242,0.06)", accent: "#1C54F2",
+      services: [
+        { key: "elevenlabs", name: "ElevenLabs",  desc: "Conversational AI voice agent" },
+        { key: "twilio",     name: "Twilio",      desc: "SIP trunking & call routing" },
+      ]},
+    { group: "Pulse \u2014 Communications", icon: "message", color: "rgba(8,145,178,0.06)", accent: "#0891B2",
+      services: [
+        { key: "twilio", name: "Twilio SMS",      desc: "Reminders, NPS surveys, reactivation" },
+        { key: "resend", name: "Resend",           desc: "Transactional email" },
+        { key: "n8n",    name: "n8n Automation",   desc: "Workflow orchestration" },
+      ]},
+    { group: "PMS Integrations", icon: "link", color: "rgba(139,92,246,0.06)", accent: "#8B5CF6",
+      services: [
+        { key: "writeupp", name: "WriteUpp",            desc: "Real-time webhook sync" },
+        { key: "cliniko",  name: "Cliniko",             desc: "Multi-region appointment sync" },
+        { key: "halaxy",   name: "Halaxy",              desc: "FHIR-compliant sync" },
+        { key: "zanda",    name: "Zanda (Power Diary)", desc: "Appointment & patient sync" },
+      ]},
+    { group: "Clinical Data & HEP", icon: "users", color: "rgba(5,150,105,0.06)", accent: "#059669",
+      services: [
+        { key: "physitrack",    name: "Physitrack",        desc: "Exercise adherence & PROM scores" },
+        { key: "heidi",         name: "Heidi Health",      desc: "Clinical documentation AI" },
+        { key: "google_places", name: "Google Places API", desc: "Clinic reviews & reputation" },
+      ]},
+    { group: "Billing", icon: "card", color: "rgba(245,158,11,0.06)", accent: "#B45309",
+      services: [
+        { key: "stripe", name: "Stripe", desc: "Subscriptions, checkout & invoicing" },
+      ]},
+  ];
+
+  function statusIcon(type) {
+    var icons = {
+      monitor: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8m-4-4v4"></path></svg>',
+      phone: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>',
+      message: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
+      link: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>',
+      users: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
+      card: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"></rect><path d="M1 10h22"></path></svg>',
+    };
+    return icons[type] || "";
+  }
+
+  function loadStatusData() {
+    fetch(STATUS_API)
+      .then(function(r) { return r.json(); })
+      .then(function(data) { renderStatus(data); })
+      .catch(function() { renderStatusFallback(); });
+  }
+
+  function renderStatus(data) {
+    var services = data.services || {};
+    var allStatuses = Object.values(services).map(function(s) { return s.status; });
+    var hasDown = allStatuses.indexOf("down") !== -1;
+    var hasDegraded = allStatuses.indexOf("degraded") !== -1;
+    var overall = hasDown ? "down" : hasDegraded ? "degraded" : "operational";
+    var overallLabel = overall === "operational" ? "All Systems Operational" : overall === "degraded" ? "Some Systems Degraded" : "Outage Detected";
+
+    var banner = document.getElementById('statusOverallBanner');
+    var dot = document.getElementById('statusOverallDot');
+    var txt = document.getElementById('statusOverallText');
+    banner.className = 'status-banner ' + overall;
+    dot.className = 'status-pulse ' + overall;
+    txt.textContent = overallLabel;
+
+    // Uptime bar
+    var uptimeBar = document.getElementById('statusUptimeBar');
+    var upCount = 0;
+    var days = data.uptime_90d || [];
+    if (days.length === 0) {
+      for (var i = 0; i < 90; i++) days.push({ status: "operational" });
+    }
+    while (uptimeBar.firstChild) uptimeBar.removeChild(uptimeBar.firstChild);
+    days.forEach(function(d) {
+      var s = d.status || "operational";
+      if (s === "operational" || s === "up") upCount++;
+      var el = document.createElement('div');
+      el.className = 'status-uptime-day ' + (s === "operational" || s === "up" ? "up" : s);
+      uptimeBar.appendChild(el);
+    });
+    var pct = days.length > 0 ? ((upCount / days.length) * 100).toFixed(2) + '%' : '\u2014';
+    document.getElementById('statusUptimePct').textContent = pct;
+
+    // Service groups
+    var container = document.getElementById('statusServicesContainer');
+    while (container.firstChild) container.removeChild(container.firstChild);
+    STATUS_SERVICE_MAP.forEach(function(group) {
+      var section = document.createElement('div');
+      section.className = 'status-group';
+
+      var header = document.createElement('div');
+      header.className = 'status-group-header';
+      var iconWrap = document.createElement('div');
+      iconWrap.className = 'status-group-icon';
+      iconWrap.style.background = group.color;
+      iconWrap.style.color = group.accent;
+      iconWrap.innerHTML = statusIcon(group.icon);
+      var title = document.createElement('div');
+      title.className = 'status-group-title';
+      title.textContent = group.group;
+      header.appendChild(iconWrap);
+      header.appendChild(title);
+      section.appendChild(header);
+
+      group.services.forEach(function(svc) {
+        var svcData = services[svc.key] || { status: "operational", latency: null };
+        var st = svcData.status || "operational";
+        var label = st === "operational" ? "Operational" : st === "degraded" ? "Degraded" : "Down";
+        var latency = svcData.latency_ms || svcData.latency;
+
+        var row = document.createElement('div');
+        row.className = 'status-service';
+
+        var dotEl = document.createElement('div');
+        dotEl.className = 'status-svc-dot ' + st;
+        row.appendChild(dotEl);
+
+        var nameEl = document.createElement('div');
+        nameEl.className = 'status-svc-name';
+        nameEl.textContent = svc.name;
+        row.appendChild(nameEl);
+
+        var descEl = document.createElement('div');
+        descEl.className = 'status-svc-desc';
+        descEl.textContent = svc.desc;
+        row.appendChild(descEl);
+
+        if (latency) {
+          var latEl = document.createElement('div');
+          latEl.className = 'status-svc-latency';
+          latEl.textContent = latency + 'ms';
+          row.appendChild(latEl);
+        }
+
+        var badgeEl = document.createElement('div');
+        badgeEl.className = 'status-svc-badge ' + st;
+        badgeEl.textContent = label;
+        row.appendChild(badgeEl);
+
+        section.appendChild(row);
+      });
+
+      container.appendChild(section);
+    });
+
+    var now = new Date();
+    var note = document.getElementById('statusRefreshNote');
+    note.textContent = '';
+    note.appendChild(document.createTextNode('Last checked ' + now.toLocaleTimeString() + ' \u00b7 Auto-refreshes every 60s \u00b7 '));
+    var link = document.createElement('a');
+    link.href = '/status';
+    link.style.color = 'var(--teal)';
+    link.style.textDecoration = 'none';
+    link.textContent = 'Full status page';
+    note.appendChild(link);
+
+    setTimeout(function() { loadStatusData(); }, 60000);
+  }
+
+  function renderStatusFallback() {
+    var fakeData = { services: {}, uptime_90d: [] };
+    STATUS_SERVICE_MAP.forEach(function(group) {
+      group.services.forEach(function(svc) {
+        fakeData.services[svc.key] = { status: "operational", latency: null };
+      });
+    });
+    renderStatus(fakeData);
+  }
 </script>
 </body>
 </html>

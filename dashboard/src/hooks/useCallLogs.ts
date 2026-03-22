@@ -2,8 +2,8 @@
  * useCallLogs
  *
  * Real-time Firestore subscription to today's voiceInteractions for the
- * authenticated clinic. Falls back to DEMO_CALLS if Retell is not configured
- * (i.e. when NEXT_PUBLIC_RETELL_CONFIGURED !== "true") or when no live data
+ * authenticated clinic. Falls back to DEMO_CALLS if ElevenLabs is not configured
+ * (i.e. when NEXT_PUBLIC_ELEVENLABS_CONFIGURED !== "true") or when no live data
  * exists yet.
  *
  * Returns:
@@ -193,7 +193,7 @@ export function useCallLogs(): UseCallLogsResult {
       return;
     }
 
-    // Try ElevenLabs call_log first (new), then fall back to Retell voiceInteractions (legacy)
+    // Subscribe to ElevenLabs call_log collection
     const unsub = subscribeTodaysElevenLabsCalls(
       db,
       user.clinicId,

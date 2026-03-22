@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { BookOpen, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 import { useAvaKnowledge } from "@/hooks/useAvaKnowledge";
 import { useAvaConfig } from "@/hooks/useAvaConfig";
-import { CATEGORY_ORDER, type KnowledgeCategory } from "@/lib/retell/ava-knowledge";
+import { CATEGORY_ORDER, type KnowledgeCategory } from "@/lib/ava/ava-knowledge";
 import KnowledgeCategoryCard from "./KnowledgeCategoryCard";
 
 interface KnowledgeBaseEditorProps {

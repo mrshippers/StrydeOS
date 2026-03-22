@@ -5,7 +5,7 @@
  * Called by n8n after Ava (voice AI) confirms a booking with the caller.
  *
  * Auth: shared webhook secret (AVA_BOOKING_SECRET) — NOT Firebase Auth,
- * because the caller is n8n/Retell, not a logged-in user.
+ * because the caller is n8n/ElevenLabs, not a logged-in user.
  *
  * Request body:
  *   clinicId              — StrydeOS clinic ID
@@ -18,7 +18,7 @@
  *   durationMinutes       — appointment length (default 45)
  *   appointmentType       — "initial_assessment" | "follow_up"
  *   notes?                — free-text notes from the call
- *   callId?               — Retell call ID for traceability
+ *   callId?               — voice call ID for traceability
  *   idempotencyKey?       — client-supplied dedup key (prevents double-booking on retry)
  *
  * Response:
@@ -98,7 +98,7 @@ function validateRequired(
 
 async function handler(request: NextRequest) {
   try {
-    // ── Auth: shared secret (n8n / Retell, not a browser user) ──
+    // ── Auth: shared secret (n8n / ElevenLabs, not a browser user) ──
     const secret =
       request.headers.get("x-webhook-secret") ??
       request.headers.get("authorization")?.replace("Bearer ", "");

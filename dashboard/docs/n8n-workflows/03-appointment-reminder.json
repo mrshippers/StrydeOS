@@ -9,7 +9,7 @@
         "responseMode": "responseNode"
       },
       "id": "webhook-trigger",
-      "name": "Retell Webhook",
+      "name": "ElevenLabs Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [240, 300]
@@ -123,7 +123,7 @@
     }
   ],
   "connections": {
-    "Retell Webhook": {
+    "ElevenLabs Webhook": {
       "main": [[{ "node": "Booking confirmed?", "type": "main", "index": 0 }]]
     },
     "Booking confirmed?": {
@@ -147,6 +147,6 @@
   },
   "settings": { "executionOrder": "v1" },
   "meta": {
-    "description": "Sends SMS and/or email appointment confirmation immediately after Ava books a call.\n\nRequired n8n credentials:\n  Twilio — for SMS (add TWILIO_PHONE_NUMBER as env var)\n  Resend / SMTP — for email\n\nRetell agent must extract these fields into custom_analysis_data for full personalisation:\n  patientFirstName, patientLastName, patientPhone (Ava-confirmed full number),\n  patientEmail, appointmentDate, appointmentTime, clinicianName, appointmentType\nWithout these, messages will be generic but still send."
+    "description": "Sends SMS and/or email appointment confirmation immediately after Ava books a call.\n\nRequired n8n credentials:\n  Twilio — for SMS (add TWILIO_PHONE_NUMBER as env var)\n  Resend / SMTP — for email\n\nElevenLabs agent must extract these fields into custom_analysis_data for full personalisation:\n  patientFirstName, patientLastName, patientPhone (Ava-confirmed full number),\n  patientEmail, appointmentDate, appointmentTime, clinicianName, appointmentType\nWithout these, messages will be generic but still send."
   }
 }

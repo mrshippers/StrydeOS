@@ -4,7 +4,7 @@
  * Collection path: clinics/{clinicId}/voiceInteractions/{callId}
  *
  * Client-side reads use the Firebase SDK (db from firebase.ts).
- * Server-side writes use firebase-admin via the Retell webhook handler.
+ * Server-side writes use firebase-admin via the ElevenLabs webhook handler.
  */
 
 import {

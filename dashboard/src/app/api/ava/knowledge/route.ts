@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { initializeApp, getApps } from "firebase-admin/app";
-import { buildAvaCorePrompt } from "@/lib/retell/ava-core-prompt";
+import { buildAvaCorePrompt } from "@/lib/ava/ava-core-prompt";
 import {
   compileKnowledgeDocument,
   compileKnowledgeChunks,
   type KnowledgeEntry,
-} from "@/lib/retell/ava-knowledge";
+} from "@/lib/ava/ava-knowledge";
 import { withRequestLog } from "@/lib/request-logger";
 
 if (!getApps().length) {

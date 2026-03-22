@@ -78,28 +78,13 @@ if (!N8N_SECRET || secret !== N8N_SECRET) {
 
 ### 🟠 HIGH
 
-#### H-SEC-4: `RETELL_SKIP_SIG_VERIFY` flag can disable webhook signature verification in production
-**File:** `dashboard/src/app/api/webhooks/retell/route.ts:28`
-**Severity:** High | **Fix estimate:** 30 minutes
-
-The flag is a dev convenience but is a single env var away from being accidentally enabled in Vercel production, allowing unsigned webhook payloads to write call data to Firestore.
-
-**Fix:** Add a guard that prevents the flag from working in production:
-```typescript
-const SKIP_SIG_VERIFY = process.env.NODE_ENV !== "production"
-  && process.env.RETELL_SKIP_SIG_VERIFY === "true";
-```
+#### H-SEC-4: ~~`RETELL_SKIP_SIG_VERIFY` flag can disable webhook signature verification~~ **RESOLVED — Retell removed**
+**Status:** Resolved. Retell integration removed in favour of ElevenLabs Conversational AI. The webhook handler (`webhooks/retell/route.ts`) has been deleted.
 
 ---
 
-#### H-SEC-5: Retell webhook falls back to hardcoded project ID for clinic routing
-**File:** `dashboard/src/app/api/webhooks/retell/route.ts:26`
-**Severity:** High | **Fix estimate:** 1 hour
-
-```typescript
-const CLINIC_ID = process.env.RETELL_CLINIC_ID
-  ?? process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID  // ← wrong fallback
-  ?? "spires";                                     // ← hardcoded old name
+#### H-SEC-5: ~~Retell webhook falls back to hardcoded project ID~~ **RESOLVED — Retell removed**
+**Status:** Resolved. Retell webhook handler deleted. ElevenLabs webhook at `/api/webhooks/elevenlabs` uses explicit clinic routing.
 ```
 
 `NEXT_PUBLIC_FIREBASE_PROJECT_ID` is the Firebase project ID (e.g. `clinical-tracker-spires`), not a Firestore clinic document ID. The final fallback `"spires"` is a legacy identifier. If `RETELL_CLINIC_ID` is not set in Vercel, call records may be written to a non-existent or wrong clinic document.
@@ -432,8 +417,8 @@ The following env vars are used in source but absent from `.env.example`:
 
 | Variable | Used In | Effect if Missing |
 |---|---|---|
-| `RETELL_CLINIC_ID` | `webhooks/retell/route.ts` | Falls back to wrong value (H-SEC-5) |
-| `RETELL_SKIP_SIG_VERIFY` | `webhooks/retell/route.ts` | Defaults false (safe but undocumented) |
+| ~~`RETELL_CLINIC_ID`~~ | ~~`webhooks/retell/route.ts`~~ | **Resolved — Retell removed** |
+| ~~`RETELL_SKIP_SIG_VERIFY`~~ | ~~`webhooks/retell/route.ts`~~ | **Resolved — Retell removed** |
 | `GOOGLE_APPLICATION_CREDENTIALS` | `firebase-admin.ts` | Falls through to ADC |
 | `NEXT_PUBLIC_APP_ENV` | `StagingBanner.tsx` | Staging banner won't show |
 
@@ -486,8 +471,8 @@ Vercel handles dependency installation separately, so this is fine as-is. But th
 
 | # | Action | File | Time |
 |---|---|---|---|
-| 6 | Fix `RETELL_SKIP_SIG_VERIFY` production guard | `webhooks/retell/route.ts` | 30 min |
-| 7 | Fix Retell clinic routing to require `RETELL_CLINIC_ID` | `webhooks/retell/route.ts` | 1 hour |
+| ~~6~~ | ~~Fix `RETELL_SKIP_SIG_VERIFY` production guard~~ | **Resolved — Retell removed** | — |
+| ~~7~~ | ~~Fix Retell clinic routing~~ | **Resolved — Retell removed** | — |
 | 8 | Fix `useAuth` not to default to `role: "owner"` | `useAuth.tsx` | 30 min |
 | 9 | Fix `useWeeklyStats` unstable `demoStats` reference (perf bug) | `useWeeklyStats.ts` | 30 min |
 | 10 | Move `firebase-admin` from devDeps to deps | `package.json` | 5 min |

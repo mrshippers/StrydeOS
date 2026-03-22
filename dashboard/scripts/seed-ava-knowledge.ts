@@ -6,7 +6,7 @@
 import * as admin from "firebase-admin";
 import * as path from "path";
 import * as fs from "fs";
-import { seedSpiresKnowledge } from "../src/lib/retell/ava-knowledge";
+import { seedSpiresKnowledge } from "../src/lib/ava/ava-knowledge";
 
 // ─── Init admin ──────────────────────────────────────────
 const saPath = path.resolve(__dirname, "serviceAccountKey.json");

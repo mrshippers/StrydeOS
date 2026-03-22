@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
-import type { KnowledgeEntry, KnowledgeCategory } from "@/lib/retell/ava-knowledge";
-import { CATEGORY_LABELS, CATEGORY_DESCRIPTIONS } from "@/lib/retell/ava-knowledge";
+import type { KnowledgeEntry, KnowledgeCategory } from "@/lib/ava/ava-knowledge";
+import { CATEGORY_LABELS, CATEGORY_DESCRIPTIONS } from "@/lib/ava/ava-knowledge";
 import KnowledgeEntryRow from "./KnowledgeEntryRow";
 
 interface KnowledgeCategoryCardProps {
