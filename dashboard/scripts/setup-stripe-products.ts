@@ -68,7 +68,7 @@ const PRODUCTS = [
   {
     key: "ava" as const,
     name: "StrydeOS — Ava",
-    description: "AI voice receptionist powered by Retell AI. 24/7 inbound call handling, direct PMS booking, cancellation recovery.",
+    description: "AI voice receptionist powered by ElevenLabs. 24/7 inbound call handling, direct PMS booking, cancellation recovery.",
   },
   {
     key: "pulse" as const,
