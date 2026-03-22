@@ -362,13 +362,22 @@ function isEligible(
   hasBeenStarted: boolean  // true if prior logs exist for this patient+sequence
 ): boolean {
   const sessionCount = (patient.sessionCount as number) ?? 0;
+  const complexity = patient.complexitySignals as
+    | { dischargeLikelihood?: string; psychosocialFlags?: boolean; treatmentComplexity?: string }
+    | undefined;
 
   switch (sequenceType) {
     case "early_intervention":
-      return (patient.sessionThresholdAlert === true) && !patient.nextSessionDate;
+      if (patient.sessionThresholdAlert !== true || patient.nextSessionDate) return false;
+      // Patient completing care shouldn't trigger early intervention alerts
+      if (complexity?.dischargeLikelihood === "high") return false;
+      return true;
 
     case "rebooking_prompt":
-      return patient.churnRisk === true && sessionCount >= 2;
+      if (patient.churnRisk !== true || sessionCount < 2) return false;
+      // Don't nag patients who are completing their course — they're not dropping out
+      if (complexity?.dischargeLikelihood === "high") return false;
+      return true;
 
     case "hep_reminder": {
       if (!patient.hepProgramId || patient.nextSessionDate) return false;
