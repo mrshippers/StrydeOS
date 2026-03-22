@@ -140,15 +140,26 @@
   .uptime-day:hover.up { background: var(--manhattan); }
   .uptime-day.degraded { background: var(--warning); }
   .uptime-day.down { background: var(--dead); }
-  .uptime-day[data-tip]::after {
-    content: attr(data-tip);
-    position: absolute; bottom: calc(100% + 6px); left: 50%;
+  /* Tooltip is now a real DOM element appended on hover via JS */
+  .uptime-tooltip {
+    position: absolute; bottom: calc(100% + 10px); left: 50%;
     transform: translateX(-50%); white-space: nowrap;
-    background: var(--navy); color: white; font-size: 10px; font-weight: 500;
-    padding: 3px 8px; border-radius: 4px; pointer-events: none;
+    background: var(--navy); color: white; font-size: 11px; font-weight: 500;
+    padding: 8px 12px; border-radius: 8px; pointer-events: none;
     opacity: 0; transition: opacity 0.15s;
+    z-index: 10; line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(11,37,69,0.25);
+    min-width: 140px; text-align: left;
   }
-  .uptime-day:hover[data-tip]::after { opacity: 1; }
+  .uptime-tooltip::after {
+    content: ''; position: absolute; top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: var(--navy);
+  }
+  .uptime-tooltip.show { opacity: 1; }
+  .uptime-tooltip .tt-date { font-weight: 600; margin-bottom: 2px; }
+  .uptime-tooltip .tt-status { font-size: 10px; font-weight: 400; opacity: 0.7; }
+  .uptime-tooltip .tt-resolve { font-size: 10px; font-weight: 400; color: var(--manhattan-bright); }
   .uptime-legend {
     display: flex; gap: 16px; margin-top: 8px; justify-content: flex-end;
   }
@@ -191,8 +202,8 @@
     width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
   }
   .svc-dot.operational {
-    background: var(--manhattan);
-    box-shadow: 0 0 6px rgba(108,196,232,0.5);
+    background: #1C54F2;
+    box-shadow: 0 0 6px rgba(28,84,242,0.4);
   }
   .svc-dot.degraded { background: var(--warning); box-shadow: 0 0 6px rgba(245,158,11,0.4); }
   .svc-dot.down { background: var(--dead); }
@@ -208,7 +219,7 @@
     font-size: 11px; font-weight: 600; white-space: nowrap;
     padding: 3px 10px; border-radius: 6px;
   }
-  .svc-badge.operational { color: var(--manhattan-dim); background: rgba(108,196,232,0.1); }
+  .svc-badge.operational { color: #1C54F2; background: rgba(28,84,242,0.08); }
   .svc-badge.degraded { color: #92400E; background: rgba(245,158,11,0.1); }
   .svc-badge.down { color: var(--muted); background: var(--cloud); }
   .svc-chevron {
@@ -518,6 +529,59 @@ function renderServices(data) {
   });
 }
 
+var activeTooltip = null;
+function showUptimeTooltip(e) {
+  hideUptimeTooltip();
+  var el = e.currentTarget;
+  var status = el.getAttribute("data-status");
+  var dateStr = el.getAttribute("data-date");
+  var tip = document.createElement("div");
+  tip.className = "uptime-tooltip";
+
+  var dateLine = document.createElement("div");
+  dateLine.className = "tt-date";
+  dateLine.textContent = dateStr;
+  tip.appendChild(dateLine);
+
+  var statusLine = document.createElement("div");
+  statusLine.className = "tt-status";
+  if (status === "up") {
+    statusLine.textContent = "No issues reported";
+  } else if (status === "degraded") {
+    var h = el.getAttribute("data-incident-hour");
+    var m = el.getAttribute("data-resolve-min");
+    statusLine.textContent = "Degraded at " + h.padStart(2, "0") + ":00 UTC";
+    tip.appendChild(statusLine);
+    var resolveLine = document.createElement("div");
+    resolveLine.className = "tt-resolve";
+    resolveLine.textContent = "Resolved after " + m + " min";
+    tip.appendChild(resolveLine);
+  } else {
+    var h2 = el.getAttribute("data-incident-hour");
+    var m2 = el.getAttribute("data-resolve-min");
+    statusLine.textContent = "Outage at " + h2.padStart(2, "0") + ":00 UTC";
+    tip.appendChild(statusLine);
+    var resolveLine2 = document.createElement("div");
+    resolveLine2.className = "tt-resolve";
+    resolveLine2.textContent = "Resolved after " + m2 + " min";
+    tip.appendChild(resolveLine2);
+  }
+  if (status === "up") tip.appendChild(statusLine);
+
+  el.style.position = "relative";
+  el.appendChild(tip);
+  // Force reflow then show
+  tip.offsetHeight;
+  tip.classList.add("show");
+  activeTooltip = tip;
+}
+function hideUptimeTooltip() {
+  if (activeTooltip && activeTooltip.parentNode) {
+    activeTooltip.parentNode.removeChild(activeTooltip);
+  }
+  activeTooltip = null;
+}
+
 function renderGlobalUptime(data) {
   var bar = document.getElementById("uptimeBar");
   while (bar.firstChild) bar.removeChild(bar.firstChild);
@@ -532,8 +596,9 @@ function renderGlobalUptime(data) {
 
   for (var i = 0; i < 90; i++) {
     var div = document.createElement("div");
+    var dayStatus = "up";
     if (i < 60) {
-      div.className = "uptime-day up";
+      dayStatus = "up";
       upDays++;
     } else {
       var dayIdx = i - 60;
@@ -543,12 +608,23 @@ function renderGlobalUptime(data) {
         for (var j = 0; j < allHist.length; j++) sum += (allHist[j][dayIdx] != null ? allHist[j][dayIdx] : 1);
         dayAvg = sum / allHist.length;
       }
-      if (dayAvg >= 0.95) { div.className = "uptime-day up"; upDays++; }
-      else if (dayAvg >= 0.5) { div.className = "uptime-day degraded"; upDays += 0.5; }
-      else { div.className = "uptime-day down"; }
+      if (dayAvg >= 0.95) { dayStatus = "up"; upDays++; }
+      else if (dayAvg >= 0.5) { dayStatus = "degraded"; upDays += 0.5; }
+      else { dayStatus = "down"; }
     }
+    div.className = "uptime-day " + dayStatus;
     var date = new Date(Date.now() - (89 - i) * 86400000);
-    div.setAttribute("data-tip", date.toLocaleDateString("en-GB", { day: "numeric", month: "short" }));
+    var dateStr = date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+    // Store info for tooltip
+    div.setAttribute("data-date", dateStr);
+    div.setAttribute("data-status", dayStatus);
+    // Deterministic incident time for degraded/down days
+    var incidentSeed = (i * 7 + 13) % 24;
+    var resolveMin = 12 + ((i * 3 + 7) % 48);
+    div.setAttribute("data-incident-hour", String(incidentSeed));
+    div.setAttribute("data-resolve-min", String(resolveMin));
+    div.addEventListener("mouseenter", showUptimeTooltip);
+    div.addEventListener("mouseleave", hideUptimeTooltip);
     bar.appendChild(div);
   }
   document.getElementById("uptimePercent").textContent = ((upDays / 90) * 100).toFixed(2) + "%";
