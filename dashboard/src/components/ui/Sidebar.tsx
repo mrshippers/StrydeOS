@@ -160,6 +160,16 @@ export default function Sidebar() {
   const isHoveredRef = useRef(false);
   const initialMountRef = useRef(true);
 
+  // Desktop detection — motion width only on lg+
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
   const clinicName = user?.clinicProfile?.name ?? "My Clinic";
   const clinicStatus = user?.clinicProfile?.status ?? "live";
   const clinicInitials = clinicName
@@ -271,37 +281,84 @@ export default function Sidebar() {
       )}
 
       {/* Desktop: floating MonolithMark — visible when sidebar collapsed */}
-      <div
-        className={`fixed top-5 left-5 z-[35] hidden lg:flex cursor-pointer transition-opacity duration-300 ${
-          collapsed ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+      <motion.div
+        className="fixed top-5 left-5 z-[35] hidden lg:flex cursor-pointer"
+        animate={{
+          opacity: collapsed ? 1 : 0,
+          scale: collapsed ? 1 : 0.85,
+          filter: collapsed ? "blur(0px)" : "blur(4px)",
+        }}
+        transition={{
+          duration: collapsed ? 0.4 : 0.15,
+          delay: collapsed ? 0.35 : 0,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+        style={{ pointerEvents: collapsed ? "auto" : "none" }}
         onMouseEnter={handleSidebarEnter}
         aria-hidden="true"
       >
         <MonolithMark size={32} />
-      </div>
+      </motion.div>
 
       {/* Desktop: left-edge hover trigger strip when collapsed */}
-      <div
-        className={`fixed top-0 left-0 z-[36] hidden lg:block w-3 h-full ${
-          collapsed ? "" : "pointer-events-none"
-        }`}
+      <motion.div
+        className="fixed top-0 left-0 z-[36] hidden lg:block h-full"
+        animate={{
+          width: collapsed ? 14 : 0,
+          opacity: collapsed ? 1 : 0,
+        }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        style={{ pointerEvents: collapsed ? "auto" : "none" }}
         onMouseEnter={handleSidebarEnter}
-      />
+      >
+        {/* Subtle glow line to invite hover */}
+        <motion.div
+          className="absolute top-0 right-0 w-[1px] h-full"
+          animate={{
+            opacity: collapsed ? [0, 0.15, 0] : 0,
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          style={{
+            background: `linear-gradient(to bottom, transparent 10%, ${brand.blueGlow} 50%, transparent 90%)`,
+          }}
+        />
+      </motion.div>
 
       {/* Sidebar — desktop uses width animation (inline), mobile uses translate (overlay) */}
-      <aside
+      <motion.aside
         role="navigation"
         aria-label="Main navigation"
         onMouseEnter={handleSidebarEnter}
         onMouseLeave={handleSidebarLeave}
         className={`fixed top-0 left-0 z-40 h-full overflow-hidden
-          w-60 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0 ${collapsed ? "lg:w-0" : "lg:w-60"}
-          transition-[width,transform] duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)]`}
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0
+          transition-transform duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)]`}
+        animate={isDesktop ? { width: collapsed ? 0 : 240 } : { width: 240 }}
+        transition={{
+          duration: 0.55,
+          ease: [0.22, 1, 0.36, 1],
+          delay: collapsed ? 0.12 : 0,
+        }}
         style={{ background: brand.navy }}
       >
-      <div className={`w-60 min-w-[240px] h-full flex flex-col transition-opacity duration-[250ms] ease-out ${collapsed ? "lg:opacity-0" : "lg:opacity-100"}`}>
+      <motion.div
+        className="w-60 min-w-[240px] h-full flex flex-col"
+        animate={isDesktop ? {
+          opacity: collapsed ? 0 : 1,
+          x: collapsed ? -8 : 0,
+          filter: collapsed ? "blur(2px)" : "blur(0px)",
+        } : { opacity: 1, x: 0, filter: "blur(0px)" }}
+        transition={{
+          duration: collapsed ? 0.18 : 0.35,
+          delay: collapsed ? 0 : 0.28,
+          ease: collapsed ? "easeIn" : [0.22, 1, 0.36, 1],
+        }}
+      >
         {/* Logo + notification bell row */}
         <div className="px-5 pt-5 pb-4 flex items-center justify-between">
           <Link
@@ -717,8 +774,8 @@ export default function Sidebar() {
             </div>
           )}
         </div>
-      </div>
-      </aside>
+      </motion.div>
+      </motion.aside>
 
       <HelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />
     </>

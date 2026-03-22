@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
+import { motion } from "motion/react";
 import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/ui/Sidebar";
 import AuthGuard from "@/components/AuthGuard";
@@ -36,6 +38,15 @@ const IS_STAGING = process.env.NEXT_PUBLIC_APP_ENV === "staging";
 function AppLayout({ children, impersonating }: { children: React.ReactNode; impersonating: boolean }) {
   const { collapsed } = useSidebar();
 
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
   return (
     <>
       <a
@@ -46,18 +57,22 @@ function AppLayout({ children, impersonating }: { children: React.ReactNode; imp
       </a>
       <Sidebar />
       <TopProgressBar />
-      <main
+      <motion.main
         id="main-content"
-        className={`min-h-screen transition-[padding-left] duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          collapsed ? "lg:pl-14" : "lg:pl-60"
-        } ${impersonating ? "mt-10" : ""}`}
+        className={`min-h-screen ${impersonating ? "mt-10" : ""}`}
+        animate={isDesktop ? { paddingLeft: collapsed ? 56 : 240 } : { paddingLeft: 0 }}
+        transition={{
+          duration: 0.55,
+          ease: [0.22, 1, 0.36, 1],
+          delay: collapsed ? 0.12 : 0,
+        }}
       >
         <div className={`mx-auto max-w-[1200px] px-6 py-8 lg:pt-8 ${IS_STAGING ? "pt-24" : "pt-16"}`}>
           <TrialBanner />
           <DemoBanner />
           <PageTransition>{children}</PageTransition>
         </div>
-      </main>
+      </motion.main>
       <OnboardingWidget />
       <FirstLoginTour />
       <InsightEngineUnlocked />
