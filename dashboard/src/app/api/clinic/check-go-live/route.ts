@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
+import { withRequestLog } from "@/lib/request-logger";
 
 /**
  * POST /api/clinic/check-go-live
@@ -10,7 +11,7 @@ import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
  *
  * Auth: Bearer {Firebase ID token}
  */
-export async function POST(req: NextRequest) {
+async function handler(req: NextRequest) {
   const authHeader = req.headers.get("authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
@@ -91,3 +92,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const POST = withRequestLog(handler);

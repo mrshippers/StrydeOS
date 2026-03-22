@@ -124,6 +124,7 @@ function ToastItem({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      role={t.variant === "error" || t.variant === "warn" ? "alert" : "status"}
       className="pointer-events-auto flex flex-col rounded-xl shadow-[var(--shadow-elevated)] min-w-[280px] max-w-sm overflow-hidden touch-pan-y select-none origin-bottom-right"
       style={{
         background: styles.bg,
@@ -140,6 +141,7 @@ function ToastItem({
         <span className="flex-1">{t.message}</span>
         <button
           onClick={() => onDismiss(t.id)}
+          aria-label="Dismiss notification"
           className="opacity-50 hover:opacity-100 transition-opacity"
         >
           <X size={14} />
@@ -176,7 +178,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-6 right-6 z-[100] pointer-events-none">
+      <div className="fixed bottom-6 right-6 z-[100] pointer-events-none" role="region" aria-label="Notifications" aria-live="polite">
         <div className="relative flex flex-col items-end">
           <AnimatePresence mode="popLayout">
             {visible.map((t, i) => (

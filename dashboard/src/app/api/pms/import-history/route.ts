@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, handleApiError, requireRole } from "@/lib/auth-guard";
+import { withRequestLog } from "@/lib/request-logger";
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+async function handler(request: NextRequest): Promise<NextResponse> {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
@@ -31,3 +32,5 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return handleApiError(e);
   }
 }
+
+export const GET = withRequestLog(handler);

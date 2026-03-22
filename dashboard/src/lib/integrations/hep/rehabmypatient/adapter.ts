@@ -7,6 +7,7 @@ import {
 import {
   mapRehabMyPatientPlan,
   type RehabMyPatientPlanRow,
+  type RehabMyPatientExerciseRow,
 } from "./mappers";
 
 export function createRehabMyPatientAdapter(config: HEPIntegrationConfig): HEPAdapter {
@@ -31,13 +32,13 @@ export function createRehabMyPatientAdapter(config: HEPIntegrationConfig): HEPAd
       }
 
       // Fetch all plans for this patient
-      const data = await rehabMyPatientFetch<RehabMyPatientPlanRow[] | { data?: RehabMyPatientPlanRow[] }>(
+      // API returns { plans: [...], total_items: N, pagination: {...} }
+      const data = await rehabMyPatientFetch<{ plans?: RehabMyPatientPlanRow[] }>(
         clientConfig,
         `/patientPlans/${encodeURIComponent(patientExternalId)}`
       );
 
-      // Handle both wrapped { data: [...] } and direct array responses
-      const rows = Array.isArray(data) ? data : (data as { data?: RehabMyPatientPlanRow[] }).data ?? [];
+      const rows = data.plans ?? [];
       
       let programmes = rows.map(mapRehabMyPatientPlan);
 
@@ -55,14 +56,19 @@ export function createRehabMyPatientAdapter(config: HEPIntegrationConfig): HEPAd
     },
 
     async getProgramme(externalId: string): Promise<HEPProgramme> {
-      const data = await rehabMyPatientFetch<RehabMyPatientPlanRow | { data?: RehabMyPatientPlanRow }>(
+      // API returns { plan: {...}, exercises: [...] } — exercises are a sibling key
+      const data = await rehabMyPatientFetch<{
+        plan?: RehabMyPatientPlanRow;
+        exercises?: RehabMyPatientExerciseRow[];
+      }>(
         clientConfig,
         `/patientPlan/${encodeURIComponent(externalId)}`
       );
 
-      // Handle both wrapped { data: {...} } and direct object responses
-      const row = (data as { data?: RehabMyPatientPlanRow }).data ?? (data as RehabMyPatientPlanRow);
-      return mapRehabMyPatientPlan(row);
+      const plan = data.plan ?? ({} as RehabMyPatientPlanRow);
+      // Merge sibling exercises array into the plan row for the mapper
+      plan.exercises = data.exercises ?? plan.exercises ?? [];
+      return mapRehabMyPatientPlan(plan);
     },
   };
 }

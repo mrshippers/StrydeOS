@@ -70,7 +70,7 @@ function aggregateWeek(
   weekStart: string,
   clinicianId: string,
   clinicianName: string,
-  targets: { followUpRate: number; physitrackRate: number },
+  targets: { followUpRate: number; hepRate: number },
   patients: PatientLike[],
   reviews: ReviewLike[]
 ): Omit<WeeklyStats, "id"> {
@@ -94,8 +94,8 @@ function aggregateWeek(
   // Follow-up rate: follow-ups ÷ initial assessments (true rate, not appointments-per-patient)
   const followUpRate = initialAssessments > 0 ? followUps / initialAssessments : 0;
 
-  const physitrackRate = total > 0 ? withHep / total : 0;
-  const hepComplianceRate = physitrackRate;
+  const hepRate = total > 0 ? withHep / total : 0;
+  const hepComplianceRate = hepRate;
 
   const revenueTotal = completed.reduce(
     (sum, a) => sum + (a.revenueAmountPence ?? 0),
@@ -177,8 +177,8 @@ function aggregateWeek(
     followUpRate,
     followUpTarget: targets.followUpRate,
     hepComplianceRate,
-    physitrackRate,
-    physitrackTarget: targets.physitrackRate,
+    hepRate,
+    hepTarget: targets.hepRate,
     utilisationRate: 0,
     dnaRate,
     courseCompletionRate,
@@ -206,10 +206,10 @@ export async function computeWeeklyMetricsForClinic(
   const clinicData = clinicDoc.data();
   const targets = {
     followUpRate: clinicData?.targets?.followUpRate ?? 4.0,
-    physitrackRate: clinicData?.targets?.physitrackRate ?? 95,
+    hepRate: clinicData?.targets?.hepRate ?? clinicData?.targets?.physitrackRate ?? 95,
   };
-  if (typeof targets.physitrackRate === "number" && targets.physitrackRate > 1) {
-    targets.physitrackRate = targets.physitrackRate / 100;
+  if (typeof targets.hepRate === "number" && targets.hepRate > 1) {
+    targets.hepRate = targets.hepRate / 100;
   }
 
   const clinicBase = db.collection("clinics").doc(clinicId);

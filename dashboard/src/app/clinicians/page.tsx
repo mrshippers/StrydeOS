@@ -1,12 +1,20 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
-import TrendChart from "@/components/ui/TrendChart";
 import CliniciansTable from "@/components/ui/CliniciansTable";
 import { SkeletonCard, SkeletonTable } from "@/components/ui/EmptyState";
+
+const TrendChart = dynamic(
+  () => import("@/components/ui/TrendChart"),
+  {
+    loading: () => <div className="animate-pulse bg-navy/10 rounded-xl h-[260px]" />,
+    ssr: false,
+  }
+);
 import { useAuth } from "@/hooks/useAuth";
 import { useClinicians } from "@/hooks/useClinicians";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
@@ -16,7 +24,7 @@ import {
   formatRate,
   formatPence,
   getFollowUpStatus,
-  getPhysitrackStatus,
+  getHepStatus,
   getDnaStatus,
   getGenericStatus,
   getInitials,
@@ -112,9 +120,9 @@ function CliniciansPage() {
                   status={getFollowUpStatus(latest.followUpRate, latest.followUpTarget)}
                 />
                 <StatCard
-                  label="Physitrack Rate"
-                  value={formatPercent(latest.physitrackRate)}
-                  status={getPhysitrackStatus(latest.physitrackRate)}
+                  label="HEP Rate"
+                  value={formatPercent(latest.hepRate)}
+                  status={getHepStatus(latest.hepRate)}
                 />
                 <StatCard
                   label="Utilisation"

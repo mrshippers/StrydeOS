@@ -3,8 +3,9 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, handleApiError, requireRole } from "@/lib/auth-guard";
 import { runCSVImport } from "@/lib/csv-import/run-import";
 import type { CSVFileType } from "@/lib/csv-import/types";
+import { withRequestLog } from "@/lib/request-logger";
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+async function handler(request: NextRequest): Promise<NextResponse> {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
@@ -42,3 +43,5 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

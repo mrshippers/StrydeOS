@@ -23,6 +23,7 @@ import { verifyApiRequest, requireClinic, handleApiError } from "@/lib/auth-guar
 import { getTwilio, getTwilioPhone } from "@/lib/twilio";
 import { getResend } from "@/lib/resend";
 import type { SequenceType, CommsChannel, CommsLogEntry } from "@/types";
+import { withRequestLog } from "@/lib/request-logger";
 
 export const runtime = "nodejs";
 
@@ -45,7 +46,7 @@ function resolveTemplate(template: string, vars: Record<string, string>): string
   );
 }
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
 
@@ -125,3 +126,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const POST = withRequestLog(handler);

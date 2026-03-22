@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrydeOS API Reference</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0B2545;
+    --navy-mid: #132D5E;
+    --blue: #1C54F2;
+    --blue-bright: #2E6BFF;
+    --blue-glow: #4B8BF5;
+    --teal: #0891B2;
+    --purple: #8B5CF6;
+    --cloud: #F2F1EE;
+    --cloud-light: #F9F8F6;
+    --cloud-dark: #E8E6E0;
+    --cream: #FAF9F7;
+    --ink: #111827;
+    --muted: #5C6370;
+    --muted-strong: #3F4752;
+    --border: #E2DFDA;
+    --success: #059669;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --radius: 12px;
+    --font-body: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+  body {
+    font-family: var(--font-body);
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--navy);
+    color: white;
+    padding: 40px 24px 32px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .header h1 span { color: var(--blue-glow); }
+  .header p {
+    font-size: 14px;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 20px;
+  }
+
+  /* ── View Toggle ── */
+  .view-toggle {
+    display: flex;
+    gap: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 3px;
+    width: fit-content;
+    margin-bottom: 16px;
+  }
+  .view-btn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: none;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: rgba(255,255,255,0.5);
+    background: transparent;
+  }
+  .view-btn.active {
+    background: var(--blue);
+    color: white;
+  }
+  .view-btn:hover:not(.active) {
+    color: rgba(255,255,255,0.8);
+  }
+
+  /* ── Search ── */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 8px 14px;
+    max-width: 400px;
+  }
+  .search-bar svg { opacity: 0.4; flex-shrink: 0; }
+  .search-bar input {
+    background: none;
+    border: none;
+    outline: none;
+    color: white;
+    font-family: var(--font-body);
+    font-size: 14px;
+    width: 100%;
+  }
+  .search-bar input::placeholder { color: rgba(255,255,255,0.3); }
+
+  /* ── Layout ── */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 40px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── Endpoint Card ── */
+  .card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+  }
+  .card:hover {
+    box-shadow: 0 2px 12px rgba(11,37,69,0.06);
+  }
+  .card-header {
+    padding: 16px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    user-select: none;
+  }
+  .card-header:hover { background: var(--cloud-light); }
+  .card-expand {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--muted);
+    transition: transform 0.15s;
+    font-size: 12px;
+  }
+  .card.open .card-expand { transform: rotate(90deg); }
+  .card-info { flex: 1; min-width: 0; }
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .card-path {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .method-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .method-GET { background: #ECFDF5; color: var(--success); }
+  .method-POST { background: #EFF6FF; color: var(--blue); }
+  .method-PUT { background: #FFFBEB; color: #B45309; }
+  .method-DELETE { background: #FEF2F2; color: var(--danger); }
+  .card-desc {
+    font-size: 14px;
+    color: var(--muted-strong);
+    line-height: 1.5;
+  }
+  .card-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .tag-auth { background: #FEF3C7; color: #92400E; }
+  .tag-public { background: #ECFDF5; color: #065F46; }
+  .tag-webhook { background: #EDE9FE; color: #5B21B6; }
+  .tag-cron { background: #FCE7F3; color: #9D174D; }
+  .tag-role { background: var(--cloud); color: var(--muted-strong); }
+
+  /* ── Card Detail ── */
+  .card-detail {
+    display: none;
+    padding: 0 20px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .card.open .card-detail { display: block; }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding-top: 16px;
+  }
+  @media (min-width: 768px) {
+    .detail-grid { grid-template-columns: 1fr 1fr; }
+    .detail-grid .full-width { grid-column: 1 / -1; }
+  }
+  .detail-block h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .detail-block pre {
+    background: var(--navy);
+    color: #E2E8F0;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .detail-block pre .key { color: var(--blue-glow); }
+  .detail-block pre .type { color: var(--teal); }
+  .detail-block pre .comment { color: #64748B; }
+  .detail-block pre .required { color: var(--warning); }
+  .detail-block p, .detail-block li {
+    font-size: 13px;
+    color: var(--muted-strong);
+    line-height: 1.6;
+  }
+  .detail-block ul {
+    padding-left: 16px;
+  }
+  .detail-block li { margin-bottom: 4px; }
+
+  /* ── Business View Cards ── */
+  .biz-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 12px;
+  }
+  .biz-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .biz-card p {
+    font-size: 14px;
+    color: var(--muted-strong);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .biz-endpoints {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .biz-endpoint {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    background: var(--cloud);
+    color: var(--muted-strong);
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+  .biz-who {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .biz-who strong { color: var(--muted-strong); }
+
+  /* ── Stats Row ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    text-align: center;
+  }
+  .stat-card .num {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .stat-card .label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .header { padding: 24px 16px 20px; }
+    .header h1 { font-size: 20px; }
+    .container { padding: 20px 16px 60px; }
+    .card-header { padding: 12px 14px; }
+    .card-path { font-size: 12px; }
+    .detail-block pre { font-size: 11px; padding: 10px 12px; }
+  }
+
+  /* ── Print ── */
+  @media print {
+    .header { position: static; }
+    .card-detail { display: block !important; }
+    .search-bar, .view-toggle { display: none; }
+  }
+
+  /* ── Hidden ── */
+  .hidden { display: none !important; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 32px 24px;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ════════ Header ════════ -->
+<header class="header">
+  <div class="header-inner">
+    <h1>Stryde<span>OS</span> API Reference</h1>
+    <p>37 endpoints &middot; Last updated March 2026</p>
+
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="setView('business')">Business Overview</button>
+      <button class="view-btn" onclick="setView('technical')">Developer Reference</button>
+    </div>
+
+    <div class="search-bar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Search endpoints, e.g. billing, webhook, clinician..." oninput="handleSearch(this.value)">
+    </div>
+  </div>
+</header>
+
+<!-- ════════ Content ════════ -->
+<div class="container">
+
+<!-- ═══ BUSINESS VIEW ═══ -->
+<div id="view-business">
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="num">37</div><div class="label">Total Endpoints</div></div>
+    <div class="stat-card"><div class="num">6</div><div class="label">Business Areas</div></div>
+    <div class="stat-card"><div class="num">4</div><div class="label">Webhook Integrations</div></div>
+    <div class="stat-card"><div class="num">5</div><div class="label">Auth Methods</div></div>
+  </div>
+
+  <!-- Onboarding & Signup -->
+  <div class="section" data-search="signup onboarding clinic provision invite go-live">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EFF6FF;color:var(--blue);">🏥</div>
+      Clinic Onboarding &amp; Signup
+    </div>
+    <div class="biz-card">
+      <h3>How clinics join StrydeOS</h3>
+      <p>When a clinic owner signs up, the system creates their account, sets up their workspace, and starts a 30-day free trial. Behind the scenes, this involves creating a secure login (Firebase Auth), a clinic record in the database, and a billing profile with Stripe.</p>
+      <p>Clinic owners can also invite their clinicians by email. Each invited clinician gets a password-reset link to set up their own login.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Clinic owners signing up, StrydeOS admin provisioning pilot clinics manually</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/clinic/signup</span>
+        <span class="biz-endpoint">/api/admin/provision-clinic</span>
+        <span class="biz-endpoint">/api/clinic/check-go-live</span>
+        <span class="biz-endpoint">/api/clinic/resend-invite</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clinician Management -->
+  <div class="section" data-search="clinician add seat team staff">
+    <div class="section-title">
+      <div class="section-icon" style="background:#F0FDF4;color:var(--success);">👤</div>
+      Clinician Management
+    </div>
+    <div class="biz-card">
+      <h3>Adding and managing clinicians</h3>
+      <p>Clinic owners can add clinicians to their practice. The number of clinicians allowed depends on the billing tier: Solo (1), Studio (2–4), Clinic (5+). Extra seats can be purchased if you need more capacity within your tier.</p>
+      <p>Each clinician is linked to their PMS practitioner ID so their appointment data flows through automatically.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Clinic owners and admins managing their team</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/clinicians/add</span>
+        <span class="biz-endpoint">/api/billing/seats</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Billing & Subscriptions -->
+  <div class="section" data-search="billing stripe checkout subscription payment invoice module pricing">
+    <div class="section-title">
+      <div class="section-icon" style="background:#FEF3C7;color:#B45309;">💳</div>
+      Billing &amp; Subscriptions
+    </div>
+    <div class="biz-card">
+      <h3>How payments work</h3>
+      <p>StrydeOS uses Stripe for all billing. Clinics choose which modules they want (Intelligence, Pulse, Ava, or Full Stack bundle), pick a tier based on clinic size, and select monthly or annual billing (20% discount for annual).</p>
+      <p>When a clinic subscribes, Stripe tells StrydeOS which modules to activate. If a payment fails, the clinic is marked "past due" but access isn't revoked immediately — giving time to update payment details via the billing portal.</p>
+      <p>Ava (voice receptionist) has a one-time £250 setup fee in addition to the recurring subscription.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Clinic owners managing their subscription</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/billing/checkout</span>
+        <span class="biz-endpoint">/api/billing/portal</span>
+        <span class="biz-endpoint">/api/billing/seats</span>
+        <span class="biz-endpoint">/api/billing/webhooks</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PMS & HEP Integrations -->
+  <div class="section" data-search="pms writeupp cliniko halaxy zanda physitrack hep integration connect csv import sync">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EDE9FE;color:var(--purple);">🔗</div>
+      Practice Management &amp; HEP Integrations
+    </div>
+    <div class="biz-card">
+      <h3>Connecting your practice software</h3>
+      <p>StrydeOS connects to your existing Practice Management System (PMS) to pull in appointment data, clinician rosters, and patient records. Supported systems: <strong>WriteUpp, Cliniko, Halaxy, Zanda (Power Diary)</strong>. TM3 support is coming soon.</p>
+      <p>You enter your PMS API key in Settings, test the connection, and StrydeOS starts syncing. Data refreshes automatically — WriteUpp pushes updates in real-time via webhooks; other systems sync on a schedule.</p>
+      <p>For clinics without API access, you can upload CSV exports of your appointment or patient data. StrydeOS auto-detects common formats or lets you create a custom column mapping.</p>
+      <p>Home Exercise Programme (HEP) data flows in from <strong>Physitrack</strong> — tracking programme assignments, adherence, and completion rates per patient.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Clinic owners connecting their PMS during onboarding, or uploading CSV exports</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/pms/save-config</span>
+        <span class="biz-endpoint">/api/pms/test-connection</span>
+        <span class="biz-endpoint">/api/pms/disconnect</span>
+        <span class="biz-endpoint">/api/pms/sync</span>
+        <span class="biz-endpoint">/api/pms/import-csv</span>
+        <span class="biz-endpoint">/api/pms/import-csv/inbound</span>
+        <span class="biz-endpoint">/api/pms/csv-schema</span>
+        <span class="biz-endpoint">/api/pms/import-history</span>
+        <span class="biz-endpoint">/api/hep/save-config</span>
+        <span class="biz-endpoint">/api/hep/test-connection</span>
+        <span class="biz-endpoint">/api/hep/disconnect</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ava Voice Receptionist -->
+  <div class="section" data-search="ava voice retell elevenlabs booking call receptionist agent">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EFF6FF;color:var(--blue);">📞</div>
+      Ava — Voice Receptionist
+    </div>
+    <div class="biz-card">
+      <h3>How Ava handles calls and bookings</h3>
+      <p>Ava is StrydeOS's AI voice receptionist, powered by Retell AI and ElevenLabs. When a patient calls, Ava answers, understands their request, and can book appointments directly into your PMS.</p>
+      <p><strong>The booking flow:</strong> Patient calls → Ava converses → confirms booking details → n8n automation creates the appointment in your PMS → a copy is saved in StrydeOS for tracking. If the PMS write fails (e.g., the PMS is briefly offline), StrydeOS saves the booking locally and retries automatically.</p>
+      <p>Call data — duration, outcome (booked, cancelled, escalated, voicemail), transcripts, and sentiment — flows into the Receptionist dashboard so you can see how Ava is performing.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Automated — Ava handles calls; clinic owners view results in the dashboard</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/ava/agent</span>
+        <span class="biz-endpoint">/api/bookings/create</span>
+        <span class="biz-endpoint">/api/bookings/retry-pms</span>
+        <span class="biz-endpoint">/api/webhooks/retell</span>
+        <span class="biz-endpoint">/api/webhooks/elevenlabs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patient Communications -->
+  <div class="section" data-search="comms sms email sequence rebooking hep reminder review reactivation nps n8n">
+    <div class="section-title">
+      <div class="section-icon" style="background:#F0FDFA;color:var(--teal);">💬</div>
+      Patient Communications (Pulse)
+    </div>
+    <div class="biz-card">
+      <h3>Automated patient messaging</h3>
+      <p>Pulse sends automated SMS and email messages to patients at the right moment. Six sequences run automatically:</p>
+      <ul style="font-size:14px;color:var(--muted-strong);padding-left:20px;margin-bottom:12px;line-height:1.8;">
+        <li><strong>Rebooking prompt</strong> — 72 hours after their last session</li>
+        <li><strong>HEP reminder</strong> — before their next appointment</li>
+        <li><strong>Review prompt</strong> — on discharge (includes NPS collection)</li>
+        <li><strong>Reactivation (90 days)</strong> — for patients who haven't returned</li>
+        <li><strong>Reactivation (180 days)</strong> — second nudge for lapsed patients</li>
+        <li><strong>Insurance pre-auth</strong> — before the first session if flagged</li>
+      </ul>
+      <p>When patients reply to a review prompt with an NPS score (0–10), StrydeOS automatically parses it and logs it to the Reputation dashboard. All messages are tracked: open rates, click rates, and whether the patient rebooked.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Automated — triggered by patient events; clinic owners view results in Pulse dashboard</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/comms/send</span>
+        <span class="biz-endpoint">/api/n8n/callback</span>
+        <span class="biz-endpoint">/api/webhooks/writeupp</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Pipeline & Metrics -->
+  <div class="section" data-search="pipeline metrics compute backfill sync cron daily weekly kpi follow-up dna utilisation">
+    <div class="section-title">
+      <div class="section-icon" style="background:#FCE7F3;color:#9D174D;">📊</div>
+      Data Pipeline &amp; Metrics
+    </div>
+    <div class="biz-card">
+      <h3>How your KPIs are calculated</h3>
+      <p>Every day at 6:00 AM UTC, StrydeOS runs its data pipeline. This pulls the latest data from your PMS, syncs patient and appointment records, computes the seven KPI metrics (follow-up rate, HEP compliance, programme assignment, utilisation, DNA rate, revenue per session, NPS), and triggers any due communications.</p>
+      <p>WriteUpp clinics also get <strong>near real-time updates</strong> — when an appointment is created or changed in WriteUpp, a webhook fires and StrydeOS re-computes within seconds.</p>
+      <p>For new clinics, a one-time <strong>90-day backfill</strong> pulls historical data so you have context from day one.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Runs automatically; clinic owners or superadmins can trigger manually</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/pipeline/run</span>
+        <span class="biz-endpoint">/api/pipeline/backfill</span>
+        <span class="biz-endpoint">/api/metrics/compute</span>
+        <span class="biz-endpoint">/api/pms/sync</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compliance & Data Privacy -->
+  <div class="section" data-search="compliance gdpr sar baa privacy data export delete patient rights">
+    <div class="section-title">
+      <div class="section-icon" style="background:#FEF2F2;color:var(--danger);">🔒</div>
+      Compliance &amp; Data Privacy
+    </div>
+    <div class="biz-card">
+      <h3>Patient data rights and compliance</h3>
+      <p>StrydeOS supports GDPR and data privacy requirements out of the box:</p>
+      <ul style="font-size:14px;color:var(--muted-strong);padding-left:20px;margin-bottom:12px;line-height:1.8;">
+        <li><strong>Subject Access Requests (SAR)</strong> — patients can request a copy of all their data. Clinic owners export it as JSON with one click. All exports are audit-logged.</li>
+        <li><strong>Data Deletion</strong> — patients can request deletion. The system marks records for removal with a 30-day grace period before purging.</li>
+        <li><strong>BAA (Business Associate Agreement)</strong> — US clinics can accept a BAA clickthrough for HIPAA compliance.</li>
+        <li><strong>Audit Trail</strong> — sensitive actions (data exports, config changes, SAR fulfilment) are logged with timestamps, user IDs, and IP addresses.</li>
+      </ul>
+      <div class="biz-who"><strong>Who uses this:</strong> Clinic owners handling patient data requests</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/compliance/sar</span>
+        <span class="biz-endpoint">/api/compliance/sar/[id]/export</span>
+        <span class="biz-endpoint">/api/compliance/sar/[id]/delete</span>
+        <span class="biz-endpoint">/api/compliance/baa</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin & Diagnostics -->
+  <div class="section" data-search="admin superadmin health diagnostics debug integration">
+    <div class="section-title">
+      <div class="section-icon" style="background:var(--cloud);color:var(--muted-strong);">⚙️</div>
+      Admin &amp; Diagnostics
+    </div>
+    <div class="biz-card">
+      <h3>StrydeOS internal tools</h3>
+      <p>These endpoints are used by the StrydeOS team (superadmins) to monitor system health, diagnose integration issues, and manage clinics.</p>
+      <p>The <strong>integration health dashboard</strong> shows sync success rates across all clinics — if a PMS connection is degrading, the team can see it before the clinic owner notices.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> StrydeOS superadmins only</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/admin/integration-health</span>
+        <span class="biz-endpoint">/api/debug/writeupp-probe</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══ TECHNICAL VIEW ═══ -->
+<div id="view-technical" class="hidden">
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="num">37</div><div class="label">Endpoints</div></div>
+    <div class="stat-card"><div class="num">24</div><div class="label">Token-Authed</div></div>
+    <div class="stat-card"><div class="num">5</div><div class="label">Webhooks</div></div>
+    <div class="stat-card"><div class="num">3</div><div class="label">Cron Jobs</div></div>
+  </div>
+
+  <!-- ── Auth Overview ── -->
+  <div class="section" data-search="auth authentication token">
+    <div class="section-title">
+      <div class="section-icon" style="background:#FEF3C7;color:#92400E;">🔑</div>
+      Authentication Methods
+    </div>
+    <div class="biz-card">
+      <h3>Five authentication patterns</h3>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;font-size:13px;border-collapse:collapse;margin-top:8px;">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border);text-align:left;">
+              <th style="padding:8px 12px;color:var(--muted);font-weight:600;">Method</th>
+              <th style="padding:8px 12px;color:var(--muted);font-weight:600;">Header</th>
+              <th style="padding:8px 12px;color:var(--muted);font-weight:600;">Used By</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:8px 12px;font-weight:500;">Firebase ID Token</td>
+              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">Authorization: Bearer &lt;idToken&gt;</td>
+              <td style="padding:8px 12px;">Dashboard users (24 endpoints)</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:8px 12px;font-weight:500;">Cron Secret</td>
+              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">Authorization: Bearer &lt;CRON_SECRET&gt;</td>
+              <td style="padding:8px 12px;">Vercel Cron (pipeline/run, metrics/compute, bookings/retry-pms)</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:8px 12px;font-weight:500;">Webhook Secret</td>
+              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">x-webhook-secret: &lt;secret&gt;</td>
+              <td style="padding:8px 12px;">WriteUpp, n8n, Ava bookings</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:8px 12px;font-weight:500;">Stripe Signature</td>
+              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">stripe-signature: &lt;sig&gt;</td>
+              <td style="padding:8px 12px;">Stripe billing webhooks</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px;font-weight:500;">Retell HMAC-SHA256</td>
+              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">x-retell-signature: &lt;hmac&gt;</td>
+              <td style="padding:8px 12px;">Retell AI voice webhooks</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:12px;font-size:13px;color:var(--muted);">Roles: <code style="font-size:12px;background:var(--cloud);padding:2px 6px;border-radius:3px;">owner</code> <code style="font-size:12px;background:var(--cloud);padding:2px 6px;border-radius:3px;">admin</code> <code style="font-size:12px;background:var(--cloud);padding:2px 6px;border-radius:3px;">clinician</code> <code style="font-size:12px;background:var(--cloud);padding:2px 6px;border-radius:3px;">superadmin</code> — enforced via <code style="font-size:12px;background:var(--cloud);padding:2px 6px;border-radius:3px;">requireRole()</code> in auth-guard.ts</p>
+    </div>
+  </div>
+
+  <!-- ── Clinic Onboarding ── -->
+  <div class="section" data-search="signup provision clinic invite go-live onboarding">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EFF6FF;color:var(--blue);">🏥</div>
+      Clinic Onboarding
+    </div>
+
+    <!-- POST /api/clinic/signup -->
+    <div class="card" data-search="signup public email password clinic create">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/clinic/signup</span>
+          </div>
+          <div class="card-desc">Self-serve clinic registration — creates auth user, clinic workspace, Stripe customer, and starts 30-day trial.</div>
+          <div class="card-tags">
+            <span class="tag tag-public">Public</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request Body</h4>
+            <pre><span class="key">clinicName</span>: <span class="type">string</span>    <span class="required">← required</span>
+<span class="key">email</span>:      <span class="type">string</span>    <span class="required">← required</span>
+<span class="key">password</span>:   <span class="type">string</span>    <span class="required">← required (min 8)</span>
+<span class="key">profession</span>: <span class="type">string</span>    <span class="comment">← optional</span>
+<span class="key">clinicSize</span>: <span class="type">string</span>    <span class="comment">← optional</span>
+<span class="key">country</span>:    <span class="type">"uk"|"us"|"au"</span> <span class="comment">← optional</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Response (201)</h4>
+            <pre>{ <span class="key">uid</span>, <span class="key">clinicId</span>, <span class="key">email</span> }</pre>
+            <h4 style="margin-top:12px;">Errors</h4>
+            <pre><span class="comment">400</span> — Missing required fields
+<span class="comment">409</span> — Email already registered
+<span class="comment">500</span> — Internal server error</pre>
+          </div>
+          <div class="detail-block full-width">
+            <h4>Notes</h4>
+            <ul>
+              <li>Idempotent — returns 409 if email exists (not a crash)</li>
+              <li>Creates: Firebase Auth user, <code>users</code> doc, <code>clinics</code> doc (with compliance config derived from country), Stripe customer</li>
+              <li>Trial: 30 days from signup, all modules accessible</li>
+              <li>Sets <code>onboardingV2.stage: "signup_complete"</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /api/admin/provision-clinic -->
+    <div class="card" data-search="admin provision clinic manual superadmin">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/admin/provision-clinic</span>
+          </div>
+          <div class="card-desc">Superadmin manual clinic provisioning — used when onboarding pilot clinics or converting qualified leads.</div>
+          <div class="card-tags">
+            <span class="tag tag-auth">Admin Secret</span>
+            <span class="tag tag-role">superadmin</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request Body</h4>
+            <pre><span class="key">clinicName</span>:     <span class="type">string</span>  <span class="required">← required</span>
+<span class="key">ownerEmail</span>:     <span class="type">string</span>  <span class="required">← required</span>
+<span class="key">ownerFirstName</span>: <span class="type">string</span>  <span class="comment">← optional</span>
+<span class="key">ownerLastName</span>:  <span class="type">string</span>  <span class="comment">← optional</span>
+<span class="key">pmsType</span>:        <span class="type">string</span>  <span class="comment">← optional</span>
+<span class="key">country</span>:        <span class="type">"uk"|"us"|"au"</span> <span class="comment">← opt</span>
+<span class="key">plan</span>:           <span class="type">string</span>  <span class="comment">← optional</span>
+<span class="key">notionLeadId</span>:   <span class="type">string</span>  <span class="comment">← optional</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Headers</h4>
+            <pre><span class="key">x-admin-secret</span>: <span class="type">&lt;STRYDE_ADMIN_SECRET&gt;</span>
+<span class="key">Authorization</span>:  Bearer &lt;token&gt; <span class="comment">(opt)</span></pre>
+            <h4 style="margin-top:12px;">Response (201)</h4>
+            <pre>{ <span class="key">uid</span>, <span class="key">clinicId</span>, <span class="key">email</span>,
+  <span class="key">passwordResetLink</span> }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /api/clinic/check-go-live -->
+    <div class="card" data-search="go-live promote status onboarding live">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/clinic/check-go-live</span>
+          </div>
+          <div class="card-desc">Checks if all admin/owner users have completed first login; promotes clinic from "onboarding" to "live" if ready.</div>
+          <div class="card-tags">
+            <span class="tag tag-auth">Token</span>
+            <span class="tag tag-role">any authenticated</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request</h4>
+            <pre><span class="comment">No body — clinicId from token</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Response (200)</h4>
+            <pre>{ <span class="key">promoted</span>: <span class="type">boolean</span>,
+  <span class="key">alreadyLive</span>?: <span class="type">boolean</span>,
+  <span class="key">reason</span>?: <span class="type">"no_admin_users"|"pending_logins"</span> }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST /api/clinic/resend-invite -->
+    <div class="card" data-search="invite resend email clinician password reset">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/clinic/resend-invite</span>
+          </div>
+          <div class="card-desc">Resend clinician invite email (password-reset link via Resend or Firebase fallback).</div>
+          <div class="card-tags">
+            <span class="tag tag-auth">Token</span>
+            <span class="tag tag-role">owner / admin</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request Body</h4>
+            <pre><span class="key">email</span>:       <span class="type">string</span> <span class="required">← required</span>
+<span class="key">clinicianId</span>: <span class="type">string</span> <span class="comment">← optional</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Response (200)</h4>
+            <pre>{ <span class="key">sent</span>: <span class="type">true</span> }
+<span class="comment">— or if Resend not configured —</span>
+{ <span class="key">sent</span>: <span class="type">false</span>, <span class="key">link</span>, <span class="key">note</span> }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Clinician Management ── -->
+  <div class="section" data-search="clinician add seat team">
+    <div class="section-title">
+      <div class="section-icon" style="background:#F0FDF4;color:var(--success);">👤</div>
+      Clinician Management
+    </div>
+
+    <div class="card" data-search="clinician add seat limit tier">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/clinicians/add</span>
+          </div>
+          <div class="card-desc">Add a clinician to the clinic. Enforces seat limits by billing tier (Solo: 1, Studio: 4, Clinic: unlimited).</div>
+          <div class="card-tags">
+            <span class="tag tag-auth">Token</span>
+            <span class="tag tag-role">owner / admin</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request Body</h4>
+            <pre><span class="key">name</span>:           <span class="type">string</span> <span class="required">← required</span>
+<span class="key">role</span>:           <span class="type">string</span> <span class="comment">← default "Physiotherapist"</span>
+<span class="key">pmsExternalId</span>:  <span class="type">string</span> <span class="comment">← optional (PMS practitioner ID)</span>
+<span class="key">physitrackId</span>:   <span class="type">string</span> <span class="comment">← optional</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Response (201)</h4>
+            <pre>{ <span class="key">id</span>: <span class="type">string</span>,
+  <span class="key">clinician</span>: { id, name, role, pmsExternalId,
+    physitrackId, active, avatar, createdAt } }</pre>
+            <h4 style="margin-top:12px;">Errors</h4>
+            <pre><span class="comment">403</span> — Seat limit reached
+  { error, currentCount, limit, canPurchaseSeat }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Billing ── -->
+  <div class="section" data-search="billing stripe checkout portal seats subscription webhook payment">
+    <div class="section-title">
+      <div class="section-icon" style="background:#FEF3C7;color:#B45309;">💳</div>
+      Billing
+    </div>
+
+    <div class="card" data-search="checkout stripe session module tier interval">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/billing/checkout</span>
+          </div>
+          <div class="card-desc">Create Stripe Checkout session for module subscriptions. Returns redirect URL.</div>
+          <div class="card-tags">
+            <span class="tag tag-auth">Token</span>
+            <span class="tag tag-role">owner / admin</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request Body</h4>
+            <pre><span class="key">modules</span>:        <span class="type">["intelligence"|"pulse"|"ava"|"fullstack"][]</span> <span class="required">← required</span>
+<span class="key">tier</span>:           <span class="type">"solo"|"studio"|"clinic"</span> <span class="comment">← default "studio"</span>
+<span class="key">interval</span>:       <span class="type">"month"|"year"</span>          <span class="comment">← default "month"</span>
+<span class="key">includeAvaSetup</span>: <span class="type">boolean</span>               <span class="comment">← adds £250 one-time</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Response (200)</h4>
+            <pre>{ <span class="key">url</span>: <span class="type">string</span> }  <span class="comment">← Stripe Checkout URL</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="portal manage subscription invoice cancel">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/billing/portal</span>
+          </div>
+          <div class="card-desc">Create Stripe Customer Portal session — manage subscription, update payment, view invoices.</div>
+          <div class="card-tags">
+            <span class="tag tag-auth">Token</span>
+            <span class="tag tag-role">owner / admin</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request</h4><pre><span class="comment">No body — clinicId from token</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">url</span>: <span class="type">string</span> }  <span class="comment">← Stripe Portal URL</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="seats extra clinician add purchase">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/billing/seats</span>
+          </div>
+          <div class="card-desc">Purchase additional clinician seats on existing subscription (1–10 at a time).</div>
+          <div class="card-tags">
+            <span class="tag tag-auth">Token</span>
+            <span class="tag tag-role">owner / admin</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">quantity</span>: <span class="type">number</span> <span class="comment">← 1–10, default 1</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">success</span>: <span class="type">true</span>, <span class="key">extraSeats</span>: <span class="type">number</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="stripe webhook subscription created updated deleted payment failed">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/billing/webhooks</span>
+          </div>
+          <div class="card-desc">Stripe webhook — syncs subscription status to Firestore feature flags. Handles created, updated, deleted, and payment_failed events.</div>
+          <div class="card-tags">
+            <span class="tag tag-webhook">Stripe Signature</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block full-width">
+            <h4>Events Handled</h4>
+            <ul>
+              <li><strong>customer.subscription.created/updated</strong> — activates modules based on Stripe line items; syncs billing info, tier, seats</li>
+              <li><strong>customer.subscription.deleted</strong> — deactivates all modules</li>
+              <li><strong>invoice.payment_failed</strong> — marks billing as <code>past_due</code> (does NOT revoke access)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PMS & HEP Integrations ── -->
+  <div class="section" data-search="pms writeupp cliniko halaxy zanda hep physitrack connect csv import schema sync disconnect">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EDE9FE;color:var(--purple);">🔗</div>
+      PMS &amp; HEP Integrations
+    </div>
+
+    <div class="card" data-search="pms save config api key connect">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/pms/save-config</span>
+          </div>
+          <div class="card-desc">Save PMS API credentials. Stores in server-only collection; updates clinic doc for display.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request Body</h4>
+            <pre><span class="key">provider</span>: <span class="type">"writeupp"|"cliniko"|"halaxy"|"zanda"</span> <span class="comment">← default "writeupp"</span>
+<span class="key">apiKey</span>:   <span class="type">string</span> <span class="required">← required</span>
+<span class="key">baseUrl</span>:  <span class="type">string</span> <span class="comment">← optional (custom API URL)</span></pre>
+          </div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="pms test connection validate">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/pms/test-connection</span>
+          </div>
+          <div class="card-desc">Test PMS API credentials before saving — fires a lightweight probe to verify access.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">provider</span>: <span class="type">string</span>
+<span class="key">apiKey</span>:   <span class="type">string</span> <span class="required">← required</span></pre></div>
+          <div class="detail-block"><h4>Response</h4><pre><span class="comment">200:</span> { <span class="key">ok</span>: <span class="type">true</span>, <span class="key">resolvedBase</span>? }
+<span class="comment">400:</span> { <span class="key">ok</span>: <span class="type">false</span>, <span class="key">error</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="pms disconnect remove credentials">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/pms/disconnect</span>
+          </div>
+          <div class="card-desc">Disconnect PMS integration — deletes config, resets clinic fields.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Request</h4><pre><span class="comment">No body</span></pre></div><div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }</pre></div></div></div>
+    </div>
+
+    <div class="card" data-search="pms sync appointments incremental cron">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/pms/sync</span>
+          </div>
+          <div class="card-desc">Sync appointments from PMS to Firestore (4-week window). Runs for all clinics or a specific one.</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron</span><span class="tag tag-auth">Token</span><span class="tag tag-role">superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">results</span>: [{ clinicId, ok, count?, error? }] }</pre></div></div></div>
+    </div>
+
+    <div class="card" data-search="csv import upload file appointments patients">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/pms/import-csv</span>
+          </div>
+          <div class="card-desc">Upload CSV for one-time appointment or patient import. Auto-detects schema or uses custom mapping.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request (FormData)</h4>
+            <pre><span class="key">file</span>:     <span class="type">File</span> (CSV) <span class="required">← required</span>
+<span class="key">fileType</span>: <span class="type">"appointments"|"patients"</span> <span class="required">← required</span>
+<span class="key">schemaId</span>: <span class="type">string</span> <span class="comment">← optional (auto-detect if omitted)</span></pre>
+          </div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ ok, <span class="key">count</span>, <span class="key">imported</span>, <span class="key">skipped</span>, <span class="key">errors</span>[] }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="csv inbound email mailgun sendgrid">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/pms/import-csv/inbound</span>
+          </div>
+          <div class="card-desc">Inbound email CSV import — called by Mailgun/SendGrid when a CSV is emailed to import-{clinicId}@ingest.strydeos.com.</div>
+          <div class="card-tags"><span class="tag tag-webhook">Webhook Secret</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request (FormData)</h4>
+            <pre><span class="key">file</span>:      <span class="type">File</span> (CSV) <span class="required">← required</span>
+<span class="key">fileType</span>:  <span class="type">"appointments"|"patients"</span>
+<span class="key">recipient</span>: <span class="type">string</span> <span class="comment">← extracts clinicId from email</span>
+<span class="key">clinicId</span>:  <span class="type">string</span> <span class="comment">← explicit override</span></pre>
+          </div>
+          <div class="detail-block"><h4>Headers</h4><pre><span class="key">x-inbound-secret</span>: <span class="type">&lt;CSV_INBOUND_SECRET&gt;</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="csv schema mapping columns custom">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/pms/csv-schema</span>
+          </div>
+          <div class="card-desc">Create/update custom CSV column mapping schema for non-standard PMS exports.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request Body</h4>
+            <pre><span class="key">name</span>:       <span class="type">string</span>  <span class="comment">← custom provider name</span>
+<span class="key">fileType</span>:   <span class="type">"appointments"|"patients"</span> <span class="required">← required</span>
+<span class="key">fieldMap</span>:   <span class="type">Record&lt;csvHeader, canonicalField&gt;</span> <span class="required">← required</span>
+<span class="key">dateFormat</span>: <span class="type">"uk"|"us"|"iso"</span> <span class="comment">← default "uk"</span>
+<span class="key">statusMap</span>:  <span class="type">Record&lt;source, target&gt;</span> <span class="comment">← appointments only</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Canonical Fields</h4>
+            <pre><span class="comment">date, time, endDate, endTime,
+patientId, patientFirst, patientLast,
+patientEmail, patientPhone, patientDob,
+practitioner, practitionerId,
+type, status, notes, price, duration</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="csv import history list uploads">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-GET">GET</span>
+            <span class="card-path">/api/pms/import-history</span>
+          </div>
+          <div class="card-desc">List past CSV imports for the clinic (paginated, most recent first).</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Query Params</h4><pre><span class="key">limit</span>: <span class="type">number</span> <span class="comment">← 1–100, default 30</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ ok, <span class="key">imports</span>: [{ id, fileName, fileType,
+  importedAt, count, status, errors }] }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="hep physitrack save config api key">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/hep/save-config</span>
+          </div>
+          <div class="card-desc">Save HEP integration credentials (Physitrack API key).</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Request Body</h4><pre><span class="key">provider</span>: <span class="type">"physitrack"</span> <span class="comment">← default</span>
+<span class="key">apiKey</span>:   <span class="type">string</span> <span class="required">← required</span></pre></div><div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }</pre></div></div></div>
+    </div>
+
+    <div class="card" data-search="hep test connection">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/hep/test-connection</span>
+          </div>
+          <div class="card-desc">Test HEP API credentials before saving.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Response</h4><pre><span class="comment">200:</span> { <span class="key">ok</span>: <span class="type">true</span> }
+<span class="comment">400:</span> { <span class="key">ok</span>: <span class="type">false</span>, <span class="key">error</span> }</pre></div></div></div>
+    </div>
+
+    <div class="card" data-search="hep disconnect remove">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/hep/disconnect</span>
+          </div>
+          <div class="card-desc">Disconnect HEP integration — deletes config, resets clinic fields.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }</pre></div></div></div>
+    </div>
+  </div>
+
+  <!-- ── Ava Voice ── -->
+  <div class="section" data-search="ava voice retell elevenlabs booking call agent">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EFF6FF;color:var(--blue);">📞</div>
+      Ava — Voice &amp; Bookings
+    </div>
+
+    <div class="card" data-search="ava agent create update elevenlabs prompt">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/ava/agent</span>
+          </div>
+          <div class="card-desc">Create or update ElevenLabs Convai agent — builds system prompt from clinic config, stores agent ID.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">authenticated</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request</h4><pre><span class="comment">No body — config pulled from clinic doc</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">agent_id</span>, <span class="key">message</span> }</pre></div>
+          <div class="detail-block full-width">
+            <h4>Agent Tools</h4>
+            <ul><li><code>book_appointment</code> — create booking via PMS</li><li><code>check_availability</code> — query open slots</li><li><code>update_booking</code> — modify existing appointment</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="booking create ava n8n pms appointment idempotent">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/bookings/create</span>
+          </div>
+          <div class="card-desc">Create booking from Ava voice call. Writes to PMS + mirrors in Firestore. Supports partial success (PMS fails, local succeeds).</div>
+          <div class="card-tags"><span class="tag tag-webhook">Webhook Secret</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request Body</h4>
+            <pre><span class="key">clinicId</span>:            <span class="type">string</span> <span class="required">← required</span>
+<span class="key">patientFirstName</span>:     <span class="type">string</span> <span class="required">← required</span>
+<span class="key">patientLastName</span>:      <span class="type">string</span> <span class="required">← required</span>
+<span class="key">patientPhone</span>:         <span class="type">string</span> <span class="required">← required (E.164)</span>
+<span class="key">clinicianExternalId</span>:  <span class="type">string</span> <span class="required">← required</span>
+<span class="key">dateTime</span>:             <span class="type">string</span> <span class="required">← required (ISO 8601)</span>
+<span class="key">patientEmail</span>:         <span class="type">string</span> <span class="comment">← optional</span>
+<span class="key">durationMinutes</span>:      <span class="type">number</span> <span class="comment">← default 45</span>
+<span class="key">appointmentType</span>:      <span class="type">string</span> <span class="comment">← optional</span>
+<span class="key">notes</span>:                <span class="type">string</span> <span class="comment">← optional</span>
+<span class="key">callId</span>:               <span class="type">string</span> <span class="comment">← Retell call ID</span>
+<span class="key">idempotencyKey</span>:       <span class="type">string</span> <span class="comment">← dedup key</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Response (200)</h4>
+            <pre>{ ok, <span class="key">appointmentId</span>, <span class="key">pmsExternalId</span>,
+  <span class="key">patientExternalId</span> }</pre>
+            <h4 style="margin-top:12px;">Partial Success (207)</h4>
+            <pre>{ ok, <span class="key">partial</span>: true,
+  pmsExternalId: null,
+  <span class="key">warning</span>: "PMS write failed..." }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="booking retry pms failed cron">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/bookings/retry-pms</span>
+          </div>
+          <div class="card-desc">Retry failed PMS write-backs for Ava bookings. Cron job — finds all failed writes and re-attempts.</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ ok, <span class="key">retried</span>, <span class="key">failed</span>, <span class="key">skipped</span>, <span class="key">results</span>[] }</pre></div>
+          <div class="detail-block"><h4>Notes</h4><ul><li>Skips appointments in the past</li><li>Max 10 retries per appointment</li><li>Audit-logged per attempt</li></ul></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="retell webhook call started ended analyzed voice transcript">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/webhooks/retell</span>
+          </div>
+          <div class="card-desc">Retell AI webhook — receives call_started, call_ended, call_analyzed events. Persists call data to Firestore.</div>
+          <div class="card-tags"><span class="tag tag-webhook">HMAC-SHA256</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block full-width">
+            <h4>Events</h4>
+            <ul>
+              <li><strong>call_started</strong> — creates voiceInteractions doc (callId, callerPhone, startTimestamp)</li>
+              <li><strong>call_ended</strong> — merges duration, recording URL, disconnection reason</li>
+              <li><strong>call_analyzed</strong> — merges summary, sentiment, outcome, transcript, custom analysis</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="elevenlabs webhook conversation voice">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/webhooks/elevenlabs</span>
+          </div>
+          <div class="card-desc">ElevenLabs webhook — stores call log with outcome heuristic from summary keywords.</div>
+          <div class="card-tags"><span class="tag tag-webhook">Webhook</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block full-width">
+            <h4>Outcome Mapping</h4>
+            <pre><span class="comment">Summary contains "book/appt"</span>   → booked
+<span class="comment">Summary contains "cancel"</span>       → follow_up_required
+<span class="comment">Summary contains "voicemail"</span>    → voicemail
+<span class="comment">Summary contains "escalat"</span>      → escalated
+<span class="comment">Summary contains "success"</span>      → resolved</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Comms ── -->
+  <div class="section" data-search="comms sms email twilio resend n8n callback inbound nps review sequence">
+    <div class="section-title">
+      <div class="section-icon" style="background:#F0FDFA;color:var(--teal);">💬</div>
+      Communications
+    </div>
+
+    <div class="card" data-search="comms send sms email twilio resend sequence">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/comms/send</span>
+          </div>
+          <div class="card-desc">Send SMS (Twilio) or email (Resend) to patient and log to comms_log collection.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">authenticated</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request Body</h4>
+            <pre><span class="key">clinicId</span>:     <span class="type">string</span> <span class="required">← required</span>
+<span class="key">patientId</span>:    <span class="type">string</span> <span class="required">← required</span>
+<span class="key">patientName</span>:  <span class="type">string</span> <span class="required">← required</span>
+<span class="key">sequenceType</span>: <span class="type">string</span> <span class="required">← required</span>
+<span class="key">channel</span>:      <span class="type">"sms"|"email"</span> <span class="required">← required</span>
+<span class="key">to</span>:           <span class="type">string</span> <span class="required">← required</span>
+<span class="key">body</span>:         <span class="type">string</span> <span class="required">← required</span>
+<span class="key">subject</span>:      <span class="type">string</span> <span class="comment">← required for email</span>
+<span class="key">templateVars</span>: <span class="type">Record</span> <span class="comment">← optional</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Sequence Types</h4>
+            <pre>hep_reminder
+rebooking_prompt
+pre_auth_collection
+review_prompt
+reactivation_90d
+reactivation_180d</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="n8n callback outbound inbound reply nps">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/n8n/callback</span>
+          </div>
+          <div class="card-desc">n8n automation callback — handles outbound delivery status and inbound SMS replies. Auto-parses NPS scores from review_prompt replies.</div>
+          <div class="card-tags"><span class="tag tag-webhook">Webhook Secret</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Outbound Callback</h4>
+            <pre><span class="key">clinicId</span>, <span class="key">patientId</span>, <span class="key">sequenceType</span>,
+<span class="key">channel</span>, <span class="key">logId</span>, <span class="key">executionId</span>,
+<span class="key">outcome</span>: <span class="type">"booked"|"unsubscribed"|"no_action"</span>
+<span class="key">openedAt</span>?, <span class="key">clickedAt</span>?</pre>
+          </div>
+          <div class="detail-block">
+            <h4>Inbound Reply</h4>
+            <pre><span class="key">type</span>: <span class="type">"inbound_reply"</span>
+<span class="key">clinicId</span>, <span class="key">fromPhone</span> <span class="comment">(E.164)</span>,
+<span class="key">replyText</span>, <span class="key">receivedAt</span>?
+
+<span class="comment">NPS parsing: "8", "8/10", "eight" → 8</span>
+<span class="comment">≥9 = promoter, 7-8 = passive, &lt;7 = detractor</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="writeupp webhook pms real-time sync appointment event">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/webhooks/writeupp</span>
+          </div>
+          <div class="card-desc">WriteUpp real-time webhook — triggers targeted mini-pipeline (sync → patients → compute → comms) on PMS events.</div>
+          <div class="card-tags"><span class="tag tag-webhook">Webhook Secret</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Headers</h4>
+            <pre><span class="key">x-webhook-secret</span>: &lt;WRITEUPP_WEBHOOK_SECRET&gt;
+<span class="key">x-strydeos-clinic-id</span>: <span class="comment">← optional direct clinic ID</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Pipeline Stages Triggered</h4>
+            <ul>
+              <li>Stage 2: syncAppointments (4-week window)</li>
+              <li>Stage 3: syncPatients</li>
+              <li>Stage 5: computePatientFields</li>
+              <li>triggerCommsSequences</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Pipeline & Metrics ── -->
+  <div class="section" data-search="pipeline metrics compute backfill cron daily">
+    <div class="section-title">
+      <div class="section-icon" style="background:#FCE7F3;color:#9D174D;">📊</div>
+      Pipeline &amp; Metrics
+    </div>
+
+    <div class="card" data-search="pipeline run full daily cron sync">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-GET">GET</span>
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/pipeline/run</span>
+          </div>
+          <div class="card-desc">Main pipeline entry point — runs full data sync + metrics computation + comms trigger. Daily cron at 06:00 UTC.</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron (daily 06:00 UTC)</span><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>POST Body (manual trigger)</h4><pre><span class="key">clinicId</span>?: <span class="type">string</span> <span class="comment">← optional (all clinics if omitted for superadmin)</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>, <span class="key">result</span> } <span class="comment">or</span> { <span class="key">results</span>: [...] }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="pipeline backfill 90 day historical">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/pipeline/backfill</span>
+          </div>
+          <div class="card-desc">One-time 90-day historical backfill — runs full pipeline with 13-week lookback.</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron</span><span class="tag tag-auth">Token</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>POST Body</h4><pre><span class="key">clinicId</span>?: <span class="type">string</span></pre></div></div></div>
+    </div>
+
+    <div class="card" data-search="metrics compute weekly kpi">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/metrics/compute</span>
+          </div>
+          <div class="card-desc">Compute weekly KPI metrics (follow-up rate, HEP compliance, utilisation, DNA rate, revenue/session, NPS).</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron</span><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">clinicId</span>?:  <span class="type">string</span> <span class="comment">← optional (all clinics if omitted)</span>
+<span class="key">weeksBack</span>?: <span class="type">number</span> <span class="comment">← 1–12, default 6</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">clinicId</span>, <span class="key">written</span> } <span class="comment">or</span> { <span class="key">results</span>: [...] }</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Compliance ── -->
+  <div class="section" data-search="compliance sar baa gdpr export delete privacy">
+    <div class="section-title">
+      <div class="section-icon" style="background:#FEF2F2;color:var(--danger);">🔒</div>
+      Compliance &amp; Privacy
+    </div>
+
+    <div class="card" data-search="sar create list subject access request">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="method-badge method-GET">GET</span>
+            <span class="card-path">/api/compliance/sar</span>
+          </div>
+          <div class="card-desc">Create or list Subject Access Requests. POST creates a new SAR; GET lists all SARs for the clinic.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>POST Body</h4>
+            <pre><span class="key">type</span>:        <span class="type">"access"|"correction"|"deletion"</span> <span class="required">← required</span>
+<span class="key">requestedBy</span>: <span class="type">string</span> <span class="required">← required</span>
+<span class="key">patientId</span>?:  <span class="type">string</span>
+<span class="key">description</span>: <span class="type">string</span> <span class="required">← required</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>GET Response (200)</h4>
+            <pre>{ <span class="key">requests</span>: [{
+  id, type, status, requestedBy,
+  patientId, description,
+  responseDeadline, <span class="comment">← 30 days from creation</span>
+  completedAt, createdAt, updatedAt
+}] }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="sar export patient data json appointments comms">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/compliance/sar/[id]/export</span>
+          </div>
+          <div class="card-desc">Export all patient data for an access-type SAR — returns patient record, appointments, comms log, and outcome scores as JSON.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block full-width">
+            <h4>Response (200)</h4>
+            <pre>{ success, data: {
+  exportedAt, patientId, clinicId,
+  <span class="key">patient</span>: { ... },
+  <span class="key">appointments</span>: [ ... ], <span class="comment">← up to 1000</span>
+  <span class="key">comms_log</span>: [ ... ],    <span class="comment">← up to 1000</span>
+  <span class="key">outcome_scores</span>: [ ... ]<span class="comment">← up to 1000</span>
+} }</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="sar delete patient data grace period soft">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/compliance/sar/[id]/delete</span>
+          </div>
+          <div class="card-desc">Mark patient data for deletion — 30-day grace period before purge. Only valid for deletion-type SARs.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Response (200)</h4><pre>{ success, <span class="key">message</span>, <span class="key">gracePeriodEnd</span> }</pre></div></div></div>
+    </div>
+
+    <div class="card" data-search="baa business associate agreement hipaa us">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/compliance/baa</span>
+          </div>
+          <div class="card-desc">Record BAA (Business Associate Agreement) acceptance — required for US clinics (HIPAA compliance).</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Request Body</h4><pre><span class="key">clinicId</span>: <span class="type">string</span> <span class="required">← required</span></pre></div><div class="detail-block"><h4>Response (200)</h4><pre>{ success, <span class="key">baaSignedAt</span> }</pre></div></div></div>
+    </div>
+  </div>
+
+  <!-- ── Admin ── -->
+  <div class="section" data-search="admin superadmin health diagnostics debug integration">
+    <div class="section-title">
+      <div class="section-icon" style="background:var(--cloud);color:var(--muted-strong);">⚙️</div>
+      Admin &amp; Diagnostics
+    </div>
+
+    <div class="card" data-search="admin integration health sync success rate degraded">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-GET">GET</span>
+            <span class="card-path">/api/admin/integration-health</span>
+          </div>
+          <div class="card-desc">Aggregated integration health across all clinics — sync success rates, latencies, error patterns over a configurable time window.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Query Params</h4><pre><span class="key">days</span>: <span class="type">number</span> <span class="comment">← 1–90, default 30</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ clinics: [{
+  clinicId, clinicName, pmsProvider,
+  integrations: {
+    [provider]: {
+      totalSyncs, successfulSyncs,
+      successRate, avgDurationMs,
+      lastSuccessAt, lastFailureAt,
+      lastErrors, <span class="key">status</span>: <span class="type">"healthy"|"degraded"|"down"</span>
+    }
+  }
+}] }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="debug writeupp probe field names diagnostic">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/debug/writeupp-probe</span>
+          </div>
+          <div class="card-desc">Diagnostic probe for WriteUpp field names — returns raw API response key shapes to debug mapping issues. Blocked in production.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">superadmin</span><span class="tag" style="background:#FEF2F2;color:var(--danger);">dev/staging only</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">clinicId</span>: <span class="type">string</span> <span class="required">← required</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ ok, summary: {
+  dateFrom, dateTo, totalReturned,
+  <span class="key">keyShape</span>: [{ keys, sample }],
+  confirmedFields, parseError?
+} }</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════ Footer ════════ -->
+<footer class="footer">
+  StrydeOS API Reference &middot; Internal documentation &middot; Do not share externally<br>
+  Generated March 2026 &middot; 37 endpoints across 6 business domains
+</footer>
+
+<script>
+  // ── View Toggle ──
+  function setView(view) {
+    document.getElementById('view-business').classList.toggle('hidden', view !== 'business');
+    document.getElementById('view-technical').classList.toggle('hidden', view !== 'technical');
+    document.querySelectorAll('.view-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.textContent.toLowerCase().includes(view === 'business' ? 'business' : 'developer'));
+    });
+    document.getElementById('searchInput').value = '';
+    handleSearch('');
+  }
+
+  // ── Card Toggle ──
+  function toggleCard(header) {
+    header.closest('.card').classList.toggle('open');
+  }
+
+  // ── Search ──
+  function handleSearch(query) {
+    const q = query.toLowerCase().trim();
+    const activeView = document.getElementById('view-business').classList.contains('hidden') ? 'view-technical' : 'view-business';
+    const container = document.getElementById(activeView);
+
+    container.querySelectorAll('.section').forEach(section => {
+      const sectionSearch = (section.dataset.search || '') + ' ' + section.textContent;
+      const sectionMatch = !q || sectionSearch.toLowerCase().includes(q);
+
+      if (activeView === 'view-technical') {
+        let anyCardMatch = false;
+        section.querySelectorAll('.card').forEach(card => {
+          const cardSearch = (card.dataset.search || '') + ' ' + card.textContent;
+          const match = !q || cardSearch.toLowerCase().includes(q);
+          card.style.display = match ? '' : 'none';
+          if (match) anyCardMatch = true;
+        });
+        // Show section if any card matches or if it's a non-card section that matches
+        const hasCards = section.querySelectorAll('.card').length > 0;
+        section.style.display = (hasCards ? anyCardMatch : sectionMatch) ? '' : 'none';
+      } else {
+        section.style.display = sectionMatch ? '' : 'none';
+      }
+    });
+  }
+
+  // ── Keyboard shortcut: / to focus search ──
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      e.preventDefault();
+      document.getElementById('searchInput').focus();
+    }
+    if (e.key === 'Escape') {
+      document.getElementById('searchInput').blur();
+      document.getElementById('searchInput').value = '';
+      handleSearch('');
+    }
+  });
+</script>
+</body>
+</html>

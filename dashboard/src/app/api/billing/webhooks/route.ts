@@ -22,14 +22,15 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { flagsFromSubscriptionItems, getTierFromMetadata } from "@/lib/billing";
+import { flagsFromSubscriptionItems, getTierFromMetadata, countExtraSeatsFromItems } from "@/lib/billing";
 import type { StripeSubscriptionStatus } from "@/types";
+import { withRequestLog } from "@/lib/request-logger";
 
 export const runtime = "nodejs";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   if (!WEBHOOK_SECRET) {
     console.error("[Billing webhook] STRIPE_WEBHOOK_SECRET is not configured");
     return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });
@@ -109,7 +110,7 @@ function getSubscriptionPeriodEnd(subscription: Stripe.Subscription): string {
 }
 
 /** Collect all line items from every active/trialing subscription for this customer. */
-async function getAllActiveSubscriptionItems(customerId: string): Promise<Array<{ price: { id: string } }>> {
+async function getAllActiveSubscriptionItems(customerId: string): Promise<Array<{ price: { id: string }; quantity?: number }>> {
   const stripe = getStripe();
   const subs = await stripe.subscriptions.list({
     customer: customerId,
@@ -117,12 +118,12 @@ async function getAllActiveSubscriptionItems(customerId: string): Promise<Array<
     limit: 100,
   });
 
-  const items: Array<{ price: { id: string } }> = [];
+  const items: Array<{ price: { id: string }; quantity?: number }> = [];
   for (const sub of subs.data) {
     if (!ACTIVE_SUB_STATUSES.includes(sub.status as (typeof ACTIVE_SUB_STATUSES)[number])) continue;
     for (const item of sub.items.data) {
       const priceId = typeof item.price === "string" ? item.price : item.price.id;
-      items.push({ price: { id: priceId } });
+      items.push({ price: { id: priceId }, quantity: item.quantity ?? 1 });
     }
   }
   return items;
@@ -162,6 +163,7 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
   // Merge all active/trialing subscriptions so "add another module" (second sub) doesn't overwrite the first
   const allItems = await getAllActiveSubscriptionItems(customerId);
   const updatedFlags = flagsFromSubscriptionItems(allItems);
+  const extraSeats = countExtraSeatsFromItems(allItems);
   const status = subscription.status as StripeSubscriptionStatus;
   const now = new Date().toISOString();
 
@@ -179,6 +181,7 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         subscriptionId: subscription.id,
         subscriptionStatus: status,
         currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
+        extraSeats,
         ...(tier ? { tier } : {}),
       },
       updatedAt: now,
@@ -186,7 +189,7 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
 
   Sentry.addBreadcrumb({
     category: "billing",
-    message: `Clinic ${clinic.id} — sub ${subscription.id} ${status} (${allItems.length} items)`,
+    message: `Clinic ${clinic.id} — sub ${subscription.id} ${status} (${allItems.length} items, ${extraSeats} extra seats)`,
     data: updatedFlags,
     level: "info",
   });
@@ -206,6 +209,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const updatedFlags = allItems.length > 0
     ? flagsFromSubscriptionItems(allItems)
     : { intelligence: false, continuity: false, receptionist: false };
+  const extraSeats = allItems.length > 0 ? countExtraSeatsFromItems(allItems) : 0;
 
   const primary = allItems.length > 0 ? await getPrimaryActiveSubscription(customerId) : null;
   const tier = getTierFromMetadata(subscription.metadata as Record<string, string>);
@@ -224,6 +228,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
         currentPeriodEnd: primary
           ? primary.periodEndIso
           : getSubscriptionPeriodEnd(subscription),
+        extraSeats,
         ...(tier ? { tier } : {}),
       },
       updatedAt: now,
@@ -272,3 +277,5 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
 
   console.warn(`[Billing webhook] Clinic ${clinic.id} — payment failed, marked past_due`);
 }
+
+export const POST = withRequestLog(handler);

@@ -20,6 +20,7 @@ import { verifyRetellWebhook, type RetellWebhookEvent } from "@/lib/retell/clien
 import type { VoiceInteractionOutcome, VoiceInteractionUrgency } from "@/lib/firebase/voiceInteractions";
 import { VOICE_INTERACTIONS_COLLECTION } from "@/lib/firebase/voiceInteractions";
 import { FieldValue } from "firebase-admin/firestore";
+import { withRequestLog } from "@/lib/request-logger";
 
 // RETELL_CLINIC_ID must be set explicitly — no fallback to prevent silent wrong-clinic writes
 const CLINIC_ID = process.env.RETELL_CLINIC_ID;
@@ -28,7 +29,7 @@ const SKIP_SIG_VERIFY =
   process.env.NODE_ENV !== "production" &&
   process.env.RETELL_SKIP_SIG_VERIFY === "true";
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+async function handler(request: NextRequest): Promise<NextResponse> {
   try {
     const rawBody = await request.text();
     const signature = request.headers.get("x-retell-signature");
@@ -185,4 +186,6 @@ function mapUrgency(
   if (summary.includes("follow up") || summary.includes("callback")) return "medium";
   return "low";
 }
+
+export const POST = withRequestLog(handler);
 

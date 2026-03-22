@@ -220,6 +220,8 @@ export const SMS_TEMPLATES: Record<string, string> = {
 };
 
 // Extended n8n payload — adds step tracking fields
+export type ToneModifier = "standard" | "supportive" | "clinical";
+
 export interface N8nSequencePayload {
   clinicId: string;
   patientId: string;
@@ -234,4 +236,6 @@ export interface N8nSequencePayload {
   sequenceDefinitionId: string;
   attributionWindowDays: number | null;
   triggerData: Record<string, unknown>;
+  /** Heidi-derived tone hint for n8n template selection. */
+  toneModifier?: ToneModifier;
 }

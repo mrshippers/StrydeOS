@@ -11,10 +11,10 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const updatedStats = [
-  { weekStart: "2026-01-27", followUpRate: 1.8, physitrackRate: 0.35, appointmentsTotal: 16 },
-  { weekStart: "2026-02-03", followUpRate: 2.0, physitrackRate: 0.52, appointmentsTotal: 18 },
-  { weekStart: "2026-02-10", followUpRate: 2.2, physitrackRate: 0.71, appointmentsTotal: 20 },
-  { weekStart: "2026-02-17", followUpRate: 2.4, physitrackRate: 0.85, appointmentsTotal: 19 },
+  { weekStart: "2026-01-27", followUpRate: 1.8, hepRate: 0.35, appointmentsTotal: 16 },
+  { weekStart: "2026-02-03", followUpRate: 2.0, hepRate: 0.52, appointmentsTotal: 18 },
+  { weekStart: "2026-02-10", followUpRate: 2.2, hepRate: 0.71, appointmentsTotal: 20 },
+  { weekStart: "2026-02-17", followUpRate: 2.4, hepRate: 0.85, appointmentsTotal: 19 },
 ];
 
 async function updateStats() {

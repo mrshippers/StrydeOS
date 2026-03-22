@@ -1,7 +1,7 @@
 import type { Firestore } from "firebase-admin/firestore";
 import type { StageResult } from "./types";
 
-export type IntegrationHealthProviderType = "pms" | "hep" | "reviews";
+export type IntegrationHealthProviderType = "pms" | "hep" | "reviews" | "enrichment";
 
 export interface IntegrationHealthEntry {
   clinicId: string;

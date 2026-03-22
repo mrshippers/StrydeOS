@@ -33,7 +33,7 @@ export interface RiskScoreInput {
   churnRisk: boolean;
   insuranceFlag: boolean;
   hepProgramId?: string | null;
-  hepComplianceData?: boolean; // true if Physitrack compliance data present
+  hepComplianceData?: boolean; // true if HEP provider compliance data present
   isInitialAssessmentWithNoFollowUp?: boolean;
   followUpBookedAtLastSession?: boolean;
   dnasInFirstThreeSessions?: number; // count of DNA appointments in first 3 sessions
@@ -44,6 +44,13 @@ export interface RiskScoreInput {
   priorLifecycleState?: LifecycleState | null;
   lastSequenceSentAt?: string | null;
   now?: Date;
+  // Heidi enrichment — when present, adjusts risk calculation
+  complexitySignals?: {
+    treatmentComplexity?: "low" | "moderate" | "high";
+    psychosocialFlags?: boolean;
+    chronicIndicators?: boolean;
+    painScore?: number;
+  } | null;
 }
 
 export interface RiskScoreResult {
@@ -99,6 +106,21 @@ export function computeRiskScore(input: RiskScoreInput): RiskScoreResult {
   if (input.insuranceFlag) staticRisk -= 30;
   if (input.isInitialAssessmentWithNoFollowUp) staticRisk -= 20;
   staticRisk = Math.max(0, Math.min(100, staticRisk));
+
+  // ── Heidi complexity adjustment ─────────────────────────────────────────
+  // When Heidi data is available, high complexity + low compliance = higher risk.
+  // Psychosocial flags lower the sentiment score (patient needs more support).
+  // High pain scores with poor attendance amplify risk.
+  if (input.complexitySignals) {
+    const cx = input.complexitySignals;
+    if (cx.psychosocialFlags) sentiment = Math.max(0, sentiment - 15);
+    if (cx.treatmentComplexity === "high" && attendance < 70) {
+      treatmentProgress = Math.max(0, treatmentProgress - 10);
+    }
+    if (cx.painScore !== undefined && cx.painScore >= 7 && attendance < 60) {
+      staticRisk = Math.max(0, staticRisk - 15);
+    }
+  }
 
   // ── Composite score ─────────────────────────────────────────────────────
   // Factors produce an engagement score where 100 = best health.

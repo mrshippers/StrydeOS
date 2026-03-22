@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, verifyCronRequest, handleApiError, requireRole } from "@/lib/auth-guard";
 import { computeWeeklyMetricsForClinic, computeWeeklyMetricsForAllClinics } from "@/lib/metrics/compute-weekly";
+import { withRequestLog } from "@/lib/request-logger";
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const isCron = request.headers.get("authorization")?.startsWith("Bearer ");
     if (isCron) {
@@ -34,3 +35,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

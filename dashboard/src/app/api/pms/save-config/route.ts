@@ -3,12 +3,13 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, handleApiError, requireRole } from "@/lib/auth-guard";
 import type { PmsProvider } from "@/types";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
+import { withRequestLog } from "@/lib/request-logger";
 
 const INTEGRATIONS_PMS = "integrations_config";
 const PMS_DOC_ID = "pms";
 
 /** Save PMS API key to server-only integrations_config; update clinic doc for client display. */
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
@@ -73,3 +74,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

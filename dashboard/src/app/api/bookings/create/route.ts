@@ -33,6 +33,7 @@ import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { writeAuditLog } from "@/lib/audit-log";
 import type { PMSIntegrationConfig } from "@/types/pms";
 import type { AppointmentType, AppointmentSource } from "@/types";
+import { withRequestLog } from "@/lib/request-logger";
 
 export const runtime = "nodejs";
 
@@ -95,7 +96,7 @@ function validateRequired(
 
 // ─── Route handler ───────────────────────────────────────────────────────────
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     // ── Auth: shared secret (n8n / Retell, not a browser user) ──
     const secret =
@@ -370,3 +371,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestLog(handler);

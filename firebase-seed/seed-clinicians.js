@@ -21,28 +21,28 @@ const weeks = ["2026-01-27", "2026-02-03", "2026-02-10", "2026-02-17"];
 
 const statsPerClinician = {
   andrew_001: [
-    { followUpRate: 2.5, physitrackRate: 0.88, appointmentsTotal: 14 },
-    { followUpRate: 2.7, physitrackRate: 0.91, appointmentsTotal: 16 },
-    { followUpRate: 3.0, physitrackRate: 0.93, appointmentsTotal: 18 },
-    { followUpRate: 3.1, physitrackRate: 0.96, appointmentsTotal: 19 },
+    { followUpRate: 2.5, hepRate: 0.88, appointmentsTotal: 14 },
+    { followUpRate: 2.7, hepRate: 0.91, appointmentsTotal: 16 },
+    { followUpRate: 3.0, hepRate: 0.93, appointmentsTotal: 18 },
+    { followUpRate: 3.1, hepRate: 0.96, appointmentsTotal: 19 },
   ],
   sarah_002: [
-    { followUpRate: 2.8, physitrackRate: 0.92, appointmentsTotal: 12 },
-    { followUpRate: 2.9, physitrackRate: 0.94, appointmentsTotal: 14 },
-    { followUpRate: 3.2, physitrackRate: 0.97, appointmentsTotal: 15 },
-    { followUpRate: 3.4, physitrackRate: 0.98, appointmentsTotal: 16 },
+    { followUpRate: 2.8, hepRate: 0.92, appointmentsTotal: 12 },
+    { followUpRate: 2.9, hepRate: 0.94, appointmentsTotal: 14 },
+    { followUpRate: 3.2, hepRate: 0.97, appointmentsTotal: 15 },
+    { followUpRate: 3.4, hepRate: 0.98, appointmentsTotal: 16 },
   ],
   james_003: [
-    { followUpRate: 1.9, physitrackRate: 0.78, appointmentsTotal: 10 },
-    { followUpRate: 2.1, physitrackRate: 0.82, appointmentsTotal: 11 },
-    { followUpRate: 2.4, physitrackRate: 0.85, appointmentsTotal: 13 },
-    { followUpRate: 2.6, physitrackRate: 0.89, appointmentsTotal: 12 },
+    { followUpRate: 1.9, hepRate: 0.78, appointmentsTotal: 10 },
+    { followUpRate: 2.1, hepRate: 0.82, appointmentsTotal: 11 },
+    { followUpRate: 2.4, hepRate: 0.85, appointmentsTotal: 13 },
+    { followUpRate: 2.6, hepRate: 0.89, appointmentsTotal: 12 },
   ],
   emma_004: [
-    { followUpRate: 3.0, physitrackRate: 0.95, appointmentsTotal: 18 },
-    { followUpRate: 3.1, physitrackRate: 0.96, appointmentsTotal: 20 },
-    { followUpRate: 2.8, physitrackRate: 0.93, appointmentsTotal: 17 },
-    { followUpRate: 3.3, physitrackRate: 0.97, appointmentsTotal: 21 },
+    { followUpRate: 3.0, hepRate: 0.95, appointmentsTotal: 18 },
+    { followUpRate: 3.1, hepRate: 0.96, appointmentsTotal: 20 },
+    { followUpRate: 2.8, hepRate: 0.93, appointmentsTotal: 17 },
+    { followUpRate: 3.3, hepRate: 0.97, appointmentsTotal: 21 },
   ],
 };
 

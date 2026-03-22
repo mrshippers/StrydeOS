@@ -4,6 +4,7 @@ import { verifyApiRequest, verifyCronRequest, handleApiError, requireRole } from
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import type { Appointment, AppointmentStatus, AppointmentType } from "@/types";
 import type { PMSIntegrationConfig } from "@/types/pms";
+import { withRequestLog } from "@/lib/request-logger";
 
 const COLLECTION_APPOINTMENTS = "appointments";
 const COLLECTION_CLINICIANS = "clinicians";
@@ -21,7 +22,7 @@ function getWeekRange(weeksBack: number): { dateFrom: string; dateTo: string } {
   };
 }
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const isCron = request.headers.get("authorization")?.startsWith("Bearer ");
     if (isCron) {
@@ -142,3 +143,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

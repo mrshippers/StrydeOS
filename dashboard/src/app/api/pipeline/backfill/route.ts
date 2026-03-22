@@ -7,6 +7,7 @@ import {
   requireRole,
 } from "@/lib/auth-guard";
 import { runPipeline } from "@/lib/pipeline/run-pipeline";
+import { withRequestLog } from "@/lib/request-logger";
 
 /**
  * POST /api/pipeline/backfill
@@ -16,7 +17,7 @@ import { runPipeline } from "@/lib/pipeline/run-pipeline";
  *
  * Body (optional): { clinicId?: string }
  */
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const isCron = request.headers.get("authorization")?.startsWith("Bearer ");
     if (isCron) {
@@ -52,3 +53,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

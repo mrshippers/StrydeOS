@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { runCSVImport } from "@/lib/csv-import/run-import";
+import { withRequestLog } from "@/lib/request-logger";
 
 /**
  * Inbound email → CSV import endpoint.
@@ -22,7 +23,7 @@ function extractClinicIdFromRecipient(recipient: string): string | null {
   return match ? match[1] : null;
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+async function handler(request: NextRequest): Promise<NextResponse> {
   if (!INBOUND_SECRET) {
     return NextResponse.json({ error: "Inbound import not configured" }, { status: 503 });
   }
@@ -78,3 +79,5 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
+
+export const POST = withRequestLog(handler);

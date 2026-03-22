@@ -28,8 +28,16 @@ import {
   CreditCard,
   HelpCircle,
 } from "lucide-react";
-import HelpPanel from "@/components/HelpPanel";
+import dynamic from "next/dynamic";
 import { LogoNav } from "@/components/MonolithLogo";
+
+const HelpPanel = dynamic(
+  () => import("@/components/HelpPanel"),
+  {
+    loading: () => <div className="animate-pulse bg-navy/10 rounded-xl h-full w-[480px] fixed top-0 right-0" />,
+    ssr: false,
+  }
+);
 import { useTheme } from "@/components/ThemeProvider";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
 import { useClinicianSummaryStats } from "@/hooks/useClinicianSummaryStats";
@@ -203,6 +211,8 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
+        role="navigation"
+        aria-label="Main navigation"
         className={`fixed top-0 left-0 z-40 h-full w-60 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
         style={{ background: brand.navy }}

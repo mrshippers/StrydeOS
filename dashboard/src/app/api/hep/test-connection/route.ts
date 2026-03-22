@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyApiRequest, handleApiError, requireRole } from "@/lib/auth-guard";
 import { createHEPAdapter } from "@/lib/integrations/hep/factory";
 import type { HEPIntegrationConfig } from "@/lib/integrations/hep/types";
+import { withRequestLog } from "@/lib/request-logger";
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
@@ -26,3 +27,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

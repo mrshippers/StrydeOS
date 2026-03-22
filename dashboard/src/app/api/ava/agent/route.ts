@@ -3,6 +3,7 @@ import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { buildAvaPrompt } from "@/lib/retell/ava-prompt";
+import { withRequestLog } from "@/lib/request-logger";
 
 // Ensure Firebase Admin is initialized
 if (!getApps().length) {
@@ -70,7 +71,7 @@ async function updateAgent(agentId: string, config: Partial<ElevenAgentsConfig>)
   }
 }
 
-export async function POST(req: NextRequest) {
+async function handler(req: NextRequest) {
   try {
     // Extract clinicId from Authorization header (Firebase token)
     const authHeader = req.headers.get("authorization");
@@ -174,3 +175,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestLog(handler);

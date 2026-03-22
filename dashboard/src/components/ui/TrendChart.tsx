@@ -65,7 +65,7 @@ export default function TrendChart({
 
   const hasPercentageLines = lines.some(
     (l) =>
-      l.key === "physitrackRate" ||
+      l.key === "hepRate" ||
       l.key === "utilisationRate" ||
       l.key === "dnaRate" ||
       l.key === "courseCompletionRate"
@@ -118,7 +118,7 @@ export default function TrendChart({
           />
           {lines.map((line) => {
             const isPercent =
-              line.key === "physitrackRate" ||
+              line.key === "hepRate" ||
               line.key === "utilisationRate" ||
               line.key === "dnaRate" ||
               line.key === "courseCompletionRate";

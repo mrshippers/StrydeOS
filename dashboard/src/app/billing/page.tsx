@@ -10,6 +10,8 @@ import {
   ExternalLink,
   AlertTriangle,
   Zap,
+  Users,
+  Plus,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
@@ -18,7 +20,9 @@ import {
   MODULE_KEYS,
   TIER_LABELS,
   TIER_KEYS,
+  TIER_SEAT_LIMITS,
   MODULE_PRICING,
+  EXTRA_SEAT_PRICING,
   getTrialEndsAt,
   formatGBP,
   type ModuleKey,
@@ -270,6 +274,7 @@ export default function BillingPage() {
   const [interval, setInterval] = useState<BillingInterval>("month");
   const [loadingModule, setLoadingModule] = useState<ModuleKey | "fullstack" | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [seatLoading, setSeatLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const billing = user?.clinicProfile?.billing;
@@ -279,10 +284,10 @@ export default function BillingPage() {
   const checkoutSuccess  = searchParams.get("checkout") === "success";
   const checkoutCanceled = searchParams.get("checkout") === "canceled";
 
-  const isSuperadmin = user?.role === "superadmin";
+  const isSuperadmin = user?.role === "superadmin" || user?.role === "owner";
   const statusDisplay =
     isSuperadmin
-      ? { label: "Superadmin — full access", color: "#8B5CF6" }
+      ? { label: "Full access", color: "#8B5CF6" }
       : trialActive && !billing?.subscriptionStatus
         ? { label: "Trial", color: "#0891B2" }
         : subscriptionStatusLabel(billing?.subscriptionStatus);
@@ -320,6 +325,27 @@ export default function BillingPage() {
     },
     [firebaseUser, tier, interval]
   );
+
+  const handleAddSeat = useCallback(async () => {
+    setError(null);
+    setSeatLoading(true);
+    try {
+      const token = await getIdToken(firebaseUser);
+      if (!token) throw new Error("Not authenticated");
+      const res = await fetch("/api/billing/seats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ quantity: 1 }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not add seat");
+      window.location.reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setSeatLoading(false);
+    }
+  }, [firebaseUser]);
 
   const handleManageBilling = useCallback(async () => {
     setError(null);
@@ -453,6 +479,54 @@ export default function BillingPage() {
         isLoading={loadingModule === "fullstack"}
         onActivate={() => handleActivate("fullstack")}
       />
+
+      {/* Clinician seats */}
+      {hasActiveSubscription && canManageBilling && (() => {
+        const currentTier = billing?.tier as TierKey | undefined;
+        const effectiveTier = currentTier ?? "studio";
+        const tierLimit = TIER_SEAT_LIMITS[effectiveTier];
+        const extraSeats: number = billing?.extraSeats ?? 0;
+        const totalSeats = tierLimit + extraSeats;
+        const seatPrice = EXTRA_SEAT_PRICING[interval];
+
+        return (
+          <div className="mt-6 rounded-2xl p-5 bg-white border border-border">
+            <div className="flex items-center gap-2 mb-4">
+              <Users size={15} className="text-navy" />
+              <h3 className="text-[14px] font-semibold text-navy">Clinician Seats</h3>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[22px] font-light text-navy font-display">{totalSeats}</span>
+                  <span className="text-[12px] text-muted">total seats</span>
+                </div>
+                <p className="text-[11px] text-muted mt-0.5">
+                  {tierLimit} included ({TIER_LABELS[effectiveTier].label} tier)
+                  {extraSeats > 0 && <> + {extraSeats} extra @ {formatGBP(EXTRA_SEAT_PRICING.month)}/mo each</>}
+                </p>
+              </div>
+
+              <button
+                onClick={handleAddSeat}
+                disabled={seatLoading}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all duration-150 hover:opacity-90 disabled:opacity-50 bg-blue"
+              >
+                {seatLoading ? <Loader2 size={13} className="animate-spin" /> : <><Plus size={13} /> Add seat</>}
+              </button>
+            </div>
+
+            <div className="pt-3 border-t border-border">
+              <p className="text-[11px] text-muted">
+                Extra seats: {formatGBP(seatPrice)}/{interval === "month" ? "mo" : "yr"} per clinician
+                {interval === "year" && <span className="text-success ml-1">(20% off)</span>}
+                . Added to your existing subscription immediately.
+              </p>
+            </div>
+          </div>
+        );
+      })()}
 
       <p className="mt-8 text-center text-[11px] text-muted">
         All prices in GBP · billed {interval === "month" ? "monthly" : "annually"} · no contracts · cancel anytime

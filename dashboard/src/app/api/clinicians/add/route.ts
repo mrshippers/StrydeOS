@@ -20,10 +20,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { canAddClinician } from "@/lib/billing";
+import { withRequestLog } from "@/lib/request-logger";
 
 export const runtime = "nodejs";
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     const db = getAdminDb();
 
     // ── Seat enforcement ──────────────────────────────────────────────
-    if (user.role !== "superadmin") {
+    if (user.role !== "superadmin" && user.role !== "owner") {
       const seatCheck = await canAddClinician(clinicId, db);
       if (!seatCheck.allowed) {
         return NextResponse.json(
@@ -56,6 +57,9 @@ export async function POST(request: NextRequest) {
             error: seatCheck.reason,
             currentCount: seatCheck.currentCount,
             limit: seatCheck.limit,
+            tierLimit: seatCheck.tierLimit,
+            extraSeats: seatCheck.extraSeats,
+            canPurchaseSeat: seatCheck.canPurchaseSeat,
           },
           { status: 403 }
         );
@@ -89,3 +93,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

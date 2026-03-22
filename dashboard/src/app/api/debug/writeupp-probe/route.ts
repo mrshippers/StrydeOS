@@ -3,6 +3,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, requireRole, requireClinic, handleApiError } from "@/lib/auth-guard";
 import type { PMSIntegrationConfig } from "@/types/pms";
 import { writeUppFetch } from "@/lib/integrations/pms/writeupp/client";
+import { withRequestLog } from "@/lib/request-logger";
 
 /**
  * POST /api/debug/writeupp-probe
@@ -14,14 +15,15 @@ import { writeUppFetch } from "@/lib/integrations/pms/writeupp/client";
  * Body: { clinicId: string }
  * Auth: Bearer token — owner, admin, or superadmin. Non-superadmin can only probe own clinic.
  */
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
-    if (process.env.NODE_ENV === "production" && !process.env.ENABLE_DEBUG_ENDPOINTS) {
-      return NextResponse.json({ error: "Debug endpoints are disabled in production" }, { status: 404 });
-    }
-
     const user = await verifyApiRequest(request);
     requireRole(user, ["superadmin"]);
+
+    // Hard-disabled in production — no env flag bypass
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Debug endpoints are disabled in production" }, { status: 404 });
+    }
 
     const body = await request.json().catch(() => ({}));
     const clinicId = body.clinicId as string | undefined;
@@ -119,3 +121,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

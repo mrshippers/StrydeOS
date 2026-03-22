@@ -23,10 +23,11 @@ import { writeAuditLog } from "@/lib/audit-log";
 import { verifyCronRequest, handleApiError } from "@/lib/auth-guard";
 import type { PMSIntegrationConfig } from "@/types/pms";
 import type { AppointmentType } from "@/types";
+import { withRequestLog } from "@/lib/request-logger";
 
 export const runtime = "nodejs";
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     verifyCronRequest(request);
 
@@ -179,3 +180,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const POST = withRequestLog(handler);

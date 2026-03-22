@@ -36,7 +36,7 @@ export function getFollowUpStatus(
   return "danger";
 }
 
-export function getPhysitrackStatus(rate: number): MetricStatus {
+export function getHepStatus(rate: number): MetricStatus {
   if (rate >= 0.95) return "ok";
   if (rate >= 0.85) return "warn";
   return "danger";
@@ -124,12 +124,12 @@ export function computeAlerts(stats: WeeklyStats): {
     });
   }
 
-  const ptStatus = getPhysitrackStatus(stats.physitrackRate);
+  const ptStatus = getHepStatus(stats.hepRate);
   if (ptStatus !== "ok") {
     alerts.push({
       metric: "HEP compliance",
-      current: stats.physitrackRate,
-      target: stats.physitrackTarget,
+      current: stats.hepRate,
+      target: stats.hepTarget,
       severity: ptStatus as "warn" | "danger",
     });
   }

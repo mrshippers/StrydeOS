@@ -7,6 +7,7 @@ import { syncClinicians, buildClinicianMap } from "./sync-clinicians";
 import { syncAppointments } from "./sync-appointments";
 import { syncPatients } from "./sync-patients";
 import { syncHep } from "./sync-hep";
+import { syncHeidi } from "./sync-heidi";
 import { computePatientFields } from "./compute-patients";
 import { computeWeeklyMetricsForClinic } from "@/lib/metrics/compute-weekly";
 import { syncReviews } from "./sync-reviews";
@@ -112,6 +113,23 @@ export async function runPipeline(
       ok: true,
       count: 0,
       errors: ["No HEP config — skipping"],
+      durationMs: 0,
+    });
+  }
+
+  // ── Stage 4b: Enrich with Heidi clinical notes ──────────────────────────
+  try {
+    const s4b = await syncHeidi(db, clinicId);
+    stages.push(s4b);
+    if (s4b.count > 0) {
+      await logIntegrationHealth(db, clinicId, "heidi", "enrichment", s4b);
+    }
+  } catch (err) {
+    stages.push({
+      stage: "sync-heidi",
+      ok: false,
+      count: 0,
+      errors: [err instanceof Error ? err.message : String(err)],
       durationMs: 0,
     });
   }

@@ -9,10 +9,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
+import { withRequestLog } from "@/lib/request-logger";
 
 const QUERY_LIMIT = 1000;
 
-export async function POST(
+async function handler(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -140,3 +141,5 @@ export async function POST(
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

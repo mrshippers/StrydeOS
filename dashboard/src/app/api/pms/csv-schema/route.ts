@@ -3,6 +3,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, handleApiError, requireRole } from "@/lib/auth-guard";
 import type { CSVSchema, CanonicalField, CSVFileType, DateFormat } from "@/lib/csv-import/types";
 import type { AppointmentStatus } from "@/types";
+import { withRequestLog } from "@/lib/request-logger";
 
 const VALID_CANONICAL_FIELDS: CanonicalField[] = [
   "date", "time", "endDate", "endTime",
@@ -28,7 +29,7 @@ const DEFAULT_STATUS_MAP: Record<string, AppointmentStatus> = {
   "late cancel": "late_cancel",
 };
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+async function handler(request: NextRequest): Promise<NextResponse> {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
@@ -107,3 +108,5 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

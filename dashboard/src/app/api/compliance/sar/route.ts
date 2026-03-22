@@ -9,8 +9,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { getAdminDb } from "@/lib/firebase-admin";
 import type { SarRequest } from "@/types";
+import { withRequestLog } from "@/lib/request-logger";
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin"]);
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
@@ -99,3 +100,6 @@ export async function GET(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(postHandler);
+export const GET = withRequestLog(getHandler);

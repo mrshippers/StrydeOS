@@ -34,8 +34,8 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "Home Exercise Programme (HEP) compliance tracks what proportion of patients seen in a given period were issued a structured exercise programme. Research consistently shows that patients with a programme have better outcomes and return for more sessions. A low rate often means clinicians are forgetting to assign programmes, or doing it inconsistently.",
     formula: "Patients given a programme ÷ Patients seen (expressed as %)",
     clinicNote:
-      "Measured via Physitrack data at Spires. If your clinic uses a different HEP tool (e.g. Rehab My Patient, PhysioAdvisor), the data source may differ but the metric logic is identical.",
-    tags: ["hep", "exercise", "programme", "physitrack", "compliance"],
+      "Measured via your connected HEP provider (Physitrack, Rehab My Patient, or Wibbi). The data source may differ between providers but the metric logic is identical.",
+    tags: ["hep", "exercise", "programme", "compliance"],
   },
   {
     id: "programme-assignment-rate",
@@ -56,8 +56,8 @@ export const HELP_ENTRIES: HelpEntry[] = [
       "HEP compliance tracks how consistently clinicians assign home exercise programmes to patients who should receive one. A low rate means patients are leaving without structured self-management — which impacts recovery speed, rebooking patterns, and long-term outcomes.",
     formula: "Patients given a HEP ÷ Patients seen (expressed as %)",
     clinicNote:
-      "Only meaningful if your practice actively uses HEP software like Physitrack. If programmes are routinely given verbally or on paper without software tracking, this metric will under-report.",
-    tags: ["hep", "compliance", "programme", "exercise", "physitrack"],
+      "Only meaningful if your practice actively uses HEP software (Physitrack, Rehab My Patient, or Wibbi). If programmes are routinely given verbally or on paper without software tracking, this metric will under-report.",
+    tags: ["hep", "compliance", "programme", "exercise"],
   },
   {
     id: "utilisation",
@@ -168,8 +168,8 @@ export const HELP_ENTRIES: HelpEntry[] = [
     category: "general",
     question: "Where does StrydeOS get its data from?",
     answer:
-      "StrydeOS pulls from three primary sources: your PMS (WriteUpp, Cliniko, Halaxy, or Zanda) for appointments and patient records; Physitrack for home exercise programme data; and directly from StrydeOS features like Ava call logs and Pulse engagement scores. Data is stored securely in a London-region data centre with EU data residency, partitioned by clinic — meaning your data is never mixed with another practice's.",
-    tags: ["data", "source", "writeupp", "cliniko", "halaxy", "zanda", "powerdiary", "physitrack", "firestore", "gdpr"],
+      "StrydeOS pulls from three primary sources: your PMS (WriteUpp, Cliniko, Halaxy, or Zanda) for appointments and patient records; your HEP provider (Physitrack, Rehab My Patient, or Wibbi) for home exercise programme data; and directly from StrydeOS features like Ava call logs and Pulse engagement scores. Data is stored securely in a London-region data centre with EU data residency, partitioned by clinic — meaning your data is never mixed with another practice's.",
+    tags: ["data", "source", "writeupp", "cliniko", "halaxy", "zanda", "powerdiary", "hep", "firestore", "gdpr"],
   },
   {
     id: "metric-targets",

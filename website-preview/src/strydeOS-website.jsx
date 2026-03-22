@@ -198,11 +198,22 @@ const MonolithMark = ({ size = 44 }) => {
 /* ─── Nav ─────────────────────────────────────────────────────────────────── */
 const Nav = ({ darkMode, setDarkMode }) => {
   const [scrolled, setScrolled] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownTimeout = useRef(null);
+
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", fn);
     return () => window.removeEventListener("scroll", fn);
   }, []);
+
+  const openDropdown = () => {
+    clearTimeout(dropdownTimeout.current);
+    setDropdownOpen(true);
+  };
+  const closeDropdown = () => {
+    dropdownTimeout.current = setTimeout(() => setDropdownOpen(false), 200);
+  };
 
   const navBg  = scrolled
     ? darkMode ? "rgba(11,37,69,0.95)"    : "rgba(242,241,238,0.94)"
@@ -214,6 +225,30 @@ const Nav = ({ darkMode, setDarkMode }) => {
   const wordColor   = darkMode ? "white"    : C.navy;
   const wordAccent  = darkMode ? C.blueGlow : C.blue;
 
+  const dropdownBg = darkMode ? "rgba(11,37,69,0.97)" : "rgba(255,255,255,0.98)";
+  const dropdownBorder = darkMode ? "rgba(255,255,255,0.08)" : C.border;
+  const dropdownItemColor = darkMode ? "rgba(255,255,255,0.7)" : C.ink;
+  const dropdownItemHover = darkMode ? "rgba(255,255,255,0.06)" : `${C.blue}06`;
+  const dropdownLabelColor = darkMode ? "rgba(255,255,255,0.3)" : C.muted;
+
+  const dropdownSections = [
+    { label: "Modules", items: [
+      { name: "Ava", desc: "AI voice receptionist", href: "/ava", dot: C.blue },
+      { name: "Pulse", desc: "Patient retention engine", href: "/pulse", dot: C.teal },
+      { name: "Intelligence", desc: "Performance dashboard", href: "/intelligence", dot: "#8B5CF6" },
+    ]},
+    { label: "Navigate", items: [
+      { name: "Products", href: "#products" },
+      { name: "How it works", href: "#how-it-works" },
+      { name: "Pricing", href: "#pricing" },
+      { name: "About", href: "#about" },
+    ]},
+    { label: "Access", items: [
+      { name: "Book a call", href: "https://calendly.com/hello-strydeos/30min", external: true },
+      { name: "Log in", href: "https://portal.strydeos.com/login" },
+    ]},
+  ];
+
   return (
     <nav style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
@@ -223,12 +258,113 @@ const Nav = ({ darkMode, setDarkMode }) => {
       borderBottom: navBdr,
     }}>
       <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 70 }}>
-        <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", cursor: "pointer" }}>
-          <MonolithMark size={34} />
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17, color: wordColor, letterSpacing: "-0.02em" }}>
-            Stryde<span style={{ color: wordAccent }}>OS</span>
+
+        {/* ── Logo area: split into Monolith (dropdown) + Wordmark (scroll-to-top) ── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+
+          {/* Monolith mark — hover opens dropdown */}
+          <div
+            style={{ position: "relative" }}
+            onMouseEnter={openDropdown}
+            onMouseLeave={closeDropdown}
+          >
+            <button
+              style={{
+                background: "none", border: "none", padding: 4, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                borderRadius: 10,
+                transition: "background 0.15s",
+              }}
+              onFocus={openDropdown}
+              onBlur={closeDropdown}
+              aria-label="Site navigation menu"
+              aria-expanded={dropdownOpen}
+              aria-haspopup="true"
+            >
+              <MonolithMark size={34} />
+            </button>
+
+            {/* Dropdown menu */}
+            <div
+              style={{
+                position: "absolute", top: "calc(100% + 8px)", left: 0,
+                minWidth: 260,
+                background: dropdownBg,
+                backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
+                border: `1px solid ${dropdownBorder}`,
+                borderRadius: 16,
+                boxShadow: darkMode
+                  ? "0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)"
+                  : "0 16px 48px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
+                padding: "8px 0",
+                opacity: dropdownOpen ? 1 : 0,
+                transform: dropdownOpen ? "translateY(0)" : "translateY(-6px)",
+                pointerEvents: dropdownOpen ? "auto" : "none",
+                transition: "opacity 0.2s ease, transform 0.2s ease",
+                zIndex: 200,
+              }}
+              onMouseEnter={openDropdown}
+              onMouseLeave={closeDropdown}
+            >
+              {dropdownSections.map((section, si) => (
+                <div key={section.label}>
+                  {si > 0 && <div style={{ height: 1, background: dropdownBorder, margin: "6px 12px" }} />}
+                  <div style={{
+                    fontSize: 10, fontWeight: 600, textTransform: "uppercase",
+                    letterSpacing: "0.08em", color: dropdownLabelColor,
+                    padding: "8px 16px 4px",
+                  }}>{section.label}</div>
+                  {section.items.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                      onClick={() => setDropdownOpen(false)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "8px 16px", textDecoration: "none",
+                        color: dropdownItemColor, fontSize: 13, fontWeight: 500,
+                        borderRadius: 8, margin: "0 6px",
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = dropdownItemHover}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    >
+                      {item.dot && (
+                        <span style={{
+                          width: 7, height: 7, borderRadius: "50%",
+                          background: item.dot, flexShrink: 0,
+                        }} />
+                      )}
+                      <span style={{ flex: 1 }}>{item.name}</span>
+                      {item.desc && (
+                        <span style={{ fontSize: 11, color: dropdownLabelColor, fontWeight: 400 }}>
+                          {item.desc}
+                        </span>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
-        </a>
+
+          {/* StrydeOS wordmark — click scrolls to top */}
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            style={{
+              background: "none", border: "none", cursor: "pointer", padding: 0,
+              fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17,
+              color: wordColor, letterSpacing: "-0.02em",
+              transition: "opacity 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.7"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+            aria-label="Scroll to top"
+          >
+            Stryde<span style={{ color: wordAccent }}>OS</span>
+          </button>
+        </div>
 
         <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: 32 }}>
           {[["Products","#products"],["How it works","#how-it-works"],["Pricing","#pricing"],["About","#about"]].map(([label, href]) => (
@@ -958,7 +1094,7 @@ const caseStudies = [
     grid: [
       { before: "No performance visibility", after: "Real-time KPI board" },
       { before: "Follow-up rate: unknown", after: "Tracked weekly" },
-      { before: "Physitrack: guesswork", after: "100% compliance" },
+      { before: "HEP: guesswork", after: "100% compliance" },
       { before: "Revenue: quarterly view", after: "Revenue: live" },
     ],
   },

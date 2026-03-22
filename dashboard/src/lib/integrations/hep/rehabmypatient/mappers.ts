@@ -4,18 +4,23 @@ import type { HEPProgramme } from "../types";
 
 export interface RehabMyPatientExerciseRow {
   name?: string;
-  description?: string;
+  desc?: string; // API returns "desc", not "description"
   [key: string]: unknown;
 }
 
 export interface RehabMyPatientPlanRow {
-  id: string | number;
-  patient_id?: string | number;
-  created?: string; // ISO timestamp
+  id: string; // API returns string IDs
+  patient_id?: string;
+  practitioner_name?: string;
+  practitioner_id?: string;
+  created?: string; // ISO timestamp e.g. "2018-01-30T23:15:56+0000"
   last_update?: string; // ISO timestamp
-  exercises?: RehabMyPatientExerciseRow[];
   name?: string;
   notes?: string;
+  layout?: string;
+  // exercises only present on single-plan endpoint (/patientPlan/:id),
+  // NOT on the list endpoint (/patientPlans/:patientId)
+  exercises?: RehabMyPatientExerciseRow[];
   [key: string]: unknown;
 }
 

@@ -6,6 +6,7 @@ import {
   requireRole,
 } from "@/lib/auth-guard";
 import type { IntegrationHealthEntry } from "@/lib/pipeline/health-logger";
+import { withRequestLog } from "@/lib/request-logger";
 
 const INTEGRATION_HEALTH_COLLECTION = "integration_health";
 
@@ -127,7 +128,7 @@ function aggregateByProvider(entries: IntegrationHealthEntry[]): Record<string, 
  * GET /api/admin/integration-health?days=30
  * Superadmin only. Returns aggregated integration health for all clinics.
  */
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["superadmin"]);
@@ -180,3 +181,5 @@ export async function GET(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const GET = withRequestLog(handler);

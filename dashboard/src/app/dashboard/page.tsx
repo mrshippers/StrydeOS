@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { motion, useScroll, useTransform } from "motion/react";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
-import TrendChart from "@/components/ui/TrendChart";
 import { AlertBanner } from "@/components/ui/AlertFlag";
 import CliniciansTable from "@/components/ui/CliniciansTable";
 import DemoBanner from "@/components/ui/DemoBanner";
@@ -15,6 +15,14 @@ import { SkeletonCard } from "@/components/ui/EmptyState";
 import DailySnapshot from "@/components/ui/DailySnapshot";
 import EmptyState from "@/components/ui/EmptyState";
 import InsightNudge from "@/components/ui/InsightNudge";
+
+const TrendChart = dynamic(
+  () => import("@/components/ui/TrendChart"),
+  {
+    loading: () => <div className="animate-pulse bg-navy/10 rounded-xl h-[320px]" />,
+    ssr: false,
+  }
+);
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
 import { usePatients } from "@/hooks/usePatients";
 import { useClinicians } from "@/hooks/useClinicians";
@@ -27,7 +35,7 @@ import {
   formatRate,
   formatPence,
   getFollowUpStatus,
-  getPhysitrackStatus,
+  getHepStatus,
   getDnaStatus,
   getGenericStatus,
   getFollowUpInsight,
@@ -339,19 +347,19 @@ export default function DashboardPage() {
               action={{ label: "View rebooking opportunities", href: "/continuity" }}
             />
             <StatCard
-              label="Physitrack Rate"
-              value={formatPercent(latest.physitrackRate)}
-              target={latest.physitrackTarget}
+              label="HEP Rate"
+              value={formatPercent(latest.hepRate)}
+              target={latest.hepTarget}
               benchmark="Target: 95%"
-              trend={computeTrend(latest.physitrackRate, previous?.physitrackRate)}
-              trendPercent={computeTrendPercent(latest.physitrackRate, previous?.physitrackRate)}
-              status={getPhysitrackStatus(latest.physitrackRate)}
+              trend={computeTrend(latest.hepRate, previous?.hepRate)}
+              trendPercent={computeTrendPercent(latest.hepRate, previous?.hepRate)}
+              status={getHepStatus(latest.hepRate)}
               insight={
-                (latest.hepComplianceRate ?? latest.physitrackRate) >= 0.95
+                (latest.hepComplianceRate ?? latest.hepRate) >= 0.95
                   ? "All patients have active HEP programmes"
-                  : "Some patients missing Physitrack assignment"
+                  : "Some patients missing HEP assignment"
               }
-              sparklineData={trendWindow.map((s) => s.physitrackRate)}
+              sparklineData={trendWindow.map((s) => s.hepRate)}
               action={{ label: "See non-compliant patients", href: "/continuity" }}
             />
           </>
@@ -442,7 +450,7 @@ export default function DashboardPage() {
             data={trendWindow}
             lines={[
               { key: "followUpRate", color: "#4B8BF5", label: "Follow-up Rate" },
-              { key: "physitrackRate", color: "#0891B2", label: "Physitrack Rate" },
+              { key: "hepRate", color: "#0891B2", label: "HEP Rate" },
               { key: "utilisationRate", color: "#8B5CF6", label: "Utilisation" },
             ]}
           />

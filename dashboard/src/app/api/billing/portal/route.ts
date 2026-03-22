@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { getStripe } from "@/lib/stripe";
+import { withRequestLog } from "@/lib/request-logger";
 
 function getAppUrl(): string {
   const url = process.env.APP_URL;
@@ -25,7 +26,7 @@ function getAppUrl(): string {
   return url;
 }
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
@@ -63,3 +64,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

@@ -46,7 +46,7 @@ const DEMO_USER: AuthUser = {
     featureFlags: DEFAULT_FEATURE_FLAGS,
     targets: {
       followUpRate: 4.0,
-      physitrackRate: 95,
+      hepRate: 95,
       utilisationRate: 75,
       dnaRate: 6,
       courseCompletionTarget: 80,
@@ -161,7 +161,7 @@ async function fetchUserProfile(fbUser: User): Promise<AuthUser | null> {
           },
           targets: {
             followUpRate: raw.targets?.followUpRate ?? 4.0,
-            physitrackRate: raw.targets?.physitrackRate ?? 95,
+            hepRate: raw.targets?.hepRate ?? raw.targets?.physitrackRate ?? 95,
             utilisationRate: raw.targets?.utilisationRate ?? 75,
             dnaRate: raw.targets?.dnaRate ?? 6,
             courseCompletionTarget: raw.targets?.courseCompletionTarget ?? 80,
@@ -291,7 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
             targets: {
               followUpRate: raw.targets?.followUpRate ?? 4.0,
-              physitrackRate: raw.targets?.physitrackRate ?? 95,
+              hepRate: raw.targets?.hepRate ?? raw.targets?.physitrackRate ?? 95,
               utilisationRate: raw.targets?.utilisationRate ?? 85,
               dnaRate: raw.targets?.dnaRate ?? 5,
               courseCompletionTarget: raw.targets?.courseCompletionTarget ?? 80,

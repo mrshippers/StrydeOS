@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { MfaEnrollment } from "@/components/MfaEnrollment";
 import { Loader2 } from "lucide-react";
+
+const MfaEnrollment = dynamic(
+  () => import("@/components/MfaEnrollment").then((mod) => mod.MfaEnrollment),
+  {
+    loading: () => <div className="animate-pulse bg-navy/10 rounded-xl h-64" />,
+    ssr: false,
+  }
+);
 
 export default function MfaSetupPage() {
   const { user, loading } = useAuth();

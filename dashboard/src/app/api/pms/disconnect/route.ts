@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, handleApiError, requireRole } from "@/lib/auth-guard";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
+import { withRequestLog } from "@/lib/request-logger";
 
 const INTEGRATIONS_PMS = "integrations_config";
 const PMS_DOC_ID = "pms";
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
@@ -53,3 +54,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

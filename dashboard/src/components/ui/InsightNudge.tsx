@@ -31,7 +31,7 @@ function computeInsight(
   }
 
   // HEP compliance below 50%
-  const hepRate = stats.hepComplianceRate ?? stats.physitrackRate;
+  const hepRate = stats.hepComplianceRate ?? stats.hepRate;
   if (hepRate < 0.5) {
     return `HEP programme assignment is at ${Math.round(hepRate * 100)}% — below half of patients seen. Programme assignment at first contact is one of the highest-leverage retention levers.`;
   }

@@ -7,8 +7,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyApiRequest, requireRole } from "@/lib/auth-guard";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { withRequestLog } from "@/lib/request-logger";
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin"]);
@@ -47,3 +48,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestLog(handler);

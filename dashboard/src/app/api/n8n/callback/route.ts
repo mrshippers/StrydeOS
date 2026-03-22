@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import type { CommsOutcome, SequenceType, CommsChannel, NpsCategory } from "@/types";
+import { withRequestLog } from "@/lib/request-logger";
 
 const N8N_SECRET = process.env.N8N_COMMS_WEBHOOK_SECRET;
 
@@ -17,7 +18,7 @@ const N8N_SECRET = process.env.N8N_COMMS_WEBHOOK_SECRET;
  *    writes inboundReply + inboundAt to the most recent comms_log entry.
  *    On no match, writes an orphan log entry. Always returns 200.
  */
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const secret =
       request.headers.get("x-webhook-secret") ??
@@ -279,3 +280,5 @@ function mapOutcome(raw: string | undefined): CommsOutcome {
   if (lower === "unsubscribed" || lower === "optout" || lower === "stop") return "unsubscribed";
   return "no_action";
 }
+
+export const POST = withRequestLog(handler);

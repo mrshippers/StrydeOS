@@ -72,6 +72,14 @@ export const MODULE_PRICING: Record<
 /** Ava one-time setup fee (pence). */
 export const AVA_SETUP_FEE_PENCE = 25000; // £250
 
+// ─── Extra seat add-on pricing (in pence, GBP) ──────────────────────────────
+
+/** Per-clinician add-on for seats above the tier cap. */
+export const EXTRA_SEAT_PRICING = {
+  month: 4900,  // £49/mo
+  year: 47040,  // £49 × 12 × 0.8 = £470.40/yr (20% annual discount)
+} as const;
+
 // ─── Stripe Price ID helpers ──────────────────────────────────────────────────
 
 /** Returns the env var name for a given product/tier/interval combination. */
@@ -99,6 +107,19 @@ export function getPriceId(
 export function getAvaSetupFeePriceId(): string {
   const id = process.env.STRIPE_PRICE_AVA_SETUP;
   if (!id) throw new Error("STRIPE_PRICE_AVA_SETUP env var is not set");
+  return id;
+}
+
+/** Returns the env var name for extra seat price. */
+export function getExtraSeatPriceEnvVar(interval: BillingInterval): string {
+  return `STRIPE_PRICE_EXTRA_SEAT_${interval.toUpperCase()}`;
+}
+
+/** Returns the Stripe Price ID for the extra seat add-on. */
+export function getExtraSeatPriceId(interval: BillingInterval): string {
+  const varName = getExtraSeatPriceEnvVar(interval);
+  const id = process.env[varName];
+  if (!id) throw new Error(`${varName} env var is not set`);
   return id;
 }
 
@@ -159,6 +180,35 @@ export function flagsFromSubscriptionItems(
   return flags;
 }
 
+// ─── Extra seat helpers ──────────────────────────────────────────────────────
+
+/** Set of all extra-seat Stripe Price IDs (monthly + annual). */
+function getExtraSeatPriceIds(): Set<string> {
+  const ids = new Set<string>();
+  for (const interval of INTERVAL_KEYS) {
+    const id = process.env[getExtraSeatPriceEnvVar(interval)];
+    if (id) ids.add(id);
+  }
+  return ids;
+}
+
+/**
+ * Count how many extra seats a clinic has purchased by inspecting subscription items.
+ * Extra seat items use quantity to represent the number of additional clinicians.
+ */
+export function countExtraSeatsFromItems(
+  items: Array<{ price: { id: string }; quantity?: number }>
+): number {
+  const seatPriceIds = getExtraSeatPriceIds();
+  let total = 0;
+  for (const item of items) {
+    if (seatPriceIds.has(item.price.id)) {
+      total += item.quantity ?? 1;
+    }
+  }
+  return total;
+}
+
 // ─── Trial helpers ────────────────────────────────────────────────────────────
 
 export const TRIAL_DURATION_DAYS = 14;
@@ -188,11 +238,11 @@ export function trialDaysRemaining(trialStartedAt: string | null): number | null
 
 // ─── Seat limits ─────────────────────────────────────────────────────────────
 
-/** Hard seat caps per billing tier. Clinic tier uses a generous cap to prevent abuse. */
+/** Hard seat caps per billing tier. Extra seats available at £49/mo each. */
 export const TIER_SEAT_LIMITS: Record<TierKey, number> = {
   solo: 1,
   studio: 4,
-  clinic: 25,
+  clinic: 6,
 };
 
 /** Resolve the tier from a Stripe subscription's metadata (set at checkout). */
@@ -206,21 +256,30 @@ export function getTierFromMetadata(
 }
 
 /**
- * Check whether a clinic can add another clinician given its billing tier.
+ * Check whether a clinic can add another clinician given its billing tier
+ * plus any purchased extra seats.
  *
  * Rules:
- *   1. Superadmin bypass — always allowed.
+ *   1. Superadmin bypass — always allowed (handled by caller).
  *   2. Active trial — use studio limits (generous for evaluation).
  *   3. No subscription — blocked (trial expired, no plan).
- *   4. Tier found — enforce TIER_SEAT_LIMITS.
+ *   4. Tier found — enforce TIER_SEAT_LIMITS + extraSeats from Firestore.
  */
 export async function canAddClinician(
   clinicId: string,
   db: FirebaseFirestore.Firestore
-): Promise<{ allowed: boolean; reason?: string; currentCount: number; limit: number }> {
+): Promise<{
+  allowed: boolean;
+  reason?: string;
+  currentCount: number;
+  limit: number;
+  tierLimit: number;
+  extraSeats: number;
+  canPurchaseSeat?: boolean;
+}> {
   const clinicSnap = await db.collection("clinics").doc(clinicId).get();
   if (!clinicSnap.exists) {
-    return { allowed: false, reason: "Clinic not found", currentCount: 0, limit: 0 };
+    return { allowed: false, reason: "Clinic not found", currentCount: 0, limit: 0, tierLimit: 0, extraSeats: 0 };
   }
 
   const clinic = clinicSnap.data()!;
@@ -237,10 +296,12 @@ export async function canAddClinician(
   } else if (subStatus === "active" || subStatus === "trialing") {
     effectiveTier = "studio"; // fallback if tier not yet persisted
   } else {
-    return { allowed: false, reason: "No active subscription or trial", currentCount: 0, limit: 0 };
+    return { allowed: false, reason: "No active subscription or trial", currentCount: 0, limit: 0, tierLimit: 0, extraSeats: 0 };
   }
 
-  const limit = TIER_SEAT_LIMITS[effectiveTier];
+  const tierLimit = TIER_SEAT_LIMITS[effectiveTier];
+  const extraSeats: number = clinic.billing?.extraSeats ?? 0;
+  const limit = tierLimit + extraSeats;
 
   // Count active clinicians
   const cliniciansSnap = await db
@@ -254,15 +315,21 @@ export async function canAddClinician(
   const currentCount = cliniciansSnap.data().count;
 
   if (currentCount >= limit) {
+    const hasSubscription = subStatus === "active" || subStatus === "trialing";
     return {
       allowed: false,
-      reason: `${TIER_LABELS[effectiveTier].label} plan allows ${limit} clinician${limit === 1 ? "" : "s"}. Upgrade to add more.`,
+      reason: extraSeats > 0
+        ? `You've used all ${limit} seats (${tierLimit} included + ${extraSeats} extra). Purchase another seat to add more.`
+        : `${TIER_LABELS[effectiveTier].label} plan allows ${tierLimit} clinician${tierLimit === 1 ? "" : "s"}. Purchase extra seats at £49/mo each, or upgrade your tier.`,
       currentCount,
       limit,
+      tierLimit,
+      extraSeats,
+      canPurchaseSeat: hasSubscription,
     };
   }
 
-  return { allowed: true, currentCount, limit };
+  return { allowed: true, currentCount, limit, tierLimit, extraSeats };
 }
 
 // ─── Display metadata ────────────────────────────────────────────────────────
@@ -270,7 +337,7 @@ export async function canAddClinician(
 export const TIER_LABELS: Record<TierKey, { label: string; detail: string }> = {
   solo:   { label: "Solo",   detail: "1 clinician" },
   studio: { label: "Studio", detail: "2–4 clinicians" },
-  clinic: { label: "Clinic", detail: "5+ clinicians" },
+  clinic: { label: "Clinic", detail: "6+ clinicians" },
 };
 
 export const MODULE_DISPLAY: Record<

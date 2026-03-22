@@ -3,11 +3,12 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, handleApiError, requireRole } from "@/lib/auth-guard";
 import type { HEPIntegrationConfig } from "@/lib/integrations/hep/types";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
+import { withRequestLog } from "@/lib/request-logger";
 
 const INTEGRATIONS_CONFIG = "integrations_config";
 const HEP_DOC_ID = "hep";
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
@@ -62,3 +63,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(e);
   }
 }
+
+export const POST = withRequestLog(handler);

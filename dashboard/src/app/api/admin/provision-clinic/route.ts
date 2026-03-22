@@ -30,8 +30,9 @@ import type {
   BrandConfig,
   PmsProvider,
 } from "@/types";
+import { withRequestLog } from "@/lib/request-logger";
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   let uid: string | undefined;
   try {
     // ── Auth check ──────────────────────────────────────────────────────────────
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
 
     const defaultTargets: ClinicTargets = {
       followUpRate: 75,
-      physitrackRate: 80,
+      hepRate: 80,
       utilisationRate: 85,
       dnaRate: 5,
       courseCompletionTarget: 70,
@@ -266,3 +267,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export const POST = withRequestLog(handler);

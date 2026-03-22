@@ -23,10 +23,10 @@ async function seed() {
   ];
 
   const weeklyStats = [
-    { clinicianId: "andrew_001", weekStart: "2026-01-27", weekEnd: "2026-02-02", appointmentsTotal: 14, followUpRate: 1.7, physitrackRate: 0.71 },
-    { clinicianId: "andrew_001", weekStart: "2026-02-03", weekEnd: "2026-02-09", appointmentsTotal: 16, followUpRate: 1.9, physitrackRate: 0.78 },
-    { clinicianId: "andrew_001", weekStart: "2026-02-10", weekEnd: "2026-02-16", appointmentsTotal: 18, followUpRate: 2.1, physitrackRate: 0.89 },
-    { clinicianId: "andrew_001", weekStart: "2026-02-17", weekEnd: "2026-02-23", appointmentsTotal: 12, followUpRate: 2.3, physitrackRate: 0.92 },
+    { clinicianId: "andrew_001", weekStart: "2026-01-27", weekEnd: "2026-02-02", appointmentsTotal: 14, followUpRate: 1.7, hepRate: 0.71 },
+    { clinicianId: "andrew_001", weekStart: "2026-02-03", weekEnd: "2026-02-09", appointmentsTotal: 16, followUpRate: 1.9, hepRate: 0.78 },
+    { clinicianId: "andrew_001", weekStart: "2026-02-10", weekEnd: "2026-02-16", appointmentsTotal: 18, followUpRate: 2.1, hepRate: 0.89 },
+    { clinicianId: "andrew_001", weekStart: "2026-02-17", weekEnd: "2026-02-23", appointmentsTotal: 12, followUpRate: 2.3, hepRate: 0.92 },
   ];
 
   try {

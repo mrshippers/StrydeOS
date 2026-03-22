@@ -50,7 +50,7 @@ Within that band, **£399 is the chosen target**; the next section explains why 
 
 ## Revised model: modules + full stack
 
-| | Solo (1 clinician) | Studio (2–4) | Clinic (5+) |
+| | Solo (1 clinician) | Studio (2–4) | Clinic (6+) |
 |--|--|--|--|
 | **Intelligence** (dashboard, KPIs, trends, alerts) | £79/mo | £129/mo | £199/mo |
 | **Ava** (AI voice receptionist, booking, no-show recovery) | £149/mo | £199/mo | £299/mo |

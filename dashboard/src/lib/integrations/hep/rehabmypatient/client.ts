@@ -4,8 +4,8 @@
  * RehabMyPatient auth: API key passed as RMP-API-KEY header.
  * Key generated in-app: Settings > API (self-serve).
  *
- * Base URL: https://rehabmypatient.com/apiV2
- * Docs: Available to registered API users
+ * Base URL: https://www.rehabmypatient.com/apiV2
+ * Docs: https://www.rehabmypatient.com/api-documentation
  *
  * Note: API exposes programme structure and assignment dates,
  * but does NOT provide adherence %, completion rates, or session timestamps.
@@ -16,7 +16,7 @@ export interface RehabMyPatientConfig {
   baseUrl?: string;
 }
 
-const DEFAULT_BASE = "https://rehabmypatient.com/apiV2";
+const DEFAULT_BASE = "https://www.rehabmypatient.com/apiV2";
 
 export async function rehabMyPatientFetch<T>(
   config: RehabMyPatientConfig,

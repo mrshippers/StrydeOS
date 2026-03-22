@@ -169,6 +169,16 @@ export async function triggerCommsSequences(
       // ── Pre-create comms_log doc ──────────────────────────────────────
       const logRef = clinicRef.collection("comms_log").doc();
 
+      // ── Derive tone modifier from Heidi complexity signals ──────────
+      const complexity = patient.complexitySignals as
+        | { psychosocialFlags?: boolean; treatmentComplexity?: string }
+        | undefined;
+      const toneModifier = complexity?.psychosocialFlags
+        ? "supportive" as const
+        : complexity?.treatmentComplexity === "high"
+          ? "clinical" as const
+          : "standard" as const;
+
       const payload: N8nSequencePayload = {
         clinicId,
         patientId,
@@ -182,6 +192,7 @@ export async function triggerCommsSequences(
         stepNumber:            nextStep.stepNumber,
         sequenceDefinitionId:  def.id,
         attributionWindowDays: def.attributionWindowDays,
+        toneModifier,
         triggerData: {
           sessionCount:    patient.sessionCount,
           lastSessionDate: patient.lastSessionDate,

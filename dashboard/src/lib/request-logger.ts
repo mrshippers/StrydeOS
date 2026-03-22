@@ -30,11 +30,11 @@ export interface RequestLogEntry {
  * Logs to stdout as JSON for easy parsing by log aggregators.
  */
 export function withRequestLog(
-  handler: (request: NextRequest, context?: unknown) => Promise<NextResponse>
+  handler: (request: NextRequest, context?: any) => Promise<NextResponse>
 ) {
   return async function loggedHandler(
     request: NextRequest,
-    context?: unknown
+    context?: any
   ): Promise<NextResponse> {
     const start = performance.now();
     const method = request.method;
@@ -63,10 +63,12 @@ export function withRequestLog(
         status,
         durationMs,
         ...(clinicId ? { clinicId } : {}),
+        userAgent: request.headers.get("user-agent")?.slice(0, 120) ?? undefined,
         ...(errorMsg ? { error: errorMsg } : {}),
       };
 
       // Single-line JSON for log aggregator compatibility
+      // eslint-disable-next-line no-console
       console.log(JSON.stringify(entry));
     }
   };

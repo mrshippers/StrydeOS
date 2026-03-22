@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth-guard";
 import { runPipeline } from "@/lib/pipeline/run-pipeline";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
+import { withRequestLog } from "@/lib/request-logger";
 
 /**
  * POST /api/pipeline/run
@@ -94,7 +95,7 @@ async function executePipeline(request: NextRequest, isCronGet = false) {
   return NextResponse.json({ results });
 }
 
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest) {
   try {
     verifyCronRequest(request);
     return executePipeline(request, true);
@@ -103,10 +104,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
   try {
     return executePipeline(request);
   } catch (e) {
     return handleApiError(e);
   }
 }
+
+export const GET = withRequestLog(getHandler);
+export const POST = withRequestLog(postHandler);

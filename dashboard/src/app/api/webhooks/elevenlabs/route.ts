@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getFirestore } from "firebase-admin/firestore";
 import { initializeApp, getApps } from "firebase-admin/app";
+import { withRequestLog } from "@/lib/request-logger";
 
 // Ensure Firebase Admin is initialized
 if (!getApps().length) {
@@ -24,7 +25,7 @@ interface ElevenLabsWebhookPayload {
   custom_metadata?: Record<string, unknown>;
 }
 
-export async function POST(req: NextRequest) {
+async function handler(req: NextRequest) {
   try {
     const payload: ElevenLabsWebhookPayload = await req.json();
 
@@ -117,3 +118,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestLog(handler);

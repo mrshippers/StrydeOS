@@ -975,7 +975,7 @@ const Pricing = () => {
   const tiers = [
     { id: "solo",   label: "Solo",   sub: "1 clinician" },
     { id: "studio", label: "Studio", sub: "2-4 clinicians" },
-    { id: "clinic", label: "Clinic", sub: "5+ clinicians" },
+    { id: "clinic", label: "Clinic", sub: "6+ clinicians" },
   ];
 
   const products = [

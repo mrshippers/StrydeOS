@@ -7,6 +7,7 @@ import { syncPatients } from "@/lib/pipeline/sync-patients";
 import { computePatientFields } from "@/lib/pipeline/compute-patients";
 import { triggerCommsSequences } from "@/lib/comms/trigger-sequences";
 import type { PMSIntegrationConfig } from "@/types/pms";
+import { withRequestLog } from "@/lib/request-logger";
 
 const WEBHOOK_SECRET = process.env.WRITEUPP_WEBHOOK_SECRET;
 
@@ -19,7 +20,7 @@ const WEBHOOK_SECRET = process.env.WRITEUPP_WEBHOOK_SECRET;
  *
  * WriteUpp sends: { event, clinicId (custom header or body), data }
  */
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     // Validate webhook secret
     const secret =
@@ -119,3 +120,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withRequestLog(handler);
