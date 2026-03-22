@@ -1,4 +1,5 @@
 import React from "react";
+import { CookieBanner } from "./strydeOS-website.jsx";
 
 const C = {
   navy: "#0B2545",
@@ -241,6 +242,7 @@ export default function TermsOfServicePage() {
           </div>
         </section>
       </main>
+      <CookieBanner />
     </>
   );
 }

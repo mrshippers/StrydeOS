@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { CookieBanner } from "./strydeOS-website.jsx";
 
 const C = {
   cloudDancer: "#F2F1EE", cloudLight: "#F9F8F6", cream: "#FAF9F7",
@@ -145,6 +146,7 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
           <div style={{ fontSize: 12, color: muted }}>© {new Date().getFullYear()} StrydeOS Ltd. All rights reserved.</div>
         </footer>
       </div>
+      <CookieBanner />
     </>
   );
 }

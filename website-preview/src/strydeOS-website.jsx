@@ -1636,6 +1636,72 @@ const Footer = () => (
   </footer>
 );
 
+/* ─── Cookie Banner ──────────────────────────────────────────────────────────── */
+const COOKIE_KEY = "strydeos_cookie_consent";
+
+export function CookieBanner() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(COOKIE_KEY)) setVisible(true);
+    } catch { setVisible(true); }
+  }, []);
+
+  function accept() {
+    try { localStorage.setItem(COOKIE_KEY, "accepted"); } catch {}
+    setVisible(false);
+  }
+
+  if (!visible) return null;
+
+  return (
+    <div style={{
+      position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999,
+      animation: "fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) forwards",
+    }}>
+      <div style={{
+        maxWidth: 680, margin: "0 auto 20px", padding: "18px 24px",
+        background: C.navy, borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 16px 48px rgba(0,0,0,0.35)",
+        display: "flex", alignItems: "center", gap: 16,
+        flexWrap: "wrap",
+      }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ shrink: 0 }}>
+          <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/>
+          <path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14v.01"/>
+        </svg>
+        <p style={{ flex: 1, fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.55, minWidth: 200 }}>
+          We use essential cookies to keep the site working and analytics cookies to understand how you use it.{" "}
+          <a href="/privacy" style={{ color: C.blueGlow, textDecoration: "underline", textUnderlineOffset: 2 }}>Privacy Policy</a>
+        </p>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={accept} style={{
+            padding: "9px 20px", background: C.blue, color: "white",
+            border: "none", borderRadius: 50, fontSize: 13, fontWeight: 600,
+            fontFamily: "'Outfit',sans-serif", cursor: "pointer",
+            transition: "all 0.2s ease",
+          }}
+            onMouseEnter={e => { e.target.style.background = C.blueBright; }}
+            onMouseLeave={e => { e.target.style.background = C.blue; }}
+          >Accept</button>
+          <button onClick={accept} style={{
+            padding: "9px 16px", background: "transparent",
+            color: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: 50, fontSize: 13, fontWeight: 500,
+            fontFamily: "'Outfit',sans-serif", cursor: "pointer",
+            transition: "all 0.2s ease",
+          }}
+            onMouseEnter={e => { e.target.style.color = "rgba(255,255,255,0.8)"; e.target.style.borderColor = "rgba(255,255,255,0.3)"; }}
+            onMouseLeave={e => { e.target.style.color = "rgba(255,255,255,0.45)"; e.target.style.borderColor = "rgba(255,255,255,0.12)"; }}
+          >Decline</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── App ────────────────────────────────────────────────────────────────────── */
 export default function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -1663,6 +1729,7 @@ export default function App() {
       <WhyUs darkMode={darkMode} />
       <EarlyAccess />
       <Footer />
+      <CookieBanner />
     </>
   );
 }
