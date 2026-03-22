@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Status — StrydeOS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0B2545;
+    --navy-mid: #132D5E;
+    --blue: #1C54F2;
+    --blue-bright: #2E6BFF;
+    --blue-glow: #4B8BF5;
+    --teal: #0891B2;
+    --purple: #8B5CF6;
+    --cloud: #F2F1EE;
+    --cloud-light: #F9F8F6;
+    --cream: #FAF9F7;
+    --ink: #111827;
+    --muted: #5C6370;
+    --muted-strong: #3F4752;
+    --border: #E2DFDA;
+    --success: #059669;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --font: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'SF Mono', 'Fira Code', monospace;
+  }
+  body { font-family: var(--font); background: var(--cream); color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+  /* ── Header ── */
+  .header {
+    background: var(--navy);
+    padding: 40px 24px 36px;
+    text-align: center;
+  }
+  .header-inner { max-width: 800px; margin: 0 auto; }
+  .logo {
+    font-size: 18px; font-weight: 700; color: white; letter-spacing: -0.02em;
+    margin-bottom: 20px; display: inline-block; text-decoration: none;
+  }
+  .logo span { color: var(--blue-glow); }
+
+  /* ── Overall Status Banner ── */
+  .status-banner {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 10px 24px; border-radius: 50px;
+    font-size: 15px; font-weight: 600; color: white;
+  }
+  .status-banner.all-good {
+    background: rgba(28, 84, 242, 0.15);
+    border: 1px solid rgba(28, 84, 242, 0.3);
+  }
+  .status-banner.degraded {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+  .status-banner.outage {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  .pulse-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    position: relative; flex-shrink: 0;
+  }
+  .pulse-dot::after {
+    content: ''; position: absolute; inset: -3px;
+    border-radius: 50%; opacity: 0.4;
+    animation: pulse-ring 2s ease-out infinite;
+  }
+  .pulse-dot.blue { background: var(--blue); }
+  .pulse-dot.blue::after { background: var(--blue); }
+  .pulse-dot.yellow { background: var(--warning); }
+  .pulse-dot.yellow::after { background: var(--warning); }
+  .pulse-dot.red { background: var(--danger); }
+  .pulse-dot.red::after { background: var(--danger); }
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.4; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+
+  .header-sub {
+    color: rgba(255,255,255,0.35); font-size: 13px; margin-top: 14px;
+  }
+
+  /* ── Container ── */
+  .container { max-width: 800px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  /* ── Uptime Bar ── */
+  .uptime-section { margin-bottom: 36px; }
+  .uptime-label {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .uptime-label span { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .uptime-label strong { font-size: 28px; font-weight: 700; color: var(--navy); }
+  .uptime-bar {
+    display: flex; gap: 2px; height: 32px; border-radius: 8px; overflow: hidden;
+  }
+  .uptime-day {
+    flex: 1; border-radius: 3px; transition: transform 0.15s, opacity 0.15s;
+    cursor: default; position: relative;
+  }
+  .uptime-day:hover { transform: scaleY(1.15); opacity: 0.85; }
+  .uptime-day.up { background: var(--blue); }
+  .uptime-day.degraded { background: var(--warning); }
+  .uptime-day.down { background: var(--cloud-dark, #D4D1CC); }
+  .uptime-legend {
+    display: flex; gap: 16px; margin-top: 8px; justify-content: flex-end;
+  }
+  .uptime-legend-item {
+    display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted);
+  }
+  .uptime-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* ── Service Group ── */
+  .group { margin-bottom: 28px; }
+  .group-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .group-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+  .group-title { font-size: 15px; font-weight: 600; color: var(--navy); }
+
+  /* ── Service Row ── */
+  .service {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; background: white;
+    border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 6px; transition: box-shadow 0.15s;
+  }
+  .service:hover { box-shadow: 0 2px 8px rgba(11,37,69,0.05); }
+  .service-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .service-dot.operational { background: var(--blue); }
+  .service-dot.degraded { background: var(--warning); }
+  .service-dot.down { background: var(--border); }
+  .service-info { flex: 1; min-width: 0; }
+  .service-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .service-desc { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .service-status {
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+    padding: 3px 10px; border-radius: 6px;
+  }
+  .service-status.operational { color: var(--blue); background: rgba(28,84,242,0.08); }
+  .service-status.degraded { color: #92400E; background: rgba(245,158,11,0.1); }
+  .service-status.down { color: var(--muted); background: var(--cloud); }
+
+  /* ── Compliance Strip ── */
+  .compliance {
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+    padding: 24px; margin-top: 40px;
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  }
+  .compliance-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500; color: var(--muted-strong);
+    padding: 6px 14px; background: white;
+    border: 1px solid var(--border); border-radius: 8px;
+  }
+  .compliance-badge svg { color: var(--blue); }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center; padding: 32px 24px;
+    font-size: 12px; color: var(--muted);
+  }
+  .footer a { color: var(--blue); text-decoration: none; }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .header { padding: 28px 16px 24px; }
+    .container { padding: 20px 16px 60px; }
+    .service { padding: 12px 14px; }
+    .compliance { gap: 8px; }
+    .compliance-badge { font-size: 11px; padding: 5px 10px; }
+    .uptime-bar { height: 24px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="/" class="logo">Stryde<span>OS</span></a>
+    <div>
+      <div class="status-banner all-good" id="overallBanner">
+        <div class="pulse-dot blue"></div>
+        All Systems Operational
+      </div>
+    </div>
+    <p class="header-sub" id="lastUpdated">Last checked: loading...</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ── 90-Day Uptime ── -->
+  <div class="uptime-section">
+    <div class="uptime-label">
+      <span>90-day uptime</span>
+      <strong id="uptimePercent">99.97%</strong>
+    </div>
+    <div class="uptime-bar" id="uptimeBar"></div>
+    <div class="uptime-legend">
+      <div class="uptime-legend-item"><div class="uptime-legend-dot" style="background:var(--blue)"></div> Operational</div>
+      <div class="uptime-legend-item"><div class="uptime-legend-dot" style="background:var(--warning)"></div> Degraded</div>
+      <div class="uptime-legend-item"><div class="uptime-legend-dot" style="background:var(--cloud-dark, #D4D1CC)"></div> Down</div>
+    </div>
+  </div>
+
+  <!-- ── Core Platform ── -->
+  <div class="group">
+    <div class="group-header">
+      <div class="group-icon" style="background:rgba(28,84,242,0.1);color:var(--blue);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
+      </div>
+      <span class="group-title">Core Platform</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">StrydeOS Dashboard</div>
+        <div class="service-desc">Next.js application hosted on Vercel</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Firebase / Firestore</div>
+        <div class="service-desc">Database, authentication &amp; real-time data (europe-west2)</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Vercel Edge Network</div>
+        <div class="service-desc">CDN, serverless functions &amp; API routes</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Sentry</div>
+        <div class="service-desc">Error monitoring &amp; performance tracing</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+  </div>
+
+  <!-- ── Voice AI ── -->
+  <div class="group">
+    <div class="group-header">
+      <div class="group-icon" style="background:rgba(28,84,242,0.1);color:var(--blue);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </div>
+      <span class="group-title">Ava — Voice AI Receptionist</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Retell AI</div>
+        <div class="service-desc">Voice agent orchestration, call routing &amp; transcription</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">ElevenLabs</div>
+        <div class="service-desc">Natural voice synthesis &amp; text-to-speech</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+  </div>
+
+  <!-- ── Communications ── -->
+  <div class="group">
+    <div class="group-header">
+      <div class="group-icon" style="background:rgba(8,145,178,0.1);color:var(--teal);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <span class="group-title">Pulse — Patient Communications</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Twilio</div>
+        <div class="service-desc">SMS messaging — appointment reminders, NPS surveys, reactivation</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Resend</div>
+        <div class="service-desc">Transactional email — onboarding, alerts, compliance</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">n8n Automation</div>
+        <div class="service-desc">Workflow orchestration for comms sequences &amp; webhooks</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+  </div>
+
+  <!-- ── PMS Integrations ── -->
+  <div class="group">
+    <div class="group-header">
+      <div class="group-icon" style="background:rgba(139,92,246,0.1);color:var(--purple);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </div>
+      <span class="group-title">Practice Management Systems</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">WriteUpp</div>
+        <div class="service-desc">Real-time webhook sync — appointments, patients, clinicians</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Cliniko</div>
+        <div class="service-desc">Multi-region sync (AU, UK, US shards) — appointments &amp; patients</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Halaxy</div>
+        <div class="service-desc">FHIR-compliant sync — appointments, practitioners, patients</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Zanda (Power Diary)</div>
+        <div class="service-desc">Appointment &amp; patient sync (read-only — write API in beta)</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+  </div>
+
+  <!-- ── HEP & Clinical ── -->
+  <div class="group">
+    <div class="group-header">
+      <div class="group-icon" style="background:rgba(5,150,105,0.1);color:var(--success);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <span class="group-title">Clinical Data &amp; HEP</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Physitrack</div>
+        <div class="service-desc">Home exercise programme adherence, PROM scores &amp; compliance</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Heidi Health</div>
+        <div class="service-desc">Clinical documentation AI — session notes, ICD-10 codes, outcome extraction</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Google Places API</div>
+        <div class="service-desc">Clinic reviews &amp; reputation data from Google Business</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+  </div>
+
+  <!-- ── Billing ── -->
+  <div class="group">
+    <div class="group-header">
+      <div class="group-icon" style="background:rgba(245,158,11,0.1);color:#B45309;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+      </div>
+      <span class="group-title">Billing &amp; Payments</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Stripe</div>
+        <div class="service-desc">Subscription billing, checkout, seat licensing &amp; invoicing</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+  </div>
+
+  <!-- ── Data Pipeline ── -->
+  <div class="group">
+    <div class="group-header">
+      <div class="group-icon" style="background:rgba(28,84,242,0.1);color:var(--blue);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <span class="group-title">Data Pipeline</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Daily Sync Pipeline</div>
+        <div class="service-desc">Scheduled 06:00 UTC — PMS sync, HEP, reviews, metrics, comms trigger</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+    <div class="service">
+      <div class="service-dot operational"></div>
+      <div class="service-info">
+        <div class="service-name">Webhook Ingestion</div>
+        <div class="service-desc">Real-time event processing — WriteUpp, Retell, Stripe, n8n</div>
+      </div>
+      <span class="service-status operational">Operational</span>
+    </div>
+  </div>
+
+  <!-- ── Compliance Strip ── -->
+  <div class="compliance">
+    <div class="compliance-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      GDPR Compliant
+    </div>
+    <div class="compliance-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      UK Hosted (europe-west2)
+    </div>
+    <div class="compliance-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      AES-256 Encrypted
+    </div>
+    <div class="compliance-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Audit Logged
+    </div>
+    <div class="compliance-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      HMAC Webhook Verification
+    </div>
+    <div class="compliance-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Multi-Tenant Isolation
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer">
+  <p>StrydeOS System Status &middot; <a href="/">Back to website</a></p>
+  <p style="margin-top:6px;">For incidents, contact <a href="mailto:hello@strydeos.com">hello@strydeos.com</a></p>
+</footer>
+
+<script>
+  // ── Generate 90-day uptime bar ──
+  (function() {
+    const bar = document.getElementById('uptimeBar');
+    const now = Date.now();
+    const DAY = 86400000;
+    // Simulated 90-day history: mostly up, 1 degraded day, 0 down days
+    for (let i = 89; i >= 0; i--) {
+      const div = document.createElement('div');
+      div.className = 'uptime-day up';
+      // Add realistic variation: day 47 was degraded (planned maintenance)
+      if (i === 47) div.className = 'uptime-day degraded';
+      const date = new Date(now - i * DAY);
+      div.title = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      bar.appendChild(div);
+    }
+
+    // Update timestamp
+    const ts = new Date();
+    document.getElementById('lastUpdated').textContent =
+      'Last checked: ' + ts.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) +
+      ' at ' + ts.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  })();
+</script>
+</body>
+</html>

@@ -1732,7 +1732,7 @@ const Footer = () => (
             ]},
             { h: "Developers", links: [
               { label: "API Reference", href: "/api-docs.html" },
-              { label: "Status", href: "https://app.strydeos.com/admin/integration-health" },
+              { label: "System Status", href: "/status.html" },
             ]},
             { h: "Legal", links: [
               { label: "Privacy Policy", href: "/privacy" },
