@@ -49,6 +49,7 @@ function LoginPageInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [clinicName, setClinicName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [profession, setProfession] = useState("");
   const [clinicSize, setClinicSize] = useState("");
   const [country, setCountry] = useState("uk");
@@ -108,6 +109,8 @@ function LoginPageInner() {
           clinicName: clinicName.trim(),
           email: email.trim(),
           password,
+          firstName: fullName.trim().split(" ")[0] || "",
+          lastName: fullName.trim().split(" ").slice(1).join(" ") || "",
           profession,
           clinicSize,
           country,
@@ -678,6 +681,21 @@ function LoginPageInner() {
 
                         <div>
                           <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest mb-2">
+                            Your name
+                          </label>
+                          <input
+                            type="text"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            required
+                            autoComplete="name"
+                            placeholder="First and last name"
+                            className="w-full px-4 py-3 rounded-xl text-sm text-navy placeholder-muted border border-border bg-cloud-light focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue transition-all"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-navy/80 uppercase tracking-widest mb-2">
                             Email
                           </label>
                           <input
@@ -736,7 +754,7 @@ function LoginPageInner() {
 
                         <motion.button
                           type="submit"
-                          disabled={submitting || !clinicName.trim() || !email.trim() || password.length < 8}
+                          disabled={submitting || !clinicName.trim() || !fullName.trim() || !email.trim() || password.length < 8}
                           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-blue transition-colors duration-200 hover:opacity-90 disabled:opacity-50"
                           whileTap={shouldReduce ? {} : { scale: 0.97 }}
                         >

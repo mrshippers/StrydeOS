@@ -85,6 +85,33 @@ export default function KnowledgeBaseEditor({ clinicId }: KnowledgeBaseEditorPro
     return map;
   }, [entries]);
 
+  if (!clinicId) {
+    return (
+      <div className="rounded-[20px] overflow-hidden border border-white/[0.08] shadow-[0_4px_24px_rgba(11,37,69,0.12)]">
+        <div className="relative bg-gradient-to-br from-[#0B2545] via-[#0f2f52] to-[#0B2545] p-6">
+          <div className="flex items-center gap-3.5">
+            <div className="relative w-10 h-10 rounded-xl bg-white/[0.08] backdrop-blur-sm flex items-center justify-center border border-white/[0.06]">
+              <Zap size={17} className="text-blue-glow" />
+            </div>
+            <div>
+              <h3 className="font-display text-[17px] text-white tracking-[-0.01em]">
+                Clinic Knowledge Base
+              </h3>
+              <p className="text-[11px] text-white/40 mt-0.5">
+                Complete onboarding to configure Ava&apos;s knowledge base
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-6 text-center">
+          <p className="text-sm text-muted">
+            Your clinic setup is still in progress. Once onboarding is complete, you can teach Ava about your clinic here.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="rounded-[20px] overflow-hidden border border-white/[0.08] shadow-[0_4px_24px_rgba(11,37,69,0.12)]">

@@ -204,6 +204,10 @@ export interface Clinician {
   id: string;
   name: string;
   role: string;
+  email?: string;
+  authRole?: "clinician" | "admin";
+  status?: "invited" | "active";
+  authUid?: string;
   pmsExternalId?: string;
   physitrackId?: string;
   active: boolean;

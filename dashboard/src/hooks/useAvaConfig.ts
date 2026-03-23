@@ -90,14 +90,19 @@ export function useAvaConfig(clinicId: string | undefined) {
       const data = clinicDoc.data();
       const avaData = data.ava || {};
 
+      // Read clinic details from top-level clinic doc (canonical source, shared
+      // with settings page) with fallback to ava.config.* for backwards compat.
+      const pricePence = data.sessionPricePence;
+      const iaFromTopLevel = pricePence != null ? String(pricePence / 100) : "";
+
       setConfig({
         enabled: avaData.enabled ?? DEFAULT_CONFIG.enabled,
-        phone: avaData.config?.phone || DEFAULT_CONFIG.phone,
-        ia_price: avaData.config?.ia_price || DEFAULT_CONFIG.ia_price,
+        phone: data.phone || avaData.config?.phone || DEFAULT_CONFIG.phone,
+        ia_price: iaFromTopLevel || avaData.config?.ia_price || DEFAULT_CONFIG.ia_price,
         fu_price: avaData.config?.fu_price || DEFAULT_CONFIG.fu_price,
-        address: avaData.config?.address || DEFAULT_CONFIG.address,
+        address: data.address || avaData.config?.address || DEFAULT_CONFIG.address,
         nearest_station: avaData.config?.nearest_station || DEFAULT_CONFIG.nearest_station,
-        parking_info: avaData.config?.parking_info || DEFAULT_CONFIG.parking_info,
+        parking_info: data.parkingInfo || avaData.config?.parking_info || DEFAULT_CONFIG.parking_info,
       });
 
       setRules({
@@ -144,6 +149,19 @@ export function useAvaConfig(clinicId: string | undefined) {
           Object.entries(updates.config).forEach(([key, value]) => {
             docUpdates[`ava.config.${key}`] = value;
           });
+
+          // Mirror shared clinic detail fields to top-level doc fields so the
+          // settings page (and any other consumer of clinicProfile) stays in sync.
+          const cfg = updates.config;
+          if (cfg.phone !== undefined) docUpdates.phone = cfg.phone || null;
+          if (cfg.address !== undefined) docUpdates.address = cfg.address || null;
+          if (cfg.parking_info !== undefined) docUpdates.parkingInfo = cfg.parking_info || null;
+          if (cfg.ia_price !== undefined) {
+            docUpdates.sessionPricePence = cfg.ia_price
+              ? Math.round(parseFloat(cfg.ia_price) * 100)
+              : null;
+          }
+
           setConfig((prev) => ({ ...prev, ...updates.config }));
         }
 

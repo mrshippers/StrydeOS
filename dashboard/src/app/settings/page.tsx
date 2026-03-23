@@ -572,7 +572,9 @@ const cp = user?.clinicProfile ?? null;
   const [addingClinician, setAddingClinician] = useState(false);
   const [submittingClinician, setSubmittingClinician] = useState(false);
   const [newClinicianName, setNewClinicianName] = useState("");
+  const [newClinicianEmail, setNewClinicianEmail] = useState("");
   const [newClinicianRole, setNewClinicianRole] = useState("Physiotherapist");
+  const [newClinicianAuthRole, setNewClinicianAuthRole] = useState<"clinician" | "admin">("clinician");
 
   // Clinician row expand/edit/delete state
   const [expandedClinicianId, setExpandedClinicianId] = useState<string | null>(null);
@@ -595,7 +597,18 @@ const cp = user?.clinicProfile ?? null;
     setHepTarget(String(t.hepRate));
     setUtilisationTarget(String(t.utilisationRate));
     setPmsProvider(cp.pmsType ?? "");
-    setPmsConnected(cp.onboarding?.pmsConnected ?? false);
+    // Only treat PMS as connected if the flag is true AND there's evidence of
+    // actual credentials — either a sync has run or the V2 stage reached
+    // api_connected+.  This prevents a false "Connected" state when the user
+    // skipped the PMS step during onboarding (which previously set the flag
+    // without saving credentials).
+    const pmsFlag = cp.onboarding?.pmsConnected ?? false;
+    const pmsVerified =
+      !!cp.pmsLastSyncAt ||
+      ["api_connected", "first_value_reached", "activation_complete"].includes(
+        cp.onboardingV2?.stage ?? ""
+      );
+    setPmsConnected(pmsFlag && pmsVerified);
     setHepProvider(cp.hepType ?? "");
     setHepConnected(!!cp.hepConnectedAt);
     // API keys are never read from server (stored in integrations_config only)
@@ -623,6 +636,11 @@ const cp = user?.clinicProfile ?? null;
           hepRate: parseFloat(hepTarget),
           utilisationRate: parseFloat(utilisationTarget),
         },
+        // Mirror shared fields to ava.config so Ava receptionist page stays in sync
+        "ava.config.phone": clinicPhone || null,
+        "ava.config.address": clinicAddress || null,
+        "ava.config.ia_price": sessionPrice || null,
+        "ava.config.parking_info": parkingInfo || null,
         updatedAt: new Date().toISOString(),
       });
       await refreshClinicProfile();
@@ -992,11 +1010,12 @@ const cp = user?.clinicProfile ?? null;
   }
 
   async function handleAddClinician() {
-    if (!newClinicianName.trim() || submittingClinician) return;
+    if (!newClinicianName.trim() || !newClinicianEmail.trim() || submittingClinician) return;
     if (!clinicId || !db || !firebaseUser) {
       toast("Clinician added (demo mode)", "success");
       setAddingClinician(false);
       setNewClinicianName("");
+      setNewClinicianEmail("");
       return;
     }
     setSubmittingClinician(true);
@@ -1005,7 +1024,12 @@ const cp = user?.clinicProfile ?? null;
       const res = await fetch("/api/clinicians/add", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name: newClinicianName.trim(), role: newClinicianRole }),
+        body: JSON.stringify({
+          name: newClinicianName.trim(),
+          email: newClinicianEmail.trim(),
+          role: newClinicianRole,
+          authRole: newClinicianAuthRole,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -1015,9 +1039,14 @@ const cp = user?.clinicProfile ?? null;
         toast(msg, "error");
         return;
       }
-      toast(`${newClinicianName.trim()} added`, "success");
+      const inviteNote = data.emailSent
+        ? ` — invite sent to ${newClinicianEmail.trim()}`
+        : " — invite link generated (configure RESEND_API_KEY to send emails)";
+      toast(`${newClinicianName.trim()} added${inviteNote}`, "success");
       setAddingClinician(false);
       setNewClinicianName("");
+      setNewClinicianEmail("");
+      setNewClinicianAuthRole("clinician");
 
       if (cp && !cp.onboarding?.cliniciansConfirmed) {
         const allComplete =
@@ -2633,6 +2662,18 @@ const cp = user?.clinicProfile ?? null;
               </div>
               <div>
                 <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={newClinicianEmail}
+                  onChange={(e) => setNewClinicianEmail(e.target.value)}
+                  placeholder="clinician@example.com"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1">
                   Role
                 </label>
                 <select
@@ -2647,19 +2688,32 @@ const cp = user?.clinicProfile ?? null;
                   <option>Admin</option>
                 </select>
               </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1">
+                  Permissions
+                </label>
+                <select
+                  value={newClinicianAuthRole}
+                  onChange={(e) => setNewClinicianAuthRole(e.target.value as "clinician" | "admin")}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
+                >
+                  <option value="clinician">Clinician — own metrics only</option>
+                  <option value="admin">Admin — all clinicians + settings</option>
+                </select>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleAddClinician}
-                disabled={!newClinicianName.trim() || submittingClinician}
+                disabled={!newClinicianName.trim() || !newClinicianEmail.trim() || submittingClinician}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
                 style={{ background: brand.blue }}
               >
                 <Check size={12} />
-                {submittingClinician ? "Adding…" : "Add"}
+                {submittingClinician ? "Adding…" : "Add & Send Invite"}
               </button>
               <button
-                onClick={() => { setAddingClinician(false); setNewClinicianName(""); }}
+                onClick={() => { setAddingClinician(false); setNewClinicianName(""); setNewClinicianEmail(""); setNewClinicianAuthRole("clinician"); }}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-muted hover:text-navy transition-colors"
               >
                 <X size={12} />
@@ -2682,6 +2736,9 @@ const cp = user?.clinicProfile ?? null;
                     setExpandedClinicianId(isExpanded ? null : c.id);
                     setConfirmDeleteId(null);
                     setInviteResult((prev) => ({ ...prev, [c.id]: "" }));
+                    if (!isExpanded && c.email && !editingEmail[c.id]) {
+                      setEditingEmail((prev) => ({ ...prev, [c.id]: c.email ?? "" }));
+                    }
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-cloud-light/50 transition-colors text-left"
                 >
@@ -2690,8 +2747,21 @@ const cp = user?.clinicProfile ?? null;
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-navy">{c.name}</p>
-                    <p className="text-[11px] text-muted">{c.role}</p>
+                    <p className="text-[11px] text-muted">
+                      {c.role}
+                      {c.email && <span className="ml-1.5 text-muted/60">· {c.email}</span>}
+                    </p>
                   </div>
+                  {c.status === "invited" && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 bg-blue/10 text-blue">
+                      Invited
+                    </span>
+                  )}
+                  {c.authRole && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 bg-purple/10 text-purple">
+                      {c.authRole === "admin" ? "Admin" : "Clinician"}
+                    </span>
+                  )}
                   <span
                     className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
                       c.active ? "bg-success/10 text-success" : "bg-muted/10 text-muted"
@@ -2715,10 +2785,12 @@ const cp = user?.clinicProfile ?? null;
                     {/* Send invite email */}
                     <div>
                       <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-2">
-                        Invite / Re-invite
+                        {c.status === "invited" ? "Resend Invite" : "Invite / Re-invite"}
                       </p>
                       <p className="text-[12px] text-muted mb-2">
-                        Enter this clinician&apos;s email address to send them a login invite link directly in-app — no need to contact support.
+                        {c.status === "invited"
+                          ? "This clinician has been invited but hasn\u2019t signed in yet. Resend the invite email below."
+                          : "Enter this clinician\u2019s email address to send them a login invite link directly in-app \u2014 no need to contact support."}
                       </p>
                       <div className="flex gap-2">
                         <input

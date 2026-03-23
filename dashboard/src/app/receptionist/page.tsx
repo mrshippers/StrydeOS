@@ -178,6 +178,8 @@ function ReceptionistContent() {
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
   const [agentError, setAgentError] = useState<string | null>(null);
 
+  const isOwner = user?.role === "owner" || user?.role === "admin" || user?.role === "superadmin";
+
   // Update local draft when config changes
   useEffect(() => {
     setConfigDraft(config);
@@ -720,18 +722,26 @@ function ReceptionistContent() {
 
           {/* Clinic Details */}
           <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-            <h3 className="font-display text-lg text-navy mb-4">Clinic Details</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display text-lg text-navy">Clinic Details</h3>
+              {!isOwner && (
+                <span className="text-[10px] font-semibold text-muted uppercase tracking-wide flex items-center gap-1">
+                  <Lock size={10} />
+                  Owner-managed
+                </span>
+              )}
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                  Clinic Phone Number (Ava's number)
+                  Clinic Phone Number (Ava&apos;s number)
                 </label>
                 <input
                   type="tel"
                   value={configDraft.phone}
                   onChange={(e) => handleConfigChange("phone", e.target.value)}
-                  disabled={saving}
-                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                  disabled={saving || !isOwner}
+                  className={`w-full px-3 py-2.5 rounded-lg border border-border text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors ${!isOwner ? "bg-cloud-light cursor-not-allowed" : "bg-white"}`}
                 />
               </div>
               <div>
@@ -742,8 +752,8 @@ function ReceptionistContent() {
                   type="text"
                   value={configDraft.address}
                   onChange={(e) => handleConfigChange("address", e.target.value)}
-                  disabled={saving}
-                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                  disabled={saving || !isOwner}
+                  className={`w-full px-3 py-2.5 rounded-lg border border-border text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors ${!isOwner ? "bg-cloud-light cursor-not-allowed" : "bg-white"}`}
                   placeholder="45 Mill Lane, West Hampstead..."
                 />
               </div>
@@ -755,8 +765,8 @@ function ReceptionistContent() {
                   type="number"
                   value={configDraft.ia_price}
                   onChange={(e) => handleConfigChange("ia_price", e.target.value)}
-                  disabled={saving}
-                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                  disabled={saving || !isOwner}
+                  className={`w-full px-3 py-2.5 rounded-lg border border-border text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors ${!isOwner ? "bg-cloud-light cursor-not-allowed" : "bg-white"}`}
                 />
               </div>
               <div>
@@ -767,8 +777,8 @@ function ReceptionistContent() {
                   type="number"
                   value={configDraft.fu_price}
                   onChange={(e) => handleConfigChange("fu_price", e.target.value)}
-                  disabled={saving}
-                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                  disabled={saving || !isOwner}
+                  className={`w-full px-3 py-2.5 rounded-lg border border-border text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors ${!isOwner ? "bg-cloud-light cursor-not-allowed" : "bg-white"}`}
                 />
               </div>
               <div>
@@ -779,8 +789,8 @@ function ReceptionistContent() {
                   type="text"
                   value={configDraft.nearest_station}
                   onChange={(e) => handleConfigChange("nearest_station", e.target.value)}
-                  disabled={saving}
-                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                  disabled={saving || !isOwner}
+                  className={`w-full px-3 py-2.5 rounded-lg border border-border text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors ${!isOwner ? "bg-cloud-light cursor-not-allowed" : "bg-white"}`}
                   placeholder="West Hampstead (Jubilee, Thameslink...)"
                 />
               </div>
@@ -792,8 +802,8 @@ function ReceptionistContent() {
                   type="text"
                   value={configDraft.parking_info}
                   onChange={(e) => handleConfigChange("parking_info", e.target.value)}
-                  disabled={saving}
-                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
+                  disabled={saving || !isOwner}
+                  className={`w-full px-3 py-2.5 rounded-lg border border-border text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors ${!isOwner ? "bg-cloud-light cursor-not-allowed" : "bg-white"}`}
                   placeholder="Paid on-street parking, no permit required evenings..."
                 />
               </div>

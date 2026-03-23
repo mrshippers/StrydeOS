@@ -27,7 +27,7 @@ const ALL_METRICS = [
 
 const ALL_SEQUENCE_TYPES: SequenceType[] = [
   "early_intervention", "rebooking_prompt", "hep_reminder",
-  "review_prompt", "reactivation_90d", "reactivation_180d",
+  "pre_auth_collection", "review_prompt", "reactivation_90d", "reactivation_180d",
 ];
 
 function defaultPreferences(userId: string, clinicId: string): UserPreferences {

@@ -28,12 +28,21 @@ export function useSequences() {
   const isOwnerOrAdmin = user?.role === "owner" || user?.role === "admin" || user?.role === "superadmin";
 
   const [definitions, setDefinitions] = useState<SequenceDefinition[]>([]);
+  const [usingDefaults, setUsingDefaults] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const seededRef = useRef(false);
 
   useEffect(() => {
     if (!db || !clinicId) {
+      // No Firestore or no clinic — fall back to canonical defaults so the UI isn't empty
+      setDefinitions(
+        DEFAULT_SEQUENCE_DEFINITIONS.map((d, i) => ({
+          ...d,
+          id: `default_${d.sequenceType}`,
+        }))
+      );
+      setUsingDefaults(true);
       setLoading(false);
       return;
     }
@@ -50,18 +59,48 @@ export function useSequences() {
               await addDoc(ref, def);
             }
           } catch {
-            // Seeding failed — sequences will stay empty; pipeline will seed on next cron run
+            // Seeding failed — fall back to canonical defaults so the tab isn't blank
+            setDefinitions(
+              DEFAULT_SEQUENCE_DEFINITIONS.map((d) => ({
+                ...d,
+                id: `default_${d.sequenceType}`,
+              }))
+            );
+            setUsingDefaults(true);
+            setLoading(false);
           }
           return; // The onSnapshot will fire again with the seeded docs
+        }
+
+        // If snapshot is still empty after seeding attempt (non-owner, or seeding didn't run)
+        if (snap.empty) {
+          setDefinitions(
+            DEFAULT_SEQUENCE_DEFINITIONS.map((d) => ({
+              ...d,
+              id: `default_${d.sequenceType}`,
+            }))
+          );
+          setUsingDefaults(true);
+          setLoading(false);
+          return;
         }
 
         const defs = snap.docs
           .map((d) => ({ id: d.id, ...d.data() } as SequenceDefinition))
           .sort((a, b) => a.priority - b.priority);
         setDefinitions(defs);
+        setUsingDefaults(false);
         setLoading(false);
       },
       (err) => {
+        // Firestore error — still show defaults so the tab isn't blank
+        setDefinitions(
+          DEFAULT_SEQUENCE_DEFINITIONS.map((d) => ({
+            ...d,
+            id: `default_${d.sequenceType}`,
+          }))
+        );
+        setUsingDefaults(true);
         setError("Failed to load sequences.");
         setLoading(false);
       }
@@ -104,5 +143,5 @@ export function useSequences() {
     attributedRevenuePence: 0,
   }));
 
-  return { sequences, toggleSequence, loading, error };
+  return { sequences, toggleSequence, loading, error, usingDefaults };
 }

@@ -96,6 +96,8 @@ export default function OnboardingPage() {
   const [selectedPms, setSelectedPms] = useState<PmsProvider | null>(null);
   const [pmsApiKey, setPmsApiKey] = useState("");
   const [clinicPhone, setClinicPhone] = useState("");
+  const [iaPrice, setIaPrice] = useState("");
+  const [fuPrice, setFuPrice] = useState("");
   const [enabledSequences, setEnabledSequences] = useState<Set<string>>(
     new Set(PULSE_SEQUENCES.filter((s) => s.defaultOn).map((s) => s.id))
   );
@@ -137,6 +139,9 @@ export default function OnboardingPage() {
       }
 
       if (data.pmsType) setSelectedPms(data.pmsType as PmsProvider);
+      if (data.phone) setClinicPhone(data.phone);
+      if (data.sessionPricePence) setIaPrice(String(data.sessionPricePence / 100));
+      if (data.ava?.config?.fu_price) setFuPrice(data.ava.config.fu_price);
       if (data.onboarding?.pmsConnected) setCompletedSteps((p) => new Set([...p, 0]));
       if (data.onboarding?.cliniciansConfirmed) setCompletedSteps((p) => new Set([...p, 1]));
       if (data.onboarding?.targetsSet) setCompletedSteps((p) => new Set([...p, 2]));
@@ -206,10 +211,24 @@ export default function OnboardingPage() {
 
       if (stepId === "pms" && selectedPms) {
         updates.pmsType = selectedPms;
-        updates["onboarding.pmsConnected"] = true;
+        // Only mark as connected if the user actually provided credentials
+        // (TM3 uses CSV bridge so no API key needed; other providers require one)
+        const hasCredentials = selectedPms === "tm3" || pmsApiKey.trim().length > 0;
+        updates["onboarding.pmsConnected"] = hasCredentials;
       }
       if (stepId === "ava") {
         updates["onboarding.cliniciansConfirmed"] = true;
+        if (clinicPhone.trim()) {
+          updates.phone = clinicPhone.trim();
+          updates["ava.config.phone"] = clinicPhone.trim();
+        }
+        if (iaPrice.trim()) {
+          updates.sessionPricePence = Math.round(parseFloat(iaPrice) * 100);
+          updates["ava.config.ia_price"] = iaPrice.trim();
+        }
+        if (fuPrice.trim()) {
+          updates["ava.config.fu_price"] = fuPrice.trim();
+        }
       }
       if (stepId === "pulse") {
         updates["onboarding.targetsSet"] = true;
@@ -622,6 +641,8 @@ export default function OnboardingPage() {
                           <span className="text-sm text-muted">£</span>
                           <input
                             type="number"
+                            value={iaPrice}
+                            onChange={(e) => setIaPrice(e.target.value)}
                             placeholder="95"
                             className="w-32 px-3 py-2.5 rounded-lg border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
                           />
@@ -636,6 +657,8 @@ export default function OnboardingPage() {
                           <span className="text-sm text-muted">£</span>
                           <input
                             type="number"
+                            value={fuPrice}
+                            onChange={(e) => setFuPrice(e.target.value)}
                             placeholder="75"
                             className="w-32 px-3 py-2.5 rounded-lg border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors"
                           />

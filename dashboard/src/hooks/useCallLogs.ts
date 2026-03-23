@@ -203,6 +203,14 @@ export function useCallLogs(): UseCallLogsResult {
       },
       (err) => {
         console.error("[useCallLogs]", err);
+        // Fresh clinics may not have a call_log subcollection yet —
+        // permission-denied / not-found are expected, not user-facing errors.
+        const code = (err as { code?: string }).code;
+        if (code === "permission-denied" || code === "not-found") {
+          setCalls([]);
+          setIsLoading(false);
+          return;
+        }
         setError("Failed to load call logs. Check your connection and try again.");
         setCalls([]);
         setIsLoading(false);

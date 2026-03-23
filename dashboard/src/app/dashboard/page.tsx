@@ -3,8 +3,8 @@
 import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { motion, useScroll, useTransform } from "motion/react";
-import { ChevronLeft, ChevronRight, RefreshCw, Upload, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
+import { ChevronLeft, ChevronRight, RefreshCw, Upload, ArrowRight, Info, X } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import { AlertBanner } from "@/components/ui/AlertFlag";
@@ -98,6 +98,7 @@ export default function DashboardPage() {
   const { unreadCount } = useInsightEvents();
   const { startLoading, stopLoading } = useProgress();
   const router = useRouter();
+  const [previewOpen, setPreviewOpen] = useState(false);
   const firstName = user?.firstName || "";
   const [isFirstMount] = useState(() => {
     try {
@@ -324,18 +325,167 @@ export default function DashboardPage() {
               heading="No performance data yet"
               subtext="Metrics will populate as patient data flows in from your PMS. If you've just connected, allow up to 24 hours for the first sync to complete."
               action={
-                <a
-                  href="/settings"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
-                  style={{ background: "#1C54F2" }}
-                >
-                  Check PMS connection →
-                </a>
+                <div className="flex items-center gap-3">
+                  <a
+                    href="/settings"
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
+                    style={{ background: "#1C54F2" }}
+                  >
+                    Check PMS connection →
+                  </a>
+                  <button
+                    onClick={() => setPreviewOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-semibold border border-border text-muted hover:text-navy hover:border-navy/20 bg-white transition-all duration-150 active:scale-[0.97] shadow-[var(--shadow-card)]"
+                  >
+                    <Info size={13} />
+                    Preview dashboard
+                  </button>
+                </div>
               }
             />
           </div>
         </motion.div>
       )}
+
+      {/* Ghost preview modal — shows what the dashboard looks like when populated */}
+      <AnimatePresence>
+        {previewOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 overflow-y-auto"
+            style={{ background: "rgba(11, 37, 69, 0.5)", backdropFilter: "blur(4px)" }}
+            onClick={() => setPreviewOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.93, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-3xl rounded-2xl bg-white shadow-[var(--shadow-elevated)] overflow-hidden my-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-5 border-b border-border">
+                <div>
+                  <h3 className="font-display text-base text-navy">Dashboard Preview</h3>
+                  <p className="text-[11px] text-muted mt-0.5">This is what your dashboard will look like once data flows in</p>
+                </div>
+                <button
+                  onClick={() => setPreviewOpen(false)}
+                  className="text-muted hover:text-navy transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Ghost preview content */}
+              <div className="p-6 opacity-50 pointer-events-none select-none">
+                {/* Example stat cards — row 1 */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  {/* Follow-up Rate */}
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-5">
+                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Follow-Up Rate</p>
+                    <p className="text-3xl font-semibold text-navy">3.8</p>
+                    <p className="text-[11px] text-muted mt-1">sessions per patient</p>
+                    <div className="flex items-center gap-1 mt-2">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#059669" }} />
+                      <span className="text-[10px] font-semibold" style={{ color: "#059669" }}>+12% vs last week</span>
+                    </div>
+                  </div>
+                  {/* HEP Rate */}
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-5">
+                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">HEP Rate</p>
+                    <p className="text-3xl font-semibold text-navy">92%</p>
+                    <p className="text-[11px] text-muted mt-1">programme compliance</p>
+                    <div className="flex items-center gap-1 mt-2">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#059669" }} />
+                      <span className="text-[10px] font-semibold" style={{ color: "#059669" }}>On target</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Example stat cards — row 2 */}
+                <div className="grid grid-cols-3 gap-4 mb-5">
+                  {/* Utilisation */}
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4">
+                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Utilisation</p>
+                    <p className="text-2xl font-semibold text-navy">78%</p>
+                    <div className="flex items-center gap-1 mt-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#F59E0B" }} />
+                      <span className="text-[10px] font-semibold" style={{ color: "#F59E0B" }}>Room to grow</span>
+                    </div>
+                  </div>
+                  {/* DNA Rate */}
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4">
+                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">DNA Rate</p>
+                    <p className="text-2xl font-semibold text-navy">4.2%</p>
+                    <div className="flex items-center gap-1 mt-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#059669" }} />
+                      <span className="text-[10px] font-semibold" style={{ color: "#059669" }}>Below threshold</span>
+                    </div>
+                  </div>
+                  {/* Revenue per Session */}
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4">
+                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Revenue / Session</p>
+                    <p className="text-2xl font-semibold text-navy">&pound;62</p>
+                    <div className="flex items-center gap-1 mt-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#6B7280" }} />
+                      <span className="text-[10px] font-semibold text-muted">Flat</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Example clinician table */}
+                <div className="rounded-[var(--radius-card)] border border-border bg-white overflow-hidden">
+                  <div className="px-5 py-3 border-b border-border bg-cloud-light/50">
+                    <p className="text-xs font-semibold text-muted uppercase tracking-wide">Clinician Summary</p>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2.5 px-4 text-[10px] font-semibold text-muted uppercase">Clinician</th>
+                        <th className="text-left py-2.5 px-4 text-[10px] font-semibold text-muted uppercase">Follow-up</th>
+                        <th className="text-left py-2.5 px-4 text-[10px] font-semibold text-muted uppercase">HEP</th>
+                        <th className="text-left py-2.5 px-4 text-[10px] font-semibold text-muted uppercase">Utilisation</th>
+                        <th className="text-left py-2.5 px-4 text-[10px] font-semibold text-muted uppercase">Sessions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-border/50">
+                        <td className="py-2.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-blue/10 flex items-center justify-center text-[10px] font-bold text-blue">AH</div>
+                            <span className="text-sm font-medium text-navy">Andrew H.</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#05966912", color: "#059669" }}>3.8</span></td>
+                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#05966912", color: "#059669" }}>94%</span></td>
+                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#F59E0B12", color: "#F59E0B" }}>76%</span></td>
+                        <td className="py-2.5 px-4 text-sm text-navy font-medium">24</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-purple/10 flex items-center justify-center text-[10px] font-bold text-purple">MR</div>
+                            <span className="text-sm font-medium text-navy">Max R.</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#F59E0B12", color: "#F59E0B" }}>2.9</span></td>
+                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#05966912", color: "#059669" }}>88%</span></td>
+                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#05966912", color: "#059669" }}>82%</span></td>
+                        <td className="py-2.5 px-4 text-sm text-navy font-medium">18</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Stat cards — row 1 */}
       <motion.section className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4" data-tour="stat-cards" {...staggerItem(0.1)}>

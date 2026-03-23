@@ -6,6 +6,7 @@ import { Sparkles, Compass } from "lucide-react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
+import { useSidebar } from "@/context/SidebarContext";
 import TourStep, { type TourStepDef } from "./TourStep";
 
 const TOUR_STEPS: TourStepDef[] = [
@@ -78,6 +79,7 @@ export function clearDemoTourCompleted(): void {
 
 export default function FirstLoginTour() {
   const { user, firebaseUser, refreshClinicProfile } = useAuth();
+  const { setCollapsed } = useSidebar();
   const [phase, setPhase] = useState<Phase>("welcome");
   const [currentStep, setCurrentStep] = useState(0);
   const [dismissed, setDismissed] = useState(false);
@@ -99,9 +101,17 @@ export default function FirstLoginTour() {
     return () => clearTimeout(t);
   }, [demoFirstTime, phase]);
 
+  // Keep sidebar expanded while the tour is active so highlighted items are visible
+  useEffect(() => {
+    if (phase === "touring") {
+      setCollapsed(false);
+    }
+  }, [phase, currentStep, setCollapsed]);
+
   const finishTour = useCallback(
     async (tourCompleted: boolean) => {
       setDismissed(true);
+      setCollapsed(true);
 
       if (user?.uid === "demo") {
         setDemoTourCompleted();
@@ -133,7 +143,7 @@ export default function FirstLoginTour() {
         console.error("[FirstLoginTour] Failed to update user:", err);
       }
     },
-    [user, firebaseUser, refreshClinicProfile]
+    [user, firebaseUser, refreshClinicProfile, setCollapsed]
   );
 
   const handleStartTour = useCallback(() => {

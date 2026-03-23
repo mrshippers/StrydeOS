@@ -81,7 +81,7 @@ function ContinuityPage() {
   const { toast } = useToast();
   const clinicianMap = Object.fromEntries(clinicians.map((c) => [c.id, c]));
 
-  const { sequences, toggleSequence } = useSequences();
+  const { sequences, toggleSequence, usingDefaults } = useSequences();
   const { user } = useAuth();
   const { commsLog, commsStats, statsBySequence, totalAttributedRevenuePence, isDemo: commsIsDemo } = useCommsLog();
   const { preferences, updatePreferences } = useUserPreferences();
@@ -245,6 +245,14 @@ function ContinuityPage() {
           <p className="text-xs text-muted">
             Each sequence triggers automatically based on patient events from your PMS. Toggle on/off per sequence. Timing and channel are configurable per clinic.
           </p>
+          {usingDefaults && (
+            <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-teal/20 bg-teal/5">
+              <Zap size={14} className="text-teal shrink-0" />
+              <p className="text-xs text-muted">
+                These are the default Pulse sequences. They&apos;ll be saved to your clinic once data starts flowing from your PMS.
+              </p>
+            </div>
+          )}
           {sequences
             .filter((seq) => !preferences || preferences.visibleSequenceTypes.includes(seq.sequenceType))
             .map((seq) => {

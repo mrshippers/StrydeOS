@@ -77,7 +77,31 @@ html.dark {
 }
 
 html.dark .bg-white {
+  background-color: rgba(255,255,255,0.08);
+}
+
+html.dark .bg-cloud-dark {
   background-color: rgba(255,255,255,0.06);
+}
+
+/* ─── Dark-mode form inputs ────────────────────────────────────────────────── */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.95) !important;
+  border-color: rgba(255,255,255,0.15) !important;
+}
+
+html.dark input::placeholder,
+html.dark select::placeholder,
+html.dark textarea::placeholder {
+  color: rgba(255,255,255,0.40) !important;
+}
+
+html.dark option {
+  background-color: #132D5E;
+  color: rgba(255,255,255,0.95);
 }
 
 html.dark .button-highlight {
@@ -115,6 +139,11 @@ a, button, input, select, textarea, [role="button"] {
 
 ::selection {
   background: rgba(28, 84, 242, 0.15);
+}
+
+html.dark ::selection {
+  background: rgba(75, 139, 245, 0.35);
+  color: #FFFFFF;
 }
 
 .font-display {

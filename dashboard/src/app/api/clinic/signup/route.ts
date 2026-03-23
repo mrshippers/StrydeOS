@@ -30,10 +30,12 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { clinicName, email, password, profession, clinicSize, country } = body as {
+    const { clinicName, email, password, firstName, lastName, profession, clinicSize, country } = body as {
       clinicName?: string;
       email?: string;
       password?: string;
+      firstName?: string;
+      lastName?: string;
       profession?: string;
       clinicSize?: string;
       country?: string;
@@ -62,10 +64,13 @@ async function handler(request: NextRequest) {
 
     // 1. Create Firebase Auth user
     try {
+      const personName = firstName?.trim()
+        ? `${firstName.trim()} ${(lastName || "").trim()}`.trim()
+        : trimmedName;
       const userRecord = await auth.createUser({
         email: trimmedEmail,
         password,
-        displayName: trimmedName,
+        displayName: personName,
       });
       uid = userRecord.uid;
     } catch (err: unknown) {
@@ -173,8 +178,8 @@ async function handler(request: NextRequest) {
     batch.set(db.collection("users").doc(uid!), {
       clinicId,
       role: "owner" as UserRole,
-      firstName: "",
-      lastName: "",
+      firstName: (firstName as string)?.trim() || "",
+      lastName: (lastName as string)?.trim() || "",
       email: trimmedEmail,
       status: "onboarding" as UserStatus,
       firstLogin: true,
