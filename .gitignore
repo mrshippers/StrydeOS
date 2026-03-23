@@ -16,6 +16,7 @@ serviceAccountKey.json
 # Stripe / secrets (backup codes, etc.)
 stripe_backup_code.txt
 *_backup_code*.txt
+# Sensitive documents
 StrydeOS_SaaS_Subscription_Agreement_v2.docx
 Private Practice Barometer - BM Public.pdf
 
@@ -24,3 +25,21 @@ firebase-debug.log
 
 # Git worktrees
 .worktrees/
+
+# Playwright MCP logs
+.playwright-mcp/
+
+# AI assistant working files
+ALL CLAUDE PARTY/
+.claude/
+.cursor/
+
+# Screenshots and one-off images at repo root
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# Logs
+logs/
+*.log
