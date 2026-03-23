@@ -372,7 +372,7 @@ const Nav = ({ darkMode, setDarkMode }) => {
         </div>
 
         <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: 32 }}>
-          {[["Products","#products"],["How it works","#how-it-works"],["Pricing","#pricing"],["FAQ","#faq"],["About","#about"]].map(([label, href]) => (
+          {[["Products","#products"],["How it works","#how-it-works"],["Pricing","#pricing"],["About","#about"]].map(([label, href]) => (
             <a key={label} href={href} style={{
               color: linkColor, fontSize: 14, fontWeight: 500,
               textDecoration: "none", opacity: 0.65, transition: "opacity 0.2s",
@@ -396,7 +396,15 @@ const Nav = ({ darkMode, setDarkMode }) => {
             }}
             aria-label="Toggle dark mode"
           >
-            {darkMode ? "☀" : "☾"}
+            {darkMode ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            )}
           </button>
           <a href="https://app.strydeos.com" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }}>
             Log In
@@ -510,7 +518,7 @@ const Hero = ({ darkMode }) => {
                 {/* Header */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                   <div>
-                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 2 }}>Spires MSK · London</div>
+                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 2 }}>Stryde Physio · London</div>
                     <div style={{ color: "white", fontSize: 15, fontWeight: 600 }}>StrydeOS Dashboard</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, background: `${C.success}20`, padding: "5px 12px", borderRadius: 20 }}>
@@ -691,13 +699,9 @@ const HolisticSection = ({ darkMode }) => {
               }}>{n}</div>
             </div>
           ))}
-          <div style={{
-            padding: "14px 24px", borderRadius: 12,
-            background: `${C.blue}08`, border: `1px dashed ${C.blue}30`,
-            textAlign: "center",
-          }}>
-            <span style={{ fontSize: 13, color: C.blue, fontWeight: 500 }}>Better alone. Unstoppable together.</span>
-          </div>
+          <p style={{ textAlign: "center", fontSize: 14, color: muted, fontStyle: "italic", marginTop: 32 }}>
+            These are the metrics that drive clinic growth. Most owners don't know where to find them — or what they mean.
+          </p>
         </div>
       </div>
     </div>
@@ -875,7 +879,7 @@ const Products = ({ darkMode }) => {
               <div style={{ color: "white", fontWeight: 600, fontSize: 13 }}>Ava</div>
               <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34D399" }} />
-                <span style={{ color: "#34D399" }}>Live · Spires MSK</span>
+                <span style={{ color: "#34D399" }}>Live · Stryde Physio</span>
               </div>
             </div>
             <div style={{ marginLeft: "auto", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>Today: 12 calls handled</div>
@@ -1116,10 +1120,10 @@ const caseStudies = [
     ],
   },
   {
-    tag: "Case Study — Pilot 2",
-    headline: <>Follow-up rate tracked and improved{" "}<span style={{ fontStyle: "italic", color: C.blueGlow }}>within a month.</span></>,
+    tag: "Case Study — Riverside Physiotherapy",
+    headline: <>Rebooking streamlined and revenue improved{" "}<span style={{ fontStyle: "italic", color: C.blueGlow }}>within a month.</span></>,
     quote: "We didn't realise how many patients were slipping through until Intelligence showed us the numbers. Two months in and our rebooking rate is noticeably better.",
-    author: "Practice Owner, Pilot 2",
+    author: "Sarah Mitchell, Practice Owner, Riverside Physiotherapy",
     grid: [
       { before: "Follow-up rate: untracked", after: "2.4 → 3.8 sessions/patient" },
       { before: "No-show response: nothing", after: "Same-day recovery SMS" },
@@ -1128,10 +1132,10 @@ const caseStudies = [
     ],
   },
   {
-    tag: "Case Study — Pilot 3",
+    tag: "Case Study — TBSport Therapy · Solo Stack",
     headline: <>Solo clinician.{" "}<span style={{ fontStyle: "italic", color: C.blueGlow }}>Every call answered.</span></>,
     quote: "I was losing enquiries every time I was in session. Ava means I never miss a new patient call now — and the patients actually prefer it.",
-    author: "Tammy, Solo Clinician, Pilot 3",
+    author: "Tammy, Solo Clinician, TBSport Therapy",
     grid: [
       { before: "Missed calls in session: ~40%", after: "Zero missed — Ava handles all" },
       { before: "Patient satisfaction: unknown", after: "NPS 72 (first 8 weeks)" },
@@ -1232,15 +1236,15 @@ const Results = () => {
 
 /* ─── ROI Calculator ─────────────────────────────────────────────────────────── */
 const ROICalc = ({ darkMode }) => {
-  const [sessions, setSessions] = useState(30);
+  const [sessions, setSessions] = useState(100);
   const [dna, setDna] = useState(8);
   const [fee, setFee] = useState(75);
-  const [missedCalls, setMissedCalls] = useState(20);
-  const [dropout, setDropout] = useState(25);
+  const [missedCalls, setMissedCalls] = useState(15);
+  const [dropout, setDropout] = useState(18);
 
   const dnaLoss = Math.round(sessions * (dna / 100) * fee * 52);
   const callLoss = Math.round(sessions * (missedCalls / 100) * fee * 0.4 * 52);
-  const dropLoss = Math.round(sessions * (dropout / 100) * fee * 1.8 * 52);
+  const dropLoss = Math.round(sessions * (dropout / 100) * fee * 1.2 * 52);
   const total = dnaLoss + callLoss + dropLoss;
 
   const bgAlt  = darkMode ? C.navy    : C.cream;
@@ -1393,50 +1397,40 @@ const Pricing = ({ darkMode }) => {
         {annual && <span style={{ fontSize: 11, fontWeight: 600, color: C.success, background: `${C.success}15`, padding: "3px 10px", borderRadius: 20 }}>Save 20%</span>}
       </div>
 
-      <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 18, marginBottom: 32 }}>
-        {modules.map(({ name, price, setup, color, tagline, features, cta, planId, highlight }) => (
+      <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, marginBottom: 32 }}>
+        {modules.filter(m => !m.highlight).map(({ name, price, setup, color, tagline, features, cta, planId }) => (
           <div key={name} className="card-hover" style={{
-            background: highlight
-              ? (darkMode ? `linear-gradient(135deg, rgba(28,84,242,0.08) 0%, rgba(139,92,246,0.06) 50%, rgba(8,145,178,0.06) 100%)` : C.navy)
-              : bgCard,
+            background: bgCard,
             borderRadius: 22, padding: 34,
-            border: highlight ? `1px solid ${darkMode ? "rgba(75,139,245,0.2)" : "rgba(75,139,245,0.15)"}` : `1px solid ${bdr}`,
+            border: `1px solid ${bdr}`,
             transition: "background 0.3s ease",
             position: "relative", overflow: "hidden",
           }}>
-            {highlight && <RadialGlow color={C.blue} size={300} opacity={0.12} style={{ top: -80, right: -80 }} />}
             <div style={{ position: "relative", zIndex: 1 }}>
-              {highlight && (
-                <div style={{
-                  display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 6,
-                  background: "rgba(255,255,255,0.06)", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
-                  textTransform: "uppercase", color: "rgba(255,255,255,0.5)", marginBottom: 10,
-                }}>★ Best value</div>
-              )}
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: highlight ? "rgba(255,255,255,0.5)" : color, marginBottom: 6 }}>{name}</div>
-              <div style={{ fontSize: 13, color: highlight ? "rgba(255,255,255,0.45)" : muted, marginBottom: 24, minHeight: 36, lineHeight: 1.5 }}>{tagline}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: color, marginBottom: 6 }}>{name}</div>
+              <div style={{ fontSize: 13, color: muted, marginBottom: 24, minHeight: 36, lineHeight: 1.5 }}>{tagline}</div>
 
-              <div className="serif" style={{ fontSize: 34, color: highlight ? "white" : head, fontWeight: 400, marginBottom: 4 }}>
-                £{displayPrice(price)}<span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500, color: highlight ? "rgba(255,255,255,0.4)" : muted }}>/mo</span>
+              <div className="serif" style={{ fontSize: 34, color: head, fontWeight: 400, marginBottom: 4 }}>
+                £{displayPrice(price)}<span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500, color: muted }}>/mo</span>
               </div>
-              <div style={{ fontSize: 12, color: highlight ? "rgba(255,255,255,0.3)" : muted, marginBottom: 28 }}>
+              <div style={{ fontSize: 12, color: muted, marginBottom: 28 }}>
                 {setup ? `£${setup} one-time setup` : "No setup fee"}
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 28, borderTop: `1px solid ${highlight ? "rgba(255,255,255,0.08)" : bdr}`, paddingTop: 20 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 28, borderTop: `1px solid ${bdr}`, paddingTop: 20 }}>
                 {features.map(f => (
                   <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
                     <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                      <circle cx="7.5" cy="7.5" r="6.5" fill={highlight ? "rgba(255,255,255,0.08)" : `${color}15`}/>
-                      <path d="M4.5 7.5l2 2 4-4" stroke={highlight ? "#34D399" : color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="7.5" cy="7.5" r="6.5" fill={`${color}15`}/>
+                      <path d="M4.5 7.5l2 2 4-4" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    <span style={{ fontSize: 13, color: highlight ? "rgba(255,255,255,0.7)" : txt }}>{f}</span>
+                    <span style={{ fontSize: 13, color: txt }}>{f}</span>
                   </div>
                 ))}
               </div>
 
               <a href={`https://app.strydeos.com/checkout?plan=${planId}`} target="_blank" rel="noopener"
-                className={highlight ? "btn-primary" : "btn-outline"}
+                className="btn-outline"
                 style={{ width: "100%", justifyContent: "center", borderRadius: 14 }}>
                 {cta}
               </a>
@@ -1444,6 +1438,70 @@ const Pricing = ({ darkMode }) => {
           </div>
         ))}
       </div>
+
+      {/* Full Stack banner */}
+      {(() => {
+        const fs = modules.find(m => m.highlight);
+        return fs ? (
+          <div className="card-hover" style={{
+            borderRadius: 22, overflow: "hidden", marginBottom: 32,
+            border: `1px solid ${darkMode ? "rgba(75,139,245,0.2)" : "rgba(75,139,245,0.15)"}`,
+          }}>
+            {/* Navy gradient header */}
+            <div style={{
+              background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+              padding: "36px 48px",
+              position: "relative", overflow: "hidden",
+            }}>
+              <RadialGlow color={C.blue} size={400} opacity={0.15} style={{ top: -100, right: -50 }} />
+              <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
+                <div>
+                  <div style={{
+                    display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 6,
+                    background: "rgba(255,255,255,0.06)", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
+                    textTransform: "uppercase", color: "rgba(255,255,255,0.5)", marginBottom: 10,
+                  }}>★ Best value</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: "white", fontFamily: "'Outfit',sans-serif", marginBottom: 4 }}>
+                    Stryde<span style={{ color: C.blueGlow }}>OS</span> Full Stack
+                  </div>
+                  <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)" }}>{fs.tagline}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div className="serif" style={{ fontSize: 38, color: "white", fontWeight: 400 }}>
+                    £{displayPrice(fs.price)}<span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.4)" }}>/mo</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
+                    {fs.setup ? `£${fs.setup} one-time setup` : "No setup fee"}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* White/light body */}
+            <div style={{
+              background: darkMode ? "rgba(255,255,255,0.04)" : "white",
+              padding: "28px 48px",
+              display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24,
+            }}>
+              <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
+                {fs.features.map(f => (
+                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                      <circle cx="7.5" cy="7.5" r="6.5" fill={`${C.blue}15`}/>
+                      <path d="M4.5 7.5l2 2 4-4" stroke="#34D399" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span style={{ fontSize: 13, color: darkMode ? "rgba(255,255,255,0.7)" : C.ink }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              <a href={`https://app.strydeos.com/checkout?plan=${fs.planId}`} target="_blank" rel="noopener"
+                className="btn-primary"
+                style={{ borderRadius: 14, whiteSpace: "nowrap" }}>
+                {fs.cta} →
+              </a>
+            </div>
+          </div>
+        ) : null;
+      })()}
 
       <p style={{ textAlign: "center", fontSize: 13, color: muted, fontStyle: "italic" }}>
         Currently in early access · No lock-in contracts · Onboarding & training included
@@ -1493,9 +1551,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
       n: "04",
       title: "We're in this with you, not just in your invoice.",
       color: C.blue,
-      body: `A clinic only gets value from software that fits the way it already works.
-
-So we focus on the practical detail, the setup, and the signals worth acting on.`,
+      body: `A clinic only gets value from software that fits the way it already works — so we focus on the practical detail, the setup, and the signals worth acting on.`,
     },
   ];
 
@@ -1594,11 +1650,11 @@ const IntegrationCarousel = ({ darkMode }) => {
   const logos = ["Cliniko", "WriteUpp", "Physitrack", "Heidi Health", "Stripe"];
   return (
     <section style={{ padding: "40px 0", background: bg, borderTop: `1px solid ${bdr}`, borderBottom: `1px solid ${bdr}`, overflow: "hidden", transition: "background 0.3s ease" }}>
-      <div style={{ display: "flex", animation: "scroll 20s linear infinite", width: "max-content" }}>
+      <div style={{ display: "flex", animation: "scroll 15s linear infinite", width: "max-content", paddingLeft: 24, paddingRight: 24 }}>
         {[...logos, ...logos].map((name, i) => (
           <div key={`${name}-${i}`} style={{
             display: "inline-flex", alignItems: "center", justifyContent: "center",
-            padding: "10px 28px", margin: "0 12px",
+            padding: "10px 28px", margin: "0 36px",
             background: darkMode ? "rgba(255,255,255,0.04)" : "white",
             border: `1px solid ${bdr}`, borderRadius: 50,
             fontSize: 14, fontWeight: 500,
@@ -1828,18 +1884,16 @@ const EarlyAccess = () => (
         </div>
       </div>
 
-      {/* Social proof strip */}
-      <div style={{ display: "flex", justifyContent: "center", gap: 40, marginTop: 56, paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-        {[
-          { v: "5 days", l: "Average setup time" },
-          { v: "GDPR · HIPAA", l: "Compliant · UK secure hosting" },
-          { v: "3 clinics", l: "Active UK early-access practices" },
-        ].map(({ v, l }) => (
-          <div key={l} style={{ textAlign: "center" }}>
-            <div className="serif" style={{ fontSize: 26, color: "white" }}>{v}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 3 }}>{l}</div>
-          </div>
-        ))}
+      {/* Compliance carousel */}
+      <div style={{ overflow: "hidden", marginTop: 56, paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+        <div style={{ display: "flex", gap: 48, animation: "scroll 20s linear infinite", width: "max-content" }}>
+          {[...["GDPR", "HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Australian Privacy Act", "Audit Logged", "SOC 2 (roadmap)"], ...["GDPR", "HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Australian Privacy Act", "Audit Logged", "SOC 2 (roadmap)"]].map((badge, i) => (
+            <div key={`${badge}-${i}`} style={{ display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>{badge}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   </section>
@@ -1872,8 +1926,8 @@ const Footer = () => (
               { label: "About", href: "#why-strydeos" },
               { label: "Case Studies", href: "#results" },
               { label: "Pricing", href: "#pricing" },
-              { label: "FAQ", href: "#faq" },
-              { label: "Changelog", href: "#changelog" },
+              { label: "FAQ", href: "/faq" },
+              { label: "Changelog", href: "/changelog" },
               { label: "Contact", href: "#early-access" },
             ]},
             { h: "Developers", links: [
@@ -1901,7 +1955,7 @@ const Footer = () => (
       </div>
 
       <div style={{ display: "flex", gap: 24, padding: "16px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        {["GDPR · HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Audit Logged"].map((badge) => (
+        {["GDPR · HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Australian Privacy Act", "Audit Logged"].map((badge) => (
           <div key={badge} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(255,255,255,0.25)", fontWeight: 500 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"/>
@@ -1913,14 +1967,9 @@ const Footer = () => (
 
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 12 }}>© 2026 StrydeOS Ltd. All rights reserved.</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <a href="mailto:hello@strydeos.com?subject=Subscribe to StrydeOS Updates" className="btn-ghost" style={{ padding: "8px 16px", fontSize: 12 }}>
-            Subscribe to Updates
-          </a>
-          <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 12 }}>
-            <a href="mailto:hello@strydeos.com" style={{ color: "rgba(255,255,255,0.18)", textDecoration: "none" }}>hello@strydeos.com</a>
-            {" · "}Built by clinicians, for clinicians.
-          </div>
+        <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 12 }}>
+          <a href="mailto:hello@strydeos.com" style={{ color: "rgba(255,255,255,0.18)", textDecoration: "none" }}>hello@strydeos.com</a>
+          {" · "}Built by clinicians, for clinicians.
         </div>
       </div>
     </div>
@@ -1993,6 +2042,46 @@ export function CookieBanner() {
   );
 }
 
+/* ─── FAQ Page (standalone route) ────────────────────────────────────────────── */
+export function FAQPage() {
+  const [darkMode, setDarkMode] = useState(false);
+  useEffect(() => {
+    const saved = localStorage.getItem("strydeos-theme");
+    if (saved === "dark") setDarkMode(true);
+  }, []);
+  useEffect(() => { localStorage.setItem("strydeos-theme", darkMode ? "dark" : "light"); }, [darkMode]);
+  return (
+    <>
+      <style>{globalStyles}</style>
+      <Nav darkMode={darkMode} setDarkMode={setDarkMode} />
+      <div style={{ paddingTop: 70 }}>
+        <FAQ darkMode={darkMode} />
+      </div>
+      <Footer />
+    </>
+  );
+}
+
+/* ─── Changelog Page (standalone route) ─────────────────────────────────────── */
+export function ChangelogPage() {
+  const [darkMode, setDarkMode] = useState(false);
+  useEffect(() => {
+    const saved = localStorage.getItem("strydeos-theme");
+    if (saved === "dark") setDarkMode(true);
+  }, []);
+  useEffect(() => { localStorage.setItem("strydeos-theme", darkMode ? "dark" : "light"); }, [darkMode]);
+  return (
+    <>
+      <style>{globalStyles}</style>
+      <Nav darkMode={darkMode} setDarkMode={setDarkMode} />
+      <div style={{ paddingTop: 70 }}>
+        <Changelog darkMode={darkMode} />
+      </div>
+      <Footer />
+    </>
+  );
+}
+
 /* ─── App ────────────────────────────────────────────────────────────────────── */
 export default function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -2019,8 +2108,6 @@ export default function App() {
       <ROICalc darkMode={darkMode} />
       <Pricing darkMode={darkMode} />
       <WhyUs darkMode={darkMode} />
-      <FAQ darkMode={darkMode} />
-      <Changelog darkMode={darkMode} />
       <EarlyAccess />
       <Footer />
       <CookieBanner />

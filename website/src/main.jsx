@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./strydeOS-website.jsx";
+import App, { FAQPage, ChangelogPage } from "./strydeOS-website.jsx";
 import SecurityPolicyPage from "./security-policy.jsx";
 import PrivacyPolicyPage from "./privacy-policy.jsx";
 import TermsOfServicePage from "./terms-of-service.jsx";
@@ -17,6 +17,8 @@ function PathRoutedApp() {
   if (path === "/ava") return <AvaPage />;
   if (path === "/pulse") return <PulsePage />;
   if (path === "/intelligence") return <IntelligencePage />;
+  if (path === "/faq") return <FAQPage />;
+  if (path === "/changelog") return <ChangelogPage />;
   return <App />;
 }
 
