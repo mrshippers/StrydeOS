@@ -1,0 +1,88 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-sonnet-4-20250514
+          timeout_minutes: 10
+          direct_prompt: |
+            Review this PR diff against the StrydeOS code review checklist below.
+
+            For each issue found, leave a specific inline comment on the relevant line.
+            Only flag real problems — don't leave comments just to show you checked something.
+            Be concise: one sentence per comment, with a fix suggestion where possible.
+
+            At the end, post a summary comment on the PR with:
+            - A pass/fail verdict
+            - Any blocking issues (prefix with ⚠️)
+            - Any non-blocking suggestions (prefix with 💡)
+
+            CHECKLIST TO REVIEW AGAINST:
+
+            **Correctness**
+            - Code does what the PR description says
+            - Edge cases handled (null/undefined, empty arrays, missing fields)
+            - Error paths handled — Sentry captures what it should
+            - Async/await correct — no unhandled rejections
+            - TypeScript types accurate — no `any` or unsafe casts
+            **Next.js / React**
+            - Server vs Client Components split correctly
+            - No waterfall data fetches that could be parallel
+            - API routes validate method, body, and query params
+            - NEXT_PUBLIC_ prefix only on browser-safe values
+
+            **Firebase**
+            - Correct Firestore collection paths and document refs
+            - Admin SDK server-side only — not in client bundles
+            - Client SDK initialised once, not per-component
+            - Firestore listeners cleaned up on unmount
+
+            **Integrations (Stripe / Twilio / Resend / ElevenLabs)**
+            - Stripe webhooks verify signature before processing
+            - Payment flows handle all terminal states
+            - SMS/email/voice calls have error handling
+            - Integration credentials from env vars, not hardcoded
+            **Security (BLOCKING)**
+            - No secrets, API keys, or tokens committed
+            - Firestore rules updated if data access patterns changed
+            - RBAC enforced correctly (superadmin/owner/admin/member/clinician)
+            - Protected user fields not client-modifiable
+            - Patient data scoped to assigned clinician
+            - No PII in logs or Sentry breadcrumbs
+
+            **API Correctness (BLOCKING)**
+            - Every API route validates auth
+            - Request validation rejects bad input with correct HTTP status
+            - Response shapes consistent across endpoints
+            - Error responses don't leak internals
+
+            **Data Integrity (BLOCKING)**
+            - New collections/fields follow existing naming under /clinics/{id}/...
+            - Multi-document operations use transactions or batched writes
+            - Deletes don't orphan subcollection documents
+
+            **Performance**
+            - No unbounded Firestore queries
+            - No N+1 patterns
+            - useEffect dependencies correct
+            - Bundle size impact considered
+
+            **Test Coverage**
+            - New functionality has tests
+            - No .skip or .only left from debugging
