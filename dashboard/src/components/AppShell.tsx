@@ -32,7 +32,7 @@ const CommandPalette = dynamic(
   { ssr: false }
 );
 
-const CHROMELESS_PATHS = ["/login", "/api-docs"];
+const CHROMELESS_PATHS = ["/login", "/api-docs", "/checkout", "/onboarding"];
 const IS_STAGING = process.env.NEXT_PUBLIC_APP_ENV === "staging";
 
 function AppLayout({ children, impersonating }: { children: React.ReactNode; impersonating: boolean }) {

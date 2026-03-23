@@ -14,7 +14,11 @@
     "promote:superadmin": "npx tsx scripts/promote-superadmin.ts",
     "setup:superadmin": "npx tsx scripts/setup-superadmin.ts",
     "fix:joe": "npx tsx scripts/fix-joe-user.ts",
-    "test": "echo 'Tests require path alias resolution — run via CI build step' && exit 0"
+    "test": "echo 'Tests require path alias resolution — run via CI build step' && exit 0",
+    "test:e2e": "E2E_NO_SERVER=1 npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:e2e:headed": "E2E_NO_SERVER=1 npx playwright test --headed",
+    "test:e2e:full": "npm run build && npx playwright test"
   },
   "dependencies": {
     "@elevenlabs/client": "^0.15.1",

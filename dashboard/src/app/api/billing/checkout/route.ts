@@ -9,6 +9,8 @@
  *     tier: "solo" | "studio" | "clinic"          (default: "studio")
  *     interval: "month" | "year"                  (default: "month")
  *     includeAvaSetup?: boolean                   (adds £250 one-time fee if ava or fullstack selected)
+ *     successPath?: string                        (path to redirect after success, default: "/billing?checkout=success")
+ *     cancelPath?: string                         (path to redirect after cancel, default: "/billing?checkout=canceled")
  *   }
  *
  * Returns: { url: string }
@@ -36,6 +38,16 @@ function getAppUrl(): string {
   const url = process.env.APP_URL;
   if (!url) throw new Error("APP_URL environment variable is not configured");
   return url;
+}
+
+/** Validate and resolve a redirect path. Must start with "/" and be a safe relative path. */
+function resolveRedirectUrl(basePath: string | undefined, fallback: string): string {
+  const appUrl = getAppUrl();
+  if (!basePath || typeof basePath !== "string") return `${appUrl}${fallback}`;
+  // Prevent open redirects: must start with "/" and not "//"
+  const trimmed = basePath.trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return `${appUrl}${fallback}`;
+  return `${appUrl}${trimmed}`;
 }
 
 type CheckoutProduct = ModuleKey | "fullstack";
@@ -114,12 +126,15 @@ async function handler(request: NextRequest) {
       }
     }
 
+    const successUrl = resolveRedirectUrl(body.successPath, "/billing?checkout=success");
+    const cancelUrl = resolveRedirectUrl(body.cancelPath, "/billing?checkout=canceled");
+
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       mode: "subscription",
       line_items: lineItems,
-      success_url: `${getAppUrl()}/billing?checkout=success`,
-      cancel_url: `${getAppUrl()}/billing?checkout=canceled`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: { clinicId, tier, interval },
       subscription_data: {
         metadata: { clinicId, tier, interval },
