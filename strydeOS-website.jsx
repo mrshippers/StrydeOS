@@ -309,13 +309,13 @@ const Hero = () => {
               Now in early access · Private practice
             </div>
             <h1 className="serif" style={{ fontSize: 60, lineHeight: 1.0, color: C.navy, marginBottom: 10, fontWeight: 400, letterSpacing: "-0.01em" }}>
-              Precision where it counts.
+              The Clinic OS
             </h1>
             <h1 className="serif" style={{ fontSize: 60, lineHeight: 1.0, color: C.navy, marginBottom: 28, fontWeight: 400, letterSpacing: "-0.01em" }}>
-              The Clinic OS for <span style={{ fontStyle: "italic", color: C.blue }}>private practice.</span>
+              for <span style={{ fontStyle: "italic", color: C.blue }}>private practice.</span>
             </h1>
             <p style={{ fontSize: 18, lineHeight: 1.7, color: C.muted, marginBottom: 40, maxWidth: 500 }}>
-              Higher conversion from first touchpoint. Improved treatment continuity. Better visibility on profit drivers.
+              Higher conversion from first touchpoint. Improved treatment continuity. Better visibility on profit drivers. Precision where it counts.
             </p>
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 52 }}>
               <a href="https://portal.strydeos.com/login?mode=signup" className="btn-primary">

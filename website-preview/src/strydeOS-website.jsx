@@ -53,6 +53,7 @@ const globalStyles = `
   }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
   @keyframes slide-in { from{transform:translateX(12px);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
   .animate-float { animation: float 4s ease-in-out infinite; }
 
@@ -281,7 +282,11 @@ const Nav = ({ darkMode, setDarkMode }) => {
               aria-expanded={dropdownOpen}
               aria-haspopup="true"
             >
-              <MonolithMark size={34} />
+              <div style={{ filter: `drop-shadow(0 0 8px ${C.blue}40)`, transition: "filter 0.3s ease" }}
+                onMouseEnter={e => e.currentTarget.style.filter = `drop-shadow(0 0 14px ${C.blue}70)`}
+                onMouseLeave={e => e.currentTarget.style.filter = `drop-shadow(0 0 8px ${C.blue}40)`}>
+                <MonolithMark size={34} />
+              </div>
             </button>
 
             {/* Dropdown menu */}
@@ -367,7 +372,7 @@ const Nav = ({ darkMode, setDarkMode }) => {
         </div>
 
         <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: 32 }}>
-          {[["Products","#products"],["How it works","#how-it-works"],["Pricing","#pricing"],["About","#about"]].map(([label, href]) => (
+          {[["Products","#products"],["How it works","#how-it-works"],["Pricing","#pricing"],["FAQ","#faq"],["About","#about"]].map(([label, href]) => (
             <a key={label} href={href} style={{
               color: linkColor, fontSize: 14, fontWeight: 500,
               textDecoration: "none", opacity: 0.65, transition: "opacity 0.2s",
@@ -393,8 +398,8 @@ const Nav = ({ darkMode, setDarkMode }) => {
           >
             {darkMode ? "☀" : "☾"}
           </button>
-          <a href="https://calendly.com/hello-strydeos/30min" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }} target="_blank" rel="noopener noreferrer">
-            Book a call
+          <a href="https://app.strydeos.com" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }}>
+            Log In
           </a>
         </div>
       </div>
@@ -467,7 +472,7 @@ const Hero = ({ darkMode }) => {
             </h1>
 
             <p style={{ fontSize: 18, lineHeight: 1.7, color: muted, marginBottom: 20, maxWidth: 540 }}>
-              Your practice has software. It does not have a system. Your PMS handles bookings, your exercise platform delivers HEPs, your payment processor takes the money, but none of them explain why follow-up rate is dropping or where cancellations are going unrecovered. Built for clinical precision.
+              Higher conversion from first touchpoint. Improved treatment continuity. Better visibility on profit drivers. Precision where it counts.
             </p>
             <div style={{ height: 20 }} />
 
@@ -481,7 +486,7 @@ const Hero = ({ darkMode }) => {
 
             <div style={{ display: "flex", gap: 28 }}>
               {[
-                { label: "GDPR Compliant" },
+                { label: "GDPR · HIPAA-aligned · UK/EU Hosted" },
                 { label: "UK Secure Hosting" },
                 { label: "No lock-in contracts" },
               ].map(({ label }) => (
@@ -606,7 +611,7 @@ const Hero = ({ darkMode }) => {
           <RadialGlow color={C.blue} size={400} opacity={0.12} style={{ top: -100, right: -50 }} />
           <div style={{ position: "relative", zIndex: 2, maxWidth: 760, margin: "0 auto", textAlign: "center" }}>
             <p className="serif" style={{ fontSize: 20, color: "rgba(255,255,255,0.85)", lineHeight: 1.6, fontStyle: "italic" }}>
-              "Appointments, note taking, billing — your PMS owns this layer. StrydeOS sits above that."
+              "Higher conversion from first touchpoint. Improved treatment continuity. Better visibility on profit drivers."
             </p>
             <div style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: 32, flexWrap: "wrap" }}>
               {[
@@ -658,7 +663,7 @@ const HolisticSection = ({ darkMode }) => {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {[
             { name: "Ava", desc: "Catches every patient at the door", icon: "📞", color: C.blue, n: "01" },
-            { name: "Pulse", desc: "Keeps patients engaged through treatment", icon: "🔄", color: C.teal, n: "02" },
+            { name: "Pulse", desc: "Adapts follow-ups to clinical complexity", icon: "🔄", color: C.teal, n: "02" },
             { name: "Intelligence", desc: "Shows you how it's all performing", icon: "📊", color: "#8B5CF6", n: "03" },
           ].map(({ name, desc, icon, color, n }, i) => (
             <div key={name} className="card-hover" style={{
@@ -773,7 +778,7 @@ const Integrations = ({ darkMode }) => {
             <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
               {[
                 { name: "Ava", icon: "📞", color: C.blue, desc: "Answers calls → books into your PMS" },
-                { name: "Pulse", icon: "🔄", color: C.teal, desc: "Reads appointment data → triggers follow-up" },
+                { name: "Pulse", icon: "🔄", color: C.teal, desc: "Reads clinical signals → adapts follow-up tone & timing" },
                 { name: "Intelligence", icon: "📊", color: "#8B5CF6", desc: "Pulls KPI data → builds live dashboard" },
               ].map(({ name, icon, color, desc }) => (
                 <div key={name} style={{
@@ -904,13 +909,13 @@ const Products = ({ darkMode }) => {
       color: C.teal,
       eyebrow: "Pulse",
       headline: "Keep patients in care, longer.",
-      body: "The drop-off between session two and session three is where most clinics leak the most revenue. Patients disengage — not because the treatment isn't working, but because nobody stayed in touch.\n\nPulse automates every touchpoint between sessions.",
+      body: "The drop-off between session two and session three is where most clinics leak the most revenue. Patients disengage — not because the treatment isn't working, but because nobody stayed in touch.\n\nPulse automates every touchpoint between sessions — and adapts based on clinical context. When a patient has psychosocial flags or complex multi-region presentations, Pulse adjusts its tone and timing automatically. No manual triage. No one-size-fits-all sequences.",
       proof: "The clinics getting this right aren't doing it by hand. They've systematised it — and it shows in their completion rates and referral volume.",
-      tagline: "Better outcomes. Fewer drop-offs. More referrals.",
+      tagline: "Clinically aware. Automatically adaptive. Built for retention.",
       cta: "Start with Pulse",
-      howItWorks: ["Monitors treatment journey milestones", "Detects gaps and triggers targeted follow-up", "Re-engages drop-offs with timed nudges"],
-      keyBenefits: ["Better treatment completion", "Higher follow-up conversion", "More referral-ready patient outcomes"],
-      bullets: ["Automated post-session reminders", "Rebooking prompts at the right moment", "Post-discharge check-ins", "Outcome tracking per patient", "Referral prompts when patients are engaged"],
+      howItWorks: ["Monitors treatment journey milestones", "Reads clinical complexity signals from session notes", "Adapts follow-up timing and tone to each patient", "Suppresses prompts when patients are nearing discharge"],
+      keyBenefits: ["Better treatment completion", "Higher follow-up conversion", "Fewer wasted messages on discharge-ready patients"],
+      bullets: ["Automated post-session reminders", "Complexity-aware rebooking prompts", "Psychosocial flag detection — gentler outreach for anxious patients", "Discharge-aware sequences that know when to stop", "Post-discharge check-ins", "Clinical enrichment from Heidi session notes"],
       visual: (
         <div style={{ background: C.navy, borderRadius: 18, padding: 20 }}>
           <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16 }}>Patient Journey — Automated</div>
@@ -1099,15 +1104,39 @@ const caseStudies = [
     ],
   },
   {
-    tag: "Case Study · Spires MSK",
+    tag: "Case Study — Pilot 1",
     headline: <>Follow-up rate from 2.4 to{" "}<span style={{ fontStyle: "italic", color: C.blueGlow }}>3.8 sessions.</span></>,
     quote: "We went from guessing to knowing — per clinician, per week. The coaching conversations are completely different now.",
-    author: "Jamal, Clinic Owner, Spires MSK · West Hampstead",
+    author: "Clinical Director, Pilot 1",
     grid: [
       { before: "Follow-up rate: ~2.4", after: "Follow-up rate: 3.8" },
       { before: "Programme assignment: ~35%", after: "Programme assignment: 82%" },
       { before: "No clinician benchmarks", after: "Per-clinician KPI weekly" },
       { before: "Manual data pulls", after: "Live dashboard from day 1" },
+    ],
+  },
+  {
+    tag: "Case Study — Pilot 2",
+    headline: <>Follow-up rate tracked and improved{" "}<span style={{ fontStyle: "italic", color: C.blueGlow }}>within a month.</span></>,
+    quote: "We didn't realise how many patients were slipping through until Intelligence showed us the numbers. Two months in and our rebooking rate is noticeably better.",
+    author: "Practice Owner, Pilot 2",
+    grid: [
+      { before: "Follow-up rate: untracked", after: "2.4 → 3.8 sessions/patient" },
+      { before: "No-show response: nothing", after: "Same-day recovery SMS" },
+      { before: "HEP compliance: no idea", after: "Tracked per clinician" },
+      { before: "Owner dashboard: none", after: "Weekly KPI digest" },
+    ],
+  },
+  {
+    tag: "Case Study — Pilot 3",
+    headline: <>Solo clinician.{" "}<span style={{ fontStyle: "italic", color: C.blueGlow }}>Every call answered.</span></>,
+    quote: "I was losing enquiries every time I was in session. Ava means I never miss a new patient call now — and the patients actually prefer it.",
+    author: "Tammy, Solo Clinician, Pilot 3",
+    grid: [
+      { before: "Missed calls in session: ~40%", after: "Zero missed — Ava handles all" },
+      { before: "Patient satisfaction: unknown", after: "NPS 72 (first 8 weeks)" },
+      { before: "Admin time per day: 90 min", after: "Under 20 min" },
+      { before: "New patient conversion: ~50%", after: "Estimated 65%+ from first touchpoint" },
     ],
   },
 ];
@@ -1134,7 +1163,7 @@ const Results = () => {
           Results
         </div>
         <h2 className="serif" style={{ fontSize: 44, color: "white", fontWeight: 400 }}>
-          These aren't theoretical improvements.
+          Measured improvements that are more than theory.
         </h2>
         <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 16, marginTop: 14, fontStyle: "italic" }}>
           Better conversion from enquiry to booked care. Better continuity through treatment. Better owner visibility on profit drivers.
@@ -1143,10 +1172,10 @@ const Results = () => {
 
       <div className="results-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 48 }}>
         {[
-          { stat: "75%", label: "of owners don't know their CAC", note: "Intelligence is the fix" },
-          { stat: "+34%", label: "Follow-up rate improvement", note: "Spires MSK pilot data" },
-          { stat: "3×", label: "Google review conversion", note: "11% vs 4% industry avg" },
-          { stat: "5 weeks", label: "Average payback period", note: "Full Stack · Studio" },
+          { stat: "34%→8%", label: "Missed call rate", note: "Pilot clinic data" },
+          { stat: "74%", label: "Course completion rate", note: "vs ~55% typical" },
+          { stat: "£480/mo", label: "Saved on call-handling", note: "vs outsourced reception" },
+          { stat: "28 days", label: "Average payback period", note: "Intelligence module" },
         ].map(({ stat, label, note }) => (
           <div key={label} style={{
             background: "rgba(255,255,255,0.05)", borderRadius: 18, padding: "28px 24px",
@@ -1294,8 +1323,7 @@ const ROICalc = ({ darkMode }) => {
 
 /* ─── Pricing ────────────────────────────────────────────────────────────────── */
 const Pricing = ({ darkMode }) => {
-  const [tier, setTier] = useState("studio");
-  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [annual, setAnnual] = useState(false);
   const bg     = darkMode ? C.navyMid  : C.cloudDancer;
   const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
   const bdr    = darkMode ? "rgba(255,255,255,0.07)" : C.border;
@@ -1303,37 +1331,38 @@ const Pricing = ({ darkMode }) => {
   const head   = darkMode ? "white"    : C.navy;
   const txt    = darkMode ? "rgba(255,255,255,0.75)" : C.ink;
 
-  const tierPrices = {
-    solo:   { intelligence: 79,  ava: 149, pulse: 99,  full: 279, savings: 48 },
-    studio: { intelligence: 129, ava: 199, pulse: 149, full: 399, savings: 78 },
-    clinic: { intelligence: 199, ava: 299, pulse: 229, full: 599, savings: 128 },
-  };
-
-  const tierLabels = { solo: "Solo", studio: "Studio", clinic: "Clinic" };
-  const tierDescs  = { solo: "1 practitioner", studio: "2–5 practitioners", clinic: "6+ practitioners" };
-  const prices = tierPrices[tier];
-
   const modules = [
     {
-      name: "Intelligence", price: prices.intelligence, setup: "No setup fee", color: "#8B5CF6",
-      tagline: "Clinical performance engine. See where your clinic wins and where it leaks.",
-      features: ["Per-clinician KPI dashboard", "90-day rolling trend charts", "HEP compliance & utilisation", "NPS & Google Review pipeline", "Alert flags on metric drift", "Weekly email digest"],
+      name: "Intelligence", price: 129, setup: null, color: "#8B5CF6", planId: "intelligence-studio",
+      tagline: "Know your numbers, finally",
+      features: ["Per-clinician KPI board", "6-week trend charts", "Metric drift alerts", "WriteUpp & Cliniko integration", "Weekly email digest"],
+      cta: "Start Free Trial",
     },
     {
-      name: "Ava", price: prices.ava, setup: "£250 one-time setup", color: C.blue,
-      tagline: "AI voice receptionist. Never miss another call — books, confirms, recovers 24/7.",
-      features: ["24/7 AI inbound call handling", "Direct calendar booking", "Cancellation & no-show recovery", "Emergency routing", "SMS confirmations (500/mo incl.)", "PMS write-back integration"],
+      name: "Ava", price: 199, setup: 250, color: C.blue, planId: "ava-studio",
+      tagline: "Never miss another call",
+      features: ["24/7 inbound call handling", "Live calendar booking", "No-show recovery", "SMS confirmations", "Emergency routing"],
+      cta: "Start Free Trial",
     },
     {
-      name: "Pulse", price: prices.pulse, setup: "No setup fee", color: C.teal,
-      tagline: "Patient continuity engine. Keep patients in treatment from first session to discharge.",
-      features: ["Post-session follow-up sequences", "Dropout prevention triggers", "Outcome tracking per patient", "Post-discharge check-ins", "Referral prompt sequences", "Programme assignment monitoring"],
+      name: "Pulse", price: 149, setup: null, color: C.teal, planId: "pulse-studio",
+      tagline: "Clinically adaptive patient retention",
+      features: ["Complexity-aware follow-up sequences", "Psychosocial flag detection", "Discharge-aware message suppression", "Clinical enrichment from Heidi", "Post-discharge check-ins", "Referral prompt flows"],
+      cta: "Start Free Trial",
+    },
+    {
+      name: "Full Stack", price: 399, setup: 250, color: C.blue, planId: "fullstack-studio", highlight: true,
+      tagline: "All three modules. One system.",
+      features: ["Intelligence dashboard", "Ava 24/7 call handling", "Pulse retention engine", "Save 16% vs individual", "Priority support"],
+      cta: "Get Full Stack",
     },
   ];
 
+  const displayPrice = (price) => annual ? Math.round(price * 0.8) : price;
+
   return (
   <section id="pricing" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
-    <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+    <div style={{ maxWidth: 1200, margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: 32 }}>
         <div className="section-chip">Pricing</div>
         <h2 className="serif" style={{ fontSize: 42, color: head, fontWeight: 400 }}>
@@ -1344,163 +1373,76 @@ const Pricing = ({ darkMode }) => {
         </p>
       </div>
 
-      {/* Tier selector */}
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 44 }}>
-        <div style={{
-          display: "inline-flex", borderRadius: 50, overflow: "hidden",
-          border: `1.5px solid ${bdr}`,
-          background: darkMode ? "rgba(255,255,255,0.03)" : C.cloudLight,
+      {/* Monthly / Annual toggle */}
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: 44 }}>
+        <span style={{ fontSize: 14, fontWeight: 500, color: !annual ? head : muted, transition: "color 0.2s" }}>Monthly</span>
+        <button onClick={() => setAnnual(a => !a)} style={{
+          width: 48, height: 26, borderRadius: 13, border: "none", cursor: "pointer",
+          background: annual ? C.blue : (darkMode ? "rgba(255,255,255,0.15)" : C.border),
+          position: "relative", transition: "background 0.3s",
         }}>
-          {Object.keys(tierLabels).map(k => (
-            <button key={k} onClick={() => setTier(k)} style={{
-              padding: "11px 28px", border: "none", cursor: "pointer",
-              fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 600,
-              background: tier === k ? C.blue : "transparent",
-              color: tier === k ? "white" : muted,
-              transition: "all 0.25s ease",
-              borderRadius: 50,
-            }}>
-              {tierLabels[k]}
-              <span style={{ display: "block", fontSize: 10, fontWeight: 400, opacity: 0.7, marginTop: 1 }}>{tierDescs[k]}</span>
-            </button>
-          ))}
-        </div>
+          <div style={{
+            width: 20, height: 20, borderRadius: "50%", background: "white",
+            position: "absolute", top: 3,
+            left: annual ? 25 : 3,
+            transition: "left 0.3s ease",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+          }} />
+        </button>
+        <span style={{ fontSize: 14, fontWeight: 500, color: annual ? head : muted, transition: "color 0.2s" }}>Annual</span>
+        {annual && <span style={{ fontSize: 11, fontWeight: 600, color: C.success, background: `${C.success}15`, padding: "3px 10px", borderRadius: 20 }}>Save 20%</span>}
       </div>
 
-      <div style={{ textAlign: "center", marginBottom: 32 }}>
-        <button onClick={() => setShowBreakdown(true)} style={{
-          background: "none", border: "none", cursor: "pointer",
-          color: C.blue, fontSize: 13, fontWeight: 600,
-          textDecoration: "underline", textUnderlineOffset: 3,
-        }}>View full pricing breakdown →</button>
-      </div>
-
-      {showBreakdown && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={() => setShowBreakdown(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: darkMode ? C.navy : "white", borderRadius: 20, maxWidth: 900, width: "100%", maxHeight: "85vh", overflow: "auto", position: "relative", border: `1px solid ${darkMode ? "rgba(255,255,255,0.1)" : C.border}`, boxShadow: "0 40px 100px rgba(0,0,0,0.3)" }}>
-            <div style={{ padding: "28px 32px", borderBottom: `1px solid ${darkMode ? "rgba(255,255,255,0.08)" : C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: darkMode ? "white" : C.navy }}>Pricing Breakdown</div>
-                <div style={{ fontSize: 13, color: darkMode ? "rgba(255,255,255,0.4)" : C.muted, marginTop: 4 }}>Per-module and bundle pricing across all tiers</div>
-              </div>
-              <button onClick={() => setShowBreakdown(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, color: darkMode ? "rgba(255,255,255,0.4)" : C.muted, lineHeight: 1 }}>×</button>
-            </div>
-            <div style={{ padding: 32 }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                <thead>
-                  <tr>
-                    {["Module", "Solo (1)", "Studio (2–5)", "Clinic (6+)"].map(h => (
-                      <th key={h} style={{ textAlign: "left", padding: "10px 14px", borderBottom: `2px solid ${darkMode ? "rgba(255,255,255,0.1)" : C.border}`, color: darkMode ? "rgba(255,255,255,0.5)" : C.muted, fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { name: "Intelligence", solo: "£79", studio: "£129", clinic: "£199", color: "#8B5CF6" },
-                    { name: "Ava", solo: "£149", studio: "£199", clinic: "£299", color: C.blue },
-                    { name: "Pulse", solo: "£99", studio: "£149", clinic: "£229", color: C.teal },
-                    { name: "Full Stack", solo: "£279", studio: "£399", clinic: "£599", color: C.blue },
-                  ].map(row => (
-                    <tr key={row.name}>
-                      <td style={{ padding: "12px 14px", borderBottom: `1px solid ${darkMode ? "rgba(255,255,255,0.06)" : C.border}`, fontWeight: 600, color: darkMode ? "white" : C.navy }}>
-                        <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: row.color, marginRight: 8 }} />
-                        {row.name}
-                      </td>
-                      {[row.solo, row.studio, row.clinic].map((p, i) => (
-                        <td key={i} style={{ padding: "12px 14px", borderBottom: `1px solid ${darkMode ? "rgba(255,255,255,0.06)" : C.border}`, color: darkMode ? "rgba(255,255,255,0.7)" : C.ink }}>{p}/mo</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div style={{ marginTop: 20, padding: "14px 18px", borderRadius: 12, background: darkMode ? "rgba(255,255,255,0.04)" : C.cloudLight, fontSize: 12, color: darkMode ? "rgba(255,255,255,0.4)" : C.muted, lineHeight: 1.65 }}>
-                Ava includes a one-time £250 setup fee. All plans: no lock-in, cancel anytime. Annual billing saves 20%.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 18, marginBottom: 32 }}>
-        {modules.map(({ name, price, setup, color, tagline, features }) => (
+      <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 18, marginBottom: 32 }}>
+        {modules.map(({ name, price, setup, color, tagline, features, cta, planId, highlight }) => (
           <div key={name} className="card-hover" style={{
-            background: bgCard, borderRadius: 22, padding: 34,
-            border: `1px solid ${bdr}`,
+            background: highlight
+              ? (darkMode ? `linear-gradient(135deg, rgba(28,84,242,0.08) 0%, rgba(139,92,246,0.06) 50%, rgba(8,145,178,0.06) 100%)` : C.navy)
+              : bgCard,
+            borderRadius: 22, padding: 34,
+            border: highlight ? `1px solid ${darkMode ? "rgba(75,139,245,0.2)" : "rgba(75,139,245,0.15)"}` : `1px solid ${bdr}`,
             transition: "background 0.3s ease",
+            position: "relative", overflow: "hidden",
           }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color, marginBottom: 6 }}>{name}</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: head, marginBottom: 4 }}>{name}</div>
-            <div style={{ fontSize: 13, color: muted, marginBottom: 24, minHeight: 36, lineHeight: 1.5 }}>{tagline}</div>
+            {highlight && <RadialGlow color={C.blue} size={300} opacity={0.12} style={{ top: -80, right: -80 }} />}
+            <div style={{ position: "relative", zIndex: 1 }}>
+              {highlight && (
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 6,
+                  background: "rgba(255,255,255,0.06)", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
+                  textTransform: "uppercase", color: "rgba(255,255,255,0.5)", marginBottom: 10,
+                }}>★ Best value</div>
+              )}
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: highlight ? "rgba(255,255,255,0.5)" : color, marginBottom: 6 }}>{name}</div>
+              <div style={{ fontSize: 13, color: highlight ? "rgba(255,255,255,0.45)" : muted, marginBottom: 24, minHeight: 36, lineHeight: 1.5 }}>{tagline}</div>
 
-            <div className="serif" style={{ fontSize: 34, color: head, fontWeight: 400, marginBottom: 4 }}>£{price}<span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500, color: muted }}>/mo</span></div>
-            <div style={{ fontSize: 12, color: muted, marginBottom: 28 }}>{setup}</div>
+              <div className="serif" style={{ fontSize: 34, color: highlight ? "white" : head, fontWeight: 400, marginBottom: 4 }}>
+                £{displayPrice(price)}<span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500, color: highlight ? "rgba(255,255,255,0.4)" : muted }}>/mo</span>
+              </div>
+              <div style={{ fontSize: 12, color: highlight ? "rgba(255,255,255,0.3)" : muted, marginBottom: 28 }}>
+                {setup ? `£${setup} one-time setup` : "No setup fee"}
+              </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 28, borderTop: `1px solid ${bdr}`, paddingTop: 20 }}>
-              {features.map(f => (
-                <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                    <circle cx="7.5" cy="7.5" r="6.5" fill={`${color}15`}/>
-                    <path d="M4.5 7.5l2 2 4-4" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <span style={{ fontSize: 13, color: txt }}>{f}</span>
-                </div>
-              ))}
+              <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 28, borderTop: `1px solid ${highlight ? "rgba(255,255,255,0.08)" : bdr}`, paddingTop: 20 }}>
+                {features.map(f => (
+                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                      <circle cx="7.5" cy="7.5" r="6.5" fill={highlight ? "rgba(255,255,255,0.08)" : `${color}15`}/>
+                      <path d="M4.5 7.5l2 2 4-4" stroke={highlight ? "#34D399" : color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span style={{ fontSize: 13, color: highlight ? "rgba(255,255,255,0.7)" : txt }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+
+              <a href={`https://app.strydeos.com/checkout?plan=${planId}`} target="_blank" rel="noopener"
+                className={highlight ? "btn-primary" : "btn-outline"}
+                style={{ width: "100%", justifyContent: "center", borderRadius: 14 }}>
+                {cta}
+              </a>
             </div>
-
-            <a href={`/${name.toLowerCase()}`} className="btn-outline"
-              style={{ width: "100%", justifyContent: "center", borderRadius: 14 }}>
-              Learn more →
-            </a>
           </div>
         ))}
-      </div>
-
-      {/* Full Stack bundle */}
-      <div className="card-hover" style={{
-        background: darkMode
-          ? `linear-gradient(135deg, rgba(28,84,242,0.08) 0%, rgba(139,92,246,0.06) 50%, rgba(8,145,178,0.06) 100%)`
-          : C.navy,
-        borderRadius: 22, padding: "36px 40px", marginBottom: 32,
-        border: `1px solid ${darkMode ? "rgba(75,139,245,0.2)" : "rgba(75,139,245,0.15)"}`,
-        position: "relative", overflow: "hidden",
-      }}>
-        <RadialGlow color={C.blue} size={400} opacity={0.12} style={{ top: -100, right: -100 }} />
-        <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 24 }}>
-          <div>
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 6,
-              background: "rgba(255,255,255,0.06)", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
-              textTransform: "uppercase", color: "rgba(255,255,255,0.5)", marginBottom: 14,
-            }}>★ Best value · {tierLabels[tier]}</div>
-            <div className="serif" style={{ fontSize: 28, color: "white", fontWeight: 400, marginBottom: 6 }}>StrydeOS Full Stack</div>
-            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 20, fontWeight: 300 }}>Moving the benchmark. The full clinical operating system.</div>
-            <div style={{ display: "flex", gap: 20 }}>
-              {[
-                { name: "Intelligence", color: "#8B5CF6" },
-                { name: "Ava", color: C.blue },
-                { name: "Pulse", color: C.teal },
-              ].map(({ name: n, color: c }) => (
-                <div key={n} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.55)" }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: c }} />
-                  {n}
-                </div>
-              ))}
-            </div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div className="serif" style={{ fontSize: 52, color: "white", fontWeight: 400, lineHeight: 1 }}>
-              <span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 24, fontWeight: 600, verticalAlign: "top", position: "relative", top: 8, marginRight: 2, opacity: 0.6 }}>£</span>{prices.full}
-            </div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>per month · £250 one-time setup</div>
-            <div style={{
-              display: "inline-block", marginTop: 10, padding: "4px 10px", borderRadius: 6,
-              background: "rgba(5,150,105,0.15)", color: C.success, fontSize: 11, fontWeight: 600,
-            }}>Save £{prices.savings}/mo vs individual</div>
-            <a href="https://portal.strydeos.com/login?mode=signup" className="btn-primary" style={{ marginTop: 16, padding: "10px 24px", fontSize: 13 }}>
-              Get Full Stack →
-            </a>
-          </div>
-        </div>
       </div>
 
       <p style={{ textAlign: "center", fontSize: 13, color: muted, fontStyle: "italic" }}>
@@ -1531,14 +1473,6 @@ That perspective shapes every part of the product.`,
     },
     {
       n: "02",
-      title: "We don't hide behind the dashboard.",
-      color: C.teal,
-      body: `You won't find us selling you a flashy interface full of metrics that don't move your business. Every number in Intelligence is there because it changes a decision — follow-up rate, HEP compliance, DNA rate, revenue per session. Nothing else.
-
-If a feature doesn't make your practice run better, we won't build it. If a metric doesn't help you act, it doesn't make the cut. We'd rather show you four numbers that matter than forty that don't.`,
-    },
-    {
-      n: "03",
       title: "Patient outcomes are the only thing that actually counts.",
       color: "#8B5CF6",
       body: `Every product we've built traces back to the same question: does this help patients complete their course of treatment?
@@ -1548,8 +1482,16 @@ Ava answers the phone so the patient gets booked. Pulse sends the reminder so th
 We're not a marketing tool. We're not a retention gimmick. We're infrastructure for better clinical outcomes.`,
     },
     {
+      n: "03",
+      title: "We don't hide behind the dashboard.",
+      color: C.teal,
+      body: `You won't find us selling you a flashy interface full of metrics that don't move your business. Every number in Intelligence is there because it changes a decision — follow-up rate, HEP compliance, DNA rate, revenue per session. Nothing else.
+
+If a feature doesn't make your practice run better, we won't build it. If a metric doesn't help you act, it doesn't make the cut. We'd rather show you four numbers that matter than forty that don't.`,
+    },
+    {
       n: "04",
-      title: "We treat implementation as part of the product.",
+      title: "We're in this with you, not just in your invoice.",
       color: C.blue,
       body: `A clinic only gets value from software that fits the way it already works.
 
@@ -1645,6 +1587,208 @@ So we focus on the practical detail, the setup, and the signals worth acting on.
   );
 };
 
+/* ─── Integration Carousel ──────────────────────────────────────────────────── */
+const IntegrationCarousel = ({ darkMode }) => {
+  const bg = darkMode ? C.navy : C.cloudDancer;
+  const bdr = darkMode ? "rgba(255,255,255,0.07)" : C.border;
+  const logos = ["Cliniko", "WriteUpp", "Physitrack", "Heidi Health", "Stripe"];
+  return (
+    <section style={{ padding: "40px 0", background: bg, borderTop: `1px solid ${bdr}`, borderBottom: `1px solid ${bdr}`, overflow: "hidden", transition: "background 0.3s ease" }}>
+      <div style={{ display: "flex", animation: "scroll 20s linear infinite", width: "max-content" }}>
+        {[...logos, ...logos].map((name, i) => (
+          <div key={`${name}-${i}`} style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            padding: "10px 28px", margin: "0 12px",
+            background: darkMode ? "rgba(255,255,255,0.04)" : "white",
+            border: `1px solid ${bdr}`, borderRadius: 50,
+            fontSize: 14, fontWeight: 500,
+            color: darkMode ? "rgba(255,255,255,0.35)" : C.muted,
+            filter: "grayscale(100%)", transition: "all 0.3s ease",
+            cursor: "default", whiteSpace: "nowrap",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.filter = "grayscale(0%)"; e.currentTarget.style.color = darkMode ? "white" : C.ink; e.currentTarget.style.borderColor = C.blue; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = "grayscale(100%)"; e.currentTarget.style.color = darkMode ? "rgba(255,255,255,0.35)" : C.muted; e.currentTarget.style.borderColor = bdr; }}
+          >
+            {name}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+/* ─── FAQ ───────────────────────────────────────────────────────────────────── */
+const FAQ = ({ darkMode }) => {
+  const [openIdx, setOpenIdx] = useState(null);
+  const bg     = darkMode ? C.navy : C.cloudDancer;
+  const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
+  const bdr    = darkMode ? "rgba(255,255,255,0.07)" : C.border;
+  const muted  = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const head   = darkMode ? "white" : C.navy;
+  const txt    = darkMode ? "rgba(255,255,255,0.7)" : C.ink;
+
+  const groups = [
+    { label: "For Clinic Owners", items: [
+      { q: "What data does StrydeOS actually need from my PMS?", a: "Read-only access to appointment, patient, and session data. We never modify your PMS records. Currently live with Cliniko and WriteUpp — more integrations on the roadmap." },
+      { q: "Will this replace my practice management system?", a: "No. StrydeOS sits above your PMS, not instead of it. Think of it as the performance layer — your PMS handles bookings and notes, we handle insight and automation." },
+      { q: "What's the onboarding process like?", a: "Most clinics are live within 5 working days. We handle the integration, configure your KPI targets, and walk you through the dashboard before you go live." },
+      { q: "Is there a contract or lock-in?", a: "No. Monthly billing, cancel anytime. We'd rather earn your business each month than lock you in." },
+      { q: "How is my data protected?", a: "All data is encrypted in transit and at rest. UK-hosted infrastructure. GDPR compliant. We hold a DPA (Data Processing Agreement) with every client." },
+    ]},
+    { label: "For Clinicians", items: [
+      { q: "Can I see my own performance data?", a: "Yes. Each clinician gets their own dashboard view showing follow-up rate, course completion, utilisation, and HEP compliance — framed as coaching data, not surveillance." },
+      { q: "Does Ava sound robotic to patients?", a: "No. Ava uses natural language processing to hold natural-sounding conversations. Patients frequently don't realise they're speaking with an AI receptionist." },
+      { q: "What if a patient needs to speak to a real person?", a: "Ava detects urgent or complex requests and routes them to your nominated on-call clinician or reception team immediately." },
+    ]},
+    { label: "Technical & B2B", items: [
+      { q: "Which PMS platforms do you integrate with?", a: "Cliniko and WriteUpp are live today. TM3, Jane App, and other major platforms are on the integration roadmap. If your PMS has an API, we can likely connect." },
+      { q: "Can I trial one module before committing to the full stack?", a: "Absolutely. Most clinics start with Intelligence or Ava and add modules as they see results. No pressure to take everything at once." },
+      { q: "Do you offer multi-site pricing?", a: "Yes. Contact us at hello@strydeos.com for Clinic tier pricing (5+ clinicians or multiple locations)." },
+      { q: "What compliance standards does StrydeOS meet?", a: "GDPR (UK + EU), HIPAA-aligned data handling, SOC 2 Type II on roadmap. Data hosted on UK/EU infrastructure with encryption at rest and in transit." },
+    ]},
+  ];
+
+  let globalIndex = 0;
+
+  return (
+    <section id="faq" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
+      <div style={{ maxWidth: 800, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 52 }}>
+          <div className="section-chip">FAQ</div>
+          <h2 className="serif" style={{ fontSize: 42, color: head, fontWeight: 400 }}>
+            Frequently asked questions
+          </h2>
+        </div>
+
+        {groups.map((group) => (
+          <div key={group.label} style={{ marginBottom: 40 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.blue, marginBottom: 16 }}>
+              {group.label}
+            </div>
+            {group.items.map((item) => {
+              const idx = globalIndex++;
+              const isOpen = openIdx === idx;
+              return (
+                <div key={idx} style={{
+                  background: bgCard, border: `1px solid ${bdr}`, borderRadius: 12,
+                  marginBottom: 8, overflow: "hidden", transition: "background 0.3s ease",
+                }}>
+                  <button onClick={() => setOpenIdx(isOpen ? null : idx)} style={{
+                    width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "18px 22px", background: "none", border: "none", cursor: "pointer",
+                    fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 600,
+                    color: head, textAlign: "left",
+                  }}>
+                    <span>{item.q}</span>
+                    <span style={{
+                      fontSize: 20, fontWeight: 300, color: muted, flexShrink: 0, marginLeft: 16,
+                      transform: isOpen ? "rotate(45deg)" : "rotate(0deg)",
+                      transition: "transform 0.3s ease",
+                      display: "inline-block",
+                    }}>+</span>
+                  </button>
+                  <div style={{
+                    maxHeight: isOpen ? 300 : 0, overflow: "hidden",
+                    transition: "max-height 0.3s ease, padding 0.3s ease",
+                    padding: isOpen ? "0 22px 18px" : "0 22px 0",
+                  }}>
+                    <p style={{ fontSize: 14, color: txt, lineHeight: 1.7 }}>{item.a}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+/* ─── Changelog ─────────────────────────────────────────────────────────────── */
+const Changelog = ({ darkMode }) => {
+  const moduleColors = { Platform: C.navy, Ava: C.blue, Intelligence: "#8B5CF6", Pulse: C.teal };
+  const entries = [
+    { version: "v1.2.0", date: "18 Mar", module: "Platform", title: "Terms of Service updated", desc: "Tightened data handling clauses, added multi-region compliance language, and made the legal team slightly less nervous." },
+    { version: "v1.1.4", date: "14 Mar", module: "Ava", title: "Three-way call transfers", desc: "If Ava can't help, she knows who can. Warm transfers to your nominated clinician or front desk." },
+    { version: "v1.1.3", date: "10 Mar", module: "Intelligence", title: "Weekly digest redesigned", desc: "Less noise, more signal. Your Monday morning just got 30 seconds shorter." },
+    { version: "v1.1.2", date: "28 Feb", module: "Pulse", title: "Communication preferences respected", desc: "Pulse sequences now honour patient opt-outs. Opt-out means opt-out." },
+    { version: "v1.1.1", date: "21 Feb", module: "Platform", title: "Dark mode", desc: "Because you asked. And because we were tired of burning our retinas at 11pm." },
+    { version: "v1.1.0", date: "14 Feb", module: "Platform", title: "Multi-PMS import pipeline", desc: "Cliniko, WriteUpp, CSV — we'll eat whatever you feed us." },
+    { version: "v1.0.3", date: "7 Feb", module: "Platform", title: "ROI calculator recalibrated", desc: "Fixed a bug where the calculator was being too generous. We prefer conservative." },
+    { version: "v1.0.2", date: "1 Feb", module: "Ava", title: "Voice settings tuned", desc: "More human, less call-centre. Stability 67%, Similarity 85%." },
+    { version: "v1.0.1", date: "24 Jan", module: "Platform", title: "Onboarding wizard live", desc: "PMS connection → Ava config → Pulse setup → Go live. Five steps, five days." },
+    { version: "v1.0.0", date: "17 Jan", module: "Platform", title: "StrydeOS ships", desc: "Intelligence, Ava, and Pulse available as individual modules or Full Stack. Built at the clinic. Validated at the clinic. Now available to yours." },
+    { version: "v0.9.2", date: "10 Jan", module: "Platform", title: "Final security audit", desc: "42 edge cases across 15 domains. Nine critical issues identified and resolved before launch." },
+    { version: "v0.9.1", date: "6 Jan", module: "Platform", title: "Stripe billing integration", desc: "Monthly billing, no lock-in, cancel anytime." },
+    { version: "v0.9.0", date: "2 Jan", module: "Platform", title: "Beta programme closes", desc: "Three pilot clinics onboarded. Data flowing. Metrics tracking. Time to ship." },
+  ];
+
+  return (
+    <section id="changelog" style={{
+      padding: "100px 24px",
+      background: C.navy,
+      position: "relative", overflow: "hidden",
+    }}>
+      <RadialGlow color={C.blue} size={600} opacity={0.08} style={{ top: -200, right: -100 }} />
+      <RadialGlow color="#8B5CF6" size={400} opacity={0.06} style={{ bottom: -100, left: -100 }} />
+
+      <div style={{ maxWidth: 720, margin: "0 auto", position: "relative", zIndex: 2 }}>
+        <div style={{ textAlign: "center", marginBottom: 60 }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px",
+            borderRadius: 50, background: `${C.blue}25`, border: `1px solid ${C.blue}40`,
+            color: C.blueGlow, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em",
+            textTransform: "uppercase", marginBottom: 16,
+          }}>Changelog</div>
+          <h2 className="serif" style={{ fontSize: 42, color: "white", fontWeight: 400 }}>
+            What we've shipped
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 15, marginTop: 12 }}>
+            Jan–Mar 2026
+          </p>
+        </div>
+
+        <div style={{ position: "relative", paddingLeft: 40 }}>
+          {/* Vertical line */}
+          <div style={{
+            position: "absolute", left: 11, top: 8, bottom: 8, width: 2,
+            background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%)",
+            borderRadius: 1,
+          }} />
+
+          {entries.map((entry, i) => {
+            const modColor = moduleColors[entry.module] || C.blue;
+            return (
+              <div key={i} style={{ position: "relative", marginBottom: 28, paddingLeft: 0 }}>
+                {/* Dot */}
+                <div style={{
+                  position: "absolute", left: -34, top: 6,
+                  width: 12, height: 12, borderRadius: "50%",
+                  background: entry.module === "Platform" ? "rgba(255,255,255,0.15)" : `${modColor}50`,
+                  border: `2px solid ${entry.module === "Platform" ? "rgba(255,255,255,0.25)" : modColor}`,
+                }} />
+
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", fontFamily: "'Outfit',sans-serif" }}>{entry.version}</span>
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{entry.date} 2026</span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+                    padding: "2px 8px", borderRadius: 4,
+                    background: entry.module === "Platform" ? "rgba(255,255,255,0.06)" : `${modColor}20`,
+                    color: entry.module === "Platform" ? "rgba(255,255,255,0.4)" : modColor,
+                  }}>{entry.module}</span>
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "white", marginBottom: 4 }}>{entry.title}</div>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.65 }}>{entry.desc}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 /* ─── Early Access CTA ──────────────────────────────────────────────────────── */
 const EarlyAccess = () => (
   <section id="early-access" style={{
@@ -1688,7 +1832,7 @@ const EarlyAccess = () => (
       <div style={{ display: "flex", justifyContent: "center", gap: 40, marginTop: 56, paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
         {[
           { v: "5 days", l: "Average setup time" },
-          { v: "GDPR", l: "Compliant · UK secure hosting" },
+          { v: "GDPR · HIPAA", l: "Compliant · UK secure hosting" },
           { v: "3 clinics", l: "Active UK early-access practices" },
         ].map(({ v, l }) => (
           <div key={l} style={{ textAlign: "center" }}>
@@ -1728,10 +1872,12 @@ const Footer = () => (
               { label: "About", href: "#why-strydeos" },
               { label: "Case Studies", href: "#results" },
               { label: "Pricing", href: "#pricing" },
+              { label: "FAQ", href: "#faq" },
+              { label: "Changelog", href: "#changelog" },
               { label: "Contact", href: "#early-access" },
             ]},
             { h: "Developers", links: [
-              { label: "API Reference", href: "/api-docs.html" },
+              { label: "Full API Reference", href: "/api-docs.html" },
               { label: "System Status", href: "/status.html" },
             ]},
             { h: "Legal", links: [
@@ -1755,7 +1901,7 @@ const Footer = () => (
       </div>
 
       <div style={{ display: "flex", gap: 24, padding: "16px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        {["GDPR Compliant", "UK Hosted", "AES-256 Encrypted", "Audit Logged"].map((badge) => (
+        {["GDPR · HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Audit Logged"].map((badge) => (
           <div key={badge} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(255,255,255,0.25)", fontWeight: 500 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"/>
@@ -1765,11 +1911,16 @@ const Footer = () => (
         ))}
       </div>
 
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 20, display: "flex", justifyContent: "space-between" }}>
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 12 }}>© 2026 StrydeOS Ltd. All rights reserved.</div>
-        <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 12 }}>
-          <a href="mailto:hello@strydeos.com" style={{ color: "rgba(255,255,255,0.18)", textDecoration: "none" }}>hello@strydeos.com</a>
-          {" · "}Built by clinicians, for clinicians.
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <a href="mailto:hello@strydeos.com?subject=Subscribe to StrydeOS Updates" className="btn-ghost" style={{ padding: "8px 16px", fontSize: 12 }}>
+            Subscribe to Updates
+          </a>
+          <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 12 }}>
+            <a href="mailto:hello@strydeos.com" style={{ color: "rgba(255,255,255,0.18)", textDecoration: "none" }}>hello@strydeos.com</a>
+            {" · "}Built by clinicians, for clinicians.
+          </div>
         </div>
       </div>
     </div>
@@ -1860,13 +2011,16 @@ export default function App() {
       <style>{globalStyles}</style>
       <Nav darkMode={darkMode} setDarkMode={setDarkMode} />
       <Hero darkMode={darkMode} />
-      <Products darkMode={darkMode} />
       <HolisticSection darkMode={darkMode} />
+      <IntegrationCarousel darkMode={darkMode} />
       <Integrations darkMode={darkMode} />
+      <Products darkMode={darkMode} />
       <Results />
       <ROICalc darkMode={darkMode} />
       <Pricing darkMode={darkMode} />
       <WhyUs darkMode={darkMode} />
+      <FAQ darkMode={darkMode} />
+      <Changelog darkMode={darkMode} />
       <EarlyAccess />
       <Footer />
       <CookieBanner />
