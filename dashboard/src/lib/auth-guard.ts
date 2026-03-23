@@ -20,12 +20,27 @@ export async function verifyApiRequest(
   }
 
   const token = authHeader.slice(7);
-  const decoded = await getAdminAuth().verifyIdToken(token);
 
-  const userDoc = await getAdminDb()
-    .collection("users")
-    .doc(decoded.uid)
-    .get();
+  let decoded;
+  try {
+    decoded = await getAdminAuth().verifyIdToken(token);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[verifyApiRequest] Firebase token verification failed:", msg);
+    throw new ApiAuthError(`Token verification failed: ${msg}`, 401);
+  }
+
+  let userDoc;
+  try {
+    userDoc = await getAdminDb()
+      .collection("users")
+      .doc(decoded.uid)
+      .get();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[verifyApiRequest] Firestore user lookup failed:", msg);
+    throw new ApiAuthError("Unable to verify user profile", 500);
+  }
 
   if (!userDoc.exists) {
     throw new ApiAuthError("User profile not found", 403);
@@ -84,6 +99,7 @@ export function handleApiError(error: unknown): NextResponse {
     );
   }
 
+  console.error("[handleApiError] Unhandled:", error);
   Sentry.captureException(error);
   return NextResponse.json(
     { error: "Internal server error" },

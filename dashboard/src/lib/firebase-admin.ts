@@ -28,13 +28,29 @@ function getAdminApp(): App {
     process.env.FIREBASE_PROJECT_ID ||
     process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  const rawKey = process.env.FIREBASE_PRIVATE_KEY;
+  // Handle all common Vercel private key formats:
+  // - JSON-encoded with literal \n  → replace \\n with real newlines
+  // - Double-escaped \\n            → same regex catches it
+  // - Already contains real newlines → no-op (replace finds nothing)
+  const privateKey = rawKey?.replace(/\\n/g, "\n");
 
   // 1. Env vars
   if (projectId && clientEmail && privateKey) {
-    const serviceAccount: ServiceAccount = { projectId, clientEmail, privateKey };
-    _app = initializeApp({ credential: cert(serviceAccount) });
-    return _app;
+    try {
+      const serviceAccount: ServiceAccount = { projectId, clientEmail, privateKey };
+      _app = initializeApp({ credential: cert(serviceAccount) });
+      return _app;
+    } catch (err) {
+      console.error(
+        "[firebase-admin] Failed to initialize with env credentials:",
+        err instanceof Error ? err.message : err
+      );
+      console.error("[firebase-admin] FIREBASE_PROJECT_ID:", projectId);
+      console.error("[firebase-admin] FIREBASE_CLIENT_EMAIL:", clientEmail ? `${clientEmail.slice(0, 12)}...` : "MISSING");
+      console.error("[firebase-admin] FIREBASE_PRIVATE_KEY length:", rawKey?.length ?? 0);
+      throw err;
+    }
   }
 
   // 2. Service account key file
