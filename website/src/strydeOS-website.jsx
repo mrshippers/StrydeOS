@@ -54,6 +54,8 @@ const globalStyles = `
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
   @keyframes slide-in { from{transform:translateX(12px);opacity:0} to{transform:translateX(0);opacity:1} }
   @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes waveform { 0% { transform: scaleY(0.4); } 100% { transform: scaleY(1); } }
+  @keyframes ava-pulse-ring { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2.2); opacity: 0; } }
 
   .animate-float { animation: float 4s ease-in-out infinite; }
 
@@ -871,40 +873,192 @@ const Products = ({ darkMode }) => {
       howItWorks: ["Captures inbound calls and triages intent", "Books directly into your existing PMS diary", "Triggers confirmations and recovery flows automatically"],
       keyBenefits: ["Fewer missed first contacts", "Higher slot fill from recovered cancels", "Lower admin overhead on front desk"],
       bullets: ["Inbound calls handled 24/7", "Books directly into your calendar", "Cancellation recovery & no-show chasing", "SMS confirmations sent automatically", "Emergency routing to on-call clinician"],
-      visual: (
-        <div style={{ background: C.navy, borderRadius: 18, overflow: "hidden" }}>
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${C.blue}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🤖</div>
-            <div>
-              <div style={{ color: "white", fontWeight: 600, fontSize: 13 }}>Ava</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34D399" }} />
-                <span style={{ color: "#34D399" }}>Live · Stryde Physio</span>
+      visual: (() => {
+        const dk = darkMode;
+        const headerBg = dk ? "rgba(255,255,255,0.04)" : "white";
+        const headerBorder = dk ? "rgba(255,255,255,0.08)" : C.border;
+        const nameColor = dk ? "white" : C.navy;
+        const subtitleColor = dk ? "rgba(255,255,255,0.45)" : C.muted;
+        const pillBg = dk ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.03)";
+        const pillBorder = dk ? "rgba(255,255,255,0.08)" : C.border;
+        const pillColor = dk ? "rgba(255,255,255,0.5)" : C.muted;
+        const waveBg = dk ? "rgba(255,255,255,0.04)" : C.cloudLight;
+        const waveBorder = dk ? "rgba(255,255,255,0.06)" : C.border;
+        const waveTimeColor = dk ? "rgba(255,255,255,0.3)" : C.muted;
+        const callCountColor = dk ? "white" : C.navy;
+        const callLabelColor = dk ? "rgba(255,255,255,0.35)" : C.muted;
+
+        const avaMsgs = [
+          { from: "caller", text: "Hi, I'd like to book an appointment for my lower back." },
+          { from: "ai", text: "Of course — I can help with that. Are mornings or afternoons better for you?" },
+          { from: "caller", text: "Mornings, ideally Thursday or Friday." },
+          { from: "ai", text: "I have Thursday at 9:15am with Dr. Reeves. Shall I book that and send you a confirmation text?" },
+          { from: "caller", text: "Yes please." },
+          { from: "ai", text: "Done — you're booked in. You'll get a text shortly. Is there anything else I can help with?" },
+        ];
+
+        return (
+          <div style={{ width: "100%", maxWidth: 520, margin: "0 auto" }}>
+            {/* ── Profile header (ElevenLabs-inspired) ── */}
+            <div style={{
+              backgroundColor: headerBg,
+              borderRadius: "20px 20px 4px 4px",
+              border: `1px solid ${headerBorder}`,
+              padding: "28px 28px 24px",
+              marginBottom: 2,
+            }}>
+              {/* Avatar + name row */}
+              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <div style={{
+                    width: 64, height: 64, borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    overflow: "hidden",
+                    boxShadow: `0 4px 20px rgba(28,84,242,0.15), 0 0 0 1px rgba(28,84,242,0.08)`,
+                  }}>
+                    <MonolithMark size={64} />
+                  </div>
+                  {/* Live pulse dot */}
+                  <div style={{
+                    position: "absolute", bottom: -2, right: -2,
+                    width: 16, height: 16, borderRadius: "50%",
+                    backgroundColor: C.success,
+                    border: dk ? "2.5px solid rgba(11,37,69,0.9)" : "2.5px solid white",
+                    boxShadow: "0 1px 4px rgba(5,150,105,0.3)",
+                  }}>
+                    <div style={{
+                      position: "absolute", inset: 0, borderRadius: "50%",
+                      backgroundColor: C.success,
+                      animation: "ava-pulse-ring 2s ease-out infinite",
+                    }} />
+                  </div>
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <h3 className="serif" style={{
+                    fontSize: 28, fontWeight: 400, color: nameColor,
+                    lineHeight: 1.1, marginBottom: 4,
+                  }}>Ava</h3>
+                  <p style={{ fontSize: 13, color: subtitleColor, fontWeight: 500, letterSpacing: "0.01em" }}>
+                    AI Receptionist · StrydeOS
+                  </p>
+                </div>
+
+                {/* Call count */}
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div className="serif" style={{ fontSize: 26, color: callCountColor, lineHeight: 1, marginBottom: 2 }}>12</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: callLabelColor, textTransform: "uppercase", letterSpacing: "0.08em" }}>Calls today</div>
+                </div>
+              </div>
+
+              {/* Metadata pills */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "5px 12px", borderRadius: 50,
+                  fontSize: 12, fontWeight: 600, lineHeight: 1,
+                  color: C.success, backgroundColor: "rgba(5,150,105,0.08)",
+                  border: "1px solid rgba(5,150,105,0.15)",
+                }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: C.success, display: "inline-block" }} />
+                  Live
+                </span>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "5px 12px", borderRadius: 50,
+                  fontSize: 12, fontWeight: 600, lineHeight: 1,
+                  color: C.blue, backgroundColor: "rgba(28,84,242,0.06)",
+                  border: "1px solid rgba(28,84,242,0.12)",
+                }}>ElevenAgents</span>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "5px 12px", borderRadius: 50,
+                  fontSize: 12, fontWeight: 600, lineHeight: 1,
+                  color: pillColor, backgroundColor: pillBg,
+                  border: `1px solid ${pillBorder}`,
+                }}>PMS: Connected</span>
+              </div>
+
+              {/* Waveform bar */}
+              <div style={{
+                padding: "14px 16px", borderRadius: 12,
+                backgroundColor: waveBg, border: `1px solid ${waveBorder}`,
+                display: "flex", alignItems: "center", gap: 14,
+              }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%",
+                  backgroundColor: C.blue,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0, cursor: "pointer",
+                  boxShadow: "0 2px 8px rgba(28,84,242,0.25)",
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M3.5 1.75L11.5 7L3.5 12.25V1.75Z" fill="white" />
+                  </svg>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 2, height: 24 }}>
+                  {[0.6, 1, 0.7, 0.9, 0.5, 0.8, 1, 0.6, 0.4, 0.8, 0.7, 0.9, 0.5, 0.7, 1].map((h, i) => (
+                    <div key={i} style={{
+                      width: 3, height: `${h * 100}%`, borderRadius: 2,
+                      backgroundColor: C.blue,
+                      animation: `waveform 1.2s ease-in-out ${i * 0.08}s infinite alternate`,
+                    }} />
+                  ))}
+                </div>
+                <span style={{
+                  fontSize: 12, color: waveTimeColor, fontWeight: 500,
+                  marginLeft: "auto", flexShrink: 0, fontVariantNumeric: "tabular-nums",
+                }}>1:42</span>
               </div>
             </div>
-            <div style={{ marginLeft: "auto", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>Today: 12 calls handled</div>
-          </div>
-          <div style={{ padding: 20 }}>
-            {[
-              { from: "caller", text: "Hi, I'd like to book an appointment for my lower back." },
-              { from: "ai", text: "Of course — I can help with that. Are mornings or afternoons better for you?" },
-              { from: "caller", text: "Mornings, ideally Thursday or Friday." },
-              { from: "ai", text: "I have Thursday at 9:15am with Dr. Reeves. Shall I book that and send you a confirmation text?" },
-              { from: "caller", text: "Yes please." },
-              { from: "ai", text: "Done — you're booked in. You'll get a text shortly. Is there anything else I can help with?" },
-            ].map((msg, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: msg.from === "caller" ? "flex-start" : "flex-end", marginBottom: 8 }}>
-                <div style={{
-                  maxWidth: "76%", padding: "9px 13px", borderRadius: 12,
-                  background: msg.from === "caller" ? "rgba(255,255,255,0.07)" : `${C.blue}45`,
-                  color: msg.from === "caller" ? "rgba(255,255,255,0.65)" : "white",
-                  fontSize: 11, lineHeight: 1.55,
-                }}>{msg.text}</div>
+
+            {/* ── Conversation transcript ── */}
+            <div style={{
+              backgroundColor: C.navy,
+              borderRadius: "4px 4px 20px 20px",
+              padding: "24px 20px 28px",
+            }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                marginBottom: 20, paddingBottom: 14,
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 3h12M2 6.5h8M2 10h10M2 13.5h6" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <span style={{
+                  fontSize: 11, fontWeight: 600,
+                  color: "rgba(255,255,255,0.3)",
+                  textTransform: "uppercase", letterSpacing: "0.08em",
+                }}>Transcript</span>
+                <span style={{
+                  marginLeft: "auto", fontSize: 11,
+                  color: "rgba(255,255,255,0.2)", fontWeight: 500,
+                  fontVariantNumeric: "tabular-nums",
+                }}>Today, 09:12</span>
               </div>
-            ))}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {avaMsgs.map((msg, i) => (
+                  <div key={i} style={{
+                    display: "flex",
+                    justifyContent: msg.from === "ai" ? "flex-end" : "flex-start",
+                  }}>
+                    <div style={{
+                      maxWidth: "82%", padding: "12px 16px",
+                      borderRadius: msg.from === "ai" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                      backgroundColor: msg.from === "ai" ? C.blue : "rgba(255,255,255,0.06)",
+                      color: msg.from === "ai" ? "white" : "rgba(255,255,255,0.75)",
+                      fontSize: 14, fontWeight: 400, lineHeight: 1.55,
+                      border: msg.from === "ai" ? "none" : "1px solid rgba(255,255,255,0.08)",
+                    }}>{msg.text}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      })(),
     },
     {
       id: "pulse",
