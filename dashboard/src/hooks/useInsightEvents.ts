@@ -131,7 +131,6 @@ export function useInsightEvents(): UseInsightEventsResult {
         setError(null);
       },
       (err) => {
-        console.error("[useInsightEvents]", err);
         setError(err.message);
         setLoading(false);
       }
@@ -163,8 +162,8 @@ export function useInsightEvents(): UseInsightEventsResult {
       try {
         const ref = doc(db, "clinics", clinicId, "insight_events", eventId);
         await updateDoc(ref, { readAt: new Date().toISOString() });
-      } catch (err) {
-        console.error("[useInsightEvents] markAsRead failed:", err);
+      } catch {
+        setError("Unable to mark insight as read — you may not have permission.");
       }
     },
     [clinicId]
@@ -176,8 +175,8 @@ export function useInsightEvents(): UseInsightEventsResult {
       try {
         const ref = doc(db, "clinics", clinicId, "insight_events", eventId);
         await updateDoc(ref, { dismissedAt: new Date().toISOString() });
-      } catch (err) {
-        console.error("[useInsightEvents] dismiss failed:", err);
+      } catch {
+        setError("Unable to dismiss insight — you may not have permission.");
       }
     },
     [clinicId]

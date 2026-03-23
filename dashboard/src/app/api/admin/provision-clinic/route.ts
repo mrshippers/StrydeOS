@@ -220,6 +220,7 @@ async function handler(request: NextRequest) {
       },
       provisionedPlan: plan ?? "starter",
       country: country ?? "uk",
+      commsConsentGrantedAt: now,
       trialStartedAt: now,
       createdAt: now,
       updatedAt: now,
@@ -252,7 +253,7 @@ async function handler(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { uid, clinicId, email: trimmedEmail, passwordResetLink },
+      { uid, clinicId, email: trimmedEmail, passwordResetSent: !!passwordResetLink },
       { status: 201 }
     );
   } catch (err) {

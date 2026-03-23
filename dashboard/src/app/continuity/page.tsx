@@ -92,8 +92,8 @@ function ContinuityPage() {
     const patient = patients.find((p) => p.id === patientId);
     if (!patient) return;
 
-    const to = patient.contact.phone ?? patient.contact.email;
-    const channel = patient.contact.phone ? "sms" : "email";
+    const to = patient.contact?.phone ?? patient.contact?.email;
+    const channel = patient.contact?.phone ? "sms" : "email";
     if (!to) {
       toast(`No contact details for ${patient.name}`, "error");
       return;
@@ -259,6 +259,7 @@ function ContinuityPage() {
                     toggleSequence(seq.id, active);
                     toast(`${seq.name} ${active ? "enabled" : "disabled"}`, "success");
                   }}
+                  onPreview={() => setPreviewSequenceType(seq.sequenceType)}
                 />
               );
             })}

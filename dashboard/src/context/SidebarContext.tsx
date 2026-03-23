@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useMemo, type ReactNode } from "react";
 
 type SidebarState = {
   collapsed: boolean;
@@ -22,8 +22,10 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     }
   });
 
+  const value = useMemo(() => ({ collapsed, setCollapsed }), [collapsed, setCollapsed]);
+
   return (
-    <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
+    <SidebarContext.Provider value={value}>
       {children}
     </SidebarContext.Provider>
   );

@@ -5,13 +5,14 @@ import { Lightbulb, CheckCheck } from "lucide-react";
 import { brand } from "@/lib/brand";
 import { useInsightEvents } from "@/hooks/useInsightEvents";
 import InsightEventCard from "./InsightEventCard";
+import ErrorBanner from "@/components/ui/ErrorBanner";
 
 /**
  * Full list of recent insight events.
  * Used in the "Insights" tab on the Intelligence page.
  */
 export default function InsightFeed() {
-  const { events, activeEvents, markAsRead, loading } = useInsightEvents();
+  const { events, activeEvents, markAsRead, loading, error } = useInsightEvents();
   const [showDismissed, setShowDismissed] = useState(false);
   const displayEvents = showDismissed ? events : activeEvents;
 
@@ -23,6 +24,10 @@ export default function InsightFeed() {
         ))}
       </div>
     );
+  }
+
+  if (error) {
+    return <ErrorBanner message={error} onRetry={() => window.location.reload()} />;
   }
 
   if (events.length === 0) {

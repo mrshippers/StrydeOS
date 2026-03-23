@@ -64,6 +64,43 @@ export function subscribeWeeklyStats(
   );
 }
 
+/**
+ * Subscribe to weekly stats for multiple clinicians in a single Firestore listener.
+ * Uses `where("clinicianId", "in", [...])` — Firestore supports up to 30 values.
+ */
+export function subscribeWeeklyStatsBatch(
+  clinicId: string | null,
+  clinicianIds: string[],
+  callback: (grouped: Map<string, WeeklyStats[]>) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  if (!db || !clinicId || clinicianIds.length === 0) {
+    callback(new Map());
+    return noopUnsubscribe();
+  }
+
+  const q = query(
+    clinicCollection(clinicId, "metrics_weekly"),
+    where("clinicianId", "in", clinicianIds.slice(0, 30)),
+    orderBy("weekStart", "asc")
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const grouped = new Map<string, WeeklyStats[]>();
+      for (const d of snapshot.docs) {
+        const stat = { id: d.id, ...(d.data() as Omit<WeeklyStats, "id">) };
+        const arr = grouped.get(stat.clinicianId) ?? [];
+        arr.push(stat);
+        grouped.set(stat.clinicianId, arr);
+      }
+      callback(grouped);
+    },
+    onError
+  );
+}
+
 // ─── Clinicians (subcollection) ──────────────────────────────────────────────
 
 export function subscribeClinicians(
@@ -112,6 +149,7 @@ export function subscribePatients(
   if (clinicianId) {
     constraints.push(where("clinicianId", "==", clinicianId));
   }
+  constraints.push(limit(500));
 
   const q = query(clinicCollection(clinicId, "patients"), ...constraints);
 
@@ -288,7 +326,7 @@ export function subscribeOutcomeScoresAll(
 
   const q = query(
     clinicCollection(clinicId, "outcome_scores"),
-    orderBy("recordedAt", "asc"),
+    orderBy("recordedAt", "desc"),
     limit(500)
   );
 

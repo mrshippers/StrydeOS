@@ -15,6 +15,9 @@ import EmptyState from "@/components/ui/EmptyState";
 import { daysSince } from "@/lib/utils";
 import { useInsightEvents } from "@/hooks/useInsightEvents";
 import { brand } from "@/lib/brand";
+
+// Hoisted styles to avoid re-creation per patient row per render
+const INSIGHT_BADGE_STYLE = { background: `${brand.purple}12`, color: brand.purple } as const;
 import type { InsightEvent } from "@/types/insight-events";
 
 interface Props {
@@ -190,7 +193,7 @@ export const PatientBoard: FC<Props> = ({
                                   return (
                                     <span
                                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                                      style={{ background: `${brand.purple}12`, color: brand.purple }}
+                                      style={INSIGHT_BADGE_STYLE}
                                       title={evt.suggestedAction}
                                     >
                                       <AlertCircle size={10} />

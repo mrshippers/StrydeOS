@@ -50,6 +50,16 @@ export function useUserPreferences() {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+
+  // Clear debounce on unmount to prevent post-unmount Firestore writes
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!db || !userId || !clinicId) {
@@ -91,7 +101,9 @@ export function useUserPreferences() {
         // Debounced Firestore write (500ms)
         if (debounceTimer.current) clearTimeout(debounceTimer.current);
         debounceTimer.current = setTimeout(() => {
-          setDoc(doc(firestore, "user_preferences", userId), next).catch(() => {});
+          if (mountedRef.current) {
+            setDoc(doc(firestore, "user_preferences", userId), next).catch(() => {});
+          }
         }, 500);
 
         return next;

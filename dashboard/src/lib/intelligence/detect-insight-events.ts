@@ -60,9 +60,10 @@ export async function detectInsightEvents(
     name: d.data().name as string,
   }));
 
-  // Load active patients
+  // Load active (non-discharged) patients only — discharged patients are skipped by all checks
   const patientsSnap = await db
     .collection(`clinics/${clinicId}/patients`)
+    .where("discharged", "==", false)
     .get();
   const patients: FsDoc[] = patientsSnap.docs.map((d) => ({
     id: d.id,

@@ -85,15 +85,24 @@ export function useAvaKnowledge(clinicId: string | undefined): UseAvaKnowledgeRe
     [clinicId],
   );
 
+  // Ref always points to latest persistToFirestore to avoid stale closure in debounce
+  const persistRef = useRef(persistToFirestore);
+  useEffect(() => { persistRef.current = persistToFirestore; }, [persistToFirestore]);
+
+  // Clear debounce on clinicId change to prevent cross-clinic writes
+  useEffect(() => {
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [clinicId]);
+
   // Debounced save — triggers 800ms after last change
   const debouncedSave = useCallback(
     (updatedEntries: KnowledgeEntry[]) => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
-        persistToFirestore(updatedEntries);
+        persistRef.current(updatedEntries);
       }, 800);
     },
-    [persistToFirestore],
+    [],
   );
 
   // Add a new knowledge entry

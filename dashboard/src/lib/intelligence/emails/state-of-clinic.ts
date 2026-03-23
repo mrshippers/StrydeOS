@@ -1,5 +1,7 @@
 import type { InsightEvent } from "@/types/insight-events";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "${APP_URL}";
+
 interface DigestData {
   clinicName: string;
   weekLabel: string;
@@ -125,7 +127,7 @@ export function buildStateOfClinicEmail(data: DigestData): string {
 
       <!-- CTA -->
       <div style="text-align:center;padding-top:16px;">
-        <a href="https://app.strydeos.com/dashboard" style="display:inline-block;padding:12px 28px;border-radius:50px;background:#1C54F2;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;">View full dashboard →</a>
+        <a href="${APP_URL}/dashboard" style="display:inline-block;padding:12px 28px;border-radius:50px;background:#1C54F2;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;">View full dashboard →</a>
       </div>
     </div>
 
@@ -133,9 +135,9 @@ export function buildStateOfClinicEmail(data: DigestData): string {
     <div style="padding:20px;text-align:center;">
       <p style="margin:0 0 4px;font-size:11px;color:#5C6370;">Powered by StrydeOS Intelligence</p>
       <p style="margin:0;font-size:11px;color:#5C6370;">
-        <a href="https://app.strydeos.com/settings" style="color:#1C54F2;text-decoration:none;">Manage preferences</a>
+        <a href="${APP_URL}/settings" style="color:#1C54F2;text-decoration:none;">Manage preferences</a>
         &nbsp;·&nbsp;
-        <a href="https://app.strydeos.com/settings?unsubscribe=digest" style="color:#5C6370;text-decoration:none;">Unsubscribe</a>
+        <a href="${APP_URL}/settings?unsubscribe=digest" style="color:#5C6370;text-decoration:none;">Unsubscribe</a>
       </p>
       <p style="margin:8px 0 0;font-size:11px;color:#5C6370;">hello@strydeos.com</p>
     </div>
@@ -180,12 +182,12 @@ export function buildStateOfClinicText(data: DigestData): string {
   lines.push(`Utilisation: ${fmtPct(curUtil)}`);
   lines.push(`Course Completion: ${fmtPct(curCompletion)}`);
   lines.push("");
-  lines.push("View dashboard: https://app.strydeos.com/dashboard");
+  lines.push("View dashboard: ${APP_URL}/dashboard");
   lines.push("");
   lines.push("---");
   lines.push("Powered by StrydeOS Intelligence");
-  lines.push("Manage preferences: https://app.strydeos.com/settings");
-  lines.push("Unsubscribe: https://app.strydeos.com/settings?unsubscribe=digest");
+  lines.push("Manage preferences: ${APP_URL}/settings");
+  lines.push("Unsubscribe: ${APP_URL}/settings?unsubscribe=digest");
   lines.push("hello@strydeos.com");
 
   return lines.join("\n");

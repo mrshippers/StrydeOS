@@ -61,6 +61,12 @@ export default function InsightEventCard({
       onClick={() => {
         if (isUnread && onMarkRead) onMarkRead(event.id);
       }}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && isUnread && onMarkRead) {
+          e.preventDefault();
+          onMarkRead(event.id);
+        }
+      }}
       role={isUnread ? "button" : undefined}
       tabIndex={isUnread ? 0 : undefined}
     >

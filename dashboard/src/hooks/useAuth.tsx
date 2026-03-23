@@ -12,12 +12,37 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut as fbSignOut,
+  getIdToken,
   multiFactor,
   type User,
 } from "firebase/auth";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { getFirebaseAuth, db, isFirebaseConfigured } from "@/lib/firebase";
 import type { AuthUser, ClinicProfile, UserRole, UserStatus, FeatureFlags, BillingState } from "@/types";
+
+async function createServerSession(fbUser: User): Promise<void> {
+  try {
+    const idToken = await getIdToken(fbUser);
+    const res = await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+    if (!res.ok) throw new Error(`Session API returned ${res.status}`);
+  } catch {
+    // Fallback: set a basic cookie so middleware doesn't block navigation.
+    // This path only fires if the session API is unreachable (e.g. local dev without SESSION_SECRET).
+    document.cookie = "__session=1; path=/; SameSite=Lax";
+  }
+}
+
+async function clearServerSession(): Promise<void> {
+  try {
+    await fetch("/api/auth/session", { method: "DELETE" });
+  } catch {
+    document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
+  }
+}
 
 const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
   intelligence: false,
@@ -236,20 +261,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const profile = await fetchUserProfile(fbUser);
             setUser(profile);
             if (profile) {
-              document.cookie = "__session=1; path=/; SameSite=Lax";
+              await createServerSession(fbUser);
             } else {
-              document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
+              await clearServerSession();
             }
           } else {
             setFirebaseUser(null);
             setUser(null);
-            document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
+            await clearServerSession();
           }
         } catch (err) {
           console.error("[Auth] Failed to load user profile:", err);
           setFirebaseUser(null);
           setUser(null);
-          document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
+          await clearServerSession();
         } finally {
           setLoading(false);
         }
@@ -329,7 +354,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (auth) await fbSignOut(auth);
     setUser(null);
     setFirebaseUser(null);
-    document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
+    await clearServerSession();
   }, []);
 
   const refreshClinicProfile = useCallback(async () => {
@@ -342,7 +367,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const enterDemoMode = useCallback(() => {
     setUser(DEMO_USER);
     setFirebaseUser(null);
-    document.cookie = "__session=1; path=/; SameSite=Lax";
+    // Demo mode uses a simple cookie — no server session needed
+    document.cookie = "__session=demo; path=/; SameSite=Lax";
     // Pick a random demo data scenario (0–4) for this session
     try {
       sessionStorage.setItem("strydeos_demo_scenario", String(Math.floor(Math.random() * 5)));

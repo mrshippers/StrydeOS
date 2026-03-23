@@ -32,12 +32,12 @@ export function useEntitlements(): Entitlements {
   const { user, loading } = useAuth();
   const flags = user?.clinicProfile?.featureFlags;
   const trialStartedAt = user?.clinicProfile?.trialStartedAt ?? null;
-  const isSuperadmin = user?.role === "superadmin" || user?.role === "owner";
+  const isSuperadmin = user?.role === "superadmin";
 
   const trialActive = isTrialActive(trialStartedAt);
   const daysLeft = computeDaysRemaining(trialStartedAt);
 
-  // Superadmin and trial both grant full access; falls through to Stripe flags otherwise
+  // Superadmin bypasses all billing; owners are subject to trial + Stripe flags
   const hasIntelligence = isSuperadmin || trialActive || (flags?.intelligence ?? false);
   const hasPulse        = isSuperadmin || trialActive || (flags?.continuity ?? false);
   const hasAva          = isSuperadmin || trialActive || (flags?.receptionist ?? false);

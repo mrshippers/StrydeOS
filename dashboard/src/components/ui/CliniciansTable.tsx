@@ -19,6 +19,11 @@ interface CliniciansTableProps {
 
 type SortKey = "name" | "followUp" | "completion" | "utilisation" | "dna" | "sessions" | "revenue";
 
+function SortIcon({ col, sortKey, sortAsc }: { col: SortKey; sortKey: SortKey; sortAsc: boolean }) {
+  if (sortKey !== col) return <ChevronDown size={12} className="text-muted/70" />;
+  return sortAsc ? <ChevronUp size={12} className="text-blue" /> : <ChevronDown size={12} className="text-blue" />;
+}
+
 const COLUMN_TOOLTIPS: Record<string, string> = {
   followUp: "Mean FU sessions per IA. UK median: 4.0 FU/IA (5.0 sessions per episode). Below 3.0 signals patient drop-off risk.",
   completion: "% of patients given a home exercise programme vs patients seen. UK private MSK benchmark: 70\u201385%.",
@@ -187,10 +192,7 @@ export default function CliniciansTable({ rows, onRowClick }: CliniciansTablePro
     return sortAsc ? cmp : -cmp;
   });
 
-  const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return <ChevronDown size={12} className="text-muted/70" />;
-    return sortAsc ? <ChevronUp size={12} className="text-blue" /> : <ChevronDown size={12} className="text-blue" />;
-  };
+  // SortIcon hoisted to module scope for render stability
 
   const columns: { key: SortKey; label: string }[] = [
     { key: "name", label: "Clinician" },
@@ -217,7 +219,7 @@ export default function CliniciansTable({ rows, onRowClick }: CliniciansTablePro
                   <div className="flex items-center gap-1">
                     {label}
                     {COLUMN_TOOLTIPS[key] && <HeaderTooltip text={COLUMN_TOOLTIPS[key]} />}
-                    <SortIcon col={key} />
+                    <SortIcon col={key} sortKey={sortKey} sortAsc={sortAsc} />
                   </div>
                 </th>
               ))}

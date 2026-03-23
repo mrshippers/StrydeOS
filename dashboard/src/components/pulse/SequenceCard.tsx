@@ -18,6 +18,7 @@ interface Props {
   stats: SequenceStats;
   showRevenue: boolean;
   onToggle: (active: boolean) => void;
+  onPreview?: () => void;
 }
 
 const CHANNEL_ICONS: Record<string, ReactNode> = {
@@ -26,7 +27,7 @@ const CHANNEL_ICONS: Record<string, ReactNode> = {
   whatsapp: <MessageSquare size={14} />,
 };
 
-export const SequenceCard: FC<Props> = ({ definition, stats, showRevenue, onToggle }) => {
+export const SequenceCard: FC<Props> = ({ definition, stats, showRevenue, onToggle, onPreview }) => {
   const [expanded, setExpanded] = useState(false);
 
   const conversionRate = stats.sent > 0
@@ -51,13 +52,24 @@ export const SequenceCard: FC<Props> = ({ definition, stats, showRevenue, onTogg
                   ? `${definition.attributionWindowDays}d attribution window`
                   : "no attribution"}
               </p>
-              <button
-                onClick={() => setExpanded((e) => !e)}
-                className="text-[11px] font-semibold text-teal hover:text-blue-bright transition-colors mt-1 flex items-center gap-1"
-              >
-                {expanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
-                View cadence
-              </button>
+              <div className="flex items-center gap-3 mt-1">
+                <button
+                  onClick={() => setExpanded((e) => !e)}
+                  className="text-[11px] font-semibold text-teal hover:text-blue-bright transition-colors flex items-center gap-1"
+                >
+                  {expanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                  View cadence
+                </button>
+                {onPreview && (
+                  <button
+                    onClick={onPreview}
+                    className="text-[11px] font-semibold text-muted hover:text-teal transition-colors flex items-center gap-1"
+                  >
+                    <Eye size={11} />
+                    Preview
+                  </button>
+                )}
+              </div>
             </div>
           </div>
           <button

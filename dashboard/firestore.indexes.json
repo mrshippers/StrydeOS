@@ -99,6 +99,29 @@
       "fields": [
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "clinical_notes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "patientId", "order": "ASCENDING" },
+        { "fieldPath": "sessionDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "patients",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "clinicianId", "order": "ASCENDING" },
+        { "fieldPath": "lastSessionDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "call_log",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "startTimestamp", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

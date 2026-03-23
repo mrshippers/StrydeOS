@@ -1,5 +1,7 @@
 import type { InsightEvent } from "@/types/insight-events";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "${APP_URL}";
+
 const SEVERITY_COLORS: Record<string, string> = {
   critical: "#EF4444",
   warning: "#F59E0B",
@@ -42,7 +44,7 @@ export function buildUrgentAlertEmail(event: InsightEvent, clinicName: string): 
 
       <!-- CTA -->
       <div style="text-align:center;padding-top:8px;">
-        <a href="https://app.strydeos.com/intelligence" style="display:inline-block;padding:12px 28px;border-radius:50px;background:#1C54F2;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;">View in Intelligence →</a>
+        <a href="${APP_URL}/intelligence" style="display:inline-block;padding:12px 28px;border-radius:50px;background:#1C54F2;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;">View in Intelligence →</a>
       </div>
     </div>
 
@@ -50,9 +52,9 @@ export function buildUrgentAlertEmail(event: InsightEvent, clinicName: string): 
     <div style="padding:16px;text-align:center;">
       <p style="margin:0 0 4px;font-size:11px;color:#5C6370;">Powered by StrydeOS Intelligence</p>
       <p style="margin:0;font-size:11px;color:#5C6370;">
-        <a href="https://app.strydeos.com/settings" style="color:#1C54F2;text-decoration:none;">Manage alerts</a>
+        <a href="${APP_URL}/settings" style="color:#1C54F2;text-decoration:none;">Manage alerts</a>
         &nbsp;·&nbsp;
-        <a href="https://app.strydeos.com/settings?unsubscribe=urgent" style="color:#5C6370;text-decoration:none;">Unsubscribe</a>
+        <a href="${APP_URL}/settings?unsubscribe=urgent" style="color:#5C6370;text-decoration:none;">Unsubscribe</a>
       </p>
     </div>
   </div>
@@ -77,12 +79,12 @@ export function buildUrgentAlertText(event: InsightEvent, clinicName: string): s
 
   lines.push(
     "",
-    "View in Intelligence: https://app.strydeos.com/intelligence",
+    "View in Intelligence: ${APP_URL}/intelligence",
     "",
     "---",
     "Powered by StrydeOS Intelligence",
-    "Manage alerts: https://app.strydeos.com/settings",
-    "Unsubscribe: https://app.strydeos.com/settings?unsubscribe=urgent"
+    "Manage alerts: ${APP_URL}/settings",
+    "Unsubscribe: ${APP_URL}/settings?unsubscribe=urgent"
   );
 
   return lines.join("\n");

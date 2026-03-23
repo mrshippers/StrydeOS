@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFirestore } from "firebase-admin/firestore";
-import { initializeApp, getApps } from "firebase-admin/app";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { withRequestLog } from "@/lib/request-logger";
 
-// Ensure Firebase Admin is initialized
-if (!getApps().length) {
-  initializeApp();
-}
+export const runtime = "nodejs";
 
-const db = getFirestore();
+const ELEVENLABS_WEBHOOK_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
+
+const db = getAdminDb();
 
 interface ElevenLabsWebhookPayload {
   event: string;
@@ -25,15 +23,48 @@ interface ElevenLabsWebhookPayload {
   custom_metadata?: Record<string, unknown>;
 }
 
+/**
+ * Verify ElevenLabs webhook signature (HMAC-SHA256).
+ * ElevenLabs sends the signature in the `elevenlabs-signature` header.
+ */
+async function verifyElevenLabsSignature(
+  body: string,
+  signatureHeader: string | null
+): Promise<boolean> {
+  if (!ELEVENLABS_WEBHOOK_SECRET || !signatureHeader) return false;
+
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(ELEVENLABS_WEBHOOK_SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
+  const expected = Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  // ElevenLabs may send "v0=<hex>" or just "<hex>"
+  const provided = signatureHeader.replace(/^v\d+=/, "");
+  return expected === provided;
+}
+
 async function handler(req: NextRequest) {
   try {
-    const payload: ElevenLabsWebhookPayload = await req.json();
+    const rawBody = await req.text();
 
-    console.log("[ElevenLabs webhook]", {
-      event: payload.event,
-      conversation_id: payload.conversation_id,
-      agent_id: payload.agent_id,
-    });
+    // Verify webhook signature
+    if (ELEVENLABS_WEBHOOK_SECRET) {
+      const sig = req.headers.get("elevenlabs-signature");
+      const valid = await verifyElevenLabsSignature(rawBody, sig);
+      if (!valid) {
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      }
+    }
+
+    const payload: ElevenLabsWebhookPayload = JSON.parse(rawBody);
 
     // Webhook events we care about:
     // - conversation.started: call initiated
@@ -43,7 +74,6 @@ async function handler(req: NextRequest) {
     // - user.message: caller spoke
 
     if (!payload.conversation_id || !payload.agent_id) {
-      console.warn("[ElevenLabs webhook] Missing conversation_id or agent_id");
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
@@ -58,7 +88,6 @@ async function handler(req: NextRequest) {
       .get();
 
     if (clinicSnap.empty) {
-      console.warn("[ElevenLabs webhook] No clinic found for agent", agentId);
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
@@ -109,11 +138,9 @@ async function handler(req: NextRequest) {
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error) {
-    console.error("[ElevenLabs webhook error]", error);
-    // Always return 200 to acknowledge webhook received
-    // (retry logic is ElevenLabs' responsibility)
+    // Always return 200 to acknowledge receipt — ElevenLabs handles retries
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Webhook processing failed" },
+      { error: "Webhook processing failed" },
       { status: 200 }
     );
   }

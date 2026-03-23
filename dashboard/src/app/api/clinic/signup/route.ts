@@ -206,6 +206,7 @@ async function handler(request: NextRequest) {
       compliance: complianceConfig,
       profession: profession?.trim() || null,
       clinicSize: clinicSize?.trim() || null,
+      commsConsentGrantedAt: now,
       trialStartedAt: now,
       createdAt: now,
       updatedAt: now,

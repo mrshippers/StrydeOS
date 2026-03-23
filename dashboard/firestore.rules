@@ -135,6 +135,33 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Call Log (legacy path) — ElevenLabs webhook writes here
+      match /call_log/{callId} {
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
+      // Clinical Notes — Heidi-synced clinical notes; clinicians see their own patients, owners/admins see all
+      match /clinical_notes/{noteId} {
+        allow read: if isSuperAdmin()
+          || isClinicOwnerOrAdmin(clinicId)
+          || (isClinicMember(clinicId)
+              && resource.data.clinicianId == getUserData().clinicianId);
+        allow write: if false;
+      }
+
+      // Funnel Events — patient journey funnel tracking; readable by owners, written by server pipeline
+      match /funnel_events/{eventId} {
+        allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
+      // Voice Interactions — Ava interaction records; readable by owners, written by server
+      match /voiceInteractions/{interactionId} {
+        allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
       // Integration Config — server-side only, never exposed to client
       match /integrations_config/{configId} {
         allow read, write: if false;

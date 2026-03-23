@@ -99,8 +99,8 @@ async function handler(req: NextRequest) {
       }
     }
 
-    // No email provider configured — return link for manual use
-    return NextResponse.json({ sent: false, link, note: "Configure RESEND_API_KEY to send automatically" });
+    // No email provider configured — do not return the link in the response body
+    return NextResponse.json({ sent: false, note: "Configure RESEND_API_KEY to send invite emails automatically." });
   } catch (err: unknown) {
     const e = err as { code?: string; message?: string };
     if (e.code === "auth/user-not-found") {

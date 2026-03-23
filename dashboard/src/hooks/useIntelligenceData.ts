@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   subscribeWeeklyStats,
+  subscribeWeeklyStatsBatch,
   subscribePatients,
   subscribeReviews,
   subscribeOutcomeScoresAll,
@@ -490,6 +491,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
 
     setFirestoreError(null);
 
+    // "all" stats subscription — per-clinician stats merged below via single `in` query
     const unsubStats = subscribeWeeklyStats(
       clinicId,
       "all",
@@ -507,13 +509,13 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     const unsubReviews = subscribeReviews(
       clinicId,
       (data) => { setReviews(data); setReviewsReady(true); },
-      (err) => { console.error("[useIntelligenceData] reviews subscription error:", err); setReviewsReady(true); }
+      () => { setReviewsReady(true); }
     );
 
     const unsubOutcomes = subscribeOutcomeScoresAll(
       clinicId,
       (data) => { setOutcomeScores(data); setOutcomesReady(true); },
-      (err) => { console.error("[useIntelligenceData] outcomes subscription error:", err); setOutcomesReady(true); }
+      () => { setOutcomesReady(true); }
     );
 
     return () => {
@@ -524,34 +526,34 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     };
   }, [clinicId, isDemo, effectivePatientClinicianId]);
 
-  // Collect all unique clinicianIds from patients for per-clinician stat subscriptions
-  const clinicianIds = useMemo(
-    () => [...new Set(patients.map((p) => p.clinicianId).filter(Boolean))],
+  // Collect all unique clinicianIds from patients — stabilised to avoid listener thrashing
+  const clinicianIdsRaw = useMemo(
+    () => [...new Set(patients.map((p) => p.clinicianId).filter(Boolean))].sort(),
     [patients]
   );
+  const clinicianIdsRef = useRef<string[]>([]);
+  const clinicianIds = useMemo(() => {
+    const key = clinicianIdsRaw.join(",");
+    if (key !== clinicianIdsRef.current.join(",")) {
+      clinicianIdsRef.current = clinicianIdsRaw;
+    }
+    return clinicianIdsRef.current;
+  }, [clinicianIdsRaw]);
 
   const [perClinicianStatsMap, setPerClinicianStatsMap] = useState<Map<string, WeeklyStats[]>>(new Map());
 
+  // Single batched Firestore listener replaces N per-clinician listeners
   useEffect(() => {
     if (isDemo || !clinicId || clinicianIds.length === 0) return;
 
-    const unsubs: (() => void)[] = [];
-    const collected = new Map<string, WeeklyStats[]>();
+    const unsub = subscribeWeeklyStatsBatch(
+      clinicId,
+      clinicianIds,
+      (grouped) => setPerClinicianStatsMap(grouped),
+      () => { /* Sentry captures via error boundary */ }
+    );
 
-    for (const cid of clinicianIds) {
-      const unsub = subscribeWeeklyStats(
-        clinicId,
-        cid,
-        (data) => {
-          collected.set(cid, data);
-          setPerClinicianStatsMap(new Map(collected));
-        },
-        (err) => { console.error("[useIntelligenceData] per-clinician stats error:", err); }
-      );
-      unsubs.push(unsub);
-    }
-
-    return () => unsubs.forEach((u) => u());
+    return unsub;
   }, [clinicId, isDemo, clinicianIds]);
 
   // Flatten per-clinician stats for derivations

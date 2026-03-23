@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifySession } from "@/lib/session";
 
 const PROTECTED_PREFIXES = [
   "/dashboard",
@@ -14,7 +15,7 @@ const PROTECTED_PREFIXES = [
   "/compliance",
 ];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isProtected = PROTECTED_PREFIXES.some(
@@ -27,6 +28,17 @@ export function middleware(request: NextRequest) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Allow demo mode (simple "demo" cookie value)
+  if (session === "demo") return NextResponse.next();
+
+  // Verify HMAC-signed session — reject if tampered or expired
+  const payload = await verifySession(session);
+  if (!payload) {
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    response.cookies.set("__session", "", { path: "/", maxAge: 0 });
+    return response;
   }
 
   return NextResponse.next();
