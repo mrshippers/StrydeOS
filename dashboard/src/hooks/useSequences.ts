@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   collection,
   onSnapshot,
   doc,
   updateDoc,
+  addDoc,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import type { SequenceDefinition } from "@/types/comms";
+import { DEFAULT_SEQUENCE_DEFINITIONS } from "@/types/comms";
 
 export interface SequenceWithStats extends SequenceDefinition {
   sent: number;
@@ -23,10 +25,12 @@ export interface SequenceWithStats extends SequenceDefinition {
 export function useSequences() {
   const { user } = useAuth();
   const clinicId = user?.clinicId ?? null;
+  const isOwnerOrAdmin = user?.role === "owner" || user?.role === "admin" || user?.role === "superadmin";
 
   const [definitions, setDefinitions] = useState<SequenceDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const seededRef = useRef(false);
 
   useEffect(() => {
     if (!db || !clinicId) {
@@ -37,7 +41,20 @@ export function useSequences() {
     const ref = collection(db, "clinics", clinicId, "sequence_definitions");
     const unsub: Unsubscribe = onSnapshot(
       ref,
-      (snap) => {
+      async (snap) => {
+        // Auto-seed default sequences if collection is empty (owner/admin only, once per session)
+        if (snap.empty && isOwnerOrAdmin && !seededRef.current) {
+          seededRef.current = true;
+          try {
+            for (const def of DEFAULT_SEQUENCE_DEFINITIONS) {
+              await addDoc(ref, def);
+            }
+          } catch {
+            // Seeding failed — sequences will stay empty; pipeline will seed on next cron run
+          }
+          return; // The onSnapshot will fire again with the seeded docs
+        }
+
         const defs = snap.docs
           .map((d) => ({ id: d.id, ...d.data() } as SequenceDefinition))
           .sort((a, b) => a.priority - b.priority);
@@ -45,14 +62,13 @@ export function useSequences() {
         setLoading(false);
       },
       (err) => {
-        console.error("[useSequences] listener error:", err);
         setError("Failed to load sequences.");
         setLoading(false);
       }
     );
 
     return unsub;
-  }, [clinicId]);
+  }, [clinicId, isOwnerOrAdmin]);
 
   const toggleSequence = useCallback(
     async (definitionId: string, active: boolean) => {

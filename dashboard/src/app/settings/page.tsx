@@ -1497,6 +1497,7 @@ const cp = user?.clinicProfile ?? null;
         </div>
       )}
 
+      {canManageTeam && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Clinic Details */}
         <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
@@ -1592,6 +1593,7 @@ const cp = user?.clinicProfile ?? null;
           </button>
         </div>
       </div>
+      )}
 
       {/* PMS Connection */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">

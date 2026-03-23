@@ -77,7 +77,11 @@ html.dark {
 }
 
 html.dark .bg-white {
-  background-color: rgba(255,255,255,0.04);
+  background-color: rgba(255,255,255,0.06);
+}
+
+html.dark .button-highlight {
+  background-color: rgba(255,255,255,0.12) !important;
 }
 
 html.dark .text-navy {

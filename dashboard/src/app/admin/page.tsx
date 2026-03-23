@@ -124,11 +124,15 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [usedDemo, setUsedDemo] = useState(false);
 
+  const isSuperadmin = user?.role === "superadmin";
+  const isOwner = user?.role === "owner";
+  const canAccessAdmin = isSuperadmin || isOwner;
+
   useEffect(() => {
-    if (!authLoading && user && user.role !== "superadmin") {
+    if (!authLoading && user && !canAccessAdmin) {
       router.replace("/dashboard");
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, router, canAccessAdmin]);
 
   useEffect(() => {
     const isDemo = user?.uid === "demo";

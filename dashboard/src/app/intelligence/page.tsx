@@ -556,10 +556,9 @@ export default function IntelligencePage() {
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition-all whitespace-nowrap ${
               activeTab === id
-                ? "font-semibold shadow-[var(--shadow-card)] button-highlight"
+                ? "font-semibold shadow-[var(--shadow-card)] button-highlight bg-white text-navy"
                 : "font-medium text-muted hover:text-ink"
             }`}
-            style={activeTab === id ? { background: "#FFFFFF", color: brand.navy } : undefined}
           >
             <Icon size={14} />
             {label}

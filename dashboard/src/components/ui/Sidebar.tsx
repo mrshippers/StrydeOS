@@ -690,8 +690,12 @@ export default function Sidebar() {
             </div>
           </div>
 
+        </nav>
+
+        {/* Bottom utilities + profile */}
+        <div className="px-3 pt-2 pb-3 border-t border-white/8">
           {/* Quick search hint */}
-          <div className="mt-4 px-3" data-tour="command-palette">
+          <div className="mb-1" data-tour="command-palette">
             <button
               onClick={() => {
                 window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
@@ -707,7 +711,7 @@ export default function Sidebar() {
           </div>
 
           {/* Dark mode toggle */}
-          <div className="mt-2 px-3">
+          <div className="mb-2">
             <button
               onClick={(e) => toggleTheme(e)}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-white/30 hover:text-white/50 hover:bg-white/5 transition-all duration-200"
@@ -719,10 +723,9 @@ export default function Sidebar() {
               </kbd>
             </button>
           </div>
-        </nav>
 
-        {/* Bottom — profile menu */}
-        <div className="px-3 py-3 border-t border-white/8" ref={profileRef}>
+          {/* Profile menu */}
+          <div ref={profileRef}>
           <button
             onClick={() => setProfileOpen(!profileOpen)}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors group"
@@ -773,6 +776,7 @@ export default function Sidebar() {
               </div>
             </div>
           )}
+        </div>
         </div>
       </motion.div>
       </motion.aside>
