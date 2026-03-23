@@ -90,7 +90,7 @@ const STEP_TO_STAGE: Record<StepId, OnboardingStage> = {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [selectedPms, setSelectedPms] = useState<PmsProvider | null>(null);
@@ -107,6 +107,13 @@ export default function OnboardingPage() {
   const [showBaaStep, setShowBaaStep] = useState(false);
 
   const clinicId = user?.clinicId;
+
+  // Guard: if auth finished loading but no clinicId, redirect to dashboard
+  useEffect(() => {
+    if (!authLoading && !clinicId) {
+      router.replace("/dashboard?error=no_clinic");
+    }
+  }, [authLoading, clinicId, router]);
 
   const hydrateFromFirestore = useCallback(async () => {
     if (!db || !clinicId) { setHydrated(true); return; }
@@ -256,13 +263,28 @@ export default function OnboardingPage() {
     ? clinicPhone.length >= 10
     : true;
 
-  if (!hydrated) {
+  // Wait for both auth to load AND firestore to hydrate
+  if (authLoading || !hydrated) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
         style={{ background: "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)" }}
       >
         <Loader2 size={24} className="animate-spin text-white/60" />
+      </div>
+    );
+  }
+
+  // Safety check: if we got past the guard but still no clinicId, show error
+  if (!clinicId) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)" }}
+      >
+        <div className="text-center">
+          <p className="text-white text-sm">Unable to load clinic information. Redirecting...</p>
+        </div>
       </div>
     );
   }

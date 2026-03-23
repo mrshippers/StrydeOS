@@ -85,7 +85,8 @@ export default function FirstLoginTour() {
   const isDemo = user?.uid === "demo";
   // Demo users get the DemoBanner instead — no tour overlay that flashes and disappears
   const demoFirstTime = false;
-  const realUserFirstTime = user && !isDemo && user.firstLogin === false && !dismissed;
+  // Show tour for first-time users who haven't completed it yet (firstLogin=true and tourCompleted=false)
+  const realUserFirstTime = user && !isDemo && user.firstLogin === true && !user.tourCompleted && !dismissed;
   const shouldShow = demoFirstTime || realUserFirstTime;
 
   // For first-time demo visitors, auto-start the step tour after a short delay so they get the walkthrough without clicking.
@@ -111,7 +112,7 @@ export default function FirstLoginTour() {
 
       try {
         await updateDoc(doc(db, "users", user.uid), {
-          firstLogin: true,
+          firstLogin: false,
           tourCompleted,
           status: "registered",
           updatedAt: new Date().toISOString(),
