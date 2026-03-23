@@ -173,9 +173,17 @@ export default function StatCard({
     <div
       onClick={onClick}
       className={`group relative rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden transition-all duration-300 ease-out flex flex-col ${
-        onClick ? "cursor-pointer hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5 active:scale-[0.99] active:shadow-[var(--shadow-card)]" : "hover:shadow-[var(--shadow-elevated)]"
+        onClick ? "cursor-pointer hover:shadow-[var(--shadow-elevated)] hover:-translate-y-1 active:scale-[0.99] active:shadow-[var(--shadow-card)]" : "hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
       }`}
     >
+      {/* Hover glow — radial wash using status colour */}
+      <div
+        className="stat-card-glow"
+        style={{
+          background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${dotStyle.glow} 0%, transparent 70%)`,
+        }}
+      />
+
       {/* Status dot — top right */}
       <div
         className="absolute top-4 right-4 w-[7px] h-[7px] rounded-full"

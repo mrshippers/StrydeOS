@@ -12,7 +12,7 @@ import { withRequestLog } from "@/lib/request-logger";
 async function handler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
-    requireRole(user, ["owner", "admin"]);
+    requireRole(user, ["owner", "admin", "superadmin"]);
 
     const body = await request.json().catch(() => null);
     if (!body || !body.clinicId) {

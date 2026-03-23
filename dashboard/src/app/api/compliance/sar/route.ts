@@ -14,7 +14,7 @@ import { withRequestLog } from "@/lib/request-logger";
 async function postHandler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
-    requireRole(user, ["owner", "admin"]);
+    requireRole(user, ["owner", "admin", "superadmin"]);
 
     const clinicId = user.clinicId;
     if (!clinicId) {

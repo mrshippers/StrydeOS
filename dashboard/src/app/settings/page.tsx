@@ -297,23 +297,31 @@ function HeidiConnectionCard() {
   };
 
   const handleSync = async () => {
+    if (!firebaseUser) {
+      toast("Sign in required to sync Heidi notes", "error");
+      return;
+    }
     setSyncing(true);
     try {
-      const token = await firebaseUser?.getIdToken();
+      const token = await firebaseUser.getIdToken();
       const res = await fetch("/api/heidi/sync", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast(normalizeApiError(res.status, data?.error, "Heidi sync failed — check your API key"), "error");
+        return;
+      }
       if (data.ok) {
         setLastSync(new Date().toISOString());
         setNoteCount((prev) => prev + (data.count ?? 0));
-        toast(`Synced ${data.count ?? 0} notes`, "success");
+        toast(`Synced ${data.count ?? 0} clinical notes from Heidi`, "success");
       } else {
-        toast(data.errors?.[0] ?? "Sync failed", "error");
+        toast(data.errors?.[0] ?? "Heidi sync returned no data — try again", "error");
       }
     } catch {
-      toast("Sync failed", "error");
+      toast("Heidi sync failed — check your connection and try again", "error");
     } finally {
       setSyncing(false);
     }
@@ -472,6 +480,11 @@ export default function SettingsPage() {
 const cp = user?.clinicProfile ?? null;
 
   const [clinicName, setClinicName] = useState("");
+  const [clinicAddress, setClinicAddress] = useState("");
+  const [clinicPhone, setClinicPhone] = useState("");
+  const [sessionPrice, setSessionPrice] = useState("");
+  const [parkingInfo, setParkingInfo] = useState("");
+  const [clinicWebsite, setClinicWebsite] = useState("");
   const [timezone, setTimezone] = useState("Europe/London");
   const [followUpTarget, setFollowUpTarget] = useState("4.0");
   const [hepTarget, setHepTarget] = useState("95");
@@ -483,6 +496,11 @@ const cp = user?.clinicProfile ?? null;
     const t = fallbackTargets(cp);
     return {
       clinicName: cp.name ?? "",
+      clinicAddress: cp.address ?? "",
+      clinicPhone: cp.phone ?? "",
+      sessionPrice: cp.sessionPricePence ? String(cp.sessionPricePence / 100) : "",
+      parkingInfo: cp.parkingInfo ?? "",
+      clinicWebsite: cp.website ?? "",
       timezone: cp.timezone ?? "Europe/London",
       followUpTarget: String(t.followUpRate),
       hepTarget: String(t.hepRate),
@@ -494,12 +512,17 @@ const cp = user?.clinicProfile ?? null;
     if (!savedValues) return false;
     return (
       clinicName !== savedValues.clinicName ||
+      clinicAddress !== savedValues.clinicAddress ||
+      clinicPhone !== savedValues.clinicPhone ||
+      sessionPrice !== savedValues.sessionPrice ||
+      parkingInfo !== savedValues.parkingInfo ||
+      clinicWebsite !== savedValues.clinicWebsite ||
       timezone !== savedValues.timezone ||
       followUpTarget !== savedValues.followUpTarget ||
       hepTarget !== savedValues.hepTarget ||
       utilisationTarget !== savedValues.utilisationTarget
     );
-  }, [clinicName, timezone, followUpTarget, hepTarget, utilisationTarget, savedValues]);
+  }, [clinicName, clinicAddress, clinicPhone, sessionPrice, parkingInfo, clinicWebsite, timezone, followUpTarget, hepTarget, utilisationTarget, savedValues]);
 
   const { showDialog, confirmLeave, cancelLeave } = useUnsavedChanges({ isDirty });
 
@@ -559,6 +582,11 @@ const cp = user?.clinicProfile ?? null;
   useEffect(() => {
     if (!cp) return;
     setClinicName(cp.name ?? "");
+    setClinicAddress(cp.address ?? "");
+    setClinicPhone(cp.phone ?? "");
+    setSessionPrice(cp.sessionPricePence ? String(cp.sessionPricePence / 100) : "");
+    setParkingInfo(cp.parkingInfo ?? "");
+    setClinicWebsite(cp.website ?? "");
     setTimezone(cp.timezone ?? "Europe/London");
     const t = fallbackTargets(cp);
     setFollowUpTarget(String(t.followUpRate));
@@ -582,6 +610,11 @@ const cp = user?.clinicProfile ?? null;
     try {
       await updateDoc(doc(db, "clinics", clinicId), {
         name: clinicName,
+        address: clinicAddress || null,
+        phone: clinicPhone || null,
+        sessionPricePence: sessionPrice ? Math.round(parseFloat(sessionPrice) * 100) : null,
+        parkingInfo: parkingInfo || null,
+        website: clinicWebsite || null,
         timezone,
         targets: {
           followUpRate: parseFloat(followUpTarget),
@@ -598,7 +631,7 @@ const cp = user?.clinicProfile ?? null;
     } finally {
       setSaving(false);
     }
-  }, [clinicId, clinicName, timezone, followUpTarget, hepTarget, utilisationTarget, refreshClinicProfile, toast]);
+  }, [clinicId, clinicName, clinicAddress, clinicPhone, sessionPrice, parkingInfo, clinicWebsite, timezone, followUpTarget, hepTarget, utilisationTarget, refreshClinicProfile, toast]);
 
   async function handleTestPms() {
     if (!pmsProvider || !pmsApiKey.trim()) {
@@ -1202,13 +1235,8 @@ const cp = user?.clinicProfile ?? null;
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="Settings" subtitle="Manage your clinic configuration, targets, and team" />
 
-      {/* Account / one-click Stryde Super User */}
+      {/* Retrigger tour */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4">
-        <p className="text-xs font-semibold text-muted-strong uppercase tracking-wide mb-2">Account</p>
-        <p className="text-xs text-navy mb-1">
-          <span className="text-muted-strong">Role:</span> <strong>{user?.role ?? "—"}</strong>
-        </p>
-        {/* Retrigger tour */}
         <RetriggerTourButton />
       </div>
 
@@ -1343,7 +1371,7 @@ const cp = user?.clinicProfile ?? null;
             </div>
           )}
 
-          {["owner", "admin"].includes(user.role) && (
+          {["owner", "admin", "superadmin"].includes(user.role) && (
             <div className="mt-6 pt-6 border-t border-border">
               <label className="flex items-center justify-between cursor-pointer">
                 <div>
@@ -1497,7 +1525,7 @@ const cp = user?.clinicProfile ?? null;
         </div>
       )}
 
-      {canManageTeam && (
+      {canManageTeam && (<>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Clinic Details */}
         <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
@@ -1514,6 +1542,71 @@ const cp = user?.clinicProfile ?? null;
                 onChange={(e) => setClinicName(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                Address
+              </label>
+              <input
+                type="text"
+                value={clinicAddress}
+                onChange={(e) => setClinicAddress(e.target.value)}
+                placeholder="e.g. 123 High Street, West Hampstead, London NW6"
+                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={clinicPhone}
+                  onChange={(e) => setClinicPhone(e.target.value)}
+                  placeholder="020 7946 0958"
+                  className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                  Session Price (£)
+                </label>
+                <input
+                  type="number"
+                  step="0.50"
+                  min="0"
+                  value={sessionPrice}
+                  onChange={(e) => setSessionPrice(e.target.value)}
+                  placeholder="65.00"
+                  className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                Website
+              </label>
+              <input
+                type="url"
+                value={clinicWebsite}
+                onChange={(e) => setClinicWebsite(e.target.value)}
+                placeholder="https://www.yourclinic.com"
+                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                Parking Info
+              </label>
+              <textarea
+                rows={2}
+                value={parkingInfo}
+                onChange={(e) => setParkingInfo(e.target.value)}
+                placeholder="e.g. Free 2-hour parking on Mill Lane. Pay & display on West End Lane."
+                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors resize-none"
+              />
+              <p className="text-[10px] text-muted mt-1">Shared with Ava so she can answer parking questions</p>
             </div>
             <div>
               <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
@@ -1582,18 +1675,22 @@ const cp = user?.clinicProfile ?? null;
             </div>
           </div>
 
-          <button
-            onClick={handleSaveWithOnboarding}
-            disabled={saving}
-            className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
-            style={{ background: brand.blue }}
-          >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {saving ? "Saving..." : "Save Targets"}
-          </button>
         </div>
       </div>
-      )}
+
+      {/* Save button — saves clinic details + KPI targets together */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleSaveWithOnboarding}
+          disabled={saving || !isDirty}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+          style={{ background: brand.blue }}
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          {saving ? "Saving..." : "Save Settings"}
+        </button>
+      </div>
+      </>)}
 
       {/* PMS Connection */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
@@ -1712,8 +1809,8 @@ const cp = user?.clinicProfile ?? null;
                 <button
                   onClick={handleTestPms}
                   disabled={!pmsApiKey.trim() || pmsTesting}
-                  className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
-                  style={{ background: brand.success }}
+                  className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: (!pmsApiKey.trim() && !pmsTesting) ? "#9CA3AF" : brand.success }}
                 >
                   {pmsTesting ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -1722,6 +1819,9 @@ const cp = user?.clinicProfile ?? null;
                   )}
                   {pmsTesting ? "Testing..." : "Test Connection"}
                 </button>
+                {!pmsApiKey.trim() && !pmsTesting && (
+                  <p className="text-[11px] text-muted mt-1.5">Enter your API key above to test the connection</p>
+                )}
 
                 {/* Integration blocked fallback */}
                 {pmsTestFailed && (
@@ -2312,8 +2412,8 @@ const cp = user?.clinicProfile ?? null;
                 <button
                   onClick={handleTestHep}
                   disabled={!hepApiKey.trim() || hepTesting}
-                  className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
-                  style={{ background: brand.success }}
+                  className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: (!hepApiKey.trim() && !hepTesting) ? "#9CA3AF" : brand.success }}
                 >
                   {hepTesting ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -2322,6 +2422,9 @@ const cp = user?.clinicProfile ?? null;
                   )}
                   {hepTesting ? "Testing..." : "Test Connection"}
                 </button>
+                {!hepApiKey.trim() && !hepTesting && (
+                  <p className="text-[11px] text-muted mt-1.5">Enter your API key above to test the connection</p>
+                )}
               </div>
             )}
 

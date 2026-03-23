@@ -330,7 +330,18 @@ export default function IntelligencePage() {
         />
       )}
       {/* Summary stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="relative grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Ambient radial glow — purple wash behind Intelligence stats */}
+        <div
+          className="ambient-glow -z-10"
+          style={{
+            width: "45%",
+            height: "130%",
+            top: "-15%",
+            left: "27%",
+            background: "radial-gradient(ellipse at center, rgba(139,92,246,0.06) 0%, transparent 70%)",
+          }}
+        />
         <StatCard
           label="Weekly Revenue"
           value={formatPence(revByClinician.length > 0 ? Math.round(totalRevenue / revByClinician.length) : 0)}
@@ -546,7 +557,7 @@ export default function IntelligencePage() {
       </div>
 
       {/* Tab navigation */}
-      <div role="tablist" aria-label="Intelligence views" className="flex items-center gap-1 bg-cloud-light rounded-xl p-1 border border-border overflow-x-auto">
+      <div role="tablist" aria-label="Intelligence views" className="relative flex items-center gap-1 bg-cloud-light rounded-xl p-1 border border-border overflow-x-auto">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -556,8 +567,8 @@ export default function IntelligencePage() {
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition-all whitespace-nowrap ${
               activeTab === id
-                ? "font-semibold shadow-[var(--shadow-card)] button-highlight bg-white text-navy"
-                : "font-medium text-muted hover:text-ink"
+                ? "font-semibold shadow-[var(--shadow-card)] tab-active-glow bg-white text-navy"
+                : "font-medium text-muted hover:text-ink hover:bg-white/50"
             }`}
           >
             <Icon size={14} />

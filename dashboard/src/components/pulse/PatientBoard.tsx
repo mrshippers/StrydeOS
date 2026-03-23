@@ -51,7 +51,13 @@ export const PatientBoard: FC<Props> = ({
 
   const openDropdown = useCallback((patientId: string, buttonEl: HTMLButtonElement) => {
     const rect = buttonEl.getBoundingClientRect();
-    setDropdownPos({ top: rect.bottom + 4, left: rect.left });
+    const dropdownWidth = 160;
+    // Clamp left so dropdown doesn't overflow viewport
+    const left = Math.min(rect.left, window.innerWidth - dropdownWidth - 16);
+    // If dropdown would go below viewport, position above the button
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const top = spaceBelow < 120 ? rect.top - 44 : rect.bottom + 4;
+    setDropdownPos({ top, left: Math.max(8, left) });
     setActiveDropdown(patientId);
   }, []);
 

@@ -26,7 +26,7 @@ export function useInsightEngineUnlock(): UseInsightEngineUnlockResult {
   const { user } = useAuth();
   const clinicId = user?.clinicId ?? null;
   const role = user?.role;
-  const isEligible = role === "owner" || role === "admin";
+  const isEligible = role === "owner" || role === "admin" || role === "superadmin";
 
   const [data, setData] = useState<InsightEngineMilestone | null>(null);
   const [shouldShow, setShouldShow] = useState(false);

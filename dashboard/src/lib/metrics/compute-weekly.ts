@@ -79,8 +79,9 @@ function aggregateWeek(
   const withHep = completed.filter((a) => a.hepAssigned === true).length;
   const dnas = appointments.filter((a) => a.status === "dna");
   const dnaCount = dnas.length;
-  const totalInclDna = appointments.length;
-  const dnaRate = totalInclDna > 0 ? dnaCount / totalInclDna : 0;
+  // DNA rate: DNAs ÷ (completed + DNAs) — excludes cancelled/no-show-rescheduled
+  const attendedOrDna = total + dnaCount;
+  const dnaRate = attendedOrDna > 0 ? dnaCount / attendedOrDna : 0;
   const initialAssessments = completed.filter(
     (a) => a.appointmentType === "initial_assessment"
   ).length;
@@ -89,10 +90,11 @@ function aggregateWeek(
   ).length;
 
   const uniquePatients = new Set(
-    appointments.map((a) => a.patientId).filter(Boolean)
+    completed.map((a) => a.patientId).filter(Boolean)
   ).size;
-  // Follow-up rate: follow-ups ÷ initial assessments (true rate, not appointments-per-patient)
-  const followUpRate = initialAssessments > 0 ? followUps / initialAssessments : 0;
+  // Follow-up rate: total completed sessions ÷ unique patients seen this week
+  // This gives sessions-per-patient which is what the dashboard displays
+  const followUpRate = uniquePatients > 0 ? total / uniquePatients : 0;
 
   const hepRate = total > 0 ? withHep / total : 0;
   const hepComplianceRate = hepRate;
@@ -170,6 +172,18 @@ function aggregateWeek(
     );
   }
 
+  // Utilisation: booked slots (completed + DNA) ÷ available capacity
+  // Estimate capacity as 8 slots/day × 5 working days = 40 slots/week per clinician
+  // For "all" aggregate, scale by number of clinicians with appointments
+  const bookedSlots = total + dnaCount;
+  const activeClinicians = clinicianId === "all"
+    ? new Set(appointments.map((a) => a.clinicianId)).size || 1
+    : 1;
+  const estimatedCapacity = activeClinicians * 40; // 8 patients/day × 5 days
+  const utilisationRate = estimatedCapacity > 0
+    ? Math.min(1, bookedSlots / estimatedCapacity)
+    : 0;
+
   return {
     clinicianId,
     clinicianName,
@@ -179,7 +193,7 @@ function aggregateWeek(
     hepComplianceRate,
     hepRate,
     hepTarget: targets.hepRate,
-    utilisationRate: 0,
+    utilisationRate,
     dnaRate,
     courseCompletionRate,
     revenuePerSessionPence,
@@ -193,6 +207,8 @@ function aggregateWeek(
     dnaByDayOfWeek,
     dnaByTimeSlot,
     computedAt: new Date().toISOString(),
+    statisticallyRepresentative: total >= 5,
+    caveatNote: total < 5 ? `Low volume week (${total} appointments)` : undefined,
   };
 }
 

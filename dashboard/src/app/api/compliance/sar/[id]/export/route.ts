@@ -19,7 +19,7 @@ async function handler(
 ) {
   try {
     const user = await verifyApiRequest(request);
-    requireRole(user, ["owner", "admin"]);
+    requireRole(user, ["owner", "admin", "superadmin"]);
 
     const clinicId = user.clinicId;
     if (!clinicId) {

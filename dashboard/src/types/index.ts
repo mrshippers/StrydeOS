@@ -160,6 +160,11 @@ export interface ClinicProfile {
   name: string;
   timezone: string;
   ownerEmail: string;
+  address?: string;
+  phone?: string;
+  sessionPricePence?: number;
+  parkingInfo?: string;
+  website?: string;
   status: ClinicStatus;
   pmsType: PmsProvider | null;
   /** Client-visible last PMS sync time (API key stored server-side only in integrations_config). */

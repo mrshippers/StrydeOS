@@ -11,6 +11,7 @@ import {
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/ui/PageHeader";
+import Link from "next/link";
 import {
   Shield,
   AlertTriangle,
@@ -22,6 +23,7 @@ import {
   WifiOff,
   Eye,
   BookOpen,
+  Activity,
 } from "lucide-react";
 import type { ClinicProfile, StripeSubscriptionStatus } from "@/types";
 
@@ -125,14 +127,12 @@ export default function AdminPage() {
   const [usedDemo, setUsedDemo] = useState(false);
 
   const isSuperadmin = user?.role === "superadmin";
-  const isOwner = user?.role === "owner";
-  const canAccessAdmin = isSuperadmin || isOwner;
 
   useEffect(() => {
-    if (!authLoading && user && !canAccessAdmin) {
+    if (!authLoading && user && !isSuperadmin) {
       router.replace("/dashboard");
     }
-  }, [authLoading, user, router, canAccessAdmin]);
+  }, [authLoading, user, router, isSuperadmin]);
 
   useEffect(() => {
     const isDemo = user?.uid === "demo";
@@ -189,10 +189,19 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader
-        title="Stryde Super User"
-        subtitle="Monitor all clinics in real time"
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Admin"
+          subtitle="Monitor all clinics in real time"
+        />
+        <Link
+          href="/admin/integration-health"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-blue hover:bg-blue/10 border border-blue/20 transition-colors"
+        >
+          <Activity size={14} />
+          Integration Health
+        </Link>
+      </div>
 
       {usedDemo && (
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-warn/10 border border-warn/20 text-sm text-warn">

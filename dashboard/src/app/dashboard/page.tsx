@@ -306,7 +306,18 @@ export default function DashboardPage() {
       )}
 
       {/* Stat cards — row 1 */}
-      <motion.section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4" data-tour="stat-cards" {...staggerItem(0.1)}>
+      <motion.section className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4" data-tour="stat-cards" {...staggerItem(0.1)}>
+        {/* Ambient radial glow — blue wash behind primary stats */}
+        <div
+          className="ambient-glow -z-10"
+          style={{
+            width: "50%",
+            height: "120%",
+            top: "-10%",
+            left: "25%",
+            background: "radial-gradient(ellipse at center, rgba(28,84,242,0.06) 0%, transparent 70%)",
+          }}
+        />
         {loading ? (
           <>
             <SkeletonCard />
@@ -352,7 +363,19 @@ export default function DashboardPage() {
       </motion.section>
 
       {/* Stat cards — row 2 */}
-      <motion.section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" {...staggerItem(0.18)}>
+      <motion.section className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" {...staggerItem(0.18)}>
+        {/* Ambient radial glow — teal wash behind secondary stats */}
+        <div
+          className="ambient-glow -z-10"
+          style={{
+            width: "40%",
+            height: "140%",
+            top: "-20%",
+            left: "30%",
+            background: "radial-gradient(ellipse at center, rgba(8,145,178,0.05) 0%, transparent 70%)",
+            animationDelay: "3s",
+          }}
+        />
         {loading ? (
           <>
             <SkeletonCard />
@@ -430,7 +453,19 @@ export default function DashboardPage() {
 
       {/* 90-day trend chart — shows window ending at selected week */}
       {!loading && trendWindow.length > 0 && (
-        <motion.div {...staggerItem(0.26)}>
+        <motion.div className="relative" {...staggerItem(0.26)}>
+          {/* Ambient radial glow — purple accent behind chart */}
+          <div
+            className="ambient-glow -z-10"
+            style={{
+              width: "35%",
+              height: "80%",
+              top: "10%",
+              right: "5%",
+              background: "radial-gradient(ellipse at center, rgba(139,92,246,0.04) 0%, transparent 70%)",
+              animationDelay: "2s",
+            }}
+          />
           <TrendChart
             data={trendWindow}
             lines={[
