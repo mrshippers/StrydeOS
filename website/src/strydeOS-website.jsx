@@ -56,6 +56,11 @@ const globalStyles = `
   @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   @keyframes waveform { 0% { transform: scaleY(0.4); } 100% { transform: scaleY(1); } }
   @keyframes ava-pulse-ring { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2.2); opacity: 0; } }
+  @keyframes ava-btn-glow {
+    0%,100% { box-shadow: 0 0 16px rgba(28,84,242,0.35), 0 0 40px rgba(28,84,242,0.15), inset 0 0 12px rgba(75,139,245,0.25); }
+    50% { box-shadow: 0 0 24px rgba(28,84,242,0.55), 0 0 60px rgba(28,84,242,0.25), inset 0 0 18px rgba(75,139,245,0.4); }
+  }
+  @keyframes ava-ring-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
   .animate-float { animation: float 4s ease-in-out infinite; }
 
@@ -840,6 +845,21 @@ const Integrations = ({ darkMode }) => {
 /* ─── Products ──────────────────────────────────────────────────────────────── */
 const Products = ({ darkMode }) => {
   const [active, setActive] = useState(0);
+  const [avaPlaying, setAvaPlaying] = useState(false);
+  const avaAudioRef = useRef(null);
+  const toggleAva = () => {
+    const audio = avaAudioRef.current;
+    if (!audio) return;
+    if (avaPlaying) { audio.pause(); } else { audio.play(); }
+    setAvaPlaying(!avaPlaying);
+  };
+  useEffect(() => {
+    const audio = avaAudioRef.current;
+    if (!audio) return;
+    const onEnd = () => setAvaPlaying(false);
+    audio.addEventListener("ended", onEnd);
+    return () => audio.removeEventListener("ended", onEnd);
+  }, []);
   const bg    = darkMode ? C.navy    : C.cloudDancer;
   const muted = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
   const head  = darkMode ? "white"   : C.navy;
@@ -884,7 +904,6 @@ const Products = ({ darkMode }) => {
         const pillColor = dk ? "rgba(255,255,255,0.5)" : C.muted;
         const waveBg = dk ? "rgba(255,255,255,0.04)" : C.cloudLight;
         const waveBorder = dk ? "rgba(255,255,255,0.06)" : C.border;
-        const waveTimeColor = dk ? "rgba(255,255,255,0.3)" : C.muted;
         const callCountColor = dk ? "white" : C.navy;
         const callLabelColor = dk ? "rgba(255,255,255,0.35)" : C.muted;
 
@@ -980,35 +999,62 @@ const Products = ({ darkMode }) => {
               </div>
 
               {/* Waveform bar */}
-              <div style={{
-                padding: "14px 16px", borderRadius: 12,
-                backgroundColor: waveBg, border: `1px solid ${waveBorder}`,
-                display: "flex", alignItems: "center", gap: 14,
-              }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: "50%",
-                  backgroundColor: C.blue,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0, cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(28,84,242,0.25)",
-                }}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M3.5 1.75L11.5 7L3.5 12.25V1.75Z" fill="white" />
-                  </svg>
+              <div
+                onClick={toggleAva}
+                style={{
+                  padding: "14px 16px", borderRadius: 12,
+                  backgroundColor: waveBg, border: `1px solid ${waveBorder}`,
+                  display: "flex", alignItems: "center", gap: 14,
+                  cursor: "pointer", transition: "border-color 0.2s ease",
+                }}
+              >
+                {/* Radial play/pause button */}
+                <div style={{ position: "relative", width: 44, height: 44, flexShrink: 0 }}>
+                  {/* Outer spinning ring (visible when playing) */}
+                  <div style={{
+                    position: "absolute", inset: -3, borderRadius: "50%",
+                    border: "2px solid transparent",
+                    borderTopColor: C.blueGlow,
+                    borderRightColor: "rgba(28,84,242,0.15)",
+                    opacity: avaPlaying ? 1 : 0,
+                    animation: avaPlaying ? "ava-ring-spin 1.8s linear infinite" : "none",
+                    transition: "opacity 0.3s ease",
+                  }} />
+                  {/* Core button */}
+                  <div style={{
+                    width: 44, height: 44, borderRadius: "50%",
+                    background: `radial-gradient(circle at 35% 30%, ${C.blueGlow}, ${C.blue} 60%, ${C.navy} 120%)`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    animation: avaPlaying ? "ava-btn-glow 2s ease-in-out infinite" : "none",
+                    boxShadow: avaPlaying
+                      ? `0 0 20px rgba(28,84,242,0.5), 0 0 50px rgba(28,84,242,0.2)`
+                      : `0 2px 12px rgba(28,84,242,0.3)`,
+                    transition: "box-shadow 0.4s ease",
+                  }}>
+                    {avaPlaying ? (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <rect x="3.5" y="2.5" width="3.5" height="11" rx="1" fill="white"/>
+                        <rect x="9" y="2.5" width="3.5" height="11" rx="1" fill="white"/>
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M4.5 2L13 8L4.5 14V2Z" fill="white"/>
+                      </svg>
+                    )}
+                  </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 2, height: 24 }}>
-                  {[0.6, 1, 0.7, 0.9, 0.5, 0.8, 1, 0.6, 0.4, 0.8, 0.7, 0.9, 0.5, 0.7, 1].map((h, i) => (
+
+                {/* Waveform bars */}
+                <div style={{ display: "flex", alignItems: "center", gap: 2, height: 24, flex: 1 }}>
+                  {[0.6, 1, 0.7, 0.9, 0.5, 0.8, 1, 0.6, 0.4, 0.8, 0.7, 0.9, 0.5, 0.7, 1, 0.6, 0.9, 0.5, 0.8, 0.7].map((h, i) => (
                     <div key={i} style={{
-                      width: 3, height: `${h * 100}%`, borderRadius: 2,
-                      backgroundColor: C.blue,
-                      animation: `waveform 1.2s ease-in-out ${i * 0.08}s infinite alternate`,
+                      width: 3, flex: 1, maxWidth: 4, height: `${h * 100}%`, borderRadius: 2,
+                      backgroundColor: avaPlaying ? C.blue : (dk ? "rgba(28,84,242,0.35)" : "rgba(28,84,242,0.25)"),
+                      animation: avaPlaying ? `waveform 1.2s ease-in-out ${i * 0.08}s infinite alternate` : "none",
+                      transition: "background-color 0.3s ease",
                     }} />
                   ))}
                 </div>
-                <span style={{
-                  fontSize: 12, color: waveTimeColor, fontWeight: 500,
-                  marginLeft: "auto", flexShrink: 0, fontVariantNumeric: "tabular-nums",
-                }}>1:42</span>
               </div>
             </div>
 
@@ -1154,6 +1200,7 @@ const Products = ({ darkMode }) => {
 
   return (
     <section id="products" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
+      <audio ref={avaAudioRef} src="/ava-demo.mp3" preload="metadata" />
       <div style={{ maxWidth: 1160, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
           <div className="section-chip">Products</div>
