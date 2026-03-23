@@ -261,6 +261,25 @@ export async function runPipeline(
 
   await cleanOldHealthLogs(db, clinicId);
 
+  // Auto-promote: api_connected → first_value_reached on first successful sync
+  if (allOk) {
+    try {
+      const clinicSnap = await db.collection("clinics").doc(clinicId).get();
+      const clinicData = clinicSnap.data();
+      const stage = (clinicData?.onboardingV2 as Record<string, unknown> | undefined)?.stage;
+      const firstValueAt = (clinicData?.onboardingV2 as Record<string, unknown> | undefined)?.firstValueAt;
+      if (stage === "api_connected" && !firstValueAt) {
+        await db.collection("clinics").doc(clinicId).update({
+          "onboardingV2.stage": "first_value_reached",
+          "onboardingV2.firstValueAt": completedAt,
+          "onboardingV2.lastEventAt": completedAt,
+        });
+      }
+    } catch {
+      // Non-critical — don't fail the pipeline for an onboarding stage update
+    }
+  }
+
   return {
     clinicId,
     ok: allOk,

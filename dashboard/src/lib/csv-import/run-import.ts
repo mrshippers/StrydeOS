@@ -308,14 +308,22 @@ export async function runCSVImport(
     }
   }
 
+  // Only set fallback_live if clinic hasn't already progressed past it
+  const clinicData = (await clinicRef.get()).data();
+  const currentStage = (clinicData?.onboardingV2 as Record<string, unknown> | undefined)?.stage as string | undefined;
+  const earlyStages = ["signup_complete", "onboarding_started", "integration_self_serve", "integration_blocked"];
+  const shouldSetFallback = !currentStage || earlyStages.includes(currentStage);
+
   await clinicRef.set(
     {
       pmsType: schema.provider ? schema.provider.toLowerCase().replace(/\s+/g, "_") : "csv_import",
       pmsLastSyncAt: now,
       "onboarding.pmsConnected": true,
-      "onboardingV2.stage": "fallback_live",
+      ...(shouldSetFallback ? {
+        "onboardingV2.stage": "fallback_live",
+        "onboardingV2.firstValueAt": now,
+      } : {}),
       "onboardingV2.lastEventAt": now,
-      "onboardingV2.firstValueAt": now,
       updatedAt: now,
     },
     { merge: true }

@@ -142,7 +142,7 @@ interface HepProviderOption {
 const HEP_PROVIDERS: HepProviderOption[] = [
   { id: "physitrack", label: "Physitrack", icon: "🏃", logo: "/integrations/physitrack.svg", comingSoon: false },
   { id: "rehab_my_patient", label: "Rehab My Patient", icon: "💪", logo: "/integrations/rehab_my_patient.svg", comingSoon: false },
-  { id: "wibbi", label: "Wibbi", icon: "🎯", logo: "/integrations/wibbi.svg", comingSoon: true },
+  { id: "wibbi", label: "Wibbi", icon: "🎯", logo: "/integrations/wibbi.svg", comingSoon: false },
 ];
 
 function RetriggerTourButton() {

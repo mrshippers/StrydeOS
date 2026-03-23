@@ -49,13 +49,23 @@ async function handler(request: NextRequest) {
 
     const clinicRef = db.collection("clinics").doc(clinicId);
     const clinicSnap = await clinicRef.get();
-    const onboarding = clinicSnap.data()?.onboarding ?? {};
+    const clinicData = clinicSnap.data() ?? {};
+    const onboarding = clinicData.onboarding ?? {};
+
+    // Auto-promote onboarding stage if clinic was in a pre-API stage
+    const currentStage = (clinicData.onboardingV2 as Record<string, unknown> | undefined)?.stage as string | undefined;
+    const promoteFrom = ["fallback_live", "integration_blocked", "integration_self_serve", "signup_complete", "onboarding_started"];
+    const stageUpdate = currentStage && promoteFrom.includes(currentStage)
+      ? { "onboardingV2.stage": "api_connected", "onboardingV2.lastEventAt": now }
+      : {};
+
     await clinicRef.update({
       pmsType: provider,
       onboarding: {
         ...onboarding,
         pmsConnected: true,
       },
+      ...stageUpdate,
       updatedAt: now,
     });
 
