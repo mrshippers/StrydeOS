@@ -69,7 +69,7 @@ const PMS_OPTIONS = [
   { id: "cliniko" as PmsProvider, label: "Cliniko", description: "Global PMS with strong UK adoption via CSP partnership", badge: null, disabled: false },
   { id: "halaxy" as PmsProvider, label: "Halaxy", description: "UK/EU practice management with FHIR-standard API", badge: null, disabled: false },
   { id: "powerdiary" as PmsProvider, label: "Zanda (Power Diary)", description: "UK & Australian PMS with self-serve API access", badge: null, disabled: false },
-  { id: "tm3" as PmsProvider, label: "TM3 (Blue Zinc)", description: "Dominant in MSK and insurance-funded UK clinics", badge: "Coming soon" as string | null, disabled: true },
+  { id: "tm3" as PmsProvider, label: "TM3 (Blue Zinc)", description: "Dominant in MSK and insurance-funded UK clinics — CSV bridge", badge: "CSV Bridge" as string | null, disabled: false },
 ];
 
 const PULSE_SEQUENCES = [

@@ -167,9 +167,18 @@ const TM3_FIELD_MAP: Record<string, CanonicalField> = {
 
 const TM3_STATUS_MAP: Record<string, AppointmentStatus> = {
   attended: "completed",
+  completed: "completed",
+  arrived: "completed",
   dna: "dna",
+  "did not attend": "dna",
+  "no show": "dna",
   cancelled: "cancelled",
+  canceled: "cancelled",
   "late cancel": "late_cancel",
+  "late cancellation": "late_cancel",
+  booked: "scheduled",
+  confirmed: "scheduled",
+  rescheduled: "scheduled",
 };
 
 const tm3Schema: CSVSchema = {

@@ -15,7 +15,10 @@ export type InsightEventType =
 
   // Patient-actionable (Intelligence detects, Pulse acts)
   | "PATIENT_DROPOUT_RISK"      // Mid-programme patient, no rebooking >X days
-  | "NPS_DETRACTOR_ALERT";      // NPS response ≤6 — needs human follow-up + possible Pulse nudge
+  | "NPS_DETRACTOR_ALERT"       // NPS response ≤6 — needs human follow-up + possible Pulse nudge
+
+  // System health
+  | "DATA_STALENESS_ALERT";     // No CSV import received in 7+ days (CSV-bridge clinics)
 
 // ── Which module acts on which event ──────────────────────
 
@@ -26,6 +29,7 @@ export const OWNER_EVENTS: InsightEventType[] = [
   "UTILISATION_BELOW_TARGET",
   "REVENUE_LEAK_DETECTED",
   "COURSE_COMPLETION_WIN",
+  "DATA_STALENESS_ALERT",
 ];
 
 export const PATIENT_ACTION_EVENTS: InsightEventType[] = [

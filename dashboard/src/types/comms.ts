@@ -37,9 +37,9 @@ export const DEFAULT_SEQUENCES: CommsSequenceConfig[] = [
   {
     type: "review_prompt",
     name: "Discharge Review Prompt",
-    description: "Step 1: NPS score request (reply with 0-10). Step 2: Google Review link for promoters.",
+    description: "Step 1: NPS score request (day 3). Step 2: Google Review link for promoters (day 5).",
     channel: "sms",
-    delayHours: 60,
+    delayHours: 72,
     enabled: true,
   },
   {
@@ -151,7 +151,7 @@ export const DEFAULT_SEQUENCE_DEFINITIONS: Omit<SequenceDefinition, "id">[] = [
     sequenceType: "review_prompt",
     steps: [
       { stepNumber: 1, daysAfterTrigger: 3, channel: "sms",   templateKey: "review_step1" },
-      { stepNumber: 2, daysAfterTrigger: 7, channel: "sms",   templateKey: "review_step2" },
+      { stepNumber: 2, daysAfterTrigger: 5, channel: "sms",   templateKey: "review_step2" },
     ],
     attributionWindowDays: 14,
     exitConditions: ["appointment_booked", "unsubscribed"],

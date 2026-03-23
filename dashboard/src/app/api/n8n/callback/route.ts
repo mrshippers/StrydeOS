@@ -210,6 +210,20 @@ async function handleInboundReply(body: Record<string, unknown>) {
       logUpdate.npsCategory = npsCategory;
       logUpdate.outcome     = "responded" as CommsOutcome;
 
+      // Resolve treating clinician from the patient record
+      let clinicianId: string | null = null;
+      try {
+        const patientDoc = await clinicRef
+          .collection("patients")
+          .doc(targetPatientId)
+          .get();
+        if (patientDoc.exists) {
+          clinicianId = (patientDoc.data()?.clinicianId as string) ?? null;
+        }
+      } catch {
+        // Non-fatal — review is still written without clinician attribution
+      }
+
       // Write NPS response to the reviews collection with platform: "nps_sms"
       await clinicRef.collection("reviews").add({
         platform:           "nps_sms",
@@ -217,6 +231,7 @@ async function handleInboundReply(body: Record<string, unknown>) {
         reviewText:         replyText,
         date:               now,
         patientId:          targetPatientId,
+        clinicianId,
         clinicianMentioned: null,
         verified:           true,
         npsCategory,

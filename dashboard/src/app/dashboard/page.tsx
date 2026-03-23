@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { motion, useScroll, useTransform } from "motion/react";
-import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, Upload, ArrowRight } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import { AlertBanner } from "@/components/ui/AlertFlag";
@@ -207,6 +207,38 @@ export default function DashboardPage() {
       {/* Rule-based insight nudge — current week only */}
       {isCurrentWeek && !loading && (
         <InsightNudge stats={latest} previousStats={previous} />
+      )}
+
+      {/* Data staleness nudge for CSV-bridge clinics (TM3 etc.) */}
+      {isCurrentWeek && !loading && lastSync?.staleness === "very-stale" && ["tm3"].includes(user?.clinicProfile?.pmsType ?? "") && (
+        <motion.div
+          className="flex items-center gap-3 p-3 rounded-xl border border-warn/20 bg-warn/5"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="w-8 h-8 rounded-lg bg-warn/10 flex items-center justify-center shrink-0">
+            <RefreshCw size={14} className="text-warn" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-navy">Data import overdue</p>
+            <p className="text-[11px] text-muted">Last import was {lastSync.label}. Upload a new CSV to keep your metrics current.</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href="/settings#csv-import-section"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
+            >
+              <Upload size={11} /> Upload CSV
+            </a>
+            <a
+              href="/settings"
+              className="flex items-center gap-1 text-[11px] font-medium text-muted hover:text-navy transition-colors"
+            >
+              Auto-import <ArrowRight size={10} />
+            </a>
+          </div>
+        </motion.div>
       )}
 
       {/* Error / Demo data banner */}

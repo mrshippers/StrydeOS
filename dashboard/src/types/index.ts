@@ -77,6 +77,19 @@ export interface BrandConfig {
   clinicUrl?: string;
 }
 
+export interface NpsConfig {
+  /** Whether the review_prompt SMS sequence fires automatically post-appointment. */
+  enabled: boolean;
+  /** Days after appointment before NPS SMS is sent (step 1). */
+  npsDelayDays: number;
+  /** Days after appointment before Google Review nudge is sent to promoters (step 2). */
+  reviewNudgeDelayDays: number;
+  /** Minimum days between NPS surveys for the same patient. */
+  cooldownDays: number;
+  /** Clinic's Google Business Profile URL — required for promoter → review nudge. */
+  googleReviewUrl: string | null;
+}
+
 export interface OnboardingState {
   pmsConnected: boolean;
   cliniciansConfirmed: boolean;
@@ -175,6 +188,7 @@ export interface ClinicProfile {
   featureFlags: FeatureFlags;
   targets: ClinicTargets;
   brandConfig: BrandConfig;
+  npsConfig?: NpsConfig;
   onboarding: OnboardingState;
   onboardingV2?: OnboardingV2;
   billing?: BillingState;
@@ -399,6 +413,9 @@ export interface Review {
   rating: number;
   reviewText?: string;
   date: string;
+  /** Treating clinician resolved from patient record (NPS SMS). */
+  clinicianId?: string;
+  /** Clinician name-matched from review text (Google/Trustpilot). */
   clinicianMentioned?: string;
   patientId?: string;
   verified: boolean;

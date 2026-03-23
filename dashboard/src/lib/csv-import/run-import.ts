@@ -310,7 +310,7 @@ export async function runCSVImport(
 
   await clinicRef.set(
     {
-      pmsType: "csv_import",
+      pmsType: schema.provider ? schema.provider.toLowerCase().replace(/\s+/g, "_") : "csv_import",
       pmsLastSyncAt: now,
       "onboarding.pmsConnected": true,
       "onboardingV2.stage": "fallback_live",

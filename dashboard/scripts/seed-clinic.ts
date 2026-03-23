@@ -101,6 +101,13 @@ async function main() {
         courseCompletionTarget: 80,
       },
       brandConfig: {},
+      npsConfig: {
+        enabled: true,
+        npsDelayDays: 3,
+        reviewNudgeDelayDays: 5,
+        cooldownDays: 30,
+        googleReviewUrl: null, // prompted during onboarding
+      },
       onboarding: { pmsConnected: false, cliniciansConfirmed: false, targetsSet: false },
       createdAt: now,
       updatedAt: now,

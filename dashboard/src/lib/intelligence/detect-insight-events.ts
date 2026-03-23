@@ -341,20 +341,45 @@ export async function detectInsightEvents(
     );
     if (alreadyAlerted) continue;
 
+    // Resolve treating clinician — prefer clinicianId written to review by callback,
+    // fall back to patient record lookup (patient may be discharged and excluded from
+    // the active patients query, so the review field is the reliable source).
+    const patientId = (review.patientId as string) ?? undefined;
+    let detractorClinicianId: string | undefined = (review.clinicianId as string) ?? undefined;
+    let detractorClinicianName: string | undefined;
+    if (!detractorClinicianId && patientId) {
+      const patient = patients.find((p) => p.id === patientId);
+      if (patient) {
+        detractorClinicianId = patient.clinicianId as string;
+      }
+    }
+    if (detractorClinicianId) {
+      detractorClinicianName = clinicians.find((c) => c.id === detractorClinicianId)?.name;
+    }
+
+    const clinicianContext = detractorClinicianName
+      ? ` (${detractorClinicianName}'s patient)`
+      : "";
+
     newEvents.push({
       type: "NPS_DETRACTOR_ALERT",
       clinicId,
-      patientId: (review.patientId as string) ?? undefined,
+      clinicianId: detractorClinicianId,
+      clinicianName: detractorClinicianName,
+      patientId,
       severity: "critical",
-      title: `NPS detractor alert — patient scored ${rating}/10`,
+      title: `NPS detractor alert — patient scored ${rating}/10${clinicianContext}`,
       description: `A patient responded with a score of ${rating} to your NPS survey. Detractor scores (≤6) need fast human follow-up to understand the issue and prevent churn or negative reviews.`,
-      suggestedAction: `Reach out to the patient within 24 hours. A personal call from the clinic owner or their treating clinician is most effective.`,
+      suggestedAction: detractorClinicianName
+        ? `Reach out to the patient within 24 hours. A personal call from ${detractorClinicianName} or the clinic owner is most effective.`
+        : `Reach out to the patient within 24 hours. A personal call from the clinic owner or their treating clinician is most effective.`,
       actionTarget: "patient",
       createdAt: new Date().toISOString(),
       metadata: {
         reviewId: review.id,
         npsScore: rating,
         reviewDate: review.date,
+        clinicianId: detractorClinicianId ?? null,
       },
     });
   }

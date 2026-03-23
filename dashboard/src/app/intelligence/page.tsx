@@ -364,7 +364,7 @@ export default function IntelligencePage() {
           value={reputationDemoFallback && !usedDemo ? "—" : reviews.totalReviews}
           unit={reputationDemoFallback && !usedDemo ? "" : `${reviews.avgRating} avg`}
           status={reputationDemoFallback && !usedDemo ? "neutral" : "ok"}
-          insight={reputationDemoFallback && !usedDemo ? "Connect Google Reviews" : `${reviews.monthlyVelocity.length > 0 ? reviews.monthlyVelocity[reviews.monthlyVelocity.length - 1].count : 0} this month`}
+          insight={reputationDemoFallback && !usedDemo ? "Awaiting first responses" : `${reviews.monthlyVelocity.length > 0 ? reviews.monthlyVelocity[reviews.monthlyVelocity.length - 1].count : 0} this month`}
         />
         <StatCard
           label="Referral Conv."
@@ -1006,16 +1006,23 @@ export default function IntelligencePage() {
           <div className="space-y-6">
             {reputationDemoFallback && !usedDemo && (
               <div
-                className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm"
-                style={{ background: "rgba(139, 92, 246, 0.06)", border: "1px solid rgba(139, 92, 246, 0.15)" }}
+                className="rounded-[var(--radius-card)] border border-border bg-white p-6 text-center"
+                style={{ borderColor: "rgba(139, 92, 246, 0.2)" }}
               >
-                <Star size={14} className="text-purple shrink-0" />
-                <span className="text-purple font-medium">
-                  Showing sample data
-                  <span className="font-normal text-muted ml-1">
-                    — connect Google Reviews to see real ratings
-                  </span>
-                </span>
+                <div
+                  className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full"
+                  style={{ background: "rgba(139, 92, 246, 0.08)" }}
+                >
+                  <Star size={18} style={{ color: brand.purple }} />
+                </div>
+                <h3 className="font-display text-base text-navy mb-1">NPS collection starts automatically</h3>
+                <p className="text-sm text-muted max-w-md mx-auto mb-3">
+                  After each appointment, patients receive a short SMS asking how likely they are to recommend you.
+                  Promoters get a Google Review nudge. Detractors trigger an owner alert.
+                </p>
+                <p className="text-xs text-muted">
+                  Data will appear here once your first patients respond — usually within a week of going live.
+                </p>
               </div>
             )}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

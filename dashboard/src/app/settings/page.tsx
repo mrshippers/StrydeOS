@@ -63,6 +63,7 @@ interface PmsProviderOption {
   icon: string;
   logo?: string;
   comingSoon: boolean;
+  csvBridge?: boolean;
   recentlyAdded?: boolean;
 }
 
@@ -122,7 +123,7 @@ const INGEST_EMAIL_DOMAIN = "ingest.strydeos.com";
 const PMS_PROVIDERS: PmsProviderOption[] = [
   { id: "writeupp", label: "WriteUpp", icon: "📋", logo: "/integrations/writeupp.svg", comingSoon: false },
   { id: "cliniko", label: "Cliniko", icon: "🗂️", logo: "/integrations/cliniko.png", comingSoon: false },
-  { id: "tm3", label: "TM3", icon: "⚕️", logo: "/integrations/tm3.svg", comingSoon: true },
+  { id: "tm3", label: "TM3", icon: "⚕️", logo: "/integrations/tm3.svg", comingSoon: false, csvBridge: true },
   { id: "jane", label: "Jane App", icon: "🌿", logo: "/integrations/jane.png", comingSoon: true },
   { id: "powerdiary", label: "Zanda (Power Diary)", icon: "📓", logo: "/integrations/powerdiary.png", comingSoon: false, recentlyAdded: true },
   { id: "pabau", label: "Pabau", icon: "🏥", logo: "/integrations/pabau.svg", comingSoon: true },
@@ -561,6 +562,7 @@ const cp = user?.clinicProfile ?? null;
   const [wizardPms, setWizardPms] = useState<string>("");
   const [wizardGuide, setWizardGuide] = useState<OnboardingGuide | null>(null);
   const [wizardGuideLoading, setWizardGuideLoading] = useState(false);
+  const [tm3Platform, setTm3Platform] = useState<"cloud" | "desktop">("cloud");
 
   const [hepProvider, setHepProvider] = useState<string>("");
   const [hepApiKey, setHepApiKey] = useState("");
@@ -910,6 +912,14 @@ const cp = user?.clinicProfile ?? null;
   async function loadOnboardingGuide(pmsId: string) {
     setWizardGuideLoading(true);
     setWizardGuide(null);
+
+    // TM3 has no API — hardcoded guide, no Firestore lookup
+    if (pmsId === "tm3") {
+      setWizardGuide(null); // handled inline by TM3-specific wizard UI
+      setWizardGuideLoading(false);
+      return;
+    }
+
     try {
       const { getDoc, doc: firestoreDoc } = await import("firebase/firestore");
       if (!db) return;
@@ -1875,25 +1885,66 @@ const cp = user?.clinicProfile ?? null;
                 <p className="text-sm font-medium text-navy">
                   {PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.label} integration is coming soon
                 </p>
-                {pmsProvider === "tm3" ? (
-                  <p className="text-[12px] text-muted mt-1">
-                    TM3 has no public API. In the meantime, use the email-ingest pathway below — export your appointments CSV from TM3, then email it to your clinic&apos;s unique ingest address and it will be imported automatically.{" "}
-                    <button
-                      onClick={() => {
-                        const el = document.getElementById("csv-import-section");
-                        if (el) el.scrollIntoView({ behavior: "smooth" });
-                      }}
-                      className="underline text-navy hover:text-blue transition-colors"
-                    >
-                      See ingest address ↓
+                <p className="text-[12px] text-muted mt-1">
+                  We&apos;re building the API adapter for this provider. You&apos;ll be notified when it&apos;s ready.
+                  In the meantime, contact support to discuss early access.
+                </p>
+              </div>
+            )}
+
+            {/* TM3 CSV Bridge — active connection card */}
+            {pmsProvider && PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.csvBridge && (
+              <div className="p-4 rounded-xl border border-navy/15 bg-navy/5">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ background: (() => {
+                      const lastImport = importHistory.find((r) => r.provider === "TM3");
+                      if (!lastImport) return "#9CA3AF";
+                      const hours = (Date.now() - new Date(lastImport.importedAt).getTime()) / 3600000;
+                      return hours < 24 ? "#059669" : hours < 168 ? "#D97706" : "#DC2626";
+                    })() }} />
+                    <p className="text-sm font-semibold text-navy">TM3 CSV Bridge</p>
+                  </div>
+                  <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-navy/10 text-navy uppercase">Active</span>
+                </div>
+                {(() => {
+                  const lastImport = importHistory.find((r) => r.provider === "TM3");
+                  if (lastImport) {
+                    const d = new Date(lastImport.importedAt);
+                    return (
+                      <p className="text-[12px] text-muted mb-3">
+                        Last import: <strong className="text-navy">{d.toLocaleDateString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong> &middot; {lastImport.rowsWritten} appointments
+                      </p>
+                    );
+                  }
+                  return <p className="text-[12px] text-muted mb-3">No data imported yet. Upload your first TM3 CSV or set up auto-import below.</p>;
+                })()}
+                {clinicId && (
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-white">
+                    <Mail size={12} className="text-blue shrink-0" />
+                    <code className="text-[11px] text-navy flex-1 break-all">import-{clinicId}@{INGEST_EMAIL_DOMAIN}</code>
+                    <button onClick={copyIngestEmail} className="shrink-0 text-blue hover:text-blue-bright transition-colors">
+                      {ingestCopied ? <Check size={12} /> : <Copy size={12} />}
                     </button>
-                  </p>
-                ) : (
-                  <p className="text-[12px] text-muted mt-1">
-                    We&apos;re building the API adapter for this provider. You&apos;ll be notified when it&apos;s ready.
-                    In the meantime, contact support to discuss early access.
-                  </p>
+                  </div>
                 )}
+                <div className="flex items-center gap-2 mt-3">
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById("csv-import-section");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
+                  >
+                    <Upload size={11} /> Upload CSV
+                  </button>
+                  <button
+                    onClick={() => { setWizardOpen(true); setWizardPms("tm3"); setWizardStep(4); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-navy/70 hover:text-navy transition-colors"
+                  >
+                    Set up auto-import &rarr;
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -1958,7 +2009,47 @@ const cp = user?.clinicProfile ?? null;
             {/* Step 1: PMS-specific guide */}
             {wizardStep === 1 && (
               <div>
-                {wizardGuideLoading ? (
+                {wizardPms === "tm3" ? (
+                  <div>
+                    <p className="text-sm font-medium text-navy mb-3">Export appointments from TM3</p>
+                    <div className="flex gap-1 mb-4">
+                      {(["cloud", "desktop"] as const).map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => setTm3Platform(p)}
+                          className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
+                            tm3Platform === p ? "bg-navy text-white" : "bg-cloud-light text-muted hover:text-navy"
+                          }`}
+                        >
+                          TM3 {p === "cloud" ? "Cloud" : "Desktop"}
+                        </button>
+                      ))}
+                    </div>
+                    <ol className="space-y-3">
+                      {(tm3Platform === "cloud" ? [
+                        { heading: "Go to Reports", body: "In TM3 Cloud, navigate to Reports and select Appointment Report." },
+                        { heading: "Set your date range", body: "For your first import, select the last 90 days. For recurring imports, the last 7 days." },
+                        { heading: "Select columns", body: "Include: Therapist, Date, Time, End Time, Type, Status, Client Ref, Amount, Forename, Surname." },
+                        { heading: "Export as CSV", body: "Click Export and save the file. You\u2019ll upload it in the next step." },
+                      ] : [
+                        { heading: "Open Reports", body: "In TM3 Desktop, go to Reports and select Diary Export or Appointment Report." },
+                        { heading: "Set your date range", body: "For your first import, cover the last 90 days. For recurring, the last 7 days." },
+                        { heading: "Select all appointment columns", body: "Ensure Therapist, Date, Time, Type, Status, Client Ref, and Amount are included." },
+                        { heading: "Export to CSV", body: "Save the exported file. You\u2019ll upload it in the next step." },
+                      ]).map((step, i) => (
+                        <li key={i} className="flex gap-3">
+                          <span className="w-6 h-6 rounded-full bg-navy/10 text-navy text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                            {i + 1}
+                          </span>
+                          <div>
+                            <p className="text-sm font-medium text-navy">{step.heading}</p>
+                            <p className="text-[12px] text-muted mt-0.5">{step.body}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : wizardGuideLoading ? (
                   <div className="flex items-center gap-2 text-muted text-sm py-4">
                     <Loader2 size={14} className="animate-spin" /> Loading guide...
                   </div>
@@ -2042,9 +2133,21 @@ const cp = user?.clinicProfile ?? null;
             {wizardStep === 4 && (
               <div>
                 <p className="text-sm font-medium text-navy mb-2">Set up recurring imports</p>
-                <p className="text-[12px] text-muted mb-3">
-                  For hands-free data import, point your PMS email export to your clinic&apos;s unique ingest address. Every CSV attachment sent here is imported automatically.
-                </p>
+                {wizardPms === "tm3" ? (
+                  <div className="text-[12px] text-muted mb-3 space-y-2">
+                    <p>TM3 Cloud supports <strong className="text-navy">Scheduled Reports</strong>. Set one up to email your appointment CSV weekly to the address below — then StrydeOS imports automatically. Zero ongoing effort.</p>
+                    <ol className="list-decimal list-inside space-y-1 text-[11px]">
+                      <li>In TM3 Cloud, go to <strong className="text-navy">Reports &rarr; Scheduled Reports</strong></li>
+                      <li>Create a new schedule for the Appointment Report</li>
+                      <li>Set frequency to <strong className="text-navy">weekly</strong> (e.g. every Monday)</li>
+                      <li>Set the email recipient to your ingest address below</li>
+                    </ol>
+                  </div>
+                ) : (
+                  <p className="text-[12px] text-muted mb-3">
+                    For hands-free data import, point your PMS email export to your clinic&apos;s unique ingest address. Every CSV attachment sent here is imported automatically.
+                  </p>
+                )}
                 {clinicId && (
                   <div className="flex items-center gap-2 p-3 rounded-xl border border-border bg-cloud-light">
                     <Mail size={14} className="text-blue shrink-0" />
