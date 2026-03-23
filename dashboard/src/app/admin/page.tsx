@@ -25,7 +25,31 @@ import {
   BookOpen,
   Activity,
 } from "lucide-react";
-import type { ClinicProfile, StripeSubscriptionStatus } from "@/types";
+import type { ClinicProfile, PmsProvider, HepProvider, StripeSubscriptionStatus } from "@/types";
+
+const PMS_LABELS: Record<PmsProvider, string> = {
+  writeupp: "WriteUpp",
+  cliniko: "Cliniko",
+  tm3: "TM3",
+  jane: "Jane App",
+  powerdiary: "Zanda",
+  pabau: "Pabau",
+  halaxy: "Halaxy",
+};
+
+const HEP_LABELS: Record<HepProvider, string> = {
+  physitrack: "Physitrack",
+  rehab_my_patient: "Rehab My Patient",
+  wibbi: "Wibbi",
+};
+
+function pmsLabel(type: PmsProvider | null | undefined): string {
+  return type ? PMS_LABELS[type] ?? type : "—";
+}
+
+function hepLabel(type: HepProvider | null | undefined): string {
+  return type ? HEP_LABELS[type] ?? type : "—";
+}
 
 function hoursSince(dateStr: string | undefined): number | null {
   if (!dateStr) return null;
@@ -294,6 +318,7 @@ export default function AdminPage() {
                 <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">Billing</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">PMS</th>
+                <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">HEP</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">Last Sync</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider">Onboarding</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-muted uppercase tracking-wider"></th>
@@ -344,13 +369,28 @@ export default function AdminPage() {
                         <div className="flex items-center gap-1.5">
                           <Wifi size={12} className={isStale ? "text-danger" : "text-success"} />
                           <span className="text-[11px] text-navy">
-                            {clinic.pmsType === "writeupp" ? "WriteUpp" : clinic.pmsType === "cliniko" ? "Cliniko" : "—"}
+                            {pmsLabel(clinic.pmsType)}
                           </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5 text-muted">
                           <WifiOff size={12} />
                           <span className="text-[11px]">Not connected</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
+                      {clinic.hepConnectedAt ? (
+                        <div className="flex items-center gap-1.5">
+                          <Wifi size={12} className="text-success" />
+                          <span className="text-[11px] text-navy">
+                            {hepLabel(clinic.hepType)}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-muted">
+                          <WifiOff size={12} />
+                          <span className="text-[11px]">None</span>
                         </div>
                       )}
                     </td>
