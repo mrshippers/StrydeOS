@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, Fragment } from "react";
+import { useState, useCallback, useRef, Fragment } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -104,16 +104,20 @@ function OutcomeScoreEntry({
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const submittingRef = useRef(false);
 
   const activePatientId = selectedPatientId || patients[0]?.id || "";
   const selectedPatient = patients.find((p) => p.id === activePatientId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
     if (!clinicId || !activePatientId) return;
+    submittingRef.current = true;
 
+    const validKeys = new Set<string>(OUTCOME_MEASURES.map((m) => m.key));
     const entries = Object.entries(scores)
-      .filter(([, v]) => v !== "")
+      .filter(([k, v]) => v !== "" && validKeys.has(k))
       .map(([measureType, value]) => ({
         patientId: activePatientId,
         clinicianId: selectedPatient?.clinicianId ?? "",
@@ -136,6 +140,7 @@ function OutcomeScoreEntry({
       setSaveError("Failed to save scores. Please try again.");
     } finally {
       setSaving(false);
+      submittingRef.current = false;
     }
   };
 
@@ -231,7 +236,8 @@ function OutcomeScoreEntry({
   );
 }
 
-function MiniSparkline({ data, color, higherIsBetter }: { data: number[]; color: string; higherIsBetter?: boolean }) {
+function MiniSparkline({ data: rawData, color, higherIsBetter }: { data: number[]; color: string; higherIsBetter?: boolean }) {
+  const data = rawData.filter((v) => Number.isFinite(v));
   if (data.length === 0) return null;
   const min = Math.min(...data);
   const max = Math.max(...data);
@@ -258,7 +264,7 @@ function MiniSparkline({ data, color, higherIsBetter }: { data: number[]; color:
         opacity={0.85}
       />
       {data.map((v, i) => {
-        const x = (i / (data.length - 1)) * w;
+        const x = (i / divisor) * w;
         const y = h - ((v - min) / range) * h;
         return i === data.length - 1 ? (
           <circle key={i} cx={x} cy={y} r={3} fill={trending ? color : brand.danger} />
@@ -314,7 +320,7 @@ export default function IntelligencePage() {
         clinicians={clinicians}
         selectedClinician={selectedClinician}
         onClinicianChange={setSelectedClinician}
-        accentColor="#8B5CF6"
+        accentColor={brand.purple}
       />
 
       {(intelligenceError || weeklyError) && (
@@ -338,16 +344,16 @@ export default function IntelligencePage() {
         />
         <StatCard
           label="NPS Score"
-          value={nps.score}
-          status={nps.score >= 70 ? "ok" : nps.score >= 50 ? "warn" : "danger"}
-          insight={`${nps.totalResponses} responses`}
+          value={reputationDemoFallback && !usedDemo ? "—" : nps.score}
+          status={reputationDemoFallback && !usedDemo ? "neutral" : nps.score >= 70 ? "ok" : nps.score >= 50 ? "warn" : "danger"}
+          insight={reputationDemoFallback && !usedDemo ? "No NPS data yet" : `${nps.totalResponses} responses`}
         />
         <StatCard
           label="Google Reviews"
-          value={reviews.totalReviews}
-          unit={`${reviews.avgRating} avg`}
-          status="ok"
-          insight={`${reviews.monthlyVelocity.length > 0 ? reviews.monthlyVelocity[reviews.monthlyVelocity.length - 1].count : 0} this month`}
+          value={reputationDemoFallback && !usedDemo ? "—" : reviews.totalReviews}
+          unit={reputationDemoFallback && !usedDemo ? "" : `${reviews.avgRating} avg`}
+          status={reputationDemoFallback && !usedDemo ? "neutral" : "ok"}
+          insight={reputationDemoFallback && !usedDemo ? "Connect Google Reviews" : `${reviews.monthlyVelocity.length > 0 ? reviews.monthlyVelocity[reviews.monthlyVelocity.length - 1].count : 0} this month`}
         />
         <StatCard
           label="Referral Conv."
@@ -540,10 +546,13 @@ export default function IntelligencePage() {
       </div>
 
       {/* Tab navigation */}
-      <div className="flex items-center gap-1 bg-cloud-light rounded-xl p-1 border border-border overflow-x-auto">
+      <div role="tablist" aria-label="Intelligence views" className="flex items-center gap-1 bg-cloud-light rounded-xl p-1 border border-border overflow-x-auto">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
+            role="tab"
+            aria-selected={activeTab === id}
+            aria-controls={`tabpanel-${id}`}
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition-all whitespace-nowrap ${
               activeTab === id
@@ -956,6 +965,7 @@ export default function IntelligencePage() {
             {/* Outcome cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {outcomeTrends.map((ot) => {
+                if (ot.dataPoints.length === 0) return null;
                 const first = ot.dataPoints[0];
                 const last = ot.dataPoints[ot.dataPoints.length - 1];
                 const improved = ot.measureType === "nprs"
