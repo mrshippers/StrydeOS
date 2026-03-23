@@ -15,9 +15,37 @@ const tierPrices = {
 };
 const tierLabels = { solo: "Solo (1)", studio: "Studio (2–5)", clinic: "Clinic (6+)" };
 
-export default function ModulePage({ id, name, color, headline, body, howItWorks, benefits, features, setup }) {
+// Setup fees: only Ava has a setup fee, and only on Studio/Clinic
+const setupFees = {
+  solo:   { intelligence: null, ava: null, pulse: null },
+  studio: { intelligence: null, ava: "£250 one-time setup", pulse: null },
+  clinic: { intelligence: null, ava: "£250 one-time setup", pulse: null },
+};
+
+// Feature comparison table data (from canonical pricing breakdown)
+const compareFeatures = [
+  { name: "Per-clinician KPI dashboard",      intelligence: true,  ava: false, pulse: false, full: true },
+  { name: "90-day rolling trends & alerts",   intelligence: true,  ava: false, pulse: false, full: true },
+  { name: "NPS & Google Review pipeline",     intelligence: true,  ava: false, pulse: false, full: true },
+  { name: "HEP compliance monitoring",        intelligence: true,  ava: false, pulse: false, full: true },
+  { name: "Weekly email digest",              intelligence: true,  ava: false, pulse: false, full: true },
+  { name: "24/7 AI inbound call handling",    intelligence: false, ava: true,  pulse: false, full: true },
+  { name: "Direct calendar booking",          intelligence: false, ava: true,  pulse: false, full: true },
+  { name: "No-show & cancellation recovery",  intelligence: false, ava: true,  pulse: false, full: true },
+  { name: "SMS confirmations (500/mo)",       intelligence: false, ava: true,  pulse: false, full: true },
+  { name: "Post-session follow-up sequences", intelligence: false, ava: false, pulse: true,  full: true },
+  { name: "Dropout prevention triggers",      intelligence: false, ava: false, pulse: true,  full: true },
+  { name: "Outcome tracking per patient",     intelligence: false, ava: false, pulse: true,  full: true },
+  { name: "Post-discharge check-ins",         intelligence: false, ava: false, pulse: true,  full: true },
+  { name: "Referral prompt sequences",        intelligence: false, ava: false, pulse: true,  full: true },
+  { name: "PMS integration (read)",           intelligence: true,  ava: true,  pulse: true,  full: true },
+  { name: "PMS write-back",                   intelligence: false, ava: true,  pulse: false, full: true },
+];
+
+export default function ModulePage({ id, name, color, headline, body, howItWorks, benefits, features }) {
   const [darkMode, setDarkMode] = useState(false);
   const [tier, setTier] = useState("studio");
+  const [showCompare, setShowCompare] = useState(false);
   useEffect(() => {
     const saved = localStorage.getItem("strydeos-theme");
     if (saved === "dark") setDarkMode(true);
@@ -30,6 +58,7 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
   const bdr = darkMode ? "rgba(255,255,255,0.07)" : C.border;
   const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
   const price = tierPrices[tier][id];
+  const setup = setupFees[tier][id];
 
   return (
     <>
@@ -52,7 +81,13 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
               </div>
             </a>
             <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => setDarkMode(d => !d)} style={{ background: "none", border: `1.5px solid ${bdr}`, borderRadius: 10, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: head, fontSize: 17 }}>{darkMode ? "☀" : "☾"}</button>
+              <button onClick={() => setDarkMode(d => !d)} style={{ background: "none", border: `1.5px solid ${bdr}`, borderRadius: 10, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: head, fontSize: 17 }}>
+                {darkMode ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                )}
+              </button>
               <a href="/" style={{ padding: "10px 22px", fontSize: 14, color: head, textDecoration: "none", fontWeight: 600, display: "flex", alignItems: "center" }}>← Back to site</a>
             </div>
           </div>
@@ -126,20 +161,113 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
                 <div className="serif" style={{ fontSize: 52, color: "white", fontWeight: 400, lineHeight: 1 }}>
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 24, fontWeight: 600, verticalAlign: "top", position: "relative", top: 8, marginRight: 2, opacity: 0.6 }}>£</span>{price}
                 </div>
-                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>per month{setup ? ` · ${setup}` : ""}</div>
+                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>
+                  p/m{setup ? ` · ${setup}` : " · no setup fee"}
+                </div>
                 <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 28, flexWrap: "wrap" }}>
-                  <a href={`https://portal.strydeos.com/login?mode=signup&module=${id}`} className="btn-primary" style={{ background: color }}>
+                  <a href={`https://app.strydeos.com/checkout?plan=${id}-${tier}`} target="_blank" rel="noopener" className="btn-primary" style={{ background: color }}>
                     Start free trial →
                   </a>
-                  <a href={`https://portal.strydeos.com/billing?module=${id}`} className="btn-outline" style={{ color: "white", borderColor: "rgba(255,255,255,0.2)" }}>
+                  <a href={`https://app.strydeos.com/checkout?plan=${id}-${tier}&billing=now`} target="_blank" rel="noopener" className="btn-outline" style={{ color: "white", borderColor: "rgba(255,255,255,0.2)" }}>
                     Buy now →
                   </a>
                 </div>
-                <a href="/#pricing" style={{ display: "inline-block", marginTop: 20, fontSize: 12, color: "rgba(255,255,255,0.3)", textDecoration: "none" }}>← Compare all plans</a>
+                <button
+                  onClick={() => setShowCompare(true)}
+                  style={{
+                    display: "inline-block", marginTop: 20, fontSize: 12,
+                    color: "rgba(255,255,255,0.3)", background: "none", border: "none",
+                    cursor: "pointer", fontFamily: "'Outfit',sans-serif",
+                    transition: "color 0.2s",
+                  }}
+                  onMouseEnter={e => e.target.style.color = "rgba(255,255,255,0.6)"}
+                  onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.3)"}
+                >
+                  Compare all plans ↓
+                </button>
               </div>
             </div>
           </div>
         </section>
+
+        {/* Compare plans modal */}
+        {showCompare && (
+          <div
+            style={{
+              position: "fixed", inset: 0, zIndex: 500,
+              background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 24,
+            }}
+            onClick={() => setShowCompare(false)}
+          >
+            <div
+              style={{
+                background: darkMode ? C.navy : "white",
+                borderRadius: 20, padding: "32px 28px", maxWidth: 720, width: "100%",
+                maxHeight: "80vh", overflowY: "auto",
+                border: `1px solid ${bdr}`,
+                boxShadow: "0 32px 80px rgba(0,0,0,0.3)",
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.blue, marginBottom: 4 }}>Feature Comparison</div>
+                  <div style={{ fontSize: 18, fontWeight: 600, color: head }}>What's included in each module</div>
+                </div>
+                <button
+                  onClick={() => setShowCompare(false)}
+                  style={{
+                    background: "none", border: "none", fontSize: 24, color: muted,
+                    cursor: "pointer", padding: 4, lineHeight: 1,
+                  }}
+                >×</button>
+              </div>
+
+              {/* Tier prices row */}
+              <div style={{ display: "grid", gridTemplateColumns: "40% 1fr 1fr 1fr 1fr", gap: 0, marginBottom: 16, padding: "12px 0", borderBottom: `1px solid ${bdr}` }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: muted, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  {tierLabels[tier]} pricing
+                </div>
+                {[
+                  { label: "Intelligence", c: "#8B5CF6", p: tierPrices[tier].intelligence },
+                  { label: "Ava", c: C.blue, p: tierPrices[tier].ava },
+                  { label: "Pulse", c: C.teal, p: tierPrices[tier].pulse },
+                  { label: "Full Stack", c: C.blue, p: tierPrices[tier].full },
+                ].map(m => (
+                  <div key={m.label} style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: m.c, marginBottom: 2 }}>{m.label}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: head }}>£{m.p}<span style={{ fontSize: 10, fontWeight: 400, color: muted }}>/mo</span></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Feature rows */}
+              {compareFeatures.map((f, i) => (
+                <div key={f.name} style={{
+                  display: "grid", gridTemplateColumns: "40% 1fr 1fr 1fr 1fr", gap: 0,
+                  padding: "8px 0",
+                  borderBottom: i < compareFeatures.length - 1 ? `1px solid ${darkMode ? "rgba(255,255,255,0.04)" : "#f0eeea"}` : "none",
+                }}>
+                  <div style={{ fontSize: 13, color: txt }}>{f.name}</div>
+                  {["intelligence", "ava", "pulse", "full"].map(mod => (
+                    <div key={mod} style={{ textAlign: "center", fontSize: 14 }}>
+                      {f[mod]
+                        ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3 3 5-5" stroke={C.success} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        : <span style={{ color: darkMode ? "rgba(255,255,255,0.15)" : "#d0cdc7" }}>—</span>
+                      }
+                    </div>
+                  ))}
+                </div>
+              ))}
+
+              <div style={{ marginTop: 20, textAlign: "center" }}>
+                <a href="/#pricing" style={{ fontSize: 12, color: C.blue, textDecoration: "none", fontWeight: 500 }}>View full pricing page →</a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <footer style={{ padding: "32px 24px", borderTop: `1px solid ${bdr}`, textAlign: "center" }}>
