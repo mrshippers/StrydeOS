@@ -11,24 +11,25 @@ export default function PulsePage() {
       headline="Keep patients in care, longer."
       body={`The drop-off between session two and session three is where most clinics leak the most revenue. Patients disengage — not because the treatment isn't working, but because nobody stayed in touch.
 
-Pulse automates every touchpoint between sessions. The clinics getting this right aren't doing it by hand. They've systematised it — and it shows in their completion rates and referral volume.`}
+Pulse automates every touchpoint between sessions — and adapts based on clinical context. When a patient has psychosocial flags or complex multi-region presentations, Pulse adjusts its tone and timing automatically. No manual triage. No one-size-fits-all sequences.`}
       howItWorks={[
         "Monitors treatment journey milestones",
-        "Detects gaps and triggers targeted follow-up",
-        "Re-engages drop-offs with timed nudges",
+        "Reads clinical complexity signals from session notes",
+        "Adapts follow-up timing and tone to each patient",
+        "Suppresses prompts when patients are nearing discharge",
       ]}
       benefits={[
         "Better treatment completion",
         "Higher follow-up conversion",
-        "More referral-ready patient outcomes",
+        "Fewer wasted messages on discharge-ready patients",
       ]}
       features={[
-        "Automated post-session reminders",
-        "Rebooking prompts at the right moment",
+        "Complexity-aware rebooking prompts",
+        "Psychosocial flag detection — gentler outreach for anxious patients",
+        "Discharge-aware sequences that know when to stop",
+        "Clinical enrichment from Heidi session notes",
         "Post-discharge check-ins",
-        "Outcome tracking per patient",
         "Referral prompt sequences",
-        "Programme assignment monitoring",
       ]}
       setup={null}
     />
