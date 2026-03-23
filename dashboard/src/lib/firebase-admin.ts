@@ -24,16 +24,18 @@ function getAdminApp(): App {
     return _app;
   }
 
-  const projectId =
+  // .trim() guards against trailing newlines pasted into Vercel env var UI
+  const projectId = (
     process.env.FIREBASE_PROJECT_ID ||
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  )?.trim();
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
   const rawKey = process.env.FIREBASE_PRIVATE_KEY;
   // Handle all common Vercel private key formats:
   // - JSON-encoded with literal \n  → replace \\n with real newlines
   // - Double-escaped \\n            → same regex catches it
   // - Already contains real newlines → no-op (replace finds nothing)
-  const privateKey = rawKey?.replace(/\\n/g, "\n");
+  const privateKey = rawKey?.replace(/\\n/g, "\n").trim();
 
   // 1. Env vars
   if (projectId && clientEmail && privateKey) {
