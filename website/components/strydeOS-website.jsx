@@ -2329,21 +2329,21 @@ const PRICING_MODULES = [
     tagline: "Know your numbers, finally",
     setup: "No setup fee",
     features: ["Per-clinician KPI board", "6-week trend charts", "Metric drift alerts", "WriteUpp & Cliniko integration", "Weekly email digest"],
-    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 5-10"/></svg>,
+    icon: <ArchIntelIcon color={C.purple} size={22} />,
   },
   {
     name: "Ava", color: C.blue, bright: C.blueBright, popular: true,
     tagline: "Never miss another call",
     setup: "\u00A3250 one-time setup",
     features: ["24/7 inbound call handling", "Live calendar booking", "No-show recovery", "SMS confirmations", "Emergency routing"],
-    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>,
+    icon: <ArchAvaIcon color={C.blue} size={22} />,
   },
   {
     name: "Pulse", color: C.teal, bright: "#06B6D4",
     tagline: "Clinically adaptive patient retention",
     setup: "No setup fee",
     features: ["Complexity-aware follow-up sequences", "Psychosocial flag detection", "Discharge-aware suppression", "Post-discharge check-ins", "Referral prompt flows"],
-    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>,
+    icon: <ArchPulseIcon color={C.teal} size={22} />,
   },
 ];
 
