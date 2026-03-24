@@ -21,8 +21,6 @@ import {
   Shield,
   CheckCheck,
   Command,
-  Moon,
-  Sun,
   Lock,
   CreditCard,
   HelpCircle,
@@ -39,6 +37,7 @@ const HelpPanel = dynamic(
   }
 );
 import { useTheme } from "@/components/ThemeProvider";
+import ApertureDarkModeToggle from "@/components/ui/ApertureDarkModeToggle";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
 import { useClinicianSummaryStats } from "@/hooks/useClinicianSummaryStats";
 import { usePatients } from "@/hooks/usePatients";
@@ -688,7 +687,11 @@ export default function Sidebar() {
               onClick={(e) => toggleTheme(e)}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-white/30 hover:text-white/50 hover:bg-white/5 transition-all duration-200"
             >
-              {theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}
+              <ApertureDarkModeToggle
+                size={12}
+                isDark={theme === "dark"}
+                className="pointer-events-none"
+              />
               <span className="flex-1 text-left">{theme === "dark" ? "Light mode" : "Dark mode"}</span>
               <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/8 border border-white/10">
                 {typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform) ? "⌘" : "Ctrl+"}D

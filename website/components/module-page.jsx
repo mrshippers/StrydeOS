@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { CookieBanner } from "./strydeOS-website.jsx";
 import ModulePricingBanner from "./ModulePricingBanner.jsx";
+import ApertureDarkModeToggle from "./ApertureDarkModeToggle";
 
 const C = {
   cloudDancer: "#F2F1EE", cloudLight: "#F9F8F6", cream: "#FAF9F7",
@@ -136,17 +137,11 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
               </div>
             </a>
             <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => {
-                const next = !darkMode;
-                setDarkMode(next);
-                localStorage.setItem("strydeos-theme", next ? "dark" : "light");
-              }} style={{ background: "none", border: `1.5px solid ${bdr}`, borderRadius: 10, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: head, fontSize: 17 }}>
-                {darkMode ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                )}
-              </button>
+              <ApertureDarkModeToggle
+                size={18}
+                isDark={darkMode}
+                onToggle={(dark) => setDarkMode(dark)}
+              />
               <a href="/" style={{ padding: "10px 22px", fontSize: 14, color: head, textDecoration: "none", fontWeight: 600, display: "flex", alignItems: "center" }}>← Back to site</a>
             </div>
           </div>

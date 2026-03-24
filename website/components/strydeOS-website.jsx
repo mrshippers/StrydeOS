@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import AvaShowcase from "../ava-conversation-card";
+import ApertureDarkModeToggle from "./ApertureDarkModeToggle";
 
 const C = {
   // Backgrounds
@@ -482,28 +483,11 @@ const Nav = ({ darkMode, setDarkMode }) => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button
-            onClick={() => setDarkMode(d => !d)}
-            style={{
-              background: darkMode ? "rgba(255,255,255,0.06)" : `${C.blue}08`,
-              border: `1.5px solid ${darkMode ? "rgba(255,255,255,0.2)" : C.border}`,
-              borderRadius: 10, width: 38, height: 38,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", color: darkMode ? "rgba(255,255,255,0.75)" : C.ink,
-              fontSize: 17, transition: "all 0.2s",
-            }}
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-              </svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-              </svg>
-            )}
-          </button>
+          <ApertureDarkModeToggle
+            size={18}
+            isDark={darkMode}
+            onToggle={(dark) => setDarkMode(dark)}
+          />
           <a href="https://portal.strydeos.com/login" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }}>
             Log In
           </a>
