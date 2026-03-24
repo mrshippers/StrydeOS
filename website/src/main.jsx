@@ -7,6 +7,8 @@ import TermsOfServicePage from "./terms-of-service.jsx";
 import AvaPage from "./ava.jsx";
 import PulsePage from "./pulse.jsx";
 import IntelligencePage from "./intelligence.jsx";
+import CaseStudiesPage from "./case-studies.jsx";
+import ContactPage from "./contact.jsx";
 
 const path = window.location.pathname.replace(/\/+$/, "") || "/";
 
@@ -19,6 +21,8 @@ function PathRoutedApp() {
   if (path === "/intelligence") return <IntelligencePage />;
   if (path === "/faq") return <FAQPage />;
   if (path === "/changelog") return <ChangelogPage />;
+  if (path === "/case-studies") return <CaseStudiesPage />;
+  if (path === "/contact") return <ContactPage />;
   return <App />;
 }
 

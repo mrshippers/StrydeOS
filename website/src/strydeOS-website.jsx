@@ -1878,11 +1878,10 @@ const IntegrationCarousel = ({ darkMode }) => {
 const FAQ = ({ darkMode }) => {
   const [openIdx, setOpenIdx] = useState(null);
   const bg     = darkMode ? C.navy : C.cloudDancer;
-  const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
-  const bdr    = darkMode ? "rgba(255,255,255,0.07)" : C.border;
-  const muted  = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const muted  = darkMode ? "rgba(255,255,255,0.4)" : C.muted;
   const head   = darkMode ? "white" : C.navy;
-  const txt    = darkMode ? "rgba(255,255,255,0.7)" : C.ink;
+  const txt    = darkMode ? "rgba(255,255,255,0.6)" : C.ink;
+  const divider = darkMode ? "rgba(255,255,255,0.06)" : C.border;
 
   const groups = [
     { label: "For Clinic Owners", items: [
@@ -1909,51 +1908,66 @@ const FAQ = ({ darkMode }) => {
 
   return (
     <section id="faq" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
-      <div style={{ maxWidth: 800, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 52 }}>
+      <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
           <div className="section-chip">FAQ</div>
-          <h2 className="serif" style={{ fontSize: 42, color: head, fontWeight: 400 }}>
+          <h2 className="serif" style={{ fontSize: 42, color: head, fontWeight: 400, lineHeight: 1.1 }}>
             Frequently asked questions
           </h2>
+          <p style={{ fontSize: 15, color: muted, marginTop: 14, lineHeight: 1.7 }}>
+            Everything you need to know before getting started.
+          </p>
         </div>
 
         {groups.map((group) => (
-          <div key={group.label} style={{ marginBottom: 40 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.blue, marginBottom: 16 }}>
+          <div key={group.label} style={{ marginBottom: 44 }}>
+            <div style={{
+              fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase",
+              color: C.blue, marginBottom: 8, paddingLeft: 2,
+            }}>
               {group.label}
             </div>
-            {group.items.map((item) => {
-              const idx = globalIndex++;
-              const isOpen = openIdx === idx;
-              return (
-                <div key={idx} style={{
-                  background: bgCard, border: `1px solid ${bdr}`, borderRadius: 12,
-                  marginBottom: 8, overflow: "hidden", transition: "background 0.3s ease",
-                }}>
-                  <button onClick={() => setOpenIdx(isOpen ? null : idx)} style={{
-                    width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
-                    padding: "18px 22px", background: "none", border: "none", cursor: "pointer",
-                    fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 600,
-                    color: head, textAlign: "left",
-                  }}>
-                    <span>{item.q}</span>
-                    <span style={{
-                      fontSize: 20, fontWeight: 300, color: muted, flexShrink: 0, marginLeft: 16,
-                      transform: isOpen ? "rotate(45deg)" : "rotate(0deg)",
-                      transition: "transform 0.3s ease",
-                      display: "inline-block",
-                    }}>+</span>
-                  </button>
-                  <div style={{
-                    maxHeight: isOpen ? 300 : 0, overflow: "hidden",
-                    transition: "max-height 0.3s ease, padding 0.3s ease",
-                    padding: isOpen ? "0 22px 18px" : "0 22px 0",
-                  }}>
-                    <p style={{ fontSize: 14, color: txt, lineHeight: 1.7 }}>{item.a}</p>
+            <div style={{ borderTop: `1px solid ${divider}` }}>
+              {group.items.map((item) => {
+                const idx = globalIndex++;
+                const isOpen = openIdx === idx;
+                return (
+                  <div key={idx} style={{ borderBottom: `1px solid ${divider}` }}>
+                    <button onClick={() => setOpenIdx(isOpen ? null : idx)} style={{
+                      width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
+                      padding: "20px 4px", background: "none", border: "none", cursor: "pointer",
+                      fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 500,
+                      color: isOpen ? (darkMode ? C.blueGlow : C.blue) : head,
+                      textAlign: "left", transition: "color 0.25s ease",
+                    }}>
+                      <span style={{ paddingRight: 24 }}>{item.q}</span>
+                      <svg
+                        width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke={isOpen ? C.blue : muted} strokeWidth="2"
+                        strokeLinecap="round" strokeLinejoin="round"
+                        style={{
+                          flexShrink: 0,
+                          transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.3s cubic-bezier(0.4,0,0.2,1), stroke 0.25s ease",
+                        }}
+                      >
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    </button>
+                    <div style={{
+                      maxHeight: isOpen ? 240 : 0, overflow: "hidden",
+                      transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease",
+                      opacity: isOpen ? 1 : 0,
+                    }}>
+                      <p style={{
+                        fontSize: 14.5, color: txt, lineHeight: 1.75,
+                        padding: "0 4px 22px",
+                      }}>{item.a}</p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>
@@ -2124,16 +2138,16 @@ const Footer = () => (
               { label: "Intelligence", href: "#product-intelligence" },
             ]},
             { h: "Company", links: [
-              { label: "About", href: "#why-strydeos" },
-              { label: "Case Studies", href: "#results" },
+              { label: "About", href: "#about" },
+              { label: "Case Studies", href: "/case-studies" },
               { label: "Pricing", href: "#pricing" },
               { label: "FAQ", href: "/faq" },
-              { label: "Changelog", href: "/changelog" },
-              { label: "Contact", href: "#early-access" },
+              { label: "Contact", href: "/contact" },
             ]},
             { h: "Developers", links: [
               { label: "Full API Reference", href: "/api-docs.html" },
               { label: "System Status", href: "/status.html" },
+              { label: "Changelog", href: "/changelog" },
             ]},
             { h: "Legal", links: [
               { label: "Privacy Policy", href: "/privacy" },
