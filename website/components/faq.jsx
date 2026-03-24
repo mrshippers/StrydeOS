@@ -244,7 +244,7 @@ const SearchBar = ({ value, onChange }) => (
     </svg>
     <input
       type="text"
-      placeholder="Search questions\u2026"
+      placeholder="Search questions…"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       style={{
@@ -446,7 +446,7 @@ export default function FAQPage() {
             maxWidth: 480, margin: "0 auto 36px",
             animation: "fadeUp 0.6s ease 0.3s both",
           }}>
-            Everything you need to know about Intelligence, Ava, and Pulse \u2014 from data and integrations to getting started.
+            Everything you need to know about Intelligence, Ava, and Pulse — from data and integrations to getting started.
           </p>
 
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
