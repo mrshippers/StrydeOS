@@ -114,11 +114,11 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
 
           {/* Price */}
           <div style={{ marginBottom: 6, position: "relative", opacity: priceAnim ? 0 : 1, transform: priceAnim ? "translateY(6px)" : "translateY(0)", transition: "all 0.15s ease" }}>
-            <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 16, color: "rgba(255,255,255,0.35)", position: "relative", top: -22 }}>\u00A3</span>
+            <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 16, color: "rgba(255,255,255,0.35)", position: "relative", top: -22 }}>{'£'}</span>
             <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 64, color: "white", lineHeight: 1, letterSpacing: "-0.02em" }}>{price}</span>
           </div>
           <div style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", marginBottom: 26, opacity: priceAnim ? 0 : 1, transform: priceAnim ? "translateY(4px)" : "translateY(0)", transition: "all 0.15s ease 0.03s" }}>
-            p/m \u00B7 {setup || "no setup fee"}
+            p/m {'·'} {setup || "no setup fee"}
           </div>
 
           {/* CTAs */}
@@ -132,7 +132,7 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
                 boxShadow: primaryHover ? `0 4px 16px ${m.color}28,0 0 0 1px ${m.bright}18,inset 0 1px 0 rgba(255,255,255,0.15)` : `0 2px 8px ${m.color}18,inset 0 1px 0 rgba(255,255,255,0.08)`,
                 transform: primaryHover ? "translateY(-1px)" : "translateY(0)", transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
               }}
-            >Start free trial <span style={{ fontSize: 16 }}>\u2192</span></a>
+            >Start free trial <span style={{ fontSize: 16 }}>{'→'}</span></a>
             <a href={`${checkoutBase}&billing=now`} target="_blank" rel="noopener"
               onMouseEnter={() => setSecondaryHover(true)} onMouseLeave={() => setSecondaryHover(false)}
               style={{
@@ -143,7 +143,7 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
                 border: secondaryHover ? `1.5px solid ${m.bright}50` : "1.5px solid rgba(255,255,255,0.15)",
                 transform: secondaryHover ? "translateY(-1px)" : "translateY(0)", transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
               }}
-            >Buy now <span style={{ fontSize: 16 }}>\u2192</span></a>
+            >Buy now <span style={{ fontSize: 16 }}>{'→'}</span></a>
           </div>
 
           {/* Compare link */}
@@ -154,12 +154,12 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
             }}
               onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.55)"}
               onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.3)"}
-            >Compare all plans \u2193</button>
+            >Compare all plans {'↓'}</button>
           ) : (
             <a href="/pricing" style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", textDecoration: "none", cursor: "pointer" }}
               onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.55)"}
               onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.3)"}
-            >Compare all plans \u2193</a>
+            >Compare all plans {'↓'}</a>
           )}
         </div>
       </div>

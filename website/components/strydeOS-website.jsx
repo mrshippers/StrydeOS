@@ -804,7 +804,7 @@ const HeroDashboard = () => {
         animation: "float 4s ease-in-out infinite",
         opacity: loaded ? 1 : 0, transition: "opacity 0.5s ease 0.8s",
       }}>
-        <span style={{ fontSize: 12 }}>\uD83D\uDCDE</span> Call answered automatically
+        <span style={{ fontSize: 12 }}>{'📞'}</span> Call answered automatically
       </div>
 
       <div style={{
@@ -2548,7 +2548,7 @@ const FullStackBanner = ({ tier, billing, darkMode }) => {
           border: `1px solid ${h ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.1)"}`,
           fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
           color: "rgba(255,255,255,0.55)", transition: "all 0.3s ease",
-        }}>\u2605 Best value</div>
+        }}>{'★'} Best value</div>
         <div style={{ fontSize: 20, fontWeight: 700, color: "white", marginBottom: 4 }}>
           Stryde<span style={{ color: C.blueGlow }}>OS</span> Full Stack
         </div>
@@ -3132,9 +3132,9 @@ const Footer = () => (
         <div style={{ display: "flex", gap: 52 }}>
           {[
             { h: "Products", links: [
-              { label: "Ava", href: "#product-ava" },
-              { label: "Pulse", href: "#product-pulse" },
-              { label: "Intelligence", href: "#product-intelligence" },
+              { label: "Ava", href: "/ava" },
+              { label: "Pulse", href: "/pulse" },
+              { label: "Intelligence", href: "/intelligence" },
             ]},
             { h: "Company", links: [
               { label: "About", href: "#about" },
