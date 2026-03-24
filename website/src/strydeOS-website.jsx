@@ -61,6 +61,14 @@ const globalStyles = `
     50% { box-shadow: 0 0 24px rgba(28,84,242,0.55), 0 0 60px rgba(28,84,242,0.25), inset 0 0 18px rgba(75,139,245,0.4); }
   }
   @keyframes ava-ring-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  @keyframes flowDot {
+    0%, 100% { opacity: 0.2; transform: translateY(0); }
+    50% { opacity: 0.8; transform: translateY(-2px); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(28,84,242,0.15); }
+    50% { box-shadow: 0 0 20px 4px rgba(28,84,242,0.08); }
+  }
 
   .animate-float { animation: float 4s ease-in-out infinite; }
 
@@ -126,6 +134,7 @@ const globalStyles = `
     .holistic-grid    { grid-template-columns: 1fr !important; }
     .roi-grid         { grid-template-columns: 1fr !important; }
     .whyus-grid       { grid-template-columns: 1fr !important; }
+    .wavecard-grid    { grid-template-columns: 1fr 1fr !important; }
     .footer-top       { flex-direction: column !important; gap: 32px !important; }
     .nav-links        { display: none !important; }
   }
@@ -200,6 +209,46 @@ const MonolithMark = ({ size = 44 }) => {
       <rect x="35" y="20" width="22" height="60" rx="5" fill={`url(#${gTopface})`} clipPath={`url(#${cAbove})`}/>
       <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round"/>
     </svg>
+  );
+};
+
+/* ─── MonolithVariant (module-coloured icon) ─────────────────────────────── */
+const MonolithVariant = ({ size = 48, accentFrom, accentTo, glowColor }) => {
+  const id = _uid("mv");
+  return (
+    <div style={{ filter: `drop-shadow(0 0 12px ${glowColor}30)` }}>
+      <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+        <defs>
+          <linearGradient id={`${id}-g`} x1="0.1" y1="0" x2="0.85" y2="1">
+            <stop offset="0%" stopColor={accentFrom} stopOpacity="0.6"/>
+            <stop offset="100%" stopColor={accentTo} stopOpacity="0.75"/>
+          </linearGradient>
+          <radialGradient id={`${id}-r`} cx="28%" cy="24%" r="60%">
+            <stop offset="0%" stopColor={accentFrom} stopOpacity="0.35"/>
+            <stop offset="100%" stopColor={accentTo} stopOpacity="0"/>
+          </radialGradient>
+          <linearGradient id={`${id}-b`} x1="0.1" y1="0" x2="0.4" y2="1">
+            <stop offset="0%" stopColor={accentFrom} stopOpacity="0.5"/>
+            <stop offset="100%" stopColor={accentTo} stopOpacity="0.06"/>
+          </linearGradient>
+          <clipPath id={`${id}-cp`}><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+          <clipPath id={`${id}-ca`}><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+        </defs>
+        <rect width="100" height="100" rx="24" fill={`url(#${id}-g)`}/>
+        <rect width="100" height="100" rx="24" fill={`url(#${id}-r)`}/>
+        <rect width="100" height="100" rx="24" fill="none" stroke={`url(#${id}-b)`} strokeWidth="1.2"/>
+        <path d="M 17 21 Q 50 12 83 21" stroke="white" strokeOpacity="0.15" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07"/>
+        <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10"/>
+        <g clipPath={`url(#${id}-cp)`}>
+          <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        </g>
+        <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.25" clipPath={`url(#${id}-ca)`}/>
+        <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.45" strokeLinecap="round"/>
+      </svg>
+    </div>
   );
 };
 
@@ -413,12 +462,245 @@ const Nav = ({ darkMode, setDarkMode }) => {
               </svg>
             )}
           </button>
-          <a href="https://app.strydeos.com" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }}>
+          <a href="https://portal.strydeos.com/login" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }}>
             Log In
           </a>
         </div>
       </div>
     </nav>
+  );
+};
+
+/* ─── WaveCard ─────────────────────────────────────────────────────────────── */
+const WaveCard = ({ without, withLabel, beforePath, afterPath, glowColor, idx }) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "relative",
+        background: hovered
+          ? `linear-gradient(160deg, rgba(255,255,255,0.06) 0%, ${glowColor}08 100%)`
+          : "rgba(255,255,255,0.03)",
+        border: `1px solid ${hovered ? `${glowColor}30` : "rgba(255,255,255,0.05)"}`,
+        borderRadius: 16,
+        padding: "22px 18px 18px",
+        cursor: "default",
+        transition: "all 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+        overflow: "hidden",
+      }}
+    >
+      {/* Bloom glow on hover */}
+      <div style={{
+        position: "absolute",
+        top: -40, left: "50%", transform: "translateX(-50%)",
+        width: 200, height: 120,
+        borderRadius: "50%",
+        background: `radial-gradient(circle, ${glowColor}${hovered ? "20" : "00"} 0%, transparent 70%)`,
+        transition: "all 0.6s ease",
+        pointerEvents: "none",
+      }} />
+
+      {/* Waveform SVG */}
+      <div style={{ position: "relative", height: 56, marginBottom: 14 }}>
+        {/* Before waveform — chaotic/flat */}
+        <svg
+          viewBox="0 0 120 50"
+          style={{
+            position: "absolute", top: 0, left: 0,
+            width: "100%", height: "100%",
+            opacity: hovered ? 0 : 0.5,
+            transition: "opacity 0.5s ease",
+          }}
+        >
+          <path d={beforePath} fill="none" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+          {[15, 30, 45, 60, 75, 90, 105].map((x, i) => (
+            <circle
+              key={i}
+              cx={x}
+              cy={20 + ((i * 7 + idx * 13) % 15)}
+              r="1"
+              fill="#EF4444"
+              opacity="0.3"
+            />
+          ))}
+        </svg>
+
+        {/* After waveform — clean, ascending */}
+        <svg
+          viewBox="0 0 120 50"
+          style={{
+            position: "absolute", top: 0, left: 0,
+            width: "100%", height: "100%",
+            opacity: hovered ? 1 : 0,
+            transition: "opacity 0.5s ease",
+          }}
+        >
+          <defs>
+            <linearGradient id={`wave-grad-${idx}`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor={glowColor} stopOpacity="0.3" />
+              <stop offset="100%" stopColor={glowColor} stopOpacity="1" />
+            </linearGradient>
+            <filter id={`wave-bloom-${idx}`}>
+              <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
+            </filter>
+          </defs>
+          {/* Glow trail */}
+          <path d={afterPath} fill="none" stroke={glowColor} strokeWidth="4" strokeLinecap="round" opacity="0.2" filter={`url(#wave-bloom-${idx})`} />
+          {/* Main line */}
+          <path d={afterPath} fill="none" stroke={`url(#wave-grad-${idx})`} strokeWidth="2" strokeLinecap="round" />
+          {/* Endpoint pulse */}
+          <circle cx="115" cy={afterPath.match(/(\d+)$/)?.[0] || 15} r="3" fill={glowColor} opacity="0.9" />
+          <circle cx="115" cy={afterPath.match(/(\d+)$/)?.[0] || 15} r="6" fill={glowColor} opacity="0.2" />
+        </svg>
+      </div>
+
+      {/* Labels */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        transition: "all 0.4s ease",
+      }}>
+        <div style={{
+          width: 6, height: 6,
+          borderRadius: "50%",
+          background: hovered ? glowColor : "#EF4444",
+          boxShadow: hovered ? `0 0 8px ${glowColor}80` : "none",
+          transition: "all 0.4s ease",
+          flexShrink: 0,
+        }} />
+        <span style={{
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: 13,
+          fontWeight: 600,
+          color: hovered ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+          transition: "color 0.4s ease",
+          lineHeight: 1.3,
+        }}>
+          {hovered ? withLabel : without}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+/* ─── BeforeAfterStrip ─────────────────────────────────────────────────────── */
+const BeforeAfterStrip = () => {
+  const purple = "#8B5CF6";
+  const cards = [
+    {
+      without: "Patients vanish after session 3",
+      withLabel: "See exactly where they disengage",
+      glowColor: C.blueGlow,
+      beforePath: "M5,25 L15,24 L25,26 L35,25 L45,25 L55,26 L65,24 L75,25 L85,25 L95,38 L105,42 L115,45",
+      afterPath: "M5,38 C20,34 35,30 50,26 C65,22 80,18 95,14 L115,10",
+    },
+    {
+      without: "Guessing which clinician needs support",
+      withLabel: "Clinician-level KPIs that drive coaching",
+      glowColor: C.teal,
+      beforePath: "M5,20 L15,32 L25,12 L35,38 L45,15 L55,35 L65,18 L75,30 L85,22 L95,28 L105,25 L115,26",
+      afterPath: "M5,35 C15,33 25,28 40,24 C55,20 70,18 85,15 C100,12 110,10 115,8",
+    },
+    {
+      without: "Chasing reviews manually",
+      withLabel: "Automated nudges after every session",
+      glowColor: C.success,
+      beforePath: "M5,30 L25,30 L35,28 L45,30 L65,30 L75,31 L95,30 L115,30",
+      afterPath: "M5,40 C15,38 25,32 40,28 C55,24 70,18 85,14 C100,10 110,8 115,6",
+    },
+    {
+      without: "Revenue leaks you can't see",
+      withLabel: "Revenue per session, per clinician, per week",
+      glowColor: purple,
+      beforePath: "M5,18 L15,28 L25,15 L35,32 L45,22 L55,30 L65,20 L75,35 L85,16 L95,28 L105,24 L115,26",
+      afterPath: "M5,36 C20,32 35,26 50,22 C65,18 80,14 95,10 L115,5",
+    },
+  ];
+
+  return (
+    <div style={{
+      marginTop: 80,
+      padding: "36px 36px 32px",
+      background: C.navy,
+      borderRadius: 20,
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      {/* Deep background waveform traces */}
+      <svg
+        viewBox="0 0 800 120"
+        style={{
+          position: "absolute",
+          top: 0, left: 0,
+          width: "100%", height: "100%",
+          opacity: 0.04,
+          pointerEvents: "none",
+        }}
+      >
+        <path d="M0,60 C50,20 100,90 150,50 C200,10 250,80 300,60 C350,40 400,90 450,50 C500,10 550,70 600,55 C650,40 700,80 750,45 C800,10 850,60 900,50" fill="none" stroke="white" strokeWidth="1" />
+        <path d="M0,70 C60,100 120,30 180,70 C240,110 300,40 360,70 C420,100 480,30 540,70 C600,110 660,40 720,70 C780,100 840,40 900,70" fill="none" stroke="white" strokeWidth="0.5" />
+      </svg>
+
+      <div style={{ position: "relative", zIndex: 2 }}>
+        {/* Header */}
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 20,
+          padding: "0 4px",
+        }}>
+          <p style={{
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: 11,
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.14em",
+            color: "rgba(255,255,255,0.25)",
+          }}>
+            Hover to reveal what changes
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#EF4444", opacity: 0.5 }} />
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Without</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.blueGlow }} />
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.08em" }}>With StrydeOS</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card strip */}
+        <div className="wavecard-grid" style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 10,
+        }}>
+          {cards.map((card, i) => (
+            <WaveCard key={i} idx={i} {...card} />
+          ))}
+        </div>
+
+        {/* Badges */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 32, flexWrap: "wrap", marginTop: 24 }}>
+          {[
+            { icon: "🔗", text: "Connects to leading PMS platforms" },
+            { icon: "🚫", text: "Not a PMS replacement" },
+            { icon: "⚡", text: "Sits above your existing stack" },
+          ].map(({ icon, text }) => (
+            <div key={text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "rgba(255,255,255,0.45)" }}>
+              <span>{icon}</span><span>{text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -615,32 +897,8 @@ const Hero = ({ darkMode }) => {
           </div>
         </div>
 
-        {/* Positioning statement */}
-        <div style={{
-          marginTop: 80,
-          padding: "36px 48px",
-          background: C.navy,
-          borderRadius: 20,
-          position: "relative", overflow: "hidden",
-        }}>
-          <RadialGlow color={C.blue} size={400} opacity={0.12} style={{ top: -100, right: -50 }} />
-          <div style={{ position: "relative", zIndex: 2, maxWidth: 760, margin: "0 auto", textAlign: "center" }}>
-            <p className="serif" style={{ fontSize: 20, color: "rgba(255,255,255,0.85)", lineHeight: 1.6, fontStyle: "italic" }}>
-              "Higher conversion from first touchpoint. Improved treatment continuity. Better visibility on profit drivers."
-            </p>
-            <div style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: 32, flexWrap: "wrap" }}>
-              {[
-                { icon: "🔗", text: "Connects to leading PMS platforms" },
-                { icon: "🚫", text: "Not a PMS replacement" },
-                { icon: "⚡", text: "Sits above your existing stack" },
-              ].map(({ icon, text }) => (
-                <div key={text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "rgba(255,255,255,0.45)" }}>
-                  <span>{icon}</span><span>{text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* Before / After waveform strip */}
+        <BeforeAfterStrip />
       </div>
     </section>
   );
@@ -677,23 +935,34 @@ const HolisticSection = ({ darkMode }) => {
         {/* Three pillars visual */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {[
-            { name: "Ava", desc: "Catches every patient at the door", icon: "📞", color: C.blue, n: "01" },
-            { name: "Pulse", desc: "Adapts follow-ups to clinical complexity", icon: "🔄", color: C.teal, n: "02" },
-            { name: "Intelligence", desc: "Shows you how it's all performing", icon: "📊", color: "#8B5CF6", n: "03" },
-          ].map(({ name, desc, icon, color, n }, i) => (
-            <div key={name} className="card-hover" style={{
+            { name: "Ava", desc: "Catches every patient at the door", color: C.blue, accentFrom: "#2E6BFF", accentTo: "#091D3E", n: "01" },
+            { name: "Pulse", desc: "Adapts follow-ups to clinical complexity", color: C.teal, accentFrom: "#0891B2", accentTo: "#064E5C", n: "02" },
+            { name: "Intelligence", desc: "Shows you how it's all performing", color: "#8B5CF6", accentFrom: "#8B5CF6", accentTo: "#3B1D8E", n: "03" },
+          ].map(({ name, desc, color, accentFrom, accentTo, n }, i) => (
+            <div key={name} style={{
               display: "flex", alignItems: "center", gap: 20,
               background: bgCard, borderRadius: 16, padding: "20px 24px",
               border: `1px solid ${bdr}`,
               boxShadow: darkMode ? "none" : "0 2px 12px rgba(11,37,69,0.04)",
-              transition: "background 0.3s ease",
-            }}>
-              <div style={{
-                width: 48, height: 48, borderRadius: 14, flexShrink: 0,
-                background: `${color}15`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 22,
-              }}>{icon}</div>
+              transition: "all 0.35s cubic-bezier(0.16,1,0.3,1)",
+              position: "relative", overflow: "hidden", cursor: "default",
+            }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
+                e.currentTarget.style.boxShadow = `0 12px 40px ${color}30, 0 0 60px ${color}15`;
+                e.currentTarget.style.background = `radial-gradient(ellipse at 30% 50%, ${color}18, ${darkMode ? "rgba(255,255,255,0.04)" : "white"} 70%)`;
+                e.currentTarget.style.borderColor = `${color}40`;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = "translateY(0) scale(1)";
+                e.currentTarget.style.boxShadow = darkMode ? "none" : "0 2px 12px rgba(11,37,69,0.04)";
+                e.currentTarget.style.background = bgCard;
+                e.currentTarget.style.borderColor = bdr;
+              }}
+            >
+              <div style={{ flexShrink: 0 }}>
+                <MonolithVariant size={48} accentFrom={accentFrom} accentTo={accentTo} glowColor={color} />
+              </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 600, color: head, marginBottom: 3 }}>{name}</div>
                 <div style={{ fontSize: 13, color: muted }}>{desc}</div>
@@ -805,6 +1074,9 @@ const Integrations = ({ darkMode }) => {
           </div>
         </div>
       </div>
+
+      {/* Integration logos scroll */}
+      <IntegrationCarousel darkMode={darkMode} />
 
       {/* Objection handler cards */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
@@ -1163,36 +1435,76 @@ const Products = ({ darkMode }) => {
       howItWorks: ["Pulls data from your clinical and ops systems", "Standardises KPIs by clinician and clinic", "Flags drift so issues are acted on early"],
       keyBenefits: ["Clear visibility on profit drivers", "Faster decisions from live metrics", "Coaching-led performance improvement"],
       bullets: ["Per-clinician KPI views", "Patient retention & completion rates", "Utilisation and DNA tracking", "90-day rolling trend charts", "Automatic alert flags when metrics drift"],
-      visual: (
-        <div style={{ background: C.navy, borderRadius: 18, padding: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em" }}>Live KPI Board</div>
-            <div style={{ background: "#8B5CF625", color: "#A78BFA", fontSize: 10, fontWeight: 600, padding: "3px 10px", borderRadius: 20 }}>Week 24</div>
-          </div>
-          {[
-            { name: "Dr. A. Reeves", fu: "78%", comp: "84%", util: "91%", warn: true },
-            { name: "S. Okoye",      fu: "92%", comp: "90%", util: "84%", warn: false },
-            { name: "J. Perkins",    fu: "88%", comp: "95%", util: "96%", warn: false },
-          ].map(row => (
-            <div key={row.name} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 8, alignItems: "center", padding: "10px 12px", marginBottom: 6, background: "rgba(255,255,255,0.04)", borderRadius: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                {row.warn && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#F59E0B", flexShrink: 0 }} />}
-                <div style={{ color: "white", fontWeight: 500, fontSize: 12 }}>{row.name}</div>
+      visual: (() => {
+        const kpiTh = {
+          bg: C.navy, text: "#FFFFFF", textSecondary: "rgba(255,255,255,0.55)",
+          textTertiary: "rgba(255,255,255,0.3)", borderAccent: "rgba(255,255,255,0.12)",
+          rowBg: "rgba(255,255,255,0.03)", rowBorder: "rgba(255,255,255,0.06)",
+        };
+        const kpiColor = (c) => ({ green: "#059669", blue: "#4B8BF5", red: "#EF4444" }[c] || kpiTh.textSecondary);
+        const Spark = ({ data, color, w = 48, h = 16 }) => {
+          const mn = Math.min(...data), mx = Math.max(...data), rng = mx - mn || 1;
+          const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - mn) / rng) * (h - 3) - 1.5}`).join(" ");
+          const last = pts.split(" ").pop().split(",");
+          return (<svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ display: "block", flexShrink: 0 }}>
+            <polyline points={pts} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx={last[0]} cy={last[1]} r="2" fill={color} />
+          </svg>);
+        };
+        const Av = ({ name }) => (<div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.08)", fontSize: 10, fontWeight: 700, color: kpiTh.textSecondary, letterSpacing: "0.03em" }}>{name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}</div>);
+        const rows = [
+          { name: "Dr. A. Reeves", followUp: "3.2x", fuC: "green", fuS: [2.8,2.9,3.0,3.1,3.0,3.2], util: "89%", utC: "blue", utS: [85,86,87,88,88,89], dna: "6%", dC: "red", dS: [8,7.5,7,6.8,6.2,6], pts: 14, alert: true },
+          { name: "S. Okoye", followUp: "3.5x", fuC: "green", fuS: [3.1,3.2,3.3,3.4,3.4,3.5], util: "93%", utC: "blue", utS: [89,90,91,92,92,93], dna: "3%", dC: "green", dS: [5,4.5,4,3.5,3.2,3], pts: 18, alert: false },
+          { name: "J. Perkins", followUp: "3.5x", fuC: "green", fuS: [3.0,3.1,3.2,3.3,3.4,3.5], util: "93%", utC: "blue", utS: [90,91,91,92,93,93], dna: "3%", dC: "green", dS: [4,3.8,3.5,3.3,3.1,3], pts: 16, alert: false },
+        ];
+        return (
+          <div style={{ position: "relative", backgroundColor: kpiTh.bg, borderRadius: 20, padding: "22px 18px 18px", border: `1px solid ${kpiTh.borderAccent}`, boxShadow: "0 8px 60px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: -60, right: -40, width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.07), transparent 70%)", pointerEvents: "none" }} />
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: kpiTh.textTertiary, marginBottom: 5 }}>Clinician Performance</div>
+                <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, fontWeight: 400, color: kpiTh.text, lineHeight: 1 }}>90-day rolling trends</div>
               </div>
-              {[row.fu, row.comp, row.util].map((v, i) => {
-                const ok = parseFloat(v) >= 80;
-                return (
-                  <div key={i} style={{ textAlign: "center", padding: "3px 0", borderRadius: 6, background: ok ? "#10B98118" : "#F59E0B18", color: ok ? "#34D399" : "#FBBF24", fontWeight: 700, fontSize: 12 }}>{v}</div>
-                );
-              })}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 50, backgroundColor: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.2)" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#8B5CF6" }}>Week 12</span>
+              </div>
             </div>
-          ))}
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 8, padding: "6px 12px" }}>
-            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.2)" }}></div>
-            {["Follow-up", "Completion", "Utilisation"].map(l => <div key={l} style={{ fontSize: 9, color: "rgba(255,255,255,0.2)", textAlign: "center" }}>{l}</div>)}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 72px 72px 72px 40px", gap: 6, padding: "0 10px 8px" }}>
+              {["Clinician", "Follow-up", "Utilisation", "DNA Rate", "Pts"].map(h => (
+                <span key={h} style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: kpiTh.textTertiary, textAlign: h === "Clinician" ? "left" : "center" }}>{h}</span>
+              ))}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {rows.map(c => (
+                <div key={c.name} style={{ display: "grid", gridTemplateColumns: "1fr 72px 72px 72px 40px", gap: 6, alignItems: "center", padding: "10px 10px", borderRadius: 12, backgroundColor: kpiTh.rowBg, border: `1px solid ${kpiTh.rowBorder}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                    {c.alert && <div style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#F59E0B", flexShrink: 0 }} />}
+                    <Av name={c.name} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: kpiTh.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: kpiColor(c.fuC), fontVariantNumeric: "tabular-nums" }}>{c.followUp}</span>
+                    <Spark data={c.fuS} color={kpiColor(c.fuC)} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: kpiColor(c.utC), fontVariantNumeric: "tabular-nums" }}>{c.util}</span>
+                    <Spark data={c.utS} color={kpiColor(c.utC)} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: kpiColor(c.dC), fontVariantNumeric: "tabular-nums" }}>{c.dna}</span>
+                    <Spark data={c.dS} color={kpiColor(c.dC)} />
+                  </div>
+                  <div style={{ textAlign: "center" }}><span style={{ fontSize: 14, fontWeight: 700, color: kpiTh.text, fontVariantNumeric: "tabular-nums" }}>{c.pts}</span></div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, paddingTop: 14, opacity: 0.3 }}>
+              <MonolithMark size={12} />
+              <span style={{ fontSize: 10, fontWeight: 600, color: kpiTh.textTertiary, letterSpacing: "0.03em" }}>Stryde<span style={{ color: "#4B8BF5" }}>OS</span></span>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      })(),
     },
   ];
 
@@ -1306,18 +1618,6 @@ const caseStudies = [
       { before: "Follow-up rate: unknown", after: "Tracked weekly" },
       { before: "HEP: guesswork", after: "100% compliance" },
       { before: "Revenue: quarterly view", after: "Revenue: live" },
-    ],
-  },
-  {
-    tag: "Case Study — Pilot 1",
-    headline: <>Follow-up rate from 2.4 to{" "}<span style={{ fontStyle: "italic", color: C.blueGlow }}>3.8 sessions.</span></>,
-    quote: "We went from guessing to knowing — per clinician, per week. The coaching conversations are completely different now.",
-    author: "Clinical Director, Pilot 1",
-    grid: [
-      { before: "Follow-up rate: ~2.4", after: "Follow-up rate: 3.8" },
-      { before: "Programme assignment: ~35%", after: "Programme assignment: 82%" },
-      { before: "No clinician benchmarks", after: "Per-clinician KPI weekly" },
-      { before: "Manual data pulls", after: "Live dashboard from day 1" },
     ],
   },
   {
@@ -1437,9 +1737,9 @@ const Results = () => {
 
 /* ─── ROI Calculator ─────────────────────────────────────────────────────────── */
 const ROICalc = ({ darkMode }) => {
-  const [sessions, setSessions] = useState(100);
-  const [dna, setDna] = useState(8);
-  const [fee, setFee] = useState(75);
+  const [sessions, setSessions] = useState(40);
+  const [dna, setDna] = useState(10);
+  const [fee, setFee] = useState(60);
   const [missedCalls, setMissedCalls] = useState(15);
   const [dropout, setDropout] = useState(18);
 
@@ -1541,19 +1841,19 @@ const Pricing = ({ darkMode }) => {
       name: "Intelligence", price: 129, setup: null, color: "#8B5CF6", planId: "intelligence-studio",
       tagline: "Know your numbers, finally",
       features: ["Per-clinician KPI board", "6-week trend charts", "Metric drift alerts", "WriteUpp & Cliniko integration", "Weekly email digest"],
-      cta: "Start Free Trial",
+      cta: "Buy Now",
     },
     {
       name: "Ava", price: 199, setup: 250, color: C.blue, planId: "ava-studio",
       tagline: "Never miss another call",
       features: ["24/7 inbound call handling", "Live calendar booking", "No-show recovery", "SMS confirmations", "Emergency routing"],
-      cta: "Start Free Trial",
+      cta: "Buy Now",
     },
     {
       name: "Pulse", price: 149, setup: null, color: C.teal, planId: "pulse-studio",
       tagline: "Clinically adaptive patient retention",
       features: ["Complexity-aware follow-up sequences", "Psychosocial flag detection", "Discharge-aware message suppression", "Clinical enrichment from Heidi", "Post-discharge check-ins", "Referral prompt flows"],
-      cta: "Start Free Trial",
+      cta: "Buy Now",
     },
     {
       name: "Full Stack", price: 399, setup: 250, color: C.blue, planId: "fullstack-studio", highlight: true,
@@ -1630,7 +1930,7 @@ const Pricing = ({ darkMode }) => {
                 ))}
               </div>
 
-              <a href={`https://app.strydeos.com/checkout?plan=${planId}`} target="_blank" rel="noopener"
+              <a href={`https://portal.strydeos.com/login?mode=signup&plan=${planId}`} target="_blank" rel="noopener"
                 className="btn-outline"
                 style={{ width: "100%", justifyContent: "center", borderRadius: 14 }}>
                 {cta}
@@ -1694,7 +1994,7 @@ const Pricing = ({ darkMode }) => {
                   </div>
                 ))}
               </div>
-              <a href={`https://app.strydeos.com/checkout?plan=${fs.planId}`} target="_blank" rel="noopener"
+              <a href={`https://portal.strydeos.com/login?mode=signup&plan=${fs.planId}`} target="_blank" rel="noopener"
                 className="btn-primary"
                 style={{ borderRadius: 14, whiteSpace: "nowrap" }}>
                 {fs.cta} →
@@ -1848,29 +2148,55 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
 const IntegrationCarousel = ({ darkMode }) => {
   const bg = darkMode ? C.navy : C.cloudDancer;
   const bdr = darkMode ? "rgba(255,255,255,0.07)" : C.border;
-  const logos = ["Cliniko", "WriteUpp", "Physitrack", "Heidi Health", "Stripe"];
+  const muted = darkMode ? "rgba(255,255,255,0.3)" : C.muted;
+
+  const logos = [
+    { name: "Cliniko", svg: (
+      <svg width="90" height="24" viewBox="0 0 90 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">Cliniko</text></svg>
+    )},
+    { name: "WriteUpp", svg: (
+      <svg width="90" height="24" viewBox="0 0 90 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">WriteUpp</text></svg>
+    )},
+    { name: "Physitrack", svg: (
+      <svg width="100" height="24" viewBox="0 0 100 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">Physitrack</text></svg>
+    )},
+    { name: "Heidi Health", svg: (
+      <svg width="110" height="24" viewBox="0 0 110 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">Heidi Health</text></svg>
+    )},
+    { name: "Stripe", svg: (
+      <svg width="60" height="24" viewBox="0 0 60 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="700" fill="currentColor">Stripe</text></svg>
+    )},
+    { name: "Rehab My Patient", svg: (
+      <svg width="140" height="24" viewBox="0 0 140 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="14" fontWeight="600" fill="currentColor">Rehab My Patient</text></svg>
+    )},
+  ];
+
   return (
-    <section style={{ padding: "40px 0", background: bg, borderTop: `1px solid ${bdr}`, borderBottom: `1px solid ${bdr}`, overflow: "hidden", transition: "background 0.3s ease" }}>
-      <div style={{ display: "flex", animation: "scroll 15s linear infinite", width: "max-content", paddingLeft: 24, paddingRight: 24 }}>
-        {[...logos, ...logos].map((name, i) => (
+    <div style={{ padding: "28px 0 12px", overflow: "hidden" }}>
+      <div style={{ textAlign: "center", marginBottom: 16 }}>
+        <span style={{ fontSize: 11, fontWeight: 500, fontStyle: "italic", color: muted, letterSpacing: "0.03em" }}>
+          currently integrated with:
+        </span>
+      </div>
+      <div style={{ display: "flex", animation: "scroll 20s linear infinite", width: "max-content" }}>
+        {[...logos, ...logos].map(({ name, svg }, i) => (
           <div key={`${name}-${i}`} style={{
             display: "inline-flex", alignItems: "center", justifyContent: "center",
-            padding: "10px 28px", margin: "0 36px",
-            background: darkMode ? "rgba(255,255,255,0.04)" : "white",
-            border: `1px solid ${bdr}`, borderRadius: 50,
-            fontSize: 14, fontWeight: 500,
-            color: darkMode ? "rgba(255,255,255,0.35)" : C.muted,
-            filter: "grayscale(100%)", transition: "all 0.3s ease",
+            margin: "0 32px",
+            color: darkMode ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)",
+            filter: "grayscale(100%)",
+            opacity: 0.7,
+            transition: "all 0.3s ease",
             cursor: "default", whiteSpace: "nowrap",
           }}
-            onMouseEnter={e => { e.currentTarget.style.filter = "grayscale(0%)"; e.currentTarget.style.color = darkMode ? "white" : C.ink; e.currentTarget.style.borderColor = C.blue; }}
-            onMouseLeave={e => { e.currentTarget.style.filter = "grayscale(100%)"; e.currentTarget.style.color = darkMode ? "rgba(255,255,255,0.35)" : C.muted; e.currentTarget.style.borderColor = bdr; }}
+            onMouseEnter={e => { e.currentTarget.style.filter = "grayscale(0%)"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.color = darkMode ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)"; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = "grayscale(100%)"; e.currentTarget.style.opacity = "0.7"; e.currentTarget.style.color = darkMode ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)"; }}
           >
-            {name}
+            {svg}
           </div>
         ))}
       </div>
-    </section>
+    </div>
   );
 };
 
@@ -2316,7 +2642,6 @@ export default function App() {
       <Nav darkMode={darkMode} setDarkMode={setDarkMode} />
       <Hero darkMode={darkMode} />
       <HolisticSection darkMode={darkMode} />
-      <IntegrationCarousel darkMode={darkMode} />
       <Integrations darkMode={darkMode} />
       <Products darkMode={darkMode} />
       <Results />
