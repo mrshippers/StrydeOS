@@ -1040,23 +1040,26 @@ const HolisticSection = ({ darkMode }) => {
   <section id="how-it-works" style={{ padding: "100px 24px", background: bgAlt, transition: "background 0.3s ease" }}>
     <div style={{ maxWidth: 1160, margin: "0 auto" }}>
       <div className="holistic-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+        <AnimIn>
         <div>
           <div className="section-chip">One Operating System</div>
           <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginBottom: 24 }}>
             Visibility drives performance. Performance drives profit.
           </h2>
-          <p style={{ fontSize: 16, lineHeight: 1.8, color: muted, marginBottom: 20 }}>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: muted, marginBottom: 20 }}>
             Cost per acquisition. Follow-up conversion. DNA recovery rate. Revenue per clinician hour. These are the metrics that drive private-practice growth, and most owners still pull them manually from spreadsheets.
           </p>
-          <p style={{ fontSize: 16, lineHeight: 1.8, color: muted, marginBottom: 32 }}>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: muted, marginBottom: 32 }}>
             They've just built the infrastructure to make it happen — without hiring more people to do it.
           </p>
-          <p style={{ fontSize: 16, lineHeight: 1.8, color: txt, fontWeight: 500 }}>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: txt, fontWeight: 500 }}>
             StrydeOS packages that infrastructure for any private clinic, from day one.
           </p>
         </div>
+        </AnimIn>
 
         {/* Three pillars visual */}
+        <AnimIn delay={200}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {[
             { name: "Ava", desc: "Catches every patient at the door", color: C.blue, accentFrom: "#2E6BFF", accentTo: "#091D3E", n: "01" },
@@ -1103,6 +1106,7 @@ const HolisticSection = ({ darkMode }) => {
             These are the metrics that drive clinic growth. Most owners don't know where to find them — or what they mean.
           </p>
         </div>
+        </AnimIn>
       </div>
     </div>
   </section>
@@ -1231,15 +1235,17 @@ const Integrations = ({ darkMode }) => {
     <div style={{ maxWidth: 1160, margin: "0 auto" }}>
 
       {/* Header */}
+      <AnimIn>
       <div style={{ textAlign: "center", marginBottom: 52 }}>
         <div className="section-chip">Works With Your Stack</div>
         <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginBottom: 16 }}>
           Our pitch isn't "switch to StrydeOS."
         </h2>
-        <p style={{ fontSize: 16, color: muted, maxWidth: 560, margin: "0 auto", lineHeight: 1.75 }}>
+        <p style={{ fontSize: 16, color: muted, maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>
           Appointments, note taking, billing — your PMS owns this layer. StrydeOS sits above that. Whatever you're already running, we simply connect and enrich it, not replace it.
         </p>
       </div>
+      </AnimIn>
 
       {/* Architecture pyramid */}
       <PyramidDiagram />
@@ -1683,15 +1689,17 @@ const Products = ({ darkMode }) => {
     <section id="products" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
       <audio ref={avaAudioRef} src="/ava-demo.mp3" preload="metadata" />
       <div style={{ maxWidth: 1160, margin: "0 auto" }}>
+        <AnimIn>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
           <div className="section-chip">Products</div>
-          <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400 }}>
+          <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
             Three products. One platform.
           </h2>
-          <p style={{ color: muted, fontSize: 16, marginTop: 14, maxWidth: 480, margin: "14px auto 0" }}>
+          <p style={{ color: muted, fontSize: 16, marginTop: 14, maxWidth: 480, margin: "14px auto 0", lineHeight: 1.7 }}>
             Know the metrics that move the needle. Use one or all three.
           </p>
         </div>
+        </AnimIn>
 
         {/* Tabs */}
         <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 52 }}>
@@ -1716,7 +1724,7 @@ const Products = ({ darkMode }) => {
               display: "inline-flex", alignItems: "center", gap: 6,
               padding: "4px 12px", borderRadius: 50, marginBottom: 18,
               background: `${p.color}15`, color: p.color,
-              fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase",
+              fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
               border: `1px solid ${p.color}25`,
             }}>
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: p.color }} />
@@ -1728,7 +1736,7 @@ const Products = ({ darkMode }) => {
             </h3>
 
             {p.body.split("\n\n").map((para, i) => (
-              <p key={i} style={{ color: muted, lineHeight: 1.75, marginBottom: 14, fontSize: 15 }}>{para}</p>
+              <p key={i} style={{ color: muted, lineHeight: 1.7, marginBottom: 14, fontSize: 16 }}>{para}</p>
             ))}
 
             <div style={{ padding: "14px 18px", borderLeft: `3px solid ${p.color}`, marginBottom: 24, marginTop: 8 }}>
@@ -1832,18 +1840,21 @@ const Results = () => {
     <RadialGlow color={C.teal} size={500} opacity={0.08} style={{ bottom: -100, left: -100 }} />
 
     <div style={{ maxWidth: 1160, margin: "0 auto", position: "relative", zIndex: 2 }}>
+      <AnimIn>
       <div style={{ textAlign: "center", marginBottom: 60 }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 50, background: `${C.blue}25`, border: `1px solid ${C.blue}40`, color: C.blueGlow, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>
           Results
         </div>
-        <h2 className="serif" style={{ fontSize: 44, color: "white", fontWeight: 400 }}>
+        <h2 className="serif" style={{ fontSize: 44, color: "white", fontWeight: 400, lineHeight: 1.1 }}>
           Measured improvements that are more than theory.
         </h2>
-        <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 16, marginTop: 14, fontStyle: "italic" }}>
+        <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 16, marginTop: 14, fontStyle: "italic", lineHeight: 1.7 }}>
           Better conversion from enquiry to booked care. Better continuity through treatment. Better owner visibility on profit drivers.
         </p>
       </div>
+      </AnimIn>
 
+      <AnimIn delay={150}>
       <div className="results-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 48 }}>
         {[
           { stat: "34%→8%", label: "Missed call rate", note: "Pilot clinic data" },
@@ -1861,8 +1872,10 @@ const Results = () => {
           </div>
         ))}
       </div>
+      </AnimIn>
 
       {/* Case Study Carousel */}
+      <AnimIn delay={300}>
       <div style={{
         background: "rgba(255,255,255,0.04)", borderRadius: 20, padding: "40px 48px",
         border: "1px solid rgba(255,255,255,0.07)",
@@ -1899,6 +1912,7 @@ const Results = () => {
           ))}
         </div>
       </div>
+      </AnimIn>
     </div>
   </section>
   );
@@ -1926,16 +1940,19 @@ const ROICalc = ({ darkMode }) => {
   return (
     <section style={{ padding: "100px 24px", background: bgAlt, transition: "background 0.3s ease" }}>
       <div style={{ maxWidth: 920, margin: "0 auto" }}>
+        <AnimIn>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
           <div className="section-chip">ROI Calculator</div>
           <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
             What's inefficiency actually costing you?
           </h2>
-          <p style={{ color: muted, marginTop: 14, fontSize: 15 }}>
+          <p style={{ color: muted, marginTop: 14, fontSize: 16, lineHeight: 1.7 }}>
             Dial in your clinic's numbers. The losses are probably larger than you think.
           </p>
         </div>
+        </AnimIn>
 
+        <AnimIn delay={150}>
         <div style={{ background: bgCard, borderRadius: 24, overflow: "hidden", boxShadow: darkMode ? `0 24px 60px ${C.navy}60` : "0 24px 60px rgba(11,37,69,0.07)", border: darkMode ? `1px solid ${bdr}` : "none", transition: "background 0.3s ease" }}>
           <div className="roi-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
             {/* Controls */}
@@ -1990,6 +2007,7 @@ const ROICalc = ({ darkMode }) => {
             </div>
           </div>
         </div>
+        </AnimIn>
       </div>
     </section>
   );
@@ -2037,15 +2055,17 @@ const Pricing = ({ darkMode }) => {
   return (
   <section id="pricing" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+      <AnimIn>
       <div style={{ textAlign: "center", marginBottom: 32 }}>
         <div className="section-chip">Pricing</div>
         <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
           Modular by design. Your clinic, your stack.
         </h2>
-        <p style={{ color: muted, marginTop: 14, fontSize: 15, maxWidth: 560, margin: "14px auto 0" }}>
+        <p style={{ color: muted, marginTop: 14, fontSize: 16, lineHeight: 1.7, maxWidth: 560, margin: "14px auto 0" }}>
           Three modules. Mix and match. No forced tiers, no wasted features. The full stack costs less than a part-time receptionist.
         </p>
       </div>
+      </AnimIn>
 
       {/* Monthly / Annual toggle */}
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: 44 }}>
@@ -2067,6 +2087,7 @@ const Pricing = ({ darkMode }) => {
         {annual && <span style={{ fontSize: 11, fontWeight: 600, color: C.success, background: `${C.success}15`, padding: "3px 10px", borderRadius: 20 }}>Save 20%</span>}
       </div>
 
+      <AnimIn delay={150}>
       <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, marginBottom: 32 }}>
         {modules.filter(m => !m.highlight).map(({ name, price, setup, color, tagline, features, cta, planId }) => (
           <div key={name} className="card-hover" style={{
@@ -2108,8 +2129,10 @@ const Pricing = ({ darkMode }) => {
           </div>
         ))}
       </div>
+      </AnimIn>
 
       {/* Full Stack banner */}
+      <AnimIn delay={300}>
       {(() => {
         const fs = modules.find(m => m.highlight);
         return fs ? (
@@ -2173,6 +2196,7 @@ const Pricing = ({ darkMode }) => {
         ) : null;
       })()}
 
+      </AnimIn>
       <p style={{ textAlign: "center", fontSize: 13, color: muted, fontStyle: "italic" }}>
         Currently in early access · No lock-in contracts · Onboarding & training included
       </p>
@@ -2230,6 +2254,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
       <div style={{ maxWidth: 1160, margin: "0 auto" }}>
 
         {/* Header */}
+        <AnimIn>
         <div className="whyus-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "end", marginBottom: 80 }}>
           <div>
             <div className="section-chip">About</div>
@@ -2240,13 +2265,15 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
             </h2>
           </div>
           <div>
-            <p style={{ fontSize: 16, color: muted, lineHeight: 1.8 }}>
+            <p style={{ fontSize: 16, color: muted, lineHeight: 1.7 }}>
               Your PMS handles bookings, the exercise platform sends HEPs and the processor takes money. None of them identify why cancellations go unrecovered or your latest KPIs. That's because none are built precisely for clinical optimisation.
             </p>
           </div>
         </div>
+        </AnimIn>
 
         {/* Four pillar grid */}
+        <AnimIn delay={200}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
           {pillars.map(({ n, title, color, body }, i) => (
             <div key={n} style={{
@@ -2279,7 +2306,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
 
               {body.split("\n\n").map((para, pi) => (
                 <p key={pi} style={{
-                  fontSize: 14.5, color: muted, lineHeight: 1.85,
+                  fontSize: 14, color: muted, lineHeight: 1.7,
                   marginBottom: pi < body.split("\n\n").length - 1 ? 16 : 0,
                 }}>
                   {para}
@@ -2288,8 +2315,10 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
             </div>
           ))}
         </div>
+        </AnimIn>
 
         {/* Bottom proof bar */}
+        <AnimIn delay={350}>
         <div style={{
           display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr",
           borderTop: `1px solid ${bdr}`,
@@ -2307,6 +2336,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
             </div>
           ))}
         </div>
+        </AnimIn>
 
       </div>
     </section>
@@ -2404,20 +2434,22 @@ const FAQ = ({ darkMode }) => {
   return (
     <section id="faq" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <AnimIn>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
           <div className="section-chip">FAQ</div>
-          <h2 className="serif" style={{ fontSize: 42, color: head, fontWeight: 400, lineHeight: 1.1 }}>
+          <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
             Frequently asked questions
           </h2>
-          <p style={{ fontSize: 15, color: muted, marginTop: 14, lineHeight: 1.7 }}>
+          <p style={{ fontSize: 16, color: muted, marginTop: 14, lineHeight: 1.7 }}>
             Everything you need to know before getting started.
           </p>
         </div>
+        </AnimIn>
 
         {groups.map((group) => (
           <div key={group.label} style={{ marginBottom: 44 }}>
             <div style={{
-              fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase",
+              fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
               color: C.blue, marginBottom: 8, paddingLeft: 2,
             }}>
               {group.label}
@@ -2499,6 +2531,7 @@ const Changelog = ({ darkMode }) => {
       <RadialGlow color="#8B5CF6" size={400} opacity={0.06} style={{ bottom: -100, left: -100 }} />
 
       <div style={{ maxWidth: 720, margin: "0 auto", position: "relative", zIndex: 2 }}>
+        <AnimIn>
         <div style={{ textAlign: "center", marginBottom: 60 }}>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px",
@@ -2506,13 +2539,14 @@ const Changelog = ({ darkMode }) => {
             color: C.blueGlow, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em",
             textTransform: "uppercase", marginBottom: 16,
           }}>Changelog</div>
-          <h2 className="serif" style={{ fontSize: 42, color: "white", fontWeight: 400 }}>
+          <h2 className="serif" style={{ fontSize: 44, color: "white", fontWeight: 400, lineHeight: 1.1 }}>
             What we've shipped
           </h2>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 15, marginTop: 12 }}>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginTop: 12 }}>
             Jan–Mar 2026
           </p>
         </div>
+        </AnimIn>
 
         <div style={{ position: "relative", paddingLeft: 40 }}>
           {/* Vertical line */}
@@ -2565,6 +2599,7 @@ const EarlyAccess = () => (
   }}>
     <RadialGlow color={C.blue} size={800} opacity={0.16} style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)" }} />
 
+    <AnimIn>
     <div style={{ maxWidth: 620, margin: "0 auto", position: "relative", zIndex: 2 }}>
       <div style={{ display: "inline-flex", gap: 4, padding: "4px 14px", borderRadius: 50, background: `${C.blue}30`, border: `1px solid ${C.blue}50`, color: C.blueGlow, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>
         Early Access
@@ -2606,6 +2641,7 @@ const EarlyAccess = () => (
         </div>
       </div>
     </div>
+    </AnimIn>
   </section>
 );
 
