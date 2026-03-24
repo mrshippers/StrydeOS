@@ -746,6 +746,159 @@ const BeforeAfterStrip = () => {
 };
 
 /* ─── Hero ─────────────────────────────────────────────────────────────────── */
+/* ─── Hero Dashboard Showcase ──────────────────────────────────────────────── */
+const HeroDashSpark = ({ data, color, w = 56, h = 18 }) => {
+  const min = Math.min(...data), max = Math.max(...data), range = max - min || 1;
+  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * (h - 3) - 1.5}`).join(" ");
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ display: "block" }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+};
+
+const HeroDashModuleCard = ({ name, color, stat, delay }) => {
+  const [v, setV] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setV(true), delay); return () => clearTimeout(t); }, [delay]);
+  return (
+    <div style={{
+      flex: 1, padding: "8px 10px", borderRadius: 10,
+      backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+      opacity: v ? 1 : 0, transform: v ? "translateY(0)" : "translateY(6px)",
+      transition: "all 0.45s cubic-bezier(0.16,1,0.3,1)", position: "relative", overflow: "hidden",
+    }}>
+      <div style={{ position: "absolute", top: -15, left: -15, width: 50, height: 50, borderRadius: "50%", background: `radial-gradient(circle, ${color}18, transparent 70%)`, pointerEvents: "none" }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+        <div style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: color }} />
+        <span style={{ fontSize: 8, fontWeight: 700, color: C.success, textTransform: "uppercase", letterSpacing: "0.06em" }}>Active</span>
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 600, color: "#fff", marginBottom: 1 }}>{name}</div>
+      <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>{stat}</div>
+    </div>
+  );
+};
+
+const HeroDashKPI = ({ label, value, unit, delta, dir, status, sparkData, delay }) => {
+  const [v, setV] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setV(true), delay); return () => clearTimeout(t); }, [delay]);
+  const sc = status === "green" ? C.success : status === "red" ? "#EF4444" : C.muted;
+  return (
+    <div style={{
+      padding: "10px 12px 8px", borderRadius: 12,
+      backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+      opacity: v ? 1 : 0, transform: v ? "translateY(0)" : "translateY(8px)",
+      transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        <span style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)" }}>{label}</span>
+        <div style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: sc }} />
+      </div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
+        <span className="serif" style={{ fontSize: 22, color: "#fff", lineHeight: 1 }}>{value}</span>
+        {unit && <span style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>{unit}</span>}
+        {delta && <span style={{ fontSize: 9, fontWeight: 700, color: dir === "up" ? C.success : "#EF4444", marginLeft: 2 }}>{dir === "up" ? "\u2191" : "\u2193"}{delta}</span>}
+      </div>
+      {sparkData && <HeroDashSpark data={sparkData} color={C.blueGlow} />}
+    </div>
+  );
+};
+
+const HeroDashboard = () => {
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => { requestAnimationFrame(() => requestAnimationFrame(() => setLoaded(true))); }, []);
+  return (
+    <div style={{ width: "100%", maxWidth: 400, margin: "0 auto" }}>
+      {/* Floating toast */}
+      <div style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        padding: "5px 12px 5px 8px", borderRadius: 50,
+        backgroundColor: "rgba(255,255,255,0.95)",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+        fontSize: 10, fontWeight: 600, color: C.success,
+        position: "relative", left: "55%", marginBottom: -8, zIndex: 2,
+        animation: "float 4s ease-in-out infinite",
+        opacity: loaded ? 1 : 0, transition: "opacity 0.5s ease 0.8s",
+      }}>
+        <span style={{ fontSize: 12 }}>\uD83D\uDCDE</span> Call answered automatically
+      </div>
+
+      <div style={{
+        backgroundColor: C.navy, borderRadius: 18, padding: "18px 16px 14px",
+        border: "1px solid rgba(255,255,255,0.12)",
+        boxShadow: "0 8px 50px rgba(0,0,0,0.45), 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)",
+        position: "relative", overflow: "hidden",
+      }}>
+        <div style={{ position: "absolute", top: -60, right: -40, width: 200, height: 200, borderRadius: "50%", background: `radial-gradient(circle, ${C.blue}14, transparent 70%)`, pointerEvents: "none" }} />
+
+        {/* Header */}
+        <div style={{
+          display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12,
+          opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(6px)",
+          transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)",
+        }}>
+          <div>
+            <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.25)", marginBottom: 4 }}>Spires Physiotherapy · London</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <MonolithMark size={18} />
+              <span className="serif" style={{ fontSize: 15, color: "#fff" }}>Stryde<span style={{ color: C.blueGlow }}>OS</span> Dashboard</span>
+            </div>
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 5, padding: "4px 10px 4px 7px", borderRadius: 50,
+            border: "1px solid rgba(5,150,105,0.2)", backgroundColor: "rgba(5,150,105,0.06)",
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: C.success }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: C.success }}>Live</span>
+          </div>
+        </div>
+
+        {/* Modules */}
+        <div style={{ display: "flex", gap: 5, marginBottom: 8 }}>
+          <HeroDashModuleCard name="Ava" color={C.blue} stat="12 today" delay={150} />
+          <HeroDashModuleCard name="Pulse" color={C.teal} stat="8 follow-ups" delay={220} />
+          <HeroDashModuleCard name="Intelligence" color={C.purple} stat="91% util." delay={290} />
+        </div>
+
+        {/* KPI 2x2 */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, marginBottom: 5 }}>
+          <HeroDashKPI label="Follow-up Rate" value="3.3" unit="sess/pt" delta="+2%" dir="up" status="green" sparkData={[2.8,2.9,3.0,3.1,3.0,3.2,3.3]} delay={350} />
+          <HeroDashKPI label="HEP Compliance" value="87%" delta="+1%" dir="up" status="green" sparkData={[80,82,83,84,85,86,87]} delay={400} />
+          <HeroDashKPI label="Utilisation" value="74%" delta="+1%" dir="up" status="red" sparkData={[70,71,72,71,73,73,74]} delay={450} />
+          <HeroDashKPI label="DNA Rate" value="3%" delta="-25%" dir="up" status="green" sparkData={[6,5.5,5,4.2,3.8,3.2,3]} delay={500} />
+        </div>
+
+        {/* Bottom row */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
+          <div style={{
+            padding: "8px 12px", borderRadius: 10,
+            backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+            opacity: loaded ? 1 : 0, transition: "opacity 0.5s ease 0.55s",
+          }}>
+            <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)", marginBottom: 4 }}>Appointments</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+              <span className="serif" style={{ fontSize: 20, color: "#fff", lineHeight: 1 }}>73</span>
+              <span style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>this week</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: C.success, marginLeft: 2 }}>\u2191+4%</span>
+            </div>
+          </div>
+          <div style={{
+            padding: "8px 12px", borderRadius: 10,
+            backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+            opacity: loaded ? 1 : 0, transition: "opacity 0.5s ease 0.6s",
+          }}>
+            <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)", marginBottom: 4 }}>Rev / Session</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+              <span className="serif" style={{ fontSize: 20, color: "#fff", lineHeight: 1 }}>\u00A379</span>
+              <span style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>avg</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.35)", marginLeft: 2 }}>+0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Hero = ({ darkMode }) => {
   const [count1, setCount1] = useState(0);
   const [count2, setCount2] = useState(0);
@@ -836,186 +989,9 @@ const Hero = ({ darkMode }) => {
             </div>
           </div>
 
-          {/* Right — OS mockup */}
+          {/* Right — Compact dashboard showcase */}
           <div style={{ animation: "fadeUp 0.8s 0.2s ease both" }}>
-            <div className="animate-float" style={{ position: "relative" }}>
-              <div style={{
-                background: C.navy,
-                borderRadius: 20, padding: "24px 20px 20px",
-                boxShadow: `0 8px 60px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)`,
-                border: "1px solid rgba(255,255,255,0.12)",
-                position: "relative", overflow: "hidden",
-              }}>
-                {/* Ambient glows */}
-                <div style={{ position: "absolute", top: -80, right: -60, width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${C.blue}14, transparent 70%)`, pointerEvents: "none" }} />
-                <div style={{ position: "absolute", bottom: -60, left: -40, width: 250, height: 250, borderRadius: "50%", background: `radial-gradient(circle, ${C.teal}0C, transparent 70%)`, pointerEvents: "none" }} />
-
-                {/* Header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18, position: "relative" }}>
-                  <div>
-                    <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Spires Physiotherapy · London</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <MonolithVariant size={22} />
-                      <span className="serif" style={{ fontSize: 18, fontWeight: 400, color: "white", lineHeight: 1 }}>
-                        Stryde<span style={{ color: C.blueGlow }}>OS</span> Dashboard
-                      </span>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 14px 6px 10px", borderRadius: 50, border: "1px solid rgba(5,150,105,0.2)", background: "rgba(5,150,105,0.06)" }}>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.success }} />
-                    <span style={{ fontSize: 12, fontWeight: 700, color: C.success }}>Live</span>
-                  </div>
-                </div>
-
-                {/* Module row */}
-                <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-                  {[
-                    { name: "Ava", color: C.blue, stat: "12 today" },
-                    { name: "Pulse", color: C.teal, stat: "8 follow-ups" },
-                    { name: "Intelligence", color: "#8B5CF6", stat: "91% util." },
-                  ].map(({ name, color, stat }) => (
-                    <div key={name} style={{ flex: 1, minWidth: 0, padding: "10px 12px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", position: "relative", overflow: "hidden" }}>
-                      <div style={{ position: "absolute", top: -20, left: -20, width: 80, height: 80, borderRadius: "50%", background: `radial-gradient(circle, ${color}18, transparent 70%)`, pointerEvents: "none" }} />
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
-                        <span style={{ fontSize: 10, fontWeight: 700, color: C.success, textTransform: "uppercase", letterSpacing: "0.06em" }}>Active</span>
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "white", marginBottom: 1 }}>{name}</div>
-                      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>{stat}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* KPI Grid — 2×2 with sparklines */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
-                  {[
-                    { label: "Follow-up Rate", value: "3.3", unit: "sessions/patient", delta: "+2%", status: "green", spark: [2.8, 2.9, 3.0, 3.1, 3.0, 3.2, 3.3] },
-                    { label: "HEP Compliance", value: "87%", delta: "+1%", status: "green", spark: [80, 82, 83, 84, 85, 86, 87] },
-                    { label: "Utilisation", value: "74%", delta: "+1%", status: "red", subtext: "Room to add more bookings", spark: [70, 71, 72, 71, 73, 73, 74] },
-                    { label: "DNA Rate", value: "3%", delta: "-25%", status: "green", subtext: "Low no-show rate", spark: [6, 5.5, 5, 4.2, 3.8, 3.2, 3] },
-                  ].map(({ label, value, unit, delta, status, subtext, spark }) => {
-                    const statusColor = status === "green" ? C.success : status === "red" ? "#EF4444" : "rgba(255,255,255,0.3)";
-                    const sparkW = 100, sparkH = 24;
-                    const sMin = Math.min(...spark), sMax = Math.max(...spark), sRange = sMax - sMin || 1;
-                    const sparkPts = spark.map((v, i) => `${(i / (spark.length - 1)) * sparkW},${sparkH - ((v - sMin) / sRange) * (sparkH - 4) - 2}`);
-                    const lastPt = sparkPts[sparkPts.length - 1].split(",");
-                    return (
-                      <div key={label} style={{ padding: "14px 16px 12px", borderRadius: 14, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", boxShadow: "0 2px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden" }}>
-                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)" }}>{label}</span>
-                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: statusColor, flexShrink: 0, marginTop: 2 }} />
-                        </div>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 4 }}>
-                          <span className="serif" style={{ fontSize: 28, color: "white", lineHeight: 1 }}>{value}</span>
-                          {unit && <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>{unit}</span>}
-                          <span style={{ fontSize: 12, fontWeight: 700, marginLeft: 4, color: C.success }}>↑ {delta}</span>
-                        </div>
-                        {subtext && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", marginBottom: 6 }}>{subtext}</div>}
-                        <svg width={sparkW} height={sparkH} viewBox={`0 0 ${sparkW} ${sparkH}`} style={{ display: "block", marginTop: 6 }}>
-                          <polygon points={`0,${sparkH} ${sparkPts.join(" ")} ${sparkW},${sparkH}`} fill={C.blueGlow} fillOpacity="0.08" />
-                          <polyline points={sparkPts.join(" ")} fill="none" stroke={C.blueGlow} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          <circle cx={lastPt[0]} cy={lastPt[1]} r="3" fill={C.blueGlow} />
-                        </svg>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Revenue + Appointments row */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
-                  {[
-                    { label: "Appointments", value: "73", unit: "this week", delta: "+4%", spark: [60, 62, 65, 68, 70, 71, 73] },
-                    { label: "Revenue / Session", value: "£79", unit: "avg", delta: "+0%", spark: [78, 78, 79, 79, 78, 79, 79] },
-                  ].map(({ label, value, unit, delta, spark }) => {
-                    const sparkW = 100, sparkH = 24;
-                    const sMin = Math.min(...spark), sMax = Math.max(...spark), sRange = sMax - sMin || 1;
-                    const sparkPts = spark.map((v, i) => `${(i / (spark.length - 1)) * sparkW},${sparkH - ((v - sMin) / sRange) * (sparkH - 4) - 2}`);
-                    const lastPt = sparkPts[sparkPts.length - 1].split(",");
-                    return (
-                      <div key={label} style={{ padding: "14px 16px 12px", borderRadius: 14, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", boxShadow: "0 2px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden" }}>
-                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)" }}>{label}</span>
-                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.success, flexShrink: 0, marginTop: 2 }} />
-                        </div>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 4 }}>
-                          <span className="serif" style={{ fontSize: 28, color: "white", lineHeight: 1 }}>{value}</span>
-                          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>{unit}</span>
-                          <span style={{ fontSize: 12, fontWeight: 700, marginLeft: 4, color: C.success }}>↑ {delta}</span>
-                        </div>
-                        <svg width={sparkW} height={sparkH} viewBox={`0 0 ${sparkW} ${sparkH}`} style={{ display: "block", marginTop: 6 }}>
-                          <polygon points={`0,${sparkH} ${sparkPts.join(" ")} ${sparkW},${sparkH}`} fill={C.blueGlow} fillOpacity="0.08" />
-                          <polyline points={sparkPts.join(" ")} fill="none" stroke={C.blueGlow} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          <circle cx={lastPt[0]} cy={lastPt[1]} r="3" fill={C.blueGlow} />
-                        </svg>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Retention Chart */}
-                <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 14, padding: "14px 16px 10px", border: "1px solid rgba(255,255,255,0.07)" }}>
-                  <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>Patient Retention — 90 days</div>
-                  {(() => {
-                    const data = [62, 64, 67, 72, 76, 80, 83, 86, 88];
-                    const labels = ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9"];
-                    const w = 400, h = 120, pad = { l: 0, r: 10, t: 8, b: 20 };
-                    const plotW = w - pad.l - pad.r, plotH = h - pad.t - pad.b;
-                    const rMin = 55, rMax = 95;
-                    const pts = data.map((v, i) => ({ x: pad.l + (i / (data.length - 1)) * plotW, y: pad.t + plotH - ((v - rMin) / (rMax - rMin)) * plotH }));
-                    const line = pts.map(p => `${p.x},${p.y}`).join(" ");
-                    const area = `${pad.l},${pad.t + plotH} ${line} ${pts[pts.length-1].x},${pad.t + plotH}`;
-                    return (
-                      <svg width="100%" viewBox={`0 0 ${w} ${h}`} style={{ display: "block" }}>
-                        {[60, 70, 80, 90].map(v => {
-                          const y = pad.t + plotH - ((v - rMin) / (rMax - rMin)) * plotH;
-                          return <line key={v} x1={pad.l} x2={w - pad.r} y1={y} y2={y} stroke="rgba(255,255,255,0.07)" strokeWidth="1" />;
-                        })}
-                        <polygon points={area} fill={C.blueGlow} fillOpacity="0.06" />
-                        <polyline points={line} fill="none" stroke={C.blueGlow} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        {pts.map((p, i) => (
-                          <g key={i}>
-                            <circle cx={p.x} cy={p.y} r="4" fill={C.blueGlow} />
-                            <circle cx={p.x} cy={p.y} r="2.5" fill={C.navy} />
-                            <text x={p.x} y={h - 4} textAnchor="middle" fontSize="9" fontFamily="Outfit" fontWeight="500" fill="rgba(255,255,255,0.3)">{labels[i]}</text>
-                          </g>
-                        ))}
-                        <text x={pts[pts.length-1].x + 8} y={pts[pts.length-1].y + 4} fontSize="11" fontFamily="Outfit" fontWeight="700" fill={C.blueGlow}>{data[data.length-1]}%</text>
-                      </svg>
-                    );
-                  })()}
-                </div>
-
-                {/* Footer watermark */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, paddingTop: 14, opacity: 0.3 }}>
-                  <MonolithVariant size={12} />
-                  <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.03em" }}>
-                    Stryde<span style={{ color: C.blueGlow }}>OS</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Floating badges */}
-              <div style={{
-                position: "absolute", top: -14, right: -18,
-                background: "rgba(255,255,255,0.95)", borderRadius: 50, padding: "7px 14px 7px 10px",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06)",
-                display: "flex", alignItems: "center", gap: 10,
-                fontSize: 11, fontWeight: 600, color: C.success,
-                whiteSpace: "nowrap",
-              }}>
-                <span style={{ fontSize: 13 }}>📞</span> Call answered automatically
-              </div>
-              <div style={{
-                position: "absolute", bottom: -14, left: -18,
-                background: "rgba(255,255,255,0.95)", borderRadius: 50, padding: "7px 14px 7px 10px",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06)",
-                display: "flex", alignItems: "center", gap: 10,
-                fontSize: 11, fontWeight: 600, color: C.blue,
-                whiteSpace: "nowrap",
-              }}>
-                <span style={{ fontSize: 13 }}>💬</span> Re-booking prompt sent
-              </div>
-            </div>
+            <HeroDashboard />
           </div>
         </div>
 
