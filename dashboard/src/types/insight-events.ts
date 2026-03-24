@@ -17,6 +17,12 @@ export type InsightEventType =
   | "PATIENT_DROPOUT_RISK"      // Mid-programme patient, no rebooking >X days
   | "NPS_DETRACTOR_ALERT"       // NPS response ≤6 — needs human follow-up + possible Pulse nudge
 
+  // Revenue intelligence — PBB: "You can't fix what you don't measure"
+  | "FOLLOWUP_REVENUE_DROP"     // Follow-up revenue dropped >20% week-on-week (patients not returning)
+
+  // Clinical outcomes (opt-in — requires featureFlags.outcomeTracking)
+  | "OUTCOME_IMPROVEMENT"       // Patient crossed MCID threshold — clinically meaningful improvement
+
   // System health
   | "DATA_STALENESS_ALERT";     // No CSV import received in 7+ days (CSV-bridge clinics)
 

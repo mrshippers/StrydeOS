@@ -558,7 +558,7 @@ export default function IntelligencePage() {
 
       {/* Tab navigation */}
       <div role="tablist" aria-label="Intelligence views" className="relative flex items-center gap-1 bg-cloud-light rounded-xl p-1 border border-border overflow-x-auto">
-        {TABS.map(({ id, label, icon: Icon }) => (
+        {TABS.filter(t => t.id !== "outcomes" || user?.clinicProfile?.featureFlags?.outcomeTracking).map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             role="tab"

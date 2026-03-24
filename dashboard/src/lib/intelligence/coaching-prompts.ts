@@ -137,6 +137,29 @@ Data:
 - Clinic: {clinicName}
 
 Generate a short owner-only narrative. Set the clinician narrative to an empty string — this is an admin issue, not clinical.`,
+
+  FOLLOWUP_REVENUE_DROP: `Follow-up appointment revenue dropped significantly week-on-week — indicating fewer patients returning for session 2+.
+
+Data:
+- This week's follow-up revenue: £{thisWeekFollowUpRevenue}
+- Last week's follow-up revenue: £{lastWeekFollowUpRevenue}
+- Drop: {dropPct}%
+- Clinic: {clinicName}
+
+Generate narratives. For the owner, frame around the PBB insight that average rebooking is 74% but top clinics hit 85%+ — every percentage point is measurable revenue. For the clinician, frame around patient continuity ("fewer patients came back for their next session this week — worth checking if any need a follow-up call").`,
+
+  OUTCOME_IMPROVEMENT: `Positive event: a patient showed clinically meaningful improvement on a validated outcome measure.
+
+Data:
+- Patient: {patientName}
+- Measure: {measureName}
+- Previous score: {previousScore}
+- Current score: {currentScore}
+- Change: {scoreChange} (MCID threshold: {mcid})
+- Clinician: {clinicianName}
+- Clinic: {clinicName}
+
+Generate narratives. For the owner, connect clinical improvement to retention ("patients who improve are 2.4x more likely to complete their full course"). For the clinician, celebrate the clinical win — name the patient, name what improved.`,
 };
 
 // ── Interpolate template variables ───────────────────────────────────────────

@@ -143,3 +143,25 @@ export function getMeasuresForRegion(
 export function getUniversalMeasures(): OutcomeMeasureDefinition[] {
   return OUTCOME_MEASURES.filter((m) => m.bodyRegion === null);
 }
+
+/**
+ * Minimal Clinically Important Difference (MCID) per outcome measure.
+ * Sourced from published literature — these are the thresholds at which
+ * a score change is considered clinically meaningful (not just noise).
+ *
+ * Used by the insight engine to fire OUTCOME_IMPROVEMENT events only when
+ * a patient's improvement crosses the MCID threshold — avoiding false positives.
+ */
+export const OUTCOME_MCID: Record<string, number> = {
+  nprs: 2,          // 2-point change on 0-10 scale (Farrar et al. 2001)
+  psfs: 2,          // 2-point change on 0-10 scale (Stratford et al. 1995)
+  quickdash: 8,     // 8-point change on 0-100 scale (Mintken et al. 2009)
+  odi: 10,          // 10-point change on 0-100 scale (Ostelo et al. 2008)
+  ndi: 7,           // 7-point change on 0-100 scale (Young et al. 2009)
+  oxford_knee: 5,   // 5-point change on 0-48 scale (Beard et al. 2015)
+  oxford_hip: 5,    // 5-point change on 0-48 scale (Beard et al. 2015)
+  koos: 10,         // 10-point change on 0-100 scale (Roos & Lohmander 2003)
+  hoos: 10,         // 10-point change on 0-100 scale (Roos & Lohmander 2003)
+  visa_a: 12,       // 12-point change on 0-100 scale (Robinson et al. 2001)
+  visa_p: 13,       // 13-point change on 0-100 scale (Hernandez-Sanchez et al. 2014)
+};

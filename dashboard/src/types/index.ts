@@ -48,6 +48,8 @@ export interface FeatureFlags {
   intelligence: boolean;
   continuity: boolean;
   receptionist: boolean;
+  /** Opt-in: enable outcome measures recording + correlation in Intelligence. */
+  outcomeTracking?: boolean;
 }
 
 export type StripeSubscriptionStatus =
@@ -373,6 +375,12 @@ export interface WeeklyStats {
   computedAt?: string;
   statisticallyRepresentative?: boolean;
   caveatNote?: string;
+  /** Revenue breakdown by appointment type (IA, follow-up, review, discharge) in pence */
+  revenueByAppointmentType?: Record<string, number>;
+  /** Revenue from insured patients in pence */
+  insuranceRevenuePence?: number;
+  /** Revenue from self-pay patients in pence */
+  selfPayRevenuePence?: number;
 }
 
 // ─── Comms ───────────────────────────────────────────────────────────────────
