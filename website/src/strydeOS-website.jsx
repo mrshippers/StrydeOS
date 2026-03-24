@@ -179,18 +179,6 @@ const AnimIn = ({ delay = 0, children, threshold = 0.15 }) => {
   );
 };
 
-const DataFlow = ({ count = 3 }) => (
-  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "6px 0" }}>
-    {Array.from({ length: count }).map((_, i) => (
-      <div key={i} style={{
-        width: 3, height: 3, borderRadius: "50%",
-        backgroundColor: C.blueGlow,
-        opacity: 0.4 + (i * 0.2),
-        animation: `flowDot 1.5s ease-in-out ${i * 0.2}s infinite`,
-      }} />
-    ))}
-  </div>
-);
 
 /* ─── MonolithMark ───────────────────────────────────────────────────────── */
 let _mmId = 0;
@@ -1114,114 +1102,6 @@ const HolisticSection = ({ darkMode }) => {
 };
 
 /* ─── Pyramid Diagram ──────────────────────────────────────────────────────── */
-const PyramidWire = ({ label, color = C.blueGlow }) => (
-  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "6px 0" }}>
-    <div style={{ width: 1, height: 16, background: `linear-gradient(${color}00, ${color}50)` }} />
-    <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color, opacity: 0.6, padding: "3px 0" }}>{label}</div>
-    <div style={{ width: 1, height: 16, background: `linear-gradient(${color}50, ${color}00)` }} />
-  </div>
-);
-
-const PyramidDiagram = () => {
-  const tierW = ["100%", "76%", "52%"];
-  return (
-    <div style={{
-      width: "100%", maxWidth: 1280, margin: "0 auto 40px",
-      background: C.navy, borderRadius: 20, padding: "36px 56px 30px",
-      position: "relative", overflow: "hidden",
-    }}>
-      {/* BG waveforms */}
-      <svg viewBox="0 0 1280 380" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.025, pointerEvents: "none" }}>
-        <path d="M0,100 C200,80 400,120 600,95 C800,70 1000,110 1280,90" fill="none" stroke="white" strokeWidth="1" />
-        <path d="M0,220 C250,200 500,240 750,215 C1000,190 1150,225 1280,210" fill="none" stroke="white" strokeWidth="0.5" />
-      </svg>
-
-      <div style={{ position: "relative", zIndex: 2 }}>
-        {/* Tier 1 — Existing tools (full width) */}
-        <div style={{ width: tierW[0], margin: "0 auto" }}>
-          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.2)", textAlign: "center", marginBottom: 10 }}>
-            Your existing tools — unchanged
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 14, padding: 8 }}>
-            {[
-              { name: "Your PMS", sub: "Appointments · Billing", icon: "🗂️" },
-              { name: "Exercise Platform", sub: "HEP · Programmes", icon: "🏋️" },
-              { name: "Your Phone Line", sub: "Inbound calls", icon: "📞" },
-            ].map(({ name, sub, icon }) => (
-              <div key={name} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ fontSize: 18 }}>{icon}</div>
-                <div>
-                  <div style={{ color: "white", fontWeight: 600, fontSize: 13 }}>{name}</div>
-                  <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 10 }}>{sub}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Wires: Tier 1 → 2 */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", width: tierW[1], margin: "0 auto" }}>
-          <PyramidWire label="Pulls data" color={C.blueGlow} />
-          <PyramidWire label="Syncs programmes" color={C.teal} />
-          <PyramidWire label="Routes calls" color={C.blueGlow} />
-        </div>
-
-        {/* Tier 2 — StrydeOS (narrower) */}
-        <div style={{ width: tierW[1], margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 }}>
-            <div style={{ width: 18, height: 18, borderRadius: 5, background: `${C.blue}22`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 800, color: C.blueGlow }}>S</div>
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: C.blueGlow }}>
-              StrydeOS — sits above your stack
-            </span>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, background: `${C.blue}06`, border: `1px solid ${C.blue}14`, borderRadius: 14, padding: 8 }}>
-            {[
-              { name: "Ava", desc: "Answers calls, books patients into your PMS", icon: "📞", color: C.blue },
-              { name: "Pulse", desc: "Detects drop-off risk, sends rebooking prompts", icon: "🔄", color: C.teal },
-              { name: "Intelligence", desc: "Turns your PMS data into clinician KPIs", icon: "📊", color: "#8B5CF6" },
-            ].map(({ name, desc, icon, color }) => (
-              <div key={name} style={{ background: `${color}0C`, border: `1px solid ${color}1A`, borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{icon}</div>
-                <div>
-                  <div style={{ color, fontWeight: 700, fontSize: 13, marginBottom: 1 }}>{name}</div>
-                  <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, lineHeight: 1.4 }}>{desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Wire: Tier 2 → 3 */}
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <PyramidWire label="So nothing slips through" color={C.teal} />
-        </div>
-
-        {/* Tier 3 — Outcomes (narrowest) */}
-        <div style={{ width: tierW[2], margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 14, padding: 8 }}>
-            {[
-              { value: "0", label: "missed calls", sub: "every inbound answered", color: C.success },
-              { value: "Auto", label: "rebooking prompts", sub: "before patients drop off", color: C.teal },
-              { value: "Live", label: "KPI dashboards", sub: "per clinician, per metric", color: C.blueGlow },
-            ].map(({ value, label, sub, color }) => (
-              <div key={label} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "12px 10px", textAlign: "center" }}>
-                <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 20, color, lineHeight: 1, marginBottom: 2 }}>{value}</div>
-                <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.6)" }}>{label}</div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.2)" }}>{sub}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, marginTop: 16 }}>
-          <div style={{ width: 14, height: 14, borderRadius: 4, background: `${C.blue}25`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, fontWeight: 800, color: C.blueGlow }}>S</div>
-          <span style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.16)" }}>StrydeOS</span>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 /* ─── Integrations ──────────────────────────────────────────────────────────── */
 const Integrations = ({ darkMode }) => {
@@ -1247,8 +1127,193 @@ const Integrations = ({ darkMode }) => {
       </div>
       </AnimIn>
 
-      {/* Architecture pyramid */}
-      <PyramidDiagram />
+      {/* Editorial architecture */}
+      <AnimIn delay={100}>
+      <div style={{
+        background: C.navy, borderRadius: 20, overflow: "hidden",
+        position: "relative", marginBottom: 40,
+      }}>
+        {/* Ambient glow */}
+        <div style={{
+          position: "absolute", top: -100, right: -60,
+          width: 420, height: 420, borderRadius: "50%",
+          background: `radial-gradient(circle, ${C.blue}0D 0%, transparent 70%)`,
+          pointerEvents: "none",
+        }} />
+
+        <div className="arch-grid" style={{
+          display: "grid", gridTemplateColumns: "38% 62%",
+          position: "relative", zIndex: 2,
+        }}>
+
+          {/* LEFT — Editorial */}
+          <div style={{
+            padding: "48px 44px 44px",
+            borderRight: "1px solid rgba(255,255,255,0.05)",
+            display: "flex", flexDirection: "column", justifyContent: "space-between",
+          }}>
+            <div>
+              <div style={{
+                fontSize: 9, fontWeight: 700, letterSpacing: "0.16em",
+                textTransform: "uppercase", color: "rgba(255,255,255,0.2)",
+                marginBottom: 16,
+              }}>
+                Architecture
+              </div>
+              <h3 className="serif" style={{
+                fontSize: 30, color: "rgba(255,255,255,0.9)",
+                fontWeight: 400, lineHeight: 1.2, marginBottom: 16,
+              }}>
+                Nothing changes.
+                <br />
+                <span style={{ fontStyle: "italic", color: C.blueGlow }}>Everything improves.</span>
+              </h3>
+              <p style={{
+                fontSize: 14, color: "rgba(255,255,255,0.35)",
+                lineHeight: 1.7, maxWidth: 320,
+              }}>
+                Your PMS stays. Your HEP platform stays. Your phone number stays. StrydeOS connects to all of it and adds the layer your practice is missing.
+              </p>
+            </div>
+
+            {/* Stat strip */}
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+              paddingTop: 22, marginTop: 32,
+            }}>
+              {[
+                { val: "0", label: "missed calls", color: C.success },
+                { val: "Auto", label: "rebooking", color: C.teal },
+                { val: "Live", label: "KPIs", color: C.blueGlow },
+              ].map(({ val, label, color }) => (
+                <div key={label}>
+                  <div className="serif" style={{ fontSize: 28, color, lineHeight: 1 }}>{val}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 4, fontWeight: 500 }}>{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT — Flow diagram */}
+          <div style={{
+            padding: "40px 44px",
+            display: "flex", flexDirection: "column", justifyContent: "center",
+          }}>
+
+            {/* Tier 1 — Your tools */}
+            <div style={{ marginBottom: 0 }}>
+              <div style={{
+                fontSize: 9, fontWeight: 700, letterSpacing: "0.14em",
+                textTransform: "uppercase", color: "rgba(255,255,255,0.18)",
+                marginBottom: 8,
+              }}>
+                Your existing tools
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                {[
+                  { name: "Your PMS", icon: "🗂️" },
+                  { name: "HEP Platform", icon: "🏋️" },
+                  { name: "Phone Line", icon: "📞" },
+                ].map(({ name, icon }) => (
+                  <div key={name} style={{
+                    background: "rgba(255,255,255,0.035)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 10, padding: "10px 14px",
+                    display: "flex", alignItems: "center", gap: 8,
+                  }}>
+                    <span style={{ fontSize: 15, lineHeight: 1 }}>{icon}</span>
+                    <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, fontWeight: 600 }}>{name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Connector — merge */}
+            <div style={{ padding: "4px 0", display: "flex", justifyContent: "center" }}>
+              <svg width="100%" height="24" viewBox="0 0 100 24" preserveAspectRatio="none">
+                <path d="M16.6,0 L16.6,11 L50,11" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
+                <path d="M50,0 L50,11" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
+                <path d="M83.3,0 L83.3,11 L50,11" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
+                <circle cx="50" cy="11" r="1.2" fill={C.blueGlow} opacity="0.5" />
+                <path d="M50,11 L50,24" stroke={C.blueGlow} strokeWidth="0.8" fill="none" opacity="0.35" />
+              </svg>
+            </div>
+
+            {/* Tier 2 — StrydeOS */}
+            <div style={{ marginBottom: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                <div style={{
+                  width: 18, height: 18, borderRadius: 5,
+                  background: `${C.blue}20`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 8, fontWeight: 800, color: C.blueGlow,
+                }}>S</div>
+                <span style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: "0.12em",
+                  textTransform: "uppercase", color: C.blueGlow, opacity: 0.6,
+                }}>
+                  StrydeOS
+                </span>
+              </div>
+              <div style={{
+                display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8,
+                background: `${C.blue}06`, border: `1px solid ${C.blue}14`,
+                borderRadius: 12, padding: 8,
+              }}>
+                {[
+                  { name: "Ava", icon: "📞", color: C.blue, desc: "Calls → bookings" },
+                  { name: "Pulse", icon: "🔄", color: C.teal, desc: "Risk → re-engage" },
+                  { name: "Intelligence", icon: "📊", color: "#8B5CF6", desc: "Data → KPIs" },
+                ].map(({ name, icon, color, desc }) => (
+                  <div key={name} style={{
+                    background: `${color}0C`, border: `1px solid ${color}1C`,
+                    borderRadius: 8, padding: "12px 10px", textAlign: "center",
+                  }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 7,
+                      background: `${color}18`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      margin: "0 auto 6px", fontSize: 13,
+                    }}>{icon}</div>
+                    <div style={{ color, fontWeight: 700, fontSize: 13 }}>{name}</div>
+                    <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, marginTop: 2 }}>{desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Connector — fan out */}
+            <div style={{ padding: "4px 0", display: "flex", justifyContent: "center" }}>
+              <svg width="100%" height="24" viewBox="0 0 100 24" preserveAspectRatio="none">
+                <path d="M50,0 L50,12" stroke={C.teal} strokeWidth="0.8" fill="none" opacity="0.35" />
+                <circle cx="50" cy="12" r="1.2" fill={C.teal} opacity="0.5" />
+                <path d="M50,12 L16.6,12 L16.6,24" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
+                <path d="M50,12 L50,24" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
+                <path d="M50,12 L83.3,12 L83.3,24" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
+              </svg>
+            </div>
+
+            {/* Tier 3 — Outcomes */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              {[
+                { val: "0 missed", color: C.success },
+                { val: "Auto rebook", color: C.teal },
+                { val: "Live KPIs", color: C.blueGlow },
+              ].map(({ val, color }) => (
+                <div key={val} style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  borderRadius: 10, padding: "10px 14px", textAlign: "center",
+                }}>
+                  <div className="serif" style={{ fontSize: 15, color, lineHeight: 1 }}>{val}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      </AnimIn>
 
       {/* Integration logos scroll */}
       <IntegrationCarousel darkMode={darkMode} />
