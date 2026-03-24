@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef, useCallback } from "react";
 
 const B = {
@@ -10,7 +12,7 @@ const B = {
   muted: "#8A8780", mutedSoft: "#A8A49E", ink: "#2C2A26",
 };
 
-// --- Speech envelope: "stride clinical operating system" ---------------------
+// ─── Speech envelope: "stride clinical operating system" ─────────────────────
 const SPEECH = [
   [0.00,0.03],[0.03,0.75],[0.08,0.88],[0.13,0.12],
   [0.18,0.06],
@@ -25,16 +27,17 @@ const SPEECH = [
 function envelope(t) {
   const c = Math.max(0, Math.min(1, t));
   for (let i = 0; i < SPEECH.length - 1; i++) {
-    const [t0, a0] = SPEECH[i], [t1, a1] = SPEECH[i + 1];
+    const [t0, v0] = SPEECH[i];
+    const [t1, v1] = SPEECH[i + 1];
     if (c >= t0 && c <= t1) {
-      const f = (c - t0) / (t1 - t0);
-      return a0 + (a1 - a0) * f * f * (3 - 2 * f);
+      const frac = (c - t0) / (t1 - t0);
+      return v0 + (v1 - v0) * (3 * frac * frac - 2 * frac * frac * frac);
     }
   }
   return 0.03;
 }
 
-// --- Monolith Mark -----------------------------------------------------------
+// ─── Monolith Mark ───────────────────────────────────────────────────────────
 function MonolithMark({ size = 44, glow = 0, playing, onClick }) {
   const id = useRef(`m-${Math.random().toString(36).slice(2, 8)}`).current;
   const g = 0.06 + glow * 0.28;
@@ -47,7 +50,12 @@ function MonolithMark({ size = 44, glow = 0, playing, onClick }) {
       display: "flex", alignItems: "center", justifyContent: "center",
       flexShrink: 0,
     }}>
-      {/* Glow field */}
+      <style>{`
+        @keyframes idleBreathe {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+      `}</style>
       <div style={{
         position: "absolute", inset: -4,
         borderRadius: "50%",
@@ -57,7 +65,6 @@ function MonolithMark({ size = 44, glow = 0, playing, onClick }) {
         animation: playing ? "none" : "idleBreathe 4s ease-in-out infinite",
       }} />
 
-      {/* Hint ring */}
       <div style={{
         position: "absolute",
         width: size + 10, height: size + 10,
@@ -93,113 +100,49 @@ function MonolithMark({ size = 44, glow = 0, playing, onClick }) {
   );
 }
 
-// --- PS4 Cinematic Waveform --------------------------------------------------
+// ─── PS4 Cinematic Waveform ──────────────────────────────────────────────────
 function Wave({ playing, progress, width = 420, height = 52 }) {
   const canvasRef = useRef(null);
   const frame = useRef(0);
   const t = useRef(0);
 
   const draw = useCallback(() => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-    const ctx = cvs.getContext("2d");
-    const dpr = window.devicePixelRatio || 1;
-    const w = width * dpr, h = height * dpr;
-    cvs.width = w; cvs.height = h;
-    ctx.clearRect(0, 0, w, h);
-
-    t.current += 0.008;
-    const time = t.current;
-    const cy = h / 2;
-
-    const globalAmp = playing
-      ? 0.25 + envelope(progress) * 0.75
-      : 0.1 + Math.sin(time * 0.5) * 0.05;
-
-    // --- Radial pulse sweep ---
-    const pulsePos = playing
-      ? (progress * 1.4 - 0.2)
-      : (time * 0.12) % 1.6 - 0.3;
-    const pulseWidth = 0.18;
-
-    // --- Draw waves ---
-    const layers = [
-      { freq: 1.1, phase: 0, speed: 0.4, amp: 0.9, r: 75, g: 139, b: 245, baseA: 0.04, activeA: 0.14, w: 2.8 },
-      { freq: 1.7, phase: 2.1, speed: -0.25, amp: 0.6, r: 46, g: 107, b: 255, baseA: 0.05, activeA: 0.18, w: 2.2 },
-      { freq: 0.8, phase: 4.2, speed: 0.3, amp: 1.0, r: 75, g: 139, b: 245, baseA: 0.06, activeA: 0.22, w: 3.5 },
-    ];
-
-    layers.forEach(l => {
-      ctx.beginPath();
-      const alpha = l.baseA + globalAmp * l.activeA;
-      ctx.strokeStyle = `rgba(${l.r},${l.g},${l.b},${alpha})`;
-      ctx.lineWidth = l.w * dpr;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      const pts = [];
-      for (let x = 0; x <= w; x += 3) {
-        const nx = x / w;
-        const edge = Math.pow(Math.sin(nx * Math.PI), 1.5);
-        const speechMod = playing ? (0.3 + envelope(nx) * 0.7) : 1;
-        const amp = globalAmp * l.amp * edge * speechMod;
-
-        const y = cy +
-          Math.sin(nx * Math.PI * 2 * l.freq + l.phase + time * l.speed * 3) * (h * 0.32 * amp) +
-          Math.sin(nx * Math.PI * 1.3 + l.phase * 0.7 + time * l.speed * 1.6) * (h * 0.14 * amp);
-
-        pts.push([x, y]);
-        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      ctx.beginPath();
-      pts.forEach(([px, py], i) => i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py));
-      ctx.lineTo(w, cy);
-      ctx.lineTo(0, cy);
-      ctx.closePath();
-      ctx.fillStyle = `rgba(${l.r},${l.g},${l.b},${alpha * 0.1})`;
-      ctx.fill();
-    });
-
-    // --- Lightning pulse ---
-    const pulseCenter = pulsePos * w;
-    const pulseR = pulseWidth * w;
-
-    if (pulsePos > -0.2 && pulsePos < 1.2) {
-      const grad = ctx.createRadialGradient(pulseCenter, cy, 0, pulseCenter, cy, pulseR);
-      const pulseStrength = playing ? 0.12 + envelope(progress) * 0.15 : 0.04;
-      grad.addColorStop(0, `rgba(75, 139, 245, ${pulseStrength})`);
-      grad.addColorStop(0.4, `rgba(122, 187, 255, ${pulseStrength * 0.5})`);
-      grad.addColorStop(1, "rgba(75, 139, 245, 0)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
-
-      ctx.beginPath();
-      ctx.strokeStyle = `rgba(122, 187, 255, ${pulseStrength * 1.5})`;
-      ctx.lineWidth = 1.5 * dpr;
-      const coreSpread = pulseR * 0.6;
-      for (let x = Math.max(0, pulseCenter - coreSpread); x <= Math.min(w, pulseCenter + coreSpread); x += 2) {
-        const dx = (x - pulseCenter) / coreSpread;
-        const fade = 1 - dx * dx;
-        const coreY = cy + Math.sin(x / w * Math.PI * 3 + time * 2) * (h * 0.15 * globalAmp * fade);
-        if (x === Math.max(0, pulseCenter - coreSpread)) ctx.moveTo(x, coreY); else ctx.lineTo(x, coreY);
-      }
-      ctx.stroke();
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = playing ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)";
+    ctx.fillRect(0, 0, width, height);
+    const bars = 60;
+    for (let i = 0; i < bars; i++) {
+      const x = (i / bars) * width;
+      const envPos = progress + (i / bars) * 0.3;
+      let amp = envelope(envPos % 1.0) * (0.4 + Math.sin(t.current * 0.08 + i * 0.1) * 0.15);
+      if (Math.abs(progress - i / bars) < 0.05) amp *= 1.3;
+      const h = Math.max(2, amp * height * 0.7);
+      const y = (height - h) / 2;
+      ctx.fillStyle = `rgba(75,139,245,${0.3 + amp * 0.5})`;
+      ctx.fillRect(x + 1, y, width / bars - 2, h);
     }
-
-    frame.current = requestAnimationFrame(draw);
+    if (playing) {
+      frame.current = requestAnimationFrame(draw);
+    }
   }, [playing, progress, width, height]);
 
   useEffect(() => {
-    frame.current = requestAnimationFrame(draw);
+    if (playing) {
+      t.current = 0;
+      frame.current = requestAnimationFrame(draw);
+    }
     return () => cancelAnimationFrame(frame.current);
-  }, [draw]);
+  }, [draw, playing]);
 
-  return <canvas ref={canvasRef} style={{ width, height, display: "block" }} />;
+  useEffect(() => {
+    if (playing) t.current += 1;
+  });
+
+  return <canvas ref={canvasRef} width={width} height={height} style={{ display: "block", width, height }} />;
 }
 
-// --- Pill --------------------------------------------------------------------
+// ─── Pill ────────────────────────────────────────────────────────────────────
 function Pill({ children, variant = "default" }) {
   const s = {
     accent: { bg: "rgba(28,84,242,0.05)", color: B.blue, border: "rgba(28,84,242,0.08)" },
@@ -219,8 +162,8 @@ function Pill({ children, variant = "default" }) {
   );
 }
 
-// --- Main --------------------------------------------------------------------
-export default function AvaConversationCard() {
+// ─── Main ────────────────────────────────────────────────────────────────────
+export default function AvaShowcase() {
   const [loaded, setLoaded] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -228,15 +171,22 @@ export default function AvaConversationCard() {
   const audioRef = useRef(null);
   const tickRef = useRef(null);
 
-  useEffect(() => { requestAnimationFrame(() => setLoaded(true)); }, []);
+  useEffect(() => {
+    setLoaded(true);
+  }, []);
 
   useEffect(() => {
-    if (!playing) { setProgress(0); setGlow(0); return; }
-    const start = Date.now(), dur = 3200;
+    if (!playing) {
+      setProgress(0);
+      setGlow(0);
+      return;
+    }
     const tick = () => {
-      const p = ((Date.now() - start) % dur) / dur;
-      setProgress(p);
-      setGlow(envelope(p));
+      if (!audioRef.current) return;
+      const dur = audioRef.current.duration || 8.3;
+      const curr = audioRef.current.currentTime || 0;
+      setProgress(Math.max(0, Math.min(1, curr / dur)));
+      setGlow(0.1 + Math.sin(Date.now() * 0.003) * 0.05);
       tickRef.current = requestAnimationFrame(tick);
     };
     tickRef.current = requestAnimationFrame(tick);
@@ -244,184 +194,77 @@ export default function AvaConversationCard() {
   }, [playing]);
 
   const toggle = () => {
+    if (!audioRef.current) return;
     if (playing) {
-      audioRef.current?.pause();
+      audioRef.current.pause();
       setPlaying(false);
     } else {
-      const a = audioRef.current;
-      if (a) { a.currentTime = 0; a.play().catch(() => {}); }
-      setPlaying(true);
-      setTimeout(() => setPlaying(false), 3200);
+      audioRef.current.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
     }
   };
 
+  if (!loaded) return null;
+
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap');
-        .ava-s * { box-sizing: border-box; margin: 0; padding: 0; }
-        @keyframes idleBreathe {
-          0%, 100% { transform: scale(1); opacity: 0.5; }
-          50% { transform: scale(1.06); opacity: 1; }
-        }
-      `}</style>
-
-      <audio ref={audioRef} preload="none">
-        <source src="/ava-demo.mp3" type="audio/mpeg" />
-      </audio>
-
-      <div className="ava-s" style={{
-        fontFamily: "'Outfit', sans-serif",
-        width: "100%", maxWidth: 520, margin: "0 auto",
-      }}>
-        <div style={{
-          position: "relative",
-          backgroundColor: B.cloud,
-          borderRadius: 24,
-          padding: "30px 30px 26px",
-          border: `1px solid ${B.borderSoft}`,
-          boxShadow: `
-            0 1px 2px rgba(0,0,0,0.03),
-            0 4px 24px rgba(0,0,0,0.04),
-            0 12px 48px rgba(0,0,0,0.02)
-          `,
-          overflow: "hidden",
-          opacity: loaded ? 1 : 0,
-          transform: loaded ? "translateY(0)" : "translateY(10px)",
-          transition: "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}>
-
-          {/* Minority Report gloss - top catch-light */}
-          <div style={{
-            position: "absolute", top: 0, left: 0, right: 0,
-            height: 100,
-            background: "linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.15) 30%, transparent 100%)",
-            borderRadius: "24px 24px 0 0",
-            pointerEvents: "none",
-          }} />
-
-          {/* Glass gloss - diagonal sheen through the full card */}
-          <div style={{
-            position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-            background: "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.08) 100%)",
-            pointerEvents: "none",
-            borderRadius: 24,
-          }} />
-
-          {/* Subtle side sheen */}
-          <div style={{
-            position: "absolute", top: 0, left: 0, bottom: 0, width: 1,
-            background: "linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.1), transparent)",
-            pointerEvents: "none",
-          }} />
-
-          {/* Avatar + Name */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 14, marginBottom: 18,
-            position: "relative",
-          }}>
-            <MonolithMark size={52} glow={glow} playing={playing} onClick={toggle} />
-
-            <div style={{ flex: 1 }}>
-              <h2 style={{
-                fontFamily: "'DM Serif Display', serif",
-                fontSize: 26, fontWeight: 400, color: B.ink,
-                lineHeight: 1.1, marginBottom: 3,
-                letterSpacing: "-0.01em",
-              }}>Ava</h2>
-              <p style={{
-                fontSize: 13, color: B.mutedSoft, fontWeight: 400,
-                letterSpacing: "0.005em",
-              }}>
-                Receptionist &middot; StrydeOS
-              </p>
-            </div>
-
-            <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <div style={{
-                fontFamily: "'DM Serif Display', serif",
-                fontSize: 24, color: B.ink, lineHeight: 1, marginBottom: 2,
-                letterSpacing: "-0.01em",
-              }}>12</div>
-              <div style={{
-                fontSize: 9, fontWeight: 500, color: B.mutedSoft,
-                textTransform: "uppercase", letterSpacing: "0.06em",
-              }}>Calls today</div>
-            </div>
+    <div style={{
+      position: "relative",
+      maxWidth: 440, width: "100%",
+      borderRadius: 24,
+      padding: 20,
+      background: `linear-gradient(135deg, ${B.navy}dd, ${B.navyMid}aa)`,
+      border: `1px solid rgba(75,139,245,0.15)`,
+      boxShadow: "0 20px 60px rgba(11,37,69,0.2), inset 0 1px 0 rgba(255,255,255,0.08)",
+      backdropFilter: "blur(20px)",
+    }}>
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 12, background: `linear-gradient(135deg, ${B.blue}, ${B.blueBright})` }}>
+            <MonolithMark size={24} />
           </div>
-
-          {/* Pills */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 18, position: "relative" }}>
-            <Pill variant="accent">ElevenAgents</Pill>
-            <Pill variant="connected">
-              <span style={{
-                width: 7, height: 7, borderRadius: "50%",
-                backgroundColor: B.success,
-                display: "inline-block",
-                boxShadow: `0 0 5px ${B.success}50, 0 0 10px ${B.success}20`,
-              }} />
-              Connected
-            </Pill>
-          </div>
-
-          {/* Waveform Bar */}
-          <div style={{
-            padding: "8px 14px",
-            borderRadius: 16,
-            backgroundColor: B.white,
-            border: `1px solid ${B.borderSoft}`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            position: "relative",
-            overflow: "hidden",
-            boxShadow: "inset 0 1px 3px rgba(0,0,0,0.02)",
-          }}>
-            <div style={{
-              position: "absolute", inset: 0,
-              background: playing
-                ? `radial-gradient(ellipse 60% 100% at 50% 50%, rgba(75,139,245,0.04), transparent 70%)`
-                : "none",
-              transition: "all 0.5s ease",
-              pointerEvents: "none",
-            }} />
-
-            <Wave
-              playing={playing}
-              progress={progress}
-              width={440}
-              height={44}
-            />
-          </div>
-
-          {/* Duration + hint */}
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            paddingTop: 10, position: "relative",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Wave
-                playing={playing}
-                progress={progress}
-                width={48}
-                height={16}
-              />
-              <span style={{
-                fontSize: 10, fontWeight: 400, color: B.mutedSoft,
-                fontVariantNumeric: "tabular-nums",
-              }}>
-                1:42
-              </span>
-            </div>
-            <span style={{
-              fontSize: 10, fontWeight: 400, color: B.mutedSoft,
-              opacity: playing ? 0 : 0.6,
-              transition: "opacity 0.4s ease",
-              fontStyle: "italic",
-            }}>
-              tap the monolith to listen
-            </span>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: B.white, lineHeight: 1 }}>Ava</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>AI Receptionist • StrydeOS</div>
           </div>
         </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: B.white, lineHeight: 1 }}>12</div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 2, textTransform: "uppercase", letterSpacing: "0.05em" }}>Calls today</div>
+        </div>
       </div>
-    </>
+
+      {/* Status badges */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+        <Pill variant="connected">
+          <div style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: B.success }} />
+          Live
+        </Pill>
+        <Pill variant="accent">ElevenAgents</Pill>
+        <Pill>PMS: Connected</Pill>
+      </div>
+
+      {/* Play button + waveform */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24, background: "rgba(75,139,245,0.05)", borderRadius: 16, padding: 12 }}>
+        <MonolithMark size={36} glow={glow} playing={playing} onClick={toggle} />
+        <Wave playing={playing} progress={progress} width={320} height={40} />
+      </div>
+
+      {/* Demo transcript label */}
+      <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Demo transcript</div>
+
+      {/* Placeholder for transcript (dark overlay) */}
+      <div style={{
+        borderRadius: 12, padding: 12,
+        background: "rgba(0,0,0,0.2)", border: "1px solid rgba(75,139,245,0.08)",
+        minHeight: 120,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: "rgba(255,255,255,0.3)", fontSize: 12, textAlign: "center",
+      }}>
+        Play to hear a sample conversation
+      </div>
+
+      {/* Hidden audio element */}
+      <audio ref={audioRef} src="/ava-demo.mp3" onEnded={() => setPlaying(false)} />
+    </div>
   );
 }

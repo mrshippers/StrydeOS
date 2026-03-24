@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { CookieBanner } from "./strydeOS-website.jsx";
-import HeroCarousel from "./HeroCarousel.jsx";
+import AvaConversationCard from "./AvaConversationCard.jsx";
 import ModulePricingBanner from "./ModulePricingBanner.jsx";
 
 /* ── Brand Tokens ── */
@@ -257,9 +257,9 @@ export default function AvaPage() {
               ))}
             </div>
 
-            {/* Right: carousel */}
-            <div className="ava-carousel-wrap">
-              <HeroCarousel />
+            {/* Right: conversation card */}
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-start" }}>
+              <AvaConversationCard />
             </div>
           </div>
         </section>
