@@ -1121,7 +1121,7 @@ const HolisticSection = ({ darkMode }) => {
   const head   = darkMode ? "white" : C.navy;
   const italic = darkMode ? C.blueGlow : C.blue;
   return (
-  <section id="how-it-works" style={{ padding: "100px 24px", background: bgAlt, transition: "background 0.3s ease" }}>
+  <section id="how-it-works" style={{ padding: "100px 24px 60px", background: bgAlt, transition: "background 0.3s ease" }}>
     <div style={{ maxWidth: 1160, margin: "0 auto" }}>
       <div className="holistic-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
         <AnimIn>
@@ -2012,7 +2012,7 @@ const Products = ({ darkMode }) => {
   const p = products[active];
 
   return (
-    <section id="products" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
+    <section id="products" style={{ padding: "60px 24px 100px", background: bg, transition: "background 0.3s ease" }}>
       <audio ref={avaAudioRef} src="/ava-demo.mp3" preload="metadata" />
       <div style={{ maxWidth: 1160, margin: "0 auto" }}>
         <AnimIn>
