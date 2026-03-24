@@ -2062,8 +2062,20 @@ const ROICalc = ({ darkMode }) => {
 };
 
 /* ─── Pricing ────────────────────────────────────────────────────────────────── */
+const tierPrices = {
+  solo:   { intelligence: 79,  ava: 149, pulse: 99,  full: 279 },
+  studio: { intelligence: 129, ava: 199, pulse: 149, full: 399 },
+  clinic: { intelligence: 199, ava: 299, pulse: 229, full: 599 },
+};
+const tierLabels = { solo: "Solo (1)", studio: "Studio (2–4)", clinic: "Clinic (6+)" };
+const setupFees = {
+  solo:   { intelligence: null, ava: null,  pulse: null },
+  studio: { intelligence: null, ava: 250,   pulse: null },
+  clinic: { intelligence: null, ava: 250,   pulse: null },
+};
+
 const Pricing = ({ darkMode }) => {
-  const [annual, setAnnual] = useState(false);
+  const [tier, setTier] = useState("studio");
   const bg     = darkMode ? C.navyMid  : C.cloudDancer;
   const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
   const bdr    = darkMode ? "rgba(255,255,255,0.07)" : C.border;
@@ -2073,32 +2085,26 @@ const Pricing = ({ darkMode }) => {
 
   const modules = [
     {
-      name: "Intelligence", price: 129, setup: null, color: "#8B5CF6", planId: "intelligence-studio",
-      tagline: "Know your numbers, finally",
-      features: ["Per-clinician KPI board", "6-week trend charts", "Metric drift alerts", "WriteUpp & Cliniko integration", "Weekly email digest"],
-      cta: "Buy Now",
+      id: "intelligence", name: "Intelligence", color: "#8B5CF6",
+      tagline: "Clinical performance engine. See where your clinic wins and where it leaks.",
+      features: ["Per-clinician KPI dashboard", "90-day rolling trend charts", "Metric drift alerts", "WriteUpp & Cliniko integration", "Weekly email digest"],
     },
     {
-      name: "Ava", price: 199, setup: 250, color: C.blue, planId: "ava-studio",
-      tagline: "Never miss another call",
-      features: ["24/7 inbound call handling", "Live calendar booking", "No-show recovery", "SMS confirmations", "Emergency routing"],
-      cta: "Buy Now",
+      id: "ava", name: "Ava", color: C.blue,
+      tagline: "Never miss a patient again. Every inbound call answered, booked, confirmed.",
+      features: ["24/7 inbound call handling", "Direct calendar booking", "No-show & cancellation recovery", "SMS confirmations", "Emergency routing to on-call"],
     },
     {
-      name: "Pulse", price: 149, setup: null, color: C.teal, planId: "pulse-studio",
-      tagline: "Clinically adaptive patient retention",
+      id: "pulse", name: "Pulse", color: C.teal,
+      tagline: "Clinically adaptive patient retention. Keeps patients in care, longer.",
       features: ["Complexity-aware follow-up sequences", "Psychosocial flag detection", "Discharge-aware message suppression", "Clinical enrichment from Heidi", "Post-discharge check-ins", "Referral prompt flows"],
-      cta: "Buy Now",
-    },
-    {
-      name: "Full Stack", price: 399, setup: 250, color: C.blue, planId: "fullstack-studio", highlight: true,
-      tagline: "All three modules. One system.",
-      features: ["Intelligence dashboard", "Ava 24/7 call handling", "Pulse retention engine", "Save 16% vs individual", "Priority support"],
-      cta: "Get Full Stack",
     },
   ];
 
-  const displayPrice = (price) => annual ? Math.round(price * 0.8) : price;
+  const fullPrice = tierPrices[tier].full;
+  const fullSetup = setupFees[tier].ava; // Full Stack inherits Ava's setup fee
+  const individualSum = tierPrices[tier].intelligence + tierPrices[tier].ava + tierPrices[tier].pulse;
+  const savingsPerMonth = individualSum - fullPrice;
 
   return (
   <section id="pricing" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
@@ -2115,30 +2121,33 @@ const Pricing = ({ darkMode }) => {
       </div>
       </AnimIn>
 
-      {/* Monthly / Annual toggle */}
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: 44 }}>
-        <span style={{ fontSize: 14, fontWeight: 500, color: !annual ? head : muted, transition: "color 0.2s" }}>Monthly</span>
-        <button onClick={() => setAnnual(a => !a)} style={{
-          width: 48, height: 26, borderRadius: 13, border: "none", cursor: "pointer",
-          background: annual ? C.blue : (darkMode ? "rgba(255,255,255,0.15)" : C.border),
-          position: "relative", transition: "background 0.3s",
+      {/* Tier selector — Solo / Studio / Clinic */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 44 }}>
+        <div style={{
+          display: "flex", gap: 4, padding: 4, borderRadius: 12,
+          background: darkMode ? "rgba(255,255,255,0.04)" : "rgba(11,37,69,0.04)",
+          border: `1px solid ${darkMode ? "rgba(255,255,255,0.06)" : C.border}`,
         }}>
-          <div style={{
-            width: 20, height: 20, borderRadius: "50%", background: "white",
-            position: "absolute", top: 3,
-            left: annual ? 25 : 3,
-            transition: "left 0.3s ease",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-          }} />
-        </button>
-        <span style={{ fontSize: 14, fontWeight: 500, color: annual ? head : muted, transition: "color 0.2s" }}>Annual</span>
-        {annual && <span style={{ fontSize: 11, fontWeight: 600, color: C.success, background: `${C.success}15`, padding: "3px 10px", borderRadius: 20 }}>Save 20%</span>}
+          {Object.keys(tierLabels).map(k => (
+            <button key={k} onClick={() => setTier(k)} style={{
+              padding: "10px 28px", border: "none", cursor: "pointer", borderRadius: 9,
+              fontFamily: "'Outfit',sans-serif", fontSize: 13, fontWeight: 600,
+              background: tier === k ? C.blue : "transparent",
+              color: tier === k ? "white" : (darkMode ? "rgba(255,255,255,0.4)" : C.muted),
+              boxShadow: tier === k ? `0 2px 12px ${C.blue}55` : "none",
+              transition: "all 0.25s ease",
+            }}>{tierLabels[k]}</button>
+          ))}
+        </div>
       </div>
 
       <AnimIn delay={150}>
       <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, marginBottom: 32 }}>
-        {modules.filter(m => !m.highlight).map(({ name, price, setup, color, tagline, features, cta, planId }) => (
-          <div key={name} className="card-hover" style={{
+        {modules.map(({ id, name, color, tagline, features }) => {
+          const price = tierPrices[tier][id];
+          const setup = setupFees[tier][id];
+          return (
+          <div key={id} className="card-hover" style={{
             background: bgCard,
             borderRadius: 22, padding: 34,
             border: `1px solid ${bdr}`,
@@ -2146,11 +2155,11 @@ const Pricing = ({ darkMode }) => {
             position: "relative", overflow: "hidden",
           }}>
             <div style={{ position: "relative", zIndex: 1 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: color, marginBottom: 6 }}>{name}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color, marginBottom: 6 }}>{name}</div>
               <div style={{ fontSize: 13, color: muted, marginBottom: 24, minHeight: 36, lineHeight: 1.5 }}>{tagline}</div>
 
               <div className="serif" style={{ fontSize: 34, color: head, fontWeight: 400, marginBottom: 4 }}>
-                £{displayPrice(price)}<span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500, color: muted }}>/mo</span>
+                £{price}<span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500, color: muted }}>/mo</span>
               </div>
               <div style={{ fontSize: 12, color: muted, marginBottom: 28 }}>
                 {setup ? `£${setup} one-time setup` : "No setup fee"}
@@ -2168,83 +2177,86 @@ const Pricing = ({ darkMode }) => {
                 ))}
               </div>
 
-              <a href={`https://portal.strydeos.com/login?mode=signup&plan=${planId}`} target="_blank" rel="noopener"
-                className="btn-outline"
-                style={{ width: "100%", justifyContent: "center", borderRadius: 14 }}>
-                {cta}
-              </a>
+              <div style={{ display: "flex", gap: 8 }}>
+                <a href={`https://portal.strydeos.com/login?mode=signup&plan=${id}-${tier}`} target="_blank" rel="noopener"
+                  className="btn-primary"
+                  style={{ flex: 1, justifyContent: "center", borderRadius: 14, fontSize: 14 }}>
+                  Start free trial
+                </a>
+                <a href={`https://portal.strydeos.com/checkout?plan=${id}-${tier}&billing=now`} target="_blank" rel="noopener"
+                  className="btn-outline"
+                  style={{ flex: 1, justifyContent: "center", borderRadius: 14, fontSize: 14 }}>
+                  Buy now
+                </a>
+              </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
       </AnimIn>
 
       {/* Full Stack banner */}
       <AnimIn delay={300}>
-      {(() => {
-        const fs = modules.find(m => m.highlight);
-        return fs ? (
-          <div className="card-hover" style={{
-            borderRadius: 22, overflow: "hidden", marginBottom: 32,
-            border: `1px solid ${darkMode ? "rgba(75,139,245,0.2)" : "rgba(75,139,245,0.15)"}`,
-          }}>
-            {/* Navy gradient header */}
-            <div style={{
-              background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
-              padding: "36px 48px",
-              position: "relative", overflow: "hidden",
-            }}>
-              <RadialGlow color={C.blue} size={400} opacity={0.15} style={{ top: -100, right: -50 }} />
-              <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
-                <div>
-                  <div style={{
-                    display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 6,
-                    background: "rgba(255,255,255,0.06)", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
-                    textTransform: "uppercase", color: "rgba(255,255,255,0.5)", marginBottom: 10,
-                  }}>★ Best value</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: "white", fontFamily: "'Outfit',sans-serif", marginBottom: 4 }}>
-                    Stryde<span style={{ color: C.blueGlow }}>OS</span> Full Stack
-                  </div>
-                  <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)" }}>{fs.tagline}</div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div className="serif" style={{ fontSize: 38, color: "white", fontWeight: 400 }}>
-                    £{displayPrice(fs.price)}<span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.4)" }}>/mo</span>
-                  </div>
-                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
-                    {fs.setup ? `£${fs.setup} one-time setup` : "No setup fee"}
-                  </div>
-                </div>
+      <div className="card-hover" style={{
+        borderRadius: 22, overflow: "hidden", marginBottom: 32,
+        border: `1px solid ${darkMode ? "rgba(75,139,245,0.2)" : "rgba(75,139,245,0.15)"}`,
+      }}>
+        {/* Navy gradient header */}
+        <div style={{
+          background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+          padding: "36px 48px",
+          position: "relative", overflow: "hidden",
+        }}>
+          <RadialGlow color={C.blue} size={400} opacity={0.15} style={{ top: -100, right: -50 }} />
+          <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
+            <div>
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 6,
+                background: "rgba(255,255,255,0.06)", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
+                textTransform: "uppercase", color: "rgba(255,255,255,0.5)", marginBottom: 10,
+              }}>★ Best value</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "white", fontFamily: "'Outfit',sans-serif", marginBottom: 4 }}>
+                Stryde<span style={{ color: C.blueGlow }}>OS</span> Full Stack
               </div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)" }}>All three modules. One system.</div>
             </div>
-            {/* White/light body */}
-            <div style={{
-              background: darkMode ? "rgba(255,255,255,0.04)" : "white",
-              padding: "28px 48px",
-              display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24,
-            }}>
-              <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
-                {fs.features.map(f => (
-                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                      <circle cx="7.5" cy="7.5" r="6.5" fill={`${C.blue}15`}/>
-                      <path d="M4.5 7.5l2 2 4-4" stroke="#34D399" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <span style={{ fontSize: 13, color: darkMode ? "rgba(255,255,255,0.7)" : C.ink }}>{f}</span>
-                  </div>
-                ))}
+            <div style={{ textAlign: "right" }}>
+              <div className="serif" style={{ fontSize: 38, color: "white", fontWeight: 400 }}>
+                £{fullPrice}<span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.4)" }}>/mo</span>
               </div>
-              <a href={`https://portal.strydeos.com/login?mode=signup&plan=${fs.planId}`} target="_blank" rel="noopener"
-                className="btn-primary"
-                style={{ borderRadius: 14, whiteSpace: "nowrap" }}>
-                {fs.cta} →
-              </a>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
+                {fullSetup ? `£${fullSetup} one-time setup` : "No setup fee"}
+              </div>
             </div>
           </div>
-        ) : null;
-      })()}
-
+        </div>
+        {/* White/light body */}
+        <div style={{
+          background: darkMode ? "rgba(255,255,255,0.04)" : "white",
+          padding: "28px 48px",
+          display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24,
+        }}>
+          <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
+            {["Intelligence dashboard", "Ava 24/7 call handling", "Pulse retention engine", `Save £${savingsPerMonth}/mo vs individual`, "Priority support"].map(f => (
+              <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <circle cx="7.5" cy="7.5" r="6.5" fill={`${C.blue}15`}/>
+                  <path d="M4.5 7.5l2 2 4-4" stroke="#34D399" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span style={{ fontSize: 13, color: darkMode ? "rgba(255,255,255,0.7)" : C.ink }}>{f}</span>
+              </div>
+            ))}
+          </div>
+          <a href={`https://portal.strydeos.com/checkout?plan=fullstack-${tier}`} target="_blank" rel="noopener"
+            className="btn-primary"
+            style={{ borderRadius: 14, whiteSpace: "nowrap" }}>
+            Get Full Stack →
+          </a>
+        </div>
+      </div>
       </AnimIn>
+
       <p style={{ textAlign: "center", fontSize: 13, color: muted, fontStyle: "italic" }}>
         Currently in early access · No lock-in contracts · Onboarding & training included
       </p>
