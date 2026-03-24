@@ -1,4 +1,4 @@
-import { FAQPage } from '../../components/strydeOS-website';
+import FAQPage from '../../components/faq';
 
 export const metadata = {
   title: 'FAQ',
