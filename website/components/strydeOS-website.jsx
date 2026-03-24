@@ -16,6 +16,7 @@ const C = {
   blueBright:  "#2E6BFF",
   blueGlow:    "#4B8BF5",
   teal:        "#0891B2",      // Pulse module accent
+  purple:      "#8B5CF6",      // Intelligence module accent
 
   // Typography
   ink:         "#111827",
@@ -57,6 +58,10 @@ const globalStyles = `
   @keyframes slide-in { from{transform:translateX(12px);opacity:0} to{transform:translateX(0);opacity:1} }
   @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   @keyframes waveform { 0% { transform: scaleY(0.4); } 100% { transform: scaleY(1); } }
+  @keyframes pulse-fade {
+    0%, 100% { opacity: 0.1; transform: scale(0.8); }
+    50% { opacity: 0.6; transform: scale(1.2); }
+  }
   @keyframes ava-pulse-ring { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2.2); opacity: 0; } }
   @keyframes ava-btn-glow {
     0%,100% { box-shadow: 0 0 16px rgba(28,84,242,0.35), 0 0 40px rgba(28,84,242,0.15), inset 0 0 12px rgba(75,139,245,0.25); }
@@ -139,6 +144,7 @@ const globalStyles = `
     .wavecard-grid    { grid-template-columns: 1fr 1fr !important; }
     .footer-top       { flex-direction: column !important; gap: 32px !important; }
     .nav-links        { display: none !important; }
+    .arch-grid        { grid-template-columns: 1fr !important; }
   }
 `;
 
@@ -1019,6 +1025,93 @@ const Hero = ({ darkMode }) => {
 };
 
 /* ─── Holistic Section ──────────────────────────────────────────────────────── */
+/* ─── Module-tinted Monolith mark ────────────────────────────────────────── */
+const ModuleMonolith = ({ color = C.blue, size = 48 }) => {
+  const id = _uid("mm");
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+      <defs>
+        <linearGradient id={`${id}-c`} x1="0.1" y1="0" x2="0.85" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.58"/>
+          <stop offset="100%" stopColor={C.navy} stopOpacity="0.72"/>
+        </linearGradient>
+        <radialGradient id={`${id}-r`} cx="28%" cy="24%" r="60%">
+          <stop offset="0%" stopColor={color} stopOpacity="0.42"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0"/>
+        </radialGradient>
+        <linearGradient id={`${id}-t`} x1="0.05" y1="1" x2="0.35" y2="0">
+          <stop offset="0%" stopColor="white" stopOpacity="0.55"/>
+          <stop offset="100%" stopColor="white" stopOpacity="0.97"/>
+        </linearGradient>
+        <linearGradient id={`${id}-b`} x1="0.1" y1="0" x2="0.4" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.65"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0.06"/>
+        </linearGradient>
+        <linearGradient id={`${id}-m`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="white" stopOpacity="0"/>
+          <stop offset="28%" stopColor="white" stopOpacity="0.60"/>
+          <stop offset="65%" stopColor="white" stopOpacity="0.12"/>
+          <stop offset="100%" stopColor="white" stopOpacity="0"/>
+        </linearGradient>
+        <clipPath id={`${id}-p`}><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+        <clipPath id={`${id}-a`}><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+      </defs>
+      <rect width="100" height="100" rx="24" fill={`url(#${id}-c)`}/>
+      <rect width="100" height="100" rx="24" fill={`url(#${id}-r)`}/>
+      <rect width="100" height="100" rx="24" fill="none" stroke={`url(#${id}-b)`} strokeWidth="1.2"/>
+      <path d="M 17 21 Q 50 12 83 21" stroke={`url(#${id}-m)`} strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+      <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07"/>
+      <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10"/>
+      <g clipPath={`url(#${id}-p)`}>
+        <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </g>
+      <rect x="35" y="20" width="22" height="60" rx="5" fill={`url(#${id}-t)`} clipPath={`url(#${id}-a)`}/>
+      <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round"/>
+    </svg>
+  );
+};
+
+const OneOSModuleCard = ({ name, desc, color, n, bgCard, bdr, head, muted, darkMode }) => {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex", alignItems: "center", gap: 20,
+        background: bgCard, borderRadius: 16, padding: "20px 24px",
+        border: `1px solid ${bdr}`,
+        boxShadow: hovered
+          ? "0 20px 48px rgba(28,84,242,0.11)"
+          : darkMode ? "none" : "0 2px 12px rgba(11,37,69,0.04)",
+        transform: hovered ? "translateY(-5px)" : "translateY(0)",
+        transition: "all 0.3s ease",
+        cursor: "default",
+      }}
+    >
+      <ModuleMonolith color={color} size={48} />
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: head, marginBottom: 3 }}>{name}</div>
+        <div style={{ fontSize: 13, color: muted }}>{desc}</div>
+      </div>
+      <div style={{
+        width: 32, height: 32, borderRadius: "50%",
+        background: `${color}15`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 11, fontWeight: 700, color, flexShrink: 0,
+      }}>{n}</div>
+    </div>
+  );
+};
+
+const oneOSModules = [
+  { name: "Ava",          desc: "Catches every call your team can\u2019t get to",                       color: C.blue,    n: "01" },
+  { name: "Pulse",        desc: "Keeps patients on course without anyone having to chase",            color: C.teal,    n: "02" },
+  { name: "Intelligence", desc: "See exactly where revenue is made, lost, and left on the table",     color: C.purple,  n: "03" },
+];
+
 const HolisticSection = ({ darkMode }) => {
   const bgAlt  = darkMode ? C.navyMid : C.cream;
   const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
@@ -1026,6 +1119,7 @@ const HolisticSection = ({ darkMode }) => {
   const txt    = darkMode ? "rgba(255,255,255,0.85)" : C.ink;
   const muted  = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
   const head   = darkMode ? "white" : C.navy;
+  const italic = darkMode ? C.blueGlow : C.blue;
   return (
   <section id="how-it-works" style={{ padding: "100px 24px", background: bgAlt, transition: "background 0.3s ease" }}>
     <div style={{ maxWidth: 1160, margin: "0 auto" }}>
@@ -1034,67 +1128,27 @@ const HolisticSection = ({ darkMode }) => {
         <div>
           <div className="section-chip">One Operating System</div>
           <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginBottom: 24 }}>
-            Visibility drives performance. Performance drives profit.
+            The gap between a good clinic and a great one isn't clinical.{" "}
+            <span style={{ fontStyle: "italic", color: italic }}>It's operational.</span>
           </h2>
-          <p style={{ fontSize: 16, lineHeight: 1.7, color: muted, marginBottom: 20 }}>
-            Cost per acquisition. Follow-up conversion. DNA recovery rate. Revenue per clinician hour. These are the metrics that drive private-practice growth, and most owners still pull them manually from spreadsheets.
+          <p style={{ fontSize: 16, lineHeight: 1.8, color: muted, marginBottom: 20 }}>
+            The highest-revenue private practices don't guess at follow-up rates. They don't lose patients between sessions. They don't miss calls during treatment hours. They built the systems to catch what falls through the cracks — without adding headcount.
           </p>
-          <p style={{ fontSize: 16, lineHeight: 1.7, color: muted, marginBottom: 32 }}>
-            They've just built the infrastructure to make it happen — without hiring more people to do it.
+          <p style={{ fontSize: 16, lineHeight: 1.8, color: muted, marginBottom: 32 }}>
+            Most physios are brilliant clinicians. But nobody taught them how to build the operational layer that turns good clinical work into a growing business. That's the gap.
           </p>
-          <p style={{ fontSize: 16, lineHeight: 1.7, color: txt, fontWeight: 500 }}>
-            StrydeOS packages that infrastructure for any private clinic, from day one.
+          <p style={{ fontSize: 16, lineHeight: 1.8, color: txt, fontWeight: 500 }}>
+            StrydeOS closes it — so you can focus on the clinical side, knowing the business side is handled.
           </p>
         </div>
         </AnimIn>
 
-        {/* Three pillars visual */}
         <AnimIn delay={200}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {[
-            { name: "Ava", desc: "Catches every patient at the door", color: C.blue, accentFrom: "#2E6BFF", accentTo: "#091D3E", n: "01" },
-            { name: "Pulse", desc: "Adapts follow-ups to clinical complexity", color: C.teal, accentFrom: "#0891B2", accentTo: "#064E5C", n: "02" },
-            { name: "Intelligence", desc: "Shows you how it's all performing", color: "#8B5CF6", accentFrom: "#8B5CF6", accentTo: "#3B1D8E", n: "03" },
-          ].map(({ name, desc, color, accentFrom, accentTo, n }, i) => (
-            <div key={name} style={{
-              display: "flex", alignItems: "center", gap: 20,
-              background: bgCard, borderRadius: 16, padding: "20px 24px",
-              border: `1px solid ${bdr}`,
-              boxShadow: darkMode ? "none" : "0 2px 12px rgba(11,37,69,0.04)",
-              transition: "all 0.35s cubic-bezier(0.16,1,0.3,1)",
-              position: "relative", overflow: "hidden", cursor: "default",
-            }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
-                e.currentTarget.style.boxShadow = `0 12px 40px ${color}30, 0 0 60px ${color}15`;
-                e.currentTarget.style.background = `radial-gradient(ellipse at 30% 50%, ${color}18, ${darkMode ? "rgba(255,255,255,0.04)" : "white"} 70%)`;
-                e.currentTarget.style.borderColor = `${color}40`;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = "translateY(0) scale(1)";
-                e.currentTarget.style.boxShadow = darkMode ? "none" : "0 2px 12px rgba(11,37,69,0.04)";
-                e.currentTarget.style.background = bgCard;
-                e.currentTarget.style.borderColor = bdr;
-              }}
-            >
-              <div style={{ flexShrink: 0 }}>
-                <MonolithVariant size={48} accentFrom={accentFrom} accentTo={accentTo} glowColor={color} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: head, marginBottom: 3 }}>{name}</div>
-                <div style={{ fontSize: 13, color: muted }}>{desc}</div>
-              </div>
-              <div style={{
-                width: 32, height: 32, borderRadius: "50%",
-                background: `${color}15`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 11, fontWeight: 700, color, flexShrink: 0,
-              }}>{n}</div>
-            </div>
+          {oneOSModules.map(({ name, desc, color, n }) => (
+            <OneOSModuleCard key={name} name={name} desc={desc} color={color} n={n}
+              bgCard={bgCard} bdr={bdr} head={head} muted={muted} darkMode={darkMode} />
           ))}
-          <p style={{ textAlign: "center", fontSize: 14, color: muted, fontStyle: "italic", marginTop: 32 }}>
-            These are the metrics that drive clinic growth. Most owners don't know where to find them — or what they mean.
-          </p>
         </div>
         </AnimIn>
       </div>
@@ -1103,7 +1157,192 @@ const HolisticSection = ({ darkMode }) => {
   );
 };
 
-/* ─── Pyramid Diagram ──────────────────────────────────────────────────────── */
+/* ─── Architecture diagram helpers ──────────────────────────────────────── */
+
+const ArchPulseDots = ({ color = C.blueGlow, count = 3 }) => (
+  <div style={{
+    display: "flex", flexDirection: "column", alignItems: "center",
+    gap: 5, padding: "6px 0",
+  }}>
+    {Array.from({ length: count }).map((_, i) => (
+      <div key={i} style={{
+        width: 4, height: 4, borderRadius: "50%",
+        background: color,
+        opacity: 0.15 + (i * 0.25),
+        animation: `pulse-fade 1.8s ease-in-out ${i * 0.3}s infinite`,
+      }} />
+    ))}
+  </div>
+);
+
+const ArchDiagonalDots = ({ direction = "right", color = C.blueGlow }) => {
+  const offsetX = direction === "right" ? 8 : -8;
+  return (
+    <div style={{ position: "relative", height: 30, padding: "4px 0" }}>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} style={{
+          width: 4, height: 4, borderRadius: "50%",
+          background: color,
+          position: "absolute",
+          top: 3 + (i * 9),
+          left: `calc(50% + ${(i - 1) * offsetX}px - 2px)`,
+          opacity: 0.15 + (i * 0.25),
+          animation: `pulse-fade 1.8s ease-in-out ${i * 0.3}s infinite`,
+        }} />
+      ))}
+    </div>
+  );
+};
+
+const ArchMonolithBall = ({ size = 44 }) => (
+  <div style={{
+    width: size, height: size, borderRadius: "50%",
+    background: `linear-gradient(135deg, ${C.blue}30, ${C.blueGlow}18)`,
+    border: `1.5px solid ${C.blue}40`,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    boxShadow: `0 0 24px ${C.blue}18, inset 0 1px 0 ${C.blueGlow}20`,
+    flexShrink: 0, overflow: "hidden",
+  }}>
+    <svg width={size * 0.56} height={size * 0.56} viewBox="0 0 100 100" fill="none">
+      <defs>
+        <linearGradient id="amb-t" x1="0.05" y1="1" x2="0.35" y2="0">
+          <stop offset="0%" stopColor="white" stopOpacity="0.55"/>
+          <stop offset="100%" stopColor="white" stopOpacity="0.97"/>
+        </linearGradient>
+        <clipPath id="amb-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+        <clipPath id="amb-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+      </defs>
+      <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07"/>
+      <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10"/>
+      <g clipPath="url(#amb-p)">
+        <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </g>
+      <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#amb-t)" clipPath="url(#amb-a)"/>
+      <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round"/>
+    </svg>
+  </div>
+);
+
+const ArchAvaIcon = ({ color = C.blue, size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+    <path d="M3,4 L15,4 C16,4 17,5 17,6 L17,12 C17,13 16,14 15,14 L8,14 L5,17 L5,14 L4,14 C3,14 2,13 2,12 L2,6 C2,5 3,4 3,4 Z"
+      stroke={color} strokeWidth="1.2" fill={color} fillOpacity="0.08" strokeLinecap="round" strokeLinejoin="round" opacity="0.7"/>
+    <rect x="5.5" y="8" width="1.2" height="4" rx="0.6" fill={color} opacity="0.5">
+      <animate attributeName="height" values="4;2;4" dur="0.8s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="8;9;8" dur="0.8s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="8" y="6.5" width="1.2" height="7" rx="0.6" fill={color} opacity="0.75">
+      <animate attributeName="height" values="7;3;7" dur="0.8s" begin="0.15s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="6.5;8.5;6.5" dur="0.8s" begin="0.15s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="10.5" y="7" width="1.2" height="6" rx="0.6" fill={color} opacity="0.9">
+      <animate attributeName="height" values="6;2;6" dur="0.8s" begin="0.3s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="7;9;7" dur="0.8s" begin="0.3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="13" y="8.5" width="1.2" height="3" rx="0.6" fill={color} opacity="0.5">
+      <animate attributeName="height" values="3;5;3" dur="0.8s" begin="0.45s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="8.5;7.5;8.5" dur="0.8s" begin="0.45s" repeatCount="indefinite"/>
+    </rect>
+  </svg>
+);
+
+const ArchPulseIcon = ({ color = C.teal, size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+    <path d="M1,10 L4,10 L6,4 L8,16 L10,6 L12,12 L13,10 L19,10"
+      stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.85"
+      strokeDasharray="40" strokeDashoffset="40">
+      <animate attributeName="stroke-dashoffset" values="40;0" dur="1.5s" fill="freeze" repeatCount="indefinite"/>
+    </path>
+    <path d="M1,10 L4,10 L6,4 L8,16 L10,6 L12,12 L13,10 L19,10"
+      stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.15"
+      strokeDasharray="40" strokeDashoffset="40">
+      <animate attributeName="stroke-dashoffset" values="40;0" dur="1.5s" fill="freeze" repeatCount="indefinite"/>
+    </path>
+    <circle r="1.5" fill={color} opacity="0.9">
+      <animateMotion path="M1,10 L4,10 L6,4 L8,16 L10,6 L12,12 L13,10 L19,10" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+  </svg>
+);
+
+const ArchIntelIcon = ({ color = C.purple, size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+    <path d="M2,10 C4,5 8,3 10,3 C12,3 16,5 18,10 C16,15 12,17 10,17 C8,17 4,15 2,10 Z"
+      stroke={color} strokeWidth="1.2" fill={color} fillOpacity="0.06" strokeLinecap="round" opacity="0.7"/>
+    <circle cx="10" cy="10" r="3.5" stroke={color} strokeWidth="1" fill={color} fillOpacity="0.12" opacity="0.8"/>
+    <circle cx="10" cy="10" r="1.5" fill={color} opacity="0.9">
+      <animate attributeName="r" values="1.5;2;1.5" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <line x1="4" y1="10" x2="16" y2="10" stroke={color} strokeWidth="0.5" opacity="0.3">
+      <animate attributeName="y1" values="10;7;13;10" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="10;7;13;10" dur="3s" repeatCount="indefinite"/>
+    </line>
+    <circle cx="5" cy="10" r="0.7" fill={color} opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.8;0.4" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="15" cy="10" r="0.7" fill={color} opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.8;0.4" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+    </circle>
+  </svg>
+);
+
+const ArchZeroMissed = ({ color = C.success, size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 28 28" fill="none" style={{ display: "block", margin: "0 auto" }}>
+    <path d="M7,11 C7,9 8,8 10,8 L12,8 C12.5,8 13,8.5 13,9 L13,12 C13,12.5 12.5,13 12,13 L11,13 C10.5,13 10,13.5 10,14 L10,16 C10,16.5 10.5,17 11,17 L13,17 C13.5,17 14,17.5 14,18 L14,21 C14,21.5 13.5,22 13,22 L10,22 C8,22 7,21 7,19 Z"
+      fill={color} opacity="0.85"/>
+    <path d="M16,12 C18,10 18,8 16,6" stroke={color} strokeWidth="1.2" strokeLinecap="round" fill="none" opacity="0.7">
+      <animate attributeName="opacity" values="0.7;0.2;0.7" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M19,14 C22,11 22,7 19,4" stroke={color} strokeWidth="1" strokeLinecap="round" fill="none" opacity="0.45">
+      <animate attributeName="opacity" values="0.45;0.1;0.45" dur="2s" begin="0.4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M22,16 C26,12 26,6 22,2" stroke={color} strokeWidth="0.8" strokeLinecap="round" fill="none" opacity="0.25">
+      <animate attributeName="opacity" values="0.25;0.05;0.25" dur="2s" begin="0.8s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="10" cy="15" r="1.2" fill={color}>
+      <animate attributeName="opacity" values="1;0.4;1" dur="1.4s" repeatCount="indefinite"/>
+    </circle>
+  </svg>
+);
+
+const ArchRetentionLoop = ({ color = C.teal, size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 28 28" fill="none" style={{ display: "block", margin: "0 auto" }}>
+    <defs>
+      <linearGradient id="arl-g" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor={color} stopOpacity="0.2"/>
+        <stop offset="50%" stopColor={color} stopOpacity="0.8"/>
+        <stop offset="100%" stopColor={color} stopOpacity="0.2"/>
+      </linearGradient>
+    </defs>
+    <path d="M6,14 C6,10 9,7 14,14 C19,21 22,18 22,14 C22,10 19,7 14,14 C9,21 6,18 6,14 Z"
+      stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.3"/>
+    <path d="M6,14 C6,10 9,7 14,14 C19,21 22,18 22,14 C22,10 19,7 14,14 C9,21 6,18 6,14 Z"
+      stroke="url(#arl-g)" strokeWidth="2" strokeLinecap="round" fill="none" strokeDasharray="8 40" strokeDashoffset="0">
+      <animate attributeName="stroke-dashoffset" values="0;-48" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <circle r="2" fill={color} opacity="0.9">
+      <animateMotion path="M6,14 C6,10 9,7 14,14 C19,21 22,18 22,14 C22,10 19,7 14,14 C9,21 6,18 6,14 Z" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="1.3" fill={color} opacity="0.5">
+      <animateMotion path="M6,14 C6,10 9,7 14,14 C19,21 22,18 22,14 C22,10 19,7 14,14 C9,21 6,18 6,14 Z" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+    </circle>
+  </svg>
+);
+
+const ArchLivePulse = ({ color = C.blueGlow, size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" fill="none" style={{ display: "block", margin: "0 auto" }}>
+    <rect x="5" y="21" width="4" height="7" rx="1" fill={color} opacity="0.3"/>
+    <rect x="11" y="16" width="4" height="12" rx="1" fill={color} opacity="0.5"/>
+    <rect x="17" y="11" width="4" height="17" rx="1" fill={color} opacity="0.75"/>
+    <rect x="23" y="6" width="4" height="22" rx="1" fill={color} opacity="1"/>
+    <path d="M28,5 C29.5,3.5 29.5,1 28,1" stroke={color} strokeWidth="0.9" strokeLinecap="round" fill="none" opacity="0.4"/>
+    <path d="M28.5,7 C31,4.5 31,0 28.5,0" stroke={color} strokeWidth="0.7" strokeLinecap="round" fill="none" opacity="0.25"/>
+    <circle cx="25" cy="5" r="1.5" fill={color}>
+      <animate attributeName="opacity" values="1;0.4;1" dur="1.6s" repeatCount="indefinite"/>
+    </circle>
+  </svg>
+);
 
 /* ─── Integrations ──────────────────────────────────────────────────────────── */
 const Integrations = ({ darkMode }) => {
@@ -1197,100 +1436,139 @@ const Integrations = ({ darkMode }) => {
             </div>
           </div>
 
-          {/* RIGHT — Mini dashboard */}
+          {/* RIGHT — Flow diagram */}
           <div style={{
-            padding: "36px 40px",
+            padding: "40px 44px",
             display: "flex", flexDirection: "column", justifyContent: "center",
           }}>
-            {/* Dashboard chrome */}
-            <div style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: 14, overflow: "hidden",
-            }}>
-              {/* Title bar */}
+
+            {/* TIER 1 — Your tools */}
+            <div>
               <div style={{
-                padding: "12px 18px",
-                borderBottom: "1px solid rgba(255,255,255,0.05)",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
+                fontSize: 9, fontWeight: 700, letterSpacing: "0.14em",
+                textTransform: "uppercase", color: "rgba(255,255,255,0.18)",
+                marginBottom: 8,
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{
-                    width: 20, height: 20, borderRadius: 5,
-                    background: `${C.blue}20`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 8, fontWeight: 800, color: C.blueGlow,
-                  }}>S</div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.55)", letterSpacing: "-0.01em" }}>
-                    Stryde<span style={{ color: C.blueGlow }}>OS</span> Dashboard
-                  </span>
-                </div>
-                <div style={{
-                  display: "flex", alignItems: "center", gap: 4,
-                  padding: "3px 10px", borderRadius: 50,
-                  background: `${C.success}18`, border: `1px solid ${C.success}30`,
-                }}>
-                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.success }} />
-                  <span style={{ fontSize: 9, fontWeight: 600, color: C.success }}>Live</span>
-                </div>
+                Your existing tools
               </div>
-
-              {/* Module pills */}
-              <div style={{ padding: "10px 18px", display: "flex", gap: 6 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                 {[
-                  { name: "Ava", color: C.blue, stat: "12 today" },
-                  { name: "Pulse", color: C.teal, stat: "8 follow-ups" },
-                  { name: "Intelligence", color: "#8B5CF6", stat: "91% util." },
-                ].map(({ name, color, stat }) => (
+                  { name: "Your PMS", icon: "\uD83D\uDDC2\uFE0F" },
+                  { name: "HEP Platform", icon: "\uD83C\uDFCB\uFE0F" },
+                  { name: "Phone Service", icon: "\uD83D\uDCDE" },
+                ].map(({ name, icon }) => (
                   <div key={name} style={{
-                    flex: 1, padding: "10px 12px",
-                    background: `${color}0A`, border: `1px solid ${color}18`,
-                    borderRadius: 8,
+                    background: "rgba(255,255,255,0.035)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 10,
+                    padding: "10px 14px",
+                    display: "flex", alignItems: "center", gap: 8,
                   }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                        <div style={{ width: 5, height: 5, borderRadius: "50%", background: color }} />
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.8)" }}>{name}</span>
-                      </div>
-                      <span style={{ fontSize: 8, fontWeight: 600, color, textTransform: "uppercase", letterSpacing: "0.06em" }}>Active</span>
-                    </div>
-                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{stat}</div>
+                    <span style={{ fontSize: 15, lineHeight: 1 }}>{icon}</span>
+                    <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, fontWeight: 600 }}>{name}</span>
                   </div>
                 ))}
               </div>
+            </div>
 
-              {/* KPI grid */}
-              <div style={{ padding: "6px 18px 14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            {/* CONNECTOR — diagonal dots converging */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              <ArchDiagonalDots direction="right" color={C.blueGlow} />
+              <ArchPulseDots color={C.teal} count={3} />
+              <ArchDiagonalDots direction="left" color={C.blueGlow} />
+            </div>
+
+            {/* MONOLITH BALL — centred */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              gap: 12, padding: "2px 0",
+            }}>
+              <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${C.blue}18)` }} />
+              <ArchMonolithBall size={44} />
+              <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${C.blue}18, transparent)` }} />
+            </div>
+
+            {/* CONNECTOR — single stream down */}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <ArchPulseDots color={C.blueGlow} count={2} />
+            </div>
+
+            {/* TIER 2 — StrydeOS modules */}
+            <div>
+              <div style={{
+                display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8,
+                background: `${C.blue}06`,
+                border: `1px solid ${C.blue}14`,
+                borderRadius: 12, padding: 8,
+              }}>
                 {[
-                  { label: "Follow-up Rate", val: "3.3", unit: "sessions/patient", delta: "+2%", good: true },
-                  { label: "HEP Compliance", val: "87%", unit: "", delta: "+1%", good: true },
-                  { label: "Utilisation", val: "74%", unit: "", delta: "+1%", good: true, warn: true },
-                  { label: "DNA Rate", val: "3%", unit: "", delta: "-25%", good: true },
-                ].map(({ label, val, unit, delta, warn }) => (
-                  <div key={label} style={{
-                    padding: "10px 12px",
-                    background: "rgba(255,255,255,0.02)",
-                    border: "1px solid rgba(255,255,255,0.04)",
-                    borderRadius: 8,
+                  { name: "Ava", IconComp: ArchAvaIcon, color: C.blue, desc: "Calls \u2192 bookings" },
+                  { name: "Pulse", IconComp: ArchPulseIcon, color: C.teal, desc: "Risk \u2192 re-engage" },
+                  { name: "Intelligence", IconComp: ArchIntelIcon, color: C.purple, desc: "Data \u2192 KPIs" },
+                ].map(({ name, IconComp, color, desc }) => (
+                  <div key={name} style={{
+                    background: `${color}0C`,
+                    border: `1px solid ${color}1C`,
+                    borderRadius: 8, padding: "12px 10px", textAlign: "center",
                   }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                      <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{label}</span>
-                      <div style={{ width: 5, height: 5, borderRadius: "50%", background: warn ? "#F59E0B" : C.success }} />
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 7,
+                      background: `${color}18`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      margin: "0 auto 6px",
+                    }}>
+                      <IconComp color={color} size={16} />
                     </div>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                      <span className="serif" style={{ fontSize: 22, color: "rgba(255,255,255,0.9)", fontWeight: 400 }}>{val}</span>
-                      {unit && <span style={{ fontSize: 10, color: "rgba(255,255,255,0.25)" }}>{unit}</span>}
-                      <span style={{ fontSize: 10, fontWeight: 600, color: C.success, marginLeft: "auto" }}>{delta}</span>
-                    </div>
-                    {/* Mini sparkline */}
-                    <svg width="100%" height="16" viewBox="0 0 100 16" preserveAspectRatio="none" style={{ marginTop: 6 }}>
-                      <polyline
-                        points="0,12 15,10 30,11 45,8 60,9 75,5 90,4 100,3"
-                        fill="none" stroke={C.blue} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"
-                      />
-                    </svg>
+                    <div style={{ color, fontWeight: 700, fontSize: 13, textShadow: `0 0 10px ${color}40` }}>{name}</div>
+                    <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginTop: 2, textShadow: `0 0 8px ${color}20` }}>{desc}</div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* CONNECTOR — fan out */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              <ArchPulseDots color={C.success} />
+              <ArchPulseDots color={C.teal} />
+              <ArchPulseDots color={C.blueGlow} />
+            </div>
+
+            {/* TIER 3 — Outcomes */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              <div style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                borderRadius: 10, padding: "14px 14px", textAlign: "center",
+              }}>
+                <div style={{ marginBottom: 4 }}><ArchZeroMissed color={C.success} size={28} /></div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 2, textShadow: `0 0 10px ${C.success}30` }}>
+                  zero missed calls
+                </div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.2)", fontWeight: 500 }}>24/7 availability</div>
+              </div>
+
+              <div style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                borderRadius: 10, padding: "14px 14px", textAlign: "center",
+              }}>
+                <div style={{ marginBottom: 4 }}><ArchRetentionLoop color={C.teal} size={28} /></div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 2, textShadow: `0 0 10px ${C.teal}30` }}>
+                  retention cycles
+                </div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.2)", fontWeight: 500 }}>automated re-engagement</div>
+              </div>
+
+              <div style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                borderRadius: 10, padding: "14px 14px", textAlign: "center",
+              }}>
+                <div style={{ marginBottom: 4 }}><ArchLivePulse color={C.blueGlow} size={28} /></div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 2, textShadow: `0 0 10px ${C.blueGlow}30` }}>
+                  live dashboards
+                </div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.2)", fontWeight: 500 }}>per clinician, per metric</div>
               </div>
             </div>
           </div>
@@ -1846,7 +2124,7 @@ const caseStudies = [
     ],
   },
   {
-    tag: "Case Study — Riverside Physiotherapy",
+    tag: "Case Study · Riverside Physiotherapy",
     headline: <>Rebooking streamlined and revenue improved{" "}<span style={{ fontStyle: "italic", color: C.blueGlow }}>within a month.</span></>,
     quote: "We didn't realise how many patients were slipping through until Intelligence showed us the numbers. Two months in and our rebooking rate is noticeably better.",
     author: "Sarah Mitchell, Practice Owner, Riverside Physiotherapy",
@@ -1858,7 +2136,7 @@ const caseStudies = [
     ],
   },
   {
-    tag: "Case Study — TBSport Therapy · Solo Stack",
+    tag: "Case Study · TBSport Therapy",
     headline: <>Solo clinician.{" "}<span style={{ fontStyle: "italic", color: C.blueGlow }}>Every call answered.</span></>,
     quote: "I was losing enquiries every time I was in session. Ava means I never miss a new patient call now — and the patients actually prefer it.",
     author: "Tammy, Solo Clinician, TBSport Therapy",
@@ -1896,9 +2174,6 @@ const Results = () => {
         <h2 className="serif" style={{ fontSize: 44, color: "white", fontWeight: 400, lineHeight: 1.1 }}>
           Measured improvements that are more than theory.
         </h2>
-        <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 16, marginTop: 14, fontStyle: "italic", lineHeight: 1.7 }}>
-          Better conversion from enquiry to booked care. Better continuity through treatment. Better owner visibility on profit drivers.
-        </p>
       </div>
       </AnimIn>
 
@@ -2062,202 +2337,341 @@ const ROICalc = ({ darkMode }) => {
 };
 
 /* ─── Pricing ────────────────────────────────────────────────────────────────── */
-const tierPrices = {
-  solo:   { intelligence: 79,  ava: 149, pulse: 99,  full: 279 },
-  studio: { intelligence: 129, ava: 199, pulse: 149, full: 399 },
-  clinic: { intelligence: 199, ava: 299, pulse: 229, full: 599 },
+const PRICING_DATA = {
+  solo:   { Intelligence: "\u00A379",  Ava: "\u00A3129", Pulse: "\u00A399",  full: "\u00A3259", fullSetup: "\u00A3250" },
+  studio: { Intelligence: "\u00A3129", Ava: "\u00A3199", Pulse: "\u00A3149", full: "\u00A3399", fullSetup: "\u00A3250" },
+  clinic: { Intelligence: "\u00A3199", Ava: "\u00A3299", Pulse: "\u00A3229", full: "\u00A3599", fullSetup: "\u00A3250" },
 };
-const tierLabels = { solo: "Solo (1)", studio: "Studio (2–4)", clinic: "Clinic (6+)" };
-const setupFees = {
-  solo:   { intelligence: null, ava: null,  pulse: null },
-  studio: { intelligence: null, ava: 250,   pulse: null },
-  clinic: { intelligence: null, ava: 250,   pulse: null },
+const TIER_OPTIONS = [
+  { id: "solo", label: "Solo", sub: "1 clinician" },
+  { id: "studio", label: "Studio", sub: "2\u20134 clinicians" },
+  { id: "clinic", label: "Clinic", sub: "6+ clinicians" },
+];
+const PRICING_MODULES = [
+  {
+    name: "Intelligence", color: C.purple, bright: "#A78BFA",
+    tagline: "Know your numbers, finally",
+    setup: "No setup fee",
+    features: ["Per-clinician KPI board", "6-week trend charts", "Metric drift alerts", "WriteUpp & Cliniko integration", "Weekly email digest"],
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 5-10"/></svg>,
+  },
+  {
+    name: "Ava", color: C.blue, bright: C.blueBright, popular: true,
+    tagline: "Never miss another call",
+    setup: "\u00A3250 one-time setup",
+    features: ["24/7 inbound call handling", "Live calendar booking", "No-show recovery", "SMS confirmations", "Emergency routing"],
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>,
+  },
+  {
+    name: "Pulse", color: C.teal, bright: "#06B6D4",
+    tagline: "Clinically adaptive patient retention",
+    setup: "No setup fee",
+    features: ["Complexity-aware follow-up sequences", "Psychosocial flag detection", "Discharge-aware suppression", "Post-discharge check-ins", "Referral prompt flows"],
+    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>,
+  },
+];
+
+const GLOSS = {
+  Intelligence: `radial-gradient(ellipse 120% 80% at 30% 20%, #A78BFAE6, ${C.purple}F2 45%, #6D28D9 100%)`,
+  Ava:          `radial-gradient(ellipse 120% 80% at 30% 20%, ${C.blueBright}E6, ${C.blue}F2 45%, #1740C4 100%)`,
+  Pulse:        `radial-gradient(ellipse 120% 80% at 30% 20%, #06B6D4E6, ${C.teal}F2 45%, #0E7490 100%)`,
+};
+const EDGE_GLOW = {
+  Intelligence: `0 0 0 1px #A78BFA60, 0 0 30px ${C.purple}40, 0 8px 40px ${C.purple}25`,
+  Ava:          `0 0 0 1px ${C.blueBright}60, 0 0 30px ${C.blue}40, 0 8px 40px ${C.blue}25`,
+  Pulse:        `0 0 0 1px #06B6D460, 0 0 30px ${C.teal}40, 0 8px 40px ${C.teal}25`,
+};
+
+const PricingCheck = ({ color }) => (
+  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
+    <circle cx="8" cy="8" r="7" fill={color} fillOpacity="0.15"/>
+    <path d="M5.5 8l2 2 3.5-4" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const PricingTierToggle = ({ tier, setTier, darkMode }) => (
+  <div style={{
+    display: "inline-flex", alignItems: "stretch",
+    padding: 4, borderRadius: 16,
+    backgroundColor: C.navy,
+    border: "1px solid rgba(255,255,255,0.08)",
+    boxShadow: "inset 0 2px 6px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.03)",
+  }}>
+    {TIER_OPTIONS.map((t) => {
+      const active = tier === t.id;
+      return (
+        <button key={t.id} onClick={() => setTier(t.id)} style={{
+          position: "relative", zIndex: active ? 2 : 1,
+          padding: "10px 28px 8px", borderRadius: 12, border: "none", cursor: "pointer",
+          fontFamily: "'Outfit', sans-serif",
+          background: active ? `linear-gradient(135deg, ${C.blueBright}, ${C.blue})` : "transparent",
+          boxShadow: active ? `0 2px 12px ${C.blue}50, 0 0 0 1px ${C.blueBright}40, inset 0 1px 0 rgba(255,255,255,0.2)` : "none",
+          transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}>
+          <div style={{
+            fontSize: 14, fontWeight: active ? 700 : 500,
+            color: active ? "white" : "rgba(255,255,255,0.35)",
+            transition: "color 0.3s ease", lineHeight: 1.2,
+          }}>{t.label}</div>
+          <div style={{
+            fontSize: 10, fontWeight: 500,
+            color: active ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.2)",
+            transition: "color 0.3s ease", marginTop: 1,
+          }}>{t.sub}</div>
+        </button>
+      );
+    })}
+  </div>
+);
+
+const PricingCard = ({ mod, price, darkMode }) => {
+  const [hovered, setHovered] = useState(false);
+  const h = hovered;
+  const c = mod.color;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "relative", borderRadius: 24, padding: "34px 28px 28px",
+        cursor: "pointer", overflow: "hidden",
+        background: h ? GLOSS[mod.name] : (darkMode ? "rgba(255,255,255,0.04)" : "white"),
+        border: h ? `1px solid ${mod.bright}50` : `1px solid ${darkMode ? "rgba(255,255,255,0.07)" : C.border}`,
+        boxShadow: h ? EDGE_GLOW[mod.name] : (darkMode ? "none" : "0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)"),
+        transform: h ? "translateY(-6px) scale(1.015)" : "translateY(0) scale(1)",
+        transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        willChange: "transform, box-shadow",
+      }}
+    >
+      {/* Glass highlight */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: 120,
+        background: h ? "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 100%)" : "none",
+        borderRadius: "24px 24px 0 0", pointerEvents: "none", transition: "all 0.4s ease",
+      }} />
+      <div style={{
+        position: "absolute", top: -60, left: -30, width: 200, height: 200, borderRadius: "50%",
+        background: h ? "radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%)" : "none",
+        pointerEvents: "none", transition: "all 0.5s ease",
+      }} />
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0, height: 1,
+        background: h ? `linear-gradient(90deg, transparent, ${mod.bright}40, transparent)` : "transparent",
+        transition: "all 0.4s ease",
+      }} />
+
+      {mod.popular && (
+        <div style={{
+          position: "absolute", top: 18, right: 18,
+          padding: "4px 10px", borderRadius: 50,
+          background: h ? "rgba(255,255,255,0.15)" : `linear-gradient(135deg, ${c}12, ${c}06)`,
+          border: `1px solid ${h ? "rgba(255,255,255,0.25)" : `${c}20`}`,
+          backdropFilter: h ? "blur(8px)" : "none",
+          fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
+          color: h ? "white" : c, transition: "all 0.4s ease",
+        }}>Most popular</div>
+      )}
+
+      <div style={{
+        width: 46, height: 46, borderRadius: 14,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: h ? "rgba(255,255,255,0.15)" : `linear-gradient(135deg, ${c}0A, ${c}05)`,
+        border: `1px solid ${h ? "rgba(255,255,255,0.2)" : `${c}15`}`,
+        boxShadow: h ? "inset 0 1px 0 rgba(255,255,255,0.15)" : "none",
+        color: h ? "white" : c, marginBottom: 20, transition: "all 0.4s ease", position: "relative",
+      }}>{mod.icon}</div>
+
+      <div style={{
+        fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.14em",
+        color: h ? "rgba(255,255,255,0.65)" : c, marginBottom: 5, transition: "color 0.4s ease", position: "relative",
+      }}>{mod.name}</div>
+
+      <div style={{
+        fontSize: 15, fontWeight: 500, lineHeight: 1.4,
+        color: h ? "rgba(255,255,255,0.9)" : (darkMode ? "rgba(255,255,255,0.85)" : C.ink),
+        marginBottom: 26, transition: "color 0.4s ease", position: "relative",
+      }}>{mod.tagline}</div>
+
+      <div style={{ marginBottom: 4, position: "relative" }}>
+        <span className="serif" style={{
+          fontSize: 42, lineHeight: 1,
+          color: h ? "white" : (darkMode ? "white" : C.navy),
+          transition: "color 0.35s ease",
+        }}>{price}</span>
+        <span style={{
+          fontSize: 16, fontWeight: 400,
+          color: h ? "rgba(255,255,255,0.45)" : C.muted,
+          transition: "color 0.35s ease",
+        }}>/mo</span>
+      </div>
+      <div style={{
+        fontSize: 12, color: h ? "rgba(255,255,255,0.4)" : C.muted,
+        marginBottom: 26, transition: "color 0.35s ease", position: "relative",
+      }}>{mod.setup}</div>
+
+      <div style={{
+        height: 1, marginBottom: 22,
+        background: h ? "linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.15), rgba(255,255,255,0.06))" : (darkMode ? "rgba(255,255,255,0.07)" : C.border),
+        transition: "all 0.4s ease", position: "relative",
+      }} />
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 11, marginBottom: 30, position: "relative" }}>
+        {mod.features.map((f) => (
+          <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+            <PricingCheck color={h ? "rgba(255,255,255,0.85)" : c} />
+            <span style={{
+              fontSize: 13, lineHeight: 1.45,
+              color: h ? "rgba(255,255,255,0.88)" : (darkMode ? "rgba(255,255,255,0.75)" : C.ink),
+              transition: "color 0.35s ease",
+            }}>{f}</span>
+          </div>
+        ))}
+      </div>
+
+      <button style={{
+        width: "100%", padding: "14px 0", borderRadius: 14,
+        fontSize: 14, fontWeight: 700, fontFamily: "'Outfit', sans-serif",
+        cursor: "pointer", position: "relative", letterSpacing: "0.02em",
+        background: h ? "rgba(255,255,255,0.95)" : "transparent",
+        color: h ? c : C.blue,
+        border: h ? "none" : `1.5px solid ${C.blue}30`,
+        boxShadow: h ? "0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8)" : "none",
+        transition: "all 0.35s ease",
+      }}>Get started</button>
+    </div>
+  );
+};
+
+const FullStackBanner = ({ tier, darkMode }) => {
+  const [h, setH] = useState(false);
+  const p = PRICING_DATA[tier];
+  return (
+    <div
+      onMouseEnter={() => setH(true)}
+      onMouseLeave={() => setH(false)}
+      style={{
+        position: "relative", borderRadius: 22, overflow: "hidden",
+        padding: "30px 36px",
+        background: h ? `radial-gradient(ellipse 100% 100% at 20% 40%, #1A3A6E, ${C.navy} 70%)` : C.navy,
+        border: `1px solid ${h ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.08)"}`,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexWrap: "wrap", gap: 24,
+        boxShadow: h
+          ? `0 0 0 1px ${C.blueBright}25, 0 0 40px ${C.blue}18, 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)`
+          : "0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)",
+        transform: h ? "translateY(-2px)" : "translateY(0)",
+        cursor: "pointer", transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)",
+      }}
+    >
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, display: "flex" }}>
+        <div style={{ flex: 1, background: `linear-gradient(90deg, ${C.purple}, #A78BFA)`, opacity: h ? 0.9 : 0.4, transition: "opacity 0.4s ease" }} />
+        <div style={{ flex: 1, background: `linear-gradient(90deg, ${C.blue}, ${C.blueBright})`, opacity: h ? 0.9 : 0.4, transition: "opacity 0.4s ease" }} />
+        <div style={{ flex: 1, background: `linear-gradient(90deg, ${C.teal}, #06B6D4)`, opacity: h ? 0.9 : 0.4, transition: "opacity 0.4s ease" }} />
+      </div>
+      <div style={{
+        position: "absolute", top: -80, right: -20, width: 280, height: 280, borderRadius: "50%",
+        background: `radial-gradient(circle, rgba(28,84,242,${h ? "0.16" : "0.06"}), transparent 70%)`,
+        pointerEvents: "none", transition: "all 0.5s ease",
+      }} />
+      <div style={{ position: "relative" }}>
+        <div style={{
+          display: "inline-block", padding: "4px 12px", borderRadius: 50, marginBottom: 10,
+          background: h ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)",
+          border: `1px solid ${h ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.1)"}`,
+          fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
+          color: "rgba(255,255,255,0.55)", transition: "all 0.3s ease",
+        }}>\u2605 Best value</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "white", marginBottom: 4 }}>
+          Stryde<span style={{ color: C.blueGlow }}>OS</span> Full Stack
+        </div>
+        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>All three modules. One system.</div>
+      </div>
+      <div style={{ textAlign: "right", position: "relative" }}>
+        <span className="serif" style={{ fontSize: 38, color: "white", lineHeight: 1 }}>{p.full}</span>
+        <span style={{ fontSize: 15, color: "rgba(255,255,255,0.35)" }}>/mo</span>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>{p.fullSetup} one-time setup</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#34D399", marginTop: 4 }}>Save vs individual</div>
+      </div>
+    </div>
+  );
 };
 
 const Pricing = ({ darkMode }) => {
   const [tier, setTier] = useState("studio");
-  const bg     = darkMode ? C.navyMid  : C.cloudDancer;
-  const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
-  const bdr    = darkMode ? "rgba(255,255,255,0.07)" : C.border;
-  const muted  = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
-  const head   = darkMode ? "white"    : C.navy;
-  const txt    = darkMode ? "rgba(255,255,255,0.75)" : C.ink;
-
-  const modules = [
-    {
-      id: "intelligence", name: "Intelligence", color: "#8B5CF6",
-      tagline: "Clinical performance engine. See where your clinic wins and where it leaks.",
-      features: ["Per-clinician KPI dashboard", "90-day rolling trend charts", "Metric drift alerts", "WriteUpp & Cliniko integration", "Weekly email digest"],
-    },
-    {
-      id: "ava", name: "Ava", color: C.blue,
-      tagline: "Never miss a patient again. Every inbound call answered, booked, confirmed.",
-      features: ["24/7 inbound call handling", "Direct calendar booking", "No-show & cancellation recovery", "SMS confirmations", "Emergency routing to on-call"],
-    },
-    {
-      id: "pulse", name: "Pulse", color: C.teal,
-      tagline: "Clinically adaptive patient retention. Keeps patients in care, longer.",
-      features: ["Complexity-aware follow-up sequences", "Psychosocial flag detection", "Discharge-aware message suppression", "Clinical enrichment from Heidi", "Post-discharge check-ins", "Referral prompt flows"],
-    },
-  ];
-
-  const fullPrice = tierPrices[tier].full;
-  const fullSetup = setupFees[tier].ava; // Full Stack inherits Ava's setup fee
-  const individualSum = tierPrices[tier].intelligence + tierPrices[tier].ava + tierPrices[tier].pulse;
-  const savingsPerMonth = individualSum - fullPrice;
+  const [billing, setBilling] = useState("monthly");
+  const bg    = darkMode ? C.navyMid : C.cloudDancer;
+  const muted = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const head  = darkMode ? "white" : C.navy;
+  const prices = PRICING_DATA[tier];
 
   return (
   <section id="pricing" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
-    <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+    <div style={{ maxWidth: 1060, margin: "0 auto" }}>
+
       <AnimIn>
-      <div style={{ textAlign: "center", marginBottom: 32 }}>
+      <div style={{ textAlign: "center", marginBottom: 40 }}>
         <div className="section-chip">Pricing</div>
-        <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
-          Modular by design. Your clinic, your stack.
+        <h2 className="serif" style={{ fontSize: 42, color: head, fontWeight: 400, lineHeight: 1.12, marginBottom: 14 }}>
+          Modular by design.<br/>Your clinic, your stack.
         </h2>
-        <p style={{ color: muted, marginTop: 14, fontSize: 16, lineHeight: 1.7, maxWidth: 560, margin: "14px auto 0" }}>
-          Three modules. Mix and match. No forced tiers, no wasted features. The full stack costs less than a part-time receptionist.
+        <p style={{ fontSize: 15, color: muted, maxWidth: 480, margin: "0 auto", lineHeight: 1.65 }}>
+          Three modules. Mix and match. No forced tiers, no wasted features.
+          The full stack costs less than a part-time receptionist.
         </p>
       </div>
       </AnimIn>
 
-      {/* Tier selector — Solo / Studio / Clinic */}
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 44 }}>
-        <div style={{
-          display: "flex", gap: 4, padding: 4, borderRadius: 12,
-          background: darkMode ? "rgba(255,255,255,0.04)" : "rgba(11,37,69,0.04)",
-          border: `1px solid ${darkMode ? "rgba(255,255,255,0.06)" : C.border}`,
-        }}>
-          {Object.keys(tierLabels).map(k => (
-            <button key={k} onClick={() => setTier(k)} style={{
-              padding: "10px 28px", border: "none", cursor: "pointer", borderRadius: 9,
-              fontFamily: "'Outfit',sans-serif", fontSize: 13, fontWeight: 600,
-              background: tier === k ? C.blue : "transparent",
-              color: tier === k ? "white" : (darkMode ? "rgba(255,255,255,0.4)" : C.muted),
-              boxShadow: tier === k ? `0 2px 12px ${C.blue}55` : "none",
-              transition: "all 0.25s ease",
-            }}>{tierLabels[k]}</button>
-          ))}
-        </div>
+      {/* Tier toggle */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+        <PricingTierToggle tier={tier} setTier={setTier} darkMode={darkMode} />
       </div>
 
-      <AnimIn delay={150}>
-      <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, marginBottom: 32 }}>
-        {modules.map(({ id, name, color, tagline, features }) => {
-          const price = tierPrices[tier][id];
-          const setup = setupFees[tier][id];
-          return (
-          <div key={id} className="card-hover" style={{
-            background: bgCard,
-            borderRadius: 22, padding: 34,
-            border: `1px solid ${bdr}`,
-            transition: "background 0.3s ease",
-            position: "relative", overflow: "hidden",
-          }}>
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color, marginBottom: 6 }}>{name}</div>
-              <div style={{ fontSize: 13, color: muted, marginBottom: 24, minHeight: 36, lineHeight: 1.5 }}>{tagline}</div>
-
-              <div className="serif" style={{ fontSize: 34, color: head, fontWeight: 400, marginBottom: 4 }}>
-                £{price}<span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500, color: muted }}>/mo</span>
-              </div>
-              <div style={{ fontSize: 12, color: muted, marginBottom: 28 }}>
-                {setup ? `£${setup} one-time setup` : "No setup fee"}
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 28, borderTop: `1px solid ${bdr}`, paddingTop: 20 }}>
-                {features.map(f => (
-                  <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                      <circle cx="7.5" cy="7.5" r="6.5" fill={`${color}15`}/>
-                      <path d="M4.5 7.5l2 2 4-4" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <span style={{ fontSize: 13, color: txt }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: "flex", gap: 8 }}>
-                <a href={`https://portal.strydeos.com/login?mode=signup&plan=${id}-${tier}`} target="_blank" rel="noopener"
-                  className="btn-primary"
-                  style={{ flex: 1, justifyContent: "center", borderRadius: 14, fontSize: 14 }}>
-                  Start free trial
-                </a>
-                <a href={`https://portal.strydeos.com/checkout?plan=${id}-${tier}&billing=now`} target="_blank" rel="noopener"
-                  className="btn-outline"
-                  style={{ flex: 1, justifyContent: "center", borderRadius: 14, fontSize: 14 }}>
-                  Buy now
-                </a>
-              </div>
-            </div>
-          </div>
-          );
-        })}
-      </div>
-      </AnimIn>
-
-      {/* Full Stack banner */}
-      <AnimIn delay={300}>
-      <div className="card-hover" style={{
-        borderRadius: 22, overflow: "hidden", marginBottom: 32,
-        border: `1px solid ${darkMode ? "rgba(75,139,245,0.2)" : "rgba(75,139,245,0.15)"}`,
+      {/* Billing toggle */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "center",
+        gap: 12, marginBottom: 40,
       }}>
-        {/* Navy gradient header */}
-        <div style={{
-          background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
-          padding: "36px 48px",
-          position: "relative", overflow: "hidden",
+        <span style={{ fontSize: 13, fontWeight: billing === "monthly" ? 700 : 500, color: billing === "monthly" ? head : muted, transition: "all 0.3s ease" }}>Monthly</span>
+        <div onClick={() => setBilling(b => b === "monthly" ? "annual" : "monthly")} style={{
+          width: 44, height: 24, borderRadius: 12, cursor: "pointer",
+          backgroundColor: billing === "annual" ? C.blue : (darkMode ? "rgba(255,255,255,0.12)" : C.border),
+          position: "relative", transition: "background-color 0.3s ease",
+          boxShadow: billing === "annual" ? `0 0 12px ${C.blue}40` : "none",
         }}>
-          <RadialGlow color={C.blue} size={400} opacity={0.15} style={{ top: -100, right: -50 }} />
-          <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
-            <div>
-              <div style={{
-                display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 6,
-                background: "rgba(255,255,255,0.06)", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
-                textTransform: "uppercase", color: "rgba(255,255,255,0.5)", marginBottom: 10,
-              }}>★ Best value</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: "white", fontFamily: "'Outfit',sans-serif", marginBottom: 4 }}>
-                Stryde<span style={{ color: C.blueGlow }}>OS</span> Full Stack
-              </div>
-              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)" }}>All three modules. One system.</div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div className="serif" style={{ fontSize: 38, color: "white", fontWeight: 400 }}>
-                £{fullPrice}<span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.4)" }}>/mo</span>
-              </div>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
-                {fullSetup ? `£${fullSetup} one-time setup` : "No setup fee"}
-              </div>
-            </div>
-          </div>
+          <div style={{
+            width: 18, height: 18, borderRadius: "50%", backgroundColor: "white",
+            position: "absolute", top: 3,
+            left: billing === "annual" ? 23 : 3,
+            transition: "left 0.3s cubic-bezier(0.16,1,0.3,1)",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+          }} />
         </div>
-        {/* White/light body */}
-        <div style={{
-          background: darkMode ? "rgba(255,255,255,0.04)" : "white",
-          padding: "28px 48px",
-          display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24,
-        }}>
-          <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
-            {["Intelligence dashboard", "Ava 24/7 call handling", "Pulse retention engine", `Save £${savingsPerMonth}/mo vs individual`, "Priority support"].map(f => (
-              <div key={f} style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                  <circle cx="7.5" cy="7.5" r="6.5" fill={`${C.blue}15`}/>
-                  <path d="M4.5 7.5l2 2 4-4" stroke="#34D399" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span style={{ fontSize: 13, color: darkMode ? "rgba(255,255,255,0.7)" : C.ink }}>{f}</span>
-              </div>
-            ))}
-          </div>
-          <a href={`https://portal.strydeos.com/checkout?plan=fullstack-${tier}`} target="_blank" rel="noopener"
-            className="btn-primary"
-            style={{ borderRadius: 14, whiteSpace: "nowrap" }}>
-            Get Full Stack →
-          </a>
-        </div>
+        <span style={{ fontSize: 13, fontWeight: billing === "annual" ? 700 : 500, color: billing === "annual" ? head : muted, transition: "all 0.3s ease" }}>Annual</span>
+        {billing === "annual" && (
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: C.success,
+            padding: "3px 10px", borderRadius: 50,
+            backgroundColor: "rgba(5,150,105,0.08)",
+            border: "1px solid rgba(5,150,105,0.15)",
+          }}>Save 20%</span>
+        )}
+      </div>
+
+      {/* Cards */}
+      <AnimIn delay={150}>
+      <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 28 }}>
+        {PRICING_MODULES.map((mod) => (
+          <PricingCard key={mod.name} mod={mod} price={prices[mod.name]} darkMode={darkMode} />
+        ))}
       </div>
       </AnimIn>
 
-      <p style={{ textAlign: "center", fontSize: 13, color: muted, fontStyle: "italic" }}>
+      {/* Full Stack */}
+      <AnimIn delay={300}>
+        <FullStackBanner tier={tier} darkMode={darkMode} />
+      </AnimIn>
+
+      <p style={{ textAlign: "center", fontSize: 13, color: muted, fontStyle: "italic", marginTop: 32 }}>
         Currently in early access · No lock-in contracts · Onboarding & training included
       </p>
     </div>
