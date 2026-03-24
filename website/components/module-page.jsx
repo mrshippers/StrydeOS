@@ -198,10 +198,10 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
 
         {/* Pricing banner */}
         <section style={{
-          padding: "80px 24px 100px",
+          padding: "100px 24px 120px",
           background: darkMode
-            ? `linear-gradient(180deg, ${C.navy} 0%, ${C.navyMid} 40%, ${C.navy} 100%)`
-            : `linear-gradient(180deg, ${C.cloudDancer} 0%, #E8E5DF 30%, #DDD9D2 50%, #E8E5DF 70%, ${C.cloudDancer} 100%)`,
+            ? `linear-gradient(180deg, ${C.navy} 0%, ${C.navyMid} 50%, ${C.navy} 100%)`
+            : `linear-gradient(180deg, ${C.cloudDancer} 0%, #D5D1CA 35%, #C4BFB6 50%, #D5D1CA 65%, ${C.cloudDancer} 100%)`,
           transition: "background 0.3s",
         }}>
           <div style={{ maxWidth: 900, margin: "0 auto" }}>
