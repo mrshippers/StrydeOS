@@ -85,33 +85,52 @@ const globalStyles = `
 
   .btn-primary {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 14px 32px;
-    background: ${C.blue}; color: white;
+    padding: 16px 36px;
+    background: linear-gradient(135deg, ${C.blueBright}, ${C.blue});
+    color: white;
     border: none; border-radius: 50px;
     font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600;
-    cursor: pointer; transition: all 0.3s ease; text-decoration: none;
-    letter-spacing: 0.01em;
+    cursor: pointer; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    text-decoration: none; letter-spacing: 0.01em;
+    box-shadow: 0 2px 8px ${C.blue}30, 0 0 0 1px ${C.blueBright}18, inset 0 1px 0 rgba(255,255,255,0.15);
   }
-  .btn-primary:hover { background: ${C.blueBright}; transform: translateY(-2px); box-shadow: 0 16px 40px ${C.blue}40; }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, ${C.blueGlow}, ${C.blueBright});
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px ${C.blue}45, 0 0 0 1px ${C.blueBright}30, inset 0 1px 0 rgba(255,255,255,0.2);
+  }
 
   .btn-ghost {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 13px 28px; background: transparent;
+    padding: 15px 32px; background: transparent;
     color: rgba(255,255,255,0.7);
-    border: 1.5px solid rgba(255,255,255,0.2); border-radius: 50px;
+    border: 1.5px solid rgba(255,255,255,0.15); border-radius: 50px;
     font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 500;
-    cursor: pointer; transition: all 0.3s ease; text-decoration: none;
+    cursor: pointer; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    text-decoration: none;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.04);
   }
-  .btn-ghost:hover { border-color: rgba(255,255,255,0.5); color: white; transform: translateY(-2px); }
+  .btn-ghost:hover {
+    border-color: rgba(255,255,255,0.35); color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.03);
+  }
 
   .btn-outline {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 13px 28px; background: transparent;
-    color: ${C.blue}; border: 1.5px solid ${C.blue}; border-radius: 50px;
+    padding: 15px 32px; background: transparent;
+    color: ${C.blue}; border: 1.5px solid ${C.blue}40; border-radius: 50px;
     font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 500;
-    cursor: pointer; transition: all 0.3s ease; text-decoration: none;
+    cursor: pointer; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    text-decoration: none;
+    box-shadow: 0 0 0 3px ${C.blue}08, inset 0 1px 0 rgba(255,255,255,0.04);
   }
-  .btn-outline:hover { background: ${C.blue}10; transform: translateY(-2px); }
+  .btn-outline:hover {
+    background: ${C.blue}08; transform: translateY(-2px);
+    border-color: ${C.blue}60;
+    box-shadow: 0 0 0 3px ${C.blue}12, 0 4px 16px ${C.blue}15;
+  }
 
   .section-chip {
     display: inline-flex; align-items: center; gap: 6px;
