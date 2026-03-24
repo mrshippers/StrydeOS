@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
-import AvaConversationCard from "./AvaConversationCard";
+import AvaShowcase from "../ava-conversation-card";
 
 const C = {
   // Backgrounds
@@ -947,7 +947,7 @@ const Hero = ({ darkMode }) => {
       }} />
 
       <div style={{ maxWidth: 1160, margin: "0 auto", width: "100%", position: "relative", zIndex: 2 }}>
-        <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "0.9fr 1.1fr", gap: 80, alignItems: "start" }}>
+        <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
 
           {/* Left */}
           <div style={{ animation: "fadeUp 0.8s ease forwards" }}>
@@ -990,9 +990,9 @@ const Hero = ({ darkMode }) => {
             </div>
           </div>
 
-          {/* Right — Ava conversation card showcase */}
+          {/* Right — Compact dashboard showcase */}
           <div style={{ animation: "fadeUp 0.8s 0.2s ease both" }}>
-            <AvaConversationCard />
+            <HeroDashboard />
           </div>
         </div>
 
@@ -1837,21 +1837,6 @@ const PulseShowcase = () => {
 /* ─── Products ──────────────────────────────────────────────────────────────── */
 const Products = ({ darkMode }) => {
   const [active, setActive] = useState(0);
-  const [avaPlaying, setAvaPlaying] = useState(false);
-  const avaAudioRef = useRef(null);
-  const toggleAva = () => {
-    const audio = avaAudioRef.current;
-    if (!audio) return;
-    if (avaPlaying) { audio.pause(); } else { audio.play(); }
-    setAvaPlaying(!avaPlaying);
-  };
-  useEffect(() => {
-    const audio = avaAudioRef.current;
-    if (!audio) return;
-    const onEnd = () => setAvaPlaying(false);
-    audio.addEventListener("ended", onEnd);
-    return () => audio.removeEventListener("ended", onEnd);
-  }, []);
   const bg    = darkMode ? C.navy    : C.cloudDancer;
   const muted = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
   const head  = darkMode ? "white"   : C.navy;
@@ -1885,218 +1870,7 @@ const Products = ({ darkMode }) => {
       howItWorks: ["Captures inbound calls and triages intent", "Books directly into your existing PMS diary", "Triggers confirmations and recovery flows automatically"],
       keyBenefits: ["Fewer missed first contacts", "Higher slot fill from recovered cancels", "Lower admin overhead on front desk"],
       bullets: ["Inbound calls handled 24/7", "Books directly into your calendar", "Cancellation recovery & no-show chasing", "SMS confirmations sent automatically", "Emergency routing to on-call clinician"],
-      visual: (() => {
-        const dk = darkMode;
-        const headerBg = dk ? "rgba(255,255,255,0.04)" : "white";
-        const headerBorder = dk ? "rgba(255,255,255,0.08)" : C.border;
-        const nameColor = dk ? "white" : C.navy;
-        const subtitleColor = dk ? "rgba(255,255,255,0.45)" : C.muted;
-        const pillBg = dk ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.03)";
-        const pillBorder = dk ? "rgba(255,255,255,0.08)" : C.border;
-        const pillColor = dk ? "rgba(255,255,255,0.5)" : C.muted;
-        const waveBg = dk ? "rgba(255,255,255,0.04)" : C.cloudLight;
-        const waveBorder = dk ? "rgba(255,255,255,0.06)" : C.border;
-        const callCountColor = dk ? "white" : C.navy;
-        const callLabelColor = dk ? "rgba(255,255,255,0.35)" : C.muted;
-
-        const avaMsgs = [
-          { from: "caller", text: "Hi, I'd like to book an appointment for my lower back." },
-          { from: "ai", text: "Of course — I can help with that. Are mornings or afternoons better for you?" },
-          { from: "caller", text: "Mornings, ideally Thursday or Friday." },
-          { from: "ai", text: "I have Thursday at 9:15am with Dr. Reeves. Shall I book that and send you a confirmation text?" },
-          { from: "caller", text: "Yes please." },
-          { from: "ai", text: "Done — you're booked in. You'll get a text shortly. Is there anything else I can help with?" },
-        ];
-
-        return (
-          <div style={{ width: "100%", maxWidth: 520, margin: "0 auto" }}>
-            {/* ── Profile header (ElevenLabs-inspired) ── */}
-            <div style={{
-              backgroundColor: headerBg,
-              borderRadius: "20px 20px 4px 4px",
-              border: `1px solid ${headerBorder}`,
-              padding: "28px 28px 24px",
-              marginBottom: 2,
-            }}>
-              {/* Avatar + name row */}
-              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-                <div style={{ position: "relative", flexShrink: 0 }}>
-                  <div style={{
-                    width: 64, height: 64, borderRadius: "50%",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    overflow: "hidden",
-                    boxShadow: `0 4px 20px rgba(28,84,242,0.15), 0 0 0 1px rgba(28,84,242,0.08)`,
-                  }}>
-                    <MonolithMark size={64} />
-                  </div>
-                  {/* Live pulse dot */}
-                  <div style={{
-                    position: "absolute", bottom: -2, right: -2,
-                    width: 16, height: 16, borderRadius: "50%",
-                    backgroundColor: C.success,
-                    border: dk ? "2.5px solid rgba(11,37,69,0.9)" : "2.5px solid white",
-                    boxShadow: "0 1px 4px rgba(5,150,105,0.3)",
-                  }}>
-                    <div style={{
-                      position: "absolute", inset: 0, borderRadius: "50%",
-                      backgroundColor: C.success,
-                      animation: "ava-pulse-ring 2s ease-out infinite",
-                    }} />
-                  </div>
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <h3 className="serif" style={{
-                    fontSize: 28, fontWeight: 400, color: nameColor,
-                    lineHeight: 1.1, marginBottom: 4,
-                  }}>Ava</h3>
-                  <p style={{ fontSize: 13, color: subtitleColor, fontWeight: 500, letterSpacing: "0.01em" }}>
-                    AI Receptionist · StrydeOS
-                  </p>
-                </div>
-
-                {/* Call count */}
-                <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <div className="serif" style={{ fontSize: 26, color: callCountColor, lineHeight: 1, marginBottom: 2 }}>12</div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: callLabelColor, textTransform: "uppercase", letterSpacing: "0.08em" }}>Calls today</div>
-                </div>
-              </div>
-
-              {/* Metadata pills */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-                <span style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "5px 12px", borderRadius: 50,
-                  fontSize: 12, fontWeight: 600, lineHeight: 1,
-                  color: C.success, backgroundColor: "rgba(5,150,105,0.08)",
-                  border: "1px solid rgba(5,150,105,0.15)",
-                }}>
-                  <span style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: C.success, display: "inline-block" }} />
-                  Live
-                </span>
-                <span style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "5px 12px", borderRadius: 50,
-                  fontSize: 12, fontWeight: 600, lineHeight: 1,
-                  color: C.blue, backgroundColor: "rgba(28,84,242,0.06)",
-                  border: "1px solid rgba(28,84,242,0.12)",
-                }}>ElevenAgents</span>
-                <span style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "5px 12px", borderRadius: 50,
-                  fontSize: 12, fontWeight: 600, lineHeight: 1,
-                  color: pillColor, backgroundColor: pillBg,
-                  border: `1px solid ${pillBorder}`,
-                }}>PMS: Connected</span>
-              </div>
-
-              {/* Waveform bar */}
-              <div
-                onClick={toggleAva}
-                style={{
-                  padding: "14px 16px", borderRadius: 12,
-                  backgroundColor: waveBg, border: `1px solid ${waveBorder}`,
-                  display: "flex", alignItems: "center", gap: 14,
-                  cursor: "pointer", transition: "border-color 0.2s ease",
-                }}
-              >
-                {/* Radial play/pause button */}
-                <div style={{ position: "relative", width: 44, height: 44, flexShrink: 0 }}>
-                  {/* Outer spinning ring (visible when playing) */}
-                  <div style={{
-                    position: "absolute", inset: -3, borderRadius: "50%",
-                    border: "2px solid transparent",
-                    borderTopColor: C.blueGlow,
-                    borderRightColor: "rgba(28,84,242,0.15)",
-                    opacity: avaPlaying ? 1 : 0,
-                    animation: avaPlaying ? "ava-ring-spin 1.8s linear infinite" : "none",
-                    transition: "opacity 0.3s ease",
-                  }} />
-                  {/* Core button */}
-                  <div style={{
-                    width: 44, height: 44, borderRadius: "50%",
-                    background: `radial-gradient(circle at 35% 30%, ${C.blueGlow}, ${C.blue} 60%, ${C.navy} 120%)`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    animation: avaPlaying ? "ava-btn-glow 2s ease-in-out infinite" : "none",
-                    boxShadow: avaPlaying
-                      ? `0 0 20px rgba(28,84,242,0.5), 0 0 50px rgba(28,84,242,0.2)`
-                      : `0 2px 12px rgba(28,84,242,0.3)`,
-                    transition: "box-shadow 0.4s ease",
-                  }}>
-                    {avaPlaying ? (
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <rect x="3.5" y="2.5" width="3.5" height="11" rx="1" fill="white"/>
-                        <rect x="9" y="2.5" width="3.5" height="11" rx="1" fill="white"/>
-                      </svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M4.5 2L13 8L4.5 14V2Z" fill="white"/>
-                      </svg>
-                    )}
-                  </div>
-                </div>
-
-                {/* Waveform bars */}
-                <div style={{ display: "flex", alignItems: "center", gap: 2, height: 24, flex: 1 }}>
-                  {[0.6, 1, 0.7, 0.9, 0.5, 0.8, 1, 0.6, 0.4, 0.8, 0.7, 0.9, 0.5, 0.7, 1, 0.6, 0.9, 0.5, 0.8, 0.7].map((h, i) => (
-                    <div key={i} style={{
-                      width: 3, flex: 1, maxWidth: 4, height: `${h * 100}%`, borderRadius: 2,
-                      backgroundColor: avaPlaying ? C.blue : (dk ? "rgba(28,84,242,0.35)" : "rgba(28,84,242,0.25)"),
-                      animation: avaPlaying ? `waveform 1.2s ease-in-out ${i * 0.08}s infinite alternate` : "none",
-                      transition: "background-color 0.3s ease",
-                    }} />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* ── Conversation transcript ── */}
-            <div style={{
-              backgroundColor: C.navy,
-              borderRadius: "4px 4px 20px 20px",
-              padding: "24px 20px 28px",
-            }}>
-              <div style={{
-                display: "flex", alignItems: "center", gap: 8,
-                marginBottom: 20, paddingBottom: 14,
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-              }}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M2 3h12M2 6.5h8M2 10h10M2 13.5h6" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <span style={{
-                  fontSize: 11, fontWeight: 600,
-                  color: "rgba(255,255,255,0.3)",
-                  textTransform: "uppercase", letterSpacing: "0.08em",
-                }}>Transcript</span>
-                <span style={{
-                  marginLeft: "auto", fontSize: 11,
-                  color: "rgba(255,255,255,0.2)", fontWeight: 500,
-                  fontVariantNumeric: "tabular-nums",
-                }}>Today, 09:12</span>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {avaMsgs.map((msg, i) => (
-                  <div key={i} style={{
-                    display: "flex",
-                    justifyContent: msg.from === "ai" ? "flex-end" : "flex-start",
-                  }}>
-                    <div style={{
-                      maxWidth: "82%", padding: "12px 16px",
-                      borderRadius: msg.from === "ai" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                      backgroundColor: msg.from === "ai" ? C.blue : "rgba(255,255,255,0.06)",
-                      color: msg.from === "ai" ? "white" : "rgba(255,255,255,0.75)",
-                      fontSize: 14, fontWeight: 400, lineHeight: 1.55,
-                      border: msg.from === "ai" ? "none" : "1px solid rgba(255,255,255,0.08)",
-                    }}>{msg.text}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-      })(),
+      visual: <AvaShowcase />,
     },
     {
       id: "pulse",
@@ -2205,7 +1979,6 @@ const Products = ({ darkMode }) => {
 
   return (
     <section id="products" style={{ padding: "60px 24px 100px", background: bg, transition: "background 0.3s ease" }}>
-      <audio ref={avaAudioRef} src="/ava-demo.mp3" preload="metadata" />
       <div style={{ maxWidth: 1160, margin: "0 auto" }}>
         <AnimIn>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
