@@ -2349,40 +2349,52 @@ const PricingCheck = ({ color }) => (
   </svg>
 );
 
-const PricingTierToggle = ({ tier, setTier, darkMode }) => (
-  <div style={{
-    display: "inline-flex", alignItems: "stretch",
-    padding: 4, borderRadius: 16,
-    backgroundColor: C.navy,
-    border: "1px solid rgba(255,255,255,0.08)",
-    boxShadow: "inset 0 2px 6px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.03)",
-  }}>
-    {TIER_OPTIONS.map((t) => {
-      const active = tier === t.id;
-      return (
-        <button key={t.id} onClick={() => setTier(t.id)} style={{
-          position: "relative", zIndex: active ? 2 : 1,
-          padding: "10px 28px 8px", borderRadius: 12, border: "none", cursor: "pointer",
-          fontFamily: "'Outfit', sans-serif",
-          background: active ? `linear-gradient(135deg, ${C.blueBright}, ${C.blue})` : "transparent",
-          boxShadow: active ? `0 2px 12px ${C.blue}50, 0 0 0 1px ${C.blueBright}40, inset 0 1px 0 rgba(255,255,255,0.2)` : "none",
-          transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}>
-          <div style={{
-            fontSize: 14, fontWeight: active ? 700 : 500,
-            color: active ? "white" : "rgba(255,255,255,0.35)",
-            transition: "color 0.3s ease", lineHeight: 1.2,
-          }}>{t.label}</div>
-          <div style={{
-            fontSize: 10, fontWeight: 500,
-            color: active ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.2)",
-            transition: "color 0.3s ease", marginTop: 1,
-          }}>{t.sub}</div>
-        </button>
-      );
-    })}
-  </div>
-);
+const PricingTierToggle = ({ tier, setTier, darkMode }) => {
+  const tierIndex = TIER_OPTIONS.findIndex(t => t.id === tier);
+  return (
+    <div style={{
+      display: "inline-flex", alignItems: "stretch", position: "relative",
+      padding: 4, borderRadius: 16,
+      backgroundColor: darkMode ? "rgba(0,0,0,0.25)" : C.navy,
+      border: `1px solid ${darkMode ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.08)"}`,
+      boxShadow: "inset 0 2px 8px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.03)",
+    }}>
+      {/* Sliding indicator pill */}
+      <div style={{
+        position: "absolute", top: 4, bottom: 4,
+        width: `calc(${100 / TIER_OPTIONS.length}% - 2px)`,
+        left: `calc(${tierIndex * (100 / TIER_OPTIONS.length)}% + 2px)`,
+        borderRadius: 12,
+        background: `linear-gradient(135deg, ${C.blueBright}, ${C.blue})`,
+        boxShadow: `0 2px 10px ${C.blue}30, 0 0 0 1px ${C.blueBright}20, inset 0 1px 0 rgba(255,255,255,0.15)`,
+        transition: "left 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        zIndex: 1,
+      }} />
+      {TIER_OPTIONS.map((t) => {
+        const active = tier === t.id;
+        return (
+          <button key={t.id} onClick={() => setTier(t.id)} style={{
+            position: "relative", zIndex: 2,
+            padding: "10px 28px 8px", borderRadius: 12, border: "none", cursor: "pointer",
+            fontFamily: "'Outfit', sans-serif", background: "transparent",
+            transition: "all 0.3s ease",
+          }}>
+            <div style={{
+              fontSize: 14, fontWeight: active ? 700 : 500,
+              color: active ? "white" : "rgba(255,255,255,0.3)",
+              transition: "color 0.3s ease", lineHeight: 1.2,
+            }}>{t.label}</div>
+            <div style={{
+              fontSize: 10, fontWeight: 500,
+              color: active ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.18)",
+              transition: "color 0.3s ease", marginTop: 1,
+            }}>{t.sub}</div>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 const PricingCard = ({ mod, price, billing, tier, darkMode }) => {
   const [hovered, setHovered] = useState(false);
