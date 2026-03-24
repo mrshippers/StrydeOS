@@ -2435,7 +2435,7 @@ const PricingTierToggle = ({ tier, setTier, darkMode }) => (
   </div>
 );
 
-const PricingCard = ({ mod, price, billing, darkMode }) => {
+const PricingCard = ({ mod, price, billing, tier, darkMode }) => {
   const [hovered, setHovered] = useState(false);
   const h = hovered;
   const c = mod.color;
@@ -2539,16 +2539,21 @@ const PricingCard = ({ mod, price, billing, darkMode }) => {
         ))}
       </div>
 
-      <button style={{
-        width: "100%", padding: "14px 0", borderRadius: 14,
+      <a
+        href={`https://portal.strydeos.com/checkout?plan=${mod.name.toLowerCase()}-${tier}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+        display: "block", width: "100%", padding: "14px 0", borderRadius: 14,
         fontSize: 14, fontWeight: 700, fontFamily: "'Outfit', sans-serif",
         cursor: "pointer", position: "relative", letterSpacing: "0.02em",
+        textAlign: "center", textDecoration: "none",
         background: h ? "rgba(255,255,255,0.95)" : "transparent",
         color: h ? c : C.blue,
         border: h ? "none" : `1.5px solid ${C.blue}30`,
         boxShadow: h ? "0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8)" : "none",
         transition: "all 0.35s ease",
-      }}>Get started</button>
+      }}>Get started</a>
     </div>
   );
 };
@@ -2557,12 +2562,15 @@ const FullStackBanner = ({ tier, billing, darkMode }) => {
   const [h, setH] = useState(false);
   const p = getPricing(tier, billing);
   return (
-    <div
+    <a
+      href={`https://portal.strydeos.com/checkout?plan=fullstack-${tier}`}
+      target="_blank"
+      rel="noopener noreferrer"
       onMouseEnter={() => setH(true)}
       onMouseLeave={() => setH(false)}
       style={{
         position: "relative", borderRadius: 22, overflow: "hidden",
-        padding: "30px 36px",
+        padding: "30px 36px", textDecoration: "none",
         background: h ? `radial-gradient(ellipse 100% 100% at 20% 40%, #1A3A6E, ${C.navy} 70%)` : C.navy,
         border: `1px solid ${h ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.08)"}`,
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -2603,7 +2611,7 @@ const FullStackBanner = ({ tier, billing, darkMode }) => {
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>{p.fullSetup} one-time setup</div>
         <div style={{ fontSize: 11, fontWeight: 600, color: "#34D399", marginTop: 4 }}>Save vs individual</div>
       </div>
-    </div>
+    </a>
   );
 };
 
@@ -2672,7 +2680,7 @@ const Pricing = ({ darkMode }) => {
       <AnimIn delay={150}>
       <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 28 }}>
         {PRICING_MODULES.map((mod) => (
-          <PricingCard key={mod.name} mod={mod} price={prices[mod.name]} billing={billing} darkMode={darkMode} />
+          <PricingCard key={mod.name} mod={mod} price={prices[mod.name]} billing={billing} tier={tier} darkMode={darkMode} />
         ))}
       </div>
       </AnimIn>
