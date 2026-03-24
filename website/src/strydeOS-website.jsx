@@ -827,98 +827,179 @@ const Hero = ({ darkMode }) => {
             <div className="animate-float" style={{ position: "relative" }}>
               <div style={{
                 background: C.navy,
-                borderRadius: 24, padding: 28,
-                boxShadow: `0 48px 80px ${C.navy}50, 0 0 0 1px rgba(255,255,255,0.06)`,
-                animation: "glow-pulse 4s ease-in-out infinite",
+                borderRadius: 20, padding: "24px 20px 20px",
+                boxShadow: `0 8px 60px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)`,
+                border: "1px solid rgba(255,255,255,0.12)",
+                position: "relative", overflow: "hidden",
               }}>
+                {/* Ambient glows */}
+                <div style={{ position: "absolute", top: -80, right: -60, width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle, ${C.blue}14, transparent 70%)`, pointerEvents: "none" }} />
+                <div style={{ position: "absolute", bottom: -60, left: -40, width: 250, height: 250, borderRadius: "50%", background: `radial-gradient(circle, ${C.teal}0C, transparent 70%)`, pointerEvents: "none" }} />
+
                 {/* Header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18, position: "relative" }}>
                   <div>
-                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 2 }}>Stryde Physio · London</div>
-                    <div style={{ color: "white", fontSize: 15, fontWeight: 600 }}>StrydeOS Dashboard</div>
+                    <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Spires Physiotherapy · London</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <MonolithVariant size={22} />
+                      <span className="serif" style={{ fontSize: 18, fontWeight: 400, color: "white", lineHeight: 1 }}>
+                        Stryde<span style={{ color: C.blueGlow }}>OS</span> Dashboard
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, background: `${C.success}20`, padding: "5px 12px", borderRadius: 20 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#34D399" }} />
-                    <span style={{ color: "#34D399", fontSize: 11, fontWeight: 600 }}>Live</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 14px 6px 10px", borderRadius: 50, border: "1px solid rgba(5,150,105,0.2)", background: "rgba(5,150,105,0.06)" }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.success }} />
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.success }}>Live</span>
                   </div>
                 </div>
 
-                {/* Three product indicators */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 18 }}>
+                {/* Module row */}
+                <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
                   {[
-                    { name: "Ava", status: "Active", calls: "12 today", color: C.blue },
-                    { name: "Pulse", status: "Active", calls: "8 follow-ups", color: C.teal },
-                    { name: "Intelligence", status: "Active", calls: "91% util.", color: "#8B5CF6" },
-                  ].map(({ name, status, calls, color }) => (
-                    <div key={name} style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "12px 14px", border: `1px solid ${color}30` }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                        <div style={{ width: 7, height: 7, borderRadius: "50%", background: color, boxShadow: `0 0 8px ${color}` }} />
-                        <div style={{ fontSize: 9, color: color, fontWeight: 600 }}>{status}</div>
+                    { name: "Ava", color: C.blue, stat: "12 today" },
+                    { name: "Pulse", color: C.teal, stat: "8 follow-ups" },
+                    { name: "Intelligence", color: "#8B5CF6", stat: "91% util." },
+                  ].map(({ name, color, stat }) => (
+                    <div key={name} style={{ flex: 1, minWidth: 0, padding: "10px 12px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", position: "relative", overflow: "hidden" }}>
+                      <div style={{ position: "absolute", top: -20, left: -20, width: 80, height: 80, borderRadius: "50%", background: `radial-gradient(circle, ${color}18, transparent 70%)`, pointerEvents: "none" }} />
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
+                        <span style={{ fontSize: 10, fontWeight: 700, color: C.success, textTransform: "uppercase", letterSpacing: "0.06em" }}>Active</span>
                       </div>
-                      <div style={{ color: "white", fontSize: 11, fontWeight: 600, marginBottom: 2 }}>{name}</div>
-                      <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 9 }}>{calls}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "white", marginBottom: 1 }}>{name}</div>
+                      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>{stat}</div>
                     </div>
                   ))}
                 </div>
 
-                {/* KPI row */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+                {/* KPI Grid — 2×2 with sparklines */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
                   {[
-                    { label: "Rebooking Rate", value: "80%", bar: 80, status: "ok" },
-                    { label: "HEP Compliance", value: "84%", bar: 84, status: "ok" },
-                    { label: "Utilisation", value: "76%", bar: 76, status: "ok" },
-                    { label: "No-show Rate", value: "5.8%", bar: 42, status: "ok" },
-                  ].map(({ label, value, bar, status }) => (
-                    <div key={label} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
-                        <div style={{ width: 7, height: 7, borderRadius: "50%", background: status === "ok" ? "#10B981" : "#F59E0B", boxShadow: `0 0 6px ${status === "ok" ? "#10B981" : "#F59E0B"}` }} />
+                    { label: "Follow-up Rate", value: "3.3", unit: "sessions/patient", delta: "+2%", status: "green", spark: [2.8, 2.9, 3.0, 3.1, 3.0, 3.2, 3.3] },
+                    { label: "HEP Compliance", value: "87%", delta: "+1%", status: "green", spark: [80, 82, 83, 84, 85, 86, 87] },
+                    { label: "Utilisation", value: "74%", delta: "+1%", status: "red", subtext: "Room to add more bookings", spark: [70, 71, 72, 71, 73, 73, 74] },
+                    { label: "DNA Rate", value: "3%", delta: "-25%", status: "green", subtext: "Low no-show rate", spark: [6, 5.5, 5, 4.2, 3.8, 3.2, 3] },
+                  ].map(({ label, value, unit, delta, status, subtext, spark }) => {
+                    const statusColor = status === "green" ? C.success : status === "red" ? "#EF4444" : "rgba(255,255,255,0.3)";
+                    const sparkW = 100, sparkH = 24;
+                    const sMin = Math.min(...spark), sMax = Math.max(...spark), sRange = sMax - sMin || 1;
+                    const sparkPts = spark.map((v, i) => `${(i / (spark.length - 1)) * sparkW},${sparkH - ((v - sMin) / sRange) * (sparkH - 4) - 2}`);
+                    const lastPt = sparkPts[sparkPts.length - 1].split(",");
+                    return (
+                      <div key={label} style={{ padding: "14px 16px 12px", borderRadius: 14, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", boxShadow: "0 2px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden" }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)" }}>{label}</span>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: statusColor, flexShrink: 0, marginTop: 2 }} />
+                        </div>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 4 }}>
+                          <span className="serif" style={{ fontSize: 28, color: "white", lineHeight: 1 }}>{value}</span>
+                          {unit && <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>{unit}</span>}
+                          <span style={{ fontSize: 12, fontWeight: 700, marginLeft: 4, color: C.success }}>↑ {delta}</span>
+                        </div>
+                        {subtext && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", marginBottom: 6 }}>{subtext}</div>}
+                        <svg width={sparkW} height={sparkH} viewBox={`0 0 ${sparkW} ${sparkH}`} style={{ display: "block", marginTop: 6 }}>
+                          <polygon points={`0,${sparkH} ${sparkPts.join(" ")} ${sparkW},${sparkH}`} fill={C.blueGlow} fillOpacity="0.08" />
+                          <polyline points={sparkPts.join(" ")} fill="none" stroke={C.blueGlow} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <circle cx={lastPt[0]} cy={lastPt[1]} r="3" fill={C.blueGlow} />
+                        </svg>
                       </div>
-                      <div style={{ color: "white", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>{value}</div>
-                      <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 4, height: 3 }}>
-                        <div style={{ width: `${bar}%`, height: "100%", borderRadius: 4, background: status === "ok" ? `linear-gradient(90deg,${C.teal},${C.blueGlow})` : "linear-gradient(90deg,#F59E0B,#FCD34D)" }} />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
-                {/* Trend */}
-                <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "12px 14px" }}>
-                  <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Patient Retention — 90 days</div>
-                  <svg viewBox="0 0 280 50" style={{ width: "100%", overflow: "visible" }}>
-                    <defs>
-                      <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={C.blueGlow} stopOpacity="0.25"/>
-                        <stop offset="100%" stopColor={C.blueGlow} stopOpacity="0"/>
-                      </linearGradient>
-                    </defs>
-                    <path d="M0,38 C30,32 60,40 90,34 C120,28 150,30 180,20 C210,10 240,14 280,8" fill="none" stroke={C.blueGlow} strokeWidth="2" strokeLinecap="round"/>
-                    <path d="M0,38 C30,32 60,40 90,34 C120,28 150,30 180,20 C210,10 240,14 280,8 L280,50 L0,50 Z" fill="url(#g1)"/>
-                    {[[0,38],[90,34],[180,20],[280,8]].map(([x,y],i) => <circle key={i} cx={x} cy={y} r="3" fill={C.blueGlow}/>)}
-                  </svg>
+                {/* Revenue + Appointments row */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
+                  {[
+                    { label: "Appointments", value: "73", unit: "this week", delta: "+4%", spark: [60, 62, 65, 68, 70, 71, 73] },
+                    { label: "Revenue / Session", value: "£79", unit: "avg", delta: "+0%", spark: [78, 78, 79, 79, 78, 79, 79] },
+                  ].map(({ label, value, unit, delta, spark }) => {
+                    const sparkW = 100, sparkH = 24;
+                    const sMin = Math.min(...spark), sMax = Math.max(...spark), sRange = sMax - sMin || 1;
+                    const sparkPts = spark.map((v, i) => `${(i / (spark.length - 1)) * sparkW},${sparkH - ((v - sMin) / sRange) * (sparkH - 4) - 2}`);
+                    const lastPt = sparkPts[sparkPts.length - 1].split(",");
+                    return (
+                      <div key={label} style={{ padding: "14px 16px 12px", borderRadius: 14, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", boxShadow: "0 2px 20px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden" }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)" }}>{label}</span>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.success, flexShrink: 0, marginTop: 2 }} />
+                        </div>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 4 }}>
+                          <span className="serif" style={{ fontSize: 28, color: "white", lineHeight: 1 }}>{value}</span>
+                          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>{unit}</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, marginLeft: 4, color: C.success }}>↑ {delta}</span>
+                        </div>
+                        <svg width={sparkW} height={sparkH} viewBox={`0 0 ${sparkW} ${sparkH}`} style={{ display: "block", marginTop: 6 }}>
+                          <polygon points={`0,${sparkH} ${sparkPts.join(" ")} ${sparkW},${sparkH}`} fill={C.blueGlow} fillOpacity="0.08" />
+                          <polyline points={sparkPts.join(" ")} fill="none" stroke={C.blueGlow} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <circle cx={lastPt[0]} cy={lastPt[1]} r="3" fill={C.blueGlow} />
+                        </svg>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Retention Chart */}
+                <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 14, padding: "14px 16px 10px", border: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>Patient Retention — 90 days</div>
+                  {(() => {
+                    const data = [62, 64, 67, 72, 76, 80, 83, 86, 88];
+                    const labels = ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9"];
+                    const w = 400, h = 120, pad = { l: 0, r: 10, t: 8, b: 20 };
+                    const plotW = w - pad.l - pad.r, plotH = h - pad.t - pad.b;
+                    const rMin = 55, rMax = 95;
+                    const pts = data.map((v, i) => ({ x: pad.l + (i / (data.length - 1)) * plotW, y: pad.t + plotH - ((v - rMin) / (rMax - rMin)) * plotH }));
+                    const line = pts.map(p => `${p.x},${p.y}`).join(" ");
+                    const area = `${pad.l},${pad.t + plotH} ${line} ${pts[pts.length-1].x},${pad.t + plotH}`;
+                    return (
+                      <svg width="100%" viewBox={`0 0 ${w} ${h}`} style={{ display: "block" }}>
+                        {[60, 70, 80, 90].map(v => {
+                          const y = pad.t + plotH - ((v - rMin) / (rMax - rMin)) * plotH;
+                          return <line key={v} x1={pad.l} x2={w - pad.r} y1={y} y2={y} stroke="rgba(255,255,255,0.07)" strokeWidth="1" />;
+                        })}
+                        <polygon points={area} fill={C.blueGlow} fillOpacity="0.06" />
+                        <polyline points={line} fill="none" stroke={C.blueGlow} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        {pts.map((p, i) => (
+                          <g key={i}>
+                            <circle cx={p.x} cy={p.y} r="4" fill={C.blueGlow} />
+                            <circle cx={p.x} cy={p.y} r="2.5" fill={C.navy} />
+                            <text x={p.x} y={h - 4} textAnchor="middle" fontSize="9" fontFamily="Outfit" fontWeight="500" fill="rgba(255,255,255,0.3)">{labels[i]}</text>
+                          </g>
+                        ))}
+                        <text x={pts[pts.length-1].x + 8} y={pts[pts.length-1].y + 4} fontSize="11" fontFamily="Outfit" fontWeight="700" fill={C.blueGlow}>{data[data.length-1]}%</text>
+                      </svg>
+                    );
+                  })()}
+                </div>
+
+                {/* Footer watermark */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, paddingTop: 14, opacity: 0.3 }}>
+                  <MonolithVariant size={12} />
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.03em" }}>
+                    Stryde<span style={{ color: C.blueGlow }}>OS</span>
+                  </span>
                 </div>
               </div>
 
               {/* Floating badges */}
               <div style={{
                 position: "absolute", top: -14, right: -18,
-                background: "white", borderRadius: 12, padding: "9px 14px",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                display: "flex", alignItems: "center", gap: 8,
+                background: "rgba(255,255,255,0.95)", borderRadius: 50, padding: "7px 14px 7px 10px",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06)",
+                display: "flex", alignItems: "center", gap: 10,
                 fontSize: 11, fontWeight: 600, color: C.success,
-                border: `1px solid ${C.success}20`,
+                whiteSpace: "nowrap",
               }}>
-                <span>📞</span> Call answered automatically
+                <span style={{ fontSize: 13 }}>📞</span> Call answered automatically
               </div>
               <div style={{
                 position: "absolute", bottom: -14, left: -18,
-                background: "white", borderRadius: 12, padding: "9px 14px",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                display: "flex", alignItems: "center", gap: 8,
+                background: "rgba(255,255,255,0.95)", borderRadius: 50, padding: "7px 14px 7px 10px",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06)",
+                display: "flex", alignItems: "center", gap: 10,
                 fontSize: 11, fontWeight: 600, color: C.blue,
-                border: `1px solid ${C.blue}15`,
+                whiteSpace: "nowrap",
               }}>
-                <span>💬</span> Re-booking prompt sent
+                <span style={{ fontSize: 13 }}>💬</span> Re-booking prompt sent
               </div>
             </div>
           </div>
