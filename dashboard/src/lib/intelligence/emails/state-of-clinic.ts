@@ -54,10 +54,10 @@ export function buildStateOfClinicEmail(data: DigestData): string {
             <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${SEVERITY_COLORS[e.severity] ?? "#5C6370"};margin-right:8px;"></span>
             <span style="font-size:14px;font-weight:600;color:#0B2545;">${escHtml(e.title)}</span>
           </div>
-          <p style="margin:0 0 8px 0;font-size:13px;color:#5C6370;line-height:1.5;">${escHtml(e.description)}</p>
-          <div style="padding:10px 12px;border-radius:6px;background:#F2F1EE;">
-            <p style="margin:0;font-size:13px;font-weight:600;color:#0B2545;">→ ${escHtml(e.suggestedAction)}</p>
-          </div>
+          <p style="margin:0 0 8px 0;font-size:13px;color:#5C6370;line-height:1.5;">${escHtml(e.ownerNarrative ?? e.description)}</p>
+          ${!e.ownerNarrative ? `<div style="padding:10px 12px;border-radius:6px;background:#F2F1EE;">
+            <p style="margin:0;font-size:13px;font-weight:600;color:#0B2545;">\u2192 ${escHtml(e.suggestedAction)}</p>
+          </div>` : ""}
           ${e.revenueImpact ? `<p style="margin:8px 0 0 0;font-size:12px;font-weight:600;color:#EF4444;">Estimated impact: ~£${e.revenueImpact.toLocaleString()}</p>` : ""}
         </div>`
     )
@@ -161,8 +161,8 @@ export function buildStateOfClinicText(data: DigestData): string {
     lines.push("TOP ACTIONS THIS WEEK", "");
     for (const e of topEvents) {
       lines.push(`• ${e.title}`);
-      lines.push(`  ${e.description}`);
-      lines.push(`  → ${e.suggestedAction}`);
+      lines.push(`  ${e.ownerNarrative ?? e.description}`);
+      if (!e.ownerNarrative) lines.push(`  → ${e.suggestedAction}`);
       if (e.revenueImpact) lines.push(`  Estimated impact: ~£${e.revenueImpact.toLocaleString()}`);
       lines.push("");
     }

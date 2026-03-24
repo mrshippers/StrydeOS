@@ -71,6 +71,9 @@ export interface InsightEvent {
   resolvedAt?: string | null;
   resolution?: string | null;
   lastNotifiedAt?: string | null;     // Deduplication: don't re-notify within 7 days
+  ownerNarrative?: string | null;     // LLM-generated business-framed narrative for owners
+  clinicianNarrative?: string | null; // LLM-generated clinically-framed narrative for clinicians
+  narrativeGeneratedAt?: string | null;
   metadata: Record<string, unknown>;
 }
 

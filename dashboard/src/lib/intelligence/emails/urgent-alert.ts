@@ -29,14 +29,15 @@ export function buildUrgentAlertEmail(event: InsightEvent, clinicName: string): 
       <!-- Severity indicator -->
       <div style="margin-bottom:20px;padding:16px;border-radius:8px;border-left:4px solid ${sevColor};background:#FAFAFA;">
         <p style="margin:0 0 8px 0;font-size:16px;font-weight:700;color:#0B2545;line-height:1.4;">${escHtml(event.title)}</p>
-        <p style="margin:0;font-size:13px;color:#5C6370;line-height:1.5;">${escHtml(event.description)}</p>
+        <p style="margin:0;font-size:13px;color:#5C6370;line-height:1.5;">${escHtml(event.ownerNarrative ?? event.description)}</p>
       </div>
 
-      <!-- Suggested action -->
+      ${!event.ownerNarrative ? `
+      <!-- Suggested action (fallback when no AI narrative) -->
       <div style="margin-bottom:20px;padding:14px 16px;border-radius:8px;background:#F2F1EE;">
         <p style="margin:0 0 4px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#5C6370;">WHAT TO DO</p>
         <p style="margin:0;font-size:14px;font-weight:600;color:#0B2545;">${escHtml(event.suggestedAction)}</p>
-      </div>
+      </div>` : ""}
 
       ${event.revenueImpact ? `
       <p style="margin:0 0 20px 0;font-size:13px;font-weight:600;color:#EF4444;">Estimated revenue impact: ~£${event.revenueImpact.toLocaleString()}</p>
@@ -68,9 +69,9 @@ export function buildUrgentAlertText(event: InsightEvent, clinicName: string): s
     "",
     event.title,
     "",
-    event.description,
+    event.ownerNarrative ?? event.description,
     "",
-    `WHAT TO DO: ${event.suggestedAction}`,
+    ...(event.ownerNarrative ? [] : [`WHAT TO DO: ${event.suggestedAction}`]),
   ];
 
   if (event.revenueImpact) {

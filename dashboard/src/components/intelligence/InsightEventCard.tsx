@@ -9,6 +9,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { brand } from "@/lib/brand";
+import { useAuth } from "@/hooks/useAuth";
 import type { InsightEvent, InsightSeverity } from "@/types/insight-events";
 
 const SEVERITY_CONFIG: Record<
@@ -45,11 +46,19 @@ export default function InsightEventCard({
   onMarkRead,
   compact = false,
 }: InsightEventCardProps) {
+  const { user } = useAuth();
   const sev = SEVERITY_CONFIG[event.severity];
   const SevIcon = sev.icon;
   const isUnread = !event.readAt;
   const isResolved = !!event.resolvedAt;
   const hasPulseAction = !!event.pulseActionId;
+
+  // Role-based narrative: owners see business framing, clinicians see clinical framing
+  const isOwnerOrAdmin = user?.role === "owner" || user?.role === "admin" || user?.role === "superadmin";
+  const narrative = isOwnerOrAdmin
+    ? event.ownerNarrative
+    : event.clinicianNarrative;
+  const hasNarrative = !!narrative;
 
   return (
     <div
@@ -94,15 +103,15 @@ export default function InsightEventCard({
             </span>
           </div>
 
-          {/* Description */}
+          {/* Description — prefer AI narrative over static text */}
           {!compact && (
             <p className="text-[12px] text-muted mt-1 leading-relaxed">
-              {event.description}
+              {hasNarrative ? narrative : event.description}
             </p>
           )}
 
-          {/* Suggested action */}
-          {!compact && (
+          {/* Suggested action — only show if no narrative (narrative includes the action) */}
+          {!compact && !hasNarrative && (
             <div className="mt-2 px-3 py-2 rounded-lg bg-cloud-light border border-border/50">
               <p className="text-[12px] font-semibold text-navy">
                 → {event.suggestedAction}

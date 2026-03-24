@@ -7,6 +7,7 @@ import {
 } from "@/lib/auth-guard";
 import { detectInsightEvents } from "@/lib/intelligence/detect-insight-events";
 import { sendUrgentAlerts } from "@/lib/intelligence/notify-owner";
+import { enrichEventsWithNarratives } from "@/lib/intelligence/enrich-narratives";
 import { consumeInsightEvents } from "@/lib/pulse/insight-event-consumer";
 import { trackReengagement } from "@/lib/pulse/track-reengagement";
 import { withRequestLog } from "@/lib/request-logger";
@@ -78,6 +79,9 @@ async function handler(request: NextRequest) {
       id: d.id,
       ...(d.data() as Omit<InsightEvent, "id">),
     }));
+
+    // 2b. Enrich events with AI coaching narratives (non-blocking)
+    await enrichEventsWithNarratives(db, clinicId, newEvents);
 
     // 3. Pulse consumer for patient-actionable events
     const pulse = await consumeInsightEvents(db, clinicId, newEvents);

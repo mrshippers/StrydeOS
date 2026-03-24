@@ -21,12 +21,14 @@
     "test:e2e:full": "npm run build && npx playwright test"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "^3.0.80",
     "@elevenlabs/client": "^0.15.1",
     "@opentelemetry/api": "^1.9.0",
     "@sentry/nextjs": "^10.43.0",
     "@tailwindcss/postcss": "^4",
     "@vercel/analytics": "^1.4.1",
     "@vercel/speed-insights": "^2.0.0",
+    "ai": "^6.0.138",
     "firebase": "^12.9.0",
     "firebase-admin": "^13.6.1",
     "lucide-react": "^0.474.0",

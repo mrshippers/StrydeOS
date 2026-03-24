@@ -12,6 +12,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { brand } from "@/lib/brand";
+import { useAuth } from "@/hooks/useAuth";
 import { useInsightEvents } from "@/hooks/useInsightEvents";
 import type { InsightSeverity } from "@/types/insight-events";
 
@@ -33,6 +34,7 @@ const SEVERITY_ICON: Record<InsightSeverity, typeof AlertCircle> = {
  * Sits above the stat cards grid.
  */
 export default function InsightBanner() {
+  const { user } = useAuth();
   const { topUnread, unreadCount, dismiss, markAsRead } = useInsightEvents();
   const [localDismissed, setLocalDismissed] = useState<Set<string>>(new Set());
 
@@ -76,15 +78,32 @@ export default function InsightBanner() {
                 </div>
 
                 <div className="min-w-0">
-                  {/* Title */}
-                  <p className="text-[14px] font-semibold text-navy leading-snug">
-                    {topUnread.title}
-                  </p>
+                  {/* Title — prefer AI narrative over static text */}
+                  {(() => {
+                    const isOwnerOrAdmin = user?.role === "owner" || user?.role === "admin" || user?.role === "superadmin";
+                    const narrative = isOwnerOrAdmin
+                      ? topUnread.ownerNarrative
+                      : topUnread.clinicianNarrative;
 
-                  {/* Suggested action */}
-                  <p className="text-[12px] text-muted mt-1">
-                    → {topUnread.suggestedAction}
-                  </p>
+                    if (narrative) {
+                      return (
+                        <p className="text-[13px] text-navy leading-relaxed">
+                          {narrative}
+                        </p>
+                      );
+                    }
+
+                    return (
+                      <>
+                        <p className="text-[14px] font-semibold text-navy leading-snug">
+                          {topUnread.title}
+                        </p>
+                        <p className="text-[12px] text-muted mt-1">
+                          → {topUnread.suggestedAction}
+                        </p>
+                      </>
+                    );
+                  })()}
 
                   {/* Revenue impact + link */}
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
