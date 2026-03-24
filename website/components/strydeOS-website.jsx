@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
+import AvaConversationCard from "./AvaConversationCard";
 
 const C = {
   // Backgrounds
@@ -946,7 +947,7 @@ const Hero = ({ darkMode }) => {
       }} />
 
       <div style={{ maxWidth: 1160, margin: "0 auto", width: "100%", position: "relative", zIndex: 2 }}>
-        <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+        <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "0.9fr 1.1fr", gap: 80, alignItems: "start" }}>
 
           {/* Left */}
           <div style={{ animation: "fadeUp 0.8s ease forwards" }}>
@@ -989,9 +990,9 @@ const Hero = ({ darkMode }) => {
             </div>
           </div>
 
-          {/* Right — Compact dashboard showcase */}
+          {/* Right — Ava conversation card showcase */}
           <div style={{ animation: "fadeUp 0.8s 0.2s ease both" }}>
-            <HeroDashboard />
+            <AvaConversationCard />
           </div>
         </div>
 
