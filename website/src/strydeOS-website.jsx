@@ -149,14 +149,30 @@ const RadialGlow = ({ color = C.blue, size = 600, opacity = 0.12, style = {} }) 
   }} />
 );
 
-const AnimIn = ({ delay = 0, children }) => {
+const AnimIn = ({ delay = 0, children, threshold = 0.15 }) => {
   const [vis, setVis] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setVis(true), delay); return () => clearTimeout(t); }, [delay]);
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => setVis(true), delay);
+          obs.disconnect();
+        }
+      },
+      { threshold }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [delay, threshold]);
   return (
-    <div style={{
+    <div ref={ref} style={{
       opacity: vis ? 1 : 0,
-      transform: vis ? "translateY(0)" : "translateY(10px)",
-      transition: "all 0.55s cubic-bezier(0.16,1,0.3,1)",
+      transform: vis ? "translateY(0)" : "translateY(18px)",
+      transition: "opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)",
+      transitionDelay: vis ? `${delay}ms` : "0ms",
     }}>
       {children}
     </div>
@@ -1217,7 +1233,7 @@ const Integrations = ({ darkMode }) => {
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: 52 }}>
         <div className="section-chip">Works With Your Stack</div>
-        <h2 className="serif" style={{ fontSize: 40, color: head, fontWeight: 400, marginBottom: 16 }}>
+        <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginBottom: 16 }}>
           Our pitch isn't "switch to StrydeOS."
         </h2>
         <p style={{ fontSize: 16, color: muted, maxWidth: 560, margin: "0 auto", lineHeight: 1.75 }}>
@@ -1912,7 +1928,7 @@ const ROICalc = ({ darkMode }) => {
       <div style={{ maxWidth: 920, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
           <div className="section-chip">ROI Calculator</div>
-          <h2 className="serif" style={{ fontSize: 42, color: head, fontWeight: 400 }}>
+          <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
             What's inefficiency actually costing you?
           </h2>
           <p style={{ color: muted, marginTop: 14, fontSize: 15 }}>
@@ -2023,7 +2039,7 @@ const Pricing = ({ darkMode }) => {
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: 32 }}>
         <div className="section-chip">Pricing</div>
-        <h2 className="serif" style={{ fontSize: 42, color: head, fontWeight: 400 }}>
+        <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
           Modular by design. Your clinic, your stack.
         </h2>
         <p style={{ color: muted, marginTop: 14, fontSize: 15, maxWidth: 560, margin: "14px auto 0" }}>
@@ -2217,7 +2233,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
         <div className="whyus-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "end", marginBottom: 80 }}>
           <div>
             <div className="section-chip">About</div>
-            <h2 className="serif" style={{ fontSize: 46, color: head, fontWeight: 400, lineHeight: 1.1, marginTop: 16 }}>
+            <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginTop: 16 }}>
               Your practice has software.
               <br />
               <span style={{ fontStyle: "italic", color: italic }}>It doesn't have a system.</span>
