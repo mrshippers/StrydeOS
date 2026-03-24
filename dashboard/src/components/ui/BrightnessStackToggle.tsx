@@ -53,7 +53,7 @@ export default function BrightnessStackToggle({
   const widths = isDark ? darkWidths : lightWidths;
 
   const t = "0.4s cubic-bezier(0.4, 0, 0.2, 1)";
-  const fg = "currentColor";
+  const fg = "#4B8BF5";
 
   return (
     <button
