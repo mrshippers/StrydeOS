@@ -297,8 +297,16 @@ export default function AvaPage() {
         </section>
 
         {/* ── PRICING ── */}
-        <section style={{ padding: "0 24px 100px", maxWidth: 1200, margin: "0 auto" }}>
-          <ModulePricingBanner module="ava" onCompare={() => setShowCompare(true)} />
+        <section style={{
+          padding: "80px 24px 100px",
+          background: darkMode
+            ? `linear-gradient(180deg, ${C.navy} 0%, ${C.navyMid} 40%, ${C.navy} 100%)`
+            : `linear-gradient(180deg, ${C.cloudDancer} 0%, #E8E5DF 30%, #DDD9D2 50%, #E8E5DF 70%, ${C.cloudDancer} 100%)`,
+          transition: "background 0.3s",
+        }}>
+          <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+            <ModulePricingBanner module="ava" onCompare={() => setShowCompare(true)} />
+          </div>
         </section>
 
         {/* ── COMPARE PLANS MODAL ── */}

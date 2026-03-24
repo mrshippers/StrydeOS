@@ -197,8 +197,16 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
         </section>
 
         {/* Pricing banner */}
-        <section style={{ padding: "0 24px 100px", maxWidth: 900, margin: "0 auto" }}>
-          <ModulePricingBanner module={id} onCompare={() => setShowCompare(true)} />
+        <section style={{
+          padding: "80px 24px 100px",
+          background: darkMode
+            ? `linear-gradient(180deg, ${C.navy} 0%, ${C.navyMid} 40%, ${C.navy} 100%)`
+            : `linear-gradient(180deg, ${C.cloudDancer} 0%, #E8E5DF 30%, #DDD9D2 50%, #E8E5DF 70%, ${C.cloudDancer} 100%)`,
+          transition: "background 0.3s",
+        }}>
+          <div style={{ maxWidth: 900, margin: "0 auto" }}>
+            <ModulePricingBanner module={id} onCompare={() => setShowCompare(true)} />
+          </div>
         </section>
 
         {/* Compare plans modal */}
