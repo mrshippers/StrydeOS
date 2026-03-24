@@ -157,6 +157,7 @@ const globalStyles = `
   body { transition: background 0.3s ease, color 0.2s ease; }
 
   @media (max-width: 768px) {
+    /* Grid collapses */
     .hero-grid        { grid-template-columns: 1fr !important; }
     .product-grid     { grid-template-columns: 1fr !important; }
     .pricing-grid     { grid-template-columns: 1fr !important; }
@@ -167,7 +168,28 @@ const globalStyles = `
     .wavecard-grid    { grid-template-columns: 1fr 1fr !important; }
     .footer-top       { flex-direction: column !important; gap: 32px !important; }
     .nav-links        { display: none !important; }
+    .nav-burger       { display: flex !important; }
     .arch-grid        { grid-template-columns: 1fr !important; }
+
+    /* Heading scale-down */
+    .hero-h1          { font-size: clamp(32px, 8vw, 60px) !important; }
+    .section-h2       { font-size: clamp(26px, 6vw, 44px) !important; }
+
+    /* Section padding reduction — all sections get tighter mobile spacing */
+    section            { padding-left: 16px !important; padding-right: 16px !important; }
+    .hero-section      { padding-top: 100px !important; padding-bottom: 48px !important; }
+
+    /* Architecture diagram: hide flow, show editorial only */
+    .arch-flow        { display: none !important; }
+    .arch-editorial   { border-right: none !important; }
+
+    /* Pricing tier toggle: compact on mobile */
+    .tier-toggle button { padding: 8px 16px 6px !important; }
+
+    /* Footer link columns: 2-col grid on mobile */
+    .footer-links     { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 24px !important; }
+    .footer-bottom    { flex-direction: column !important; gap: 12px !important; text-align: center !important; }
+    .footer-compliance { flex-wrap: wrap !important; justify-content: center !important; }
   }
 `;
 
@@ -318,6 +340,7 @@ const MonolithVariant = ({ size = 48, accentFrom, accentTo, glowColor }) => {
 const Nav = ({ darkMode, setDarkMode }) => {
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const dropdownTimeout = useRef(null);
 
   useEffect(() => {
@@ -510,6 +533,49 @@ const Nav = ({ darkMode, setDarkMode }) => {
           <a href="https://portal.strydeos.com/login" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }}>
             Log In
           </a>
+          {/* Hamburger — hidden on desktop, shown on mobile */}
+          <button
+            className="nav-burger"
+            onClick={() => setMobileOpen(o => !o)}
+            aria-label="Toggle menu"
+            style={{
+              display: "none", background: "none", border: "none",
+              cursor: "pointer", padding: 6, color: linkColor,
+              alignItems: "center", justifyContent: "center",
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              {mobileOpen
+                ? <><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></>
+                : <><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></>
+              }
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile menu panel */}
+      <div style={{
+        maxHeight: mobileOpen ? 400 : 0,
+        overflow: "hidden",
+        transition: "max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+        background: darkMode ? "rgba(11,37,69,0.98)" : "rgba(242,241,238,0.98)",
+        borderTop: mobileOpen ? `1px solid ${darkMode ? "rgba(255,255,255,0.06)" : C.border}` : "none",
+      }}>
+        <div style={{ padding: "12px 24px 20px", display: "flex", flexDirection: "column", gap: 4 }}>
+          {[["Products","#products"],["How it works","#how-it-works"],["Pricing","#pricing"],["About","#about"]].map(([label, href]) => (
+            <a key={label} href={href} onClick={() => setMobileOpen(false)} style={{
+              color: linkColor, fontSize: 15, fontWeight: 500,
+              textDecoration: "none", padding: "10px 0",
+              borderBottom: `1px solid ${darkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}`,
+            }}>{label}</a>
+          ))}
+          <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+            <a href="https://calendly.com/hello-strydeos/30min" target="_blank" rel="noopener noreferrer"
+              className="btn-ghost" style={{ flex: 1, justifyContent: "center", padding: "10px 0", fontSize: 13 }}>Book a call</a>
+            <a href="https://portal.strydeos.com/login"
+              className="btn-primary" style={{ flex: 1, justifyContent: "center", padding: "10px 0", fontSize: 13 }}>Log in</a>
+          </div>
         </div>
       </div>
     </nav>
@@ -933,7 +999,7 @@ const Hero = ({ darkMode }) => {
     : `linear-gradient(160deg, ${C.cloudLight} 0%, ${C.cloudDancer} 50%, ${C.cloudDark} 100%)`;
 
   return (
-    <section style={{
+    <section className="hero-section" style={{
       position: "relative", overflow: "hidden",
       minHeight: "100vh",
       display: "flex", flexDirection: "column", justifyContent: "center",
@@ -959,10 +1025,10 @@ const Hero = ({ darkMode }) => {
               Now in early access
             </div>
 
-            <h1 className="serif" style={{ fontSize: 60, lineHeight: 1.0, color: head, marginBottom: 10, fontWeight: 400, letterSpacing: "-0.01em" }}>
+            <h1 className="serif hero-h1" style={{ fontSize: 60, lineHeight: 1.0, color: head, marginBottom: 10, fontWeight: 400, letterSpacing: "-0.01em" }}>
               The Clinic OS
             </h1>
-            <h1 className="serif" style={{ fontSize: 60, lineHeight: 1.0, color: head, marginBottom: 28, fontWeight: 400, letterSpacing: "-0.01em" }}>
+            <h1 className="serif hero-h1" style={{ fontSize: 60, lineHeight: 1.0, color: head, marginBottom: 28, fontWeight: 400, letterSpacing: "-0.01em" }}>
               for <span style={{ fontStyle: "italic", color: italic }}>private practice.</span>
             </h1>
 
@@ -1109,7 +1175,7 @@ const HolisticSection = ({ darkMode }) => {
         <AnimIn>
         <div>
           <div className="section-chip">One Operating System</div>
-          <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginBottom: 24 }}>
+          <h2 className="serif section-h2" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginBottom: 24 }}>
             The gap between a good clinic and a great one isn't clinical.{" "}
             <span style={{ fontStyle: "italic", color: italic }}>It's operational.</span>
           </h2>
@@ -1341,7 +1407,7 @@ const Integrations = ({ darkMode }) => {
       <AnimIn>
       <div style={{ textAlign: "center", marginBottom: 52 }}>
         <div className="section-chip">Works With Your Stack</div>
-        <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginBottom: 16 }}>
+        <h2 className="serif section-h2" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginBottom: 16 }}>
           Our pitch isn't "switch to StrydeOS."
         </h2>
         <p style={{ fontSize: 16, color: muted, maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>
@@ -1370,7 +1436,7 @@ const Integrations = ({ darkMode }) => {
         }}>
 
           {/* LEFT — Editorial */}
-          <div style={{
+          <div className="arch-editorial" style={{
             padding: "48px 44px 44px",
             borderRight: "1px solid rgba(255,255,255,0.05)",
             display: "flex", flexDirection: "column", justifyContent: "space-between",
@@ -1419,7 +1485,7 @@ const Integrations = ({ darkMode }) => {
           </div>
 
           {/* RIGHT — Flow diagram */}
-          <div style={{
+          <div className="arch-flow" style={{
             padding: "40px 44px",
             display: "flex", flexDirection: "column", justifyContent: "center",
           }}>
@@ -1986,7 +2052,7 @@ const Products = ({ darkMode }) => {
         <AnimIn>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
           <div className="section-chip">Products</div>
-          <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
+          <h2 className="serif section-h2" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
             Three products. One platform.
           </h2>
           <p style={{ color: muted, fontSize: 16, marginTop: 14, maxWidth: 480, margin: "14px auto 0", lineHeight: 1.7 }}>
@@ -2139,7 +2205,7 @@ const Results = () => {
         <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 50, background: `${C.blue}25`, border: `1px solid ${C.blue}40`, color: C.blueGlow, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>
           Results
         </div>
-        <h2 className="serif" style={{ fontSize: 44, color: "white", fontWeight: 400, lineHeight: 1.1 }}>
+        <h2 className="serif section-h2" style={{ fontSize: 44, color: "white", fontWeight: 400, lineHeight: 1.1 }}>
           Measured improvements that are more than theory.
         </h2>
       </div>
@@ -2234,7 +2300,7 @@ const ROICalc = ({ darkMode }) => {
         <AnimIn>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
           <div className="section-chip">ROI Calculator</div>
-          <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
+          <h2 className="serif section-h2" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
             What's inefficiency actually costing you?
           </h2>
           <p style={{ color: muted, marginTop: 14, fontSize: 16, lineHeight: 1.7 }}>
@@ -2371,7 +2437,7 @@ const PricingCheck = ({ color }) => (
 const PricingTierToggle = ({ tier, setTier, darkMode }) => {
   const tierIndex = TIER_OPTIONS.findIndex(t => t.id === tier);
   return (
-    <div style={{
+    <div className="tier-toggle" style={{
       display: "inline-flex", alignItems: "stretch", position: "relative",
       padding: 4, borderRadius: 16,
       backgroundColor: darkMode ? "rgba(0,0,0,0.25)" : C.navy,
@@ -2610,7 +2676,7 @@ const Pricing = ({ darkMode }) => {
       <AnimIn>
       <div style={{ textAlign: "center", marginBottom: 40 }}>
         <div className="section-chip">Pricing</div>
-        <h2 className="serif" style={{ fontSize: 42, color: head, fontWeight: 400, lineHeight: 1.12, marginBottom: 14 }}>
+        <h2 className="serif section-h2" style={{ fontSize: 42, color: head, fontWeight: 400, lineHeight: 1.12, marginBottom: 14 }}>
           Modular by design.<br/>Your clinic, your stack.
         </h2>
         <p style={{ fontSize: 15, color: muted, maxWidth: 480, margin: "0 auto", lineHeight: 1.65 }}>
@@ -2731,7 +2797,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
         <div className="whyus-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "end", marginBottom: 80 }}>
           <div>
             <div className="section-chip">About</div>
-            <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginTop: 16 }}>
+            <h2 className="serif section-h2" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginTop: 16 }}>
               Your practice has software.
               <br />
               <span style={{ fontStyle: "italic", color: italic }}>It doesn't have a system.</span>
@@ -2936,7 +3002,7 @@ const FAQ = ({ darkMode }) => {
         <AnimIn>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
           <div className="section-chip">FAQ</div>
-          <h2 className="serif" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
+          <h2 className="serif section-h2" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
             Frequently asked questions
           </h2>
           <p style={{ fontSize: 16, color: muted, marginTop: 14, lineHeight: 1.7 }}>
@@ -3038,7 +3104,7 @@ const Changelog = ({ darkMode }) => {
             color: C.blueGlow, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em",
             textTransform: "uppercase", marginBottom: 16,
           }}>Changelog</div>
-          <h2 className="serif" style={{ fontSize: 44, color: "white", fontWeight: 400, lineHeight: 1.1 }}>
+          <h2 className="serif section-h2" style={{ fontSize: 44, color: "white", fontWeight: 400, lineHeight: 1.1 }}>
             What we've shipped
           </h2>
           <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginTop: 12 }}>
@@ -3104,7 +3170,7 @@ const EarlyAccess = () => (
         Early Access
       </div>
 
-      <h2 className="serif" style={{ fontSize: 48, color: "white", fontWeight: 400, lineHeight: 1.05, marginBottom: 20 }}>
+      <h2 className="serif section-h2" style={{ fontSize: 48, color: "white", fontWeight: 400, lineHeight: 1.05, marginBottom: 20 }}>
         See what your clinic is leaving on the table.
       </h2>
 
@@ -3160,7 +3226,7 @@ const Footer = () => (
             The Clinic OS for private practice.
           </p>
         </div>
-        <div style={{ display: "flex", gap: 52 }}>
+        <div className="footer-links" style={{ display: "flex", gap: 52 }}>
           {[
             { h: "Products", links: [
               { label: "Ava", href: "/ava" },
@@ -3199,7 +3265,7 @@ const Footer = () => (
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 24, padding: "16px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="footer-compliance" style={{ display: "flex", gap: 24, padding: "16px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
         {["GDPR · HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Australian Privacy Act", "Audit Logged"].map((badge) => (
           <div key={badge} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(255,255,255,0.25)", fontWeight: 500 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -3210,7 +3276,7 @@ const Footer = () => (
         ))}
       </div>
 
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="footer-bottom" style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 12 }}>© 2026 StrydeOS Ltd. All rights reserved.</div>
         <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 12 }}>
           <a href="mailto:hello@strydeos.com" style={{ color: "rgba(255,255,255,0.18)", textDecoration: "none" }}>hello@strydeos.com</a>

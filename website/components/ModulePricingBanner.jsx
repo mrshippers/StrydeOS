@@ -3,9 +3,16 @@
 import { useState, useEffect } from "react";
 
 const C = {
-  navy: "#0B2545", navyMid: "#132D5E",
+  navy: "#0B2545", navyMid: "#132D5E", navyLight: "#1A3A6E",
   blue: "#1C54F2", blueBright: "#2E6BFF", blueGlow: "#4B8BF5",
   teal: "#0891B2",
+};
+
+const hexToRgba = (hex, alpha) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
 };
 
 const MODULE_META = {
@@ -60,12 +67,11 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
 
   return (
     <>
-      <style>{`@keyframes driftGlow { 0%,100%{transform:translate(0,0) scale(1);opacity:1} 50%{transform:translate(15px,-10px) scale(1.08);opacity:0.7} }`}</style>
       <div style={{ fontFamily: "'Outfit', sans-serif", width: "100%", maxWidth: 560, margin: "0 auto" }}>
         <div style={{
           position: "relative", overflow: "hidden", borderRadius: 20,
           padding: "30px 32px 28px",
-          background: `radial-gradient(ellipse 80% 60% at 50% 30%, #1A3A6E40, ${C.navy} 70%)`,
+          background: `radial-gradient(ellipse 80% 60% at 50% 30%, ${hexToRgba(C.navyLight, 0.25)}, ${C.navy} 70%)`,
           border: "1px solid rgba(255,255,255,0.08)",
           boxShadow: "0 8px 40px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)",
           textAlign: "center",
@@ -74,8 +80,7 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
           transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
         }}>
           {/* Ambient glows */}
-          <div style={{ position: "absolute", top: -100, left: "50%", marginLeft: -200, width: 400, height: 400, borderRadius: "50%", background: `radial-gradient(circle,${m.color}06,transparent 70%)`, pointerEvents: "none", animation: "driftGlow 8s ease-in-out infinite" }}/>
-          <div style={{ position: "absolute", bottom: -80, right: -60, width: 300, height: 300, borderRadius: "50%", background: `radial-gradient(circle,${m.color}04,transparent 70%)`, pointerEvents: "none", animation: "driftGlow 8s ease-in-out 2s infinite reverse" }}/>
+          <div style={{ position: "absolute", inset: 0, background: `radial-gradient(circle, ${hexToRgba(m.color, 0.045)}, transparent 65%)`, pointerEvents: "none" }}/>
           {/* Glass highlight */}
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, background: "linear-gradient(180deg,rgba(255,255,255,0.015) 0%,transparent 100%)", borderRadius: "20px 20px 0 0", pointerEvents: "none" }}/>
 
@@ -93,7 +98,7 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
               left: `calc(${tierIndex * (100 / TIERS.length)}% + 2px)`,
               borderRadius: 12,
               background: `linear-gradient(135deg,${m.bright},${m.color})`,
-              boxShadow: `0 2px 10px ${m.color}30,0 0 0 1px ${m.bright}20,inset 0 1px 0 rgba(255,255,255,0.15)`,
+              boxShadow: `0 2px 10px ${hexToRgba(m.color, 0.19)},0 0 0 1px ${hexToRgba(m.bright, 0.12)},inset 0 1px 0 rgba(255,255,255,0.15)`,
               transition: "left 0.4s cubic-bezier(0.16,1,0.3,1)",
               zIndex: 1,
             }}/>
@@ -128,8 +133,8 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
               style={{
                 display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 30px", borderRadius: 50,
                 fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 700, color: "white", textDecoration: "none", cursor: "pointer",
-                background: primaryHover ? `linear-gradient(135deg,${m.bright},${m.color})` : `linear-gradient(135deg,${m.color},${m.color}E6)`,
-                boxShadow: primaryHover ? `0 4px 16px ${m.color}28,0 0 0 1px ${m.bright}18,inset 0 1px 0 rgba(255,255,255,0.15)` : `0 2px 8px ${m.color}18,inset 0 1px 0 rgba(255,255,255,0.08)`,
+                background: primaryHover ? `linear-gradient(135deg,${m.bright},${m.color})` : `linear-gradient(135deg,${m.color},${hexToRgba(m.color, 0.9)})`,
+                boxShadow: primaryHover ? `0 4px 16px ${hexToRgba(m.color, 0.16)},0 0 0 1px ${hexToRgba(m.bright, 0.09)},inset 0 1px 0 rgba(255,255,255,0.15)` : `0 2px 8px ${hexToRgba(m.color, 0.09)},inset 0 1px 0 rgba(255,255,255,0.08)`,
                 transform: primaryHover ? "translateY(-1px)" : "translateY(0)", transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
               }}
             >Start free trial <span style={{ fontSize: 16 }}>{'→'}</span></a>
@@ -139,8 +144,8 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
                 display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 30px", borderRadius: 50,
                 fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 700, textDecoration: "none", cursor: "pointer",
                 color: secondaryHover ? "white" : "rgba(255,255,255,0.7)",
-                background: secondaryHover ? `linear-gradient(135deg,${m.bright}20,${m.color}15)` : "transparent",
-                border: secondaryHover ? `1.5px solid ${m.bright}50` : "1.5px solid rgba(255,255,255,0.15)",
+                background: secondaryHover ? `linear-gradient(135deg,${hexToRgba(m.bright, 0.12)},${hexToRgba(m.color, 0.08)})` : "transparent",
+                border: secondaryHover ? `1.5px solid ${hexToRgba(m.bright, 0.31)}` : "1.5px solid rgba(255,255,255,0.15)",
                 transform: secondaryHover ? "translateY(-1px)" : "translateY(0)", transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
               }}
             >Buy now <span style={{ fontSize: 16 }}>{'→'}</span></a>
