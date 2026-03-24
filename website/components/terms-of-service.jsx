@@ -1,3 +1,5 @@
+'use client';
+
 import React from "react";
 import { CookieBanner } from "./strydeOS-website.jsx";
 
@@ -16,48 +18,48 @@ const C = {
 const pageStyles = `
   @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap");
 
-  .privacy-page * { box-sizing: border-box; }
-  .privacy-page {
+  .tos-page * { box-sizing: border-box; }
+  .tos-page {
     min-height: 100vh;
     background: linear-gradient(180deg, ${C.cream} 0%, ${C.cloudLight} 100%);
     color: ${C.ink};
     font-family: "Outfit", sans-serif;
   }
-  .privacy-page .serif { font-family: "DM Serif Display", serif; font-weight: 400; }
-  .privacy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .tos-page .serif { font-family: "DM Serif Display", serif; font-weight: 400; }
+  .tos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
   @media (max-width: 900px) {
-    .privacy-grid { grid-template-columns: 1fr; }
+    .tos-grid { grid-template-columns: 1fr; }
   }
 `;
 
 const MonolithMark = ({ size = 34 }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
     <defs>
-      <linearGradient id="pp-c" x1="0.1" y1="0" x2="0.85" y2="1">
+      <linearGradient id="tos-c" x1="0.1" y1="0" x2="0.85" y2="1">
         <stop offset="0%" stopColor="#2E6BFF" stopOpacity="0.58" />
         <stop offset="100%" stopColor="#091D3E" stopOpacity="0.72" />
       </linearGradient>
-      <radialGradient id="pp-r" cx="28%" cy="24%" r="60%">
+      <radialGradient id="tos-r" cx="28%" cy="24%" r="60%">
         <stop offset="0%" stopColor="#6AABFF" stopOpacity="0.42" />
         <stop offset="100%" stopColor="#1C54F2" stopOpacity="0" />
       </radialGradient>
-      <linearGradient id="pp-t" x1="0.05" y1="1" x2="0.35" y2="0">
+      <linearGradient id="tos-t" x1="0.05" y1="1" x2="0.35" y2="0">
         <stop offset="0%" stopColor="white" stopOpacity="0.55" />
         <stop offset="100%" stopColor="white" stopOpacity="0.97" />
       </linearGradient>
-      <clipPath id="pp-p">
+      <clipPath id="tos-p">
         <rect x="35" y="20" width="22" height="60" rx="5" />
       </clipPath>
-      <clipPath id="pp-a">
+      <clipPath id="tos-a">
         <polygon points="35,52 57,40 57,20 35,20" />
       </clipPath>
     </defs>
-    <rect width="100" height="100" rx="24" fill="url(#pp-c)" />
-    <rect width="100" height="100" rx="24" fill="url(#pp-r)" />
+    <rect width="100" height="100" rx="24" fill="url(#tos-c)" />
+    <rect width="100" height="100" rx="24" fill="url(#tos-r)" />
     <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07" />
     <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.1" />
-    <g clipPath="url(#pp-p)">
+    <g clipPath="url(#tos-p)">
       <polyline
         points="32,80 46,72 60,80"
         stroke="white"
@@ -86,50 +88,62 @@ const MonolithMark = ({ size = 34 }) => (
         fill="none"
       />
     </g>
-    <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#pp-t)" clipPath="url(#pp-a)" />
+    <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#tos-t)" clipPath="url(#tos-a)" />
     <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round" />
   </svg>
 );
 
-const PrincipleCard = ({ title, body }) => (
+const TermCard = ({ title, body }) => (
   <article
     style={{
       background: "white",
       border: `1px solid ${C.border}`,
       borderRadius: 16,
-      padding: "20px 20px 18px",
+      padding: "22px 22px 20px",
       boxShadow: "0 8px 24px rgba(11,37,69,0.05)",
     }}
   >
-    <h2 style={{ color: C.ink, fontSize: 16, fontWeight: 600, marginBottom: 8 }}>{title}</h2>
+    <h2 style={{ color: C.ink, fontSize: 17, fontWeight: 600, marginBottom: 8 }}>{title}</h2>
     <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.8 }}>{body}</p>
   </article>
 );
 
-const principles = [
+const terms = [
   {
-    title: "Purpose limitation",
-    body: "We process personal data only for service delivery, analytics to improve care operations, and platform security. We do not collect data that is unnecessary for these purposes.",
+    title: "Agreement",
+    body: "By subscribing to or using StrydeOS, you agree to these Terms and to our SaaS Subscription Agreement. The Service is a cloud-based clinical operating system for physiotherapy and allied health practices, provided by StrydeOS Ltd.",
   },
   {
-    title: "Data minimization",
-    body: "StrydeOS is designed to collect the minimum dataset needed to operate clinical performance workflows and reporting. Access to sensitive fields is role-restricted.",
+    title: "Billing",
+    body: "Subscriptions are billed monthly or annually in advance via Stripe. We may change pricing with at least 30 days’ notice; you may cancel before the new price applies. Failed payments get a 7-day grace period before access may be suspended. Monthly fees are non-refundable; annual subscriptions may be refunded pro-rata within the first 30 days if you are dissatisfied.",
   },
   {
-    title: "Security safeguards",
-    body: "Personal data is protected by encrypted transport, managed storage encryption, role-based controls, and audit logging to support accountability and incident investigation.",
+    title: "Your obligations",
+    body: "You must provide accurate information, keep login details secure, and ensure anyone you authorise to use the Service complies with these terms and the law. Use of the Service must be lawful and for its intended clinical and business purpose. You may not reverse-engineer, resell, or sublicense the Service.",
   },
   {
-    title: "Retention and rights",
-    body: "Data retention and deletion are governed by policy and contractual requirements. Individuals can request access, correction, portability, or deletion through our contact channel.",
+    title: "Data and privacy",
+    body: "We process your data in line with UK GDPR and our Data Processing Addendum. You remain the data controller; we act as processor. Data is encrypted in transit and at rest, and we use sub-processors only under contract. On termination you may request an export; we delete your data within 30 days unless we must retain it by law.",
+  },
+  {
+    title: "AI-assisted features",
+    body: "Some features use AI (e.g. voice receptionist, triage). AI output is assistive only and does not replace professional judgement. You retain full clinical responsibility for decisions made using the Service.",
+  },
+  {
+    title: "Liability and term",
+    body: "Our total liability is capped at the fees you paid in the 12 months before the claim. We do not exclude liability for death or personal injury caused by negligence, or where English law does not allow exclusion. The agreement runs for your subscription term and renews unless either party gives at least 14 days’ notice. Either party may terminate for material breach if not remedied within 14 days of notice.",
+  },
+  {
+    title: "Law and contact",
+    body: "These terms are governed by the laws of England and Wales. The courts of England and Wales have exclusive jurisdiction. For questions or to request the full Subscription Agreement or DPA, contact us at the email below.",
   },
 ];
 
-export default function PrivacyPolicyPage() {
+export default function TermsOfServicePage() {
   return (
     <>
       <style>{pageStyles}</style>
-      <main className="privacy-page">
+      <main className="tos-page">
         <nav
           style={{
             position: "sticky",
@@ -158,7 +172,7 @@ export default function PrivacyPolicyPage() {
               </div>
             </a>
             <span style={{ color: C.muted, fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}>
-              Privacy Policy
+              Terms of Service
             </span>
           </div>
         </nav>
@@ -183,25 +197,25 @@ export default function PrivacyPolicyPage() {
                 marginBottom: 14,
               }}
             >
-              Data Protection
+              Subscription terms
             </div>
             <h1 className="serif" style={{ color: C.navy, fontSize: 48, lineHeight: 1.05, marginBottom: 12 }}>
-              Privacy Policy
+              Terms of Service
             </h1>
             <p style={{ color: C.muted, fontSize: 16, lineHeight: 1.75, maxWidth: 760 }}>
-              StrydeOS processes personal data to deliver and improve services for private practice clinics. This page
-              outlines our principles for collection, use, retention, and individual rights.
+              These terms summarise the agreement between you and StrydeOS Ltd when you use our Service. The full
+              SaaS Subscription Agreement (including billing via Stripe, data protection, and liability) is available on request.
             </p>
             <p style={{ marginTop: 12, color: `${C.muted}C0`, fontSize: 12 }}>
-              Version 1.0 · Last reviewed March 2026
+              Version 1.0 · Last updated March 2026
             </p>
           </div>
         </section>
 
         <section style={{ maxWidth: 980, margin: "0 auto", padding: "0 24px 24px" }}>
-          <div className="privacy-grid">
-            {principles.map((item) => (
-              <PrincipleCard key={item.title} title={item.title} body={item.body} />
+          <div className="tos-grid">
+            {terms.map((item) => (
+              <TermCard key={item.title} title={item.title} body={item.body} />
             ))}
           </div>
         </section>
@@ -216,16 +230,16 @@ export default function PrivacyPolicyPage() {
               boxShadow: "0 16px 36px rgba(11,37,69,0.25)",
             }}
           >
-            <h2 style={{ color: "white", fontSize: 18, fontWeight: 600, marginBottom: 10 }}>Data Requests</h2>
+            <h2 style={{ color: "white", fontSize: 18, fontWeight: 600, marginBottom: 10 }}>Full agreement and questions</h2>
             <p style={{ color: "rgba(255,255,255,0.68)", fontSize: 14, lineHeight: 1.8, marginBottom: 10 }}>
-              If you need access, correction, portability, or deletion support, contact{" "}
+              To request the full SaaS Subscription Agreement, Data Processing Addendum, or Pricing Schedule, contact{" "}
               <a href="mailto:hello@strydeos.com" style={{ color: C.blueGlow, textDecoration: "none", fontWeight: 600 }}>
                 hello@strydeos.com
               </a>
               .
             </p>
             <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>
-              Requests are handled in line with applicable UK GDPR obligations.
+              StrydeOS Ltd · England & Wales · Governing law: England and Wales
             </p>
           </div>
         </section>

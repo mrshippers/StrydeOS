@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef } from "react";
 
 const C = {
@@ -1131,7 +1133,7 @@ const Integrations = ({ darkMode }) => {
       <AnimIn delay={100}>
       <div style={{
         background: C.navy, borderRadius: 20, overflow: "hidden",
-        position: "relative", marginBottom: 40,
+        position: "relative", marginBottom: 20,
       }}>
         {/* Ambient glow */}
         <div style={{
@@ -1195,120 +1197,101 @@ const Integrations = ({ darkMode }) => {
             </div>
           </div>
 
-          {/* RIGHT — Flow diagram */}
+          {/* RIGHT — Mini dashboard */}
           <div style={{
-            padding: "40px 44px",
+            padding: "36px 40px",
             display: "flex", flexDirection: "column", justifyContent: "center",
           }}>
-
-            {/* Tier 1 — Your tools */}
-            <div style={{ marginBottom: 0 }}>
+            {/* Dashboard chrome */}
+            <div style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 14, overflow: "hidden",
+            }}>
+              {/* Title bar */}
               <div style={{
-                fontSize: 9, fontWeight: 700, letterSpacing: "0.14em",
-                textTransform: "uppercase", color: "rgba(255,255,255,0.18)",
-                marginBottom: 8,
+                padding: "12px 18px",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
               }}>
-                Your existing tools
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                {[
-                  { name: "Your PMS", icon: "🗂️" },
-                  { name: "HEP Platform", icon: "🏋️" },
-                  { name: "Phone Line", icon: "📞" },
-                ].map(({ name, icon }) => (
-                  <div key={name} style={{
-                    background: "rgba(255,255,255,0.035)",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 10, padding: "10px 14px",
-                    display: "flex", alignItems: "center", gap: 8,
-                  }}>
-                    <span style={{ fontSize: 15, lineHeight: 1 }}>{icon}</span>
-                    <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, fontWeight: 600 }}>{name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Connector — merge */}
-            <div style={{ padding: "4px 0", display: "flex", justifyContent: "center" }}>
-              <svg width="100%" height="24" viewBox="0 0 100 24" preserveAspectRatio="none">
-                <path d="M16.6,0 L16.6,11 L50,11" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
-                <path d="M50,0 L50,11" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
-                <path d="M83.3,0 L83.3,11 L50,11" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
-                <circle cx="50" cy="11" r="1.2" fill={C.blueGlow} opacity="0.5" />
-                <path d="M50,11 L50,24" stroke={C.blueGlow} strokeWidth="0.8" fill="none" opacity="0.35" />
-              </svg>
-            </div>
-
-            {/* Tier 2 — StrydeOS */}
-            <div style={{ marginBottom: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                <div style={{
-                  width: 18, height: 18, borderRadius: 5,
-                  background: `${C.blue}20`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 8, fontWeight: 800, color: C.blueGlow,
-                }}>S</div>
-                <span style={{
-                  fontSize: 9, fontWeight: 700, letterSpacing: "0.12em",
-                  textTransform: "uppercase", color: C.blueGlow, opacity: 0.6,
-                }}>
-                  StrydeOS
-                </span>
-              </div>
-              <div style={{
-                display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8,
-                background: `${C.blue}06`, border: `1px solid ${C.blue}14`,
-                borderRadius: 12, padding: 8,
-              }}>
-                {[
-                  { name: "Ava", icon: "📞", color: C.blue, desc: "Calls → bookings" },
-                  { name: "Pulse", icon: "🔄", color: C.teal, desc: "Risk → re-engage" },
-                  { name: "Intelligence", icon: "📊", color: "#8B5CF6", desc: "Data → KPIs" },
-                ].map(({ name, icon, color, desc }) => (
-                  <div key={name} style={{
-                    background: `${color}0C`, border: `1px solid ${color}1C`,
-                    borderRadius: 8, padding: "12px 10px", textAlign: "center",
-                  }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 7,
-                      background: `${color}18`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      margin: "0 auto 6px", fontSize: 13,
-                    }}>{icon}</div>
-                    <div style={{ color, fontWeight: 700, fontSize: 13 }}>{name}</div>
-                    <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, marginTop: 2 }}>{desc}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Connector — fan out */}
-            <div style={{ padding: "4px 0", display: "flex", justifyContent: "center" }}>
-              <svg width="100%" height="24" viewBox="0 0 100 24" preserveAspectRatio="none">
-                <path d="M50,0 L50,12" stroke={C.teal} strokeWidth="0.8" fill="none" opacity="0.35" />
-                <circle cx="50" cy="12" r="1.2" fill={C.teal} opacity="0.5" />
-                <path d="M50,12 L16.6,12 L16.6,24" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
-                <path d="M50,12 L50,24" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
-                <path d="M50,12 L83.3,12 L83.3,24" stroke="rgba(255,255,255,0.06)" strokeWidth="0.6" fill="none" />
-              </svg>
-            </div>
-
-            {/* Tier 3 — Outcomes */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-              {[
-                { val: "0 missed", color: C.success },
-                { val: "Auto rebook", color: C.teal },
-                { val: "Live KPIs", color: C.blueGlow },
-              ].map(({ val, color }) => (
-                <div key={val} style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                  borderRadius: 10, padding: "10px 14px", textAlign: "center",
-                }}>
-                  <div className="serif" style={{ fontSize: 15, color, lineHeight: 1 }}>{val}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: 5,
+                    background: `${C.blue}20`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 8, fontWeight: 800, color: C.blueGlow,
+                  }}>S</div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.55)", letterSpacing: "-0.01em" }}>
+                    Stryde<span style={{ color: C.blueGlow }}>OS</span> Dashboard
+                  </span>
                 </div>
-              ))}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 4,
+                  padding: "3px 10px", borderRadius: 50,
+                  background: `${C.success}18`, border: `1px solid ${C.success}30`,
+                }}>
+                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.success }} />
+                  <span style={{ fontSize: 9, fontWeight: 600, color: C.success }}>Live</span>
+                </div>
+              </div>
+
+              {/* Module pills */}
+              <div style={{ padding: "10px 18px", display: "flex", gap: 6 }}>
+                {[
+                  { name: "Ava", color: C.blue, stat: "12 today" },
+                  { name: "Pulse", color: C.teal, stat: "8 follow-ups" },
+                  { name: "Intelligence", color: "#8B5CF6", stat: "91% util." },
+                ].map(({ name, color, stat }) => (
+                  <div key={name} style={{
+                    flex: 1, padding: "10px 12px",
+                    background: `${color}0A`, border: `1px solid ${color}18`,
+                    borderRadius: 8,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                        <div style={{ width: 5, height: 5, borderRadius: "50%", background: color }} />
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.8)" }}>{name}</span>
+                      </div>
+                      <span style={{ fontSize: 8, fontWeight: 600, color, textTransform: "uppercase", letterSpacing: "0.06em" }}>Active</span>
+                    </div>
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{stat}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* KPI grid */}
+              <div style={{ padding: "6px 18px 14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                {[
+                  { label: "Follow-up Rate", val: "3.3", unit: "sessions/patient", delta: "+2%", good: true },
+                  { label: "HEP Compliance", val: "87%", unit: "", delta: "+1%", good: true },
+                  { label: "Utilisation", val: "74%", unit: "", delta: "+1%", good: true, warn: true },
+                  { label: "DNA Rate", val: "3%", unit: "", delta: "-25%", good: true },
+                ].map(({ label, val, unit, delta, warn }) => (
+                  <div key={label} style={{
+                    padding: "10px 12px",
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.04)",
+                    borderRadius: 8,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{label}</span>
+                      <div style={{ width: 5, height: 5, borderRadius: "50%", background: warn ? "#F59E0B" : C.success }} />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                      <span className="serif" style={{ fontSize: 22, color: "rgba(255,255,255,0.9)", fontWeight: 400 }}>{val}</span>
+                      {unit && <span style={{ fontSize: 10, color: "rgba(255,255,255,0.25)" }}>{unit}</span>}
+                      <span style={{ fontSize: 10, fontWeight: 600, color: C.success, marginLeft: "auto" }}>{delta}</span>
+                    </div>
+                    {/* Mini sparkline */}
+                    <svg width="100%" height="16" viewBox="0 0 100 16" preserveAspectRatio="none" style={{ marginTop: 6 }}>
+                      <polyline
+                        points="0,12 15,10 30,11 45,8 60,9 75,5 90,4 100,3"
+                        fill="none" stroke={C.blue} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"
+                      />
+                    </svg>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -2436,29 +2419,55 @@ const IntegrationCarousel = ({ darkMode }) => {
   ];
 
   return (
-    <div style={{ padding: "28px 0 12px", overflow: "hidden" }}>
-      <div style={{ textAlign: "center", marginBottom: 16 }}>
+    <div style={{ padding: "16px 0 20px" }}>
+      <div style={{ textAlign: "center", marginBottom: 12 }}>
         <span style={{ fontSize: 11, fontWeight: 500, fontStyle: "italic", color: muted, letterSpacing: "0.03em" }}>
-          currently integrated with:
+          Currently integrated with:
         </span>
       </div>
-      <div style={{ display: "flex", animation: "scroll 20s linear infinite", width: "max-content" }}>
-        {[...logos, ...logos].map(({ name, svg }, i) => (
-          <div key={`${name}-${i}`} style={{
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            margin: "0 32px",
-            color: darkMode ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)",
-            filter: "grayscale(100%)",
-            opacity: 0.7,
-            transition: "all 0.3s ease",
-            cursor: "default", whiteSpace: "nowrap",
-          }}
-            onMouseEnter={e => { e.currentTarget.style.filter = "grayscale(0%)"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.color = darkMode ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)"; }}
-            onMouseLeave={e => { e.currentTarget.style.filter = "grayscale(100%)"; e.currentTarget.style.opacity = "0.7"; e.currentTarget.style.color = darkMode ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)"; }}
-          >
-            {svg}
-          </div>
-        ))}
+      <div style={{
+        maxWidth: 640, margin: "0 auto", overflow: "hidden",
+        position: "relative",
+        maskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
+        WebkitMaskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
+      }}>
+        <div style={{ display: "flex", animation: "scroll 18s linear infinite", width: "max-content" }}>
+          {[...logos, ...logos].map(({ name, svg }, i) => (
+            <div key={`${name}-${i}`} style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              padding: "6px 16px", margin: "0 6px",
+              borderRadius: 8,
+              color: darkMode ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)",
+              filter: "grayscale(100%)",
+              opacity: 0.7,
+              transition: "all 0.35s cubic-bezier(0.16,1,0.3,1)",
+              cursor: "default", whiteSpace: "nowrap",
+            }}
+              onMouseEnter={e => {
+                e.currentTarget.style.filter = "grayscale(0%)";
+                e.currentTarget.style.opacity = "1";
+                e.currentTarget.style.color = darkMode ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)";
+                e.currentTarget.style.background = darkMode ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.7)";
+                e.currentTarget.style.boxShadow = darkMode
+                  ? "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)"
+                  : "0 4px 16px rgba(11,37,69,0.08), inset 0 1px 0 rgba(255,255,255,0.8)";
+                e.currentTarget.style.backdropFilter = "blur(8px)";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.filter = "grayscale(100%)";
+                e.currentTarget.style.opacity = "0.7";
+                e.currentTarget.style.color = darkMode ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)";
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.backdropFilter = "none";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              {svg}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

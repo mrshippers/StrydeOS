@@ -1,3 +1,5 @@
+'use client';
+
 import ModulePage from "./module-page.jsx";
 
 const C_BLUE = "#1C54F2";

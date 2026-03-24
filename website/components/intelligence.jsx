@@ -1,3 +1,5 @@
+'use client';
+
 import ModulePage from "./module-page.jsx";
 
 const C_PURPLE = "#8B5CF6";
