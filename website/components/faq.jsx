@@ -20,6 +20,227 @@ const C = {
   border: "#E2DFDA",
 };
 
+/* -- MonolithMark (canonical logo) -- */
+let _mmId = 0;
+const _uid = (p) => `${p}-${++_mmId}`;
+
+const MonolithMark = ({ size = 44 }) => {
+  const id       = _uid("m");
+  const gCont    = `${id}-c`;
+  const gRad     = `${id}-r`;
+  const gTopface = `${id}-t`;
+  const gRim     = `${id}-m`;
+  const gBorder  = `${id}-b`;
+  const cPillar  = `${id}-p`;
+  const cAbove   = `${id}-a`;
+  const small    = size <= 24;
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none"
+      xmlns="http://www.w3.org/2000/svg" role="img" aria-label="StrydeOS">
+      <defs>
+        <linearGradient id={gCont} x1="0.1" y1="0" x2="0.85" y2="1">
+          <stop offset="0%"    stopColor="#2E6BFF" stopOpacity="0.58"/>
+          <stop offset="100%"  stopColor="#091D3E" stopOpacity="0.72"/>
+        </linearGradient>
+        <radialGradient id={gRad} cx="28%" cy="24%" r="60%">
+          <stop offset="0%"    stopColor="#6AABFF" stopOpacity="0.42"/>
+          <stop offset="100%"  stopColor="#1C54F2" stopOpacity="0"/>
+        </radialGradient>
+        <linearGradient id={gTopface} x1="0.05" y1="1" x2="0.35" y2="0">
+          <stop offset="0%"    stopColor="white" stopOpacity="0.55"/>
+          <stop offset="100%"  stopColor="white" stopOpacity="0.97"/>
+        </linearGradient>
+        <linearGradient id={gRim} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"    stopColor="white" stopOpacity="0"/>
+          <stop offset="28%"   stopColor="white" stopOpacity="0.60"/>
+          <stop offset="65%"   stopColor="white" stopOpacity="0.12"/>
+          <stop offset="100%"  stopColor="white" stopOpacity="0"/>
+        </linearGradient>
+        <linearGradient id={gBorder} x1="0.1" y1="0" x2="0.4" y2="1">
+          <stop offset="0%"    stopColor="#7ABBFF" stopOpacity="0.65"/>
+          <stop offset="100%"  stopColor="#1C54F2" stopOpacity="0.06"/>
+        </linearGradient>
+        <clipPath id={cPillar}><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+        <clipPath id={cAbove}><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+      </defs>
+      <rect width="100" height="100" rx="24" fill={`url(#${gCont})`}/>
+      <rect width="100" height="100" rx="24" fill={`url(#${gRad})`}/>
+      <rect width="100" height="100" rx="24" fill="none" stroke={`url(#${gBorder})`} strokeWidth="1.2"/>
+      {!small && (
+        <path d="M 17 21 Q 50 12 83 21" stroke={`url(#${gRim})`} strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+      )}
+      <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07"/>
+      <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10"/>
+      <g clipPath={`url(#${cPillar})`}>
+        <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth={small ? 3.0 : 2.0} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth={small ? 3.5 : 2.5} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth={small ? 4.2 : 3.2} strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </g>
+      <rect x="35" y="20" width="22" height="60" rx="5" fill={`url(#${gTopface})`} clipPath={`url(#${cAbove})`}/>
+      <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round"/>
+    </svg>
+  );
+};
+
+/* -- Nav (matches main site nav) -- */
+const FaqNav = () => {
+  const [scrolled, setScrolled] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownTimeout = useRef(null);
+
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", fn);
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
+
+  const openDropdown = () => {
+    clearTimeout(dropdownTimeout.current);
+    setDropdownOpen(true);
+  };
+  const closeDropdown = () => {
+    dropdownTimeout.current = setTimeout(() => setDropdownOpen(false), 200);
+  };
+
+  const navBg  = scrolled ? "rgba(11,37,69,0.95)" : "transparent";
+  const navBdr = scrolled ? "1px solid rgba(255,255,255,0.07)" : "none";
+
+  const dropdownSections = [
+    { label: "Modules", items: [
+      { name: "Ava", desc: "AI voice receptionist", href: "/ava", dot: C.blue },
+      { name: "Pulse", desc: "Patient retention engine", href: "/pulse", dot: C.teal },
+      { name: "Intelligence", desc: "Performance dashboard", href: "/intelligence", dot: "#8B5CF6" },
+    ]},
+    { label: "Navigate", items: [
+      { name: "Products", href: "/#products" },
+      { name: "How it works", href: "/#how-it-works" },
+      { name: "Pricing", href: "/#pricing" },
+      { name: "About", href: "/#about" },
+    ]},
+    { label: "Access", items: [
+      { name: "Book a call", href: "https://calendly.com/hello-strydeos/30min", external: true },
+      { name: "Log in", href: "https://portal.strydeos.com/login" },
+    ]},
+  ];
+
+  return (
+    <nav style={{
+      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+      padding: "0 24px", transition: "all 0.3s ease",
+      background: navBg,
+      backdropFilter: scrolled ? "blur(20px)" : "none",
+      borderBottom: navBdr,
+    }}>
+      <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", height: 70 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Monolith mark — hover opens dropdown */}
+          <div
+            style={{ position: "relative" }}
+            onMouseEnter={openDropdown}
+            onMouseLeave={closeDropdown}
+          >
+            <button
+              style={{
+                background: "none", border: "none", padding: 4, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                borderRadius: 10, transition: "background 0.15s",
+              }}
+              onFocus={openDropdown}
+              onBlur={closeDropdown}
+              aria-label="Site navigation menu"
+              aria-expanded={dropdownOpen}
+              aria-haspopup="true"
+            >
+              <div style={{ filter: `drop-shadow(0 0 8px ${C.blue}40)`, transition: "filter 0.3s ease" }}
+                onMouseEnter={e => e.currentTarget.style.filter = `drop-shadow(0 0 14px ${C.blue}70)`}
+                onMouseLeave={e => e.currentTarget.style.filter = `drop-shadow(0 0 8px ${C.blue}40)`}>
+                <MonolithMark size={34} />
+              </div>
+            </button>
+
+            {/* Dropdown menu */}
+            <div
+              style={{
+                position: "absolute", top: "calc(100% + 8px)", left: 0,
+                minWidth: 260,
+                background: "rgba(11,37,69,0.97)",
+                backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 16,
+                boxShadow: "0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)",
+                padding: "8px 0",
+                opacity: dropdownOpen ? 1 : 0,
+                transform: dropdownOpen ? "translateY(0)" : "translateY(-6px)",
+                pointerEvents: dropdownOpen ? "auto" : "none",
+                transition: "opacity 0.2s ease, transform 0.2s ease",
+                zIndex: 200,
+              }}
+              onMouseEnter={openDropdown}
+              onMouseLeave={closeDropdown}
+            >
+              {dropdownSections.map((section, si) => (
+                <div key={section.label}>
+                  {si > 0 && <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "6px 12px" }} />}
+                  <div style={{
+                    fontSize: 10, fontWeight: 600, textTransform: "uppercase",
+                    letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)",
+                    padding: "8px 16px 4px",
+                  }}>{section.label}</div>
+                  {section.items.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                      onClick={() => setDropdownOpen(false)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "8px 16px", textDecoration: "none",
+                        color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: 500,
+                        borderRadius: 8, margin: "0 6px",
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    >
+                      {item.dot && (
+                        <span style={{
+                          width: 7, height: 7, borderRadius: "50%",
+                          background: item.dot, flexShrink: 0,
+                        }} />
+                      )}
+                      <span style={{ flex: 1 }}>{item.name}</span>
+                      {item.desc && (
+                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", fontWeight: 400 }}>
+                          {item.desc}
+                        </span>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* StrydeOS wordmark — links home */}
+          <a
+            href="/"
+            style={{
+              fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17,
+              color: "white", letterSpacing: "-0.02em",
+              transition: "opacity 0.15s", textDecoration: "none",
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.7"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >
+            Stryde<span style={{ color: C.blueGlow }}>OS</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
 /* -- Module accent map -- */
 const MODULE_COLORS = {
   owners: C.blue,
@@ -379,6 +600,8 @@ export default function FAQPage() {
           .faq-body { padding: 0 20px !important; }
         }
       `}</style>
+
+      <FaqNav />
 
       {/* --- HERO --- */}
       <section

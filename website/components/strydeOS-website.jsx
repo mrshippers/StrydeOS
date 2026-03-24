@@ -2337,10 +2337,21 @@ const ROICalc = ({ darkMode }) => {
 };
 
 /* ─── Pricing ────────────────────────────────────────────────────────────────── */
-const PRICING_DATA = {
-  solo:   { Intelligence: "\u00A379",  Ava: "\u00A3129", Pulse: "\u00A399",  full: "\u00A3259", fullSetup: "\u00A3250" },
-  studio: { Intelligence: "\u00A3129", Ava: "\u00A3199", Pulse: "\u00A3149", full: "\u00A3399", fullSetup: "\u00A3250" },
-  clinic: { Intelligence: "\u00A3199", Ava: "\u00A3299", Pulse: "\u00A3229", full: "\u00A3599", fullSetup: "\u00A3250" },
+const PRICING_DATA_MONTHLY = {
+  solo:   { Intelligence: 79,  Ava: 149, Pulse: 99,  full: 279, fullSetup: "£250" },
+  studio: { Intelligence: 129, Ava: 199, Pulse: 149, full: 399, fullSetup: "£250" },
+  clinic: { Intelligence: 199, Ava: 299, Pulse: 229, full: 599, fullSetup: "£250" },
+};
+const getPricing = (tier, billing) => {
+  const m = PRICING_DATA_MONTHLY[tier];
+  const discount = billing === "annual" ? 0.8 : 1;
+  return {
+    Intelligence: `£${Math.round(m.Intelligence * discount)}`,
+    Ava: `£${Math.round(m.Ava * discount)}`,
+    Pulse: `£${Math.round(m.Pulse * discount)}`,
+    full: `£${Math.round(m.full * discount)}`,
+    fullSetup: m.fullSetup,
+  };
 };
 const TIER_OPTIONS = [
   { id: "solo", label: "Solo", sub: "1 clinician" },
@@ -2424,7 +2435,7 @@ const PricingTierToggle = ({ tier, setTier, darkMode }) => (
   </div>
 );
 
-const PricingCard = ({ mod, price, darkMode }) => {
+const PricingCard = ({ mod, price, billing, darkMode }) => {
   const [hovered, setHovered] = useState(false);
   const h = hovered;
   const c = mod.color;
@@ -2542,9 +2553,9 @@ const PricingCard = ({ mod, price, darkMode }) => {
   );
 };
 
-const FullStackBanner = ({ tier, darkMode }) => {
+const FullStackBanner = ({ tier, billing, darkMode }) => {
   const [h, setH] = useState(false);
-  const p = PRICING_DATA[tier];
+  const p = getPricing(tier, billing);
   return (
     <div
       onMouseEnter={() => setH(true)}
@@ -2588,7 +2599,7 @@ const FullStackBanner = ({ tier, darkMode }) => {
       </div>
       <div style={{ textAlign: "right", position: "relative" }}>
         <span className="serif" style={{ fontSize: 38, color: "white", lineHeight: 1 }}>{p.full}</span>
-        <span style={{ fontSize: 15, color: "rgba(255,255,255,0.35)" }}>/mo</span>
+        <span style={{ fontSize: 15, color: "rgba(255,255,255,0.35)" }}>/mo{billing === "annual" ? " (billed annually)" : ""}</span>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>{p.fullSetup} one-time setup</div>
         <div style={{ fontSize: 11, fontWeight: 600, color: "#34D399", marginTop: 4 }}>Save vs individual</div>
       </div>
@@ -2602,7 +2613,7 @@ const Pricing = ({ darkMode }) => {
   const bg    = darkMode ? C.navyMid : C.cloudDancer;
   const muted = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
   const head  = darkMode ? "white" : C.navy;
-  const prices = PRICING_DATA[tier];
+  const prices = getPricing(tier, billing);
 
   return (
   <section id="pricing" style={{ padding: "100px 24px", background: bg, transition: "background 0.3s ease" }}>
@@ -2661,14 +2672,14 @@ const Pricing = ({ darkMode }) => {
       <AnimIn delay={150}>
       <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 28 }}>
         {PRICING_MODULES.map((mod) => (
-          <PricingCard key={mod.name} mod={mod} price={prices[mod.name]} darkMode={darkMode} />
+          <PricingCard key={mod.name} mod={mod} price={prices[mod.name]} billing={billing} darkMode={darkMode} />
         ))}
       </div>
       </AnimIn>
 
       {/* Full Stack */}
       <AnimIn delay={300}>
-        <FullStackBanner tier={tier} darkMode={darkMode} />
+        <FullStackBanner tier={tier} billing={billing} darkMode={darkMode} />
       </AnimIn>
 
       <p style={{ textAlign: "center", fontSize: 13, color: muted, fontStyle: "italic", marginTop: 32 }}>
