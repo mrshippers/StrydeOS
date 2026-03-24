@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { CookieBanner } from "./strydeOS-website.jsx";
 import HeroCarousel from "./HeroCarousel.jsx";
 import ModulePricingBanner from "./ModulePricingBanner.jsx";
-import AvaConversationCard from "./AvaConversationCard.jsx";
 
 /* ── Brand Tokens ── */
 const C = {
@@ -263,17 +262,6 @@ export default function AvaPage() {
               <HeroCarousel />
             </div>
           </div>
-        </section>
-
-        {/* ── Ava Conversation Card Demo ── */}
-        <section style={{ padding: "80px 24px 80px", maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ marginBottom: 40 }}>
-            <h3 style={{ fontSize: 24, fontWeight: 600, color: head, marginBottom: 12, letterSpacing: "-0.01em" }}>Hear Ava in action</h3>
-            <p style={{ fontSize: 14, color: txt, maxWidth: 600 }}>
-              Click the monolith to hear a snippet of Ava's voice. She operates 24/7 to handle inbound calls, book appointments, and recover cancelled sessions.
-            </p>
-          </div>
-          <AvaConversationCard />
         </section>
 
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}><hr style={{ border: "none", height: 1, background: bdr }} /></div>
