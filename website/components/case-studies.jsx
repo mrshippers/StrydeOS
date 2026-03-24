@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import ApertureDarkModeToggle from "./ApertureDarkModeToggle";
+import BrightnessStackToggle from "./BrightnessStackToggle";
 
 const C = {
   cloudDancer: "#F2F1EE", cloudLight: "#F9F8F6", cloudDark: "#E8E6E0", cream: "#FAF9F7",
@@ -151,7 +151,7 @@ export default function CaseStudiesPage() {
             <span style={{ fontSize: 12, fontWeight: 600, color: muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
               Case Study · March 2026
             </span>
-            <ApertureDarkModeToggle
+            <BrightnessStackToggle
               size={16}
               isDark={darkMode}
               onToggle={(dark) => setDarkMode(dark)}

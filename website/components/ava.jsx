@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { CookieBanner } from "./strydeOS-website.jsx";
 import HeroCarousel from "./HeroCarousel.jsx";
 import ModulePricingBanner from "./ModulePricingBanner.jsx";
-import ApertureDarkModeToggle from "./ApertureDarkModeToggle";
+import BrightnessStackToggle from "./BrightnessStackToggle";
 
 /* ── Brand Tokens ── */
 const C = {
@@ -214,7 +214,7 @@ export default function AvaPage() {
               </div>
             </a>
             <div style={{ display: "flex", gap: 12 }}>
-              <ApertureDarkModeToggle
+              <BrightnessStackToggle
                 size={18}
                 isDark={darkMode}
                 onToggle={(dark) => setDarkMode(dark)}

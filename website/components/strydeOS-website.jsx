@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import AvaShowcase from "../ava-conversation-card";
-import ApertureDarkModeToggle from "./ApertureDarkModeToggle";
+import BrightnessStackToggle from "./BrightnessStackToggle";
 
 const C = {
   // Backgrounds
@@ -483,7 +483,7 @@ const Nav = ({ darkMode, setDarkMode }) => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <ApertureDarkModeToggle
+          <BrightnessStackToggle
             size={18}
             isDark={darkMode}
             onToggle={(dark) => setDarkMode(dark)}

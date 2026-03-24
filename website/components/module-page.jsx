@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { CookieBanner } from "./strydeOS-website.jsx";
 import ModulePricingBanner from "./ModulePricingBanner.jsx";
-import ApertureDarkModeToggle from "./ApertureDarkModeToggle";
+import BrightnessStackToggle from "./BrightnessStackToggle";
 
 const C = {
   cloudDancer: "#F2F1EE", cloudLight: "#F9F8F6", cream: "#FAF9F7",
@@ -137,7 +137,7 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
               </div>
             </a>
             <div style={{ display: "flex", gap: 12 }}>
-              <ApertureDarkModeToggle
+              <BrightnessStackToggle
                 size={18}
                 isDark={darkMode}
                 onToggle={(dark) => setDarkMode(dark)}
