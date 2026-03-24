@@ -3472,6 +3472,10 @@ export function CookieBanner() {
     try { localStorage.setItem(COOKIE_KEY, "accepted"); } catch {}
     setVisible(false);
   }
+  function decline() {
+    try { localStorage.setItem(COOKIE_KEY, "declined"); } catch {}
+    setVisible(false);
+  }
 
   if (!visible) return null;
 
@@ -3506,7 +3510,7 @@ export function CookieBanner() {
             onMouseEnter={e => { e.target.style.background = C.blueBright; }}
             onMouseLeave={e => { e.target.style.background = C.blue; }}
           >Accept</button>
-          <button onClick={accept} style={{
+          <button onClick={decline} style={{
             padding: "9px 16px", background: "transparent",
             color: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.12)",
             borderRadius: 50, fontSize: 13, fontWeight: 500,
