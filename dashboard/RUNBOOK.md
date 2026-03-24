@@ -17,7 +17,7 @@ All variables must be set in the Vercel dashboard under **Settings → Environme
 | `CRON_SECRET` | **Yes** | Shared secret Vercel uses to authenticate cron invocations. Generate with `openssl rand -hex 32`. |
 | `CSV_INBOUND_SECRET` | Yes | Shared secret for inbound email-to-CSV webhook (Mailgun/SendGrid/n8n). |
 | `INGEST_EMAIL_DOMAIN` | Yes | Domain for ingest addresses — `ingest.strydeos.com` |
-| `APP_URL` | **Yes** | Full app URL — `https://app.strydeos.com` (no trailing slash). Used by Stripe checkout/portal return URLs. |
+| `APP_URL` | **Yes** | Full app URL — `https://portal.strydeos.com` (no trailing slash). Used by Stripe checkout/portal return URLs. |
 | `FIREBASE_*` | Yes | Firebase Admin SDK credentials |
 | `STRIPE_SECRET_KEY` | **Yes** | Stripe secret key — use `sk_live_...` in production |
 | `STRIPE_WEBHOOK_SECRET` | **Yes** | Stripe webhook signing secret — `whsec_...` from Stripe Dashboard |
@@ -28,7 +28,7 @@ All variables must be set in the Vercel dashboard under **Settings → Environme
 1. Vercel dashboard → Project → Settings → Environment Variables
 2. Verify `CRON_SECRET` exists for **Production** environment
 3. After any change, redeploy (Vercel caches env at build time)
-4. To test: `curl -X POST https://app.strydeos.com/api/pipeline/run -H "Authorization: Bearer <secret>"` — should return `200`, not `500 CRON_SECRET not configured`
+4. To test: `curl -X POST https://portal.strydeos.com/api/pipeline/run -H "Authorization: Bearer <secret>"` — should return `200`, not `500 CRON_SECRET not configured`
 
 ---
 
@@ -89,7 +89,7 @@ TM3 (Blue Zinc) has no public API. The interim automation pathway is:
 ### Mailgun setup (if using Mailgun for inbound)
 
 1. Add `ingest.strydeos.com` as a receiving domain in Mailgun
-2. Set up a Route: match `import-*@ingest.strydeos.com` → forward to `https://app.strydeos.com/api/pms/import-csv/inbound`
+2. Set up a Route: match `import-*@ingest.strydeos.com` → forward to `https://portal.strydeos.com/api/pms/import-csv/inbound`
 3. Add the `X-Inbound-Secret` header to the forwarded request (Mailgun supports custom headers in route forwarding, or proxy via n8n)
 4. Set `CSV_INBOUND_SECRET` env var to match
 
@@ -149,7 +149,7 @@ Error monitoring is live on all API routes and the client bundle.
 ```
 STRIPE_SECRET_KEY=sk_live_...          # Production key from Stripe Dashboard → API Keys
 STRIPE_WEBHOOK_SECRET=whsec_...        # Set after registering webhook endpoint (see below)
-APP_URL=https://app.strydeos.com       # Required for checkout/portal return URLs
+APP_URL=https://portal.strydeos.com       # Required for checkout/portal return URLs
 
 # Per-module/tier/interval price IDs (create products in Stripe first)
 # Pattern: STRIPE_PRICE_{MODULE}_{TIER}_{INTERVAL}
@@ -186,7 +186,7 @@ STRIPE_PRICE_FULLSTACK_CLINIC_YEAR=price_...
 
 Register a webhook in **Stripe Dashboard → Developers → Webhooks → Add endpoint**:
 
-- **URL:** `https://app.strydeos.com/api/billing/webhooks`
+- **URL:** `https://portal.strydeos.com/api/billing/webhooks`
 - **Events to listen to:**
   - `customer.subscription.created`
   - `customer.subscription.updated`
@@ -202,7 +202,7 @@ Configure in **Stripe Dashboard → Settings → Billing → Customer Portal**:
 - Enable: **Allow customers to cancel subscriptions**
 - Enable: **Show invoices**
 - Set **Business information** (name, URL, privacy, ToS links)
-- Return URL: `https://app.strydeos.com/billing`
+- Return URL: `https://portal.strydeos.com/billing`
 
 The portal is triggered from Settings → Billing → **Manage subscription** button. It calls `POST /api/billing/portal` which returns a Stripe session URL and redirects.
 
@@ -317,7 +317,7 @@ TOKEN=$(curl -s -X POST "https://identitytoolkit.googleapis.com/v1/accounts:sign
   -d '{"email":"admin@strydeos.com","password":"...","returnSecureToken":true}' \
   | jq -r .idToken)
 
-curl -X POST https://app.strydeos.com/api/pipeline/run \
+curl -X POST https://portal.strydeos.com/api/pipeline/run \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"clinicId":"<clinicId>"}'
@@ -379,12 +379,12 @@ To verify rules are live: Firebase Console → Firestore → Rules tab — check
 
 1. Stripe Dashboard → Developers → Webhooks → select the endpoint → check **Recent deliveries**
 2. If deliveries are failing: check `STRIPE_WEBHOOK_SECRET` in Vercel matches the endpoint's signing secret
-3. If URL is wrong: update the endpoint URL in Stripe Dashboard to `https://app.strydeos.com/api/billing/webhooks`
+3. If URL is wrong: update the endpoint URL in Stripe Dashboard to `https://portal.strydeos.com/api/billing/webhooks`
 4. Retry the failed delivery from the Stripe Dashboard if needed (safe — webhook handler is idempotent)
 
 ### Billing portal not opening
 
-- Verify `APP_URL=https://app.strydeos.com` is set in Vercel
+- Verify `APP_URL=https://portal.strydeos.com` is set in Vercel
 - Verify Customer Portal is configured in Stripe Dashboard → Settings → Billing → Customer Portal
 - The clinic must have a `billing.stripeCustomerId` in Firestore — if not, they haven't checked out yet
 
