@@ -797,7 +797,7 @@ const HeroDashKPI = ({ label, value, unit, delta, dir, status, sparkData, delay 
       <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
         <span className="serif" style={{ fontSize: 22, color: "#fff", lineHeight: 1 }}>{value}</span>
         {unit && <span style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>{unit}</span>}
-        {delta && <span style={{ fontSize: 9, fontWeight: 700, color: dir === "up" ? C.success : "#EF4444", marginLeft: 2 }}>{dir === "up" ? "\u2191" : "\u2193"}{delta}</span>}
+        {delta && <span style={{ fontSize: 9, fontWeight: 700, color: dir === "up" ? C.success : "#EF4444", marginLeft: 2 }}>{dir === "up" ? "↑" : "↓"}{delta}</span>}
       </div>
       {sparkData && <HeroDashSpark data={sparkData} color={C.blueGlow} />}
     </div>
@@ -808,7 +808,7 @@ const HeroDashboard = () => {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => { requestAnimationFrame(() => requestAnimationFrame(() => setLoaded(true))); }, []);
   return (
-    <div style={{ width: "100%", maxWidth: 400, margin: "0 auto" }}>
+    <div style={{ width: "100%", maxWidth: 540, margin: "0 auto" }}>
       {/* Floating toast */}
       <div style={{
         display: "inline-flex", alignItems: "center", gap: 6,
@@ -879,7 +879,7 @@ const HeroDashboard = () => {
             <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
               <span className="serif" style={{ fontSize: 20, color: "#fff", lineHeight: 1 }}>73</span>
               <span style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>this week</span>
-              <span style={{ fontSize: 9, fontWeight: 700, color: C.success, marginLeft: 2 }}>\u2191+4%</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: C.success, marginLeft: 2 }}>{"↑"}+4%</span>
             </div>
           </div>
           <div style={{
@@ -889,7 +889,7 @@ const HeroDashboard = () => {
           }}>
             <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)", marginBottom: 4 }}>Rev / Session</div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-              <span className="serif" style={{ fontSize: 20, color: "#fff", lineHeight: 1 }}>\u00A379</span>
+              <span className="serif" style={{ fontSize: 20, color: "#fff", lineHeight: 1 }}>{"£"}79</span>
               <span style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>avg</span>
               <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.35)", marginLeft: 2 }}>+0%</span>
             </div>
@@ -947,7 +947,7 @@ const Hero = ({ darkMode }) => {
       }} />
 
       <div style={{ maxWidth: 1160, margin: "0 auto", width: "100%", position: "relative", zIndex: 2 }}>
-        <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+        <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr", gap: 48, alignItems: "center" }}>
 
           {/* Left */}
           <div style={{ animation: "fadeUp 0.8s ease forwards" }}>
