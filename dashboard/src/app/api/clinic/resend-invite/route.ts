@@ -58,7 +58,7 @@ async function handler(req: NextRequest) {
 
     // Generate a password reset link (acts as an invite link for new users)
     const link = await adminAuth.generatePasswordResetLink(email, {
-      url: `${process.env.APP_URL ?? "https://app.strydeos.com"}/login`,
+      url: `${process.env.APP_URL ?? "https://portal.strydeos.com"}/login`,
     });
 
     // If RESEND_API_KEY is configured, send the email

@@ -363,7 +363,7 @@ Proactive alerts when a partner’s status page reports an outage so you can tri
    - **Zanda:** `https://status.zandahealth.com` — Same settings.
    - **Physitrack:** `https://status.physitrack.com` — Same settings.
 3. **Alert contacts:** Add email and/or Slack webhook (Uptime Robot → Alert Contacts → Add). Assign these contacts to all three monitors.
-4. **Optional:** Add a monitor for StrydeOS app (e.g. `https://app.strydeos.com`) to detect our own downtime.
+4. **Optional:** Add a monitor for StrydeOS app (e.g. `https://portal.strydeos.com`) to detect our own downtime.
 
 **Note:** WriteUpp and Halaxy do not publish a public status page URL; skip them until one is available.
 

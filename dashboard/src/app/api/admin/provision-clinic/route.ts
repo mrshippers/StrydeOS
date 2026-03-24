@@ -233,7 +233,7 @@ async function handler(request: NextRequest) {
     let passwordResetLink: string | null = null;
     try {
       passwordResetLink = await auth.generatePasswordResetLink(trimmedEmail, {
-        url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://app.strydeos.com"}/login?welcome=1`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.strydeos.com"}/login?welcome=1`,
       });
     } catch {
       // Non-blocking — can be resent manually

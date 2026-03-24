@@ -165,10 +165,10 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
                   p/m{setup ? ` · ${setup}` : " · no setup fee"}
                 </div>
                 <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 28, flexWrap: "wrap" }}>
-                  <a href={`https://app.strydeos.com/checkout?plan=${id}-${tier}`} target="_blank" rel="noopener" className="btn-primary" style={{ background: color }}>
+                  <a href={`https://portal.strydeos.com/checkout?plan=${id}-${tier}`} target="_blank" rel="noopener" className="btn-primary" style={{ background: color }}>
                     Start free trial →
                   </a>
-                  <a href={`https://app.strydeos.com/checkout?plan=${id}-${tier}&billing=now`} target="_blank" rel="noopener" className="btn-outline" style={{ color: "white", borderColor: "rgba(255,255,255,0.2)" }}>
+                  <a href={`https://portal.strydeos.com/checkout?plan=${id}-${tier}&billing=now`} target="_blank" rel="noopener" className="btn-outline" style={{ color: "white", borderColor: "rgba(255,255,255,0.2)" }}>
                     Buy now →
                   </a>
                 </div>

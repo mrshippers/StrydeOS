@@ -164,7 +164,7 @@ async function handler(request: NextRequest) {
     let emailSent = false;
     try {
       const resetLink = await adminAuth.generatePasswordResetLink(email, {
-        url: `${process.env.APP_URL ?? "https://app.strydeos.com"}/login`,
+        url: `${process.env.APP_URL ?? "https://portal.strydeos.com"}/login`,
       });
 
       const resendKey = process.env.RESEND_API_KEY;
