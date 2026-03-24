@@ -11,6 +11,69 @@ const C = {
   ink: "#111827", muted: "#6B7280", success: "#059669", border: "#E2DFDA",
 };
 
+/* ── Monolith Mark (canonical — unique IDs per instance) ── */
+let _mmId = 0;
+const _uid = (p) => `${p}-${++_mmId}`;
+
+const MonolithMark = ({ size = 44 }) => {
+  const id       = _uid("m");
+  const gCont    = `${id}-c`;
+  const gRad     = `${id}-r`;
+  const gTopface = `${id}-t`;
+  const gRim     = `${id}-m`;
+  const gBorder  = `${id}-b`;
+  const cPillar  = `${id}-p`;
+  const cAbove   = `${id}-a`;
+  const small    = size <= 24;
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none"
+      xmlns="http://www.w3.org/2000/svg" role="img" aria-label="StrydeOS">
+      <defs>
+        <linearGradient id={gCont} x1="0.1" y1="0" x2="0.85" y2="1">
+          <stop offset="0%" stopColor="#2E6BFF" stopOpacity="0.58"/>
+          <stop offset="100%" stopColor="#091D3E" stopOpacity="0.72"/>
+        </linearGradient>
+        <radialGradient id={gRad} cx="28%" cy="24%" r="60%">
+          <stop offset="0%" stopColor="#6AABFF" stopOpacity="0.42"/>
+          <stop offset="100%" stopColor="#1C54F2" stopOpacity="0"/>
+        </radialGradient>
+        <linearGradient id={gTopface} x1="0.05" y1="1" x2="0.35" y2="0">
+          <stop offset="0%" stopColor="white" stopOpacity="0.55"/>
+          <stop offset="100%" stopColor="white" stopOpacity="0.97"/>
+        </linearGradient>
+        <linearGradient id={gRim} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="white" stopOpacity="0"/>
+          <stop offset="28%" stopColor="white" stopOpacity="0.60"/>
+          <stop offset="65%" stopColor="white" stopOpacity="0.12"/>
+          <stop offset="100%" stopColor="white" stopOpacity="0"/>
+        </linearGradient>
+        <linearGradient id={gBorder} x1="0.1" y1="0" x2="0.4" y2="1">
+          <stop offset="0%" stopColor="#7ABBFF" stopOpacity="0.65"/>
+          <stop offset="100%" stopColor="#1C54F2" stopOpacity="0.06"/>
+        </linearGradient>
+        <clipPath id={cPillar}><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+        <clipPath id={cAbove}><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+      </defs>
+      <rect width="100" height="100" rx="24" fill={`url(#${gCont})`}/>
+      <rect width="100" height="100" rx="24" fill={`url(#${gRad})`}/>
+      <rect width="100" height="100" rx="24" fill="none" stroke={`url(#${gBorder})`} strokeWidth="1.2"/>
+      {!small && (
+        <path d="M 17 21 Q 50 12 83 21" stroke={`url(#${gRim})`} strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+      )}
+      <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07"/>
+      <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10"/>
+      <g clipPath={`url(#${cPillar})`}>
+        <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </g>
+      <rect x="35" y="20" width="22" height="60" rx="5" fill={`url(#${gTopface})`} clipPath={`url(#${cAbove})`}/>
+      <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round"/>
+    </svg>
+  );
+};
+
 const tierPrices = {
   solo:   { intelligence: 79,  ava: 149, pulse: 99,  full: 279 },
   studio: { intelligence: 129, ava: 199, pulse: 149, full: 399 },
@@ -61,21 +124,23 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; }
         .serif { font-family: 'DM Serif Display', serif; }
-        .btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 50px; background: ${C.blue}; color: white; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 15px; text-decoration: none; transition: all 0.25s; border: none; cursor: pointer; }
-        .btn-primary:hover { filter: brightness(1.12); }
-        .btn-outline { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 50px; background: transparent; color: ${C.blue}; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 15px; text-decoration: none; border: 1.5px solid ${C.border}; transition: all 0.25s; cursor: pointer; }
       `}</style>
       <div style={{ minHeight: "100vh", background: bg, transition: "background 0.3s" }}>
         {/* Sticky nav */}
         <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, padding: "0 24px", background: darkMode ? "rgba(11,37,69,0.95)" : "rgba(242,241,238,0.94)", backdropFilter: "blur(20px)", borderBottom: `1px solid ${bdr}` }}>
           <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 70 }}>
             <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+              <MonolithMark size={34} />
               <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17, color: head, letterSpacing: "-0.02em" }}>
                 Stryde<span style={{ color: darkMode ? C.blueGlow : C.blue }}>OS</span>
               </div>
             </a>
             <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => setDarkMode(d => !d)} style={{ background: "none", border: `1.5px solid ${bdr}`, borderRadius: 10, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: head, fontSize: 17 }}>
+              <button onClick={() => {
+                const next = !darkMode;
+                setDarkMode(next);
+                localStorage.setItem("strydeos-theme", next ? "dark" : "light");
+              }} style={{ background: "none", border: `1.5px solid ${bdr}`, borderRadius: 10, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: head, fontSize: 17 }}>
                 {darkMode ? (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
                 ) : (
@@ -174,6 +239,19 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
                     cursor: "pointer", padding: 4, lineHeight: 1,
                   }}
                 >×</button>
+              </div>
+
+              {/* Tier selector */}
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 16 }}>
+                {Object.keys(tierLabels).map(k => (
+                  <button key={k} onClick={() => setTier(k)} style={{
+                    padding: "8px 20px", border: "none", cursor: "pointer", borderRadius: 50,
+                    fontFamily: "'Outfit',sans-serif", fontSize: 13, fontWeight: 600,
+                    background: tier === k ? C.blue : (darkMode ? "rgba(255,255,255,0.06)" : `${C.blue}08`),
+                    color: tier === k ? "white" : muted,
+                    transition: "all 0.25s",
+                  }}>{tierLabels[k]}</button>
+                ))}
               </div>
 
               {/* Tier prices row */}
