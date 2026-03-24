@@ -62,6 +62,7 @@ const DEMO_USER: AuthUser = {
   status: "registered",
   mfaEnrolled: false,
   allowedClinicIds: ["demo-clinic"],
+  allowedClinics: [{ id: "demo-clinic", name: "Demo Clinic" }],
   activeClinicId: "demo-clinic",
   isMultiSite: false,
   clinicProfile: {
@@ -226,6 +227,22 @@ async function fetchUserProfile(fbUser: User): Promise<AuthUser | null> {
       new Set([userData.clinicId, ...(userData.allowedClinicIds ?? [])])
     );
 
+    // Pre-load clinic names for the picker (multi-site users only)
+    let allowedClinics: { id: string; name: string }[] = [
+      { id: userData.clinicId, name: clinicProfile?.name ?? userData.clinicId },
+    ];
+    if (allowedClinicIds.length > 1 && db) {
+      const otherIds = allowedClinicIds.filter((id) => id !== userData.clinicId);
+      const clinicDocs = await Promise.all(
+        otherIds.map((id) => getDoc(doc(db!, "clinics", id)))
+      );
+      allowedClinics = allowedClinicIds.map((id) => {
+        if (id === userData.clinicId) return { id, name: clinicProfile?.name ?? id };
+        const d = clinicDocs.find((c) => c.id === id);
+        return { id, name: (d?.data()?.name as string) ?? id };
+      });
+    }
+
     return {
       uid: fbUser.uid,
       email: fbUser.email ?? "",
@@ -240,6 +257,7 @@ async function fetchUserProfile(fbUser: User): Promise<AuthUser | null> {
       mfaEnrolled,
       clinicProfile,
       allowedClinicIds,
+      allowedClinics,
       activeClinicId: userData.clinicId,
       isMultiSite: allowedClinicIds.length > 1,
     };

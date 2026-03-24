@@ -282,17 +282,107 @@ export const SMS_TEMPLATES: Record<string, string> = {
   early_intervention_step1_clinical:
     "Hi [Name], the initial phase of your treatment at [ClinicName] is critical for establishing a baseline. We'd recommend booking your next session promptly: [BookingUrl]",
 
-  // ── Reactivation 90d — standard ────────────────────────────────────────────
+  // ── Early intervention step 2 (email — channel-appropriate) ──────────────
+  early_intervention_step2_standard:
+    "Hi [Name], we wanted to follow up from your recent session at [ClinicName]. Keeping up with your early sessions makes a big difference to your overall recovery. Book your next one here: [BookingUrl]",
+  early_intervention_step2_supportive:
+    "Hi [Name], just checking in after your recent visit to [ClinicName]. There's no rush, but when you're ready to continue, we're here: [BookingUrl]",
+  early_intervention_step2_clinical:
+    "Hi [Name], following your initial assessment at [ClinicName], your clinician recommends continuing promptly to establish your treatment baseline. Book here: [BookingUrl]",
+
+  // ── Reactivation 90d (6-step sequence) ─────────────────────────────────────
   reactivation_step1_standard:
     "Hi [Name], it's been a while since your last visit to [ClinicName]. If you've got any new niggles or want a check-up, we're here: [BookingUrl]",
-
-  // ── Reactivation 90d — supportive ──────────────────────────────────────────
   reactivation_step1_supportive:
     "Hi [Name], hope you've been well since your last visit to [ClinicName]. If anything's cropped up or you just want a check-in, we'd love to hear from you: [BookingUrl]",
-
-  // ── Reactivation 90d — clinical ────────────────────────────────────────────
   reactivation_step1_clinical:
     "Hi [Name], given your treatment history at [ClinicName], a follow-up assessment may be beneficial. Please book a review if you've experienced any recurrence: [BookingUrl]",
+
+  reactivation_step2_standard:
+    "Hi [Name], this is a follow-up from [ClinicName]. Many patients find a check-in around this time helps maintain their progress. We'd love to see how you're doing: [BookingUrl]",
+  reactivation_step2_supportive:
+    "Hi [Name], we hope you're keeping well. It's been a few months since your last session at [ClinicName]. If you'd like to come in for a check-up, we're always happy to see you: [BookingUrl]",
+  reactivation_step2_clinical:
+    "Hi [Name], a periodic review is recommended following your course of treatment at [ClinicName]. Please consider booking a review appointment: [BookingUrl]",
+
+  reactivation_step3_standard:
+    "Hi [Name], just a reminder from [ClinicName] — if you've noticed any changes since finishing your treatment, we're here to help. Book a session: [BookingUrl]",
+  reactivation_step3_supportive:
+    "Hi [Name], it's [ClinicName] again. No pressure at all — we just wanted to make sure you know we're here if you need us: [BookingUrl]",
+  reactivation_step3_clinical:
+    "Hi [Name], patients who return for a review after their initial course at [ClinicName] tend to have better long-term outcomes. We'd recommend a brief follow-up: [BookingUrl]",
+
+  reactivation_step4_standard:
+    "Hi [Name], one last reminder from [ClinicName]. If you'd like a check-in or have new symptoms, book anytime: [BookingUrl]",
+  reactivation_step4_supportive:
+    "Hi [Name], this is our last check-in for now from [ClinicName]. We hope everything's going well. You're always welcome back whenever you need us.",
+  reactivation_step4_clinical:
+    "Hi [Name], this is a final follow-up from [ClinicName]. If you've experienced any symptom recurrence, an early review is advisable: [BookingUrl]",
+
+  reactivation_step5_standard:
+    "Hi [Name], it's been a few months since we last saw you at [ClinicName]. If anything's come up, we'd love to help: [BookingUrl]",
+  reactivation_step5_supportive:
+    "Hi [Name], thinking of you from [ClinicName]. If you ever need us, we're just a message away: [BookingUrl]",
+  reactivation_step5_clinical:
+    "Hi [Name], a maintenance check-in at [ClinicName] may help prevent recurrence. Book when convenient: [BookingUrl]",
+
+  reactivation_step6_standard:
+    "Hi [Name], final check-in from [ClinicName]. We hope you're doing great. If you ever need treatment again, we're here: [BookingUrl]",
+  reactivation_step6_supportive:
+    "Hi [Name], this is our final message for now from [ClinicName]. Wishing you all the best — you know where to find us.",
+  reactivation_step6_clinical:
+    "Hi [Name], this concludes our post-discharge follow-up from [ClinicName]. For any future MSK concerns, our team is available: [BookingUrl]",
+
+  // ── Reactivation 180d (6-step sequence) ────────────────────────────────────
+  reactivation_180_step1_standard:
+    "Hi [Name], it's been about 6 months since your last visit to [ClinicName]. How are you getting on? If you'd like a check-up, book here: [BookingUrl]",
+  reactivation_180_step1_supportive:
+    "Hi [Name], it's been a while since we saw you at [ClinicName]. We hope you're doing well. If you'd ever like to come back for a check-in, we're here: [BookingUrl]",
+  reactivation_180_step1_clinical:
+    "Hi [Name], a 6-month post-treatment review is recommended by your clinician at [ClinicName]. Please book a follow-up at your convenience: [BookingUrl]",
+
+  reactivation_180_step2_standard:
+    "Hi [Name], just following up from [ClinicName]. If you've had any new symptoms or would like a maintenance check, we'd love to see you: [BookingUrl]",
+  reactivation_180_step2_supportive:
+    "Hi [Name], we hope you're keeping well. This is a gentle check-in from [ClinicName] — no obligations, just making sure you know we're here: [BookingUrl]",
+  reactivation_180_step2_clinical:
+    "Hi [Name], a follow-up from [ClinicName] regarding your previous treatment. A review appointment is advisable to assess long-term progress: [BookingUrl]",
+
+  reactivation_180_step3_standard:
+    "Hi [Name], reminder from [ClinicName] — if anything's changed since your treatment, book a quick check-in: [BookingUrl]",
+  reactivation_180_step3_supportive:
+    "Hi [Name], just letting you know [ClinicName] is always here for you. No rush, no pressure — whenever you need us.",
+  reactivation_180_step3_clinical:
+    "Hi [Name], for patients with your treatment history at [ClinicName], periodic review supports optimal long-term outcomes: [BookingUrl]",
+
+  reactivation_180_step4_standard:
+    "Hi [Name], final check-in from [ClinicName]. If you need us in the future, we're always here: [BookingUrl]",
+  reactivation_180_step4_supportive:
+    "Hi [Name], this is our last message for now from [ClinicName]. Take care of yourself — we're only a call away.",
+  reactivation_180_step4_clinical:
+    "Hi [Name], concluding our follow-up series from [ClinicName]. Please don't hesitate to book if symptoms recur: [BookingUrl]",
+
+  reactivation_180_step5_standard:
+    "Hi [Name], hope all is well. If you ever need [ClinicName] again, book anytime: [BookingUrl]",
+  reactivation_180_step5_supportive:
+    "Hi [Name], wishing you continued wellness from the team at [ClinicName]. We're here whenever you need us.",
+  reactivation_180_step5_clinical:
+    "Hi [Name], ongoing monitoring is recommended following your treatment at [ClinicName]. Book a review if indicated: [BookingUrl]",
+
+  reactivation_180_step6_standard:
+    "Hi [Name], this is our final follow-up from [ClinicName]. We wish you all the best. Book anytime: [BookingUrl]",
+  reactivation_180_step6_supportive:
+    "Hi [Name], final message from [ClinicName]. It's been a pleasure looking after you. Take care, and reach out anytime you need us.",
+  reactivation_180_step6_clinical:
+    "Hi [Name], this concludes our extended follow-up from [ClinicName]. For any future MSK concerns, our clinical team remains available: [BookingUrl]",
+
+  // ── Pre-auth collection (email) ────────────────────────────────────────────
+  pre_auth_step1_standard:
+    "Hi [Name], we need to collect your insurance pre-authorisation before your upcoming appointment at [ClinicName]. Please reply to this email with your insurance details or call us to arrange.",
+  pre_auth_step1_supportive:
+    "Hi [Name], before your upcoming session at [ClinicName], we'll need to arrange insurance pre-authorisation. If you're not sure how this works, don't worry — just reply to this email and we'll guide you through it.",
+  pre_auth_step1_clinical:
+    "Hi [Name], prior authorisation from your insurer is required before your next appointment at [ClinicName]. Please provide your policy details at your earliest convenience so we can process this promptly.",
 };
 
 /**

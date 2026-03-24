@@ -36,6 +36,8 @@ export interface AuthUser {
   clinicProfile: ClinicProfile | null;
   /** Multi-site: all clinic IDs this user can access (includes primary clinicId). */
   allowedClinicIds: string[];
+  /** Multi-site: clinic ID + name pairs for the picker dropdown. */
+  allowedClinics: { id: string; name: string }[];
   /** Multi-site: the currently active clinic (may differ from primary clinicId). */
   activeClinicId: string;
   /** Multi-site: true when user has access to 2+ clinics. */

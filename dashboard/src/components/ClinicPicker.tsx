@@ -61,13 +61,13 @@ export default function ClinicPicker() {
               Your clinics
             </span>
           </div>
-          {user.allowedClinicIds.map((clinicId) => {
-            const isActive = clinicId === user.activeClinicId;
+          {user.allowedClinics.map((clinic) => {
+            const isActive = clinic.id === user.activeClinicId;
             return (
               <button
-                key={clinicId}
+                key={clinic.id}
                 onClick={async () => {
-                  if (!isActive) await switchClinic(clinicId);
+                  if (!isActive) await switchClinic(clinic.id);
                   setOpen(false);
                 }}
                 className="w-full text-left px-3 py-2 flex items-center gap-2 transition-colors"
@@ -95,8 +95,7 @@ export default function ClinicPicker() {
                     color: isActive ? brand.navy : brand.muted,
                   }}
                 >
-                  {/* Show clinic name — for now use ID, will resolve to name on load */}
-                  {clinicId === user.clinicProfile?.id ? user.clinicProfile.name : clinicId}
+                  {clinic.name}
                 </span>
               </button>
             );
