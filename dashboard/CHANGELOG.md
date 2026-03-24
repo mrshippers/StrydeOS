@@ -1,5 +1,31 @@
 # StrydeOS Changelog
 
+## v0.9.0 — Website Overhaul & i18n Foundation (24 Mar 2026)
+
+### Marketing Website — Next.js Migration & Full Rebuild
+- **Vite → Next.js App Router migration** — SEO, SSR, file-system routing, metadata API
+- **Hero carousel** — `HeroCarousel.jsx` with animated slide transitions across module showcases
+- **Modular pricing banner** — `ModulePricingBanner.jsx` extracted as shared component, used on Ava + module pages
+- **Pulse showcase** — Interactive patient board and comms sequence demos on Pulse module page
+- **FAQ overhaul** — Categorised accordion with search, nav bar, annual pricing toggle wired up
+- **Integrations, OneOS, Pricing sections** — Upgraded layouts with checkout button wiring (trial + buy now → portal.strydeos.com)
+- **Architecture diagram** — Editorial split layout replacing pyramid, then cinematic pyramid variant
+- **Scroll animations** — Scroll-triggered reveals and typography standardisation across all sections
+- **Dashboard showcase** — Compact sparkline version with scroll animations
+- **Cookie consent fix** — Decline button now correctly stores "declined" instead of "accepted"
+
+### Dashboard — i18n Foundation
+- **next-intl** added — `NextIntlClientProvider` wrapping root layout, locale-aware `<html lang>` tag
+- **Messages directory** — `messages/en.json` with type-safe message declarations (`global.d.ts`)
+- **i18n config** — `src/i18n/request.ts` for server-side locale resolution
+- **TypeScript** — `allowArbitraryExtensions` enabled in tsconfig for `.json` module imports
+
+### Infrastructure
+- **Vercel redeploy** — Next.js framework settings configured for website project
+- **CI fixes** — Firebase Admin credentials handled during CI build
+
+---
+
 ## v0.3.1 — HEP Provider Expansion (Mar 2026)
 
 ### New HEP Integrations

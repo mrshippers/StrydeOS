@@ -2,7 +2,7 @@
 
 Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analytics), **Pulse** (continuity & comms).
 
-## Current State — v0.8.0 (22 Mar 2026)
+## Current State — v0.9.0 (24 Mar 2026)
 
 
 | Module                          | Status      | Notes                                                        |
@@ -25,16 +25,25 @@ Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analyt
 | Status Page                     | Live        | 17 services, live health checks, 30-day uptime bars           |
 | API Docs                        | Live        | 37+ endpoints, dual-view (business + developer)              |
 | GDPR / Compliance               | Live        | Cookie consent, SAR templates, security audit checklist       |
-| Marketing Website               | Live        | All module pages, pricing, legal pages                        |
+| Marketing Website               | Live        | Next.js App Router, all module pages, pricing, checkout wiring |
+| i18n (Dashboard)                | Foundation  | next-intl wired, en.json messages, locale-aware layout        |
 | Stryde Super User               | Live        | Multi-clinic monitoring                                      |
 
 
 ---
 
-## Shipped This Session (22 Mar 2026)
+## Shipped This Session (22–24 Mar 2026)
 
 | Feature                                  | What it does                                                              |
 | ---------------------------------------- | ------------------------------------------------------------------------- |
+| **Website → Next.js App Router**         | Full Vite→Next.js migration with SSR, SEO metadata, file-system routing   |
+| **Hero Carousel**                        | Animated slide transitions across module showcases (Ava page)             |
+| **Modular Pricing Banner**               | Shared `ModulePricingBanner` component used across all module pages        |
+| **Pulse Showcase**                       | Interactive patient board + comms sequence demos on Pulse page             |
+| **FAQ Overhaul**                         | Categorised accordion, search, nav, annual pricing toggle                  |
+| **Checkout Wiring**                      | Pricing cards + Full Stack CTA → portal.strydeos.com checkout flow         |
+| **Scroll Animations**                    | Scroll-triggered reveals + typography standardisation sitewide             |
+| **Dashboard i18n Foundation**            | next-intl, en.json messages, locale-aware layout, type-safe declarations   |
 | Ava → ElevenLabs + Twilio migration      | Ripped out Retell AI, voice stack now ElevenLabs Conversational AI + SIP  |
 | Ava Knowledge Base System                | CRUD editor, Firestore persistence, category suggestions, premium UI     |
 | Context-aware Dashboard Greeting         | Subtext driven by real KPIs (DNA spikes, churn clusters, revenue drops)   |
@@ -49,10 +58,11 @@ Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analyt
 | API Docs Page                            | 37 endpoints, searchable, responsive, sidebar link                       |
 | Dark Mode Contrast Pass                  | WCAG AA fixes across tooltips, badges, overlays, charts                  |
 | Error Boundary                           | Global error.tsx recovery UI                                             |
-| CI/CD Fixes                              | TS errors, ESLint downgrade, skipped broken test step                    |
+| CI/CD Fixes                              | TS errors, ESLint downgrade, Firebase Admin env handling in CI            |
 | Owner Billing Bypass                     | Owners skip all module billing gates                                     |
 | Pre-commit Hook                          | Secret detection before commit                                           |
 | Firestore Rules + Indexes                | user_preferences, sequence_definitions, comms_log attribution            |
+| Cookie Consent Fix                       | Decline button now stores "declined" correctly                            |
 
 
 ---

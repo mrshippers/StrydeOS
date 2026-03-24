@@ -1,7 +1,7 @@
-# Past 24 Hours — Implementation Summary
+# Implementation Summary
 
-**Date:** 13 March 2026  
-**Status:** Uncommitted work → ready to push and deploy (almost live).
+**Date:** 24 March 2026
+**Status:** All prior work committed. Current session: docs update + push.
 
 ---
 
@@ -93,22 +93,34 @@ No global design system or brand token changes; existing Navy/Blue/Teal/Purple a
 
 ## What’s Left (Pre–Live Checklist)
 
-- [ ] **Env vars** — Ensure Vercel has `CRON_SECRET`, Firebase, Sentry, `CSV_INBOUND_SECRET`, etc. (see RUNBOOK.md).
-- [ ] **Stripe** — Billing/portal and webhooks configured; backup codes not in repo (e.g. `stripe_backup_code.txt` in `.gitignore`).
-- [ ] **Firebase** — Deploy rules after push: `cd dashboard && firebase use --add` (or `--project <project-id>`), then `firebase deploy --only firestore:rules`. No active project = CLI will not deploy until set.
-- [ ] **Cron** — Confirm 4-hour pipeline cron in Vercel and one successful run.
-- [ ] **Smoke test** — Login (with MFA if enabled), Settings, Billing link, Admin → Integration health (superadmin), Sync now.
+- [x] **Env vars** — Vercel has `CRON_SECRET`, Firebase, Sentry, `CSV_INBOUND_SECRET` (see RUNBOOK.md).
+- [x] **Stripe** — Billing/portal and webhooks configured.
+- [x] **Firebase** — Rules deployed.
+- [x] **Cron** — 4-hour pipeline cron confirmed.
+- [ ] **Smoke test** — Full login → dashboard → settings → billing → admin integration health; trigger “Sync now” once.
 
 ---
 
-## Tomorrow’s Todo List
+## Recent Sessions (22–24 Mar 2026)
 
-1. **Smoke test in production** — Full login → dashboard → settings → billing → admin integration health; trigger “Sync now” once.
-2. **Sentry** — Confirm alerts for `pipeline_cron` and `CRON_SECRET` (see RUNBOOK).
-3. **Stripe** — Verify portal and webhook URLs and test subscription/portal flow if not done.
-4. **Documentation** — Add Integration Health and WriteUpp probe to RUNBOOK (optional).
-5. **TM3 / Pabau** — No code changes in this 24h; keep on roadmap.
-6. **Optional** — One final pass on empty states and error copy on login/settings for “almost live” polish.
+### Website Overhaul
+- Vite → Next.js App Router migration (SSR, SEO, file-system routing)
+- Hero carousel, modular pricing banner, Pulse interactive showcase
+- FAQ overhaul with categorised accordion and search
+- Checkout wiring (pricing cards + Full Stack CTA → portal checkout)
+- Scroll animations and typography standardisation
+- Cookie consent fix (decline button)
+
+### Dashboard i18n Foundation
+- next-intl wired with NextIntlClientProvider
+- en.json messages, type-safe declarations, locale-aware layout
+
+### Prior Session (13 Mar 2026)
+- Auth: Login page, MFA challenge flow, AuthGuard tightening
+- Admin: Integration Health page + API, WriteUpp probe
+- Settings: Billing, MFA management, pipeline sync
+- Backend: PMS disconnect, Physitrack adapter improvements
+- Compliance: SAR email templates, Firestore rules for integration_health
 
 ---
 
@@ -128,4 +140,4 @@ No global design system or brand token changes; existing Navy/Blue/Teal/Purple a
 
 ---
 
-*Generated 13 March 2026. After push: deploy Firestore rules and confirm Vercel build + cron.*
+*Updated 24 March 2026.*

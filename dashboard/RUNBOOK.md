@@ -19,8 +19,8 @@ All variables must be set in the Vercel dashboard under **Settings → Environme
 | `INGEST_EMAIL_DOMAIN` | Yes | Domain for ingest addresses — `ingest.strydeos.com` |
 | `APP_URL` | **Yes** | Full app URL — `https://portal.strydeos.com` (no trailing slash). Used by Stripe checkout/portal return URLs. |
 | `FIREBASE_*` | Yes | Firebase Admin SDK credentials |
-| `STRIPE_SECRET_KEY` | **Yes** | Stripe secret key — use `sk_live_...` in production |
-| `STRIPE_WEBHOOK_SECRET` | **Yes** | Stripe webhook signing secret — `whsec_...` from Stripe Dashboard |
+| `STRIPE_SECRET_KEY` | **Yes** | Stripe secret key — use `sk_live_ ...` in production |
+| `STRIPE_WEBHOOK_SECRET` | **Yes** | Stripe webhook signing secret — `whsec_ ...` from Stripe Dashboard |
 | `STRIPE_PRICE_*` | **Yes** | Per-module/tier/interval price IDs — see Stripe section below |
 
 ### Confirming `CRON_SECRET` is set
@@ -147,8 +147,8 @@ Error monitoring is live on all API routes and the client bundle.
 ### Environment variables required
 
 ```
-STRIPE_SECRET_KEY=sk_live_...          # Production key from Stripe Dashboard → API Keys
-STRIPE_WEBHOOK_SECRET=whsec_...        # Set after registering webhook endpoint (see below)
+STRIPE_SECRET_KEY=sk_live_ ...          # Production key from Stripe Dashboard → API Keys
+STRIPE_WEBHOOK_SECRET=whsec_ ...        # Set after registering webhook endpoint (see below)
 APP_URL=https://portal.strydeos.com       # Required for checkout/portal return URLs
 
 # Per-module/tier/interval price IDs (create products in Stripe first)
@@ -192,7 +192,7 @@ Register a webhook in **Stripe Dashboard → Developers → Webhooks → Add end
   - `customer.subscription.updated`
   - `customer.subscription.deleted`
   - `invoice.payment_failed`
-- After saving, copy the **Signing secret** (`whsec_...`) → set as `STRIPE_WEBHOOK_SECRET` in Vercel
+- After saving, copy the **Signing secret** (`whsec_ ...`) → set as `STRIPE_WEBHOOK_SECRET` in Vercel
 
 ### Customer Portal
 
@@ -394,4 +394,30 @@ Not an incident — surface to the clinic owner via the Intelligence dashboard. 
 
 ---
 
-*Last updated: March 2026*
+---
+
+## i18n (Internationalisation)
+
+The dashboard uses `next-intl` for internationalisation.
+
+### Architecture
+
+- **Messages:** `dashboard/messages/en.json` — all translatable strings (English default)
+- **Server config:** `dashboard/src/i18n/request.ts` — locale resolution
+- **Type safety:** `dashboard/global.d.ts` — typed message keys from `en.json`
+- **Root layout:** `NextIntlClientProvider` wraps the app with locale + messages
+
+### Adding a new language
+
+1. Create `dashboard/messages/{locale}.json` (e.g. `fr.json`) with same key structure as `en.json`
+2. Update `dashboard/src/i18n/request.ts` to resolve the new locale
+3. Translations are available immediately — no build step required
+
+### Current state
+
+- English (`en`) only — foundation is wired, no other locales active yet
+- All new user-facing strings should use `useTranslations()` hook rather than hardcoded text
+
+---
+
+*Last updated: 24 March 2026*

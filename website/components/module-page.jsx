@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { CookieBanner } from "./strydeOS-website.jsx";
+import ModulePricingBanner from "./ModulePricingBanner.jsx";
 
 const C = {
   cloudDancer: "#F2F1EE", cloudLight: "#F9F8F6", cream: "#FAF9F7",
@@ -16,13 +17,6 @@ const tierPrices = {
   clinic: { intelligence: 199, ava: 299, pulse: 229, full: 599 },
 };
 const tierLabels = { solo: "Solo (1)", studio: "Studio (2–5)", clinic: "Clinic (6+)" };
-
-// Setup fees: only Ava has a setup fee, and only on Studio/Clinic
-const setupFees = {
-  solo:   { intelligence: null, ava: null, pulse: null },
-  studio: { intelligence: null, ava: "£250 one-time setup", pulse: null },
-  clinic: { intelligence: null, ava: "£250 one-time setup", pulse: null },
-};
 
 // Feature comparison table data (from canonical pricing breakdown)
 const compareFeatures = [
@@ -59,8 +53,6 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
   const txt = darkMode ? "rgba(255,255,255,0.75)" : C.ink;
   const bdr = darkMode ? "rgba(255,255,255,0.07)" : C.border;
   const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
-  const price = tierPrices[tier][id];
-  const setup = setupFees[tier][id];
 
   return (
     <>
@@ -144,52 +136,9 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
           </div>
         </section>
 
-        {/* Pricing card */}
+        {/* Pricing banner */}
         <section style={{ padding: "0 24px 100px", maxWidth: 900, margin: "0 auto" }}>
-          <div style={{ background: darkMode ? `linear-gradient(145deg, ${C.navy}, ${C.navyMid})` : C.navy, borderRadius: 20, padding: "40px 44px", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 28 }}>
-                {Object.keys(tierLabels).map(k => (
-                  <button key={k} onClick={() => setTier(k)} style={{
-                    padding: "8px 20px", border: "none", cursor: "pointer", borderRadius: 50,
-                    fontFamily: "'Outfit',sans-serif", fontSize: 13, fontWeight: 600,
-                    background: tier === k ? C.blue : "rgba(255,255,255,0.06)",
-                    color: tier === k ? "white" : "rgba(255,255,255,0.45)",
-                    transition: "all 0.25s",
-                  }}>{tierLabels[k]}</button>
-                ))}
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div className="serif" style={{ fontSize: 52, color: "white", fontWeight: 400, lineHeight: 1 }}>
-                  <span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 24, fontWeight: 600, verticalAlign: "top", position: "relative", top: 8, marginRight: 2, opacity: 0.6 }}>£</span>{price}
-                </div>
-                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>
-                  p/m{setup ? ` · ${setup}` : " · no setup fee"}
-                </div>
-                <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 28, flexWrap: "wrap" }}>
-                  <a href={`https://portal.strydeos.com/checkout?plan=${id}-${tier}`} target="_blank" rel="noopener" className="btn-primary" style={{ background: color }}>
-                    Start free trial →
-                  </a>
-                  <a href={`https://portal.strydeos.com/checkout?plan=${id}-${tier}&billing=now`} target="_blank" rel="noopener" className="btn-outline" style={{ color: "white", borderColor: "rgba(255,255,255,0.2)" }}>
-                    Buy now →
-                  </a>
-                </div>
-                <button
-                  onClick={() => setShowCompare(true)}
-                  style={{
-                    display: "inline-block", marginTop: 20, fontSize: 12,
-                    color: "rgba(255,255,255,0.3)", background: "none", border: "none",
-                    cursor: "pointer", fontFamily: "'Outfit',sans-serif",
-                    transition: "color 0.2s",
-                  }}
-                  onMouseEnter={e => e.target.style.color = "rgba(255,255,255,0.6)"}
-                  onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.3)"}
-                >
-                  Compare all plans ↓
-                </button>
-              </div>
-            </div>
-          </div>
+          <ModulePricingBanner module={id} onCompare={() => setShowCompare(true)} />
         </section>
 
         {/* Compare plans modal */}

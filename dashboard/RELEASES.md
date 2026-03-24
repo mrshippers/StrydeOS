@@ -5,6 +5,24 @@
 
 ---
 
+## v0.9.0 — The Website That Ships
+*Your marketing site now runs on the same stack as your product.*
+
+StrydeOS.com migrated from a Vite SPA to Next.js App Router — SSR, SEO metadata, proper routing. Every module page got a pricing banner that wires directly to checkout. The Ava page has an animated hero carousel. Pulse has an interactive patient board demo. The FAQ is searchable. And the dashboard now has an i18n foundation ready for multi-language support.
+
+**What shipped:**
+- Next.js App Router migration — SSR, metadata API, file-system routing
+- Hero carousel on Ava page — animated module showcases
+- Modular pricing banner — shared component across all module pages, wired to checkout
+- Pulse interactive showcase — patient board + comms sequence demos
+- FAQ overhaul — categorised accordion with search + annual pricing toggle
+- Scroll-triggered animations and typography standardisation sitewide
+- Dashboard i18n foundation — next-intl, locale-aware layout
+
+**Post angle:** *"Your marketing site should run on the same stack as your product. Ours does now — SSR, SEO, and every pricing button wires to checkout. No more static placeholder."*
+
+---
+
 ## v0.8.5 — The Trust Layer
 *Infrastructure that proves you're not a side project.*
 
