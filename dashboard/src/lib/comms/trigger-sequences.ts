@@ -18,7 +18,7 @@
 import type { Firestore } from "firebase-admin/firestore";
 import type { SequenceType } from "@/types";
 import type { SequenceDefinition, N8nSequencePayload } from "@/types/comms";
-import { DEFAULT_SEQUENCE_DEFINITIONS } from "@/types/comms";
+import { DEFAULT_SEQUENCE_DEFINITIONS, resolveTemplate } from "@/types/comms";
 
 const N8N_BASE   = process.env.N8N_WEBHOOK_BASE_URL;
 const N8N_SECRET = process.env.N8N_COMMS_WEBHOOK_SECRET;
@@ -49,6 +49,10 @@ export async function triggerCommsSequences(
   const activeDefinitions = definitions
     .filter((d) => d.active)
     .sort((a, b) => a.priority - b.priority);
+
+  // ── Load clinic name for template substitution ─────────────────────────
+  const clinicDoc = await clinicRef.get();
+  const clinicName = (clinicDoc.data()?.name as string) ?? "the clinic";
 
   // ── Load supporting data ────────────────────────────────────────────────
   const [patientsSnap, cliniciansSnap, allLogsSnap] = await Promise.all([
@@ -179,6 +183,12 @@ export async function triggerCommsSequences(
           ? "clinical" as const
           : "standard" as const;
 
+      // ── Resolve tone-adaptive template ──────────────────────────────
+      const patientFirstName = ((patient.name as string) ?? "Patient").split(" ")[0];
+      const resolvedSmsBody = resolveTemplate(nextStep.templateKey, toneModifier)
+        .replace(/\[Name\]/g, patientFirstName)
+        .replace(/\[ClinicName\]/g, clinicName ?? "the clinic");
+
       const payload: N8nSequencePayload = {
         clinicId,
         patientId,
@@ -193,6 +203,7 @@ export async function triggerCommsSequences(
         sequenceDefinitionId:  def.id,
         attributionWindowDays: def.attributionWindowDays,
         toneModifier,
+        resolvedSmsBody,
         triggerData: {
           sessionCount:    patient.sessionCount,
           lastSessionDate: patient.lastSessionDate,
