@@ -11,13 +11,17 @@ service cloud.firestore {
     }
 
     function isClinicMember(clinicId) {
-      return isAuthenticated() && getUserData().clinicId == clinicId;
+      let user = getUserData();
+      return isAuthenticated()
+        && (user.clinicId == clinicId
+            || clinicId in user.get('allowedClinicIds', []));
     }
 
     function isClinicOwnerOrAdmin(clinicId) {
       let user = getUserData();
       return isAuthenticated()
-        && user.clinicId == clinicId
+        && (user.clinicId == clinicId
+            || clinicId in user.get('allowedClinicIds', []))
         && user.role in ['owner', 'admin'];
     }
 

@@ -16,6 +16,7 @@ import SplashScreen from "@/components/SplashScreen";
 import TrialBanner from "@/components/TrialBanner";
 import DemoBanner from "@/components/ui/DemoBanner";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
+import ClinicPicker from "@/components/ClinicPicker";
 
 const FirstLoginTour = dynamic(
   () => import("@/components/FirstLoginTour"),
@@ -68,6 +69,7 @@ function AppLayout({ children, impersonating }: { children: React.ReactNode; imp
         }}
       >
         <div className={`mx-auto max-w-[1200px] px-6 py-8 lg:pt-8 ${IS_STAGING ? "pt-24" : "pt-16"}`}>
+          <ClinicPicker />
           <TrialBanner />
           <DemoBanner />
           <PageTransition>{children}</PageTransition>

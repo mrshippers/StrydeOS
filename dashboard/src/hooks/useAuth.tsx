@@ -61,6 +61,9 @@ const DEMO_USER: AuthUser = {
   tourCompleted: true,
   status: "registered",
   mfaEnrolled: false,
+  allowedClinicIds: ["demo-clinic"],
+  activeClinicId: "demo-clinic",
+  isMultiSite: false,
   clinicProfile: {
     id: "demo-clinic",
     name: "Demo Clinic",
@@ -114,6 +117,8 @@ interface AuthContextValue {
   impersonationTarget: ClinicProfile | null;
   startImpersonation: (clinic: ClinicProfile) => void;
   stopImpersonation: () => void;
+  /** Multi-site: switch the active clinic context. Reloads clinic profile. */
+  switchClinic: (clinicId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -129,6 +134,7 @@ const AuthContext = createContext<AuthContextValue>({
   impersonationTarget: null,
   startImpersonation: () => {},
   stopImpersonation: () => {},
+  switchClinic: async () => {},
 });
 
 export function useAuth() {
@@ -153,6 +159,7 @@ async function fetchUserProfile(fbUser: User): Promise<AuthUser | null> {
       firstLogin?: boolean;
       tourCompleted?: boolean;
       status?: UserStatus;
+      allowedClinicIds?: string[];
     };
 
     let clinicProfile: ClinicProfile | null = null;
@@ -214,6 +221,11 @@ async function fetchUserProfile(fbUser: User): Promise<AuthUser | null> {
 
     const mfaEnrolled = multiFactor(fbUser).enrolledFactors.length > 0;
 
+    // Build the unified allowed clinics list (always includes primary)
+    const allowedClinicIds = Array.from(
+      new Set([userData.clinicId, ...(userData.allowedClinicIds ?? [])])
+    );
+
     return {
       uid: fbUser.uid,
       email: fbUser.email ?? "",
@@ -227,6 +239,9 @@ async function fetchUserProfile(fbUser: User): Promise<AuthUser | null> {
       status: userData.status ?? "registered",
       mfaEnrolled,
       clinicProfile,
+      allowedClinicIds,
+      activeClinicId: userData.clinicId,
+      isMultiSite: allowedClinicIds.length > 1,
     };
   } catch {
     // Firestore read failed — do not grant any role.
@@ -396,6 +411,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setImpersonation(null);
   }, []);
 
+  // Multi-site: switch the active clinic by loading its profile
+  const switchClinic = useCallback(async (targetClinicId: string) => {
+    if (!user || !db) return;
+    if (!user.allowedClinicIds.includes(targetClinicId)) return;
+
+    const clinicDoc = await getDoc(doc(db, "clinics", targetClinicId));
+    if (!clinicDoc.exists()) return;
+
+    const raw = clinicDoc.data();
+    const billingRaw = raw.billing;
+    const billing: BillingState | undefined = billingRaw
+      ? {
+          stripeCustomerId: billingRaw.stripeCustomerId ?? null,
+          subscriptionId: billingRaw.subscriptionId ?? null,
+          subscriptionStatus: billingRaw.subscriptionStatus ?? null,
+          currentPeriodEnd: billingRaw.currentPeriodEnd ?? null,
+        }
+      : undefined;
+
+    const profile: ClinicProfile = {
+      id: clinicDoc.id,
+      name: raw.name ?? "",
+      timezone: raw.timezone ?? "Europe/London",
+      ownerEmail: raw.ownerEmail ?? "",
+      address: raw.address ?? undefined,
+      phone: raw.phone ?? undefined,
+      sessionPricePence: raw.sessionPricePence ?? undefined,
+      parkingInfo: raw.parkingInfo ?? undefined,
+      website: raw.website ?? undefined,
+      status: raw.status ?? "onboarding",
+      pmsType: raw.pmsType ?? null,
+      pmsLastSyncAt: raw.pmsLastSyncAt ?? raw.pms?.lastSyncAt ?? null,
+      featureFlags: {
+        ...DEFAULT_FEATURE_FLAGS,
+        ...(raw.featureFlags ?? {}),
+      },
+      targets: {
+        followUpRate: raw.targets?.followUpRate ?? 4.0,
+        hepRate: raw.targets?.hepRate ?? raw.targets?.physitrackRate ?? 95,
+        utilisationRate: raw.targets?.utilisationRate ?? 75,
+        dnaRate: raw.targets?.dnaRate ?? 6,
+        courseCompletionTarget: raw.targets?.courseCompletionTarget ?? 80,
+      },
+      brandConfig: raw.brandConfig ?? {},
+      onboarding: {
+        pmsConnected: raw.onboarding?.pmsConnected ?? false,
+        cliniciansConfirmed: raw.onboarding?.cliniciansConfirmed ?? false,
+        targetsSet: raw.onboarding?.targetsSet ?? false,
+      },
+      onboardingV2: raw.onboardingV2 ?? undefined,
+      billing,
+      compliance: raw.compliance ?? undefined,
+      trialStartedAt: raw.trialStartedAt ?? null,
+      createdAt: raw.createdAt ?? "",
+      updatedAt: raw.updatedAt ?? "",
+    };
+
+    setUser((prev) =>
+      prev
+        ? { ...prev, activeClinicId: targetClinicId, clinicId: targetClinicId, clinicProfile: profile }
+        : prev
+    );
+  }, [user]);
+
   // When impersonating, override clinicId + clinicProfile on the user object
   const effectiveUser: AuthUser | null = user && impersonation
     ? { ...user, clinicId: impersonation.clinicId, clinicProfile: impersonation.clinicProfile }
@@ -416,6 +495,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         impersonationTarget: impersonation?.clinicProfile ?? null,
         startImpersonation,
         stopImpersonation,
+        switchClinic,
       }}
     >
       {children}

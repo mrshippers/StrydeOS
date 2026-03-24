@@ -13,6 +13,8 @@ export interface UserDocument {
   status: UserStatus;
   firstLogin: boolean;
   tourCompleted: boolean;
+  /** Multi-site: additional clinic IDs this user can access (server-set only). */
+  allowedClinicIds?: string[];
   createdAt: string;
   updatedAt: string;
   createdBy: string;
@@ -32,6 +34,12 @@ export interface AuthUser {
   status: UserStatus;
   mfaEnrolled: boolean;
   clinicProfile: ClinicProfile | null;
+  /** Multi-site: all clinic IDs this user can access (includes primary clinicId). */
+  allowedClinicIds: string[];
+  /** Multi-site: the currently active clinic (may differ from primary clinicId). */
+  activeClinicId: string;
+  /** Multi-site: true when user has access to 2+ clinics. */
+  isMultiSite: boolean;
 }
 
 // ─── Clinic ──────────────────────────────────────────────────────────────────
