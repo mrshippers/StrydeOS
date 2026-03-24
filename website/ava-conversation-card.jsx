@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const B = {
   navy: "#0B2545", navyMid: "#132D5E",
@@ -10,7 +10,7 @@ const B = {
   muted: "#8A8780", mutedSoft: "#A8A49E", ink: "#2C2A26",
 };
 
-// --- Speech envelope: "stride clinical operating system" ---------------------
+// ——— Speech envelope —————————————————————————————————————————————————————————
 const SPEECH = [
   [0.00,0.03],[0.03,0.75],[0.08,0.88],[0.13,0.12],
   [0.18,0.06],
@@ -34,19 +34,29 @@ function envelope(t) {
   return 0.03;
 }
 
-// --- Monolith Mark -----------------------------------------------------------
+// ——— Monolith Mark (FIX #1: hover scale) —————————————————————————————————————
 function MonolithMark({ size = 44, glow = 0, playing, onClick }) {
   const id = useRef(`m-${Math.random().toString(36).slice(2, 8)}`).current;
+  const [hovered, setHovered] = useState(false);
   const g = 0.06 + glow * 0.28;
   const s = 1 + glow * 0.1;
+  const hoverScale = hovered && !playing ? 1.06 : 1;
 
   return (
-    <div onClick={onClick} title="Click to play" style={{
-      position: "relative", cursor: "pointer",
-      width: size + 22, height: size + 22,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      flexShrink: 0,
-    }}>
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title="Click to play"
+      style={{
+        position: "relative", cursor: "pointer",
+        width: size + 22, height: size + 22,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexShrink: 0,
+        transform: `scale(${hoverScale})`,
+        transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+      }}
+    >
       {/* Glow field */}
       <div style={{
         position: "absolute", inset: -4,
@@ -62,12 +72,15 @@ function MonolithMark({ size = 44, glow = 0, playing, onClick }) {
         position: "absolute",
         width: size + 10, height: size + 10,
         borderRadius: "50%",
-        border: `1px solid rgba(75,139,245,${0.08 + glow * 0.2})`,
-        transition: playing ? "border-color 0.06s linear" : "border-color 0.8s ease",
+        border: `1px solid rgba(75,139,245,${hovered ? 0.25 : 0.08 + glow * 0.2})`,
+        transition: playing ? "border-color 0.06s linear" : "all 0.4s ease",
         animation: playing ? "none" : "idleBreathe 4s ease-in-out infinite",
       }} />
 
-      <svg width={size} height={size} viewBox="0 0 100 100" fill="none" style={{ position: "relative", zIndex: 1, filter: `drop-shadow(0 0 ${4 + glow * 12}px rgba(75,139,245,${0.1 + glow * 0.2}))` }}>
+      <svg width={size} height={size} viewBox="0 0 100 100" fill="none" style={{
+        position: "relative", zIndex: 1,
+        filter: `drop-shadow(0 0 ${4 + glow * 12}px rgba(75,139,245,${0.1 + glow * 0.2}))`,
+      }}>
         <defs>
           <linearGradient id={`${id}-c`} x1=".1" y1="0" x2=".85" y2="1"><stop offset="0%" stopColor="#2E6BFF" stopOpacity=".58"/><stop offset="100%" stopColor="#091D3E" stopOpacity=".72"/></linearGradient>
           <radialGradient id={`${id}-r`} cx="28%" cy="24%" r="60%"><stop offset="0%" stopColor="#6AABFF" stopOpacity=".42"/><stop offset="100%" stopColor="#1C54F2" stopOpacity="0"/></radialGradient>
@@ -93,124 +106,142 @@ function MonolithMark({ size = 44, glow = 0, playing, onClick }) {
   );
 }
 
-// --- PS4 Cinematic Waveform --------------------------------------------------
-function Wave({ playing, progress, width = 420, height = 52 }) {
+// ——— PS4 Cinematic Waveform (FIX #5: ref-based progress) —————————————————————
+function Wave({ playingRef, progressRef, width = 420, height = 52 }) {
   const canvasRef = useRef(null);
   const frame = useRef(0);
   const t = useRef(0);
 
-  const draw = useCallback(() => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-    const ctx = cvs.getContext("2d");
-    const dpr = window.devicePixelRatio || 1;
-    const w = width * dpr, h = height * dpr;
-    cvs.width = w; cvs.height = h;
-    ctx.clearRect(0, 0, w, h);
-
-    t.current += 0.008;
-    const time = t.current;
-    const cy = h / 2;
-
-    const globalAmp = playing
-      ? 0.25 + envelope(progress) * 0.75
-      : 0.1 + Math.sin(time * 0.5) * 0.05;
-
-    // --- Radial pulse sweep ---
-    const pulsePos = playing
-      ? (progress * 1.4 - 0.2)
-      : (time * 0.12) % 1.6 - 0.3;
-    const pulseWidth = 0.18;
-
-    // --- Draw waves ---
-    const layers = [
-      { freq: 1.1, phase: 0, speed: 0.4, amp: 0.9, r: 75, g: 139, b: 245, baseA: 0.04, activeA: 0.14, w: 2.8 },
-      { freq: 1.7, phase: 2.1, speed: -0.25, amp: 0.6, r: 46, g: 107, b: 255, baseA: 0.05, activeA: 0.18, w: 2.2 },
-      { freq: 0.8, phase: 4.2, speed: 0.3, amp: 1.0, r: 75, g: 139, b: 245, baseA: 0.06, activeA: 0.22, w: 3.5 },
-    ];
-
-    layers.forEach(l => {
-      ctx.beginPath();
-      const alpha = l.baseA + globalAmp * l.activeA;
-      ctx.strokeStyle = `rgba(${l.r},${l.g},${l.b},${alpha})`;
-      ctx.lineWidth = l.w * dpr;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      const pts = [];
-      for (let x = 0; x <= w; x += 3) {
-        const nx = x / w;
-        const edge = Math.pow(Math.sin(nx * Math.PI), 1.5);
-        const speechMod = playing ? (0.3 + envelope(nx) * 0.7) : 1;
-        const amp = globalAmp * l.amp * edge * speechMod;
-
-        const y = cy +
-          Math.sin(nx * Math.PI * 2 * l.freq + l.phase + time * l.speed * 3) * (h * 0.32 * amp) +
-          Math.sin(nx * Math.PI * 1.3 + l.phase * 0.7 + time * l.speed * 1.6) * (h * 0.14 * amp);
-
-        pts.push([x, y]);
-        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      ctx.beginPath();
-      pts.forEach(([px, py], i) => i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py));
-      ctx.lineTo(w, cy);
-      ctx.lineTo(0, cy);
-      ctx.closePath();
-      ctx.fillStyle = `rgba(${l.r},${l.g},${l.b},${alpha * 0.1})`;
-      ctx.fill();
-    });
-
-    // --- Lightning pulse ---
-    const pulseCenter = pulsePos * w;
-    const pulseR = pulseWidth * w;
-
-    if (pulsePos > -0.2 && pulsePos < 1.2) {
-      const grad = ctx.createRadialGradient(pulseCenter, cy, 0, pulseCenter, cy, pulseR);
-      const pulseStrength = playing ? 0.12 + envelope(progress) * 0.15 : 0.04;
-      grad.addColorStop(0, `rgba(75, 139, 245, ${pulseStrength})`);
-      grad.addColorStop(0.4, `rgba(122, 187, 255, ${pulseStrength * 0.5})`);
-      grad.addColorStop(1, "rgba(75, 139, 245, 0)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
-
-      ctx.beginPath();
-      ctx.strokeStyle = `rgba(122, 187, 255, ${pulseStrength * 1.5})`;
-      ctx.lineWidth = 1.5 * dpr;
-      const coreSpread = pulseR * 0.6;
-      for (let x = Math.max(0, pulseCenter - coreSpread); x <= Math.min(w, pulseCenter + coreSpread); x += 2) {
-        const dx = (x - pulseCenter) / coreSpread;
-        const fade = 1 - dx * dx;
-        const coreY = cy + Math.sin(x / w * Math.PI * 3 + time * 2) * (h * 0.15 * globalAmp * fade);
-        if (x === Math.max(0, pulseCenter - coreSpread)) ctx.moveTo(x, coreY); else ctx.lineTo(x, coreY);
-      }
-      ctx.stroke();
-    }
-
-    frame.current = requestAnimationFrame(draw);
-  }, [playing, progress, width, height]);
-
   useEffect(() => {
+    const draw = () => {
+      const cvs = canvasRef.current;
+      if (!cvs) return;
+      const ctx = cvs.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const w = width * dpr, h = height * dpr;
+      cvs.width = w; cvs.height = h;
+      ctx.clearRect(0, 0, w, h);
+
+      t.current += 0.005;
+      const time = t.current;
+      const cy = h / 2;
+      const isPlaying = playingRef.current;
+      const progress = progressRef.current;
+
+      const globalAmp = isPlaying
+        ? 0.3 + envelope(progress) * 0.7
+        : 0.14 + Math.sin(time * 0.35) * 0.06;
+
+      const pulsePos = isPlaying
+        ? (progress * 1.4 - 0.2)
+        : (time * 0.08) % 1.6 - 0.3;
+      const pulseWidth = 0.22;
+
+      const layers = [
+        { freq: 0.7, phase: 0, speed: 0.25, amp: 1.0, r: 55, g: 120, b: 245, baseA: 0.06, activeA: 0.22, lw: 3.2 },
+        { freq: 1.2, phase: 1.8, speed: -0.18, amp: 0.7, r: 28, g: 84, b: 242, baseA: 0.08, activeA: 0.26, lw: 2.5 },
+        { freq: 0.5, phase: 3.6, speed: 0.2, amp: 1.1, r: 75, g: 139, b: 245, baseA: 0.08, activeA: 0.30, lw: 4.0 },
+      ];
+
+      layers.forEach(l => {
+        ctx.beginPath();
+        const alpha = l.baseA + globalAmp * l.activeA;
+        ctx.strokeStyle = `rgba(${l.r},${l.g},${l.b},${alpha})`;
+        ctx.lineWidth = l.lw * dpr;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        const pts = [];
+        for (let x = 0; x <= w; x += 3) {
+          const nx = x / w;
+          const edge = Math.pow(Math.sin(nx * Math.PI), 1.5);
+          const speechMod = isPlaying ? (0.3 + envelope(nx) * 0.7) : 1;
+          const amp = globalAmp * l.amp * edge * speechMod;
+          const y = cy +
+            Math.sin(nx * Math.PI * 2 * l.freq + l.phase + time * l.speed * 2.2) * (h * 0.38 * amp) +
+            Math.sin(nx * Math.PI * 0.9 + l.phase * 0.5 + time * l.speed * 1.1) * (h * 0.18 * amp);
+          pts.push([x, y]);
+          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.beginPath();
+        pts.forEach(([px, py], i) => i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py));
+        ctx.lineTo(w, cy);
+        ctx.lineTo(0, cy);
+        ctx.closePath();
+        ctx.fillStyle = `rgba(${l.r},${l.g},${l.b},${alpha * 0.15})`;
+        ctx.fill();
+      });
+
+      // Lightning pulse
+      const pulseCenter = pulsePos * w;
+      const pulseR = pulseWidth * w;
+
+      if (pulsePos > -0.2 && pulsePos < 1.2) {
+        const grad = ctx.createRadialGradient(pulseCenter, cy, 0, pulseCenter, cy, pulseR);
+        const pulseStrength = isPlaying ? 0.16 + envelope(progress) * 0.2 : 0.05;
+        grad.addColorStop(0, `rgba(55, 120, 245, ${pulseStrength})`);
+        grad.addColorStop(0.35, `rgba(100, 170, 255, ${pulseStrength * 0.6})`);
+        grad.addColorStop(1, "rgba(55, 120, 245, 0)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(100, 170, 255, ${pulseStrength * 1.8})`;
+        ctx.lineWidth = 1.8 * dpr;
+        const coreSpread = pulseR * 0.6;
+        for (let x = Math.max(0, pulseCenter - coreSpread); x <= Math.min(w, pulseCenter + coreSpread); x += 2) {
+          const dx = (x - pulseCenter) / coreSpread;
+          const fade = 1 - dx * dx;
+          const coreY = cy + Math.sin(x / w * Math.PI * 2.2 + time * 1.3) * (h * 0.18 * globalAmp * fade);
+          if (x === Math.max(0, pulseCenter - coreSpread)) ctx.moveTo(x, coreY); else ctx.lineTo(x, coreY);
+        }
+        ctx.stroke();
+      }
+
+      frame.current = requestAnimationFrame(draw);
+    };
+
     frame.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame.current);
-  }, [draw]);
+  }, [width, height]); // Only re-init on size change
 
   return <canvas ref={canvasRef} style={{ width, height, display: "block" }} />;
 }
 
-// --- Pill --------------------------------------------------------------------
+// ——— Mini Waveform (FIX #2: lightweight SVG, no canvas) ——————————————————————
+function MiniWave({ playing }) {
+  const bars = [0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 0.45, 0.75, 0.55, 0.85, 0.5, 0.7];
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 1.5, height: 14 }}>
+      {bars.map((h, i) => (
+        <div key={i} style={{
+          width: 2, borderRadius: 1,
+          backgroundColor: playing ? B.blueGlow : B.borderSoft,
+          height: `${h * 100}%`,
+          transition: "background-color 0.3s ease",
+          animation: playing
+            ? `miniPulse 1s ease-in-out ${i * 0.07}s infinite alternate`
+            : `miniIdle 4s ease-in-out ${i * 0.2}s infinite alternate`,
+        }} />
+      ))}
+    </div>
+  );
+}
+
+// ——— Pill ————————————————————————————————————————————————————————————————————
 function Pill({ children, variant = "default" }) {
   const s = {
-    accent: { bg: "rgba(28,84,242,0.05)", color: B.blue, border: "rgba(28,84,242,0.08)" },
-    connected: { bg: "rgba(5,150,105,0.05)", color: B.success, border: "rgba(5,150,105,0.08)" },
+    accent: { bg: "rgba(28,84,242,0.04)", color: B.blue, border: "rgba(28,84,242,0.07)" },
+    connected: { bg: "rgba(5,150,105,0.04)", color: B.success, border: "rgba(5,150,105,0.07)" },
   }[variant] || { bg: "rgba(0,0,0,0.02)", color: B.mutedSoft, border: B.borderSoft };
 
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 6,
-      padding: "5px 13px", borderRadius: 50,
-      fontSize: 12, fontWeight: 500, fontFamily: "'Outfit', sans-serif",
+      padding: "6px 10px", borderRadius: 50,
+      fontSize: 10, fontWeight: 500, fontFamily: "'Outfit', sans-serif",
       color: s.color, backgroundColor: s.bg,
       border: `1px solid ${s.border}`, lineHeight: 1,
     }}>
@@ -219,24 +250,38 @@ function Pill({ children, variant = "default" }) {
   );
 }
 
-// --- Main --------------------------------------------------------------------
+// ——— Main ————————————————————————————————————————————————————————————————————
 export default function AvaShowcase() {
   const [loaded, setLoaded] = useState(false);
   const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [glow, setGlow] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const [cardHover, setCardHover] = useState(false); // FIX #4
   const audioRef = useRef(null);
   const tickRef = useRef(null);
 
+  // Refs for canvas (FIX #5)
+  const playingRef = useRef(false);
+  const progressRef = useRef(0);
+
+  useEffect(() => { playingRef.current = playing; }, [playing]);
   useEffect(() => { requestAnimationFrame(() => setLoaded(true)); }, []);
 
+  // FIX #3 + #5: progress via refs, elapsed counter
   useEffect(() => {
-    if (!playing) { setProgress(0); setGlow(0); return; }
+    if (!playing) {
+      progressRef.current = 0;
+      setGlow(0);
+      setElapsed(0);
+      return;
+    }
     const start = Date.now(), dur = 3200;
     const tick = () => {
-      const p = ((Date.now() - start) % dur) / dur;
-      setProgress(p);
+      const ms = Date.now() - start;
+      const p = (ms % dur) / dur;
+      progressRef.current = p;
       setGlow(envelope(p));
+      setElapsed(Math.min(ms / 1000, 3.2));
       tickRef.current = requestAnimationFrame(tick);
     };
     tickRef.current = requestAnimationFrame(tick);
@@ -255,6 +300,8 @@ export default function AvaShowcase() {
     }
   };
 
+  const formatTime = (s) => `0:${String(Math.floor(s)).padStart(2, "0")}`;
+
   return (
     <>
       <style>{`
@@ -264,58 +311,101 @@ export default function AvaShowcase() {
           0%, 100% { transform: scale(1); opacity: 0.5; }
           50% { transform: scale(1.06); opacity: 1; }
         }
+        @keyframes miniPulse {
+          0% { transform: scaleY(0.5); }
+          100% { transform: scaleY(1); }
+        }
+        @keyframes miniIdle {
+          0% { transform: scaleY(0.6); opacity: 0.35; }
+          100% { transform: scaleY(1); opacity: 0.65; }
+        }
       `}</style>
 
       <audio ref={audioRef} preload="none">
-        <source src="/ava-demo.mp3" type="audio/mpeg" />
+        <source src="/audio/ava-intro.mp3" type="audio/mpeg" />
       </audio>
 
       <div className="ava-s" style={{
         fontFamily: "'Outfit', sans-serif",
         width: "100%", maxWidth: 520, margin: "0 auto",
       }}>
-        <div style={{
-          position: "relative",
-          backgroundColor: B.cloud,
-          borderRadius: 24,
-          padding: "30px 30px 26px",
-          border: `1px solid ${B.borderSoft}`,
-          boxShadow: `
-            0 1px 2px rgba(0,0,0,0.03),
-            0 4px 24px rgba(0,0,0,0.04),
-            0 12px 48px rgba(0,0,0,0.02)
-          `,
-          overflow: "hidden",
-          opacity: loaded ? 1 : 0,
-          transform: loaded ? "translateY(0)" : "translateY(10px)",
-          transition: "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}>
+        {/* FIX #4: card hover lift */}
+        <div
+          onMouseEnter={() => setCardHover(true)}
+          onMouseLeave={() => setCardHover(false)}
+          style={{
+            position: "relative",
+            backgroundColor: B.cloud,
+            borderRadius: 24,
+            padding: "30px 30px 22px",
+            border: `1px solid ${cardHover ? "rgba(255,255,255,0.6)" : B.borderSoft}`,
+            boxShadow: cardHover
+              ? `0 2px 4px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06), 0 16px 56px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.7)`
+              : `0 1px 2px rgba(0,0,0,0.03), 0 4px 24px rgba(0,0,0,0.04), 0 12px 48px rgba(0,0,0,0.02)`,
+            transform: cardHover ? "translateY(-2px)" : "translateY(0)",
+            overflow: "hidden",
+            opacity: loaded ? 1 : 0,
+            transition: "all 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+        >
 
-          {/* Minority Report gloss - top catch-light */}
+          {/* ——— PS5 Glass layers ——— */}
+
+          {/* Layer 1: Top catch-light */}
           <div style={{
             position: "absolute", top: 0, left: 0, right: 0,
-            height: 100,
-            background: "linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.15) 30%, transparent 100%)",
+            height: 110,
+            background: "linear-gradient(180deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0.06) 50%, transparent 100%)",
             borderRadius: "24px 24px 0 0",
             pointerEvents: "none",
           }} />
 
-          {/* Glass gloss - diagonal sheen through the full card */}
+          {/* Layer 2: Full diagonal sheen */}
           <div style={{
             position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-            background: "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.08) 100%)",
-            pointerEvents: "none",
-            borderRadius: 24,
+            background: `linear-gradient(
+              135deg,
+              rgba(255,255,255,0.4) 0%,
+              rgba(255,255,255,0.12) 20%,
+              rgba(255,255,255,0) 45%,
+              rgba(255,255,255,0) 55%,
+              rgba(255,255,255,0.06) 80%,
+              rgba(255,255,255,0.15) 100%
+            )`,
+            pointerEvents: "none", borderRadius: 24,
           }} />
 
-          {/* Subtle side sheen */}
+          {/* Layer 3: Radial light source */}
+          <div style={{
+            position: "absolute", top: -40, left: -40,
+            width: 280, height: 280, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(255,255,255,0.2), transparent 65%)",
+            pointerEvents: "none",
+          }} />
+
+          {/* Layer 4: Bottom edge reflection */}
+          <div style={{
+            position: "absolute", bottom: 0, left: 0, right: 0, height: 1,
+            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
+            pointerEvents: "none",
+          }} />
+
+          {/* Layer 5: Left edge sheen */}
           <div style={{
             position: "absolute", top: 0, left: 0, bottom: 0, width: 1,
-            background: "linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.1), transparent)",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.15), transparent)",
             pointerEvents: "none",
           }} />
 
-          {/* Avatar + Name */}
+          {/* Layer 6: Inner border highlight */}
+          <div style={{
+            position: "absolute", top: 1, left: 1, right: 1, bottom: 1,
+            borderRadius: 23,
+            border: "1px solid rgba(255,255,255,0.25)",
+            pointerEvents: "none",
+          }} />
+
+          {/* ——— Avatar + Name ——— */}
           <div style={{
             display: "flex", alignItems: "center", gap: 14, marginBottom: 18,
             position: "relative",
@@ -350,9 +440,13 @@ export default function AvaShowcase() {
             </div>
           </div>
 
-          {/* Pills */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 18, position: "relative" }}>
-            <Pill variant="accent">ElevenAgents</Pill>
+          {/* ——— Pills (FIX #6: Connected first) ——— */}
+          <div style={{
+            display: "flex", justifyContent: "center", gap: 5, marginBottom: 18, position: "relative",
+            maxWidth: "70%", margin: "0 auto 18px",
+            maskImage: "linear-gradient(90deg, transparent, black 12%, black 88%, transparent)",
+            WebkitMaskImage: "linear-gradient(90deg, transparent, black 12%, black 88%, transparent)",
+          }}>
             <Pill variant="connected">
               <span style={{
                 width: 7, height: 7, borderRadius: "50%",
@@ -362,9 +456,10 @@ export default function AvaShowcase() {
               }} />
               Connected
             </Pill>
+            <Pill variant="accent">ElevenAgents</Pill>
           </div>
 
-          {/* Waveform Bar */}
+          {/* ——— Waveform Bar ——— */}
           <div style={{
             padding: "8px 14px",
             borderRadius: 16,
@@ -373,8 +468,9 @@ export default function AvaShowcase() {
             display: "flex", alignItems: "center", justifyContent: "center",
             position: "relative",
             overflow: "hidden",
-            boxShadow: "inset 0 1px 3px rgba(0,0,0,0.02)",
+            boxShadow: "inset 0 1px 3px rgba(0,0,0,0.02), 0 1px 0 rgba(255,255,255,0.5)",
           }}>
+            {/* Inner glow when playing */}
             <div style={{
               position: "absolute", inset: 0,
               background: playing
@@ -385,32 +481,30 @@ export default function AvaShowcase() {
             }} />
 
             <Wave
-              playing={playing}
-              progress={progress}
+              playingRef={playingRef}
+              progressRef={progressRef}
               width={440}
               height={44}
             />
           </div>
 
-          {/* Duration + hint */}
+          {/* ——— Footer: mini wave + elapsed/duration + hint ——— */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
             paddingTop: 10, position: "relative",
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Wave
-                playing={playing}
-                progress={progress}
-                width={48}
-                height={16}
-              />
+            {/* FIX #2: lightweight SVG mini wave + FIX #3: elapsed counter */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <MiniWave playing={playing} />
               <span style={{
                 fontSize: 10, fontWeight: 400, color: B.mutedSoft,
                 fontVariantNumeric: "tabular-nums",
+                minWidth: 30,
               }}>
-                1:42
+                {playing ? formatTime(elapsed) : "1:42"}
               </span>
             </div>
+
             <span style={{
               fontSize: 10, fontWeight: 400, color: B.mutedSoft,
               opacity: playing ? 0 : 0.6,
