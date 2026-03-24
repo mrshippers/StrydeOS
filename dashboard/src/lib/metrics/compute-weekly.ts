@@ -53,10 +53,12 @@ interface AppointmentLike {
 }
 
 interface PatientLike {
+  id: string;
   clinicianId: string;
   sessionCount: number;
   courseLength: number;
   discharged: boolean;
+  insuranceFlag?: boolean;
 }
 
 interface ReviewLike {
@@ -104,6 +106,30 @@ function aggregateWeek(
     0
   );
   const revenuePerSessionPence = total > 0 ? Math.round(revenueTotal / total) : 0;
+
+  // Revenue by appointment type — PBB: "The industry is addicted to busyness over value"
+  // This breaks revenue down so owners can see where margin comes from (IA vs FU vs review)
+  const revenueByAppointmentType: Record<string, number> = {};
+  for (const a of completed) {
+    const type = a.appointmentType ?? "unknown";
+    revenueByAppointmentType[type] = (revenueByAppointmentType[type] ?? 0) + (a.revenueAmountPence ?? 0);
+  }
+
+  // Insurance vs self-pay revenue split — PBB: "PMI clinics: 83% more revenue but 5pp lower margin"
+  // Tracks the revenue mix so owners can see their insurance dependency
+  const patientInsuranceMap = new Map(
+    patients.map((p) => [p.id, !!p.insuranceFlag])
+  );
+  let insuranceRevenuePence = 0;
+  let selfPayRevenuePence = 0;
+  for (const a of completed) {
+    const revenue = a.revenueAmountPence ?? 0;
+    if (a.patientId && patientInsuranceMap.get(a.patientId)) {
+      insuranceRevenuePence += revenue;
+    } else {
+      selfPayRevenuePence += revenue;
+    }
+  }
 
   // HEP compliance: patients given a programme / total patients seen
   const relevantPatients = patients.filter((p) =>
@@ -197,6 +223,9 @@ function aggregateWeek(
     dnaRate,
     courseCompletionRate,
     revenuePerSessionPence,
+    revenueByAppointmentType,
+    insuranceRevenuePence,
+    selfPayRevenuePence,
     appointmentsTotal: total,
     initialAssessments,
     followUps,
@@ -243,10 +272,12 @@ export async function computeWeeklyMetricsForClinic(
   const patients: PatientLike[] = patientsSnap.docs.map((d) => {
     const data = d.data();
     return {
+      id: d.id,
       clinicianId: data.clinicianId ?? "",
       sessionCount: data.sessionCount ?? 0,
       courseLength: data.courseLength ?? 6,
       discharged: data.discharged ?? false,
+      insuranceFlag: data.insuranceFlag ?? false,
     };
   });
 
