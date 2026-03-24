@@ -31,6 +31,15 @@ function getAdminApp(): App {
   )?.trim();
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
   const rawKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  // CI / next build: no real credentials available. Return a stub app so the
+  // build completes (API routes are never called during page data collection).
+  const isBuild = process.env.CI === "true" || process.env.NEXT_PHASE === "phase-production-build";
+  if (isBuild && (!clientEmail || !rawKey)) {
+    console.warn("[firebase-admin] CI/build detected without credentials — using stub app");
+    _app = initializeApp({ projectId: projectId || "ci-placeholder" });
+    return _app;
+  }
   // Handle all common Vercel private key formats:
   // - JSON-encoded with literal \n  → replace \\n with real newlines
   // - Double-escaped \\n            → same regex catches it
