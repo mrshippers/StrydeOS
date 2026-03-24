@@ -46,5 +46,5 @@ export const PIPELINE_DOC_ID = "pipeline";
 export const REVIEWS_DOC_ID = "google_reviews";
 
 export const DEFAULT_COURSE_LENGTH = 6;
-export const BACKFILL_WEEKS = 13; // ~90 days
+export const BACKFILL_WEEKS = 26; // ~6 months — PBB: "You cannot navigate using data that is 12 months old"
 export const INCREMENTAL_WEEKS = 4; // ~28 days

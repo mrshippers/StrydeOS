@@ -83,9 +83,30 @@ export async function syncAppointments(
     };
 
     const weeks = options.backfill ? BACKFILL_WEEKS : INCREMENTAL_WEEKS;
-    const { dateFrom, dateTo } = getDateRange(weeks);
 
-    const pmsAppointments = await adapter.getAppointments({ dateFrom, dateTo });
+    // For backfill (26 weeks), chunk into 4-week windows to respect PMS rate limits.
+    // For incremental syncs, single request is fine.
+    const CHUNK_WEEKS = 4;
+    let pmsAppointments: Awaited<ReturnType<typeof adapter.getAppointments>> = [];
+
+    if (options.backfill && weeks > CHUNK_WEEKS) {
+      const totalChunks = Math.ceil(weeks / CHUNK_WEEKS);
+      for (let i = 0; i < totalChunks; i++) {
+        const chunkWeeks = Math.min(CHUNK_WEEKS, weeks - i * CHUNK_WEEKS);
+        const chunkEnd = new Date();
+        chunkEnd.setDate(chunkEnd.getDate() - i * CHUNK_WEEKS * 7);
+        const chunkStart = new Date(chunkEnd);
+        chunkStart.setDate(chunkStart.getDate() - chunkWeeks * 7);
+        const chunk = await adapter.getAppointments({
+          dateFrom: chunkStart.toISOString().split("T")[0],
+          dateTo: chunkEnd.toISOString().split("T")[0],
+        });
+        pmsAppointments = pmsAppointments.concat(chunk);
+      }
+    } else {
+      const { dateFrom, dateTo } = getDateRange(weeks);
+      pmsAppointments = await adapter.getAppointments({ dateFrom, dateTo });
+    }
 
     // Track per-patient earliest appointment to detect first visits
     const patientFirstSeen = new Map<string, string>();
