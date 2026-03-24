@@ -948,7 +948,7 @@ const Hero = ({ darkMode }) => {
             </h1>
 
             <p style={{ fontSize: 18, lineHeight: 1.7, color: muted, marginBottom: 20, maxWidth: 540 }}>
-              Higher conversion from first touchpoint. Improved treatment continuity. Better visibility on profit drivers. Precision where it counts.
+              You know your clinic could do more. You just can't see where the gaps are.
             </p>
             <div style={{ height: 20 }} />
 
