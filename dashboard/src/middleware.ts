@@ -16,7 +16,7 @@ const PROTECTED_PREFIXES = [
 ];
 
 // Routes that authenticated users should NOT see (redirect to /dashboard)
-const AUTH_REDIRECT_PATHS = ["/login", "/trial"];
+const AUTH_REDIRECT_PATHS = ["/login"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

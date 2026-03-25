@@ -183,16 +183,9 @@ function hexToRgba(hex: string, alpha: number): string {
 
 export default function TrialPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   const [selected, setSelected] = useState<ModuleId | null>(null);
   const [hoveredModule, setHoveredModule] = useState<ModuleId | null>(null);
-
-  // Already authenticated — you have an account, go to dashboard
-  useEffect(() => {
-    if (!loading && user) {
-      router.replace("/dashboard");
-    }
-  }, [loading, user, router]);
 
   const handleStart = () => {
     if (!selected) return;
@@ -201,8 +194,8 @@ export default function TrialPage() {
     router.push(`/login?mode=signup&next=${next}&module=${selected}`);
   };
 
-  // Show nothing while checking auth or redirecting
-  if (loading || user) {
+  // Show spinner only while auth is loading (page renders for everyone)
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: C.cream }}>
         <div className="animate-spin rounded-full h-6 w-6 border-2 border-transparent" style={{ borderTopColor: C.blue }} />
@@ -390,18 +383,10 @@ export default function TrialPage() {
                   </AnimatePresence>
 
                   <div className="flex items-start gap-4">
-                    <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                      style={{
-                        background:
-                          isSelected && isFullStack
-                            ? hexToRgba(C.blue, 0.2)
-                            : hexToRgba(accent, 0.1),
-                      }}
-                    >
+                    <div className="w-11 h-11 shrink-0">
                       <ModuleIcon
                         color={isSelected && isFullStack ? C.blueGlow : accent}
-                        size={22}
+                        size={44}
                       />
                     </div>
 
