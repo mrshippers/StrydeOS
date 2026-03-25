@@ -76,9 +76,16 @@ export async function GET(request: NextRequest) {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
 
-    const clinicId = user.clinicId;
-    if (!clinicId && user.role !== "superadmin") {
-      return NextResponse.json({ error: "No clinic" }, { status: 400 });
+    // Superadmin can optionally pass ?clinicId= to scope the query
+    const queryClinicId =
+      new URL(request.url).searchParams.get("clinicId") ?? undefined;
+    const clinicId = queryClinicId ?? user.clinicId;
+
+    if (!clinicId) {
+      return NextResponse.json(
+        { error: "clinicId is required (pass as query param or have one on your account)" },
+        { status: 400 }
+      );
     }
 
     const db = getAdminDb();

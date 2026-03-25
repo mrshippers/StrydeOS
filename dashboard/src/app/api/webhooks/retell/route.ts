@@ -41,7 +41,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    const event = JSON.parse(rawBody) as RetellWebhookEvent;
+    let event: RetellWebhookEvent;
+    try {
+      event = JSON.parse(rawBody) as RetellWebhookEvent;
+    } catch {
+      return NextResponse.json({ error: "Malformed JSON body" }, { status: 400 });
+    }
     const { call } = event;
 
     if (!call?.call_id) {
