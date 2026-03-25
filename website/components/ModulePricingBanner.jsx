@@ -63,6 +63,7 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
   const m = MODULE_META[module] || MODULE_META.ava;
   const price = PRICING[tier][module];
   const setup = SETUP[tier][module];
+  const trialUrl = `https://portal.strydeos.com/trial`;
   const checkoutBase = `https://portal.strydeos.com/checkout?plan=${module}-${tier}`;
 
   return (
@@ -128,7 +129,7 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
 
           {/* CTAs */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
-            <a href={checkoutBase} target="_blank" rel="noopener"
+            <a href={trialUrl} target="_blank" rel="noopener"
               onMouseEnter={() => setPrimaryHover(true)} onMouseLeave={() => setPrimaryHover(false)}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 30px", borderRadius: 50,

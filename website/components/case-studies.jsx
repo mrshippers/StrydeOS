@@ -149,7 +149,7 @@ export default function CaseStudiesPage() {
 
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: muted, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-              Case Study · March 2026
+              Blog · March 2026
             </span>
             <BrightnessStackToggle
               size={16}
@@ -171,13 +171,13 @@ export default function CaseStudiesPage() {
             borderRadius: 50, background: `${C.blue}12`, border: `1px solid ${C.blue}25`,
             color: C.blue, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em",
             textTransform: "uppercase", marginBottom: 24,
-          }}>Case Study</div>
+          }}>Blog</div>
 
           <h1 className="serif" style={{
             fontSize: 52, color: head, fontWeight: 400, lineHeight: 1.08,
             maxWidth: 720, marginBottom: 28,
           }}>
-            How a Notting Hill Physio Clinic Improved Clinician Performance in 6 Weeks
+            Our Pilot Clinic Reduced VA Costs by £470/Month and Improved Follow-Up Rate by 32%
           </h1>
 
           <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 0 }}>

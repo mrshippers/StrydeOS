@@ -139,7 +139,11 @@ function LoginPageInner() {
         // localStorage unavailable
       }
       setSuccess(true);
-      setTimeout(() => router.push("/onboarding"), 800);
+      const next = searchParams.get("next");
+      const dest = next && next.startsWith("/") && !next.startsWith("//")
+        ? next
+        : "/onboarding";
+      setTimeout(() => router.push(dest), 800);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);

@@ -1038,7 +1038,7 @@ const Hero = ({ darkMode }) => {
             <div style={{ height: 20 }} />
 
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 52 }}>
-              <a href="https://portal.strydeos.com/login?mode=signup" className="btn-primary">
+              <a href="https://portal.strydeos.com/trial" className="btn-primary">
                 Start free trial
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </a>
@@ -2206,7 +2206,7 @@ const Results = () => {
           Results
         </div>
         <h2 className="serif section-h2" style={{ fontSize: 44, color: "white", fontWeight: 400, lineHeight: 1.1 }}>
-          Measured improvements that are more than theory.
+          What changes when you can see the numbers.
         </h2>
       </div>
       </AnimIn>
@@ -2214,10 +2214,10 @@ const Results = () => {
       <AnimIn delay={150}>
       <div className="results-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 48 }}>
         {[
-          { stat: "34%→8%", label: "Missed call rate", note: "Pilot clinic data" },
-          { stat: "74%", label: "Course completion rate", note: "vs ~55% typical" },
-          { stat: "£480/mo", label: "Saved on call-handling", note: "vs outsourced reception" },
-          { stat: "28 days", label: "Average payback period", note: "Intelligence module" },
+          { stat: "34%→8%", label: "Missed call rate", note: "Modelled · pilot clinic data" },
+          { stat: "74%", label: "Course completion rate", note: "Modelled · vs ~55% typical" },
+          { stat: "£480/mo", label: "Saved on call-handling", note: "Modelled · vs outsourced reception" },
+          { stat: "28 days", label: "Average payback period", note: "Modelled · Intelligence module" },
         ].map(({ stat, label, note }) => (
           <div key={label} style={{
             background: "rgba(255,255,255,0.05)", borderRadius: 18, padding: "28px 24px",
@@ -2357,7 +2357,7 @@ const ROICalc = ({ darkMode }) => {
                   </div>
                 </div>
 
-                <a href="https://portal.strydeos.com/login?mode=signup" className="btn-primary" style={{ width: "100%", justifyContent: "center", borderRadius: 14 }}>
+                <a href="https://portal.strydeos.com/trial" className="btn-primary" style={{ width: "100%", justifyContent: "center", borderRadius: 14 }}>
                   Start free trial →
                 </a>
               </div>
@@ -2389,7 +2389,7 @@ const getPricing = (tier, billing) => {
 };
 const TIER_OPTIONS = [
   { id: "solo", label: "Solo", sub: "1 clinician" },
-  { id: "studio", label: "Studio", sub: "2\u20134 clinicians" },
+  { id: "studio", label: "Studio", sub: "2\u20135 clinicians" },
   { id: "clinic", label: "Clinic", sub: "6+ clinicians" },
 ];
 const PRICING_MODULES = [
@@ -2586,7 +2586,7 @@ const PricingCard = ({ mod, price, billing, tier, darkMode }) => {
       </div>
 
       <a
-        href={`https://portal.strydeos.com/checkout?plan=${mod.name.toLowerCase()}-${tier}`}
+        href={`https://portal.strydeos.com/checkout?plan=${mod.name.toLowerCase()}-${tier}&billing=now`}
         target="_blank"
         rel="noopener noreferrer"
         style={{
@@ -2609,7 +2609,7 @@ const FullStackBanner = ({ tier, billing, darkMode }) => {
   const p = getPricing(tier, billing);
   return (
     <a
-      href={`https://portal.strydeos.com/checkout?plan=fullstack-${tier}`}
+      href={`https://portal.strydeos.com/checkout?plan=fullstack-${tier}&billing=now`}
       target="_blank"
       rel="noopener noreferrer"
       onMouseEnter={() => setH(true)}
@@ -3182,7 +3182,7 @@ const EarlyAccess = () => (
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-        <a href="https://portal.strydeos.com/login?mode=signup" className="btn-primary" style={{ fontSize: 16, padding: "16px 44px" }}>
+        <a href="https://portal.strydeos.com/trial" className="btn-primary" style={{ fontSize: 16, padding: "16px 44px" }}>
           Start free trial →
         </a>
         <div style={{ display: "flex", gap: 24 }}>
@@ -3235,7 +3235,7 @@ const Footer = () => (
             ]},
             { h: "Company", links: [
               { label: "About", href: "#about" },
-              { label: "Case Studies", href: "/case-studies" },
+              { label: "Blog", href: "/case-studies" },
               { label: "Pricing", href: "#pricing" },
               { label: "FAQ", href: "/faq" },
               { label: "Contact", href: "/contact" },

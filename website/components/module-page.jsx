@@ -12,6 +12,13 @@ const C = {
   ink: "#111827", muted: "#6B7280", success: "#059669", border: "#E2DFDA",
 };
 
+const hexToRgba = (hex, alpha) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+};
+
 /* ── Monolith Mark (canonical — unique IDs per instance) ── */
 let _mmId = 0;
 const _uid = (p) => `${p}-${++_mmId}`;
@@ -149,7 +156,7 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
 
         {/* Hero */}
         <section style={{ padding: "140px 24px 80px", maxWidth: 900, margin: "0 auto" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 50, background: `${color}15`, border: `1px solid ${color}25`, color, fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 20 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 50, background: hexToRgba(color, 0.08), border: `1px solid ${hexToRgba(color, 0.15)}`, color, fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 20 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
             {name}
           </div>
@@ -166,7 +173,7 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color, marginBottom: 16 }}>How It Works</div>
               {howItWorks.map((item, i) => (
                 <div key={i} style={{ display: "flex", gap: 12, marginBottom: 14 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: "50%", background: `${color}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color, flexShrink: 0 }}>{i + 1}</div>
+                  <div style={{ width: 24, height: 24, borderRadius: "50%", background: hexToRgba(color, 0.08), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color, flexShrink: 0 }}>{i + 1}</div>
                   <div style={{ fontSize: 14, color: txt, lineHeight: 1.55 }}>{item}</div>
                 </div>
               ))}
@@ -175,7 +182,7 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color, marginBottom: 16 }}>Key Benefits</div>
               {benefits.map((item, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" fill={`${color}15`}/><path d="M4.5 7.5l2 2 4-4" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" fill={hexToRgba(color, 0.08)}/><path d="M4.5 7.5l2 2 4-4" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   <span style={{ fontSize: 14, color: txt }}>{item}</span>
                 </div>
               ))}
@@ -250,7 +257,7 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
                   <button key={k} onClick={() => setTier(k)} style={{
                     padding: "8px 20px", border: "none", cursor: "pointer", borderRadius: 50,
                     fontFamily: "'Outfit',sans-serif", fontSize: 13, fontWeight: 600,
-                    background: tier === k ? C.blue : (darkMode ? "rgba(255,255,255,0.06)" : `${C.blue}08`),
+                    background: tier === k ? C.blue : (darkMode ? "rgba(255,255,255,0.06)" : hexToRgba(C.blue, 0.03)),
                     color: tier === k ? "white" : muted,
                     transition: "all 0.25s",
                   }}>{tierLabels[k]}</button>

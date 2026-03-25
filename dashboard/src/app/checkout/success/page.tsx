@@ -23,7 +23,7 @@ export default function CheckoutSuccessPage() {
   }, []);
 
   useEffect(() => {
-    if (ready) router.replace("/onboarding");
+    if (ready) router.replace("/dashboard");
   }, [ready, router]);
 
   return (

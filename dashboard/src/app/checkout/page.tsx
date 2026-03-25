@@ -32,6 +32,13 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 function parsePlan(raw: string | null): { product: ProductKey; tier: TierKey } | null {
   if (!raw) return null;
   const parts = raw.split("-");
@@ -336,8 +343,8 @@ function CheckoutInner() {
                 <div
                   className="w-11 h-11 rounded-xl flex items-center justify-center"
                   style={{
-                    background: `${meta.color}25`,
-                    border: `1px solid ${meta.color}40`,
+                    background: hexToRgba(meta.color, 0.15),
+                    border: `1px solid ${hexToRgba(meta.color, 0.25)}`,
                   }}
                 >
                   <Icon size={20} style={{ color: meta.color }} />
