@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  BarChart3,
-  Phone,
-  RefreshCw,
-  Layers,
   Check,
   ArrowRight,
   Shield,
@@ -16,6 +13,44 @@ import {
   Zap,
 } from "lucide-react";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
+
+// ─── Module icon — mini Monolith mark tinted to module colour ───────────────
+
+function ModuleIcon({ color, size = 22 }: { color: string; size?: number }) {
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+  const light = `rgba(${Math.min(r + 80, 255)},${Math.min(g + 80, 255)},${Math.min(b + 80, 255)},0.58)`;
+  const dark = `rgba(${Math.max(r - 60, 0)},${Math.max(g - 60, 0)},${Math.max(b - 60, 0)},0.72)`;
+
+  const id = `mi-${color.replace("#", "")}`;
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" role="img">
+      <defs>
+        <linearGradient id={`${id}-c`} x1="0.1" y1="0" x2="0.85" y2="1">
+          <stop offset="0%" stopColor={light} />
+          <stop offset="100%" stopColor={dark} />
+        </linearGradient>
+        <linearGradient id={`${id}-t`} x1="0.05" y1="1" x2="0.35" y2="0">
+          <stop offset="0%" stopColor="white" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="white" stopOpacity="0.97" />
+        </linearGradient>
+        <clipPath id={`${id}-p`}><rect x="35" y="20" width="22" height="60" rx="5" /></clipPath>
+        <clipPath id={`${id}-a`}><polygon points="35,52 57,40 57,20 35,20" /></clipPath>
+      </defs>
+      <rect width="100" height="100" rx="24" fill={`url(#${id}-c)`} />
+      <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07" />
+      <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10" />
+      <g clipPath={`url(#${id}-p)`}>
+        <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </g>
+      <rect x="35" y="20" width="22" height="60" rx="5" fill={`url(#${id}-t)`} clipPath={`url(#${id}-a)`} />
+      <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 // ─── Brand tokens ────────────────────────────────────────────────────────────
 
@@ -43,7 +78,6 @@ interface ModuleDef {
   name: string;
   tagline: string;
   color: string;
-  icon: typeof BarChart3;
   features: string[];
   startingAt: string;
 }
@@ -54,7 +88,6 @@ const MODULES: ModuleDef[] = [
     name: "Intelligence",
     tagline: "Clinical performance dashboard",
     color: C.purple,
-    icon: BarChart3,
     features: [
       "Per-clinician KPI dashboard",
       "90-day rolling trends & alerts",
@@ -70,7 +103,6 @@ const MODULES: ModuleDef[] = [
     name: "Ava",
     tagline: "AI voice receptionist",
     color: C.blue,
-    icon: Phone,
     features: [
       "24/7 AI inbound call handling",
       "Direct calendar booking",
@@ -86,7 +118,6 @@ const MODULES: ModuleDef[] = [
     name: "Pulse",
     tagline: "Patient retention engine",
     color: C.teal,
-    icon: RefreshCw,
     features: [
       "Automated rebooking reminders",
       "HEP adherence nudges",
@@ -102,7 +133,6 @@ const MODULES: ModuleDef[] = [
     name: "Full Stack",
     tagline: "All three modules — one platform",
     color: C.navy,
-    icon: Layers,
     features: [
       "Everything in Intelligence",
       "Everything in Ava",
@@ -153,8 +183,16 @@ function hexToRgba(hex: string, alpha: number): string {
 
 export default function TrialPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [selected, setSelected] = useState<ModuleId | null>(null);
   const [hoveredModule, setHoveredModule] = useState<ModuleId | null>(null);
+
+  // Already authenticated — you have an account, go to dashboard
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace("/dashboard");
+    }
+  }, [loading, user, router]);
 
   const handleStart = () => {
     if (!selected) return;
@@ -162,6 +200,15 @@ export default function TrialPage() {
     const next = encodeURIComponent("/onboarding");
     router.push(`/login?mode=signup&next=${next}&module=${selected}`);
   };
+
+  // Show nothing while checking auth or redirecting
+  if (loading || user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: C.cream }}>
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-transparent" style={{ borderTopColor: C.blue }} />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -352,12 +399,9 @@ export default function TrialPage() {
                             : hexToRgba(accent, 0.1),
                       }}
                     >
-                      <mod.icon
+                      <ModuleIcon
+                        color={isSelected && isFullStack ? C.blueGlow : accent}
                         size={22}
-                        style={{
-                          color:
-                            isSelected && isFullStack ? C.blueGlow : accent,
-                        }}
                       />
                     </div>
 

@@ -15,15 +15,43 @@ const PROTECTED_PREFIXES = [
   "/compliance",
 ];
 
+// Routes that authenticated users should NOT see (redirect to /dashboard)
+const AUTH_REDIRECT_PATHS = ["/login", "/trial"];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const session = request.cookies.get("__session")?.value;
 
+  // ── Authenticated users hitting login/trial → bounce to dashboard ──
+  const isAuthRedirect = AUTH_REDIRECT_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(p + "/")
+  );
+  if (isAuthRedirect && session) {
+    // Demo users can access these pages (demo is a lightweight session)
+    if (session === "demo") return NextResponse.next();
+
+    const payload = await verifySession(session);
+    if (payload) {
+      // Valid session — skip login/trial, go straight to dashboard
+      // Preserve ?next param from /login if present
+      const next = request.nextUrl.searchParams.get("next");
+      const dest = next && next.startsWith("/") && !next.startsWith("//")
+        ? next
+        : "/dashboard";
+      return NextResponse.redirect(new URL(dest, request.url));
+    }
+    // Invalid/expired session — clear it and let them through to login/trial
+    const response = NextResponse.next();
+    response.cookies.set("__session", "", { path: "/", maxAge: 0 });
+    return response;
+  }
+
+  // ── Protected routes → require valid session ──
   const isProtected = PROTECTED_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
   if (!isProtected) return NextResponse.next();
 
-  const session = request.cookies.get("__session")?.value;
   if (!session) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);

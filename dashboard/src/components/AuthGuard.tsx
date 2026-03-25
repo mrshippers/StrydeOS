@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { brand } from "@/lib/brand";
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/trial"];
 const MFA_EXEMPT_PATHS = ["/login", "/mfa-setup"];
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {

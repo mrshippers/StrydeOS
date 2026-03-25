@@ -9,10 +9,6 @@ import {
   Check,
   CreditCard,
   AlertCircle,
-  Sparkles,
-  BarChart3,
-  Phone,
-  RefreshCw,
   ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +23,47 @@ import {
   type TierKey,
   type BillingInterval,
 } from "@/lib/billing";
+
+// ---------------------------------------------------------------------------
+// Module icon — mini Monolith mark in module colour
+// ---------------------------------------------------------------------------
+
+function ModuleIcon({ color, size = 20 }: { color: string; size?: number }) {
+  // Derive lighter/darker shades from the hex colour
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+  const light = `rgba(${Math.min(r + 80, 255)},${Math.min(g + 80, 255)},${Math.min(b + 80, 255)},0.58)`;
+  const dark = `rgba(${Math.max(r - 60, 0)},${Math.max(g - 60, 0)},${Math.max(b - 60, 0)},0.72)`;
+
+  const id = `mi-${color.replace("#", "")}`;
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" role="img">
+      <defs>
+        <linearGradient id={`${id}-c`} x1="0.1" y1="0" x2="0.85" y2="1">
+          <stop offset="0%" stopColor={light} />
+          <stop offset="100%" stopColor={dark} />
+        </linearGradient>
+        <linearGradient id={`${id}-t`} x1="0.05" y1="1" x2="0.35" y2="0">
+          <stop offset="0%" stopColor="white" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="white" stopOpacity="0.97" />
+        </linearGradient>
+        <clipPath id={`${id}-p`}><rect x="35" y="20" width="22" height="60" rx="5" /></clipPath>
+        <clipPath id={`${id}-a`}><polygon points="35,52 57,40 57,20 35,20" /></clipPath>
+      </defs>
+      <rect width="100" height="100" rx="24" fill={`url(#${id}-c)`} />
+      <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07" />
+      <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10" />
+      <g clipPath={`url(#${id}-p)`}>
+        <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </g>
+      <rect x="35" y="20" width="22" height="60" rx="5" fill={`url(#${id}-t)`} clipPath={`url(#${id}-a)`} />
+      <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -55,14 +92,13 @@ function parsePlan(raw: string | null): { product: ProductKey; tier: TierKey } |
 
 const MODULE_META: Record<
   ProductKey,
-  { name: string; icon: typeof BarChart3; color: string; description: string; features: string[] }
+  { name: string; color: string; description: string; features: string[] }
 > = {
   intelligence: {
     name: "Intelligence",
-    icon: BarChart3,
     color: "#8B5CF6",
     description:
-      "Clinical performance dashboard — 8 validated KPIs, revenue analytics, outcome measures, DNA analysis, and reputation tracking.",
+      "Clinical performance dashboard — 6 validated KPIs, revenue analytics, outcome measures, DNA analysis, and reputation tracking.",
     features: [
       "Per-clinician KPI dashboard",
       "90-day rolling trends & alerts",
@@ -74,7 +110,6 @@ const MODULE_META: Record<
   },
   ava: {
     name: "Ava",
-    icon: Phone,
     color: "#1C54F2",
     description:
       "AI voice receptionist powered by ElevenLabs. Handles inbound calls 24/7, books appointments, and logs all interactions.",
@@ -89,7 +124,6 @@ const MODULE_META: Record<
   },
   pulse: {
     name: "Pulse",
-    icon: RefreshCw,
     color: "#0891B2",
     description:
       "Patient retention engine. Automated rebooking sequences, HEP reminders, churn risk detection, and comms log.",
@@ -104,7 +138,6 @@ const MODULE_META: Record<
   },
   fullstack: {
     name: "Full Stack",
-    icon: Sparkles,
     color: "#1C54F2",
     description:
       "Intelligence + Ava + Pulse — the complete clinical performance platform. Everything StrydeOS offers, in one plan.",
@@ -288,7 +321,6 @@ function CheckoutInner() {
   // ------ Main checkout UI ------
 
   const meta = MODULE_META[parsed.product];
-  const Icon = meta.icon;
   const tierLabel = TIER_LABELS[parsed.tier];
   const price = MODULE_PRICING[parsed.product][parsed.tier][interval];
   const showAvaSetup =
@@ -347,7 +379,7 @@ function CheckoutInner() {
                     border: `1px solid ${hexToRgba(meta.color, 0.25)}`,
                   }}
                 >
-                  <Icon size={20} style={{ color: meta.color }} />
+                  <ModuleIcon color={meta.color} size={20} />
                 </div>
                 <div>
                   <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">

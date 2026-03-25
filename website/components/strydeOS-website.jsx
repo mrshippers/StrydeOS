@@ -801,12 +801,12 @@ const BeforeAfterStrip = () => {
         {/* Badges */}
         <div style={{ display: "flex", justifyContent: "center", gap: 32, flexWrap: "wrap", marginTop: 24 }}>
           {[
-            { icon: "🔗", text: "Connects to leading PMS platforms" },
-            { icon: "🚫", text: "Not a PMS replacement" },
-            { icon: "⚡", text: "Sits above your existing stack" },
+            { icon: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6.5 11.5L4 14l-2-2 2.5-2.5M9.5 4.5L12 2l2 2-2.5 2.5M5.5 10.5l5-5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>, text: "Connects to leading PMS platforms" },
+            { icon: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 14A6 6 0 108 2a6 6 0 000 12z" stroke="currentColor" strokeWidth="1.3"/><path d="M5 5l6 6M11 5L5 11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>, text: "Not a PMS replacement" },
+            { icon: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v4l2.5 1.5M14 8A6 6 0 112 8a6 6 0 0112 0z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>, text: "Sits above your existing stack" },
           ].map(({ icon, text }) => (
             <div key={text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "rgba(255,255,255,0.45)" }}>
-              <span>{icon}</span><span>{text}</span>
+              {icon}<span>{text}</span>
             </div>
           ))}
         </div>
@@ -878,20 +878,6 @@ const HeroDashboard = () => {
   useEffect(() => { requestAnimationFrame(() => requestAnimationFrame(() => setLoaded(true))); }, []);
   return (
     <div style={{ width: "100%", maxWidth: 540, margin: "0 auto" }}>
-      {/* Floating toast */}
-      <div style={{
-        display: "inline-flex", alignItems: "center", gap: 6,
-        padding: "5px 12px 5px 8px", borderRadius: 50,
-        backgroundColor: "rgba(255,255,255,0.95)",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-        fontSize: 10, fontWeight: 600, color: C.success,
-        position: "relative", left: "55%", marginBottom: -8, zIndex: 2,
-        animation: "float 4s ease-in-out infinite",
-        opacity: loaded ? 1 : 0, transition: "opacity 0.5s ease 0.8s",
-      }}>
-        <span style={{ fontSize: 12 }}>{'📞'}</span> Call answered automatically
-      </div>
-
       <div style={{
         backgroundColor: C.navy, borderRadius: 18, padding: "18px 16px 14px",
         border: "1px solid rgba(255,255,255,0.12)",
@@ -1633,17 +1619,17 @@ const Integrations = ({ darkMode }) => {
           {
             q: "Do I need to switch systems?",
             a: "No. StrydeOS connects to your existing PMS via API or bespoke integration. Your workflows stay exactly the same.",
-            icon: "🔌",
+            icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.blue} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v6l3-3M12 8L9 5"/><rect x="4" y="10" width="16" height="10" rx="2"/><line x1="9" y1="15" x2="15" y2="15"/></svg>,
           },
           {
             q: "Will my team need retraining?",
             a: "They keep using the same PMS they always have. StrydeOS runs quietly in the background — your staff only notice the results.",
-            icon: "🎓",
+            icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.blue} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 20v-1a7 7 0 0114 0v1"/></svg>,
           },
           {
             q: "How long does setup take?",
             a: "Most practices are live within 5 days. We handle the integration.",
-            icon: "⚡",
+            icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.blue} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>,
           },
         ].map(({ q, a, icon }) => (
           <div key={q} className="card-hover" style={{
@@ -1652,7 +1638,7 @@ const Integrations = ({ darkMode }) => {
             boxShadow: darkMode ? "none" : "0 2px 12px rgba(11,37,69,0.04)",
             transition: "background 0.3s ease",
           }}>
-            <div style={{ fontSize: 26, marginBottom: 12 }}>{icon}</div>
+            <div style={{ marginBottom: 12 }}>{icon}</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: head, marginBottom: 10 }}>{q}</div>
             <div style={{ fontSize: 13, color: muted, lineHeight: 1.65 }}>{a}</div>
           </div>
@@ -1928,7 +1914,7 @@ const Products = ({ darkMode }) => {
     {
       id: "ava",
       label: "Ava",
-      icon: "📞",
+      icon: <ArchAvaIcon color={C.blue} size={14} />,
       color: C.blue,
       eyebrow: "Ava",
       headline: "Never miss a patient again.",
@@ -1944,7 +1930,7 @@ const Products = ({ darkMode }) => {
     {
       id: "pulse",
       label: "Pulse",
-      icon: "🔄",
+      icon: <ArchPulseIcon color={C.teal} size={14} />,
       color: C.teal,
       eyebrow: "Pulse",
       headline: "Keep patients in care, longer.",
@@ -1960,7 +1946,7 @@ const Products = ({ darkMode }) => {
     {
       id: "intelligence",
       label: "Intelligence",
-      icon: "📊",
+      icon: <ArchIntelIcon color="#8B5CF6" size={14} />,
       color: "#8B5CF6",
       eyebrow: "Intelligence",
       headline: "Know how your clinic actually performs.",
@@ -2267,6 +2253,12 @@ const Results = () => {
               transition: "all 0.3s ease",
             }} aria-label={`Case study ${i + 1}`} />
           ))}
+        </div>
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <a href="/case-studies" style={{
+            fontSize: 13, color: C.blueGlow, textDecoration: "none", fontWeight: 500,
+            transition: "color 0.2s",
+          }}>Blog: Our pilot clinic reduced VA costs by £470/month →</a>
         </div>
       </div>
       </AnimIn>
