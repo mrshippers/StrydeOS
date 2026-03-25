@@ -164,7 +164,17 @@ const globalStyles = `
     .results-grid     { grid-template-columns: 1fr 1fr !important; }
     .holistic-grid    { grid-template-columns: 1fr !important; }
     .roi-grid         { grid-template-columns: 1fr !important; }
-    .whyus-grid       { grid-template-columns: 1fr !important; }
+    .whyus-grid       { grid-template-columns: 1fr !important; gap: 32px !important; margin-bottom: 40px !important; }
+    .pillar-grid      { grid-template-columns: 1fr !important; gap: 0 !important; }
+    .pillar-card      { padding: 28px 24px !important; }
+    .pillar-number    { font-size: 48px !important; top: 20px !important; right: 24px !important; }
+    .pillar-title     { font-size: 20px !important; }
+    .stats-bar        { grid-template-columns: 1fr 1fr !important; gap: 0 !important; }
+    .stat-item        { padding: 24px 0 !important; padding-right: 16px !important; }
+    .stat-value       { font-size: 28px !important; }
+    .product-grid     { grid-template-columns: 1fr !important; gap: 36px !important; }
+    .product-headline { font-size: 28px !important; }
+    .product-cards    { grid-template-columns: 1fr !important; }
     .wavecard-grid    { grid-template-columns: 1fr 1fr !important; }
     .footer-top       { flex-direction: column !important; gap: 32px !important; }
     .nav-links        { display: none !important; }
@@ -2077,7 +2087,7 @@ const Products = ({ darkMode }) => {
               {p.eyebrow}
             </div>
 
-            <h3 className="serif" style={{ fontSize: 36, color: head, fontWeight: 400, lineHeight: 1.15, marginBottom: 20 }}>
+            <h3 className="serif product-headline" style={{ fontSize: 36, color: head, fontWeight: 400, lineHeight: 1.15, marginBottom: 20 }}>
               {p.headline}
             </h3>
 
@@ -2089,7 +2099,7 @@ const Products = ({ darkMode }) => {
               <p style={{ color: txt, fontSize: 13.5, lineHeight: 1.65 }}>{p.proof}</p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+            <div className="product-cards" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
               <div style={{ background: darkMode ? "rgba(255,255,255,0.04)" : "white", border: `1px solid ${bdr}`, borderRadius: 12, padding: "12px 14px" }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: p.color, marginBottom: 8 }}>How It Works</div>
                 {p.howItWorks.map((item) => (
@@ -2805,9 +2815,9 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
 
         {/* Four pillar grid */}
         <AnimIn delay={200}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+        <div className="pillar-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
           {pillars.map(({ n, title, color, body }, i) => (
-            <div key={n} style={{
+            <div key={n} className="pillar-card" style={{
               background: i % 2 === 0 ? bgCard0 : bgCard1,
               padding: "52px 56px",
               position: "relative",
@@ -2817,7 +2827,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
               onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? bgCard0 : bgCard1}
             >
               {/* Number */}
-              <div style={{
+              <div className="pillar-number" style={{
                 position: "absolute", top: 44, right: 52,
                 fontFamily: "'DM Serif Display', serif",
                 fontSize: 72, fontWeight: 400, lineHeight: 1,
@@ -2828,7 +2838,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
               {/* Accent bar */}
               <div style={{ width: 36, height: 3, background: color, borderRadius: 2, marginBottom: 28 }} />
 
-              <h3 className="serif" style={{
+              <h3 className="serif pillar-title" style={{
                 fontSize: 24, color: head, fontWeight: 400, lineHeight: 1.25,
                 marginBottom: 24, maxWidth: 380,
               }}>
@@ -2850,7 +2860,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
 
         {/* Bottom proof bar */}
         <AnimIn delay={350}>
-        <div style={{
+        <div className="stats-bar" style={{
           display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr",
           borderTop: `1px solid ${bdr}`,
           marginTop: 60,
@@ -2861,8 +2871,8 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
             { stat: "Zero", label: "metrics included unless they drive decisions" },
             { stat: "Always", label: "a human on the other end — not a ticket system" },
           ].map(({ stat, label }) => (
-            <div key={label} style={{ padding: "36px 0 0", paddingRight: 32 }}>
-              <div className="serif" style={{ fontSize: 36, color: head, marginBottom: 8 }}>{stat}</div>
+            <div key={label} className="stat-item" style={{ padding: "36px 0 0", paddingRight: 32 }}>
+              <div className="serif stat-value" style={{ fontSize: 36, color: head, marginBottom: 8 }}>{stat}</div>
               <div style={{ fontSize: 13, color: muted, lineHeight: 1.65, maxWidth: 180 }}>{label}</div>
             </div>
           ))}
