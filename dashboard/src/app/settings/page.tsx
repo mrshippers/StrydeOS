@@ -56,6 +56,10 @@ import {
 import type { ClinicProfile, PmsProvider, HepProvider } from "@/types";
 import type { CanonicalField } from "@/lib/csv-import/types";
 import { brand } from "@/lib/brand";
+import SecurityCard from "./_components/SecurityCard";
+import ClinicDetailsCard from "./_components/ClinicDetailsCard";
+import TargetsCard from "./_components/TargetsCard";
+import TeamManagementCard from "./_components/TeamManagementCard";
 
 interface PmsProviderOption {
   id: PmsProvider;
@@ -468,18 +472,7 @@ export default function SettingsPage() {
 
   const router = useRouter();
 
-  // Password change state
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [changingPassword, setChangingPassword] = useState(false);
-
-  // MFA state
-  const [showMfaEnrollment, setShowMfaEnrollment] = useState(false);
-  const [mfaToggling, setMfaToggling] = useState(false);
-  const [mfaUnenrolling, setMfaUnenrolling] = useState(false);
-
-const cp = user?.clinicProfile ?? null;
+  const cp = user?.clinicProfile ?? null;
 
   const [clinicName, setClinicName] = useState("");
   const [clinicAddress, setClinicAddress] = useState("");
@@ -1130,117 +1123,6 @@ const cp = user?.clinicProfile ?? null;
     }
   }
 
-  async function handleChangePassword() {
-    if (!firebaseUser || !currentPassword || !newPassword || !confirmPassword) {
-      toast("All password fields are required", "error");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast("New passwords don't match", "error");
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      toast("New password must be at least 8 characters", "error");
-      return;
-    }
-
-    if (newPassword === currentPassword) {
-      toast("New password must be different from current password", "error");
-      return;
-    }
-
-    setChangingPassword(true);
-    try {
-      const { updatePassword, reauthenticateWithCredential, EmailAuthProvider } = await import("firebase/auth");
-      
-      // Reauthenticate user first for security
-      const credential = EmailAuthProvider.credential(
-        firebaseUser.email!,
-        currentPassword
-      );
-      await reauthenticateWithCredential(firebaseUser, credential);
-
-      // Update password
-      await updatePassword(firebaseUser, newPassword);
-
-      // Clear form
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-
-      toast("Password updated successfully", "success");
-    } catch (err: unknown) {
-      const error = err as { code?: string; message?: string };
-      if (error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
-        toast("Current password is incorrect", "error");
-      } else if (error.code === "auth/weak-password") {
-        toast("Password is too weak. Use a stronger password.", "error");
-      } else {
-        toast(error.message ?? "Failed to update password", "error");
-      }
-    } finally {
-      setChangingPassword(false);
-    }
-  }
-
-  async function handleMfaToggle(enabled: boolean) {
-    if (!db || !user?.clinicId) return;
-
-    setMfaToggling(true);
-    try {
-      await updateDoc(doc(db, "clinics", user.clinicId), {
-        "compliance.mfaRequired": enabled,
-        updatedAt: new Date().toISOString(),
-      });
-      await refreshClinicProfile();
-      toast(enabled ? "MFA enabled for clinic" : "MFA disabled for clinic", "success");
-    } catch (err) {
-      console.error("[MFA toggle error]", err);
-      toast("Failed to update MFA settings", "error");
-    } finally {
-      setMfaToggling(false);
-    }
-  }
-
-  function handleMfaEnrollmentComplete() {
-    setShowMfaEnrollment(false);
-    toast("Two-factor authentication enabled", "success");
-    window.location.reload();
-  }
-
-  async function handleMfaUnenroll() {
-    if (!firebaseUser) return;
-    
-    const mfaRequired = user?.clinicProfile?.compliance?.mfaRequired ?? false;
-    if (mfaRequired) {
-      toast("MFA cannot be disabled - required by your clinic", "error");
-      return;
-    }
-
-    if (!confirm("Disable two-factor authentication? Your account will be less secure.")) {
-      return;
-    }
-
-    setMfaUnenrolling(true);
-    try {
-      const { multiFactor } = await import("firebase/auth");
-      const enrolledFactors = multiFactor(firebaseUser).enrolledFactors;
-      
-      if (enrolledFactors.length > 0) {
-        await multiFactor(firebaseUser).unenroll(enrolledFactors[0]);
-        toast("Two-factor authentication disabled", "success");
-        window.location.reload();
-      }
-    } catch (err) {
-      console.error("[MFA unenroll error]", err);
-      toast("Failed to disable MFA", "error");
-    } finally {
-      setMfaUnenrolling(false);
-    }
-  }
-
   const canManageTeam =
     user?.role === "owner" || user?.role === "admin" || user?.role === "superadmin";
 
@@ -1280,193 +1162,8 @@ const cp = user?.clinicProfile ?? null;
         <RetriggerTourButton />
       </div>
 
-      {/* Change Password */}
-      {user?.uid !== "demo" && firebaseUser && (
-        <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-blue/10 flex items-center justify-center">
-              <Lock size={16} className="text-blue" />
-            </div>
-            <div>
-              <h3 className="font-display text-lg text-navy">Change Password</h3>
-              <p className="text-xs text-muted">Update your account password</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                Current Password
-              </label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter current password"
-                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                disabled={changingPassword}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                New Password
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password (min 8 characters)"
-                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                disabled={changingPassword}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
-                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                disabled={changingPassword}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleChangePassword();
-                }}
-              />
-            </div>
-
-            <button
-              onClick={handleChangePassword}
-              disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
-              style={{ background: brand.blue }}
-            >
-              {changingPassword ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
-              {changingPassword ? "Updating..." : "Update Password"}
-            </button>
-
-            <p className="text-[11px] text-muted mt-2">
-              Your password must be at least 8 characters long and different from your current password.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Two-Factor Authentication */}
-      {user && user.uid !== "demo" && (
-        <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-blue/10 flex items-center justify-center">
-              <Shield size={16} className="text-blue" />
-            </div>
-            <div>
-              <h3 className="font-display text-lg text-navy">Two-Factor Authentication</h3>
-              <p className="text-xs text-muted">Add an extra layer of security to your account</p>
-            </div>
-          </div>
-
-          {user.mfaEnrolled ? (
-            <div>
-              <div className="p-4 rounded-xl bg-success/10 border border-success/20 mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle2 size={16} className="text-success" />
-                  <p className="text-sm font-semibold text-success">Two-factor authentication is enabled</p>
-                </div>
-                <p className="text-xs text-muted">
-                  Your account is protected by an authenticator app. You'll need to enter a verification code when signing in.
-                </p>
-              </div>
-
-              {!user.clinicProfile?.compliance?.mfaRequired && (
-                <button
-                  onClick={handleMfaUnenroll}
-                  disabled={mfaUnenrolling}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-danger border border-danger/20 bg-danger/5 hover:bg-danger/10 transition-colors disabled:opacity-50"
-                >
-                  {mfaUnenrolling ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
-                  Disable Two-Factor Authentication
-                </button>
-              )}
-            </div>
-          ) : (
-            <div>
-              <div className="p-4 rounded-xl bg-cloud-light border border-border mb-4">
-                <p className="text-xs text-navy">
-                  Enable two-factor authentication to add an extra layer of security. You'll need an authenticator app like Google Authenticator or Authy.
-                </p>
-              </div>
-
-              <button
-                onClick={() => setShowMfaEnrollment(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
-                style={{ background: brand.blue }}
-              >
-                <Shield size={14} />
-                Enable Two-Factor Authentication
-              </button>
-            </div>
-          )}
-
-          {["owner", "admin", "superadmin"].includes(user.role) && (
-            <div className="mt-6 pt-6 border-t border-border">
-              <label className="flex items-center justify-between cursor-pointer">
-                <div>
-                  <p className="text-sm font-semibold text-navy">Require MFA for all users</p>
-                  <p className="text-xs text-muted mt-0.5">
-                    {user.clinicProfile?.compliance?.jurisdiction === "us"
-                      ? "Required under HIPAA compliance standards"
-                      : "Recommended for enhanced security"}
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={user.clinicProfile?.compliance?.mfaRequired ?? false}
-                  onChange={(e) => handleMfaToggle(e.target.checked)}
-                  disabled={mfaToggling || user.clinicProfile?.compliance?.jurisdiction === "us"}
-                  className="h-5 w-5 rounded border-border text-blue focus:ring-2 focus:ring-blue/30 cursor-pointer disabled:opacity-50"
-                />
-              </label>
-              {user.clinicProfile?.compliance?.jurisdiction === "us" && (
-                <p className="text-[11px] text-muted mt-2">
-                  MFA is automatically required for US clinics under HIPAA compliance.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* MFA Enrollment Modal */}
-      <AnimatePresence>
-        {showMfaEnrollment && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-navy/60 backdrop-blur-sm z-40"
-              onClick={() => setShowMfaEnrollment(false)}
-            />
-            <div className="fixed inset-0 flex items-center justify-center z-50 p-6">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden p-8"
-              >
-                <MfaEnrollment
-                  onComplete={handleMfaEnrollmentComplete}
-                  onSkip={() => setShowMfaEnrollment(false)}
-                />
-              </motion.div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Security: Password + MFA */}
+      <SecurityCard />
 
       {/* Unsaved changes dialog */}
       <AnimatePresence>
@@ -1567,155 +1264,20 @@ const cp = user?.clinicProfile ?? null;
 
       {canManageTeam && (<>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Clinic Details */}
-        <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-          <h3 className="font-display text-lg text-navy mb-4">Clinic Details</h3>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                Clinic Name
-              </label>
-              <input
-                type="text"
-                value={clinicName}
-                onChange={(e) => setClinicName(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                Address
-              </label>
-              <input
-                type="text"
-                value={clinicAddress}
-                onChange={(e) => setClinicAddress(e.target.value)}
-                placeholder="e.g. 10 Harley Street, London W1G 9PF"
-                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                  Phone
-                </label>
-                <input
-                  type="tel"
-                  value={clinicPhone}
-                  onChange={(e) => setClinicPhone(e.target.value)}
-                  placeholder="020 7946 0958"
-                  className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                  Session Price (£)
-                </label>
-                <input
-                  type="number"
-                  step="0.50"
-                  min="0"
-                  value={sessionPrice}
-                  onChange={(e) => setSessionPrice(e.target.value)}
-                  placeholder="65.00"
-                  className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                Website
-              </label>
-              <input
-                type="url"
-                value={clinicWebsite}
-                onChange={(e) => setClinicWebsite(e.target.value)}
-                placeholder="https://www.yourclinic.com"
-                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                Parking Info
-              </label>
-              <textarea
-                rows={2}
-                value={parkingInfo}
-                onChange={(e) => setParkingInfo(e.target.value)}
-                placeholder="e.g. Free 2-hour parking on Mill Lane. Pay & display on West End Lane."
-                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors resize-none"
-              />
-              <p className="text-[10px] text-muted mt-1">Shared with Ava so she can answer parking questions</p>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                Timezone
-              </label>
-              <select
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-              >
-                <option value="Europe/London">Europe/London (GMT/BST)</option>
-                <option value="Europe/Dublin">Europe/Dublin</option>
-                <option value="America/New_York">US Eastern</option>
-                <option value="Australia/Sydney">Australia/Sydney</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI Targets */}
-        <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-          <h3 className="font-display text-lg text-navy mb-4">KPI Targets</h3>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                Follow-Up Rate Target (sessions per patient)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                min="1"
-                max="10"
-                value={followUpTarget}
-                onChange={(e) => setFollowUpTarget(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                HEP Rate Target (%)
-              </label>
-              <input
-                type="number"
-                step="1"
-                min="50"
-                max="100"
-                value={hepTarget}
-                onChange={(e) => setHepTarget(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                Utilisation Rate Target (%)
-              </label>
-              <input
-                type="number"
-                step="1"
-                min="50"
-                max="100"
-                value={utilisationTarget}
-                onChange={(e) => setUtilisationTarget(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-              />
-            </div>
-          </div>
-
-        </div>
+        <ClinicDetailsCard
+          clinicName={clinicName} setClinicName={setClinicName}
+          clinicAddress={clinicAddress} setClinicAddress={setClinicAddress}
+          clinicPhone={clinicPhone} setClinicPhone={setClinicPhone}
+          sessionPrice={sessionPrice} setSessionPrice={setSessionPrice}
+          clinicWebsite={clinicWebsite} setClinicWebsite={setClinicWebsite}
+          parkingInfo={parkingInfo} setParkingInfo={setParkingInfo}
+          timezone={timezone} setTimezone={setTimezone}
+        />
+        <TargetsCard
+          followUpTarget={followUpTarget} setFollowUpTarget={setFollowUpTarget}
+          hepTarget={hepTarget} setHepTarget={setHepTarget}
+          utilisationTarget={utilisationTarget} setUtilisationTarget={setUtilisationTarget}
+        />
       </div>
 
       {/* Save button — saves clinic details + KPI targets together */}
@@ -2614,270 +2176,37 @@ const cp = user?.clinicProfile ?? null;
       </div>
 
       {/* Clinic Management */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-        <div className="flex items-center justify-between mb-1">
-          <div>
-            <h3 className="font-display text-lg text-navy">Clinic Management</h3>
-            {cp?.name && (
-              <p className="text-[12px] text-muted italic mt-0.5">{cp.name} team</p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {showOnboarding && clinicians.length > 0 && !onboarding.cliniciansConfirmed && (
-              <button
-                onClick={handleConfirmTeam}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90"
-                style={{ background: brand.success }}
-              >
-                <CheckCircle2 size={12} />
-                Confirm team
-              </button>
-            )}
-            {canManageTeam && (
-              <button
-                onClick={() => setAddingClinician(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
-              >
-                <Plus size={12} />
-                Add Clinician
-              </button>
-            )}
-          </div>
-        </div>
-
-        {addingClinician && (
-          <div className="mb-4 mt-4 p-4 rounded-xl border border-blue/20 bg-blue/5 animate-fade-in">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={newClinicianName}
-                  onChange={(e) => setNewClinicianName(e.target.value)}
-                  placeholder="Full name"
-                  autoFocus
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={newClinicianEmail}
-                  onChange={(e) => setNewClinicianEmail(e.target.value)}
-                  placeholder="clinician@example.com"
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1">
-                  Role
-                </label>
-                <select
-                  value={newClinicianRole}
-                  onChange={(e) => setNewClinicianRole(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                >
-                  <option>Physiotherapist</option>
-                  <option>Senior Physiotherapist</option>
-                  <option>Sports Therapist</option>
-                  <option>Practice Owner</option>
-                  <option>Admin</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1">
-                  Permissions
-                </label>
-                <select
-                  value={newClinicianAuthRole}
-                  onChange={(e) => setNewClinicianAuthRole(e.target.value as "clinician" | "admin")}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                >
-                  <option value="clinician">Clinician — own metrics only</option>
-                  <option value="admin">Admin — all clinicians + settings</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleAddClinician}
-                disabled={!newClinicianName.trim() || !newClinicianEmail.trim() || submittingClinician}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ background: brand.blue }}
-              >
-                <Check size={12} />
-                {submittingClinician ? "Adding…" : "Add & Send Invite"}
-              </button>
-              <button
-                onClick={() => { setAddingClinician(false); setNewClinicianName(""); setNewClinicianEmail(""); setNewClinicianAuthRole("clinician"); }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-muted hover:text-navy transition-colors"
-              >
-                <X size={12} />
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-2 mt-4">
-          {clinicians.map((c) => {
-            const isExpanded = expandedClinicianId === c.id;
-            const isConfirmingDelete = confirmDeleteId === c.id;
-
-            return (
-              <div key={c.id} className="rounded-xl border border-border/50 overflow-hidden">
-                {/* Row header — click to expand */}
-                <button
-                  onClick={() => {
-                    setExpandedClinicianId(isExpanded ? null : c.id);
-                    setConfirmDeleteId(null);
-                    setInviteResult((prev) => ({ ...prev, [c.id]: "" }));
-                    if (!isExpanded && c.email && !editingEmail[c.id]) {
-                      setEditingEmail((prev) => ({ ...prev, [c.id]: c.email ?? "" }));
-                    }
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-cloud-light/50 transition-colors text-left"
-                >
-                  <div className="w-9 h-9 rounded-full bg-navy flex items-center justify-center text-[10px] font-bold text-white shrink-0">
-                    {getInitials(c.name)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-navy">{c.name}</p>
-                    <p className="text-[11px] text-muted">
-                      {c.role}
-                      {c.email && <span className="ml-1.5 text-muted/60">· {c.email}</span>}
-                    </p>
-                  </div>
-                  {c.status === "invited" && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 bg-blue/10 text-blue">
-                      Invited
-                    </span>
-                  )}
-                  {c.authRole && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 bg-purple/10 text-purple">
-                      {c.authRole === "admin" ? "Admin" : "Clinician"}
-                    </span>
-                  )}
-                  <span
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                      c.active ? "bg-success/10 text-success" : "bg-muted/10 text-muted"
-                    }`}
-                  >
-                    {c.active ? "Active" : "Inactive"}
-                  </span>
-                  <div
-                    className={`transition-transform duration-200 text-muted shrink-0 ${isExpanded ? "rotate-180" : ""}`}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                </button>
-
-                {/* Expanded panel */}
-                {isExpanded && (
-                  <div className="border-t border-border/50 px-4 py-4 bg-cloud-light/30 animate-fade-in space-y-4">
-
-                    {/* Send invite email */}
-                    <div>
-                      <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-2">
-                        {c.status === "invited" ? "Resend Invite" : "Invite / Re-invite"}
-                      </p>
-                      <p className="text-[12px] text-muted mb-2">
-                        {c.status === "invited"
-                          ? "This clinician has been invited but hasn\u2019t signed in yet. Resend the invite email below."
-                          : "Enter this clinician\u2019s email address to send them a login invite link directly in-app \u2014 no need to contact support."}
-                      </p>
-                      <div className="flex gap-2">
-                        <input
-                          type="email"
-                          value={editingEmail[c.id] ?? ""}
-                          onChange={(e) =>
-                            setEditingEmail((prev) => ({ ...prev, [c.id]: e.target.value }))
-                          }
-                          placeholder="clinician@example.com"
-                          className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSendInvite(c.id);
-                          }}
-                        />
-                        <button
-                          onClick={() => handleSendInvite(c.id)}
-                          disabled={!editingEmail[c.id]?.trim() || sendingInvite[c.id]}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 shrink-0"
-                          style={{ background: brand.blue }}
-                        >
-                          {sendingInvite[c.id] ? (
-                            <Loader2 size={12} className="animate-spin" />
-                          ) : (
-                            <ArrowRight size={12} />
-                          )}
-                          {sendingInvite[c.id] ? "Sending…" : "Send invite"}
-                        </button>
-                      </div>
-                      {inviteResult[c.id] && (
-                        <p
-                          className={`text-[11px] mt-2 ${
-                            inviteResult[c.id].startsWith("Invite sent") ||
-                            inviteResult[c.id].startsWith("Link generated")
-                              ? "text-success"
-                              : "text-danger"
-                          }`}
-                        >
-                          {inviteResult[c.id]}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Remove clinician */}
-                    {canManageTeam && (
-                      <div className="pt-2 border-t border-border/30">
-                        {!isConfirmingDelete ? (
-                          <button
-                            onClick={() => setConfirmDeleteId(c.id)}
-                            className="flex items-center gap-1.5 text-[12px] font-medium text-muted hover:text-danger transition-colors"
-                          >
-                            <Trash2 size={13} />
-                            Remove {c.name.split(" ")[0]} from team
-                          </button>
-                        ) : (
-                          <div className="flex items-center gap-3 p-3 rounded-xl border border-danger/20 bg-danger/5 animate-fade-in">
-                            <p className="text-[12px] text-navy flex-1">
-                              Remove <strong>{c.name}</strong> permanently?
-                            </p>
-                            <button
-                              onClick={() => setConfirmDeleteId(null)}
-                              className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-muted border border-border hover:bg-white transition-colors"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleDeactivateClinician(c.id, c.name);
-                                setConfirmDeleteId(null);
-                                setExpandedClinicianId(null);
-                              }}
-                              className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition-all hover:opacity-90"
-                              style={{ background: brand.danger }}
-                            >
-                              Yes, remove
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <TeamManagementCard
+        clinicProfile={cp}
+        clinicians={clinicians}
+        canManageTeam={canManageTeam}
+        showOnboarding={showOnboarding}
+        onboarding={onboarding}
+        addingClinician={addingClinician}
+        setAddingClinician={setAddingClinician}
+        newClinicianName={newClinicianName}
+        setNewClinicianName={setNewClinicianName}
+        newClinicianEmail={newClinicianEmail}
+        setNewClinicianEmail={setNewClinicianEmail}
+        newClinicianRole={newClinicianRole}
+        setNewClinicianRole={setNewClinicianRole}
+        newClinicianAuthRole={newClinicianAuthRole}
+        setNewClinicianAuthRole={setNewClinicianAuthRole}
+        submittingClinician={submittingClinician}
+        expandedClinicianId={expandedClinicianId}
+        setExpandedClinicianId={setExpandedClinicianId}
+        confirmDeleteId={confirmDeleteId}
+        setConfirmDeleteId={setConfirmDeleteId}
+        editingEmail={editingEmail}
+        setEditingEmail={setEditingEmail}
+        sendingInvite={sendingInvite}
+        inviteResult={inviteResult}
+        setInviteResult={setInviteResult}
+        handleAddClinician={handleAddClinician}
+        handleDeactivateClinician={handleDeactivateClinician}
+        handleConfirmTeam={handleConfirmTeam}
+        handleSendInvite={handleSendInvite}
+      />
     </div>
   );
 }
