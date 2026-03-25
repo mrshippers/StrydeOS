@@ -83,6 +83,13 @@ const globalStyles = `
 
   .animate-float { animation: float 4s ease-in-out infinite; }
 
+  /* Grid layout classes — base (desktop) values here, mobile overrides in @media below */
+  .pillar-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+  .stats-bar     { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .product-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: center; }
+  .product-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .whyus-grid    { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: end; margin-bottom: 80px; }
+
   .btn-primary {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 16px 36px;
@@ -159,22 +166,22 @@ const globalStyles = `
   @media (max-width: 768px) {
     /* Grid collapses */
     .hero-grid        { grid-template-columns: 1fr !important; }
-    .product-grid     { grid-template-columns: 1fr !important; }
     .pricing-grid     { grid-template-columns: 1fr !important; }
     .results-grid     { grid-template-columns: 1fr 1fr !important; }
     .holistic-grid    { grid-template-columns: 1fr !important; }
     .roi-grid         { grid-template-columns: 1fr !important; }
-    .whyus-grid       { grid-template-columns: 1fr !important; gap: 32px !important; margin-bottom: 40px !important; }
-    .pillar-grid      { grid-template-columns: 1fr !important; gap: 0 !important; }
+    .whyus-grid       { grid-template-columns: 1fr; gap: 32px; margin-bottom: 40px; }
+    .pillar-grid      { grid-template-columns: 1fr; gap: 0; }
     .pillar-card      { padding: 28px 24px !important; }
     .pillar-number    { font-size: 48px !important; top: 20px !important; right: 24px !important; }
     .pillar-title     { font-size: 20px !important; }
-    .stats-bar        { grid-template-columns: 1fr 1fr !important; gap: 0 !important; }
+    .stats-bar        { grid-template-columns: 1fr 1fr; gap: 0; margin-top: 32px; }
     .stat-item        { padding: 24px 0 !important; padding-right: 16px !important; }
     .stat-value       { font-size: 28px !important; }
-    .product-grid     { grid-template-columns: 1fr !important; gap: 36px !important; }
+    .product-grid     { grid-template-columns: 1fr; gap: 36px; }
     .product-headline { font-size: 28px !important; }
-    .product-cards    { grid-template-columns: 1fr !important; }
+    .product-cards    { grid-template-columns: 1fr; }
+    .product-visual   { order: -1; }
     .wavecard-grid    { grid-template-columns: 1fr 1fr !important; }
     .footer-top       { flex-direction: column !important; gap: 32px !important; }
     .nav-links        { display: none !important; }
@@ -2074,7 +2081,7 @@ const Products = ({ darkMode }) => {
         </div>
 
         {/* Panel */}
-        <div id={`product-${p.id}`} key={active} className="product-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 72, alignItems: "center", animation: "fadeIn 0.4s ease" }}>
+        <div id={`product-${p.id}`} key={active} className="product-grid" style={{ animation: "fadeIn 0.4s ease" }}>
           <div>
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 6,
@@ -2099,7 +2106,7 @@ const Products = ({ darkMode }) => {
               <p style={{ color: txt, fontSize: 13.5, lineHeight: 1.65 }}>{p.proof}</p>
             </div>
 
-            <div className="product-cards" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+            <div className="product-cards" style={{ marginBottom: 24 }}>
               <div style={{ background: darkMode ? "rgba(255,255,255,0.04)" : "white", border: `1px solid ${bdr}`, borderRadius: 12, padding: "12px 14px" }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: p.color, marginBottom: 8 }}>How It Works</div>
                 {p.howItWorks.map((item) => (
@@ -2132,7 +2139,7 @@ const Products = ({ darkMode }) => {
             </a>
           </div>
 
-          <div>{p.visual}</div>
+          <div className="product-visual">{p.visual}</div>
         </div>
       </div>
     </section>
@@ -2796,7 +2803,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
 
         {/* Header */}
         <AnimIn>
-        <div className="whyus-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "end", marginBottom: 80 }}>
+        <div className="whyus-grid">
           <div>
             <div className="section-chip">About</div>
             <h2 className="serif section-h2" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1, marginTop: 16 }}>
@@ -2815,7 +2822,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
 
         {/* Four pillar grid */}
         <AnimIn delay={200}>
-        <div className="pillar-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+        <div className="pillar-grid">
           {pillars.map(({ n, title, color, body }, i) => (
             <div key={n} className="pillar-card" style={{
               background: i % 2 === 0 ? bgCard0 : bgCard1,
@@ -2861,7 +2868,6 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
         {/* Bottom proof bar */}
         <AnimIn delay={350}>
         <div className="stats-bar" style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr",
           borderTop: `1px solid ${bdr}`,
           marginTop: 60,
         }}>
