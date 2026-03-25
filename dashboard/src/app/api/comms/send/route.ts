@@ -19,7 +19,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { verifyApiRequest, requireClinic, handleApiError } from "@/lib/auth-guard";
+import { verifyApiRequest, requireRole, requireClinic, handleApiError } from "@/lib/auth-guard";
 import { getTwilio, getTwilioPhone } from "@/lib/twilio";
 import { getResend } from "@/lib/resend";
 import type { SequenceType, CommsChannel, CommsLogEntry } from "@/types";
@@ -49,6 +49,7 @@ function resolveTemplate(template: string, vars: Record<string, string>): string
 async function handler(request: NextRequest) {
   try {
     const user = await verifyApiRequest(request);
+    requireRole(user, ["owner", "admin", "superadmin"]);
 
     let body: SendCommsBody;
     try {

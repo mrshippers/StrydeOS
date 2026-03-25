@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, Suspense } from "react";
+import { useState, useMemo, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -193,6 +193,13 @@ function CheckoutInner() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [redirecting, setRedirecting] = useState(false);
+
+  // Guard: clinicians cannot access checkout — owner/admin only
+  useEffect(() => {
+    if (!authLoading && user && user.role === "clinician") {
+      router.replace("/dashboard");
+    }
+  }, [authLoading, user, router]);
 
   // ------ Redirect logic (runs once auth settles) ------
 

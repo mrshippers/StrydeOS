@@ -9,13 +9,17 @@ import { brand } from "@/lib/brand";
 const PUBLIC_PATHS = ["/login", "/trial", "/onboarding"];
 const MFA_EXEMPT_PATHS = ["/login", "/mfa-setup"];
 
+function matchesPath(pathname: string, paths: string[]): boolean {
+  return paths.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
-  const isMfaExempt = MFA_EXEMPT_PATHS.some((p) => pathname.startsWith(p));
+  const isPublicPath = matchesPath(pathname, PUBLIC_PATHS);
+  const isMfaExempt = matchesPath(pathname, MFA_EXEMPT_PATHS);
 
   useEffect(() => {
     if (loading) return;

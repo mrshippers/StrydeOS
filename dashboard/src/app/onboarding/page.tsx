@@ -157,6 +157,17 @@ export default function OnboardingPage() {
   const clinicId = user?.clinicId;
   const isAuthenticated = !!user;
 
+  // Guard: clinicians cannot run clinic onboarding — owner/admin only
+  useEffect(() => {
+    if (!authLoading && user && user.role === "clinician") {
+      router.replace("/dashboard");
+      return;
+    }
+    if (!authLoading && !clinicId) {
+      router.replace("/dashboard?error=no_clinic");
+    }
+  }, [authLoading, clinicId, user, router]);
+
   // ── Determine visible steps ────────────────────────────────────────────────
   // Step 3 (configure) shows different content based on module, or is skipped
   // if Intelligence-only (defaults are sufficient)
