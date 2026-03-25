@@ -90,10 +90,38 @@ export function BaaClickthrough({ clinicId, onAccept }: BaaClickthroughProps) {
 
             <div className="mb-8 max-h-[400px] overflow-y-auto p-6 rounded-xl border border-border bg-cloud-light">
               <div className="prose prose-sm max-w-none">
-                <div
-                  className="text-[13px] text-navy leading-relaxed whitespace-pre-line"
-                  dangerouslySetInnerHTML={{ __html: baaText.replace(/\n/g, "<br />").replace(/##/g, "<br /><strong>").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }}
-                />
+                <div className="text-[13px] text-navy leading-relaxed whitespace-pre-line">
+                  {baaText.split(/\n/).map((line, i) => {
+                    const parts: React.ReactNode[] = [];
+                    let remaining = line.replace(/^##\s*/, "");
+                    const isHeading = line.startsWith("##");
+                    let keyIdx = 0;
+
+                    const boldRegex = /\*\*(.*?)\*\*/g;
+                    let match: RegExpExecArray | null;
+                    let lastIndex = 0;
+
+                    while ((match = boldRegex.exec(remaining)) !== null) {
+                      if (match.index > lastIndex) {
+                        parts.push(remaining.slice(lastIndex, match.index));
+                      }
+                      parts.push(<strong key={`b${keyIdx++}`}>{match[1]}</strong>);
+                      lastIndex = boldRegex.lastIndex;
+                    }
+                    if (lastIndex < remaining.length) {
+                      parts.push(remaining.slice(lastIndex));
+                    }
+
+                    if (isHeading) {
+                      return (
+                        <p key={i} className="font-semibold mt-4 mb-1">
+                          {parts}
+                        </p>
+                      );
+                    }
+                    return <span key={i}>{parts}{"\n"}</span>;
+                  })}
+                </div>
               </div>
             </div>
 

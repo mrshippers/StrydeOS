@@ -1,11 +1,8 @@
 /**
  * Tests for auth-guard pure logic functions.
- *
- * Run: npx tsx --test src/lib/__tests__/auth-guard.test.ts
  */
 
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, expect } from "vitest";
 import { ApiAuthError } from "../auth-guard";
 
 // ─── requireRole logic ──────────────────────────────────────────────────────
@@ -13,15 +10,15 @@ import { ApiAuthError } from "../auth-guard";
 describe("ApiAuthError", () => {
   it("stores statusCode and message", () => {
     const err = new ApiAuthError("Forbidden", 403);
-    assert.equal(err.message, "Forbidden");
-    assert.equal(err.statusCode, 403);
-    assert.equal(err.name, "ApiAuthError");
+    expect(err.message).toBe("Forbidden");
+    expect(err.statusCode).toBe(403);
+    expect(err.name).toBe("ApiAuthError");
   });
 
   it("is an instance of Error", () => {
     const err = new ApiAuthError("Unauthorized", 401);
-    assert.ok(err instanceof Error);
-    assert.ok(err instanceof ApiAuthError);
+    expect(err).toBeInstanceOf(Error);
+    expect(err).toBeInstanceOf(ApiAuthError);
   });
 });
 
@@ -49,11 +46,13 @@ describe("requireRole", () => {
       clinicId: "c1",
       role: "clinician" as const,
     };
-    assert.throws(
-      () => requireRole(user, ["owner", "superadmin"]),
-      (err: unknown) =>
-        err instanceof ApiAuthError && err.statusCode === 403
-    );
+    expect(() => requireRole(user, ["owner", "superadmin"])).toThrow();
+    try {
+      requireRole(user, ["owner", "superadmin"]);
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiAuthError);
+      expect((err as ApiAuthError).statusCode).toBe(403);
+    }
   });
 });
 
@@ -91,10 +90,12 @@ describe("requireClinic", () => {
       clinicId: "clinic-1",
       role: "owner" as const,
     };
-    assert.throws(
-      () => requireClinic(user, "clinic-2"),
-      (err: unknown) =>
-        err instanceof ApiAuthError && err.statusCode === 403
-    );
+    expect(() => requireClinic(user, "clinic-2")).toThrow();
+    try {
+      requireClinic(user, "clinic-2");
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiAuthError);
+      expect((err as ApiAuthError).statusCode).toBe(403);
+    }
   });
 });

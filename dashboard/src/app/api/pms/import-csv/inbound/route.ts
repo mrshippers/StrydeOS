@@ -48,7 +48,12 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     const db = getAdminDb();
     const clinicDoc = await db.collection("clinics").doc(clinicId).get();
     if (!clinicDoc.exists) {
-      return NextResponse.json({ error: `Clinic not found: ${clinicId}` }, { status: 404 });
+      return NextResponse.json({ error: "Clinic not found" }, { status: 404 });
+    }
+
+    const clinicData = clinicDoc.data();
+    if (clinicData?.status === "suspended" || clinicData?.status === "deleted") {
+      return NextResponse.json({ error: "Clinic is not active" }, { status: 403 });
     }
 
     const file = formData.get("file") as File | null;

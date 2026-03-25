@@ -30,12 +30,14 @@ export interface RequestLogEntry {
  * Wraps a Next.js route handler with structured request logging.
  * Logs to stdout as JSON for easy parsing by log aggregators.
  */
-export function withRequestLog(
-  handler: (request: NextRequest, context?: any) => Promise<NextResponse>
-) {
-  return async function loggedHandler(
+export function withRequestLog<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  H extends (request: NextRequest, ...args: any[]) => Promise<NextResponse>,
+>(handler: H): H {
+  const loggedHandler = async function loggedHandler(
     request: NextRequest,
-    context?: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...rest: any[]
   ): Promise<NextResponse> {
     const start = performance.now();
     const method = request.method;
@@ -45,7 +47,7 @@ export function withRequestLog(
     let errorMsg: string | undefined;
 
     try {
-      const response = await handler(request, context);
+      const response = await handler(request, ...rest);
       status = response.status;
       // Attach correlation ID to response for client-side tracing
       response.headers.set("x-request-id", requestId);
@@ -77,4 +79,6 @@ export function withRequestLog(
       console.log(JSON.stringify(entry));
     }
   };
+
+  return loggedHandler as H;
 }

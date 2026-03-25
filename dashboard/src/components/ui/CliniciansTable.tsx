@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { ChevronDown, ChevronUp, Info, Users } from "lucide-react";
 import type { WeeklyStats, MetricStatus } from "@/types";
 import { getInitials, formatPercent, formatRate } from "@/lib/utils";
@@ -134,7 +134,9 @@ function clinicianRevenue(stats: WeeklyStats): number {
   return stats.appointmentsTotal * stats.revenuePerSessionPence;
 }
 
-export default function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
+// Re-renders when rows array or onRowClick reference changes (shallow compare).
+// Parent should stabilise onRowClick with useCallback and rows with useMemo.
+function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortAsc, setSortAsc] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -301,3 +303,5 @@ export default function CliniciansTable({ rows, onRowClick }: CliniciansTablePro
     </div>
   );
 }
+
+export default memo(CliniciansTable);

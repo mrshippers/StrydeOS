@@ -5,8 +5,8 @@
  * Used by the StrydeOS team to onboard clients without self-serve signup,
  * and called by n8n when a qualified lead converts in Notion.
  *
- * Authentication: requires a valid STRYDE_ADMIN_SECRET header AND a Firebase
- * superadmin token in Authorization: Bearer <token>.
+ * Authentication: requires BOTH a valid STRYDE_ADMIN_SECRET header AND a Firebase
+ * superadmin token in Authorization: Bearer <token>. Both are mandatory.
  *
  * Creates:
  *   - Firebase Auth user for the clinic owner (temp password, reset email sent)
@@ -35,26 +35,29 @@ import { withRequestLog } from "@/lib/request-logger";
 async function handler(request: NextRequest) {
   let uid: string | undefined;
   try {
-    // ── Auth check ──────────────────────────────────────────────────────────────
+    // ── Auth check: both admin secret AND superadmin Firebase token required ──
     const adminSecret = request.headers.get("x-admin-secret");
     if (!adminSecret || adminSecret !== process.env.STRYDE_ADMIN_SECRET) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Optionally verify Firebase superadmin token
     const authHeader = request.headers.get("authorization");
-    if (authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.slice(7);
-      try {
-        const adminAuth = getAdminAuth();
-        const decoded = await adminAuth.verifyIdToken(token);
-        const userDoc = await getAdminDb().collection("users").doc(decoded.uid).get();
-        if (!userDoc.exists || userDoc.data()?.role !== "superadmin") {
-          return NextResponse.json({ error: "Superadmin role required" }, { status: 403 });
-        }
-      } catch {
-        return NextResponse.json({ error: "Invalid Firebase token" }, { status: 401 });
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Firebase superadmin token required" }, { status: 401 });
+    }
+
+    let provisionedBy: string;
+    const token = authHeader.slice(7);
+    try {
+      const adminAuth = getAdminAuth();
+      const decoded = await adminAuth.verifyIdToken(token);
+      const userDoc = await getAdminDb().collection("users").doc(decoded.uid).get();
+      if (!userDoc.exists || userDoc.data()?.role !== "superadmin") {
+        return NextResponse.json({ error: "Superadmin role required" }, { status: 403 });
       }
+      provisionedBy = decoded.uid;
+    } catch {
+      return NextResponse.json({ error: "Invalid Firebase token" }, { status: 401 });
     }
 
     // ── Parse body ──────────────────────────────────────────────────────────────
@@ -196,8 +199,8 @@ async function handler(request: NextRequest) {
       tourCompleted: false,
       createdAt: now,
       updatedAt: now,
-      createdBy: "admin_provision",
-      updatedBy: "admin_provision",
+      createdBy: `admin_provision:${provisionedBy}`,
+      updatedBy: `admin_provision:${provisionedBy}`,
     });
 
     batch.set(clinicRef, {

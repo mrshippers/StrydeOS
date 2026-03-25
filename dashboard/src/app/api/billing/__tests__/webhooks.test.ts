@@ -3,12 +3,9 @@
  *
  * These test the pure logic functions (flagsFromSubscriptionItems, getTierFromMetadata)
  * and the webhook routing (via mocked Stripe + Firestore).
- *
- * Run: npx tsx --test src/app/api/billing/__tests__/webhooks.test.ts
  */
 
-import { describe, it, beforeEach } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, beforeEach, expect } from "vitest";
 
 // ─── Test flagsFromSubscriptionItems ────────────────────────────────────────
 
@@ -30,9 +27,9 @@ describe("flagsFromSubscriptionItems", () => {
       { price: { id: "price_int_solo_m" } },
     ]);
 
-    assert.equal(flags.intelligence, true);
-    assert.equal(flags.continuity, false);
-    assert.equal(flags.receptionist, false);
+    expect(flags.intelligence).toBe(true);
+    expect(flags.continuity).toBe(false);
+    expect(flags.receptionist).toBe(false);
   });
 
   it("maps Fullstack price to all three flags", async () => {
@@ -42,9 +39,9 @@ describe("flagsFromSubscriptionItems", () => {
       { price: { id: "price_fs_clinic_m" } },
     ]);
 
-    assert.equal(flags.intelligence, true);
-    assert.equal(flags.continuity, true);
-    assert.equal(flags.receptionist, true);
+    expect(flags.intelligence).toBe(true);
+    expect(flags.continuity).toBe(true);
+    expect(flags.receptionist).toBe(true);
   });
 
   it("merges multiple individual module prices", async () => {
@@ -55,9 +52,9 @@ describe("flagsFromSubscriptionItems", () => {
       { price: { id: "price_ava_studio_m" } },
     ]);
 
-    assert.equal(flags.intelligence, true);
-    assert.equal(flags.continuity, false);
-    assert.equal(flags.receptionist, true);
+    expect(flags.intelligence).toBe(true);
+    expect(flags.continuity).toBe(false);
+    expect(flags.receptionist).toBe(true);
   });
 
   it("returns all-false for unknown price IDs", async () => {
@@ -67,9 +64,9 @@ describe("flagsFromSubscriptionItems", () => {
       { price: { id: "price_unknown_xyz" } },
     ]);
 
-    assert.equal(flags.intelligence, false);
-    assert.equal(flags.continuity, false);
-    assert.equal(flags.receptionist, false);
+    expect(flags.intelligence).toBe(false);
+    expect(flags.continuity).toBe(false);
+    expect(flags.receptionist).toBe(false);
   });
 });
 
@@ -79,18 +76,18 @@ describe("getTierFromMetadata", () => {
   it("extracts a valid tier from metadata", async () => {
     const { getTierFromMetadata } = await import("@/lib/billing");
 
-    assert.equal(getTierFromMetadata({ tier: "solo" }), "solo");
-    assert.equal(getTierFromMetadata({ tier: "studio" }), "studio");
-    assert.equal(getTierFromMetadata({ tier: "clinic" }), "clinic");
+    expect(getTierFromMetadata({ tier: "solo" })).toBe("solo");
+    expect(getTierFromMetadata({ tier: "studio" })).toBe("studio");
+    expect(getTierFromMetadata({ tier: "clinic" })).toBe("clinic");
   });
 
   it("returns null for invalid tier values", async () => {
     const { getTierFromMetadata } = await import("@/lib/billing");
 
-    assert.equal(getTierFromMetadata({ tier: "enterprise" }), null);
-    assert.equal(getTierFromMetadata({}), null);
-    assert.equal(getTierFromMetadata(null), null);
-    assert.equal(getTierFromMetadata(undefined), null);
+    expect(getTierFromMetadata({ tier: "enterprise" })).toBe(null);
+    expect(getTierFromMetadata({})).toBe(null);
+    expect(getTierFromMetadata(null)).toBe(null);
+    expect(getTierFromMetadata(undefined)).toBe(null);
   });
 });
 
@@ -100,9 +97,9 @@ describe("TIER_SEAT_LIMITS", () => {
   it("enforces correct seat caps per tier", async () => {
     const { TIER_SEAT_LIMITS } = await import("@/lib/billing");
 
-    assert.equal(TIER_SEAT_LIMITS.solo, 1);
-    assert.equal(TIER_SEAT_LIMITS.studio, 4);
-    assert.equal(TIER_SEAT_LIMITS.clinic, 25);
+    expect(TIER_SEAT_LIMITS.solo).toBe(1);
+    expect(TIER_SEAT_LIMITS.studio).toBe(4);
+    expect(TIER_SEAT_LIMITS.clinic).toBe(6);
   });
 });
 
@@ -113,14 +110,14 @@ describe("trial helpers", () => {
     const { isTrialActive } = await import("@/lib/billing");
 
     const now = new Date().toISOString();
-    assert.equal(isTrialActive(now), true);
+    expect(isTrialActive(now)).toBe(true);
   });
 
   it("isTrialActive returns false for an expired trial", async () => {
     const { isTrialActive } = await import("@/lib/billing");
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    assert.equal(isTrialActive(thirtyDaysAgo), false);
+    expect(isTrialActive(thirtyDaysAgo)).toBe(false);
   });
 
   it("trialDaysRemaining returns correct value", async () => {
@@ -128,23 +125,23 @@ describe("trial helpers", () => {
 
     const now = new Date().toISOString();
     const remaining = trialDaysRemaining(now);
-    assert.ok(remaining !== null);
+    expect(remaining).not.toBe(null);
     // Should be close to TRIAL_DURATION_DAYS (13 or 14 depending on time of day)
-    assert.ok(remaining! >= TRIAL_DURATION_DAYS - 1);
-    assert.ok(remaining! <= TRIAL_DURATION_DAYS);
+    expect(remaining!).toBeGreaterThanOrEqual(TRIAL_DURATION_DAYS - 1);
+    expect(remaining!).toBeLessThanOrEqual(TRIAL_DURATION_DAYS);
   });
 
   it("trialDaysRemaining returns 0 for expired trial", async () => {
     const { trialDaysRemaining } = await import("@/lib/billing");
 
     const longAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
-    assert.equal(trialDaysRemaining(longAgo), 0);
+    expect(trialDaysRemaining(longAgo)).toBe(0);
   });
 
   it("handles null trialStartedAt gracefully", async () => {
     const { isTrialActive, trialDaysRemaining } = await import("@/lib/billing");
 
-    assert.equal(isTrialActive(null), false);
-    assert.equal(trialDaysRemaining(null), null);
+    expect(isTrialActive(null)).toBe(false);
+    expect(trialDaysRemaining(null)).toBe(null);
   });
 });

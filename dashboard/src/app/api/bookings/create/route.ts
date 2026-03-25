@@ -28,6 +28,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { writeAuditLog } from "@/lib/audit-log";
@@ -97,6 +98,15 @@ function validateRequired(
 // ─── Route handler ───────────────────────────────────────────────────────────
 
 async function handler(request: NextRequest) {
+  // Rate limit: 20 requests per IP per minute
+  const { limited, remaining } = checkRateLimit(request, { limit: 20, windowMs: 60 * 1000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     // ── Auth: shared secret (n8n / ElevenLabs, not a browser user) ──
     const secret =

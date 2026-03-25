@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import type { Clinician } from "@/types";
 
 interface PageHeaderProps {
@@ -13,7 +13,8 @@ interface PageHeaderProps {
   accentColor?: string;
 }
 
-export default function PageHeader({
+// Re-renders when props change. onClinicianChange should be useCallback-stable in parent.
+function PageHeader({
   title,
   subtitle,
   clinicians,
@@ -113,3 +114,5 @@ export default function PageHeader({
     </div>
   );
 }
+
+export default memo(PageHeader);

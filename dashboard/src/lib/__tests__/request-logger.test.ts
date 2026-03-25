@@ -1,11 +1,8 @@
 /**
  * Tests for the request logger wrapper.
- *
- * Run: npx tsx --test src/lib/__tests__/request-logger.test.ts
  */
 
-import { describe, it, beforeEach } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, beforeEach, expect, afterAll, vi } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 import { withRequestLog, type RequestLogEntry } from "../request-logger";
 
@@ -20,14 +17,13 @@ beforeEach(() => {
   };
 });
 
-// Restore after all tests (best-effort)
-process.on("exit", () => {
+afterAll(() => {
   console.log = originalLog;
 });
 
 describe("withRequestLog", () => {
   it("logs successful requests with method, path, status, and duration", async () => {
-    const handler = async () =>
+    const handler = async (_req: NextRequest) =>
       NextResponse.json({ ok: true }, { status: 200 });
 
     const wrapped = withRequestLog(handler);
@@ -37,20 +33,20 @@ describe("withRequestLog", () => {
 
     const res = await wrapped(req);
 
-    assert.equal(res.status, 200);
-    assert.equal(logOutput.length, 1);
+    expect(res.status).toBe(200);
+    expect(logOutput.length).toBe(1);
 
     const entry: RequestLogEntry = JSON.parse(logOutput[0]);
-    assert.equal(entry.method, "POST");
-    assert.equal(entry.path, "/api/test");
-    assert.equal(entry.status, 200);
-    assert.ok(entry.durationMs >= 0);
-    assert.ok(entry.timestamp);
-    assert.equal(entry.error, undefined);
+    expect(entry.method).toBe("POST");
+    expect(entry.path).toBe("/api/test");
+    expect(entry.status).toBe(200);
+    expect(entry.durationMs).toBeGreaterThanOrEqual(0);
+    expect(entry.timestamp).toBeTruthy();
+    expect(entry.error).toBeUndefined();
   });
 
   it("logs errors when handler throws", async () => {
-    const handler = async () => {
+    const handler = async (_req: NextRequest): Promise<NextResponse> => {
       throw new Error("Database connection failed");
     };
 
@@ -59,16 +55,14 @@ describe("withRequestLog", () => {
       method: "GET",
     });
 
-    await assert.rejects(() => wrapped(req), {
-      message: "Database connection failed",
-    });
+    await expect(wrapped(req)).rejects.toThrow("Database connection failed");
 
-    assert.equal(logOutput.length, 1);
+    expect(logOutput.length).toBe(1);
     const entry: RequestLogEntry = JSON.parse(logOutput[0]);
-    assert.equal(entry.method, "GET");
-    assert.equal(entry.path, "/api/broken");
-    assert.equal(entry.status, 500); // default when handler throws
-    assert.equal(entry.error, "Database connection failed");
+    expect(entry.method).toBe("GET");
+    expect(entry.path).toBe("/api/broken");
+    expect(entry.status).toBe(500); // default when handler throws
+    expect(entry.error).toBe("Database connection failed");
   });
 
   it("passes through context to handler", async () => {
@@ -84,11 +78,11 @@ describe("withRequestLog", () => {
 
     await wrapped(req, ctx);
 
-    assert.ok(receivedParams);
+    expect(receivedParams).toBeTruthy();
   });
 
   it("captures clinic ID from x-clinic-id header", async () => {
-    const handler = async () => NextResponse.json({ ok: true });
+    const handler = async (_req: NextRequest) => NextResponse.json({ ok: true });
 
     const wrapped = withRequestLog(handler);
     const req = new NextRequest("http://localhost:3000/api/test", {
@@ -98,6 +92,6 @@ describe("withRequestLog", () => {
     await wrapped(req);
 
     const entry: RequestLogEntry = JSON.parse(logOutput[0]);
-    assert.equal(entry.clinicId, "clinic-abc");
+    expect(entry.clinicId).toBe("clinic-abc");
   });
 });
