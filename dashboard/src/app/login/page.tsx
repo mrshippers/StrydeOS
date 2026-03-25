@@ -120,6 +120,13 @@ function LoginPageInner() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.code === "INVITED_USER" || data.code === "ALREADY_INVITED") {
+          // Invited clinician tried to create a new account — switch them to sign-in
+          switchMode("signin");
+          setError(data.error);
+          setSubmitting(false);
+          return;
+        }
         setError(data.error || "Something went wrong. Please try again.");
         setSubmitting(false);
         return;
