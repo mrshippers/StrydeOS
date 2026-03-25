@@ -1155,7 +1155,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Settings" subtitle="Manage your clinic configuration, targets, and team" />
+      <PageHeader title="Settings" subtitle={canManageTeam ? "Manage your clinic configuration, targets, and team" : "Manage your account"} />
 
       {/* Retrigger tour */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4">
@@ -1214,8 +1214,8 @@ export default function SettingsPage() {
         )}
       </AnimatePresence>
 
-      {/* Onboarding Checklist */}
-      {showOnboarding && (
+      {/* Onboarding Checklist — owner/admin only */}
+      {canManageTeam && showOnboarding && (
         <div className="rounded-[var(--radius-card)] border-2 border-blue/30 bg-blue/5 p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-9 w-9 rounded-xl bg-blue/10 flex items-center justify-center">
@@ -1293,6 +1293,9 @@ export default function SettingsPage() {
         </button>
       </div>
       </>)}
+
+      {/* ─── Owner/Admin-only sections ────────────────────────────── */}
+      {canManageTeam && (<>
 
       {/* PMS Connection */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
@@ -2207,6 +2210,9 @@ export default function SettingsPage() {
         handleConfirmTeam={handleConfirmTeam}
         handleSendInvite={handleSendInvite}
       />
+
+      </>)}
+      {/* ─── End owner/admin-only sections ──────────────────────────── */}
     </div>
   );
 }
