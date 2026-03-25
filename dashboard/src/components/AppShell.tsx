@@ -10,6 +10,7 @@ import AuthGuard from "@/components/AuthGuard";
 import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
 import PageTransition from "@/components/PageTransition";
 import OnboardingWidget from "@/components/OnboardingWidget";
+import AccountSetupWidget from "@/components/AccountSetupWidget";
 import TopProgressBar, { ProgressProvider } from "@/components/TopProgressBar";
 import StagingBanner from "@/components/StagingBanner";
 import SplashScreen from "@/components/SplashScreen";
@@ -76,6 +77,7 @@ function AppLayout({ children, impersonating }: { children: React.ReactNode; imp
         </div>
       </motion.main>
       <OnboardingWidget />
+      <AccountSetupWidget />
       <FirstLoginTour />
       <InsightEngineUnlocked />
       <CommandPalette />
