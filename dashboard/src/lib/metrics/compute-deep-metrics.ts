@@ -237,14 +237,14 @@ function computeRetentionCurve(
     const reached = activePatients.filter(
       (p) => p.sessionCount >= session
     ).length;
-    const percentOfInitial = reached / totalIAs;
+    const percentOfInitial = (reached / totalIAs) * 100;
     const previousReached =
       session === 1
         ? totalIAs
         : steps[session - 2].patientsReached;
     const droppedOff = previousReached - reached;
     const dropoffFromPrevious =
-      previousReached > 0 ? droppedOff / previousReached : 0;
+      previousReached > 0 ? (droppedOff / previousReached) * 100 : 0;
 
     // Revenue lost = patients who dropped off × remaining sessions × rate
     const remainingSessions = MAX_RETENTION_SESSIONS - session;

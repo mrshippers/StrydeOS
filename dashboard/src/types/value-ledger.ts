@@ -127,8 +127,8 @@ export interface ValueSummary {
 export interface RetentionStep {
   session: number;                  // 1, 2, 3, 4, 5, 6+
   patientsReached: number;          // Count who made it to this session
-  percentOfInitial: number;         // patientsReached / totalIAs
-  dropoffFromPrevious: number;      // % who dropped between this and previous step
+  percentOfInitial: number;         // 0–100 scale (patientsReached / totalIAs × 100)
+  dropoffFromPrevious: number;      // 0–100 scale (% who dropped between this and previous step)
   revenueLostPence: number;         // Dropoff × remaining sessions × session rate
 }
 
