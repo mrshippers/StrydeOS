@@ -135,7 +135,7 @@ async function detectAvaEvents(
 
   // Load call logs since cutoff
   const callsSnap = await db
-    .collection(`clinics/${clinicId}/call_logs`)
+    .collection(`clinics/${clinicId}/calls`)
     .where("timestamp", ">=", since.toISOString())
     .orderBy("timestamp", "desc")
     .get();
