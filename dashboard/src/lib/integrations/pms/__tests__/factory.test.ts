@@ -1,11 +1,8 @@
 /**
  * Tests for PMS adapter factory and status maps.
- *
- * Run: npx tsx --test src/lib/integrations/pms/__tests__/factory.test.ts
  */
 
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, expect } from "vitest";
 import {
   WRITEUPP_STATUS_MAP,
   CLINIKO_STATUS_MAP,
@@ -23,7 +20,7 @@ describe("createPMSAdapter", () => {
       provider: "writeupp",
       apiKey: "test-key",
     });
-    assert.equal(adapter.provider, "writeupp");
+    expect(adapter.provider).toBe("writeupp");
   });
 
   it("creates a Cliniko adapter", async () => {
@@ -32,7 +29,7 @@ describe("createPMSAdapter", () => {
       provider: "cliniko",
       apiKey: "test-key",
     });
-    assert.equal(adapter.provider, "cliniko");
+    expect(adapter.provider).toBe("cliniko");
   });
 
   it("creates a Halaxy adapter", async () => {
@@ -41,7 +38,7 @@ describe("createPMSAdapter", () => {
       provider: "halaxy",
       apiKey: "test-key",
     });
-    assert.equal(adapter.provider, "halaxy");
+    expect(adapter.provider).toBe("halaxy");
   });
 
   it("creates a Zanda (Power Diary) adapter", async () => {
@@ -50,15 +47,14 @@ describe("createPMSAdapter", () => {
       provider: "powerdiary",
       apiKey: "test-key",
     });
-    assert.equal(adapter.provider, "powerdiary");
+    expect(adapter.provider).toBe("powerdiary");
   });
 
   it("throws for TM3 (not yet implemented)", async () => {
     const { createPMSAdapter } = await import("../factory");
-    assert.throws(
+    expect(
       () => createPMSAdapter({ provider: "tm3", apiKey: "key" }),
-      /TM3 adapter not yet implemented/
-    );
+    ).toThrow(/TM3 adapter not yet implemented/);
   });
 
   it("throws for PPS (not yet implemented)", async () => {
@@ -71,14 +67,13 @@ describe("createPMSAdapter", () => {
 
   it("throws for unknown provider", async () => {
     const { createPMSAdapter } = await import("../factory");
-    assert.throws(
+    expect(
       () =>
         createPMSAdapter({
           provider: "nonexistent" as any,
           apiKey: "key",
         }),
-      /Unknown PMS provider/
-    );
+    ).toThrow(/Unknown PMS provider/);
   });
 });
 
@@ -86,42 +81,42 @@ describe("createPMSAdapter", () => {
 
 describe("WriteUpp status map", () => {
   it("maps all expected statuses", () => {
-    assert.equal(WRITEUPP_STATUS_MAP["Confirmed"], "scheduled");
-    assert.equal(WRITEUPP_STATUS_MAP["Attended"], "completed");
-    assert.equal(WRITEUPP_STATUS_MAP["Did Not Attend"], "dna");
-    assert.equal(WRITEUPP_STATUS_MAP["Cancelled"], "cancelled");
-    assert.equal(WRITEUPP_STATUS_MAP["Late Cancellation"], "late_cancel");
+    expect(WRITEUPP_STATUS_MAP["Confirmed"]).toBe("scheduled");
+    expect(WRITEUPP_STATUS_MAP["Attended"]).toBe("completed");
+    expect(WRITEUPP_STATUS_MAP["Did Not Attend"]).toBe("dna");
+    expect(WRITEUPP_STATUS_MAP["Cancelled"]).toBe("cancelled");
+    expect(WRITEUPP_STATUS_MAP["Late Cancellation"]).toBe("late_cancel");
   });
 });
 
 describe("Cliniko status map", () => {
   it("maps all expected statuses", () => {
-    assert.equal(CLINIKO_STATUS_MAP["booked"], "scheduled");
-    assert.equal(CLINIKO_STATUS_MAP["arrived"], "completed");
-    assert.equal(CLINIKO_STATUS_MAP["did_not_arrive"], "dna");
-    assert.equal(CLINIKO_STATUS_MAP["cancelled"], "cancelled");
+    expect(CLINIKO_STATUS_MAP["booked"]).toBe("scheduled");
+    expect(CLINIKO_STATUS_MAP["arrived"]).toBe("completed");
+    expect(CLINIKO_STATUS_MAP["did_not_arrive"]).toBe("dna");
+    expect(CLINIKO_STATUS_MAP["cancelled"]).toBe("cancelled");
   });
 });
 
 describe("Halaxy status map", () => {
   it("maps all expected statuses", () => {
-    assert.equal(HALAXY_STATUS_MAP["booked"], "scheduled");
-    assert.equal(HALAXY_STATUS_MAP["fulfilled"], "completed");
-    assert.equal(HALAXY_STATUS_MAP["noshow"], "dna");
-    assert.equal(HALAXY_STATUS_MAP["cancelled"], "cancelled");
-    assert.equal(HALAXY_STATUS_MAP["entered-in-error"], "cancelled");
+    expect(HALAXY_STATUS_MAP["booked"]).toBe("scheduled");
+    expect(HALAXY_STATUS_MAP["fulfilled"]).toBe("completed");
+    expect(HALAXY_STATUS_MAP["noshow"]).toBe("dna");
+    expect(HALAXY_STATUS_MAP["cancelled"]).toBe("cancelled");
+    expect(HALAXY_STATUS_MAP["entered-in-error"]).toBe("cancelled");
   });
 });
 
 describe("Zanda status map", () => {
   it("maps all expected statuses", () => {
-    assert.equal(ZANDA_STATUS_MAP["confirmed"], "scheduled");
-    assert.equal(ZANDA_STATUS_MAP["arrived"], "completed");
-    assert.equal(ZANDA_STATUS_MAP["dna"], "dna");
-    assert.equal(ZANDA_STATUS_MAP["did not attend"], "dna");
-    assert.equal(ZANDA_STATUS_MAP["cancelled"], "cancelled");
-    assert.equal(ZANDA_STATUS_MAP["late cancellation"], "late_cancel");
-    assert.equal(ZANDA_STATUS_MAP["no show"], "dna");
+    expect(ZANDA_STATUS_MAP["confirmed"]).toBe("scheduled");
+    expect(ZANDA_STATUS_MAP["arrived"]).toBe("completed");
+    expect(ZANDA_STATUS_MAP["dna"]).toBe("dna");
+    expect(ZANDA_STATUS_MAP["did not attend"]).toBe("dna");
+    expect(ZANDA_STATUS_MAP["cancelled"]).toBe("cancelled");
+    expect(ZANDA_STATUS_MAP["late cancellation"]).toBe("late_cancel");
+    expect(ZANDA_STATUS_MAP["no show"]).toBe("dna");
   });
 });
 

@@ -181,7 +181,8 @@ function LoginPageInner() {
       
       if (code === "auth/multi-factor-auth-required") {
         const mfaError = err as MultiFactorError;
-        const resolver = (mfaError as any).resolver || (mfaError.customData as any)?.resolver;
+        const resolver = (mfaError as MultiFactorError & { resolver?: MultiFactorResolver }).resolver
+          || (mfaError.customData as Record<string, unknown> | undefined)?.resolver as MultiFactorResolver | undefined;
         if (resolver) {
           setMfaResolver(resolver);
           setMfaRequired(true);
@@ -419,7 +420,7 @@ function LoginPageInner() {
                                 placeholder="000000"
                                 className="w-full px-4 py-3 rounded-xl text-sm text-navy text-center font-mono placeholder-muted border border-border bg-cloud-light focus:outline-none focus:ring-2 focus:ring-blue/30 focus:border-blue transition-all"
                                 onKeyDown={(e) => {
-                                  if (e.key === "Enter" && mfaCode.length === 6) handleMfaVerify(e as any);
+                                  if (e.key === "Enter" && mfaCode.length === 6) handleMfaVerify(e as unknown as React.FormEvent);
                                 }}
                               />
                             </div>

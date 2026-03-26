@@ -7,7 +7,7 @@
  */
 
 const SESSION_COOKIE = "__session";
-const SESSION_MAX_AGE = 60 * 60; // 1 hour
+const SESSION_MAX_AGE = 8 * 60 * 60; // 8 hours — matches a clinical workday
 
 interface SessionPayload {
   uid: string;

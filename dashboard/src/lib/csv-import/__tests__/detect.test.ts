@@ -1,5 +1,4 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, expect } from "vitest";
 import { detectSchema } from "../detect";
 import { BUILTIN_SCHEMAS } from "../schemas";
 
@@ -26,9 +25,9 @@ describe("detectSchema", () => {
     ];
 
     const result = detectSchema(headers, BUILTIN_SCHEMAS, "appointments");
-    assert.ok(result, "Expected a detection result");
-    assert.equal(result.schema.id, "writeupp");
-    assert.ok(result.confidence > 0.7, `Expected confidence > 0.7, got ${result.confidence}`);
+    expect(result).toBeTruthy();
+    expect(result!.schema.id).toBe("writeupp");
+    expect(result!.confidence).toBeGreaterThan(0.7);
   });
 
   it("detects Cliniko from Cliniko-style headers", () => {
@@ -46,8 +45,8 @@ describe("detectSchema", () => {
     ];
 
     const result = detectSchema(headers, BUILTIN_SCHEMAS, "appointments");
-    assert.ok(result, "Expected a detection result");
-    assert.equal(result.schema.id, "cliniko");
+    expect(result).toBeTruthy();
+    expect(result!.schema.id).toBe("cliniko");
   });
 
   it("detects TM3 from TM3-style headers", () => {
@@ -66,8 +65,8 @@ describe("detectSchema", () => {
     ];
 
     const result = detectSchema(headers, BUILTIN_SCHEMAS, "appointments");
-    assert.ok(result, "Expected a detection result");
-    assert.equal(result.schema.id, "tm3");
+    expect(result).toBeTruthy();
+    expect(result!.schema.id).toBe("tm3");
   });
 
   it("returns null for unrecognised headers", () => {
@@ -80,7 +79,7 @@ describe("detectSchema", () => {
     ];
 
     const result = detectSchema(headers, BUILTIN_SCHEMAS, "appointments");
-    assert.equal(result, null);
+    expect(result).toBe(null);
   });
 
   it("returns higher-priority schema when headers produce equal scores", () => {
@@ -103,7 +102,7 @@ describe("detectSchema", () => {
     ];
 
     const result = detectSchema(headers, BUILTIN_SCHEMAS, "appointments");
-    assert.ok(result, "Expected a detection result");
-    assert.equal(result.schema.id, "tm3");
+    expect(result).toBeTruthy();
+    expect(result!.schema.id).toBe("tm3");
   });
 });

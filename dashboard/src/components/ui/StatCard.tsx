@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import Link from "next/link";
 import type { StatCardProps } from "@/types";
 import { ChevronUp, ChevronDown, Minus, AlertTriangle } from "lucide-react";
@@ -137,7 +137,9 @@ function Sparkline({ data, status }: { data: number[]; status: string }) {
   );
 }
 
-export default function StatCard({
+// Re-renders when any prop changes (shallow compare via memo).
+// If onClick or action callbacks are unstable, parent should useCallback them.
+function StatCard({
   label,
   value,
   unit,
@@ -285,3 +287,5 @@ export default function StatCard({
     </div>
   );
 }
+
+export default memo(StatCard);
