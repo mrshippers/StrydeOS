@@ -267,7 +267,7 @@ export default function AvaShowcase() {
   useEffect(() => { playingRef.current = playing; }, [playing]);
   useEffect(() => { requestAnimationFrame(() => setLoaded(true)); }, []);
 
-  // FIX #3 + #5: progress via refs, elapsed counter
+  // Progress synced to real audio playback
   useEffect(() => {
     if (!playing) {
       progressRef.current = 0;
@@ -275,13 +275,14 @@ export default function AvaShowcase() {
       setElapsed(0);
       return;
     }
-    const start = Date.now(), dur = 3200;
     const tick = () => {
-      const ms = Date.now() - start;
-      const p = (ms % dur) / dur;
-      progressRef.current = p;
-      setGlow(envelope(p));
-      setElapsed(Math.min(ms / 1000, 3.2));
+      const a = audioRef.current;
+      if (a && a.duration && isFinite(a.duration)) {
+        const p = a.currentTime / a.duration;
+        progressRef.current = p;
+        setGlow(envelope(p));
+        setElapsed(Math.floor(a.currentTime));
+      }
       tickRef.current = requestAnimationFrame(tick);
     };
     tickRef.current = requestAnimationFrame(tick);
@@ -294,13 +295,14 @@ export default function AvaShowcase() {
       setPlaying(false);
     } else {
       const a = audioRef.current;
-      if (a) { a.currentTime = 0; a.play().catch(() => {}); }
+      if (a) {
+        a.currentTime = 0;
+        a.play().catch(() => {});
+        a.onended = () => setPlaying(false);
+      }
       setPlaying(true);
-      setTimeout(() => setPlaying(false), 3200);
     }
   };
-
-  const formatTime = (s) => `0:${String(Math.floor(s)).padStart(2, "0")}`;
 
   return (
     <>
@@ -321,7 +323,7 @@ export default function AvaShowcase() {
         }
       `}</style>
 
-      <audio ref={audioRef} preload="none">
+      <audio ref={audioRef} preload="auto">
         <source src="/audio/ava-intro.mp3" type="audio/mpeg" />
       </audio>
 
@@ -493,15 +495,18 @@ export default function AvaShowcase() {
             display: "flex", alignItems: "center", justifyContent: "space-between",
             paddingTop: 10, position: "relative",
           }}>
-            {/* FIX #2: lightweight SVG mini wave + FIX #3: elapsed counter */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              opacity: playing ? 1 : 0,
+              transition: "opacity 0.4s ease",
+            }}>
               <MiniWave playing={playing} />
               <span style={{
                 fontSize: 10, fontWeight: 400, color: B.mutedSoft,
                 fontVariantNumeric: "tabular-nums",
                 minWidth: 30,
               }}>
-                {playing ? formatTime(elapsed) : "1:42"}
+                {elapsed}s
               </span>
             </div>
 
