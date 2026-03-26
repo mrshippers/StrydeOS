@@ -189,9 +189,8 @@ export default function TrialPage() {
 
   const handleStart = () => {
     if (!selected) return;
-    // Route to signup with module context, then onboarding
-    const next = encodeURIComponent("/onboarding");
-    router.push(`/login?mode=signup&next=${next}&module=${selected}`);
+    // Route directly to onboarding — step 1 is sign-up
+    router.push(`/onboarding?module=${selected}`);
   };
 
   // Show spinner only while auth is loading (page renders for everyone)

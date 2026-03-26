@@ -11,7 +11,6 @@ const PROTECTED_PREFIXES = [
   "/settings",
   "/clinicians",
   "/patients",
-  "/onboarding",
   "/compliance",
 ];
 

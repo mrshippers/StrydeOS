@@ -347,7 +347,7 @@ export const MODULE_DISPLAY: Record<
   intelligence: {
     name: "Intelligence",
     description:
-      "Clinical performance dashboard. 8 validated KPIs, revenue analytics, outcome measures, DNA analysis, and reputation tracking.",
+      "Clinical performance dashboard. 6 validated KPIs, revenue analytics, DNA analysis, and reputation tracking.",
     color: "#8B5CF6",
     flagKey: "intelligence",
   },

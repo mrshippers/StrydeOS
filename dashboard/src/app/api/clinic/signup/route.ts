@@ -30,7 +30,7 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { clinicName, email, password, firstName, lastName, profession, clinicSize, country } = body as {
+    const { clinicName, email, password, firstName, lastName, profession, clinicSize, country, trialModule, trialTier } = body as {
       clinicName?: string;
       email?: string;
       password?: string;
@@ -39,6 +39,8 @@ async function handler(request: NextRequest) {
       profession?: string;
       clinicSize?: string;
       country?: string;
+      trialModule?: string;
+      trialTier?: string;
     };
 
     if (!clinicName?.trim() || !email?.trim() || !password) {
@@ -213,6 +215,8 @@ async function handler(request: NextRequest) {
       clinicSize: clinicSize?.trim() || null,
       commsConsentGrantedAt: now,
       trialStartedAt: now,
+      trialModule: trialModule || "intelligence",
+      trialTier: trialTier || "solo",
       createdAt: now,
       updatedAt: now,
     });
