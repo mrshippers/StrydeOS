@@ -49,41 +49,6 @@
         { "type": "header", "key": "authorization" }
       ],
       "mitigate": { "action": "deny" }
-    },
-    {
-      "src": "/api/auth/session",
-      "mitigate": {
-        "action": "rate_limit",
-        "rateLimit": { "algo": "fixed_window", "window": 60, "limit": 10 }
-      }
-    },
-    {
-      "src": "/api/clinic/signup",
-      "mitigate": {
-        "action": "rate_limit",
-        "rateLimit": { "algo": "fixed_window", "window": 60, "limit": 5 }
-      }
-    },
-    {
-      "src": "/api/comms/send",
-      "mitigate": {
-        "action": "rate_limit",
-        "rateLimit": { "algo": "fixed_window", "window": 60, "limit": 30 }
-      }
-    },
-    {
-      "src": "/api/billing/checkout",
-      "mitigate": {
-        "action": "rate_limit",
-        "rateLimit": { "algo": "fixed_window", "window": 60, "limit": 5 }
-      }
-    },
-    {
-      "src": "/api/clinicians/add",
-      "mitigate": {
-        "action": "rate_limit",
-        "rateLimit": { "algo": "fixed_window", "window": 60, "limit": 10 }
-      }
     }
   ]
 }
