@@ -2,7 +2,7 @@
 
 Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analytics), **Pulse** (continuity & comms).
 
-## Current State — v0.9.0 (24 Mar 2026)
+## Current State — v0.10.0 (26 Mar 2026)
 
 
 | Module                          | Status      | Notes                                                        |
@@ -21,7 +21,10 @@ Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analyt
 | Heidi Health                    | Built       | REST client, JWT auth, complexity signals, clinical notes     |
 | Patient Profiles                | Live        | Timeline, risk factors, complexity panel, clinical notes      |
 | Billing (Stripe)                | Live        | Seat limits, tier gates, checkout flow                        |
-| Auth (Firebase)                 | Live        | Custom claims, MFA, demo mode, owner billing bypass           |
+| Auth (Firebase)                 | Live        | 4-tier RBAC, MFA, demo mode, enterprise role enforcement      |
+| RBAC                            | **Live**    | **Enterprise RBAC: superadmin > owner > admin > clinician**   |
+| Account Setup Widget            | **Live**    | **5-step onboarding checklist, floating top-right UI**        |
+| Invite Guard                    | **Live**    | **Prevents duplicate clinic creation for invited clinicians** |
 | Status Page                     | Live        | 17 services, live health checks, 30-day uptime bars           |
 | API Docs                        | Live        | 37+ endpoints, dual-view (business + developer)              |
 | GDPR / Compliance               | Live        | Cookie consent, SAR templates, security audit checklist       |
@@ -32,7 +35,24 @@ Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analyt
 
 ---
 
-## Shipped This Session (22–24 Mar 2026)
+## Shipped This Session (26 Mar 2026)
+
+| Feature                                        | What it does                                                                |
+| ---------------------------------------------- | --------------------------------------------------------------------------- |
+| **Account Setup Widget (1/5)**                 | Floating top-right checklist: profile, clinic details, PMS, clinicians, KPIs |
+| **Enterprise RBAC enforcement**                | 4-tier role hierarchy enforced across all pages, sidebar, API routes          |
+| **Clinician-scoped Settings**                  | Clinicians see only password + MFA; all admin sections hidden                |
+| **Billing access removed for clinicians**      | Page redirect + all CTAs/links/commands stripped from clinician view          |
+| **Invited user signup guard**                  | Prevents duplicate clinic creation when invited clinician tries to sign up   |
+| **AuthGuard pathname fix**                     | Exact path matching prevents `/loginx` bypass                                |
+| **`/api/comms/send` role guard**               | Added missing requireRole — clinicians can't trigger comms sequences         |
+| **Onboarding/Checkout/API Docs guards**        | All redirect clinicians to /dashboard                                        |
+| **Clinic-wide data propagation verified**      | featureFlags, modules, targets sync to all users via onSnapshot              |
+
+
+---
+
+## Shipped Previously (22–24 Mar 2026)
 
 | Feature                                  | What it does                                                              |
 | ---------------------------------------- | ------------------------------------------------------------------------- |

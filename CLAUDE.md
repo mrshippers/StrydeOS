@@ -219,9 +219,30 @@ Irreversible = multi-tenant data modelling, real-time listener architecture, com
 - `clinicId` partitioning is the multi-tenant isolation strategy — respect it in every query
 - Metrics are computed and cached in `metrics_weekly` — don't re-derive from raw collections unless building a backfill
 
-### Auth
+### Auth & RBAC
 - Firebase Auth only — no custom auth logic
-- Role model: `owner`, `clinician` — permissions enforced server-side in Firestore rules
+- **Four-tier role hierarchy:** `superadmin > owner > admin > clinician`
+- Role is **always read from Firestore** (`users/{uid}.role`) — never from JWT claims or client state
+- Permissions enforced at **four layers:** middleware (session cookie), AuthGuard (client redirect), API routes (`requireRole()`), Firestore security rules
+- Session cookie: HMAC-signed, HttpOnly, 1hr TTL — contains only `{ uid, exp }`, no role
+
+#### Role Access Summary
+
+| Capability | Superadmin | Owner | Admin | Clinician |
+|-----------|-----------|-------|-------|-----------|
+| Dashboard (all clinicians) | Yes | Yes | Yes | **Own only** |
+| Settings (clinic details, KPIs, integrations) | Yes | Yes | Yes | **No** |
+| Settings (password, MFA) | Yes | Yes | Yes | Yes |
+| Billing / Checkout | Yes | Yes | Yes | **Redirect** |
+| Onboarding wizard | Yes | Yes | Yes | **Redirect** |
+| Compliance / SAR | Yes | Yes | Yes | **Redirect** |
+| Admin panel | Yes | **Redirect** | **Redirect** | **Redirect** |
+| API routes (PMS, HEP, comms, metrics) | Yes | Yes | Yes | **403** |
+
+#### Invite Flow
+- Owner adds clinician via Settings → creates Firebase Auth user + `users/{uid}` doc (with correct `clinicId`) + `clinicians` subcollection doc
+- Invited clinician sets password via email link, signs in → automatically under correct clinic
+- Signup route checks for existing invited users → blocks duplicate clinic creation with `INVITED_USER` error
 - Never expose Firebase config in client code outside of env vars
 
 ### Integrations

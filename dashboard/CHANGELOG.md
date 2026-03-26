@@ -1,5 +1,37 @@
 # StrydeOS Changelog
 
+## v0.10.0 — RBAC Hardening & Onboarding (26 Mar 2026)
+
+### Account Setup Widget (New)
+- **Floating checklist** — `AccountSetupWidget.tsx` renders in top-right corner during onboarding
+- **5-step progress ring** — Complete profile, Add clinic details, Connect PMS, Add clinicians, Set KPI targets
+- **Auto-fills from signup** — steps already completed at registration are pre-checked
+- **Dismissable** — close to collapse to pill, "Don't show this again" for permanent dismiss (per-clinic localStorage)
+- **Co-exists with OnboardingWidget** — bottom-right wizard pill unaffected
+
+### Enterprise RBAC Enforcement
+- **Four-tier role hierarchy** — `superadmin > owner > admin > clinician`, enforced end-to-end
+- **Clinician-scoped Settings** — clinicians see only password, MFA, and tour reset; clinic details, KPIs, integrations, team management hidden behind `canManageTeam`
+- **Billing page redirect** — clinicians redirected to `/dashboard` on page load
+- **Sidebar filtering** — Billing and API Docs nav items hidden for clinician role
+- **Billing CTAs removed** — `LockedModulePage`, `ModuleGuard`, `CommandPalette`, `TrialBanner` all show "Ask your clinic owner" instead of billing links for clinicians
+- **Onboarding wizard** — clinicians redirected to `/dashboard` (owner/admin-only flow)
+- **Checkout flow** — clinicians redirected to `/dashboard`
+- **API Docs** — clinicians redirected to `/dashboard`
+- **`/api/comms/send`** — added `requireRole(["owner","admin","superadmin"])` (was missing explicit role check)
+
+### Auth Security Fixes
+- **AuthGuard pathname bypass** — `pathname.startsWith("/login")` replaced with exact match + separator check to prevent `/loginx` bypass
+- **Invited user signup guard** — signup route now checks for existing Firebase Auth users with `status: "invited"` and returns specific `INVITED_USER` error code guiding them to sign in
+- **Login page UX** — `INVITED_USER` error auto-switches to sign-in tab with explanation
+
+### Clinic-Wide Data Propagation (Verified)
+- **No code changes needed** — `featureFlags`, `targets`, `billing`, `status` all live on the clinic doc (`clinics/{clinicId}`)
+- **Real-time sync** — `onSnapshot` listener in `useAuth` propagates module unlocks, target changes, and status updates to all logged-in users under the same clinicId instantly
+- **Multi-tenant isolation** — Firestore security rules + `requireClinic()` in API routes enforce clinicId partitioning at every layer
+
+---
+
 ## v0.9.0 — Website Overhaul & i18n Foundation (24 Mar 2026)
 
 ### Marketing Website — Next.js Migration & Full Rebuild

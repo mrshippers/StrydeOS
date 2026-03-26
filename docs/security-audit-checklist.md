@@ -33,15 +33,21 @@
 
 ## 3. Authentication & Authorization
 
-- [ ] **Auth on all API routes** — every route verifies identity (token, session, API key)
-- [ ] **Role-based access control** — routes enforce allowed roles (owner, admin, clinician, etc.)
-- [ ] **Multi-tenant isolation** — queries scoped by tenant ID (clinicId, orgId, etc.)
-- [ ] **Superadmin bypass is explicit** — not accidental; clearly coded and auditable
-- [ ] **Cron endpoints verify secret** — `CRON_SECRET` header checked on scheduled routes
-- [ ] **Webhook endpoints verify signatures** — HMAC/signature validation on inbound webhooks
-- [ ] **Session/token expiry** — auth tokens have reasonable TTL
-- [ ] **Middleware protects UI routes** — unauthenticated users redirected to login
-- [ ] **No auth bypass via direct URL** — protected pages can't be accessed by guessing paths
+- [x] **Auth on all API routes** — every route verifies identity (token, session, API key)
+- [x] **Role-based access control** — routes enforce allowed roles (owner, admin, clinician, etc.)
+- [x] **Multi-tenant isolation** — queries scoped by tenant ID (clinicId, orgId, etc.)
+- [x] **Superadmin bypass is explicit** — not accidental; clearly coded and auditable
+- [x] **Cron endpoints verify secret** — `CRON_SECRET` header checked on scheduled routes
+- [x] **Webhook endpoints verify signatures** — HMAC/signature validation on inbound webhooks
+- [x] **Session/token expiry** — auth tokens have reasonable TTL (1hr HMAC-signed cookie)
+- [x] **Middleware protects UI routes** — unauthenticated users redirected to login
+- [x] **No auth bypass via direct URL** — protected pages can't be accessed by guessing paths
+- [x] **Enterprise RBAC enforcement** — 4-tier hierarchy (superadmin > owner > admin > clinician) enforced at page, component, sidebar, API, and Firestore layers
+- [x] **Clinician view isolation** — clinicians see only own metrics, own patients; no billing, no admin settings, no team management
+- [x] **Invited user guard** — signup route detects invited users and prevents duplicate clinic creation
+- [x] **AuthGuard path matching** — exact match prevents `/loginx`-style bypasses
+- [x] **Role sourced from Firestore** — never from JWT claims or client state; always fresh from DB
+- [x] **Clinic-wide data propagation** — featureFlags, modules, targets on clinic doc, synced via onSnapshot to all users
 
 ## 4. Debug & Development Endpoints
 
@@ -142,6 +148,7 @@
 | Rate limiting | Done | | |
 | Secret scanning | Done | | |
 | Auth on all routes | Done | | |
+| Enterprise RBAC | Done | | 4-tier: superadmin > owner > admin > clinician |
 | Debug endpoints hardened | Done | | |
 | ESLint | Done | | |
 | Structured logging | Done | | |
