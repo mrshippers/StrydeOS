@@ -10,6 +10,7 @@ import { Lock, Check } from "lucide-react";
 import { MODULE_DISPLAY } from "@/lib/billing";
 import type { ModuleKey } from "@/lib/billing";
 import { brand } from "@/lib/brand";
+import { useAuth } from "@/hooks/useAuth";
 
 // ─── Per-module benefit bullets ───────────────────────────────────────────────
 
@@ -40,6 +41,8 @@ interface Props {
 export default function LockedModulePage({ module }: Props) {
   const { name, description, color } = MODULE_DISPLAY[module];
   const benefits = MODULE_BENEFITS[module];
+  const { user } = useAuth();
+  const isClinician = user?.role === "clinician";
 
   return (
     <div
@@ -125,24 +128,32 @@ export default function LockedModulePage({ module }: Props) {
           ))}
         </ul>
 
-        {/* CTA */}
-        <Link
-          href="/billing"
-          className="w-full flex items-center justify-center py-3 rounded-xl text-[14px] font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-          style={{
-            background: color,
-            boxShadow: `0 4px 20px ${color}40`,
-          }}
-        >
-          Unlock {name}
-        </Link>
+        {/* CTA — only show billing link to owners/admins */}
+        {isClinician ? (
+          <p className="text-[13px] text-white/40">
+            Ask your clinic owner to unlock this module.
+          </p>
+        ) : (
+          <>
+            <Link
+              href="/billing"
+              className="w-full flex items-center justify-center py-3 rounded-xl text-[14px] font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+              style={{
+                background: color,
+                boxShadow: `0 4px 20px ${color}40`,
+              }}
+            >
+              Unlock {name}
+            </Link>
 
-        <p className="mt-4 text-[11px] text-white/25">
-          Manage your plan on the{" "}
-          <Link href="/billing" className="underline underline-offset-2 hover:text-white/45 transition-colors">
-            billing page
-          </Link>
-        </p>
+            <p className="mt-4 text-[11px] text-white/25">
+              Manage your plan on the{" "}
+              <Link href="/billing" className="underline underline-offset-2 hover:text-white/45 transition-colors">
+                billing page
+              </Link>
+            </p>
+          </>
+        )}
       </div>
 
       {/* Keyframe animations via inline style tag */}

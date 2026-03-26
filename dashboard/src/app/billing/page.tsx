@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Check,
   Lock,
@@ -266,6 +266,14 @@ export default function BillingPage() {
   const { user, firebaseUser } = useAuth();
   const { hasModule, loading: entitlementLoading, trialActive, trialDaysRemaining } = useEntitlements();
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Clinicians cannot access billing — redirect to dashboard
+  useEffect(() => {
+    if (user && user.role === "clinician") {
+      router.replace("/dashboard");
+    }
+  }, [user, router]);
 
   const trialStartedAt = user?.clinicProfile?.trialStartedAt ?? null;
   const trialEndsAt = getTrialEndsAt(trialStartedAt);

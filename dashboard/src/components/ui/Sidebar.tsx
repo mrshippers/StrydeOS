@@ -576,7 +576,11 @@ export default function Sidebar() {
               System
             </p>
             <div className="space-y-0.5">
-              {SYSTEM_ITEMS.map((item) => {
+              {SYSTEM_ITEMS.filter((item) => {
+                // Clinicians cannot access Billing or API Docs
+                if (user?.role === "clinician" && (item.href === "/billing" || item.href === "/api-docs")) return false;
+                return true;
+              }).map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link

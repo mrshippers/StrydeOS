@@ -63,13 +63,15 @@ export default function TrialBanner() {
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <Link
-          href="/billing"
-          className="text-[11px] font-semibold whitespace-nowrap transition-opacity hover:opacity-75"
-          style={{ color: brand.warning }}
-        >
-          Upgrade →
-        </Link>
+        {user?.role !== "clinician" && (
+          <Link
+            href="/billing"
+            className="text-[11px] font-semibold whitespace-nowrap transition-opacity hover:opacity-75"
+            style={{ color: brand.warning }}
+          >
+            Upgrade →
+          </Link>
+        )}
         <button
           onClick={() => {
             try { sessionStorage.setItem(DISMISS_KEY, "1"); } catch { /* ignored */ }

@@ -79,6 +79,7 @@ export default function CommandPalette() {
   const { user, signOut } = useAuth();
   const { clinicians } = useClinicians();
   const isSuperAdmin = user?.role === "superadmin";
+  const isClinician = user?.role === "clinician";
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -109,7 +110,7 @@ export default function CommandPalette() {
       { id: "receptionist", label: "Ava", icon: Phone, action: () => { router.push("/receptionist"); close(); }, section: "pages" },
       { id: "intelligence", label: "Intelligence", icon: BarChart3, action: () => { router.push("/intelligence"); close(); }, section: "pages" },
       { id: "settings", label: "Settings", icon: Settings, action: () => { router.push("/settings"); close(); }, section: "pages" },
-      { id: "billing", label: "Billing", icon: CreditCard, action: () => { router.push("/billing"); close(); }, section: "pages" },
+      ...(!isClinician ? [{ id: "billing", label: "Billing", icon: CreditCard, action: () => { router.push("/billing"); close(); }, section: "pages" as const }] : []),
       { id: "help", label: "Help", icon: HelpCircle, action: () => { router.push("/help"); close(); }, section: "pages" },
       { id: "onboarding", label: "Setup Wizard", icon: Zap, action: () => { router.push("/onboarding"); close(); }, section: "pages" },
     ];
@@ -153,7 +154,7 @@ export default function CommandPalette() {
     ];
 
     return [...pages, ...clinicianItems, ...actions];
-  }, [clinicians, isSuperAdmin, router, close, signOut]);
+  }, [clinicians, isSuperAdmin, isClinician, router, close, signOut]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return items;
