@@ -1006,11 +1006,6 @@ const Hero = ({ darkMode }) => {
 
           {/* Left */}
           <div style={{ animation: "fadeUp 0.8s ease forwards" }}>
-            <div className="section-chip" style={{ marginBottom: 24 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.success, display: "inline-block" }} />
-              Now in early access
-            </div>
-
             <h1 className="serif hero-h1" style={{ fontSize: 60, lineHeight: 1.0, color: head, marginBottom: 10, fontWeight: 400, letterSpacing: "-0.01em" }}>
               The Clinic OS
             </h1>
@@ -2270,10 +2265,10 @@ const Results = () => {
 /* ─── ROI Calculator ─────────────────────────────────────────────────────────── */
 const ROICalc = ({ darkMode }) => {
   const [sessions, setSessions] = useState(40);
-  const [dna, setDna] = useState(10);
-  const [fee, setFee] = useState(60);
-  const [missedCalls, setMissedCalls] = useState(15);
-  const [dropout, setDropout] = useState(18);
+  const [dna, setDna] = useState(8);
+  const [fee, setFee] = useState(65);
+  const [missedCalls, setMissedCalls] = useState(20);
+  const [dropout, setDropout] = useState(20);
 
   const dnaLoss = Math.round(sessions * (dna / 100) * fee * 52);
   const callLoss = Math.round(sessions * (missedCalls / 100) * fee * 0.4 * 52);
@@ -2727,7 +2722,7 @@ const Pricing = ({ darkMode }) => {
       </AnimIn>
 
       <p style={{ textAlign: "center", fontSize: 13, color: muted, fontStyle: "italic", marginTop: 32 }}>
-        Currently in early access · No lock-in contracts · Onboarding & training included
+        No lock-in contracts · Onboarding & training included
       </p>
     </div>
   </section>
@@ -3144,9 +3139,9 @@ const Changelog = ({ darkMode }) => {
   );
 };
 
-/* ─── Early Access CTA ──────────────────────────────────────────────────────── */
-const EarlyAccess = () => (
-  <section id="early-access" style={{
+/* ─── CTA ──────────────────────────────────────────────────────────────────── */
+const CtaSection = () => (
+  <section id="get-started" style={{
     padding: "100px 24px",
     background: C.navy,
     position: "relative", overflow: "hidden",
@@ -3156,10 +3151,6 @@ const EarlyAccess = () => (
 
     <AnimIn>
     <div style={{ maxWidth: 620, margin: "0 auto", position: "relative", zIndex: 2 }}>
-      <div style={{ display: "inline-flex", gap: 4, padding: "4px 14px", borderRadius: 50, background: `${C.blue}30`, border: `1px solid ${C.blue}50`, color: C.blueGlow, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>
-        Early Access
-      </div>
-
       <h2 className="serif section-h2" style={{ fontSize: 48, color: "white", fontWeight: 400, lineHeight: 1.05, marginBottom: 20 }}>
         See what your clinic is leaving on the table.
       </h2>
@@ -3187,7 +3178,7 @@ const EarlyAccess = () => (
       {/* Compliance carousel */}
       <div style={{ overflow: "hidden", marginTop: 56, paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
         <div style={{ display: "flex", gap: 48, animation: "scroll 20s linear infinite", width: "max-content" }}>
-          {[...["GDPR", "HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Australian Privacy Act", "Audit Logged", "SOC 2 (roadmap)"], ...["GDPR", "HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Australian Privacy Act", "Audit Logged", "SOC 2 (roadmap)"]].map((badge, i) => (
+          {[...["GDPR", "HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Audit Logged", "SOC 2 (roadmap)"], ...["GDPR", "HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Audit Logged", "SOC 2 (roadmap)"]].map((badge, i) => (
             <div key={`${badge}-${i}`} style={{ display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               <span style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>{badge}</span>
@@ -3256,7 +3247,7 @@ const Footer = () => (
       </div>
 
       <div className="footer-compliance" style={{ display: "flex", gap: 24, padding: "16px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        {["GDPR · HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Australian Privacy Act", "Audit Logged"].map((badge) => (
+        {["GDPR · HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Audit Logged"].map((badge) => (
           <div key={badge} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(255,255,255,0.25)", fontWeight: 500 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"/>
@@ -3412,7 +3403,7 @@ export default function App() {
       <ROICalc darkMode={darkMode} />
       <Pricing darkMode={darkMode} />
       <WhyUs darkMode={darkMode} />
-      <EarlyAccess />
+      <CtaSection />
       <Footer />
       <CookieBanner />
     </>
