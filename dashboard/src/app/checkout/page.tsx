@@ -395,14 +395,8 @@ function CheckoutInner() {
               }}
             >
               <div className="flex items-center gap-4 mb-4">
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                  style={{
-                    background: hexToRgba(meta.color, 0.15),
-                    border: `1px solid ${hexToRgba(meta.color, 0.25)}`,
-                  }}
-                >
-                  <ModuleIcon color={meta.color} size={36} />
+                <div className="w-16 h-16 shrink-0">
+                  <ModuleIcon color={meta.color} size={64} />
                 </div>
                 <div>
                   <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">
