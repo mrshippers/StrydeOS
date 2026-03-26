@@ -225,6 +225,7 @@ export default function AvaConversationCard() {
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [glow, setGlow] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const audioRef = useRef(null);
   const tickRef = useRef(null);
 
@@ -232,11 +233,14 @@ export default function AvaConversationCard() {
 
   useEffect(() => {
     if (!playing) { setProgress(0); setGlow(0); return; }
-    const start = Date.now(), dur = 3200;
     const tick = () => {
-      const p = ((Date.now() - start) % dur) / dur;
-      setProgress(p);
-      setGlow(envelope(p));
+      const a = audioRef.current;
+      if (a && a.duration && isFinite(a.duration)) {
+        const p = a.currentTime / a.duration;
+        setProgress(p);
+        setGlow(envelope(p));
+        setElapsed(Math.floor(a.currentTime));
+      }
       tickRef.current = requestAnimationFrame(tick);
     };
     tickRef.current = requestAnimationFrame(tick);
@@ -249,9 +253,12 @@ export default function AvaConversationCard() {
       setPlaying(false);
     } else {
       const a = audioRef.current;
-      if (a) { a.currentTime = 0; a.play().catch(() => {}); }
+      if (a) {
+        a.currentTime = 0;
+        a.play().catch(() => {});
+        a.onended = () => setPlaying(false);
+      }
       setPlaying(true);
-      setTimeout(() => setPlaying(false), 3200);
     }
   };
 
@@ -397,7 +404,11 @@ export default function AvaConversationCard() {
             display: "flex", alignItems: "center", justifyContent: "space-between",
             paddingTop: 10, position: "relative",
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6,
+              opacity: playing ? 1 : 0,
+              transition: "opacity 0.4s ease",
+            }}>
               <Wave
                 playing={playing}
                 progress={progress}
@@ -408,7 +419,7 @@ export default function AvaConversationCard() {
                 fontSize: 10, fontWeight: 400, color: B.mutedSoft,
                 fontVariantNumeric: "tabular-nums",
               }}>
-                1:42
+                {elapsed}s
               </span>
             </div>
             <span style={{

@@ -128,6 +128,7 @@ const PMS_PROVIDERS: PmsProviderOption[] = [
   { id: "powerdiary", label: "Zanda (Power Diary)", icon: "📓", logo: "/integrations/powerdiary.png", comingSoon: false, recentlyAdded: true },
   { id: "pabau", label: "Pabau", icon: "🏥", logo: "/integrations/pabau.svg", comingSoon: true },
   { id: "halaxy", label: "Halaxy", icon: "💙", logo: "/integrations/halaxy.svg", comingSoon: false, recentlyAdded: true },
+  { id: "pps", label: "PPS (Rushcliff)", icon: "🩺", logo: "/integrations/pps.png", comingSoon: true },
 ];
 
 interface HepProviderOption {

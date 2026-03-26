@@ -86,6 +86,7 @@ const PMS_OPTIONS = [
   { id: "halaxy" as PmsProvider, label: "Halaxy", description: "UK/EU practice management with FHIR-standard API", badge: null },
   { id: "powerdiary" as PmsProvider, label: "Zanda (Power Diary)", description: "UK & Australian PMS with self-serve API access", badge: null },
   { id: "tm3" as PmsProvider, label: "TM3 (Blue Zinc)", description: "Dominant in MSK and insurance-funded UK clinics — CSV bridge", badge: "CSV Bridge" as string | null },
+  { id: "pps" as PmsProvider, label: "PPS (Rushcliff)", description: "Legacy UK incumbent — 2,400+ clinics across physio, podiatry, osteopathy", badge: "Coming Soon" as string | null },
 ];
 
 const PULSE_SEQUENCES = [

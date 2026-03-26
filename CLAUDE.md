@@ -87,7 +87,7 @@ StrydeOS is built and validated at Spires first.
 - **Voice AI:** ElevenLabs (Conversational AI) + Twilio (telephony/SIP)
 - **White-label voice layer (future):** Vapify (wraps ElevenLabs at reseller phase)
 - **PMS integrations:** WriteUpp (primary), Cliniko, Halaxy, Zanda (Power Diary) — all live
-- **Roadmap:** TM3 (Blue Zinc), Pabau (requires API key), Jane App
+- **Roadmap:** TM3 (Blue Zinc), PPS (Rushcliff — API docs gated, requires PPS Express login), Pabau (requires API key), Jane App
 - **HEP integrations:** Physitrack (live), Rehab My Patient (live), Wibbi (pending — auth model needs rework)
 - **Clinical tools:** Heidi Health (clinical docs — data enrichment, not a competitor)
 - **PMS API bridge:** OpenClaw (handles PMS API access without official integration)
@@ -260,6 +260,7 @@ Irreversible = multi-tenant data modelling, real-time listener architecture, com
 - Onboard 1–2 other private physio practices
 - Pitch deck + sales motion built around stakeholder triangle
 - TM3 (Blue Zinc) integration — dominant legacy UK physio PMS, current blind spot
+- PPS (Rushcliff) integration — legacy UK incumbent, 2,400+ clinics, Physio First partner. API docs gated behind PPS Express login.
 - Outcome measures layer: NPRS, PSFS, QuickDASH, ODI, NDI (clinical-to-commercial correlation)
 
 ### Later
@@ -273,6 +274,7 @@ Irreversible = multi-tenant data modelling, real-time listener architecture, com
 ## Pending / Known Gaps
 
 - **TM3 (Blue Zinc)** — critical UK PMS integration, not yet built
+- **PPS (Rushcliff)** — legacy UK incumbent (2,400+ clinics, Physio First partner). API exists (docs.pps-api.com) but docs gated behind PPS Express login. Token-based API pricing from £80/mo. Contact sales@rushcliff.com for developer access.
 - **Pabau** — medspa/aesthetics PMS integration, awaiting API key access
 - **Outcome measures** — NPRS, PSFS, QuickDASH, ODI, NDI layer not yet started
 - **Loom embed** — demo video section on website, not yet implemented

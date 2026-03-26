@@ -122,3 +122,24 @@ export const ZANDA_STATUS_MAP: PMSStatusMap = {
   "late cancellation": "late_cancel",
   "no show": "dna",
 };
+
+/**
+ * PPS (Private Practice Software / Rushcliff) status map.
+ *
+ * PPS API docs are gated (docs.pps-api.com, requires PPS Express login).
+ * These mappings are inferred from PPS's UK physio conventions and may need
+ * refinement once API access is obtained. PPS uses standard UK appointment
+ * terminology consistent with Physio First guidelines.
+ */
+export const PPS_STATUS_MAP: PMSStatusMap = {
+  booked: "scheduled",
+  confirmed: "scheduled",
+  attended: "completed",
+  completed: "completed",
+  dna: "dna",
+  "did not attend": "dna",
+  "no show": "dna",
+  cancelled: "cancelled",
+  "late cancellation": "late_cancel",
+  "late cancel": "late_cancel",
+};

@@ -137,7 +137,7 @@ export interface OnboardingV2 {
   lastEventAt: string;
 }
 
-export type PmsProvider = "writeupp" | "cliniko" | "tm3" | "jane" | "powerdiary" | "pabau" | "halaxy";
+export type PmsProvider = "writeupp" | "cliniko" | "tm3" | "jane" | "powerdiary" | "pabau" | "halaxy" | "pps";
 export type HepProvider = "physitrack" | "rehab_my_patient" | "wibbi";
 export type ClinicStatus = "onboarding" | "live" | "paused" | "churned";
 

@@ -11,6 +11,7 @@ import {
   CLINIKO_STATUS_MAP,
   HALAXY_STATUS_MAP,
   ZANDA_STATUS_MAP,
+  PPS_STATUS_MAP,
 } from "@/types/pms";
 
 // ─── PMS Factory ─────────────────────────────────────────────────────────────
@@ -57,6 +58,14 @@ describe("createPMSAdapter", () => {
     assert.throws(
       () => createPMSAdapter({ provider: "tm3", apiKey: "key" }),
       /TM3 adapter not yet implemented/
+    );
+  });
+
+  it("throws for PPS (not yet implemented)", async () => {
+    const { createPMSAdapter } = await import("../factory");
+    assert.throws(
+      () => createPMSAdapter({ provider: "pps", apiKey: "key" }),
+      /PPS adapter not yet implemented/
     );
   });
 
@@ -113,5 +122,20 @@ describe("Zanda status map", () => {
     assert.equal(ZANDA_STATUS_MAP["cancelled"], "cancelled");
     assert.equal(ZANDA_STATUS_MAP["late cancellation"], "late_cancel");
     assert.equal(ZANDA_STATUS_MAP["no show"], "dna");
+  });
+});
+
+describe("PPS status map", () => {
+  it("maps all expected statuses", () => {
+    assert.equal(PPS_STATUS_MAP["booked"], "scheduled");
+    assert.equal(PPS_STATUS_MAP["confirmed"], "scheduled");
+    assert.equal(PPS_STATUS_MAP["attended"], "completed");
+    assert.equal(PPS_STATUS_MAP["completed"], "completed");
+    assert.equal(PPS_STATUS_MAP["dna"], "dna");
+    assert.equal(PPS_STATUS_MAP["did not attend"], "dna");
+    assert.equal(PPS_STATUS_MAP["no show"], "dna");
+    assert.equal(PPS_STATUS_MAP["cancelled"], "cancelled");
+    assert.equal(PPS_STATUS_MAP["late cancellation"], "late_cancel");
+    assert.equal(PPS_STATUS_MAP["late cancel"], "late_cancel");
   });
 });

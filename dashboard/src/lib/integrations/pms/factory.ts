@@ -17,6 +17,8 @@ export function createPMSAdapter(config: PMSIntegrationConfig): PMSAdapter {
       return createZandaAdapter({ apiKey, baseUrl });
     case "tm3":
       throw new Error("TM3 adapter not yet implemented");
+    case "pps":
+      throw new Error("PPS adapter not yet implemented — API docs gated behind docs.pps-api.com (requires PPS Express login)");
     default:
       throw new Error(`Unknown PMS provider: ${provider}`);
   }
