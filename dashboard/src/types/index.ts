@@ -154,6 +154,8 @@ export interface ComplianceConfig {
   dataRegion: string;
   privacyPolicyVersion: string | null;
   consentRecordedAt: string | null;
+  dpaAcceptedAt?: string | null;
+  commsConsentAt?: string | null;
 }
 
 export interface AuditLogEntry {
@@ -206,6 +208,8 @@ export interface ClinicProfile {
   billing?: BillingState;
   compliance?: ComplianceConfig;
   trialStartedAt: string | null;
+  trialModule?: string | null;
+  trialTier?: string | null;
   createdAt: string;
   updatedAt: string;
 }

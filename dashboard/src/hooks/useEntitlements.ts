@@ -32,7 +32,7 @@ export function useEntitlements(): Entitlements {
   const { user, loading } = useAuth();
   const flags = user?.clinicProfile?.featureFlags;
   const trialStartedAt = user?.clinicProfile?.trialStartedAt ?? null;
-  const trialModule: string | null = (user?.clinicProfile as unknown as Record<string, unknown>)?.trialModule as string | null ?? null;
+  const trialModule: string | null = user?.clinicProfile?.trialModule ?? null;
   const isSuperadmin = user?.role === "superadmin";
 
   const trialActive = isTrialActive(trialStartedAt);

@@ -64,6 +64,50 @@ async function handler(request: NextRequest) {
     const db = getAdminDb();
     const now = new Date().toISOString();
 
+    // ── Pre-flight: check if this email belongs to an invited clinician ──────
+    // If an owner already created the clinic and invited this person,
+    // they should use their invite link — not create a duplicate clinic.
+    try {
+      const existingUser = await auth.getUserByEmail(trimmedEmail);
+      // User exists in Firebase Auth — check if they have a Firestore user doc
+      const userDoc = await db.collection("users").doc(existingUser.uid).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data()!;
+        if (userData.status === "invited") {
+          // They were invited but haven't accepted yet
+          const clinicDoc = userData.clinicId
+            ? await db.collection("clinics").doc(userData.clinicId).get()
+            : null;
+          const clinicDisplayName = clinicDoc?.data()?.name || "your clinic";
+          return NextResponse.json(
+            {
+              error: `You've already been invited to ${clinicDisplayName}. Check your email for the invite link, or ask your clinic admin to resend it.`,
+              code: "ALREADY_INVITED",
+              clinicName: clinicDisplayName,
+            },
+            { status: 409 }
+          );
+        }
+        // User exists and is active/registered — standard duplicate
+        return NextResponse.json(
+          {
+            error: "An account with this email already exists. Please sign in instead.",
+            code: "EMAIL_EXISTS",
+          },
+          { status: 409 }
+        );
+      }
+      // User exists in Auth but no Firestore doc — orphaned auth user, proceed
+      // (this can happen if a previous signup failed mid-way)
+    } catch (lookupErr: unknown) {
+      const code = (lookupErr as { code?: string }).code;
+      if (code !== "auth/user-not-found") {
+        // Unexpected error — log but don't block signup
+        console.warn("[signup pre-flight] Unexpected error during email lookup:", lookupErr);
+      }
+      // auth/user-not-found is expected for new users — continue normally
+    }
+
     // 1. Create Firebase Auth user
     try {
       const personName = firstName?.trim()

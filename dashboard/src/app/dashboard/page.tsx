@@ -112,6 +112,16 @@ export default function DashboardPage() {
     }
   });
 
+  // Redirect to onboarding if clinic setup isn't complete (DPA not accepted)
+  useEffect(() => {
+    if (!user?.clinicProfile) return;
+    const clinic = user.clinicProfile;
+    const dpaAccepted = !!clinic.compliance?.dpaAcceptedAt;
+    if (clinic.status === "onboarding" && !dpaAccepted && user.role === "owner") {
+      router.replace("/onboarding");
+    }
+  }, [user, router]);
+
   useEffect(() => {
     if (loading) {
       startLoading();

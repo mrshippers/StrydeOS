@@ -149,6 +149,8 @@ export default function OnboardingPage() {
   // General
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [inviteClinicName, setInviteClinicName] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   const clinicId = user?.clinicId;
@@ -195,6 +197,8 @@ export default function OnboardingPage() {
   // ── Step 1: Sign up ────────────────────────────────────────────────────────
   async function handleSignup() {
     setError(null);
+    setErrorCode(null);
+    setInviteClinicName(null);
     setSaving(true);
 
     try {
@@ -216,6 +220,8 @@ export default function OnboardingPage() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Something went wrong. Please try again.");
+        setErrorCode(data.code || null);
+        if (data.clinicName) setInviteClinicName(data.clinicName);
         setSaving(false);
         return;
       }
@@ -736,8 +742,23 @@ export default function OnboardingPage() {
 
                 {/* Error display */}
                 {error && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-3 rounded-lg bg-red-50 border border-red-200">
-                    <p className="text-sm text-red-700">{error}</p>
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 rounded-xl bg-red-50 border border-red-200">
+                    <p className="text-sm text-red-700 mb-1">{error}</p>
+                    {errorCode === "ALREADY_INVITED" && (
+                      <div className="mt-2 space-y-2">
+                        <p className="text-xs text-red-600">
+                          Your clinic admin ({inviteClinicName}) has already set up an account. Check your email for the invite, or ask them to resend it from Settings → Team.
+                        </p>
+                        <button onClick={() => router.push("/login")} className="text-xs font-semibold text-blue hover:underline">
+                          Sign in instead →
+                        </button>
+                      </div>
+                    )}
+                    {errorCode === "EMAIL_EXISTS" && (
+                      <button onClick={() => router.push("/login")} className="mt-1 text-xs font-semibold text-blue hover:underline">
+                        Sign in instead →
+                      </button>
+                    )}
                   </motion.div>
                 )}
 
