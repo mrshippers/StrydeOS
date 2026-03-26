@@ -1590,7 +1590,7 @@ const cp = user?.clinicProfile ?? null;
                 type="text"
                 value={clinicAddress}
                 onChange={(e) => setClinicAddress(e.target.value)}
-                placeholder="e.g. 123 High Street, West Hampstead, London NW6"
+                placeholder="e.g. 10 Harley Street, London W1G 9PF"
                 className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
               />
             </div>

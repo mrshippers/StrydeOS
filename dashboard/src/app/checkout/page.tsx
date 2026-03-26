@@ -35,6 +35,7 @@ function ModuleIcon({ color, size = 20 }: { color: string; size?: number }) {
   const b = parseInt(color.slice(5, 7), 16);
   const light = `rgba(${Math.min(r + 80, 255)},${Math.min(g + 80, 255)},${Math.min(b + 80, 255)},0.58)`;
   const dark = `rgba(${Math.max(r - 60, 0)},${Math.max(g - 60, 0)},${Math.max(b - 60, 0)},0.72)`;
+  const mid = `rgba(${Math.min(r + 40, 255)},${Math.min(g + 40, 255)},${Math.min(b + 40, 255)},0.42)`;
 
   const id = `mi-${color.replace("#", "")}`;
   return (
@@ -44,20 +45,39 @@ function ModuleIcon({ color, size = 20 }: { color: string; size?: number }) {
           <stop offset="0%" stopColor={light} />
           <stop offset="100%" stopColor={dark} />
         </linearGradient>
+        <radialGradient id={`${id}-r`} cx="28%" cy="24%" r="60%">
+          <stop offset="0%" stopColor={mid} />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </radialGradient>
         <linearGradient id={`${id}-t`} x1="0.05" y1="1" x2="0.35" y2="0">
           <stop offset="0%" stopColor="white" stopOpacity="0.55" />
           <stop offset="100%" stopColor="white" stopOpacity="0.97" />
+        </linearGradient>
+        <linearGradient id={`${id}-m`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="white" stopOpacity="0" />
+          <stop offset="28%" stopColor="white" stopOpacity="0.60" />
+          <stop offset="65%" stopColor="white" stopOpacity="0.12" />
+          <stop offset="100%" stopColor="white" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id={`${id}-b`} x1="0.1" y1="0" x2="0.4" y2="1">
+          <stop offset="0%" stopColor={light} stopOpacity="0.65" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.06" />
         </linearGradient>
         <clipPath id={`${id}-p`}><rect x="35" y="20" width="22" height="60" rx="5" /></clipPath>
         <clipPath id={`${id}-a`}><polygon points="35,52 57,40 57,20 35,20" /></clipPath>
       </defs>
       <rect width="100" height="100" rx="24" fill={`url(#${id}-c)`} />
+      <rect width="100" height="100" rx="24" fill={`url(#${id}-r)`} />
+      <rect width="100" height="100" rx="24" fill="none" stroke={`url(#${id}-b)`} strokeWidth="1.2" />
+      {size > 24 && (
+        <path d="M 17 21 Q 50 12 83 21" stroke={`url(#${id}-m)`} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      )}
       <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07" />
       <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10" />
       <g clipPath={`url(#${id}-p)`}>
-        <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity="0.20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity="0.42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <polyline points="32,64 46,56 60,64" stroke="white" strokeOpacity="0.72" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </g>
       <rect x="35" y="20" width="22" height="60" rx="5" fill={`url(#${id}-t)`} clipPath={`url(#${id}-a)`} />
       <line x1="33" y1="52" x2="59" y2="39" stroke="white" strokeWidth="1.2" strokeOpacity="0.55" strokeLinecap="round" />
@@ -163,10 +183,13 @@ function CheckoutInner() {
 
   const planParam = searchParams.get("plan");
   const billingNow = searchParams.get("billing") === "now";
+  const intervalParam = searchParams.get("interval");
   const parsed = useMemo(() => parsePlan(planParam), [planParam]);
 
-  const [interval, setInterval] = useState<BillingInterval>("month");
-  const [includeAvaSetup, setIncludeAvaSetup] = useState(true);
+  const [interval, setBillingInterval] = useState<BillingInterval>(
+    intervalParam === "year" ? "year" : "month"
+  );
+  const includeAvaSetup = true;
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [redirecting, setRedirecting] = useState(false);
@@ -228,7 +251,7 @@ function CheckoutInner() {
           interval,
           includeAvaSetup: needsAvaSetup,
           successPath: "/checkout/success",
-          cancelPath: `/checkout?plan=${planParam}&billing=now`,
+          cancelPath: `/checkout?plan=${planParam}&billing=now&interval=${interval}`,
         }),
       });
 
@@ -371,15 +394,15 @@ function CheckoutInner() {
                   "linear-gradient(135deg, #0B2545 0%, #132D5E 100%)",
               }}
             >
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-4 mb-4">
                 <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center"
                   style={{
                     background: hexToRgba(meta.color, 0.15),
                     border: `1px solid ${hexToRgba(meta.color, 0.25)}`,
                   }}
                 >
-                  <ModuleIcon color={meta.color} size={20} />
+                  <ModuleIcon color={meta.color} size={36} />
                 </div>
                 <div>
                   <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">
@@ -405,7 +428,7 @@ function CheckoutInner() {
                 <div className="flex rounded-xl bg-cloud-light p-1">
                   <button
                     type="button"
-                    onClick={() => setInterval("month")}
+                    onClick={() => setBillingInterval("month")}
                     className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                       interval === "month"
                         ? "bg-white text-navy shadow-sm"
@@ -416,7 +439,7 @@ function CheckoutInner() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setInterval("year")}
+                    onClick={() => setBillingInterval("year")}
                     className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                       interval === "year"
                         ? "bg-white text-navy shadow-sm"
@@ -457,27 +480,12 @@ function CheckoutInner() {
                 {/* Ava setup fee */}
                 {showAvaSetup && (
                   <div className="flex items-center justify-between py-3 border-b border-border">
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setIncludeAvaSetup(!includeAvaSetup)}
-                        className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all ${
-                          includeAvaSetup
-                            ? "bg-blue"
-                            : "border-2 border-border"
-                        }`}
-                      >
-                        {includeAvaSetup && (
-                          <Check size={11} className="text-white" />
-                        )}
-                      </button>
-                      <div>
-                        <div className="text-sm font-semibold text-navy">
-                          Ava setup
-                        </div>
-                        <div className="text-[11px] text-muted">
-                          One-time configuration fee
-                        </div>
+                    <div>
+                      <div className="text-sm font-semibold text-navy">
+                        Ava setup
+                      </div>
+                      <div className="text-[11px] text-muted">
+                        One-time configuration fee
                       </div>
                     </div>
                     <div className="text-sm font-semibold text-navy">
@@ -562,16 +570,15 @@ function CheckoutInner() {
               </motion.button>
 
               {/* Security note */}
-              <div className="flex items-center justify-center gap-2 text-[11px] text-muted">
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted">
                 <span>Powered by</span>
                 <svg
-                  viewBox="0 0 120 50"
-                  className="h-[16px] w-auto"
+                  viewBox="0 0 60 25"
+                  className="h-[14px] w-auto relative top-[0.5px]"
                   fill="#6772E5"
-                  fillRule="evenodd"
                   aria-label="Stripe"
                 >
-                  <path d="M101.547 30.94c0-5.885-2.85-10.53-8.3-10.53-5.47 0-8.782 4.644-8.782 10.483 0 6.92 3.908 10.414 9.517 10.414 2.736 0 4.805-.62 6.368-1.494v-4.598c-1.563.782-3.356 1.264-5.632 1.264-2.23 0-4.207-.782-4.46-3.494h11.24c0-.3.046-1.494.046-2.046zM90.2 28.757c0-2.598 1.586-3.678 3.035-3.678 1.402 0 2.897 1.08 2.897 3.678zm-14.597-8.345c-2.253 0-3.7 1.057-4.506 1.793l-.3-1.425H65.73v26.805l5.747-1.218.023-6.506c.828.598 2.046 1.448 4.07 1.448 4.115 0 7.862-3.3 7.862-10.598-.023-6.667-3.816-10.3-7.84-10.3zm-1.38 15.84c-1.356 0-2.16-.483-2.713-1.08l-.023-8.53c.598-.667 1.425-1.126 2.736-1.126 2.092 0 3.54 2.345 3.54 5.356 0 3.08-1.425 5.38-3.54 5.38zm-16.4-17.196l5.77-1.24V13.15l-5.77 1.218zm0 1.747h5.77v20.115h-5.77zm-6.185 1.7l-.368-1.7h-4.966V40.92h5.747V27.286c1.356-1.77 3.655-1.448 4.368-1.195v-5.287c-.736-.276-3.425-.782-4.782 1.7zm-11.494-6.7L34.535 17l-.023 18.414c0 3.402 2.552 5.908 5.954 5.908 1.885 0 3.264-.345 4.023-.76v-4.667c-.736.3-4.368 1.356-4.368-2.046V25.7h4.368v-4.897h-4.37zm-15.54 10.828c0-.897.736-1.24 1.954-1.24a12.85 12.85 0 0 1 5.7 1.47V21.47c-1.908-.76-3.793-1.057-5.7-1.057-4.667 0-7.77 2.437-7.77 6.506 0 6.345 8.736 5.333 8.736 8.07 0 1.057-.92 1.402-2.207 1.402-1.908 0-4.345-.782-6.276-1.84v5.47c2.138.92 4.3 1.3 6.276 1.3 4.782 0 8.07-2.368 8.07-6.483-.023-6.85-8.782-5.632-8.782-8.207z" />
+                  <path d="M5 11.2c0-.7.6-1 1.5-1 1.4 0 3.1.4 4.5 1.2v-4.3C9.5 6.5 8 6.2 6.5 6.2 2.8 6.2.6 8.1.6 11.3c0 5 6.9 4.2 6.9 6.4 0 .8-.7 1.1-1.7 1.1-1.5 0-3.4-.6-5-1.5v4.3c1.7.7 3.4 1 5 1 3.8 0 6.4-1.9 6.4-5.1C13.2 12 5 13 5 11.2zm13-5l-4.5 1v3.7h4.5V7h-4.5zM18 10.9h4.5V7H18v3.9zm8.3-3.2c0-2.7-1.3-4.8-3.8-4.8h-.1v4.8h4zm-3.9 4.1v9.4h4.5v-9.4h-4.5zm7.9.4l-.3-1.3h-3.9v15.5l4.5-.9v-4.7c.6.4 1.5 1.1 3.1 1.1 3.2 0 6.1-2.5 6.1-8.1 0-5.1-3-7.9-6.1-7.9-1.7 0-2.9.8-3.5 1.4zm1.1 8c-1.1 0-1.7-.4-2.1-.8v-6.5c.5-.5 1.1-.9 2.1-.9 1.6 0 2.7 1.8 2.7 4.1 0 2.4-1.1 4.1-2.7 4.1zm13.3-12.4L49 9v-1h-4.5v15.5h4.5V14c1.1-1.4 2.9-1.1 3.4-.9V9c-.6-.2-2.7-.6-3.7 1.3v-2.5zm9.4 2.3c-4.2 0-6.8 3.6-6.8 8 0 5.3 3 8 7.3 8 2.1 0 3.7-.5 4.9-1.1v-3.5c-1.2.6-2.6 1-4.3 1-1.7 0-3.2-.6-3.4-2.7h8.6c0-.2 0-1.1 0-1.6 0-4.5-2.2-8.1-6.4-8.1zm-2.4 6.4c0-2 1.2-2.8 2.3-2.8 1.1 0 2.2.8 2.2 2.8h-4.5z" />
                 </svg>
                 <span>· Cancel anytime</span>
               </div>

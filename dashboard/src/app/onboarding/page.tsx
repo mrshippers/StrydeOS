@@ -522,7 +522,7 @@ export default function OnboardingPage() {
                     <div>
                       <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">Clinic address</label>
                       <input type="text" value={clinicAddress} onChange={(e) => setClinicAddress(e.target.value)}
-                        placeholder="123 High Street, West Hampstead, London NW6 1AB"
+                        placeholder="e.g. 10 Harley Street, London W1G 9PF"
                         className="w-full px-3 py-2.5 rounded-lg border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30" />
                     </div>
 

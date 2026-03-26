@@ -2578,9 +2578,7 @@ const PricingCard = ({ mod, price, billing, tier, darkMode }) => {
       </div>
 
       <a
-        href={`https://portal.strydeos.com/checkout?plan=${mod.name.toLowerCase()}-${tier}&billing=now`}
-        target="_blank"
-        rel="noopener noreferrer"
+        href={`/${mod.name.toLowerCase()}`}
         style={{
         display: "block", width: "100%", padding: "14px 0", borderRadius: 14,
         fontSize: 14, fontWeight: 700, fontFamily: "'Outfit', sans-serif",
@@ -2601,7 +2599,7 @@ const FullStackBanner = ({ tier, billing, darkMode }) => {
   const p = getPricing(tier, billing);
   return (
     <a
-      href={`https://portal.strydeos.com/checkout?plan=fullstack-${tier}&billing=now`}
+      href={`https://portal.strydeos.com/checkout?plan=fullstack-${tier}&billing=now&interval=${billing === "annual" ? "year" : "month"}`}
       target="_blank"
       rel="noopener noreferrer"
       onMouseEnter={() => setH(true)}

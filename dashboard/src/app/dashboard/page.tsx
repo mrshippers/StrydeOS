@@ -112,15 +112,13 @@ export default function DashboardPage() {
     }
   });
 
-  // Redirect to onboarding if clinic setup isn't complete (DPA not accepted)
-  useEffect(() => {
-    if (!user?.clinicProfile) return;
+  // Show onboarding banner instead of redirecting — login should always land here
+  const showOnboardingBanner = (() => {
+    if (!user?.clinicProfile) return false;
     const clinic = user.clinicProfile;
     const dpaAccepted = !!clinic.compliance?.dpaAcceptedAt;
-    if (clinic.status === "onboarding" && !dpaAccepted && user.role === "owner") {
-      router.replace("/onboarding");
-    }
-  }, [user, router]);
+    return clinic.status === "onboarding" && !dpaAccepted && user.role === "owner";
+  })();
 
   useEffect(() => {
     if (loading) {
@@ -161,6 +159,22 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Onboarding nudge — shown instead of redirecting */}
+      {showOnboardingBanner && (
+        <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-blue/5 border border-blue/15">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue/10 flex items-center justify-center text-blue text-sm font-bold">!</div>
+            <div>
+              <p className="text-sm font-semibold text-navy">Finish setting up your clinic</p>
+              <p className="text-xs text-muted">Complete onboarding to unlock all features.</p>
+            </div>
+          </div>
+          <a href="/onboarding" className="shrink-0 px-4 py-2 rounded-lg bg-blue text-white text-xs font-semibold hover:opacity-90 transition-opacity">
+            Continue setup
+          </a>
+        </div>
+      )}
+
       {/* Welcome greeting + sync indicator */}
       <motion.div
         className="sticky top-0 z-20 mb-2 -mx-6 px-6 py-2 bg-cloud-dancer/90 dark:bg-navy/90 backdrop-blur-sm"
