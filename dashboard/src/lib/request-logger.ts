@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export interface RequestLogEntry {
   timestamp: string;
+  requestId: string;
   method: string;
   path: string;
   status: number;
@@ -39,12 +40,15 @@ export function withRequestLog(
     const start = performance.now();
     const method = request.method;
     const path = new URL(request.url).pathname;
+    const requestId = crypto.randomUUID();
     let status = 500;
     let errorMsg: string | undefined;
 
     try {
       const response = await handler(request, context);
       status = response.status;
+      // Attach correlation ID to response for client-side tracing
+      response.headers.set("x-request-id", requestId);
       return response;
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : String(err);
@@ -58,6 +62,7 @@ export function withRequestLog(
 
       const entry: RequestLogEntry = {
         timestamp: new Date().toISOString(),
+        requestId,
         method,
         path,
         status,

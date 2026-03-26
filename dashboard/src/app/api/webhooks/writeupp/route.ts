@@ -1,4 +1,6 @@
+import * as crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { buildClinicianMap } from "@/lib/pipeline/sync-clinicians";
@@ -38,8 +40,23 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "Missing event" }, { status: 400 });
     }
 
+    // Idempotency: hash event + clinicId + timestamp (rounded to 30s window) to dedup retries
+    const idempotencyKey = crypto
+      .createHash("sha256")
+      .update(`${event}:${clinicExternalRef ?? "all"}:${Math.floor(Date.now() / 30_000)}`)
+      .digest("hex")
+      .slice(0, 24);
+
     const db = getAdminDb();
-    const results = [];
+
+    // Check if this webhook was already processed recently
+    const dedupRef = db.collection("_webhook_dedup").doc(idempotencyKey);
+    const dedupSnap = await dedupRef.get();
+    if (dedupSnap.exists) {
+      return NextResponse.json({ ok: true, deduplicated: true });
+    }
+    // Mark as processed (TTL cleanup handled by data-health/cleanup cron)
+    await dedupRef.set({ processedAt: new Date().toISOString(), event });
 
     // Optimised clinic resolution: use clinicId from body/header if available,
     // otherwise fall back to scanning WriteUpp-configured clinics.
@@ -60,58 +77,51 @@ async function handler(request: NextRequest) {
       targetClinicIds = clinicsSnap.docs.map((d) => d.id);
     }
 
-    for (const clinicId of targetClinicIds) {
-      const configSnap = await db
-        .collection("clinics")
-        .doc(clinicId)
-        .collection("integrations_config")
-        .doc("pms")
-        .get();
-      const config = configSnap.data() as PMSIntegrationConfig | undefined;
+    // Acknowledge receipt immediately — process pipeline in background
+    after(async () => {
+      for (const clinicId of targetClinicIds) {
+        try {
+          const configSnap = await db
+            .collection("clinics")
+            .doc(clinicId)
+            .collection("integrations_config")
+            .doc("pms")
+            .get();
+          const config = configSnap.data() as PMSIntegrationConfig | undefined;
 
-      if (!config?.apiKey?.trim() || config.provider !== "writeupp") continue;
+          if (!config?.apiKey?.trim() || config.provider !== "writeupp") continue;
 
-      const adapter = createPMSAdapter(config);
-      const clinicianMap = await buildClinicianMap(db, clinicId);
+          const adapter = createPMSAdapter(config);
+          const clinicianMap = await buildClinicianMap(db, clinicId);
 
-      // Run a targeted incremental sync (4-week window, not backfill)
-      const s2 = await syncAppointments(
-        db,
-        clinicId,
-        adapter,
-        clinicianMap,
-        { backfill: false }
-      );
+          const s2 = await syncAppointments(
+            db,
+            clinicId,
+            adapter,
+            clinicianMap,
+            { backfill: false }
+          );
 
-      const s3 = await syncPatients(
-        db,
-        clinicId,
-        adapter,
-        s2.patientExternalIds,
-        clinicianMap
-      );
+          const s3 = await syncPatients(
+            db,
+            clinicId,
+            adapter,
+            s2.patientExternalIds,
+            clinicianMap
+          );
 
-      const s5 = await computePatientFields(db, clinicId);
+          await computePatientFields(db, clinicId);
 
-      // Trigger comms sequences after patient fields are recomputed
-      const commsResult = await triggerCommsSequences(db, clinicId).catch((e) => ({
-        fired: 0, skipped: 0,
-        errors: [e instanceof Error ? e.message : String(e)],
-      }));
+          await triggerCommsSequences(db, clinicId).catch((e) => {
+            console.error(`[WriteUpp webhook] comms error for ${clinicId}:`, e);
+          });
+        } catch (err) {
+          console.error(`[WriteUpp webhook] pipeline error for ${clinicId}:`, err);
+        }
+      }
+    });
 
-      results.push({
-        clinicId,
-        event,
-        stages: [
-          { stage: s2.stage, ok: s2.ok, count: s2.count },
-          { stage: s3.stage, ok: s3.ok, count: s3.count },
-          { stage: s5.stage, ok: s5.ok, count: s5.count },
-          { stage: "trigger-comms", ok: commsResult.errors.length === 0, count: commsResult.fired },
-        ],
-      });
-    }
-
-    return NextResponse.json({ ok: true, results });
+    return NextResponse.json({ ok: true, event, clinicIds: targetClinicIds });
   } catch (e) {
     console.error("[Webhook Error]", e);
     return NextResponse.json(

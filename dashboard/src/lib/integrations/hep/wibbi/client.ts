@@ -31,6 +31,7 @@ export class WibbiClient {
     const url = `${this.baseUrl}${path}`;
     const res = await fetch(url, {
       ...options,
+      signal: options?.signal ?? AbortSignal.timeout(15_000),
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         "Content-Type": "application/json",

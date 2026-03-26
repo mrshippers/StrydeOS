@@ -41,6 +41,7 @@ export default [
       "out/**",
       "scripts/**",
       "*.config.*",
+      "next-env.d.ts",
     ],
   },
 ];

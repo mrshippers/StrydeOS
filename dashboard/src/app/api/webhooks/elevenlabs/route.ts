@@ -55,13 +55,16 @@ async function handler(req: NextRequest) {
   try {
     const rawBody = await req.text();
 
-    // Verify webhook signature
-    if (ELEVENLABS_WEBHOOK_SECRET) {
-      const sig = req.headers.get("elevenlabs-signature");
-      const valid = await verifyElevenLabsSignature(rawBody, sig);
-      if (!valid) {
-        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-      }
+    // Verify webhook signature — fail closed if secret not configured
+    if (!ELEVENLABS_WEBHOOK_SECRET) {
+      console.error("[ElevenLabs webhook] ELEVENLABS_WEBHOOK_SECRET is not configured");
+      return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });
+    }
+
+    const sig = req.headers.get("elevenlabs-signature");
+    const valid = await verifyElevenLabsSignature(rawBody, sig);
+    if (!valid) {
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
     const payload: ElevenLabsWebhookPayload = JSON.parse(rawBody);

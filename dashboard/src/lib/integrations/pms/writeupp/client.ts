@@ -30,6 +30,7 @@ export async function writeUppFetch<T>(
   const url = path.startsWith("http") ? path : `${base.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
   const res = await fetch(url, {
     ...options,
+    signal: options.signal ?? AbortSignal.timeout(15_000),
     headers: {
       Authorization: `Bearer ${config.apiKey}`,
       "Content-Type": "application/json",

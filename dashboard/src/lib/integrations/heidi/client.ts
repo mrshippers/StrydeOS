@@ -50,7 +50,7 @@ export interface HeidiClientConfig {
 }
 
 async function fetchJson<T>(url: string, headers: Record<string, string>): Promise<T> {
-  const res = await fetch(url, { headers });
+  const res = await fetch(url, { headers, signal: AbortSignal.timeout(15_000) });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(`Heidi API ${res.status}: ${res.statusText} — ${body}`);
@@ -67,6 +67,7 @@ async function postJson<T>(
     method: "POST",
     headers: { ...headers, "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");

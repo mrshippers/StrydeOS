@@ -26,8 +26,17 @@ export async function middleware(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
   if (isAuthRedirect && session) {
-    // Demo users can access these pages (demo is a lightweight session)
-    if (session === "demo") return NextResponse.next();
+    // Demo users can access these pages — but only outside production
+    if (session === "demo") {
+      const isProduction = process.env.NODE_ENV === "production"
+        && !process.env.ALLOW_DEMO_MODE;
+      if (isProduction) {
+        const response = NextResponse.next();
+        response.cookies.set("__session", "", { path: "/", maxAge: 0 });
+        return response;
+      }
+      return NextResponse.next();
+    }
 
     const payload = await verifySession(session);
     if (payload) {
@@ -57,8 +66,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Allow demo mode (simple "demo" cookie value)
-  if (session === "demo") return NextResponse.next();
+  // Demo mode: only allowed in non-production environments
+  if (session === "demo") {
+    const isProduction = process.env.NODE_ENV === "production"
+      && !process.env.ALLOW_DEMO_MODE;
+    if (isProduction) {
+      const response = NextResponse.redirect(new URL("/login", request.url));
+      response.cookies.set("__session", "", { path: "/", maxAge: 0 });
+      return response;
+    }
+    return NextResponse.next();
+  }
 
   // Verify HMAC-signed session — reject if tampered or expired
   const payload = await verifySession(session);
@@ -68,7 +86,34 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  setSecurityHeaders(response);
+  return response;
+}
+
+function setSecurityHeaders(response: NextResponse): void {
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload"
+  );
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  response.headers.set(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.vercel-insights.com https://*.vercel-scripts.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https:",
+      "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://*.sentry.io https://*.vercel-insights.com https://api.stripe.com https://*.strydeos.com",
+      "frame-src https://js.stripe.com https://hooks.stripe.com",
+      "frame-ancestors 'none'",
+    ].join("; ")
+  );
 }
 
 export const config = {

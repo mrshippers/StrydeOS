@@ -30,6 +30,7 @@ export async function rehabMyPatientFetch<T>(
 
   const res = await fetch(url, {
     ...options,
+    signal: options.signal ?? AbortSignal.timeout(15_000),
     headers: {
       "RMP-API-KEY": config.apiKey,
       "Content-Type": "application/json",

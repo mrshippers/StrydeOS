@@ -18,6 +18,14 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     const schemaId = (formData.get("schemaId") as string) || undefined;
 
     if (!file) return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+
+    const MAX_CSV_SIZE = 10 * 1024 * 1024; // 10 MB
+    if (file.size > MAX_CSV_SIZE) {
+      return NextResponse.json(
+        { error: `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 10 MB.` },
+        { status: 413 }
+      );
+    }
     if (!["appointments", "patients"].includes(fileType)) {
       return NextResponse.json({ error: "fileType must be 'appointments' or 'patients'" }, { status: 400 });
     }

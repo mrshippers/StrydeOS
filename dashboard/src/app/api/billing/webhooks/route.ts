@@ -70,9 +70,24 @@ async function handler(request: NextRequest) {
         break;
     }
   } catch (err) {
-    // Return 200 to prevent Stripe retrying non-recoverable errors
     console.error(`[Billing webhook] Error processing ${event.type}:`, err);
     Sentry.captureException(err, { tags: { stripeEvent: event.type } });
+
+    // Distinguish transient errors (Firestore down, timeout) from logic errors.
+    // Return 500 for transient so Stripe retries; 200 for non-recoverable.
+    const msg = err instanceof Error ? err.message : String(err);
+    const isTransient = msg.includes("UNAVAILABLE")
+      || msg.includes("DEADLINE_EXCEEDED")
+      || msg.includes("INTERNAL")
+      || msg.includes("timeout")
+      || msg.includes("ECONNRESET");
+
+    if (isTransient) {
+      return NextResponse.json(
+        { error: "Transient error — please retry" },
+        { status: 500 }
+      );
+    }
   }
 
   return NextResponse.json({ received: true });

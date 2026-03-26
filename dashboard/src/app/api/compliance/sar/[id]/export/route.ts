@@ -3,6 +3,16 @@
  *
  * Exports all patient data for a Subject Access Request.
  * Only valid for SAR requests of type "access".
+ *
+ * Exported collections:
+ *   - patients (single doc)
+ *   - appointments
+ *   - comms_log
+ *   - call_log          (matched by callerPhone when no patientId)
+ *   - voiceInteractions (matched by patientId OR callerPhone)
+ *   - clinical_notes    (Heidi clinical notes)
+ *   - outcome_scores
+ *   - reviews           (where patientId matches)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -12,6 +22,32 @@ import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
 import { withRequestLog } from "@/lib/request-logger";
 
 const QUERY_LIMIT = 1000;
+
+/** Fields that should never appear in a SAR export (internal IDs, raw webhook payloads). */
+const INTERNAL_FIELDS = new Set([
+  "pmsExternalId",
+  "physitrackPatientId",
+  "heidiPatientId",
+  "raw",
+]);
+
+/** Strip internal-only fields from a Firestore document map. */
+function stripInternal(data: Record<string, unknown>): Record<string, unknown> {
+  const cleaned: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (!INTERNAL_FIELDS.has(key)) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+}
+
+/** Map a Firestore snapshot to an array of cleaned records. */
+function mapDocs(
+  snap: FirebaseFirestore.QuerySnapshot
+): Record<string, unknown>[] {
+  return snap.docs.map((doc) => stripInternal({ id: doc.id, ...doc.data() }));
+}
 
 async function handler(
   request: NextRequest,
@@ -67,13 +103,25 @@ async function handler(
       clinicId,
     };
 
+    // ── 1. Patient record ─────────────────────────────────────────────────────
     const patientDoc = await clinicBase.collection("patients").doc(patientId).get();
+    const patientPhone = patientDoc.exists
+      ? (patientDoc.data()?.contact?.phone as string | undefined)
+      : undefined;
 
     if (patientDoc.exists) {
-      exportData.patient = patientDoc.data();
+      exportData.patient = stripInternal(patientDoc.data()!);
     }
 
-    const [appointmentsSnap, commsSnap, outcomesSnap] = await Promise.all([
+    // ── 2. Collections queryable by patientId ─────────────────────────────────
+    const [
+      appointmentsSnap,
+      commsSnap,
+      outcomesSnap,
+      clinicalNotesSnap,
+      reviewsSnap,
+      voiceByPatientSnap,
+    ] = await Promise.all([
       clinicBase
         .collection("appointments")
         .where("patientId", "==", patientId)
@@ -89,23 +137,66 @@ async function handler(
         .where("patientId", "==", patientId)
         .limit(QUERY_LIMIT)
         .get(),
+      clinicBase
+        .collection("clinical_notes")
+        .where("patientId", "==", patientId)
+        .limit(QUERY_LIMIT)
+        .get(),
+      clinicBase
+        .collection("reviews")
+        .where("patientId", "==", patientId)
+        .limit(QUERY_LIMIT)
+        .get(),
+      clinicBase
+        .collection("voiceInteractions")
+        .where("patientId", "==", patientId)
+        .limit(QUERY_LIMIT)
+        .get(),
     ]);
 
-    exportData.appointments = appointmentsSnap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    exportData.appointments = mapDocs(appointmentsSnap);
+    exportData.comms_log = mapDocs(commsSnap);
+    exportData.outcome_scores = mapDocs(outcomesSnap);
+    exportData.clinical_notes = mapDocs(clinicalNotesSnap);
+    exportData.reviews = mapDocs(reviewsSnap);
 
-    exportData.comms_log = commsSnap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    // ── 3. Phone-matched collections (call_log + voiceInteractions fallback) ──
+    // call_log docs often lack a patientId — match on the patient's phone number.
+    // voiceInteractions may also have records linked by callerPhone rather than
+    // patientId, so we merge those in (deduped by doc id).
 
-    exportData.outcome_scores = outcomesSnap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    let callLogDocs: Record<string, unknown>[] = [];
+    let voiceByPhoneDocs: Record<string, unknown>[] = [];
 
+    if (patientPhone) {
+      const [callLogSnap, voiceByPhoneSnap] = await Promise.all([
+        clinicBase
+          .collection("call_log")
+          .where("callerPhone", "==", patientPhone)
+          .limit(QUERY_LIMIT)
+          .get(),
+        clinicBase
+          .collection("voiceInteractions")
+          .where("callerPhone", "==", patientPhone)
+          .limit(QUERY_LIMIT)
+          .get(),
+      ]);
+      callLogDocs = mapDocs(callLogSnap);
+      voiceByPhoneDocs = mapDocs(voiceByPhoneSnap);
+    }
+
+    exportData.call_log = callLogDocs;
+
+    // Merge voiceInteractions found by patientId and by callerPhone, deduped.
+    const voiceById = mapDocs(voiceByPatientSnap);
+    const seenVoiceIds = new Set(voiceById.map((d) => d.id));
+    const mergedVoice = [
+      ...voiceById,
+      ...voiceByPhoneDocs.filter((d) => !seenVoiceIds.has(d.id as string)),
+    ];
+    exportData.voiceInteractions = mergedVoice;
+
+    // ── 4. Mark SAR as completed ──────────────────────────────────────────────
     await clinicBase
       .collection("sar_requests")
       .doc(sarId)
@@ -116,6 +207,7 @@ async function handler(
         updatedBy: user.uid,
       });
 
+    // ── 5. Audit log ──────────────────────────────────────────────────────────
     await writeAuditLog(db, clinicId, {
       userId: user.uid,
       userEmail: user.email,
@@ -125,9 +217,13 @@ async function handler(
         sarId,
         patientId,
         recordCounts: {
-          appointments: appointmentsSnap.size,
-          comms_log: commsSnap.size,
-          outcome_scores: outcomesSnap.size,
+          appointments: (exportData.appointments as unknown[]).length,
+          comms_log: (exportData.comms_log as unknown[]).length,
+          call_log: (exportData.call_log as unknown[]).length,
+          voiceInteractions: (exportData.voiceInteractions as unknown[]).length,
+          clinical_notes: (exportData.clinical_notes as unknown[]).length,
+          outcome_scores: (exportData.outcome_scores as unknown[]).length,
+          reviews: (exportData.reviews as unknown[]).length,
         },
       },
       ip: extractIpFromRequest(request),

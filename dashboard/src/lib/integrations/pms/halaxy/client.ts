@@ -32,6 +32,7 @@ export async function halaxyFetch<T>(
 
   const res = await fetch(url, {
     ...options,
+    signal: options.signal ?? AbortSignal.timeout(15_000),
     headers: {
       Authorization: `Bearer ${config.apiKey}`,
       "Content-Type": "application/fhir+json",

@@ -30,6 +30,7 @@ export async function zandaFetch<T>(
 
   const res = await fetch(url, {
     ...options,
+    signal: options.signal ?? AbortSignal.timeout(15_000),
     headers: {
       "x-api-key": config.apiKey,
       "Content-Type": "application/json",

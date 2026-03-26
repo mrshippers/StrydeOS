@@ -48,7 +48,8 @@ export function subscribeWeeklyStats(
   const q = query(
     clinicCollection(clinicId, "metrics_weekly"),
     where("clinicianId", "==", target),
-    orderBy("weekStart", "asc")
+    orderBy("weekStart", "asc"),
+    limit(104) // 2 years of weekly data
   );
 
   return onSnapshot(
@@ -195,6 +196,7 @@ export function subscribeAppointments(
   const constraints: QueryConstraint[] = [
     where("dateTime", ">=", dateFrom),
     orderBy("dateTime", "desc"),
+    limit(500),
   ];
   if (clinicianId && clinicianId !== "all") {
     constraints.push(where("clinicianId", "==", clinicianId));

@@ -30,6 +30,7 @@ export async function clinikoFetch<T>(
   
   const res = await fetch(url, {
     ...options,
+    signal: options.signal ?? AbortSignal.timeout(15_000),
     headers: {
       Authorization: `Basic ${authString}`,
       "Content-Type": "application/json",
