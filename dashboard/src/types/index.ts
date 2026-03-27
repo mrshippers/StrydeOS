@@ -161,7 +161,7 @@ export interface ComplianceConfig {
 export interface AuditLogEntry {
   userId: string;
   userEmail: string;
-  action: "read" | "write" | "delete" | "export" | "login" | "config_change";
+  action: "read" | "write" | "update" | "delete" | "export" | "login" | "config_change";
   resource: string;
   resourceId?: string;
   metadata?: Record<string, unknown>;

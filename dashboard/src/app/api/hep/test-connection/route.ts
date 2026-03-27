@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { verifyApiRequest, handleApiError, requireRole } from "@/lib/auth-guard";
 import { createHEPAdapter } from "@/lib/integrations/hep/factory";
 import type { HEPIntegrationConfig } from "@/lib/integrations/hep/types";
 import { withRequestLog } from "@/lib/request-logger";
 
 async function handler(request: NextRequest) {
+  // Rate limit: 10 requests per IP per 60 seconds
+  const { limited, remaining } = checkRateLimit(request, { limit: 10, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);

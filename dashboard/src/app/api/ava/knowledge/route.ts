@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, handleApiError } from "@/lib/auth-guard";
 import { buildAvaCorePrompt } from "@/lib/ava/ava-core-prompt";
@@ -20,6 +21,15 @@ const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
  * Fallback: Append compiled knowledge to the system prompt if KB API fails.
  */
 async function handler(req: NextRequest) {
+  // Rate limit: 5 requests per IP per 60 seconds
+  const { limited, remaining } = checkRateLimit(req, { limit: 5, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const user = await verifyApiRequest(req);
     const clinicId = user.clinicId;

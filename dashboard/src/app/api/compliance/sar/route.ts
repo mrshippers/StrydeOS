@@ -6,12 +6,22 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { getAdminDb } from "@/lib/firebase-admin";
 import type { SarRequest } from "@/types";
 import { withRequestLog } from "@/lib/request-logger";
 
 async function postHandler(request: NextRequest) {
+  // Rate limit: 10 requests per IP per 60 seconds
+  const { limited, remaining } = checkRateLimit(request, { limit: 10, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
@@ -73,6 +83,15 @@ async function postHandler(request: NextRequest) {
 }
 
 async function getHandler(request: NextRequest) {
+  // Rate limit: 10 requests per IP per 60 seconds
+  const { limited, remaining } = checkRateLimit(request, { limit: 10, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);

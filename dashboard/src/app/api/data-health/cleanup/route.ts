@@ -172,6 +172,77 @@ async function executeGdprHardDeletions(
   return result;
 }
 
+const PAYMENT_GRACE_DAYS = 14;
+
+/** Downgrade clinics whose payment has been past_due beyond the grace period. */
+async function enforcePaymentGracePeriod(
+  db: FirebaseFirestore.Firestore
+): Promise<{ downgraded: number; errors: string[] }> {
+  const result = { downgraded: 0, errors: [] as string[] };
+
+  const pastDueSnap = await db
+    .collection("clinics")
+    .where("billing.subscriptionStatus", "==", "past_due")
+    .get();
+
+  for (const clinicDoc of pastDueSnap.docs) {
+    const clinicId = clinicDoc.id;
+    const data = clinicDoc.data();
+    const paymentFailedAt = data.billing?.paymentFailedAt;
+
+    if (!paymentFailedAt) continue;
+
+    const failedDate =
+      typeof paymentFailedAt === "string"
+        ? new Date(paymentFailedAt).getTime()
+        : paymentFailedAt?.toMillis?.()
+          ? paymentFailedAt.toMillis()
+          : Number(paymentFailedAt);
+
+    if (isNaN(failedDate)) continue;
+
+    const daysSinceFailure = (Date.now() - failedDate) / 86400000;
+    if (daysSinceFailure <= PAYMENT_GRACE_DAYS) continue;
+
+    try {
+      await clinicDoc.ref.update({
+        "billing.subscriptionStatus": "unpaid",
+        "billing.tier": "free",
+        "features.ava": false,
+        "features.pulse": false,
+        "features.intelligence": false,
+        "features.comms": false,
+        "features.dataHealth": false,
+      });
+
+      await writeAuditLog(db, clinicId, {
+        userId: "system:billing-enforcement",
+        userEmail: "system@strydeos.com",
+        action: "update",
+        resource: "clinic",
+        resourceId: clinicId,
+        metadata: {
+          reason: "payment_grace_period_exceeded",
+          daysPastDue: Math.floor(daysSinceFailure),
+          previousTier: data.billing?.tier ?? "unknown",
+          previousStatus: "past_due",
+          downgradedTo: "free",
+        },
+      });
+
+      result.downgraded += 1;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      result.errors.push(`${clinicId}: ${message}`);
+      Sentry.captureException(err, {
+        tags: { clinicId, source: "payment_grace_downgrade" },
+      });
+    }
+  }
+
+  return result;
+}
+
 async function handler(request: NextRequest) {
   try {
     verifyCronRequest(request);
@@ -264,6 +335,14 @@ async function handler(request: NextRequest) {
     Sentry.captureException(err, { tags: { source: "gdpr_hard_delete" } });
   }
 
+  // Billing: downgrade clinics past the 14-day payment grace period
+  let billingResult = { downgraded: 0, errors: [] as string[] };
+  try {
+    billingResult = await enforcePaymentGracePeriod(db);
+  } catch (err) {
+    Sentry.captureException(err, { tags: { source: "payment_grace_downgrade" } });
+  }
+
   const totalDeleted = Object.values(summary).reduce((acc, s) => acc + s.deleted, 0) + dedupDeleted + gdprResult.deleted;
 
   return NextResponse.json({
@@ -274,6 +353,8 @@ async function handler(request: NextRequest) {
     webhookDedupDeleted: dedupDeleted,
     gdprHardDeleted: gdprResult.deleted,
     gdprErrors: gdprResult.errors.length > 0 ? gdprResult.errors : undefined,
+    billingDowngraded: billingResult.downgraded,
+    billingErrors: billingResult.errors.length > 0 ? billingResult.errors : undefined,
     collections: summary,
   });
 }

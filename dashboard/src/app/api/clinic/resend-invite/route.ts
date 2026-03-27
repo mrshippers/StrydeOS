@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { withRequestLog } from "@/lib/request-logger";
@@ -13,6 +14,15 @@ import { withRequestLog } from "@/lib/request-logger";
  * Auth: Bearer {Firebase ID token} — must be owner, admin, or superadmin
  */
 async function handler(req: NextRequest) {
+  // Rate limit: 5 requests per IP per 60 seconds
+  const { limited, remaining } = checkRateLimit(req, { limit: 5, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const user = await verifyApiRequest(req);
     requireRole(user, ["owner", "admin", "superadmin"]);

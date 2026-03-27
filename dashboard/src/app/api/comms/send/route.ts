@@ -18,6 +18,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, requireRole, requireClinic, handleApiError } from "@/lib/auth-guard";
 import { getTwilio, getTwilioPhone } from "@/lib/twilio";
@@ -47,6 +48,15 @@ function resolveTemplate(template: string, vars: Record<string, string>): string
 }
 
 async function handler(request: NextRequest) {
+  // Rate limit: 20 requests per IP per 60 seconds
+  const { limited, remaining } = checkRateLimit(request, { limit: 20, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
