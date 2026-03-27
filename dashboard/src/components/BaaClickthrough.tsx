@@ -93,7 +93,7 @@ export function BaaClickthrough({ clinicId, onAccept }: BaaClickthroughProps) {
                 <div className="text-[13px] text-navy leading-relaxed whitespace-pre-line">
                   {baaText.split(/\n/).map((line, i) => {
                     const parts: React.ReactNode[] = [];
-                    let remaining = line.replace(/^##\s*/, "");
+                    const remaining = line.replace(/^##\s*/, "");
                     const isHeading = line.startsWith("##");
                     let keyIdx = 0;
 

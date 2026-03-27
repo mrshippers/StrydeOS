@@ -2,7 +2,7 @@
 
 import type { WeeklyStats } from "@/types";
 import type { Patient } from "@/types";
-import { colors } from "@/lib/brand";
+import { brand as colors } from "@/lib/brand";
 
 interface DailySnapshotProps {
   stats: WeeklyStats | null;
@@ -32,7 +32,7 @@ export default function DailySnapshot({ stats, patients }: DailySnapshotProps) {
     chips.push({
       icon: "⚠️",
       label: `${churnCount} patient${churnCount !== 1 ? "s" : ""} at churn risk`,
-      color: colors.warn,
+      color: colors.warning,
     });
   }
 
