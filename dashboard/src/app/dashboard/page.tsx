@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Component, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,22 @@ import { ChevronLeft, ChevronRight, RefreshCw, Upload, ArrowRight, Info, X } fro
 import StatCard from "@/components/ui/StatCard";
 import CliniciansTable from "@/components/ui/CliniciansTable";
 import LiveActivityFeed from "@/components/ui/LiveActivityFeed";
+
+class FeedErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="rounded-[var(--radius-card)] p-5 h-full flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, #0B2545 0%, #132D5E 100%)" }}>
+          <p className="text-[11px] text-white/25 italic">Activity feed unavailable</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import { SkeletonCard } from "@/components/ui/EmptyState";
@@ -532,7 +548,9 @@ export default function DashboardPage() {
             })()}
 
             {/* Live Activity Feed */}
-            <LiveActivityFeed />
+            <FeedErrorBoundary>
+              <LiveActivityFeed />
+            </FeedErrorBoundary>
           </>
         ) : null}
       </motion.section>
@@ -540,7 +558,7 @@ export default function DashboardPage() {
       {/* ══════════════════════════════════════════════════════════════════════
           ROW 2 — Patient Flow | Revenue | Compliance | 6-Week Trend
          ══════════════════════════════════════════════════════════════════════ */}
-      <motion.section className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" style={{ gridTemplateColumns: "1fr 1fr 1fr 1.2fr" }} {...staggerItem(0.18)}>
+      <motion.section className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.2fr] gap-4" {...staggerItem(0.18)}>
         <div
           className="ambient-glow -z-10"
           style={{
