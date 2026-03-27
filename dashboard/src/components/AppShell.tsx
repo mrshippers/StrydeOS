@@ -90,10 +90,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, impersonating } = useAuth();
   const isChromeless = CHROMELESS_PATHS.some((p) => pathname.startsWith(p));
 
+  /* ─── Dual-gate splash: animation must finish AND app must hydrate ─── */
+  const [animDone, setAnimDone] = useState(false);
+  const [appReady, setAppReady] = useState(false);
+  const showSplash = !animDone || !appReady;
+
+  useEffect(() => {
+    /* App is "ready" once this client effect fires (hydration complete) */
+    setAppReady(true);
+  }, []);
+
   return (
     <AuthGuard>
       <ProgressProvider>
-        <SplashScreen />
+        {showSplash && <SplashScreen onComplete={() => setAnimDone(true)} />}
         <ImpersonationBanner />
         <StagingBanner />
         {isChromeless || !user ? (
