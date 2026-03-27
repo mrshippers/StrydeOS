@@ -17,6 +17,7 @@ interface TrendChartProps {
   data: WeeklyStats[];
   lines: TrendLine[];
   height?: number;
+  compact?: boolean;
 }
 
 function CustomTooltip({
@@ -57,6 +58,7 @@ export default function TrendChart({
   data,
   lines,
   height = 320,
+  compact = false,
 }: TrendChartProps) {
   const chartData = data.map((d) => ({
     ...d,
@@ -71,6 +73,39 @@ export default function TrendChart({
       l.key === "courseCompletionRate"
   );
   const hasRateLines = lines.some((l) => l.key === "followUpRate");
+
+  if (compact) {
+    return (
+      <ResponsiveContainer width="100%" height={height || 100}>
+        <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#E2DFDA" vertical={false} opacity={0.5} />
+          {hasRateLines && (
+            <YAxis yAxisId="rate" hide domain={[0, 5]} />
+          )}
+          {hasPercentageLines && (
+            <YAxis yAxisId="pct" hide domain={[0, 1]} />
+          )}
+          <Tooltip content={<CustomTooltip />} />
+          {lines.map((line) => {
+            const yAxisId = line.key === "followUpRate" ? "rate" : "pct";
+            return (
+              <Line
+                key={line.key}
+                yAxisId={yAxisId}
+                type="monotone"
+                dataKey={line.key}
+                name={line.label}
+                stroke={line.color}
+                strokeWidth={2}
+                dot={{ r: 0 }}
+                activeDot={{ r: 3 }}
+              />
+            );
+          })}
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  }
 
   return (
     <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">

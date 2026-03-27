@@ -2,28 +2,24 @@
 
 import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { ChevronLeft, ChevronRight, RefreshCw, Upload, ArrowRight, Info, X } from "lucide-react";
-import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
-import { AlertBanner } from "@/components/ui/AlertFlag";
 import CliniciansTable from "@/components/ui/CliniciansTable";
+import LiveActivityFeed from "@/components/ui/LiveActivityFeed";
 
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import { SkeletonCard } from "@/components/ui/EmptyState";
-import DailySnapshot from "@/components/ui/DailySnapshot";
 import EmptyState from "@/components/ui/EmptyState";
-import InsightNudge from "@/components/ui/InsightNudge";
-import InsightBanner from "@/components/intelligence/InsightBanner";
-import { useInsightEvents } from "@/hooks/useInsightEvents";
 import { getGreeting, SESSION_GREETED_KEY } from "@/lib/greeting";
 import type { GreetingData } from "@/lib/greeting";
 
 const TrendChart = dynamic(
   () => import("@/components/ui/TrendChart"),
   {
-    loading: () => <div className="animate-pulse bg-navy/10 rounded-xl h-[320px]" />,
+    loading: () => <div className="animate-pulse bg-navy/10 rounded-xl h-[140px]" />,
     ssr: false,
   }
 );
@@ -32,6 +28,7 @@ import { usePatients } from "@/hooks/usePatients";
 import { useClinicians } from "@/hooks/useClinicians";
 import { useClinicianSummaryStats } from "@/hooks/useClinicianSummaryStats";
 import { useAuth } from "@/hooks/useAuth";
+import { useInsightEvents } from "@/hooks/useInsightEvents";
 import { useProgress } from "@/components/TopProgressBar";
 import {
   formatFullDate,
@@ -43,9 +40,9 @@ import {
   getDnaStatus,
   getGenericStatus,
   getFollowUpInsight,
-  computeAlerts,
 } from "@/lib/utils";
-import type { TrendDirection } from "@/types";
+import { brand } from "@/lib/brand";
+import type { TrendDirection, MetricStatus } from "@/types";
 
 function computeTrend(current: number, previous: number | undefined): TrendDirection {
   if (previous === undefined) return "flat";
@@ -58,7 +55,6 @@ function computeTrendPercent(current: number, previous: number | undefined): num
   if (previous === undefined || previous === 0) return undefined;
   return ((current - previous) / previous) * 100;
 }
-
 
 function formatSyncTime(dateStr: string | undefined): { label: string; staleness: "fresh" | "stale" | "very-stale" } | null {
   if (!dateStr) return null;
@@ -75,6 +71,12 @@ function formatSyncTime(dateStr: string | undefined): { label: string; staleness
 
   const staleness = hours < 24 ? "fresh" : hours < 72 ? "stale" : "very-stale";
   return { label, staleness };
+}
+
+/** Composite status: worst of two statuses */
+function worstStatus(a: MetricStatus, b: MetricStatus): MetricStatus {
+  const rank: Record<MetricStatus, number> = { danger: 0, warn: 1, neutral: 2, ok: 3 };
+  return rank[a] <= rank[b] ? a : b;
 }
 
 const staggerItem = (delay: number) => ({
@@ -148,8 +150,6 @@ export default function DashboardPage() {
   const { greeting, subtext } = getGreeting(firstName, isFirstMount, greetingData);
   const isCurrentWeek = weekOffset === 0;
 
-  const alerts = latest ? computeAlerts(latest) : [];
-
   const trendWindow = stats.slice(Math.max(0, weekIndex - 5), weekIndex + 1);
 
   const { scrollY } = useScroll();
@@ -158,34 +158,31 @@ export default function DashboardPage() {
   const chevronOpacity = useTransform(scrollY, [0, 40], [1, 0]);
 
   return (
-    <div className="space-y-6">
-      {/* Onboarding nudge — shown instead of redirecting */}
+    <div className="space-y-5">
+      {/* ── Onboarding banner (compressed) ────────────────────────────────── */}
       {showOnboardingBanner && (
-        <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-blue/5 border border-blue/15">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue/10 flex items-center justify-center text-blue text-sm font-bold">!</div>
-            <div>
-              <p className="text-sm font-semibold text-navy">Finish setting up your clinic</p>
-              <p className="text-xs text-muted">Complete onboarding to unlock all features.</p>
-            </div>
+        <div className="flex items-center justify-between gap-3 px-4 py-2 rounded-xl bg-blue/3 border border-blue/10">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-blue/8 flex items-center justify-center text-blue text-[10px] font-bold">!</div>
+            <p className="text-xs font-medium text-navy">Finish setting up your clinic</p>
           </div>
-          <a href="/onboarding" className="shrink-0 px-4 py-2 rounded-lg bg-blue text-white text-xs font-semibold hover:opacity-90 transition-opacity">
-            Continue setup
+          <a href="/onboarding" className="btn-primary" style={{ padding: "6px 18px", fontSize: 11 }}>
+            Continue &rarr;
           </a>
         </div>
       )}
 
-      {/* Welcome greeting + sync indicator */}
+      {/* ── Greeting (softer header) ──────────────────────────────────────── */}
       <motion.div
-        className="sticky top-0 z-20 mb-2 -mx-6 px-6 py-2 bg-cloud-dancer/90 dark:bg-navy/90 backdrop-blur-sm"
+        className="sticky top-0 z-20 mb-1 -mx-6 px-6 py-2 bg-cloud-dancer/90 dark:bg-navy/90 backdrop-blur-sm"
         style={{ paddingTop: 8 }}
         {...staggerItem(0)}
       >
         <div className="flex items-start justify-between">
           <div>
             <motion.h1
-              className="font-display text-navy leading-tight relative"
-              style={{ fontSize: headerFontSize }}
+              className="font-display text-navy/90 leading-tight relative"
+              style={{ fontSize: headerFontSize, letterSpacing: "-0.5px" }}
             >
               <span className="relative z-10">{greeting}{greeting.endsWith("?") ? "" : "."}</span>
               <motion.span className="chevron-trail" aria-hidden="true" style={{ opacity: chevronOpacity }}>
@@ -194,7 +191,7 @@ export default function DashboardPage() {
                 <span className="chevron-glyph" style={{ animationDelay: "0.8s" }}>&rsaquo;</span>
               </motion.span>
             </motion.h1>
-            <motion.p className="text-[13px] text-muted-strong mt-1 leading-relaxed" style={{ opacity: subtextOpacity }}>{subtext}</motion.p>
+            <motion.p className="text-[13px] font-medium text-muted-strong mt-1 italic leading-relaxed" style={{ opacity: subtextOpacity }}>{subtext}</motion.p>
           </div>
           <div className="flex items-center gap-2 shrink-0 mt-2 flex-wrap justify-end">
             {isCurrentWeek && !loading && (
@@ -221,20 +218,9 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-        {isCurrentWeek && !loading && (
-          <DailySnapshot stats={latest} patients={patients} />
-        )}
       </motion.div>
 
-      {/* Intelligence insight banner — #1 ranked unread event */}
-      {isCurrentWeek && !loading && <InsightBanner />}
-
-      {/* Rule-based insight nudge — current week only */}
-      {isCurrentWeek && !loading && (
-        <InsightNudge stats={latest} previousStats={previous} />
-      )}
-
-      {/* Data staleness nudge for CSV-bridge clinics (TM3 etc.) */}
+      {/* ── Data staleness nudge (CSV-bridge clinics) ─────────────────────── */}
       {isCurrentWeek && !loading && lastSync?.staleness === "very-stale" && ["tm3"].includes(user?.clinicProfile?.pmsType ?? "") && (
         <motion.div
           className="flex items-center gap-3 p-3 rounded-xl border border-warn/20 bg-warn/5"
@@ -269,9 +255,9 @@ export default function DashboardPage() {
       {/* Error / Demo data banner */}
       {statsError && <ErrorBanner message={statsError} onRetry={() => window.location.reload()} />}
       {summaryError && <ErrorBanner message={summaryError} onRetry={() => window.location.reload()} />}
-      {/* Week navigation + clinician filter row */}
+
+      {/* ── Week navigation + clinician filter ────────────────────────────── */}
       <motion.div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-tour="clinician-filter" {...staggerItem(0.08)}>
-        {/* Week picker */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setWeekOffset((o) => o - 1)}
@@ -305,7 +291,6 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* Clinician filter — hidden for clinician role (they only see their own stats) */}
         {!isClinicianView && clinicians.length > 0 && (
           <div className="flex items-center gap-2">
             <span className="text-[13px] text-muted-strong font-medium">Viewing:</span>
@@ -338,10 +323,7 @@ export default function DashboardPage() {
         )}
       </motion.div>
 
-      {/* Alert section — before the numbers, so priority context lands first */}
-      {!loading && alerts.length > 0 && <AlertBanner alerts={alerts} />}
-
-      {/* Empty state — shown when loading is done but no metrics exist */}
+      {/* ── Empty state ───────────────────────────────────────────────────── */}
       {!loading && !latest && (
         <motion.div {...staggerItem(0.1)}>
           <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)]">
@@ -353,7 +335,7 @@ export default function DashboardPage() {
                   <a
                     href="/settings"
                     className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
-                    style={{ background: "#1C54F2" }}
+                    style={{ background: brand.blue }}
                   >
                     Check PMS connection →
                   </a>
@@ -371,7 +353,7 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Ghost preview modal — shows what the dashboard looks like when populated */}
+      {/* ── Preview modal (updated layout) ────────────────────────────────── */}
       <AnimatePresence>
         {previewOpen && (
           <motion.div
@@ -391,119 +373,55 @@ export default function DashboardPage() {
               className="w-full max-w-3xl rounded-2xl bg-white shadow-[var(--shadow-elevated)] overflow-hidden my-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
               <div className="flex items-center justify-between p-5 border-b border-border">
                 <div>
                   <h3 className="font-display text-base text-navy">Dashboard Preview</h3>
                   <p className="text-[11px] text-muted mt-0.5">This is what your dashboard will look like once data flows in</p>
                 </div>
-                <button
-                  onClick={() => setPreviewOpen(false)}
-                  className="text-muted hover:text-navy transition-colors"
-                >
+                <button onClick={() => setPreviewOpen(false)} className="text-muted hover:text-navy transition-colors">
                   <X size={18} />
                 </button>
               </div>
-
-              {/* Ghost preview content */}
               <div className="p-6 opacity-50 pointer-events-none select-none">
-                {/* Example stat cards — row 1 */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  {/* Follow-up Rate */}
-                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-5">
-                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Follow-Up Rate</p>
-                    <p className="text-3xl font-semibold text-navy">3.8</p>
-                    <p className="text-[11px] text-muted mt-1">sessions per patient</p>
-                    <div className="flex items-center gap-1 mt-2">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#059669" }} />
-                      <span className="text-[10px] font-semibold" style={{ color: "#059669" }}>+12% vs last week</span>
+                {/* Row 1: 3 hero cards */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4">
+                    <p className="text-[10px] font-semibold text-muted uppercase tracking-wide mb-1">Appointments</p>
+                    <p className="text-2xl font-semibold text-navy">73</p>
+                    <p className="text-[10px] text-muted mt-0.5">this week</p>
+                    <div className="border-t border-border mt-2 pt-2 flex justify-between text-[10px] text-navy font-medium">
+                      <span>11 new</span><span>62 follow-ups</span>
                     </div>
                   </div>
-                  {/* HEP Rate */}
-                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-5">
-                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">HEP Rate</p>
-                    <p className="text-3xl font-semibold text-navy">92%</p>
-                    <p className="text-[11px] text-muted mt-1">programme compliance</p>
-                    <div className="flex items-center gap-1 mt-2">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#059669" }} />
-                      <span className="text-[10px] font-semibold" style={{ color: "#059669" }}>On target</span>
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4">
+                    <p className="text-[10px] font-semibold text-muted uppercase tracking-wide mb-1">Performance</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div><p className="text-xl font-semibold text-navy">3.8</p><p className="text-[9px] text-muted">follow-up</p></div>
+                      <div><p className="text-xl font-semibold text-navy">82%</p><p className="text-[9px] text-muted">utilisation</p></div>
+                    </div>
+                  </div>
+                  <div className="rounded-[var(--radius-card)] p-4" style={{ background: brand.navy }}>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>Clinic Pulse</p>
+                    <div className="space-y-1.5">
+                      {["Ava booked new patient", "HEP reminder responded", "DNA spike detected"].map((t) => (
+                        <div key={t} className="text-[9px] px-2 py-1 rounded" style={{ color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.04)" }}>{t}</div>
+                      ))}
                     </div>
                   </div>
                 </div>
-
-                {/* Example stat cards — row 2 */}
-                <div className="grid grid-cols-3 gap-4 mb-5">
-                  {/* Utilisation */}
-                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4">
-                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Utilisation</p>
-                    <p className="text-2xl font-semibold text-navy">78%</p>
-                    <div className="flex items-center gap-1 mt-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#F59E0B" }} />
-                      <span className="text-[10px] font-semibold" style={{ color: "#F59E0B" }}>Room to grow</span>
+                {/* Row 2: 4 grouped cards */}
+                <div className="grid grid-cols-4 gap-3 mb-4">
+                  {["Patient Flow", "Revenue", "Compliance", "Trend"].map((l) => (
+                    <div key={l} className="rounded-[var(--radius-card)] border border-border bg-white p-3">
+                      <p className="text-[9px] font-semibold text-muted uppercase tracking-wide">{l}</p>
+                      <div className="h-8 mt-2 bg-cloud-light rounded" />
                     </div>
-                  </div>
-                  {/* DNA Rate */}
-                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4">
-                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">DNA Rate</p>
-                    <p className="text-2xl font-semibold text-navy">4.2%</p>
-                    <div className="flex items-center gap-1 mt-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#059669" }} />
-                      <span className="text-[10px] font-semibold" style={{ color: "#059669" }}>Below threshold</span>
-                    </div>
-                  </div>
-                  {/* Revenue per Session */}
-                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4">
-                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">Revenue / Session</p>
-                    <p className="text-2xl font-semibold text-navy">&pound;62</p>
-                    <div className="flex items-center gap-1 mt-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#6B7280" }} />
-                      <span className="text-[10px] font-semibold text-muted">Flat</span>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-
-                {/* Example clinician table */}
-                <div className="rounded-[var(--radius-card)] border border-border bg-white overflow-hidden">
-                  <div className="px-5 py-3 border-b border-border bg-cloud-light/50">
-                    <p className="text-xs font-semibold text-muted uppercase tracking-wide">Clinician Summary</p>
-                  </div>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-2.5 px-4 text-[10px] font-semibold text-muted uppercase">Clinician</th>
-                        <th className="text-left py-2.5 px-4 text-[10px] font-semibold text-muted uppercase">Follow-up</th>
-                        <th className="text-left py-2.5 px-4 text-[10px] font-semibold text-muted uppercase">HEP</th>
-                        <th className="text-left py-2.5 px-4 text-[10px] font-semibold text-muted uppercase">Utilisation</th>
-                        <th className="text-left py-2.5 px-4 text-[10px] font-semibold text-muted uppercase">Sessions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-border/50">
-                        <td className="py-2.5 px-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-blue/10 flex items-center justify-center text-[10px] font-bold text-blue">AH</div>
-                            <span className="text-sm font-medium text-navy">Andrew H.</span>
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#05966912", color: "#059669" }}>3.8</span></td>
-                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#05966912", color: "#059669" }}>94%</span></td>
-                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#F59E0B12", color: "#F59E0B" }}>76%</span></td>
-                        <td className="py-2.5 px-4 text-sm text-navy font-medium">24</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2.5 px-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-purple/10 flex items-center justify-center text-[10px] font-bold text-purple">MR</div>
-                            <span className="text-sm font-medium text-navy">Max R.</span>
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#F59E0B12", color: "#F59E0B" }}>2.9</span></td>
-                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#05966912", color: "#059669" }}>88%</span></td>
-                        <td className="py-2.5 px-4"><span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#05966912", color: "#059669" }}>82%</span></td>
-                        <td className="py-2.5 px-4 text-sm text-navy font-medium">18</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                {/* Clinician table placeholder */}
+                <div className="rounded-[var(--radius-card)] border border-border bg-white p-3">
+                  <p className="text-[10px] font-semibold text-muted uppercase tracking-wide mb-2">Clinician Summary</p>
+                  <div className="h-12 bg-cloud-light rounded" />
                 </div>
               </div>
             </motion.div>
@@ -511,9 +429,11 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* Stat cards — row 1 */}
-      <motion.section className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4" data-tour="stat-cards" {...staggerItem(0.1)}>
-        {/* Ambient radial glow — blue wash behind primary stats */}
+      {/* ══════════════════════════════════════════════════════════════════════
+          ROW 1 — Hero Cards: Appointments | Performance Snapshot | Live Feed
+         ══════════════════════════════════════════════════════════════════════ */}
+      <motion.section className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-tour="stat-cards" {...staggerItem(0.1)}>
+        {/* Ambient glow */}
         <div
           className="ambient-glow -z-10"
           style={{
@@ -528,49 +448,99 @@ export default function DashboardPage() {
           <>
             <SkeletonCard />
             <SkeletonCard />
+            <SkeletonCard />
           </>
         ) : latest ? (
           <>
-            <StatCard
-              label="Follow-Up Rate"
-              value={formatRate(latest.followUpRate)}
-              unit="sessions per patient"
-              target={latest.followUpTarget}
-              benchmark="Top performer: 3.8"
-              trend={computeTrend(latest.followUpRate, previous?.followUpRate)}
-              trendPercent={computeTrendPercent(latest.followUpRate, previous?.followUpRate)}
-              status={getFollowUpStatus(latest.followUpRate, latest.followUpTarget)}
-              insight={getFollowUpInsight(
-                latest.followUpRate,
-                latest.followUpTarget,
-                previous?.followUpRate
-              )}
-              sparklineData={trendWindow.map((s) => s.followUpRate)}
-              action={{ label: "View rebooking opportunities", href: "/continuity" }}
-            />
-            <StatCard
-              label="HEP Rate"
-              value={formatPercent(latest.hepRate)}
-              target={latest.hepTarget}
-              benchmark="Target: 95%"
-              trend={computeTrend(latest.hepRate, previous?.hepRate)}
-              trendPercent={computeTrendPercent(latest.hepRate, previous?.hepRate)}
-              status={getHepStatus(latest.hepRate)}
-              insight={
-                (latest.hepComplianceRate ?? latest.hepRate) >= 0.95
-                  ? "All patients have active HEP programmes"
-                  : "Some patients missing HEP assignment"
-              }
-              sparklineData={trendWindow.map((s) => s.hepRate)}
-              action={{ label: "See non-compliant patients", href: "/continuity" }}
-            />
+            {/* Appointments (promoted from Row 2) */}
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="flex items-start justify-between mb-2">
+                <span className="text-[11px] font-semibold text-muted uppercase tracking-wide">Appointments</span>
+                <div className="w-[7px] h-[7px] rounded-full" style={{ background: "#6B7280", boxShadow: "0 0 6px rgba(107,114,128,0.2)" }} />
+              </div>
+              <div className="flex items-baseline gap-2 mb-0.5">
+                <span className="text-[44px] font-bold text-navy leading-none tabular-nums">{latest.appointmentsTotal}</span>
+                {(() => {
+                  const t = computeTrend(latest.appointmentsTotal, previous?.appointmentsTotal);
+                  const p = computeTrendPercent(latest.appointmentsTotal, previous?.appointmentsTotal);
+                  const color = t === "up" ? "#059669" : t === "down" ? "#EF4444" : "#6B7280";
+                  return p !== undefined ? (
+                    <span className="text-[11px] font-semibold" style={{ color }}>
+                      {t === "up" ? "↑" : t === "down" ? "↓" : "→"} {Math.abs(Math.round(p))}%
+                    </span>
+                  ) : null;
+                })()}
+              </div>
+              <p className="text-[12px] text-muted">this week</p>
+              <div className="border-t border-border mt-3 pt-3 flex items-center justify-between">
+                <div>
+                  <span className="text-lg font-bold text-navy">{latest.initialAssessments}</span>
+                  <span className="text-[10px] text-muted ml-1">new patients</span>
+                </div>
+                <div>
+                  <span className="text-lg font-bold text-navy">{latest.followUps}</span>
+                  <span className="text-[10px] text-muted ml-1">follow-ups</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Performance Snapshot (merged follow-up + utilisation) */}
+            {(() => {
+              const fuStatus = getFollowUpStatus(latest.followUpRate, latest.followUpTarget);
+              const utilStatus = getGenericStatus(latest.utilisationRate, 0.85);
+              const compositeStatus = worstStatus(fuStatus, utilStatus);
+              const statusColor =
+                compositeStatus === "ok" ? "#059669"
+                : compositeStatus === "warn" ? "#F59E0B"
+                : compositeStatus === "danger" ? "#EF4444"
+                : "#6B7280";
+              const fuTrend = computeTrend(latest.followUpRate, previous?.followUpRate);
+              const fuPct = computeTrendPercent(latest.followUpRate, previous?.followUpRate);
+              const utilTrend = computeTrend(latest.utilisationRate, previous?.utilisationRate);
+              const utilPct = computeTrendPercent(latest.utilisationRate, previous?.utilisationRate);
+              const insight = getFollowUpInsight(latest.followUpRate, latest.followUpTarget, previous?.followUpRate);
+
+              return (
+                <Link href="/intelligence" className="block rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-[11px] font-semibold text-muted uppercase tracking-wide">Performance</span>
+                    <div className="w-[7px] h-[7px] rounded-full" style={{ background: statusColor, boxShadow: `0 0 6px ${statusColor}73` }} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-2">
+                    <div>
+                      <span className="text-[32px] font-bold text-navy leading-none tabular-nums">{formatRate(latest.followUpRate)}</span>
+                      <p className="text-[10px] text-muted mt-0.5">follow-up rate</p>
+                      {fuPct !== undefined && (
+                        <span className="text-[10px] font-semibold" style={{ color: fuTrend === "up" ? "#059669" : fuTrend === "down" ? "#EF4444" : "#6B7280" }}>
+                          {fuTrend === "up" ? "↑" : fuTrend === "down" ? "↓" : "→"} {Math.abs(Math.round(fuPct))}%
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-[32px] font-bold text-navy leading-none tabular-nums">{formatPercent(latest.utilisationRate)}</span>
+                      <p className="text-[10px] text-muted mt-0.5">utilisation</p>
+                      {utilPct !== undefined && (
+                        <span className="text-[10px] font-semibold" style={{ color: utilTrend === "up" ? "#059669" : utilTrend === "down" ? "#EF4444" : "#6B7280" }}>
+                          {utilTrend === "up" ? "↑" : utilTrend === "down" ? "↓" : "→"} {Math.abs(Math.round(utilPct))}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted italic">{insight}</p>
+                </Link>
+              );
+            })()}
+
+            {/* Live Activity Feed */}
+            <LiveActivityFeed />
           </>
         ) : null}
       </motion.section>
 
-      {/* Stat cards — row 2 */}
-      <motion.section className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" {...staggerItem(0.18)}>
-        {/* Ambient radial glow — teal wash behind secondary stats */}
+      {/* ══════════════════════════════════════════════════════════════════════
+          ROW 2 — Patient Flow | Revenue | Compliance | 6-Week Trend
+         ══════════════════════════════════════════════════════════════════════ */}
+      <motion.section className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" style={{ gridTemplateColumns: "1fr 1fr 1fr 1.2fr" }} {...staggerItem(0.18)}>
         <div
           className="ambient-glow -z-10"
           style={{
@@ -588,40 +558,14 @@ export default function DashboardPage() {
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
-            <SkeletonCard />
           </>
         ) : latest ? (
           <>
+            {/* Patient Flow (DNA-focused) */}
             <StatCard
-              label="Appointments Total"
-              value={latest.appointmentsTotal}
-              unit="total this week"
-              trend={computeTrend(latest.appointmentsTotal, previous?.appointmentsTotal)}
-              trendPercent={computeTrendPercent(latest.appointmentsTotal, previous?.appointmentsTotal)}
-              status="neutral"
-              sparklineData={trendWindow.map((s) => s.appointmentsTotal)}
-            />
-            <StatCard
-              label="Utilisation Rate"
-              value={formatPercent(latest.utilisationRate)}
-              trend={computeTrend(latest.utilisationRate, previous?.utilisationRate)}
-              trendPercent={computeTrendPercent(latest.utilisationRate, previous?.utilisationRate)}
-              status={getGenericStatus(latest.utilisationRate, 0.85)}
-              insight={
-                latest.utilisationRate >= 0.9
-                  ? "Running near capacity"
-                  : "Room to add more bookings"
-              }
-              sparklineData={trendWindow.map((s) => s.utilisationRate)}
-              action={{ label: "View schedule gaps", href: "/clinicians" }}
-            />
-            <StatCard
-              label="DNA Rate"
+              label="Patient Flow"
               value={formatPercent(latest.dnaRate)}
-              trend={computeTrend(
-                -(latest.dnaRate),
-                previous ? -(previous.dnaRate) : undefined
-              )}
+              trend={computeTrend(-(latest.dnaRate), previous ? -(previous.dnaRate) : undefined)}
               trendPercent={computeTrendPercent(latest.dnaRate, previous?.dnaRate)}
               status={getDnaStatus(latest.dnaRate)}
               insight={
@@ -632,60 +576,129 @@ export default function DashboardPage() {
               sparklineData={trendWindow.map((s) => s.dnaRate)}
               action={{ label: "Review missed appointments", href: "/continuity" }}
             />
-            <StatCard
-              label="HEP Compliance"
-              value={formatPercent(latest.courseCompletionRate)}
-              trend={computeTrend(latest.courseCompletionRate, previous?.courseCompletionRate)}
-              trendPercent={computeTrendPercent(latest.courseCompletionRate, previous?.courseCompletionRate)}
-              status={getGenericStatus(latest.courseCompletionRate, 0.80)}
-              sparklineData={trendWindow.map((s) => s.courseCompletionRate)}
-            />
-            <StatCard
-              label="Revenue per Session"
-              value={formatPence(latest.revenuePerSessionPence)}
-              unit="avg"
-              trend={computeTrend(
-                latest.revenuePerSessionPence,
-                previous?.revenuePerSessionPence
-              )}
-              trendPercent={computeTrendPercent(latest.revenuePerSessionPence, previous?.revenuePerSessionPence)}
-              status="neutral"
-              sparklineData={trendWindow.map((s) => s.revenuePerSessionPence)}
-              action={{ label: "See revenue breakdown", href: "/intelligence" }}
-            />
+
+            {/* Revenue (compound) */}
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="flex items-start justify-between mb-1">
+                <span className="text-[11px] font-semibold text-muted uppercase tracking-wide">Revenue</span>
+                <div className="w-[7px] h-[7px] rounded-full" style={{ background: "#6B7280", boxShadow: "0 0 6px rgba(107,114,128,0.2)" }} />
+              </div>
+              <div className="flex items-baseline gap-1.5 mb-0.5">
+                <span className="text-[28px] font-bold text-navy leading-none tabular-nums">{formatPence(latest.revenuePerSessionPence)}</span>
+                <span className="text-[11px] text-muted">avg/session</span>
+                {(() => {
+                  const t = computeTrend(latest.revenuePerSessionPence, previous?.revenuePerSessionPence);
+                  const p = computeTrendPercent(latest.revenuePerSessionPence, previous?.revenuePerSessionPence);
+                  const color = t === "up" ? "#059669" : t === "down" ? "#EF4444" : "#6B7280";
+                  return p !== undefined ? (
+                    <span className="text-[10px] font-semibold" style={{ color }}>
+                      {t === "up" ? "↑" : t === "down" ? "↓" : "→"} {Math.abs(Math.round(p))}%
+                    </span>
+                  ) : null;
+                })()}
+              </div>
+              <p className="text-[11px] text-muted mb-2">
+                {latest.revenuePerSessionPence > (previous?.revenuePerSessionPence ?? 0) ? "Improving rate" : "Steady rate"}
+              </p>
+              <div className="border-t border-border pt-2 flex items-center justify-between">
+                <div>
+                  <span className="text-base font-bold text-navy tabular-nums">
+                    {formatPence(latest.appointmentsTotal * latest.revenuePerSessionPence)}
+                  </span>
+                  <span className="text-[9px] text-muted ml-1">total this week</span>
+                </div>
+              </div>
+              <div className="mt-2">
+                <Link href="/intelligence" className="text-[11px] font-semibold text-blue hover:text-blue-bright transition-colors group">
+                  See revenue breakdown <span className="inline-block transition-transform group-hover:translate-x-0.5">→</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Compliance (HEP + course completion as progress bars) */}
+            {(() => {
+              const hepVal = Math.round((latest.hepRate ?? 0) * 100);
+              const courseVal = Math.round((latest.courseCompletionRate ?? 0) * 100);
+              const hepStatus = getHepStatus(latest.hepRate);
+              const courseStatus = getGenericStatus(latest.courseCompletionRate, 0.80);
+              const composite = worstStatus(hepStatus, courseStatus);
+              const dotColor =
+                composite === "ok" ? "#059669"
+                : composite === "warn" ? "#F59E0B"
+                : composite === "danger" ? "#EF4444"
+                : "#6B7280";
+              const barGrad = "linear-gradient(90deg, #0891B2, #4B8BF5)";
+              const barWarn = "linear-gradient(90deg, #F59E0B, #F59E0B)";
+              const hepPct = computeTrendPercent(latest.hepRate, previous?.hepRate);
+              const coursePct = computeTrendPercent(latest.courseCompletionRate, previous?.courseCompletionRate);
+              const avgChange = ((hepPct ?? 0) + (coursePct ?? 0)) / 2;
+
+              return (
+                <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-[11px] font-semibold text-muted uppercase tracking-wide">Compliance</span>
+                    <div className="w-[7px] h-[7px] rounded-full" style={{ background: dotColor, boxShadow: `0 0 6px ${dotColor}73` }} />
+                  </div>
+                  {/* HEP bar */}
+                  <div className="mb-3">
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="text-[11px] font-medium text-navy">HEP assigned</span>
+                      <span className="text-[11px] font-bold text-navy tabular-nums">{hepVal}%</span>
+                    </div>
+                    <div className="h-[4px] bg-cloud-dark rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(hepVal, 100)}%`, background: hepStatus === "ok" ? barGrad : barWarn }}
+                      />
+                    </div>
+                  </div>
+                  {/* Course completion bar */}
+                  <div className="mb-3">
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="text-[11px] font-medium text-navy">Course completion</span>
+                      <span className="text-[11px] font-bold text-navy tabular-nums">{courseVal}%</span>
+                    </div>
+                    <div className="h-[4px] bg-cloud-dark rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(courseVal, 100)}%`, background: courseStatus === "ok" ? barGrad : barWarn }}
+                      />
+                    </div>
+                  </div>
+                  <div className="border-t border-border pt-2">
+                    <p className="text-[10px] text-muted italic">
+                      {composite === "ok" ? "On track" : composite === "warn" ? "Needs attention" : "Below target"}
+                      {avgChange ? ` · ${avgChange > 0 ? "+" : ""}${Math.round(avgChange)}% WoW` : ""}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* 6-Week Trend Strip (replaces full 90-day chart) */}
+            {trendWindow.length > 0 && (
+              <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4">
+                <span className="text-[11px] font-semibold text-muted uppercase tracking-wide">6-Week Trend</span>
+                <p className="text-[10px] text-muted mb-2">Rolling performance</p>
+                <div className="h-[100px]">
+                  <TrendChart
+                    data={trendWindow}
+                    lines={[
+                      { key: "followUpRate", color: "#4B8BF5", label: "Follow-up Rate" },
+                      { key: "utilisationRate", color: "#8B5CF6", label: "Utilisation" },
+                    ]}
+                    compact
+                  />
+                </div>
+              </div>
+            )}
           </>
         ) : null}
       </motion.section>
 
-      {/* 90-day trend chart — shows window ending at selected week */}
-      {!loading && trendWindow.length > 0 && (
-        <motion.div className="relative" {...staggerItem(0.26)}>
-          {/* Ambient radial glow — purple accent behind chart */}
-          <div
-            className="ambient-glow -z-10"
-            style={{
-              width: "35%",
-              height: "80%",
-              top: "10%",
-              right: "5%",
-              background: "radial-gradient(ellipse at center, rgba(139,92,246,0.04) 0%, transparent 70%)",
-              animationDelay: "2s",
-            }}
-          />
-          <TrendChart
-            data={trendWindow}
-            lines={[
-              { key: "followUpRate", color: "#4B8BF5", label: "Follow-up Rate" },
-              { key: "hepRate", color: "#0891B2", label: "HEP Rate" },
-              { key: "utilisationRate", color: "#8B5CF6", label: "Utilisation" },
-            ]}
-          />
-        </motion.div>
-      )}
-
-      {/* Clinician mini-table — real Firestore data, demo fallback */}
+      {/* ── Clinician summary table ───────────────────────────────────────── */}
       {!loading && !isClinicianView && clinicianRows.length > 0 && (
-        <motion.div {...staggerItem(0.32)}>
+        <motion.div {...staggerItem(0.26)}>
           <div className="flex items-center gap-2 mb-3">
             <h3 className="font-display text-lg text-navy">
               Clinician Summary — This Week
