@@ -23,6 +23,7 @@ import { useClinicians } from "@/hooks/useClinicians";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
 import { useIntelligenceData } from "@/hooks/useIntelligenceData";
 import { usePatients } from "@/hooks/usePatients";
+import { useValueLedger } from "@/hooks/useValueLedger";
 import { recordOutcomeScores } from "@/lib/queries";
 import { brand } from "@/lib/brand";
 import type { OutcomeMeasureType, Patient } from "@/types";
@@ -42,9 +43,14 @@ import {
   ChevronUp,
   BarChart2,
   Lightbulb,
+  Gem,
+  Clock,
+  UserMinus,
+  UserPlus,
+  Shield,
 } from "lucide-react";
 
-type Tab = "insights" | "revenue" | "dna" | "referrals" | "outcomes" | "reputation";
+type Tab = "insights" | "revenue" | "dna" | "referrals" | "outcomes" | "reputation" | "value";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "insights", label: "Insights", icon: Lightbulb },
@@ -53,6 +59,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "referrals", label: "Referrals", icon: GitBranch },
   { id: "outcomes", label: "Outcomes", icon: Activity },
   { id: "reputation", label: "Reputation", icon: Star },
+  { id: "value", label: "Value", icon: Gem },
 ];
 
 const BAR_COLORS = [brand.blue, brand.teal, brand.purple, brand.success, brand.warning];
@@ -274,6 +281,381 @@ function MiniSparkline({ data: rawData, color, higherIsBetter }: { data: number[
   );
 }
 
+// ─── Value Tab ────────────────────────────────────────────────────────────────
+
+/** Format pence as £ with comma separators */
+function fmtPence(pence: number): string {
+  const pounds = Math.round(pence / 100);
+  return `£${pounds.toLocaleString("en-GB")}`;
+}
+
+function fmtPenceDecimal(pence: number): string {
+  const pounds = pence / 100;
+  return `£${pounds.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
+const MODULE_DESCRIPTIONS: Record<string, (s: { callsHandled?: number; bookingsFromAva?: number; patientsReengaged?: number; insightsActedOn?: number }) => string> = {
+  ava: (s) => `${s.callsHandled ?? 0} calls handled, ${s.bookingsFromAva ?? 0} bookings`,
+  pulse: (s) => `${s.patientsReengaged ?? 0} patients re-engaged`,
+  intelligence: (s) => `${s.insightsActedOn ?? 0} insights acted on`,
+};
+
+const CONFIDENCE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  high: { bg: `${brand.success}15`, text: brand.success, label: "High" },
+  medium: { bg: `${brand.warning}15`, text: brand.warning, label: "Medium" },
+  low: { bg: `${brand.muted}15`, text: brand.muted, label: "Low" },
+};
+
+const MODULE_DOT_COLORS: Record<string, string> = {
+  ava: brand.blue,
+  pulse: brand.teal,
+  intelligence: brand.purple,
+};
+
+function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useValueLedger> }) {
+  const {
+    summary,
+    totalValueThisMonth,
+    roiMultiple,
+    netValueThisMonth,
+    moduleBreakdown,
+    topEvents,
+    deepMetrics,
+    loading,
+  } = valueLedger;
+
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="rounded-[var(--radius-card)] bg-white border border-border h-40" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="rounded-[var(--radius-card)] bg-white border border-border h-32" />
+          ))}
+        </div>
+        <div className="rounded-[var(--radius-card)] bg-white border border-border h-64" />
+      </div>
+    );
+  }
+
+  if (!summary && topEvents.length === 0) {
+    return (
+      <div className="rounded-[var(--radius-card)] border border-border bg-white p-8 text-center" style={{ borderColor: "rgba(139, 92, 246, 0.2)" }}>
+        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full" style={{ background: "rgba(139, 92, 246, 0.08)" }}>
+          <Gem size={18} style={{ color: brand.purple }} />
+        </div>
+        <h3 className="font-display text-base text-navy mb-1">Value attribution starts automatically</h3>
+        <p className="text-sm text-muted max-w-md mx-auto mb-3">
+          As Ava handles calls, Pulse re-engages patients, and Intelligence surfaces insights,
+          each measurable outcome is logged here with a conservative £ estimate.
+        </p>
+        <p className="text-xs text-muted">
+          Data will appear once your first attributed events are recorded — typically within a few days of going live.
+        </p>
+      </div>
+    );
+  }
+
+  const isPositiveRoi = netValueThisMonth > 0;
+
+  return (
+    <div className="space-y-6">
+      {/* ── ROI Hero Card ──────────────────────────────────── */}
+      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">This Month</p>
+            <h2 className="font-display text-3xl md:text-4xl text-navy leading-tight">
+              StrydeOS generated {fmtPence(totalValueThisMonth)}
+            </h2>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <span
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold"
+              style={{
+                background: isPositiveRoi ? `${brand.success}12` : `${brand.danger}12`,
+                color: isPositiveRoi ? brand.success : brand.danger,
+              }}
+            >
+              <TrendingUp size={14} />
+              {roiMultiple.toFixed(1)}&times; your subscription
+            </span>
+            <span
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold"
+              style={{
+                background: isPositiveRoi ? `${brand.success}08` : `${brand.danger}08`,
+                color: isPositiveRoi ? brand.success : brand.danger,
+              }}
+            >
+              {isPositiveRoi ? "+" : ""}{fmtPence(netValueThisMonth)} net value
+            </span>
+          </div>
+        </div>
+        {summary && (
+          <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 pt-4 border-t border-border">
+            <span className="text-xs text-muted">{summary.totalEvents} events</span>
+            <span className="text-xs text-muted">High-confidence: {fmtPence(summary.highConfidenceValuePence)}</span>
+            <span className="text-xs text-muted">Subscription: {fmtPence(summary.subscriptionCostPence)}/mo</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Module Breakdown ───────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {moduleBreakdown.map((mod) => (
+          <div
+            key={mod.module}
+            className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5 relative overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 right-0 h-1" style={{ background: mod.color }} />
+            <h4 className="text-sm font-semibold text-navy mb-1 mt-1">{mod.label}</h4>
+            <p className="font-display text-2xl text-navy mb-2">{fmtPence(mod.totalPence)}</p>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted">{mod.eventCount} events</span>
+              <span className="text-xs text-muted">
+                {summary ? MODULE_DESCRIPTIONS[mod.module]?.({
+                  callsHandled: summary.callsHandled,
+                  bookingsFromAva: summary.bookingsFromAva,
+                  patientsReengaged: summary.patientsReengaged,
+                  insightsActedOn: summary.insightsActedOn,
+                }) : ""}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Attribution Feed ───────────────────────────────── */}
+      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+        <h3 className="font-display text-lg text-navy mb-1">Attribution Feed</h3>
+        <p className="text-xs text-muted mb-4">Recent value events sorted by impact — highest first</p>
+        {topEvents.length === 0 ? (
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-cloud-light border border-border text-sm text-muted">
+            <Gem size={16} className="shrink-0 text-purple" />
+            <span>Attribution events will appear here as Ava, Pulse, and Intelligence generate measurable outcomes.</span>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {topEvents.map((evt) => {
+              const conf = CONFIDENCE_STYLES[evt.confidence] ?? CONFIDENCE_STYLES.low;
+              const dotColor = MODULE_DOT_COLORS[evt.module] ?? brand.muted;
+              const ts = new Date(evt.attributedAt);
+              const timeStr = ts.toLocaleDateString("en-GB", { day: "numeric", month: "short" }) + " " + ts.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+              return (
+                <div key={evt.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                  <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ background: dotColor }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-sm font-semibold text-navy truncate">{evt.title}</span>
+                      <span
+                        className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                        style={{ background: conf.bg, color: conf.text }}
+                      >
+                        {conf.label}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted leading-relaxed">{evt.description}</p>
+                    <p className="text-[11px] text-muted mt-0.5">{timeStr}</p>
+                  </div>
+                  <span className="text-sm font-bold text-navy shrink-0 ml-2">{fmtPence(evt.valuePence)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Deep Metrics ───────────────────────────────────── */}
+      {deepMetrics && (
+        <div className="space-y-4">
+          <h3 className="font-display text-lg text-navy">Deep Metrics</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Cost of Empty Chair */}
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.danger}12` }}>
+                  <AlertTriangle size={14} style={{ color: brand.danger }} />
+                </div>
+                <h4 className="text-sm font-semibold text-navy">Cost of Empty Chair</h4>
+              </div>
+              <p className="font-display text-2xl text-navy mb-1">{fmtPence(deepMetrics.costOfEmptyChairPence)}</p>
+              <p className="text-xs text-muted mb-2">per week</p>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted">{deepMetrics.dnaSlots} DNAs + {deepMetrics.unfilledSlots} unfilled</span>
+                <span className="font-semibold text-danger">{fmtPenceDecimal(deepMetrics.costOfEmptyChairAnnualisedPence)}/yr</span>
+              </div>
+            </div>
+
+            {/* Net Growth */}
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.success}12` }}>
+                  <UserPlus size={14} style={{ color: brand.success }} />
+                </div>
+                <h4 className="text-sm font-semibold text-navy">Net Growth</h4>
+              </div>
+              <p className={`font-display text-2xl ${deepMetrics.netGrowth >= 0 ? "text-success" : "text-danger"}`}>
+                {deepMetrics.netGrowth >= 0 ? "+" : ""}{deepMetrics.netGrowth}
+              </p>
+              <p className="text-xs text-muted mb-2">patients this week</p>
+              <div className="flex items-center gap-4 text-xs text-muted">
+                <span className="flex items-center gap-1"><UserPlus size={11} className="text-success" /> {deepMetrics.newPatients} new</span>
+                <span className="flex items-center gap-1"><UserMinus size={11} className="text-muted" /> {deepMetrics.dischargedPatients} discharged</span>
+                <span className="flex items-center gap-1"><AlertTriangle size={11} className="text-warning" /> {deepMetrics.ghostPatients} ghost</span>
+              </div>
+            </div>
+
+            {/* Rebooking Lag */}
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.warning}12` }}>
+                  <Clock size={14} style={{ color: brand.warning }} />
+                </div>
+                <h4 className="text-sm font-semibold text-navy">Rebooking Lag</h4>
+              </div>
+              <p className="font-display text-2xl text-navy mb-1">{deepMetrics.avgRebookingLagDays.toFixed(1)} days</p>
+              <p className="text-xs text-muted mb-2">avg between sessions (median {deepMetrics.medianRebookingLagDays.toFixed(1)})</p>
+              <div className="text-xs">
+                <span className={`font-semibold ${deepMetrics.patientsOverThreshold > 0 ? "text-danger" : "text-success"}`}>
+                  {deepMetrics.patientsOverThreshold} patients
+                </span>
+                <span className="text-muted"> over 14-day threshold</span>
+              </div>
+            </div>
+
+            {/* Discharge Quality */}
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.teal}12` }}>
+                  <Shield size={14} style={{ color: brand.teal }} />
+                </div>
+                <h4 className="text-sm font-semibold text-navy">Discharge Quality</h4>
+              </div>
+              <p className="font-display text-2xl text-navy mb-1">{Math.round(deepMetrics.dischargeQualityRate * 100)}%</p>
+              <p className="text-xs text-muted mb-2">proper discharge rate</p>
+              <div className="flex items-center gap-4 text-xs text-muted">
+                <span>{deepMetrics.properDischarges} proper</span>
+                <span>{deepMetrics.ghostDischarges} ghost</span>
+              </div>
+            </div>
+
+            {/* Patient LTV */}
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.purple}12` }}>
+                  <PoundSterling size={14} style={{ color: brand.purple }} />
+                </div>
+                <h4 className="text-sm font-semibold text-navy">Patient Lifetime Value</h4>
+              </div>
+              <p className="font-display text-2xl text-navy mb-1">{fmtPence(deepMetrics.avgLifetimeValuePence)}</p>
+              <p className="text-xs text-muted mb-2">average (median {fmtPence(deepMetrics.medianLifetimeValuePence)})</p>
+              {(deepMetrics.insuranceLtvPence != null || deepMetrics.selfPayLtvPence != null) && (
+                <div className="flex items-center gap-4 text-xs text-muted">
+                  {deepMetrics.insuranceLtvPence != null && <span>Insurance: {fmtPence(deepMetrics.insuranceLtvPence)}</span>}
+                  {deepMetrics.selfPayLtvPence != null && <span>Self-pay: {fmtPence(deepMetrics.selfPayLtvPence)}</span>}
+                </div>
+              )}
+            </div>
+
+            {/* Revenue per Delivered Hour */}
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.blue}12` }}>
+                  <BarChart2 size={14} style={{ color: brand.blue }} />
+                </div>
+                <h4 className="text-sm font-semibold text-navy">Revenue per Hour</h4>
+              </div>
+              <p className="font-display text-2xl text-navy mb-1">{fmtPence(deepMetrics.revenuePerDeliveredHourPence)}</p>
+              <p className="text-xs text-muted mb-2">per delivered hour</p>
+              {deepMetrics.revenuePerAvailableHourPence != null && (
+                <div className="text-xs text-muted">
+                  Available hour: {fmtPence(deepMetrics.revenuePerAvailableHourPence)}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Retention Curve */}
+          {deepMetrics.retentionCurve.length > 0 && (
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+              <h4 className="font-display text-lg text-navy mb-1">Retention Curve</h4>
+              <p className="text-xs text-muted mb-4">
+                Patient drop-off by session — biggest loss at session {deepMetrics.biggestDropoffSession} ({deepMetrics.biggestDropoffPercent.toFixed(0)}% drop)
+              </p>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={deepMetrics.retentionCurve} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="4 4" stroke={brand.border} vertical={false} />
+                  <XAxis
+                    dataKey="session"
+                    tickFormatter={(v: number) => v >= 6 ? "6+" : `S${v}`}
+                    tick={{ fontSize: 12, fill: brand.muted }}
+                    tickLine={false}
+                    axisLine={{ stroke: brand.border }}
+                  />
+                  <YAxis
+                    tickFormatter={(v: number) => `${Math.round(v)}%`}
+                    tick={{ fontSize: 11, fill: brand.muted }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={45}
+                    domain={[0, 100]}
+                  />
+                  <Tooltip
+                    content={<ChartTooltip />}
+                    formatter={(v: number, name: string) => [
+                      name === "percentOfInitial" ? `${v.toFixed(0)}%` : fmtPence(v),
+                      name === "percentOfInitial" ? "Retained" : "Revenue Lost",
+                    ]}
+                  />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+                  <Bar dataKey="percentOfInitial" name="Retained %" radius={[6, 6, 0, 0]}>
+                    {deepMetrics.retentionCurve.map((step, i) => (
+                      <Cell
+                        key={i}
+                        fill={step.session === deepMetrics.biggestDropoffSession ? brand.danger : brand.teal}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              {/* Revenue lost table */}
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 px-3 font-semibold text-muted uppercase tracking-wide">Session</th>
+                      <th className="text-right py-2 px-3 font-semibold text-muted uppercase tracking-wide">Patients</th>
+                      <th className="text-right py-2 px-3 font-semibold text-muted uppercase tracking-wide">Retained</th>
+                      <th className="text-right py-2 px-3 font-semibold text-muted uppercase tracking-wide">Drop-off</th>
+                      <th className="text-right py-2 px-3 font-semibold text-muted uppercase tracking-wide">Revenue Lost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deepMetrics.retentionCurve.map((step) => (
+                      <tr key={step.session} className="border-b border-border/50">
+                        <td className="py-2 px-3 font-medium text-navy">{step.session >= 6 ? "6+" : `Session ${step.session}`}</td>
+                        <td className="py-2 px-3 text-right text-navy">{step.patientsReached}</td>
+                        <td className="py-2 px-3 text-right">
+                          <span className={step.percentOfInitial >= 60 ? "text-success font-semibold" : step.percentOfInitial >= 40 ? "text-warning font-semibold" : "text-danger font-semibold"}>
+                            {step.percentOfInitial.toFixed(0)}%
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-right text-muted">{step.dropoffFromPrevious.toFixed(0)}%</td>
+                        <td className="py-2 px-3 text-right font-semibold text-danger">{fmtPence(step.revenueLostPence)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function IntelligencePage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("insights");
@@ -283,6 +665,7 @@ export default function IntelligencePage() {
   const { stats, usedDemo: weeklyUsedDemo, error: weeklyError } = useWeeklyStats(selectedClinician);
   const latest = stats.length > 0 ? stats[stats.length - 1] : null;
   const { patients } = usePatients();
+  const valueLedger = useValueLedger(selectedClinician);
 
   const {
     revByClinician,
@@ -1000,6 +1383,10 @@ export default function IntelligencePage() {
               })}
             </div>
           </div>
+        )}
+
+        {activeTab === "value" && (
+          <ValueTabContent valueLedger={valueLedger} />
         )}
 
         {activeTab === "reputation" && (

@@ -22,6 +22,7 @@ import type {
   Review,
   OutcomeScore,
 } from "@/types";
+import type { ValueEvent, ValueSummary, DeepMetrics } from "@/types/value-ledger";
 
 function noopUnsubscribe(): Unsubscribe {
   return () => {};
@@ -415,6 +416,98 @@ export function subscribeCalls(
       const data = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as Omit<CallLog, "id">),
+      }));
+      callback(data);
+    },
+    onError
+  );
+}
+
+// ─── Value Events (subcollection) ──────────────────────────────────────────
+
+export function subscribeValueEvents(
+  clinicId: string | null,
+  callback: (data: ValueEvent[]) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  if (!db || !clinicId) {
+    callback([]);
+    return noopUnsubscribe();
+  }
+
+  const q = query(
+    clinicCollection(clinicId, "value_events"),
+    orderBy("attributedAt", "desc"),
+    limit(100)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const data = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<ValueEvent, "id">),
+      }));
+      callback(data);
+    },
+    onError
+  );
+}
+
+// ─── Value Summary (document) ─────────────────────────────────────────────
+
+export function subscribeValueSummary(
+  clinicId: string | null,
+  periodKey: string,
+  callback: (data: ValueSummary | null) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  if (!db || !clinicId) {
+    callback(null);
+    return noopUnsubscribe();
+  }
+
+  const ref = doc(db, "clinics", clinicId, "value_summaries", periodKey);
+
+  return onSnapshot(
+    ref,
+    (snapshot) => {
+      if (!snapshot.exists()) {
+        callback(null);
+        return;
+      }
+      callback({ id: snapshot.id, ...snapshot.data() } as ValueSummary);
+    },
+    onError
+  );
+}
+
+// ─── Deep Metrics (subcollection) ─────────────────────────────────────────
+
+export function subscribeDeepMetrics(
+  clinicId: string | null,
+  clinicianId: string,
+  callback: (data: DeepMetrics[]) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  if (!db || !clinicId) {
+    callback([]);
+    return noopUnsubscribe();
+  }
+
+  const target = clinicianId === "all" ? "all" : clinicianId;
+  const q = query(
+    clinicCollection(clinicId, "deep_metrics"),
+    where("clinicianId", "==", target),
+    orderBy("weekStart", "desc"),
+    limit(16)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const data = snapshot.docs.map((d) => ({
+        ...(d.data() as DeepMetrics),
       }));
       callback(data);
     },
