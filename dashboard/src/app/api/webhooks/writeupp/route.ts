@@ -79,7 +79,22 @@ async function handler(request: NextRequest) {
         .collection("clinics")
         .where("pmsType", "==", "writeupp")
         .get();
-      targetClinicIds = clinicsSnap.docs.map((d) => d.id);
+      const allIds = clinicsSnap.docs.map((d) => d.id);
+
+      if (allIds.length > 1) {
+        // Ambiguous — refuse to sync multiple clinics from a single webhook.
+        // Require x-strydeos-clinic-id header or strydeos_clinic_id in body.
+        console.error(
+          `[WriteUpp Webhook] Ambiguous clinic resolution: ${allIds.length} clinics matched. ` +
+          `Set x-strydeos-clinic-id header to disambiguate. Matched: ${allIds.join(", ")}`
+        );
+        return NextResponse.json(
+          { error: "Ambiguous clinic — set x-strydeos-clinic-id header", matchedCount: allIds.length },
+          { status: 422 }
+        );
+      }
+
+      targetClinicIds = allIds;
     }
 
     // Acknowledge receipt immediately — process pipeline in background

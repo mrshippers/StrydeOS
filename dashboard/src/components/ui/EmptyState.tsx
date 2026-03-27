@@ -2,13 +2,7 @@
 
 import type { ReactNode } from "react";
 import { MonolithMark } from "@/components/MonolithLogo";
-
-const MODULE_COLORS: Record<string, string> = {
-  ava: "#1C54F2",
-  pulse: "#0891B2",
-  intelligence: "#8B5CF6",
-  default: "#1C54F2",
-};
+import { moduleColors } from "@/lib/brand";
 
 interface EmptyStateProps {
   icon?: ReactNode;
@@ -19,7 +13,7 @@ interface EmptyStateProps {
 }
 
 export default function EmptyState({ heading, subtext, action, module }: EmptyStateProps) {
-  const accentColor = MODULE_COLORS[module ?? "default"];
+  const accentColor = moduleColors[module ?? "default"];
 
   return (
     <div className="relative flex flex-col items-center justify-center py-16 px-8 text-center overflow-hidden">
@@ -68,7 +62,7 @@ export function SkeletonTable() {
       {/* table header */}
       <div className="px-5 py-3 border-b border-border flex gap-8">
         {[40, 28, 28, 28, 20, 20, 24].map((w, i) => (
-          <div key={i} className={`h-2 w-${w} skeleton-shimmer rounded-md`} style={{ width: `${w * 3}px` }} />
+          <div key={i} className="h-2 skeleton-shimmer rounded-md" style={{ width: `${w * 3}px` }} />
         ))}
       </div>
       {/* rows */}
