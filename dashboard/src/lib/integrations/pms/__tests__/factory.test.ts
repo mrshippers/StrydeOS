@@ -59,10 +59,9 @@ describe("createPMSAdapter", () => {
 
   it("throws for PPS (not yet implemented)", async () => {
     const { createPMSAdapter } = await import("../factory");
-    assert.throws(
+    expect(
       () => createPMSAdapter({ provider: "pps", apiKey: "key" }),
-      /PPS adapter not yet implemented/
-    );
+    ).toThrow(/PPS adapter not yet implemented/);
   });
 
   it("throws for unknown provider", async () => {
@@ -122,15 +121,15 @@ describe("Zanda status map", () => {
 
 describe("PPS status map", () => {
   it("maps all expected statuses", () => {
-    assert.equal(PPS_STATUS_MAP["booked"], "scheduled");
-    assert.equal(PPS_STATUS_MAP["confirmed"], "scheduled");
-    assert.equal(PPS_STATUS_MAP["attended"], "completed");
-    assert.equal(PPS_STATUS_MAP["completed"], "completed");
-    assert.equal(PPS_STATUS_MAP["dna"], "dna");
-    assert.equal(PPS_STATUS_MAP["did not attend"], "dna");
-    assert.equal(PPS_STATUS_MAP["no show"], "dna");
-    assert.equal(PPS_STATUS_MAP["cancelled"], "cancelled");
-    assert.equal(PPS_STATUS_MAP["late cancellation"], "late_cancel");
-    assert.equal(PPS_STATUS_MAP["late cancel"], "late_cancel");
+    expect(PPS_STATUS_MAP["booked"]).toBe("scheduled");
+    expect(PPS_STATUS_MAP["confirmed"]).toBe("scheduled");
+    expect(PPS_STATUS_MAP["attended"]).toBe("completed");
+    expect(PPS_STATUS_MAP["completed"]).toBe("completed");
+    expect(PPS_STATUS_MAP["dna"]).toBe("dna");
+    expect(PPS_STATUS_MAP["did not attend"]).toBe("dna");
+    expect(PPS_STATUS_MAP["no show"]).toBe("dna");
+    expect(PPS_STATUS_MAP["cancelled"]).toBe("cancelled");
+    expect(PPS_STATUS_MAP["late cancellation"]).toBe("late_cancel");
+    expect(PPS_STATUS_MAP["late cancel"]).toBe("late_cancel");
   });
 });

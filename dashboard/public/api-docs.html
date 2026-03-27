@@ -592,7 +592,7 @@
     </div>
     <div class="biz-card">
       <h3>Connecting your practice software</h3>
-      <p>StrydeOS connects to your existing Practice Management System (PMS) to pull in appointment data, clinician rosters, and patient records. Supported systems: <strong>WriteUpp, Cliniko, Halaxy, Zanda (Power Diary)</strong>. TM3 support is coming soon.</p>
+      <p>StrydeOS connects to your existing Practice Management System (PMS) to pull in appointment data, clinician rosters, and patient records. Supported systems: <strong>WriteUpp, Cliniko, Halaxy, Zanda (Power Diary)</strong>. PPS and TM3 support coming soon.</p>
       <p>You enter your PMS API key in Settings, test the connection, and StrydeOS starts syncing. Data refreshes automatically — WriteUpp pushes updates in real-time via webhooks; other systems sync on a schedule.</p>
       <p>For clinics without API access, you can upload CSV exports of your appointment or patient data. StrydeOS auto-detects common formats or lets you create a custom column mapping.</p>
       <p>Home Exercise Programme (HEP) data flows in from your connected HEP provider (<strong>Physitrack, Rehab My Patient, or Wibbi</strong>) — tracking programme assignments, adherence, and completion rates per patient.</p>
@@ -2015,6 +2015,7 @@ CORS: Access-Control-Allow-Origin: *</pre></div>
         { key: "cliniko",  name: "Cliniko",             desc: "Multi-region appointment sync" },
         { key: "halaxy",   name: "Halaxy",              desc: "FHIR-compliant sync" },
         { key: "zanda",    name: "Zanda (Power Diary)", desc: "Appointment & patient sync" },
+        { key: "pps",      name: "PPS (Rushcliff)",     desc: "Coming soon" },
       ]},
     { group: "Clinical Data & HEP", icon: "users", color: "rgba(5,150,105,0.06)", accent: "#059669",
       services: [
