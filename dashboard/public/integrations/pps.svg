@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" fill="none">
+  <!-- PPS wordmark -->
+  <text x="60" y="30" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="32" fill="#3D2C6B" letter-spacing="2">PPS</text>
+  <!-- Brand colour squares -->
+  <rect x="22" y="37" width="8" height="4" rx="0.5" fill="#E4393C"/>
+  <rect x="33" y="37" width="8" height="4" rx="0.5" fill="#F5A623"/>
+  <rect x="44" y="37" width="8" height="4" rx="0.5" fill="#4A7DBD"/>
+  <rect x="55" y="37" width="8" height="4" rx="0.5" fill="#59B44A"/>
+  <rect x="66" y="37" width="8" height="4" rx="0.5" fill="#E4393C"/>
+  <rect x="77" y="37" width="8" height="4" rx="0.5" fill="#F5A623"/>
+  <rect x="88" y="37" width="8" height="4" rx="0.5" fill="#4A7DBD"/>
+</svg>

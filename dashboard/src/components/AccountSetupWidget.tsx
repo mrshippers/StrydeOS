@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { CheckCircle2, Circle, X, ChevronDown, ChevronUp, User, Building2, Link2, Users, Target } from "lucide-react";
+import { collection, query, where, limit, getDocs, getFirestore } from "firebase/firestore";
 import { useAuth } from "@/hooks/useAuth";
 import { brand } from "@/lib/brand";
 
@@ -67,11 +68,25 @@ export default function AccountSetupWidget() {
   const [closed, setClosed] = useState(true);
 
   const cp = user?.clinicProfile;
+  const clinicId = cp?.id ?? null;
   const onboarding = cp?.onboarding ?? {
     pmsConnected: false,
     cliniciansConfirmed: false,
     targetsSet: false,
   };
+
+  // Verify clinician flag against real data — flag can be stale
+  const [hasClinicians, setHasClinicians] = useState(false);
+  useEffect(() => {
+    if (!clinicId) return;
+    const db = getFirestore();
+    const q = query(
+      collection(db, "clinics", clinicId, "clinicians"),
+      where("active", "==", true),
+      limit(1),
+    );
+    getDocs(q).then((snap) => setHasClinicians(!snap.empty)).catch(() => {});
+  }, [clinicId]);
 
   const steps: SetupStep[] = useMemo(() => {
     if (!user || !cp) return [];
@@ -108,7 +123,7 @@ export default function AccountSetupWidget() {
         key: "clinicians",
         label: "Add your clinicians",
         description: "Confirm the team in your practice",
-        done: onboarding.cliniciansConfirmed,
+        done: onboarding.cliniciansConfirmed && hasClinicians,
         href: "/settings",
         icon: Users,
       },
@@ -121,7 +136,7 @@ export default function AccountSetupWidget() {
         icon: Target,
       },
     ];
-  }, [user, cp, onboarding.pmsConnected, onboarding.cliniciansConfirmed, onboarding.targetsSet]);
+  }, [user, cp, onboarding.pmsConnected, onboarding.cliniciansConfirmed, onboarding.targetsSet, hasClinicians]);
 
   const completedCount = steps.filter((s) => s.done).length;
   const allComplete = steps.length > 0 && completedCount === steps.length;

@@ -286,8 +286,6 @@ export default function OnboardingPage() {
         }
         if (fuPrice.trim()) updates["ava.config.fu_price"] = fuPrice.trim();
         updates.enabledSequences = Array.from(enabledSequences);
-        updates["onboarding.cliniciansConfirmed"] = true;
-        updates["onboarding.targetsSet"] = true;
       }
       if (stepId === "pms" && selectedPms) {
         updates.pmsType = selectedPms;

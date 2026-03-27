@@ -152,9 +152,9 @@ async function handler(request: NextRequest) {
     const clinicId = clinicRef.id;
 
     const defaultTargets: ClinicTargets = {
-      followUpRate: 75,
+      followUpRate: 4.0,
       hepRate: 80,
-      utilisationRate: 85,
+      utilisationRate: 80,
       dnaRate: 5,
       courseCompletionTarget: 70,
     };

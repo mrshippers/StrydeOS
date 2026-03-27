@@ -132,7 +132,7 @@ const PMS_PROVIDERS: PmsProviderOption[] = [
   { id: "powerdiary", label: "Zanda (Power Diary)", icon: "📓", logo: "/integrations/powerdiary.png", comingSoon: false, recentlyAdded: true },
   { id: "pabau", label: "Pabau", icon: "🏥", logo: "/integrations/pabau.svg", comingSoon: true },
   { id: "halaxy", label: "Halaxy", icon: "💙", logo: "/integrations/halaxy.svg", comingSoon: false, recentlyAdded: true },
-  { id: "pps", label: "PPS (Rushcliff)", icon: "🩺", logo: "/integrations/pps.png", comingSoon: true },
+  { id: "pps", label: "PPS (Rushcliff)", icon: "🩺", logo: "/integrations/pps.svg", comingSoon: true },
 ];
 
 interface HepProviderOption {
@@ -211,8 +211,8 @@ function RetriggerTourButton() {
 function fallbackTargets(cp: ClinicProfile | null) {
   return {
     followUpRate: cp?.targets?.followUpRate ?? 4.0,
-    hepRate: cp?.targets?.hepRate ?? 95,
-    utilisationRate: cp?.targets?.utilisationRate ?? 75,
+    hepRate: cp?.targets?.hepRate ?? 80,
+    utilisationRate: cp?.targets?.utilisationRate ?? 80,
   };
 }
 
@@ -482,8 +482,8 @@ export default function SettingsPage() {
   const [clinicWebsite, setClinicWebsite] = useState("");
   const [timezone, setTimezone] = useState("Europe/London");
   const [followUpTarget, setFollowUpTarget] = useState("4.0");
-  const [hepTarget, setHepTarget] = useState("95");
-  const [utilisationTarget, setUtilisationTarget] = useState("75");
+  const [hepTarget, setHepTarget] = useState("80");
+  const [utilisationTarget, setUtilisationTarget] = useState("80");
   const [saving, setSaving] = useState(false);
 
   const savedValues = useMemo(() => {
@@ -1148,8 +1148,14 @@ export default function SettingsPage() {
 
   async function handleSaveWithOnboarding() {
     await handleSaveProfile();
-    if (!onboarding.targetsSet) {
-      await markTargetsSet();
+    if (!onboarding.targetsSet && savedValues) {
+      const targetsModified =
+        followUpTarget !== savedValues.followUpTarget ||
+        hepTarget !== savedValues.hepTarget ||
+        utilisationTarget !== savedValues.utilisationTarget;
+      if (targetsModified) {
+        await markTargetsSet();
+      }
     }
   }
 
@@ -1549,14 +1555,19 @@ export default function SettingsPage() {
       {/* CSV Import — WriteUpp / any PMS */}
       <div id="csv-import-section" className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
         <div className="flex items-start justify-between mb-1">
-          <h3 className="font-display text-lg text-navy">Import from CSV</h3>
+          <div>
+            <h3 className="font-display text-lg text-navy">Import from CSV</h3>
+            {!wizardOpen && (
+              <p className="text-xs text-muted mt-0.5">New here? Use the setup wizard to get started in minutes.</p>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {!wizardOpen && (
               <button
                 onClick={() => { setWizardOpen(true); setWizardStep(0); setWizardPms(""); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-blue hover:bg-blue-bright shadow-sm hover:shadow-md transition-all"
               >
-                <Sparkles size={12} />
+                <Sparkles size={14} />
                 Setup wizard
               </button>
             )}
@@ -2166,12 +2177,12 @@ export default function SettingsPage() {
                 <p className="text-[11px] text-muted mb-2 leading-relaxed">
                   Full PMS integration for TM3 clinics. TM3 dominates UK MSK and insurance-funded practices. API access is being scoped — CSV bridge available as interim.
                 </p>
-                <button
-                  onClick={() => {}}
+                <a
+                  href="mailto:hello@strydeos.com?subject=TM3%20Integration%20Waitlist&body=Hi%20StrydeOS%20team%2C%0A%0AI%27d%20like%20to%20join%20the%20waitlist%20for%20the%20TM3%20integration.%0A%0AClinic%20name%3A%20%0ATMS%20version%3A%20Cloud%20%2F%20Desktop%0A%0AThanks"
                   className="text-[11px] font-semibold text-blue hover:text-blue-bright transition-colors"
                 >
                   Join the waitlist →
-                </button>
+                </a>
               </div>
             </div>
           </div>
