@@ -6,7 +6,7 @@ import { MonolithHero } from "@/components/MonolithLogo";
 
 const SPLASH_SEEN_KEY = "strydeos_splash_seen";
 
-const REVEAL_MS = 2000;
+const REVEAL_MS = 2500;
 const HOLD_MS = 500;
 const EXIT_MS = 500;
 const TOTAL_MS = REVEAL_MS + HOLD_MS;
@@ -133,37 +133,44 @@ export default function SplashScreen() {
         <MonolithHero />
       </motion.div>
 
-      {/* Phase 2: Diagonal shimmer sweep (800ms-1400ms) — references the rim highlight + diagonal cut edge */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 1, 1, 0] }}
-        transition={{
-          duration: 0.8 * dur,
-          delay: 0.7 * dur,
-          ease: "easeInOut",
-          times: [0, 0.15, 0.7, 1],
-        }}
-      >
+      {/* Phase 2: Diagonal waveform sweep — staggered soft waves rolling corner to corner */}
+      {[
+        { delay: 0.5, duration: 1.2, peakOpacity: 0.10, width: "250%" },
+        { delay: 0.7, duration: 1.2, peakOpacity: 0.07, width: "220%" },
+        { delay: 0.6, duration: 1.4, peakOpacity: 0.05, width: "280%" },
+      ].map((wave, i) => (
         <motion.div
-          className="absolute"
-          style={{
-            width: "200%",
-            height: "200%",
-            top: "-50%",
-            left: "-50%",
-            background:
-              "linear-gradient(135deg, transparent 42%, rgba(255,255,255,0.06) 46%, rgba(255,255,255,0.18) 49%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.18) 51%, rgba(255,255,255,0.06) 54%, transparent 58%)",
-          }}
-          initial={{ x: "-40%", y: "-40%" }}
-          animate={{ x: "40%", y: "40%" }}
+          key={i}
+          className="absolute inset-0 pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, wave.peakOpacity, wave.peakOpacity, 0] }}
           transition={{
-            duration: 0.7 * dur,
-            delay: 0.75 * dur,
-            ease: [0.4, 0, 0.2, 1],
+            duration: wave.duration * dur,
+            delay: wave.delay * dur,
+            ease: "easeInOut",
+            times: [0, 0.2, 0.7, 1],
           }}
-        />
-      </motion.div>
+        >
+          <motion.div
+            className="absolute"
+            style={{
+              width: wave.width,
+              height: wave.width,
+              top: "-75%",
+              left: "-75%",
+              background:
+                "linear-gradient(135deg, transparent 30%, rgba(106,171,255,0.12) 42%, rgba(255,255,255,0.08) 50%, rgba(106,171,255,0.12) 58%, transparent 70%)",
+            }}
+            initial={{ x: "-50%", y: "-50%" }}
+            animate={{ x: "50%", y: "50%" }}
+            transition={{
+              duration: wave.duration * dur,
+              delay: wave.delay * dur,
+              ease: [0.4, 0, 0.6, 1],
+            }}
+          />
+        </motion.div>
+      ))}
     </motion.div>
   );
 }
