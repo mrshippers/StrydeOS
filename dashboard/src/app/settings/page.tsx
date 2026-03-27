@@ -52,6 +52,7 @@ import {
   ChevronLeft,
   Upload,
   Shield,
+  Info,
 } from "lucide-react";
 import type { ClinicProfile, PmsProvider, HepProvider } from "@/types";
 import type { CanonicalField } from "@/lib/csv-import/types";
@@ -69,6 +70,7 @@ interface PmsProviderOption {
   comingSoon: boolean;
   csvBridge?: boolean;
   recentlyAdded?: boolean;
+  hasApi?: boolean;
 }
 
 const CANONICAL_FIELD_OPTIONS: { value: string; label: string; required?: boolean }[] = [
@@ -125,14 +127,14 @@ const ONBOARDING_PMS_OPTIONS = [
 const INGEST_EMAIL_DOMAIN = "ingest.strydeos.com";
 
 const PMS_PROVIDERS: PmsProviderOption[] = [
-  { id: "writeupp", label: "WriteUpp", icon: "📋", logo: "/integrations/writeupp.svg", comingSoon: false },
-  { id: "cliniko", label: "Cliniko", icon: "🗂️", logo: "/integrations/cliniko.png", comingSoon: false },
-  { id: "tm3", label: "TM3", icon: "⚕️", logo: "/integrations/tm3.svg", comingSoon: false, csvBridge: true },
-  { id: "jane", label: "Jane App", icon: "🌿", logo: "/integrations/jane.png", comingSoon: true },
-  { id: "powerdiary", label: "Zanda (Power Diary)", icon: "📓", logo: "/integrations/powerdiary.png", comingSoon: false, recentlyAdded: true },
-  { id: "pabau", label: "Pabau", icon: "🏥", logo: "/integrations/pabau.svg", comingSoon: true },
-  { id: "halaxy", label: "Halaxy", icon: "💙", logo: "/integrations/halaxy.svg", comingSoon: false, recentlyAdded: true },
-  { id: "pps", label: "PPS (Rushcliff)", icon: "🩺", logo: "/integrations/pps.svg", comingSoon: true },
+  { id: "writeupp", label: "WriteUpp", icon: "📋", logo: "/integrations/writeupp.svg", comingSoon: false, hasApi: false },
+  { id: "cliniko", label: "Cliniko", icon: "🗂️", logo: "/integrations/cliniko.png", comingSoon: false, hasApi: true },
+  { id: "tm3", label: "TM3", icon: "⚕️", logo: "/integrations/tm3.svg", comingSoon: false, csvBridge: true, hasApi: false },
+  { id: "jane", label: "Jane App", icon: "🌿", logo: "/integrations/jane.png", comingSoon: true, hasApi: false },
+  { id: "powerdiary", label: "Zanda (Power Diary)", icon: "📓", logo: "/integrations/powerdiary.png", comingSoon: false, recentlyAdded: true, hasApi: true },
+  { id: "pabau", label: "Pabau", icon: "🏥", logo: "/integrations/pabau.svg", comingSoon: true, hasApi: false },
+  { id: "halaxy", label: "Halaxy", icon: "💙", logo: "/integrations/halaxy.svg", comingSoon: false, recentlyAdded: true, hasApi: true },
+  { id: "pps", label: "PPS (Rushcliff)", icon: "🩺", logo: "/integrations/pps.svg", comingSoon: true, hasApi: false },
 ];
 
 interface HepProviderOption {
@@ -536,6 +538,7 @@ export default function SettingsPage() {
   const [pmsTestFailed, setPmsTestFailed] = useState(false);
   const [requestingAssist, setRequestingAssist] = useState(false);
   const [assistRequested, setAssistRequested] = useState(false);
+  const [importPanelOpen, setImportPanelOpen] = useState(false);
 
   // Column mapping state (Phase 2)
   const [mappingHeaders, setMappingHeaders] = useState<string[] | null>(null);
@@ -1380,7 +1383,22 @@ export default function SettingsPage() {
 
       {/* PMS Connection */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-        <h3 className="font-display text-lg text-navy mb-4">PMS Connection</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display text-lg text-navy">PMS Connection</h3>
+          {!pmsConnected && (
+            <button
+              onClick={() => setImportPanelOpen((v) => !v)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                importPanelOpen
+                  ? "text-white bg-blue"
+                  : "text-blue border border-blue/20 hover:bg-blue/5"
+              }`}
+            >
+              <Upload size={12} />
+              Import
+            </button>
+          )}
+        </div>
 
         {pmsConnected ? (
           <div className="space-y-3">
@@ -1480,7 +1498,8 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {pmsProvider && !PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.comingSoon && (
+            {/* API providers — show API key input */}
+            {pmsProvider && PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.hasApi && !PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.comingSoon && (
               <div>
                 <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
                   API Key
@@ -1515,7 +1534,7 @@ export default function SettingsPage() {
                     <p className="text-sm font-medium text-navy">Having trouble connecting?</p>
                     <div className="space-y-2">
                       <a
-                        href={pmsProvider === "writeupp" ? "https://support.writeupp.com/en/articles/api" : pmsProvider === "cliniko" ? "https://developer.cliniko.com/" : "#"}
+                        href={pmsProvider === "cliniko" ? "https://developer.cliniko.com/" : "#"}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-[12px] text-blue font-semibold hover:underline"
@@ -1541,10 +1560,7 @@ export default function SettingsPage() {
                       )}
 
                       <button
-                        onClick={() => {
-                          const csvSection = document.getElementById("csv-import-section");
-                          if (csvSection) csvSection.scrollIntoView({ behavior: "smooth" });
-                        }}
+                        onClick={() => setImportPanelOpen(true)}
                         className="flex items-center gap-2 text-[12px] text-blue font-semibold hover:underline"
                       >
                         <ArrowRight size={12} />
@@ -1556,14 +1572,33 @@ export default function SettingsPage() {
               </div>
             )}
 
+            {/* Non-API providers — legacy message with CSV import link */}
+            {pmsProvider && !PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.hasApi && !PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.comingSoon && !PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.csvBridge && (
+              <p className="text-[12px] text-muted italic">
+                {PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.label} is a legacy provider which doesn&apos;t support API integrations.{" "}
+                <button
+                  onClick={() => setImportPanelOpen(true)}
+                  className="text-blue font-semibold not-italic hover:underline"
+                >
+                  Import via CSV instead
+                </button>
+              </p>
+            )}
+
+            {/* Coming soon providers */}
             {pmsProvider && PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.comingSoon && (
               <div className="p-4 rounded-xl border border-warn/20 bg-warn/5">
                 <p className="text-sm font-medium text-navy">
                   {PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.label} integration is coming soon
                 </p>
                 <p className="text-[12px] text-muted mt-1">
-                  We&apos;re building the API adapter for this provider. You&apos;ll be notified when it&apos;s ready.
-                  In the meantime, contact support to discuss early access.
+                  We&apos;re working on this integration. You&apos;ll be notified when it&apos;s ready.{" "}
+                  <button
+                    onClick={() => setImportPanelOpen(true)}
+                    className="text-blue font-semibold hover:underline"
+                  >
+                    Import via CSV
+                  </button>{" "}in the meantime.
                 </p>
               </div>
             )}
@@ -1606,16 +1641,13 @@ export default function SettingsPage() {
                 )}
                 <div className="flex items-center gap-2 mt-3">
                   <button
-                    onClick={() => {
-                      const el = document.getElementById("csv-import-section");
-                      if (el) el.scrollIntoView({ behavior: "smooth" });
-                    }}
+                    onClick={() => setImportPanelOpen(true)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
                   >
                     <Upload size={11} /> Upload CSV
                   </button>
                   <button
-                    onClick={() => { setWizardOpen(true); setWizardPms("tm3"); setWizardStep(4); }}
+                    onClick={() => { setImportPanelOpen(true); setWizardOpen(true); setWizardPms("tm3"); setWizardStep(4); }}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-navy/70 hover:text-navy transition-colors"
                   >
                     Set up auto-import &rarr;
@@ -1625,30 +1657,44 @@ export default function SettingsPage() {
             )}
           </div>
         )}
-      </div>
 
-      {/* CSV Import — WriteUpp / any PMS */}
-      <div id="csv-import-section" className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-        <div className="flex items-start justify-between mb-1">
-          <div>
-            <h3 className="font-display text-lg text-navy">Import from CSV</h3>
-            {!wizardOpen && (
-              <p className="text-xs text-muted mt-0.5">New here? Use the setup wizard to get started in minutes.</p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {!wizardOpen && (
-              <button
-                onClick={() => { setWizardOpen(true); setWizardStep(0); setWizardPms(""); }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-blue hover:bg-blue-bright shadow-sm hover:shadow-md transition-all"
-              >
-                <Sparkles size={14} />
-                Setup wizard
-              </button>
-            )}
-            <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-blue/10 text-blue">All PMS</span>
-          </div>
-        </div>
+        {/* ─── CSV Import Panel (collapsible, inside PMS card) ───────── */}
+        <AnimatePresence>
+          {importPanelOpen && (
+            <motion.div
+              id="csv-import-section"
+              initial={{ opacity: 0, height: 0, marginTop: 0 }}
+              animate={{ opacity: 1, height: "auto", marginTop: 16 }}
+              exit={{ opacity: 0, height: 0, marginTop: 0 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="p-5 rounded-xl border border-blue/15 bg-blue/[0.02]">
+                <div className="flex items-start justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-navy">Import from CSV</h4>
+                    <Tooltip content="Export your appointment or patient data from your PMS as a CSV file, then upload it here. StrydeOS auto-detects the format from WriteUpp, Cliniko, TM3, Jane App, and custom layouts. Uploading again merges — it won't create duplicates." side="bottom">
+                      <Info size={13} className="text-muted/60 hover:text-muted cursor-help transition-colors" />
+                    </Tooltip>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!wizardOpen && (
+                      <button
+                        onClick={() => { setWizardOpen(true); setWizardStep(0); setWizardPms(""); }}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-white bg-blue hover:bg-blue-bright shadow-sm hover:shadow-md transition-all"
+                      >
+                        <Sparkles size={12} />
+                        Setup wizard
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setImportPanelOpen(false)}
+                      className="text-muted hover:text-navy transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
 
         {/* ── Onboarding Wizard (Phase 5) ─────────────────────────────── */}
         {wizardOpen && (
@@ -2007,7 +2053,12 @@ export default function SettingsPage() {
                 <Mail size={14} className="text-blue" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-navy mb-0.5">Email-to-Import</p>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <p className="text-xs font-semibold text-navy">Email-to-Import</p>
+                  <Tooltip content="Your clinic has a unique email address. Any CSV file sent as an attachment to this address is automatically imported into StrydeOS — no manual upload needed. Set your PMS to email scheduled reports here for hands-free data sync." side="bottom">
+                    <Info size={11} className="text-muted/60 hover:text-muted cursor-help transition-colors" />
+                  </Tooltip>
+                </div>
                 <p className="text-[11px] text-muted mb-2">
                   Forward PMS exports or set up scheduled email delivery to this address. CSV attachments are imported automatically.
                 </p>
@@ -2032,6 +2083,10 @@ export default function SettingsPage() {
           Supports WriteUpp, Cliniko, TM3, Jane App, and custom formats.
           Uploading again merges — it won&apos;t create duplicates.
         </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Import History (Phase 4) */}
