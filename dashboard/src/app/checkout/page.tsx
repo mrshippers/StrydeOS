@@ -26,28 +26,28 @@ import {
 
 // ---------------------------------------------------------------------------
 // Module icon — mini Monolith mark in module colour
+// Canonical gradient stops matching monolith.svg / monolith-pulse.svg / monolith-intelligence.svg
 // ---------------------------------------------------------------------------
 
-function ModuleIcon({ color, size = 20 }: { color: string; size?: number }) {
-  // Derive lighter/darker shades from the hex colour
-  const r = parseInt(color.slice(1, 3), 16);
-  const g = parseInt(color.slice(3, 5), 16);
-  const b = parseInt(color.slice(5, 7), 16);
-  const light = `rgba(${Math.min(r + 80, 255)},${Math.min(g + 80, 255)},${Math.min(b + 80, 255)},0.58)`;
-  const dark = `rgba(${Math.max(r - 60, 0)},${Math.max(g - 60, 0)},${Math.max(b - 60, 0)},0.72)`;
-  const mid = `rgba(${Math.min(r + 40, 255)},${Math.min(g + 40, 255)},${Math.min(b + 40, 255)},0.42)`;
+const MONOLITH_PALETTES: Record<string, { contFrom: string; contTo: string; radFrom: string; radTo: string; bdrFrom: string; bdrTo: string }> = {
+  "#1C54F2": { contFrom: "#2E6BFF", contTo: "#091D3E", radFrom: "#6AABFF", radTo: "#1C54F2", bdrFrom: "#7ABBFF", bdrTo: "#1C54F2" },
+  "#0891B2": { contFrom: "#0CC0E0", contTo: "#053B47", radFrom: "#22D3EE", radTo: "#0891B2", bdrFrom: "#34D9F0", bdrTo: "#0891B2" },
+  "#8B5CF6": { contFrom: "#9B4DFF", contTo: "#1A0A3E", radFrom: "#C084FC", radTo: "#7C3AED", bdrFrom: "#C49CFF", bdrTo: "#7C3AED" },
+};
 
+function ModuleIcon({ color, size = 20 }: { color: string; size?: number }) {
+  const p = MONOLITH_PALETTES[color] || MONOLITH_PALETTES["#1C54F2"];
   const id = `mi-${color.replace("#", "")}`;
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" role="img">
       <defs>
         <linearGradient id={`${id}-c`} x1="0.1" y1="0" x2="0.85" y2="1">
-          <stop offset="0%" stopColor={light} />
-          <stop offset="100%" stopColor={dark} />
+          <stop offset="0%" stopColor={p.contFrom} stopOpacity="0.58" />
+          <stop offset="100%" stopColor={p.contTo} stopOpacity="0.72" />
         </linearGradient>
         <radialGradient id={`${id}-r`} cx="28%" cy="24%" r="60%">
-          <stop offset="0%" stopColor={mid} />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
+          <stop offset="0%" stopColor={p.radFrom} stopOpacity="0.42" />
+          <stop offset="100%" stopColor={p.radTo} stopOpacity="0" />
         </radialGradient>
         <linearGradient id={`${id}-t`} x1="0.05" y1="1" x2="0.35" y2="0">
           <stop offset="0%" stopColor="white" stopOpacity="0.55" />
@@ -60,8 +60,8 @@ function ModuleIcon({ color, size = 20 }: { color: string; size?: number }) {
           <stop offset="100%" stopColor="white" stopOpacity="0" />
         </linearGradient>
         <linearGradient id={`${id}-b`} x1="0.1" y1="0" x2="0.4" y2="1">
-          <stop offset="0%" stopColor={light} stopOpacity="0.65" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.06" />
+          <stop offset="0%" stopColor={p.bdrFrom} stopOpacity="0.65" />
+          <stop offset="100%" stopColor={p.bdrTo} stopOpacity="0.06" />
         </linearGradient>
         <clipPath id={`${id}-p`}><rect x="35" y="20" width="22" height="60" rx="5" /></clipPath>
         <clipPath id={`${id}-a`}><polygon points="35,52 57,40 57,20 35,20" /></clipPath>

@@ -1055,26 +1055,34 @@ const Hero = ({ darkMode }) => {
 
 /* ─── Holistic Section ──────────────────────────────────────────────────────── */
 /* ─── Module-tinted Monolith mark ────────────────────────────────────────── */
+/* Canonical gradient stops — must match monolith.svg / monolith-pulse.svg / monolith-intelligence.svg */
+const MONOLITH_PALETTES = {
+  [C.blue]:   { contFrom: "#2E6BFF", contTo: "#091D3E", radFrom: "#6AABFF", radTo: "#1C54F2", bdrFrom: "#7ABBFF", bdrTo: "#1C54F2" },
+  [C.teal]:   { contFrom: "#0CC0E0", contTo: "#053B47", radFrom: "#22D3EE", radTo: "#0891B2", bdrFrom: "#34D9F0", bdrTo: "#0891B2" },
+  [C.purple]: { contFrom: "#9B4DFF", contTo: "#1A0A3E", radFrom: "#C084FC", radTo: "#7C3AED", bdrFrom: "#C49CFF", bdrTo: "#7C3AED" },
+};
+
 const ModuleMonolith = ({ color = C.blue, size = 48 }) => {
   const id = _uid("mm");
+  const p = MONOLITH_PALETTES[color] || MONOLITH_PALETTES[C.blue];
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
       <defs>
         <linearGradient id={`${id}-c`} x1="0.1" y1="0" x2="0.85" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.58"/>
-          <stop offset="100%" stopColor={C.navy} stopOpacity="0.72"/>
+          <stop offset="0%" stopColor={p.contFrom} stopOpacity="0.58"/>
+          <stop offset="100%" stopColor={p.contTo} stopOpacity="0.72"/>
         </linearGradient>
         <radialGradient id={`${id}-r`} cx="28%" cy="24%" r="60%">
-          <stop offset="0%" stopColor={color} stopOpacity="0.42"/>
-          <stop offset="100%" stopColor={color} stopOpacity="0"/>
+          <stop offset="0%" stopColor={p.radFrom} stopOpacity="0.42"/>
+          <stop offset="100%" stopColor={p.radTo} stopOpacity="0"/>
         </radialGradient>
         <linearGradient id={`${id}-t`} x1="0.05" y1="1" x2="0.35" y2="0">
           <stop offset="0%" stopColor="white" stopOpacity="0.55"/>
           <stop offset="100%" stopColor="white" stopOpacity="0.97"/>
         </linearGradient>
         <linearGradient id={`${id}-b`} x1="0.1" y1="0" x2="0.4" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.65"/>
-          <stop offset="100%" stopColor={color} stopOpacity="0.06"/>
+          <stop offset="0%" stopColor={p.bdrFrom} stopOpacity="0.65"/>
+          <stop offset="100%" stopColor={p.bdrTo} stopOpacity="0.06"/>
         </linearGradient>
         <linearGradient id={`${id}-m`} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="white" stopOpacity="0"/>
@@ -2892,6 +2900,12 @@ const IntegrationCarousel = ({ darkMode }) => {
     { name: "Rehab My Patient", svg: (
       <svg width="140" height="24" viewBox="0 0 140 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="14" fontWeight="600" fill="currentColor">Rehab My Patient</text></svg>
     )},
+    { name: "Halaxy", svg: (
+      <svg width="70" height="24" viewBox="0 0 70 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">Halaxy</text></svg>
+    )},
+    { name: "Zanda", svg: (
+      <svg width="65" height="24" viewBox="0 0 65 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">Zanda</text></svg>
+    )},
   ];
 
   return (
@@ -2960,7 +2974,7 @@ const FAQ = ({ darkMode }) => {
 
   const groups = [
     { label: "For Clinic Owners", items: [
-      { q: "What data does StrydeOS actually need from my PMS?", a: "Read-only access to appointment, patient, and session data. We never modify your PMS records. Currently live with Cliniko and WriteUpp — more integrations on the roadmap." },
+      { q: "What data does StrydeOS actually need from my PMS?", a: "Read-only access to appointment, patient, and session data. We never modify your PMS records. Currently live with Cliniko, WriteUpp, Halaxy, and Zanda — with PPS, TM3, and more on the roadmap." },
       { q: "Will this replace my practice management system?", a: "No. StrydeOS sits above your PMS, not instead of it. Think of it as the performance layer — your PMS handles bookings and notes, we handle insight and automation." },
       { q: "What's the onboarding process like?", a: "Most clinics are live within 5 working days. We handle the integration, configure your KPI targets, and walk you through the dashboard before you go live." },
       { q: "Is there a contract or lock-in?", a: "No. Monthly billing, cancel anytime. We'd rather earn your business each month than lock you in." },
@@ -2972,7 +2986,7 @@ const FAQ = ({ darkMode }) => {
       { q: "What if a patient needs to speak to a real person?", a: "Ava detects urgent or complex requests and routes them to your nominated on-call clinician or reception team immediately." },
     ]},
     { label: "Technical & B2B", items: [
-      { q: "Which PMS platforms do you integrate with?", a: "Cliniko and WriteUpp are live today. TM3, Jane App, and other major platforms are on the integration roadmap. If your PMS has an API, we can likely connect." },
+      { q: "Which PMS platforms do you integrate with?", a: "Cliniko, WriteUpp, Halaxy, and Zanda are live today. PPS, TM3, Jane App, and other major platforms are on the integration roadmap. If your PMS has an API, we can likely connect." },
       { q: "Can I trial one module before committing to the full stack?", a: "Absolutely. Most clinics start with Intelligence or Ava and add modules as they see results. No pressure to take everything at once." },
       { q: "Do you offer multi-site pricing?", a: "Yes. Contact us at hello@strydeos.com for Clinic tier pricing (5+ clinicians or multiple locations)." },
       { q: "What compliance standards does StrydeOS meet?", a: "GDPR (UK + EU), HIPAA-aligned data handling, SOC 2 Type II on roadmap. Data hosted on UK/EU infrastructure with encryption at rest and in transit." },

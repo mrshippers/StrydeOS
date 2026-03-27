@@ -14,22 +14,41 @@ import {
 } from "lucide-react";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
 
+// ─── Brand tokens ────────────────────────────────────────────────────────────
+
+const C = {
+  navy: "#0B2545",
+  blue: "#1C54F2",
+  blueBright: "#2E6BFF",
+  blueGlow: "#4B8BF5",
+  teal: "#0891B2",
+  purple: "#8B5CF6",
+  cream: "#FAF9F7",
+  cloudDancer: "#F2F1EE",
+  ink: "#111827",
+  muted: "#6B7280",
+  border: "#E2DFDA",
+  success: "#059669",
+};
+
 // ─── Module icon — mini Monolith mark tinted to module colour ───────────────
+// Canonical gradient stops matching monolith.svg / monolith-pulse.svg / monolith-intelligence.svg
+
+const MONOLITH_PALETTES: Record<string, { contFrom: string; contTo: string; radFrom: string; radTo: string; bdrFrom: string; bdrTo: string }> = {
+  [C.blue]:   { contFrom: "#2E6BFF", contTo: "#091D3E", radFrom: "#6AABFF", radTo: "#1C54F2", bdrFrom: "#7ABBFF", bdrTo: "#1C54F2" },
+  [C.teal]:   { contFrom: "#0CC0E0", contTo: "#053B47", radFrom: "#22D3EE", radTo: "#0891B2", bdrFrom: "#34D9F0", bdrTo: "#0891B2" },
+  [C.purple]: { contFrom: "#9B4DFF", contTo: "#1A0A3E", radFrom: "#C084FC", radTo: "#7C3AED", bdrFrom: "#C49CFF", bdrTo: "#7C3AED" },
+};
 
 function ModuleIcon({ color, size = 22 }: { color: string; size?: number }) {
-  const r = parseInt(color.slice(1, 3), 16);
-  const g = parseInt(color.slice(3, 5), 16);
-  const b = parseInt(color.slice(5, 7), 16);
-  const light = `rgba(${Math.min(r + 80, 255)},${Math.min(g + 80, 255)},${Math.min(b + 80, 255)},0.58)`;
-  const dark = `rgba(${Math.max(r - 60, 0)},${Math.max(g - 60, 0)},${Math.max(b - 60, 0)},0.72)`;
-
+  const p = MONOLITH_PALETTES[color] || MONOLITH_PALETTES[C.blue];
   const id = `mi-${color.replace("#", "")}`;
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" role="img">
       <defs>
         <linearGradient id={`${id}-c`} x1="0.1" y1="0" x2="0.85" y2="1">
-          <stop offset="0%" stopColor={light} />
-          <stop offset="100%" stopColor={dark} />
+          <stop offset="0%" stopColor={p.contFrom} stopOpacity="0.58" />
+          <stop offset="100%" stopColor={p.contTo} stopOpacity="0.72" />
         </linearGradient>
         <linearGradient id={`${id}-t`} x1="0.05" y1="1" x2="0.35" y2="0">
           <stop offset="0%" stopColor="white" stopOpacity="0.55" />
@@ -51,23 +70,6 @@ function ModuleIcon({ color, size = 22 }: { color: string; size?: number }) {
     </svg>
   );
 }
-
-// ─── Brand tokens ────────────────────────────────────────────────────────────
-
-const C = {
-  navy: "#0B2545",
-  blue: "#1C54F2",
-  blueBright: "#2E6BFF",
-  blueGlow: "#4B8BF5",
-  teal: "#0891B2",
-  purple: "#8B5CF6",
-  cream: "#FAF9F7",
-  cloudDancer: "#F2F1EE",
-  ink: "#111827",
-  muted: "#6B7280",
-  border: "#E2DFDA",
-  success: "#059669",
-};
 
 // ─── Module definitions ──────────────────────────────────────────────────────
 

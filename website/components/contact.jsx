@@ -190,8 +190,8 @@ export default function ContactPage() {
             display: "flex", justifyContent: "center", gap: 48, marginBottom: 48,
           }}>
             <MonolithVariant size={72} accentFrom="#2E6BFF" accentTo="#091D3E" glowColor={C.blue} label="Ava" />
-            <MonolithVariant size={72} accentFrom="#0891B2" accentTo="#064E5C" glowColor={C.teal} label="Pulse" />
-            <MonolithVariant size={72} accentFrom="#8B5CF6" accentTo="#3B1D8E" glowColor={C.purple} label="Intelligence" />
+            <MonolithVariant size={72} accentFrom="#0CC0E0" accentTo="#053B47" glowColor={C.teal} label="Pulse" />
+            <MonolithVariant size={72} accentFrom="#9B4DFF" accentTo="#1A0A3E" glowColor={C.purple} label="Intelligence" />
           </div>
 
           <h1 className="serif" style={{
