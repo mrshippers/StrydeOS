@@ -35,6 +35,7 @@ const PMS_LABELS: Record<PmsProvider, string> = {
   powerdiary: "Zanda",
   pabau: "Pabau",
   halaxy: "Halaxy",
+  pps: "PPS",
 };
 
 const HEP_LABELS: Record<HepProvider, string> = {
