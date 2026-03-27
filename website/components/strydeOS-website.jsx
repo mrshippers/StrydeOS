@@ -1614,7 +1614,7 @@ const Integrations = ({ darkMode }) => {
       </AnimIn>
 
       {/* Integration logos scroll */}
-      <IntegrationCarousel darkMode={darkMode} />
+      <IntegrationLogoBar darkMode={darkMode} />
 
       {/* Objection handler cards */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
@@ -2875,91 +2875,116 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
   );
 };
 
-/* ─── Integration Carousel ──────────────────────────────────────────────────── */
-const IntegrationCarousel = ({ darkMode }) => {
-  const bg = darkMode ? C.navy : C.cloudDancer;
-  const bdr = darkMode ? "rgba(255,255,255,0.07)" : C.border;
-  const muted = darkMode ? "rgba(255,255,255,0.3)" : C.muted;
+/* ─── Integration Logo Bar ─────────────────────────────────────────────────── */
+const INTEGRATION_LOGOS = [
+  { name: 'Heidi Health',     white: '/logos/heidi-white.svg',       dark: '/logos/heidi-dark.svg',       h: 26 },
+  { name: 'Stripe',           white: '/logos/stripe-white.svg',      dark: '/logos/stripe-dark.svg',      h: 24 },
+  { name: 'Rehab My Patient', white: '/logos/rmp-white.svg',         dark: '/logos/rmp-dark.svg',         h: 20 },
+  { name: 'Cliniko',          white: '/logos/cliniko-white.svg',     dark: '/logos/cliniko-dark.svg',     h: 28 },
+  { name: 'Physitrack',       white: '/logos/physitrack-white.svg',  dark: '/logos/physitrack-dark.svg',  h: 22 },
+  { name: 'WriteUpp',         white: '/logos/writeupp-white.svg',    dark: '/logos/writeupp-dark.svg',    h: 18 },
+];
 
-  const logos = [
-    { name: "Cliniko", svg: (
-      <svg width="90" height="24" viewBox="0 0 90 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">Cliniko</text></svg>
-    )},
-    { name: "WriteUpp", svg: (
-      <svg width="90" height="24" viewBox="0 0 90 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">WriteUpp</text></svg>
-    )},
-    { name: "Physitrack", svg: (
-      <svg width="100" height="24" viewBox="0 0 100 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">Physitrack</text></svg>
-    )},
-    { name: "Heidi Health", svg: (
-      <svg width="110" height="24" viewBox="0 0 110 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">Heidi Health</text></svg>
-    )},
-    { name: "Stripe", svg: (
-      <svg width="60" height="24" viewBox="0 0 60 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="700" fill="currentColor">Stripe</text></svg>
-    )},
-    { name: "Rehab My Patient", svg: (
-      <svg width="140" height="24" viewBox="0 0 140 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="14" fontWeight="600" fill="currentColor">Rehab My Patient</text></svg>
-    )},
-    { name: "Halaxy", svg: (
-      <svg width="70" height="24" viewBox="0 0 70 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">Halaxy</text></svg>
-    )},
-    { name: "Zanda", svg: (
-      <svg width="65" height="24" viewBox="0 0 65 24" fill="none"><text x="0" y="18" fontFamily="Outfit, sans-serif" fontSize="16" fontWeight="600" fill="currentColor">Zanda</text></svg>
-    )},
-  ];
+const IntegrationLogoBar = ({ darkMode, speed = 24 }) => {
+  const bg       = darkMode ? C.navy : C.cloudDancer;
+  const lineBase = darkMode ? 'rgba(255,255,255,0.07)' : 'rgba(11,37,69,0.08)';
+  const lineFade = darkMode ? C.navy : C.cloudDancer;
+  const label    = darkMode ? 'rgba(255,255,255,0.22)' : 'rgba(11,37,69,0.35)';
+  const logoOp   = darkMode ? 0.28 : 0.4;
+  const logoHov  = darkMode ? 0.65 : 0.85;
+
+  const items = [...INTEGRATION_LOGOS, ...INTEGRATION_LOGOS];
 
   return (
-    <div style={{ padding: "16px 0 20px" }}>
-      <div style={{ textAlign: "center", marginBottom: 12 }}>
-        <span style={{ fontSize: 11, fontWeight: 500, fontStyle: "italic", color: muted, letterSpacing: "0.03em" }}>
-          Currently integrated with:
-        </span>
+    <section
+      style={{
+        padding: '36px 0 40px',
+        background: bg,
+        textAlign: 'center',
+        transition: 'background 0.3s ease',
+        position: 'relative',
+      }}
+    >
+      {/* Fading border line TOP */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1 }}>
+        <div style={{
+          height: '100%',
+          background: `linear-gradient(to right, ${lineFade}, ${lineBase} 20%, ${lineBase} 80%, ${lineFade})`,
+        }} />
       </div>
+
+      {/* Fading border line BOTTOM */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1 }}>
+        <div style={{
+          height: '100%',
+          background: `linear-gradient(to right, ${lineFade}, ${lineBase} 20%, ${lineBase} 80%, ${lineFade})`,
+        }} />
+      </div>
+
+      {/* Label */}
       <div style={{
-        maxWidth: 640, margin: "0 auto", overflow: "hidden",
-        position: "relative",
-        maskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
-        WebkitMaskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
+        fontFamily: "'Outfit', system-ui, sans-serif",
+        fontSize: 11,
+        fontWeight: 500,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: label,
+        marginBottom: 24,
+        transition: 'color 0.3s ease',
       }}>
-        <div style={{ display: "flex", animation: "scroll 18s linear infinite", width: "max-content" }}>
-          {[...logos, ...logos].map(({ name, svg }, i) => (
-            <div key={`${name}-${i}`} style={{
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              padding: "6px 16px", margin: "0 6px",
-              borderRadius: 8,
-              color: darkMode ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)",
-              filter: "grayscale(100%)",
-              opacity: 0.7,
-              transition: "all 0.35s cubic-bezier(0.16,1,0.3,1)",
-              cursor: "default", whiteSpace: "nowrap",
-            }}
-              onMouseEnter={e => {
-                e.currentTarget.style.filter = "grayscale(0%)";
-                e.currentTarget.style.opacity = "1";
-                e.currentTarget.style.color = darkMode ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)";
-                e.currentTarget.style.background = darkMode ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.7)";
-                e.currentTarget.style.boxShadow = darkMode
-                  ? "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)"
-                  : "0 4px 16px rgba(11,37,69,0.08), inset 0 1px 0 rgba(255,255,255,0.8)";
-                e.currentTarget.style.backdropFilter = "blur(8px)";
-                e.currentTarget.style.transform = "translateY(-1px)";
+        Currently integrated with
+      </div>
+
+      {/* Scroll container */}
+      <div style={{ position: 'relative', overflow: 'hidden' }}>
+        {/* Edge fade masks */}
+        <div style={{
+          position: 'absolute', top: 0, bottom: 0, left: 0, width: 100,
+          background: `linear-gradient(to right, ${bg}, transparent)`,
+          zIndex: 2, pointerEvents: 'none',
+          transition: 'background 0.3s ease',
+        }} />
+        <div style={{
+          position: 'absolute', top: 0, bottom: 0, right: 0, width: 100,
+          background: `linear-gradient(to left, ${bg}, transparent)`,
+          zIndex: 2, pointerEvents: 'none',
+          transition: 'background 0.3s ease',
+        }} />
+
+        {/* Track */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 72,
+            width: 'max-content',
+            animation: `scroll ${speed}s linear infinite`,
+            padding: '12px 0',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.animationPlayState = 'paused')}
+          onMouseLeave={e => (e.currentTarget.style.animationPlayState = 'running')}
+        >
+          {items.map((logo, i) => (
+            <img
+              key={`${logo.name}-${i}`}
+              src={darkMode ? logo.white : logo.dark}
+              alt={logo.name}
+              draggable={false}
+              style={{
+                flexShrink: 0,
+                height: logo.h,
+                width: 'auto',
+                opacity: logoOp,
+                transition: 'opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+                userSelect: 'none',
               }}
-              onMouseLeave={e => {
-                e.currentTarget.style.filter = "grayscale(100%)";
-                e.currentTarget.style.opacity = "0.7";
-                e.currentTarget.style.color = darkMode ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)";
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.boxShadow = "none";
-                e.currentTarget.style.backdropFilter = "none";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              {svg}
-            </div>
+              onMouseEnter={e => (e.currentTarget.style.opacity = String(logoHov))}
+              onMouseLeave={e => (e.currentTarget.style.opacity = String(logoOp))}
+            />
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 
