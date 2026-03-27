@@ -111,7 +111,7 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
                   border: "none", cursor: "pointer", fontFamily: "'Outfit',sans-serif", background: "transparent",
                   transition: "all 0.3s ease",
                 }}>
-                  <span style={{ fontSize: 14, fontWeight: active ? 700 : 500, color: active ? "white" : "rgba(255,255,255,0.3)", transition: "color 0.3s" }}>{t.label}</span>
+                  <span style={{ fontSize: 14, fontWeight: active ? 700 : 500, color: active ? "white" : "rgba(255,255,255,0.6)", transition: "color 0.3s" }}>{t.label}</span>
                   <span style={{ fontSize: 12, fontWeight: 400, marginLeft: 4, color: active ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.18)", transition: "color 0.3s" }}>{t.sub}</span>
                 </button>
               );
@@ -120,10 +120,10 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
 
           {/* Price */}
           <div style={{ marginBottom: 6, position: "relative", opacity: priceAnim ? 0 : 1, transform: priceAnim ? "translateY(6px)" : "translateY(0)", transition: "all 0.15s ease" }}>
-            <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 16, color: "rgba(255,255,255,0.35)", position: "relative", top: -22 }}>{'£'}</span>
+            <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 16, color: "rgba(255,255,255,0.6)", position: "relative", top: -22 }}>{'£'}</span>
             <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 64, color: "white", lineHeight: 1, letterSpacing: "-0.02em" }}>{price}</span>
           </div>
-          <div style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", marginBottom: 26, opacity: priceAnim ? 0 : 1, transform: priceAnim ? "translateY(4px)" : "translateY(0)", transition: "all 0.15s ease 0.03s" }}>
+          <div style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 26, opacity: priceAnim ? 0 : 1, transform: priceAnim ? "translateY(4px)" : "translateY(0)", transition: "all 0.15s ease 0.03s" }}>
             p/m {'·'} {setup || "no setup fee"}
           </div>
 
@@ -155,16 +155,16 @@ export default function ModulePricingBanner({ module = "ava", onCompare }) {
           {/* Compare link */}
           {onCompare ? (
             <button onClick={onCompare} style={{
-              fontSize: 13, color: "rgba(255,255,255,0.3)", background: "none", border: "none",
+              fontSize: 13, color: "rgba(255,255,255,0.6)", background: "none", border: "none",
               cursor: "pointer", fontFamily: "'Outfit',sans-serif", transition: "color 0.2s",
             }}
-              onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.55)"}
-              onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.3)"}
+              onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.75)"}
+              onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.6)"}
             >Compare all plans {'↓'}</button>
           ) : (
-            <a href="/pricing" style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", textDecoration: "none", cursor: "pointer" }}
-              onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.55)"}
-              onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.3)"}
+            <a href="/pricing" style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", textDecoration: "none", cursor: "pointer" }}
+              onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.75)"}
+              onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.6)"}
             >Compare all plans {'↓'}</a>
           )}
         </div>

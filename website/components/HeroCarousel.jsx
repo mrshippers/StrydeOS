@@ -59,7 +59,7 @@ export default function HeroCarousel() {
               </svg>
               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.6px", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>Transcript</span>
             </div>
-            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.3)" }}>Today, 09:12</span>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Today, 09:12</span>
           </div>
 
           {/* Messages */}
@@ -108,7 +108,7 @@ export default function HeroCarousel() {
               </div>
               <div>
                 <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 15, fontWeight: 400, color: "white", letterSpacing: "-0.3px" }}>Clinic Knowledge Base</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 0, letterSpacing: "-0.1px", lineHeight: 1.3 }}>17 entries teaching Ava about your clinic</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 0, letterSpacing: "-0.1px", lineHeight: 1.3 }}>17 entries teaching Ava about your clinic</div>
               </div>
             </div>
             <div style={{

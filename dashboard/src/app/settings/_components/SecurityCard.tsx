@@ -208,8 +208,7 @@ export default function SecurityCard() {
             <button
               onClick={handleChangePassword}
               disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
-              style={{ background: brand.blue }}
+              className="btn-primary"
             >
               {changingPassword ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
               {changingPassword ? "Updating..." : "Update Password"}
@@ -268,8 +267,7 @@ export default function SecurityCard() {
 
               <button
                 onClick={() => setShowMfaEnrollment(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
-                style={{ background: brand.blue }}
+                className="btn-primary"
               >
                 <Shield size={14} />
                 Enable Two-Factor Authentication

@@ -782,8 +782,7 @@ export default function OnboardingPage() {
 
                   <button onClick={handleNext}
                     disabled={saving || !canProceed()}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-                    style={{ background: step.color }}>
+                    className={`btn-primary ${step.color === "#0891B2" ? "btn-primary-teal" : step.color === "#8B5CF6" ? "btn-primary-purple" : step.color === "#059669" ? "btn-primary-success" : ""}`}>
                     {saving ? (
                       <Loader2 size={14} className="animate-spin" />
                     ) : step.id === "signup" ? (

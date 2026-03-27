@@ -196,8 +196,8 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
               <button
                 onClick={handleSave}
                 disabled={saving || !name.trim()}
-                className="px-4 py-2 rounded-[8px] text-sm font-semibold text-white transition-colors disabled:opacity-50"
-                style={{ background: brand.teal }}
+                className="btn-primary btn-primary-teal"
+                style={{ padding: "8px 16px" }}
               >
                 {saving ? "Saving…" : "Save Changes"}
               </button>

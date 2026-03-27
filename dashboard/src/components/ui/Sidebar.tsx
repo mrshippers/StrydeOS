@@ -142,6 +142,8 @@ export default function Sidebar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const notifBtnRef = useRef<HTMLButtonElement>(null);
+  const notifDropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const { allAlerts, unreadCount, readHashes, markAllRead } = useAlerts();
   const { activeEvents: allInsightEvents, markAsRead: markInsightRead } = useInsightEvents();
@@ -180,7 +182,11 @@ export default function Sidebar() {
 
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        notifRef.current && !notifRef.current.contains(target) &&
+        (!notifDropdownRef.current || !notifDropdownRef.current.contains(target))
+      ) {
         setNotifOpen(false);
       }
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
@@ -375,6 +381,7 @@ export default function Sidebar() {
           {/* Notification bell */}
           <div ref={notifRef} className="relative" data-tour="notification-bell">
             <button
+              ref={notifBtnRef}
               onClick={() => setNotifOpen(!notifOpen)}
               className="relative w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
               aria-label="Notifications"
@@ -391,8 +398,15 @@ export default function Sidebar() {
             </button>
 
             {notifOpen && (
-              <div className="absolute left-0 top-full mt-2 w-72 rounded-xl shadow-[var(--shadow-elevated)] overflow-hidden z-50 animate-fade-in"
-                style={{ background: brand.navyMid, border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div
+                ref={notifDropdownRef}
+                className="fixed w-72 rounded-xl shadow-[var(--shadow-elevated)] overflow-hidden z-50 animate-fade-in"
+                style={{
+                  background: brand.navyMid,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  top: notifBtnRef.current ? notifBtnRef.current.getBoundingClientRect().bottom + 8 : 60,
+                  left: notifBtnRef.current ? notifBtnRef.current.getBoundingClientRect().left : 20,
+                }}>
                 <div className="px-4 py-3 border-b border-white/8 flex items-center justify-between">
                   <p className="text-[11px] font-semibold text-white/45 uppercase tracking-widest">
                     Alerts this week

@@ -67,8 +67,8 @@ html.dark {
   --color-cloud-dark: rgba(255,255,255,0.08);
   --color-cream: #0F2240;
   --color-ink: rgba(255,255,255,0.95);
-  --color-muted: rgba(255,255,255,0.72);
-  --color-muted-strong: rgba(255,255,255,0.85);
+  --color-muted: rgba(255,255,255,0.88);
+  --color-muted-strong: rgba(255,255,255,0.95);
   --color-border: rgba(255,255,255,0.12);
   --color-success: #10B981;
   --color-danger: #F87171;
@@ -114,6 +114,20 @@ html.dark .text-navy {
 
 html.dark [class*="text-navy\\/"] {
   color: rgba(255, 255, 255, 0.60) !important;
+}
+
+/* ─── Dark-mode Tailwind grey overrides ────────────────────────────────────── */
+html.dark .text-gray-400 {
+  color: rgba(255,255,255,0.60) !important;
+}
+html.dark .text-gray-500 {
+  color: rgba(255,255,255,0.70) !important;
+}
+html.dark .hover\:bg-gray-50:hover {
+  background-color: rgba(255,255,255,0.06) !important;
+}
+html.dark .bg-gray-50 {
+  background-color: rgba(255,255,255,0.06) !important;
 }
 
 html.dark .animate-skeleton .bg-black\/\[0\.06\] {
@@ -207,6 +221,104 @@ html.dark ::selection {
 
 .recharts-tooltip-wrapper {
   outline: none !important;
+}
+
+/* ─── Premium button styles (matching marketing website) ──────────────────── */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #2E6BFF, #1C54F2);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 8px rgba(28,84,242,0.19), 0 0 0 1px rgba(46,107,255,0.09), inset 0 1px 0 rgba(255,255,255,0.15);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #4B8BF5, #2E6BFF);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(28,84,242,0.27), 0 0 0 1px rgba(46,107,255,0.19), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Module-coloured variants */
+.btn-primary-teal {
+  background: linear-gradient(135deg, #0AADCF, #0891B2);
+  box-shadow: 0 2px 8px rgba(8,145,178,0.19), 0 0 0 1px rgba(10,173,207,0.09), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-primary-teal:hover {
+  background: linear-gradient(135deg, #22D3EE, #0AADCF);
+  box-shadow: 0 4px 20px rgba(8,145,178,0.27), 0 0 0 1px rgba(10,173,207,0.19), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.btn-primary-purple {
+  background: linear-gradient(135deg, #A78BFA, #8B5CF6);
+  box-shadow: 0 2px 8px rgba(139,92,246,0.19), 0 0 0 1px rgba(167,139,250,0.09), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-primary-purple:hover {
+  background: linear-gradient(135deg, #C4B5FD, #A78BFA);
+  box-shadow: 0 4px 20px rgba(139,92,246,0.27), 0 0 0 1px rgba(167,139,250,0.19), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.btn-primary-success {
+  background: linear-gradient(135deg, #10B981, #059669);
+  box-shadow: 0 2px 8px rgba(5,150,105,0.19), 0 0 0 1px rgba(16,185,129,0.09), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-primary-success:hover {
+  background: linear-gradient(135deg, #34D399, #10B981);
+  box-shadow: 0 4px 20px rgba(5,150,105,0.27), 0 0 0 1px rgba(16,185,129,0.19), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: transparent;
+  color: var(--color-navy);
+  border: 1.5px solid var(--color-border);
+  border-radius: 50px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.dark .btn-secondary {
+  color: rgba(255,255,255,0.85);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.btn-secondary:hover {
+  border-color: rgba(28,84,242,0.3);
+  color: #1C54F2;
+  transform: translateY(-1px);
+}
+
+html.dark .btn-secondary:hover {
+  border-color: rgba(75,139,245,0.4);
+  color: #4B8BF5;
 }
 
 ::-webkit-scrollbar {

@@ -788,18 +788,18 @@ const BeforeAfterStrip = () => {
             fontWeight: 600,
             textTransform: "uppercase",
             letterSpacing: "0.14em",
-            color: "rgba(255,255,255,0.25)",
+            color: "rgba(255,255,255,0.6)",
           }}>
             Hover to reveal what changes
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#EF4444", opacity: 0.5 }} />
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Without</span>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Without</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.blueGlow }} />
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.08em" }}>With StrydeOS</span>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>With StrydeOS</span>
             </div>
           </div>
         </div>
@@ -822,7 +822,7 @@ const BeforeAfterStrip = () => {
             { icon: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 14A6 6 0 108 2a6 6 0 000 12z" stroke="currentColor" strokeWidth="1.3"/><path d="M5 5l6 6M11 5L5 11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>, text: "Not a PMS replacement" },
             { icon: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2v4l2.5 1.5M14 8A6 6 0 112 8a6 6 0 0112 0z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>, text: "Sits above your existing stack" },
           ].map(({ icon, text }) => (
-            <div key={text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "rgba(255,255,255,0.45)" }}>
+            <div key={text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "rgba(255,255,255,0.7)" }}>
               {icon}<span>{text}</span>
             </div>
           ))}
@@ -877,7 +877,7 @@ const HeroDashKPI = ({ label, value, unit, delta, dir, status, sparkData, delay 
       transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
     }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-        <span style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)" }}>{label}</span>
+        <span style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.6)" }}>{label}</span>
         <div style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: sc }} />
       </div>
       <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
@@ -910,7 +910,7 @@ const HeroDashboard = () => {
           transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)",
         }}>
           <div>
-            <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.25)", marginBottom: 4 }}>Spires Physiotherapy · London</div>
+            <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>Spires Physiotherapy · London</div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <MonolithMark size={18} />
               <span className="serif" style={{ fontSize: 15, color: "#fff" }}>Stryde<span style={{ color: C.blueGlow }}>OS</span> Dashboard</span>
@@ -947,7 +947,7 @@ const HeroDashboard = () => {
             backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
             opacity: loaded ? 1 : 0, transition: "opacity 0.5s ease 0.55s",
           }}>
-            <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)", marginBottom: 4 }}>Appointments</div>
+            <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>Appointments</div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
               <span className="serif" style={{ fontSize: 20, color: "#fff", lineHeight: 1 }}>73</span>
               <span style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>this week</span>
@@ -959,11 +959,11 @@ const HeroDashboard = () => {
             backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
             opacity: loaded ? 1 : 0, transition: "opacity 0.5s ease 0.6s",
           }}>
-            <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)", marginBottom: 4 }}>Rev / Session</div>
+            <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>Rev / Session</div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
               <span className="serif" style={{ fontSize: 20, color: "#fff", lineHeight: 1 }}>{"£"}79</span>
               <span style={{ fontSize: 9, color: "rgba(255,255,255,0.5)" }}>avg</span>
-              <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.35)", marginLeft: 2 }}>+0%</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.6)", marginLeft: 2 }}>+0%</span>
             </div>
           </div>
         </div>
@@ -1464,7 +1464,7 @@ const Integrations = ({ darkMode }) => {
                 <span style={{ fontStyle: "italic", color: C.blueGlow }}>Everything improves.</span>
               </h3>
               <p style={{
-                fontSize: 14, color: "rgba(255,255,255,0.35)",
+                fontSize: 14, color: "rgba(255,255,255,0.6)",
                 lineHeight: 1.7, maxWidth: 320,
               }}>
                 Your PMS stays. Your HEP platform stays. Your phone number stays. StrydeOS connects to all of it and adds the layer your practice is missing.
@@ -1484,7 +1484,7 @@ const Integrations = ({ darkMode }) => {
               ].map(({ val, label, color }) => (
                 <div key={label}>
                   <div className="serif" style={{ fontSize: 28, color, lineHeight: 1 }}>{val}</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 4, fontWeight: 500 }}>{label}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 4, fontWeight: 500 }}>{label}</div>
                 </div>
               ))}
             </div>
@@ -1574,7 +1574,7 @@ const Integrations = ({ darkMode }) => {
                       <IconComp color={color} size={16} />
                     </div>
                     <div style={{ color, fontWeight: 700, fontSize: 13, textShadow: `0 0 10px ${color}40` }}>{name}</div>
-                    <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginTop: 2, textShadow: `0 0 8px ${color}20` }}>{desc}</div>
+                    <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, marginTop: 2, textShadow: `0 0 8px ${color}20` }}>{desc}</div>
                   </div>
                 ))}
               </div>
@@ -1696,7 +1696,7 @@ const PulsePatientBoard = () => {
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 9, fontWeight: 700, color: C.success, padding: "2px 8px", borderRadius: 50, backgroundColor: "rgba(5,150,105,0.1)", border: "1px solid rgba(5,150,105,0.15)" }}>Active</span>
-        <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>12 patients</span>
+        <span style={{ fontSize: 10, color: "rgba(255,255,255,0.6)" }}>12 patients</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {patients.map((p, i) => (
@@ -1708,7 +1708,7 @@ const PulsePatientBoard = () => {
             <PulseAvatar name={p.name} index={i} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: "white", filter: "blur(2px)", userSelect: "none" }}>{p.name}</div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)" }}>{p.sessions} sessions · Last {p.last}</div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>{p.sessions} sessions · Last {p.last}</div>
             </div>
             {p.warn && (
               <span style={{ fontSize: 8, color: "#F59E0B", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 3 }}>
@@ -1765,7 +1765,7 @@ const PulseSequencesPanel = () => {
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)" }}>{s.steps} steps · {s.window}</div>
               <div style={{ display: "flex", gap: 10, marginTop: 3 }}>
                 <span style={{ fontSize: 9, fontWeight: 600, color: C.teal, cursor: "pointer" }}>▸ View cadence</span>
-                <span style={{ fontSize: 9, fontWeight: 500, color: "rgba(255,255,255,0.25)", cursor: "pointer" }}>⧉ Preview</span>
+                <span style={{ fontSize: 9, fontWeight: 500, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>⧉ Preview</span>
               </div>
             </div>
             <div style={{
@@ -1826,7 +1826,7 @@ const PulseShowcase = () => {
               <div style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: C.teal }} />
               <span className="serif" style={{ fontSize: 18, color: "white" }}>Pulse</span>
             </div>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>Track patient journeys, manage comms, reduce drop-off</div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)" }}>Track patient journeys, manage comms, reduce drop-off</div>
           </div>
           <div style={{
             padding: "4px 10px", borderRadius: 8,
@@ -1853,10 +1853,10 @@ const PulseShowcase = () => {
               position: "relative",
             }}>
               <div style={{ position: "absolute", top: 7, right: 7, width: 5, height: 5, borderRadius: "50%", backgroundColor: s.dot }} />
-              <div style={{ fontSize: 7, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "rgba(255,255,255,0.25)", marginBottom: 4 }}>{s.l}</div>
+              <div style={{ fontSize: 7, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>{s.l}</div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
                 <span className="serif" style={{ fontSize: 18, color: "white", lineHeight: 1 }}>{s.v}</span>
-                {s.u && <span style={{ fontSize: 8, color: "rgba(255,255,255,0.3)" }}>{s.u}</span>}
+                {s.u && <span style={{ fontSize: 8, color: "rgba(255,255,255,0.6)" }}>{s.u}</span>}
               </div>
             </div>
           ))}
@@ -1877,7 +1877,7 @@ const PulseShowcase = () => {
               background: "none", border: "none", cursor: "pointer",
               fontFamily: "'Outfit', sans-serif",
               fontSize: 11, fontWeight: i === activePanel ? 700 : 500,
-              color: i === activePanel ? "white" : "rgba(255,255,255,0.3)",
+              color: i === activePanel ? "white" : "rgba(255,255,255,0.6)",
               padding: "6px 14px 8px",
               borderBottom: i === activePanel ? `2px solid ${C.teal}` : "2px solid transparent",
               marginBottom: -1, transition: "all 0.25s ease",
@@ -1913,7 +1913,7 @@ const PulseShowcase = () => {
 const Products = ({ darkMode }) => {
   const [active, setActive] = useState(0);
   const bg    = darkMode ? C.navy    : C.cloudDancer;
-  const muted = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const muted = darkMode ? "rgba(255,255,255,0.7)" : C.muted;
   const head  = darkMode ? "white"   : C.navy;
   const txt   = darkMode ? "rgba(255,255,255,0.85)" : C.ink;
   const bdr   = darkMode ? "rgba(255,255,255,0.12)" : C.border;
@@ -2231,7 +2231,7 @@ const Results = () => {
           }}>
             <div className="serif" style={{ fontSize: 38, color: "white", fontWeight: 400, marginBottom: 8 }}>{stat}</div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", fontWeight: 500, marginBottom: 4 }}>{label}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{note}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }}>{note}</div>
           </div>
         ))}
       </div>
@@ -2251,7 +2251,7 @@ const Results = () => {
             </h3>
             <blockquote style={{ borderLeft: `3px solid ${C.blue}`, paddingLeft: 18, color: "rgba(255,255,255,0.6)", fontStyle: "italic", fontSize: 15, lineHeight: 1.65 }}>
               "{cs.quote}"
-              <div style={{ fontStyle: "normal", marginTop: 10, fontSize: 12, color: "rgba(255,255,255,0.3)", fontWeight: 500 }}>
+              <div style={{ fontStyle: "normal", marginTop: 10, fontSize: 12, color: "rgba(255,255,255,0.6)", fontWeight: 500 }}>
                 — {cs.author}
               </div>
             </blockquote>
@@ -2259,7 +2259,7 @@ const Results = () => {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {cs.grid.map(({ before, after }) => (
               <div key={before} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: 14, border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, textDecoration: "line-through", marginBottom: 5 }}>{before}</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, textDecoration: "line-through", marginBottom: 5 }}>{before}</div>
                 <div style={{ color: "white", fontSize: 12, fontWeight: 500 }}>{after}</div>
               </div>
             ))}
@@ -2478,7 +2478,7 @@ const PricingTierToggle = ({ tier, setTier, darkMode }) => {
           }}>
             <div style={{
               fontSize: 14, fontWeight: active ? 700 : 500,
-              color: active ? "white" : "rgba(255,255,255,0.3)",
+              color: active ? "white" : "rgba(255,255,255,0.6)",
               transition: "color 0.3s ease", lineHeight: 1.2,
             }}>{t.label}</div>
             <div style={{
@@ -2569,7 +2569,7 @@ const PricingCard = ({ mod, price, billing, tier, darkMode }) => {
         }}>{price}</span>
         <span style={{
           fontSize: 16, fontWeight: 400,
-          color: h ? "rgba(255,255,255,0.45)" : C.muted,
+          color: h ? "rgba(255,255,255,0.7)" : C.muted,
           transition: "color 0.35s ease",
         }}>/mo</span>
       </div>
@@ -2663,8 +2663,8 @@ const FullStackBanner = ({ tier, billing, darkMode }) => {
       </div>
       <div style={{ textAlign: "right", position: "relative" }}>
         <span className="serif" style={{ fontSize: 38, color: "white", lineHeight: 1 }}>{p.full}</span>
-        <span style={{ fontSize: 15, color: "rgba(255,255,255,0.35)" }}>/mo{billing === "annual" ? " (billed annually)" : ""}</span>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>{p.fullSetup} one-time setup</div>
+        <span style={{ fontSize: 15, color: "rgba(255,255,255,0.6)" }}>/mo{billing === "annual" ? " (billed annually)" : ""}</span>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 3 }}>{p.fullSetup} one-time setup</div>
         <div style={{ fontSize: 11, fontWeight: 600, color: "#34D399", marginTop: 4 }}>Save vs individual</div>
       </div>
     </a>
@@ -2675,7 +2675,7 @@ const Pricing = ({ darkMode }) => {
   const [tier, setTier] = useState("studio");
   const [billing, setBilling] = useState("monthly");
   const bg    = darkMode ? C.navyMid : C.cloudDancer;
-  const muted = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const muted = darkMode ? "rgba(255,255,255,0.7)" : C.muted;
   const head  = darkMode ? "white" : C.navy;
   const prices = getPricing(tier, billing);
 
@@ -3175,7 +3175,7 @@ const Changelog = ({ darkMode }) => {
 
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", fontFamily: "'Outfit',sans-serif" }}>{entry.version}</span>
-                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{entry.date} 2026</span>
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }}>{entry.date} 2026</span>
                   <span style={{
                     fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
                     padding: "2px 8px", borderRadius: 4,
@@ -3213,7 +3213,7 @@ const CtaSection = () => (
       <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 16, lineHeight: 1.7, marginBottom: 18 }}>
         Book a free 30-minute Clinical Performance Audit. We'll review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks — using your existing systems.
       </p>
-      <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 14, lineHeight: 1.65, marginBottom: 40, fontStyle: "italic" }}>
+      <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, lineHeight: 1.65, marginBottom: 40, fontStyle: "italic" }}>
         No switching required. StrydeOS connects to your existing PMS stack via API or bespoke integration. Pick the product that solves your biggest problem right now — and build from there.
       </p>
 
@@ -3225,7 +3225,7 @@ const CtaSection = () => (
           <a href="https://calendly.com/hello-strydeos/30min" target="_blank" rel="noopener" className="btn-ghost" style={{ padding: "10px 20px", fontSize: 13 }}>Book a Demo</a>
           <a href="#pricing" className="btn-ghost" style={{ padding: "10px 20px", fontSize: 13 }}>See Pricing</a>
         </div>
-        <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 12, marginTop: 4 }}>
+        <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, marginTop: 4 }}>
           30 minutes · No obligation · UK private practice · MSK · Allied health
         </div>
       </div>
@@ -3236,7 +3236,7 @@ const CtaSection = () => (
           {[...["GDPR", "HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Audit Logged", "SOC 2 (roadmap)"], ...["GDPR", "HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Audit Logged", "SOC 2 (roadmap)"]].map((badge, i) => (
             <div key={`${badge}-${i}`} style={{ display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>{badge}</span>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", fontWeight: 500 }}>{badge}</span>
             </div>
           ))}
         </div>
@@ -3291,9 +3291,9 @@ const Footer = () => (
               <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>{h}</div>
               {links.map(({ label, href }) => (
                 <div key={label} style={{ marginBottom: 9 }}>
-                  <a href={href} style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none", transition: "color 0.2s" }}
+                  <a href={href} style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, textDecoration: "none", transition: "color 0.2s" }}
                     onMouseEnter={e => e.target.style.color = "rgba(255,255,255,0.75)"}
-                    onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.3)"}>{label}</a>
+                    onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.6)"}>{label}</a>
                 </div>
               ))}
             </div>
@@ -3303,7 +3303,7 @@ const Footer = () => (
 
       <div className="footer-compliance" style={{ display: "flex", gap: 24, padding: "16px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
         {["GDPR · HIPAA-aligned", "UK/EU Hosted", "AES-256 Encrypted", "Audit Logged"].map((badge) => (
-          <div key={badge} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(255,255,255,0.25)", fontWeight: 500 }}>
+          <div key={badge} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 500 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"/>
             </svg>
@@ -3379,13 +3379,13 @@ export function CookieBanner() {
           >Accept</button>
           <button onClick={decline} style={{
             padding: "9px 16px", background: "transparent",
-            color: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.12)",
+            color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.12)",
             borderRadius: 50, fontSize: 13, fontWeight: 500,
             fontFamily: "'Outfit',sans-serif", cursor: "pointer",
             transition: "all 0.2s ease",
           }}
             onMouseEnter={e => { e.target.style.color = "rgba(255,255,255,0.8)"; e.target.style.borderColor = "rgba(255,255,255,0.3)"; }}
-            onMouseLeave={e => { e.target.style.color = "rgba(255,255,255,0.45)"; e.target.style.borderColor = "rgba(255,255,255,0.12)"; }}
+            onMouseLeave={e => { e.target.style.color = "rgba(255,255,255,0.7)"; e.target.style.borderColor = "rgba(255,255,255,0.12)"; }}
           >Decline</button>
         </div>
       </div>

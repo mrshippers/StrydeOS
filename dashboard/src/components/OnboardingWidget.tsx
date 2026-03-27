@@ -246,8 +246,7 @@ export default function OnboardingWidget() {
               <div className="px-6 pb-6 pt-2">
                 <button
                   onClick={handleGoToSettings}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
-                  style={{ background: "#1C54F2" }}
+                  className="btn-primary w-full justify-center"
                 >
                   {completedCount === 0 ? "Let's get started" : "Continue setup"}
                   <ArrowRight size={14} />

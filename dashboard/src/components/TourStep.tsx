@@ -232,8 +232,8 @@ export default function TourStep({
                 )}
                 <button
                   onClick={onNext}
-                  className="flex items-center gap-1 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all hover:opacity-90"
-                  style={{ background: brand.blue }}
+                  className="btn-primary"
+                  style={{ padding: "8px 16px", fontSize: 12 }}
                 >
                   {isLast ? "Finish" : "Next"}
                   {!isLast && <ChevronRight size={12} />}

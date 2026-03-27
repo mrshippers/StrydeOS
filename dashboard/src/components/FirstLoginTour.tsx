@@ -246,8 +246,7 @@ export default function FirstLoginTour() {
               <div className="px-8 py-6 space-y-3">
                 <button
                   onClick={handleStartTour}
-                  className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-[14px] font-semibold text-white transition-all duration-200 hover:opacity-90"
-                  style={{ background: "#1C54F2" }}
+                  className="btn-primary w-full justify-center"
                 >
                   <Compass size={16} />
                   Show me around

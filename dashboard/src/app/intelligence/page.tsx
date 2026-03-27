@@ -231,8 +231,7 @@ function OutcomeScoreEntry({
             <button
               type="submit"
               disabled={Object.keys(scores).filter((k) => scores[k] !== "").length === 0 || saving}
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ background: brand.blue }}
+              className="btn-primary btn-primary-purple"
             >
               {saving ? "Saving…" : "Save Scores"}
             </button>

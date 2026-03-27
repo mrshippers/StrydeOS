@@ -137,11 +137,7 @@ export default function LockedModulePage({ module }: Props) {
           <>
             <Link
               href="/billing"
-              className="w-full flex items-center justify-center py-3 rounded-xl text-[14px] font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-              style={{
-                background: color,
-                boxShadow: `0 4px 20px ${color}40`,
-              }}
+              className={`btn-primary w-full justify-center ${color === "#0891B2" ? "btn-primary-teal" : color === "#8B5CF6" ? "btn-primary-purple" : color === "#059669" ? "btn-primary-success" : ""}`}
             >
               Unlock {name}
             </Link>

@@ -334,8 +334,8 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3">
                   <a
                     href="/settings"
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
-                    style={{ background: brand.blue }}
+                    className="btn-primary"
+                    style={{ padding: "8px 20px", fontSize: 12 }}
                   >
                     Check PMS connection →
                   </a>

@@ -162,8 +162,7 @@ export default function TeamManagementCard({
             <button
               onClick={handleAddClinician}
               disabled={!newClinicianName.trim() || !newClinicianEmail.trim() || submittingClinician}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ background: brand.blue }}
+              className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }}
             >
               <Check size={12} />
               {submittingClinician ? "Adding…" : "Add & Send Invite"}
@@ -264,8 +263,7 @@ export default function TeamManagementCard({
                       <button
                         onClick={() => handleSendInvite(c.id)}
                         disabled={!editingEmail[c.id]?.trim() || sendingInvite[c.id]}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 shrink-0"
-                        style={{ background: brand.blue }}
+                        className="btn-primary shrink-0" style={{ padding: "8px 16px", fontSize: 12 }}
                       >
                         {sendingInvite[c.id] ? (
                           <Loader2 size={12} className="animate-spin" />

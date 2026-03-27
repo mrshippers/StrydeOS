@@ -173,8 +173,8 @@ function ModuleCard({ moduleKey, isActive, isLoading, tier, interval, canManage,
         <button
           onClick={() => onActivate(moduleKey)}
           disabled={isLoading}
-          className="mt-auto flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all duration-150 hover:opacity-90 disabled:opacity-50"
-          style={{ background: color }}
+          className={`btn-primary w-full mt-auto justify-center ${color === "#0891B2" ? "btn-primary-teal" : color === "#8B5CF6" ? "btn-primary-purple" : ""}`}
+          style={{ padding: "10px 0", fontSize: 13 }}
         >
           {isLoading ? <Loader2 size={14} className="animate-spin" /> : <>Add {name}</>}
         </button>
@@ -246,7 +246,7 @@ function FullStackCard({ tier, interval, allActive, isLoading, onActivate }: Ful
         <button
           onClick={onActivate}
           disabled={isLoading}
-          className="mt-5 w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[14px] font-semibold text-white transition-all duration-150 hover:opacity-90 disabled:opacity-50 bg-gradient-to-r from-blue to-purple"
+          className="btn-primary btn-primary-purple mt-5 w-full justify-center"
         >
           {isLoading ? <Loader2 size={14} className="animate-spin" /> : <>Get Full Stack</>}
         </button>
@@ -519,7 +519,7 @@ export default function BillingPage() {
               <button
                 onClick={handleAddSeat}
                 disabled={seatLoading}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all duration-150 hover:opacity-90 disabled:opacity-50 bg-blue"
+                className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }}
               >
                 {seatLoading ? <Loader2 size={13} className="animate-spin" /> : <><Plus size={13} /> Add seat</>}
               </button>

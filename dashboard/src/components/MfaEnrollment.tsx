@@ -125,7 +125,7 @@ export function MfaEnrollment({ onComplete, onSkip }: MfaEnrollmentProps) {
         <button
           onClick={handleSetup}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-blue hover:opacity-90 transition-opacity disabled:opacity-50 mb-4"
+          className="btn-primary w-full justify-center mb-4"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <>Get Started</>}
         </button>
@@ -207,7 +207,7 @@ export function MfaEnrollment({ onComplete, onSkip }: MfaEnrollmentProps) {
         <button
           onClick={handleVerify}
           disabled={loading || verificationCode.length !== 6}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-blue hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="btn-primary w-full justify-center"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <>Verify & Enable</>}
         </button>

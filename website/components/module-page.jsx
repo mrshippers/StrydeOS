@@ -120,7 +120,7 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
 
   const bg = darkMode ? C.navy : C.cloudDancer;
   const head = darkMode ? "white" : C.navy;
-  const muted = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
+  const muted = darkMode ? "rgba(255,255,255,0.7)" : C.muted;
   const txt = darkMode ? "rgba(255,255,255,0.75)" : C.ink;
   const bdr = darkMode ? "rgba(255,255,255,0.07)" : C.border;
   const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";

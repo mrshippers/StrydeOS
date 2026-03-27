@@ -45,11 +45,7 @@ export default function RouteErrorFallback({
         )}
         <button
           onClick={reset}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-          style={{
-            background: accentColor,
-            boxShadow: `0 4px 16px ${accentColor}30`,
-          }}
+          className="btn-primary"
         >
           <RotateCcw size={14} />
           Try again

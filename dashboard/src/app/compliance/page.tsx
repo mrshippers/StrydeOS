@@ -149,7 +149,7 @@ export default function CompliancePage() {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue hover:opacity-90 transition-opacity"
+            className="btn-primary" style={{ padding: "8px 16px" }}
           >
             <Plus size={16} />
             New Request
@@ -167,7 +167,7 @@ export default function CompliancePage() {
             <p className="text-sm text-muted mb-6">Subject Access Requests will appear here</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue hover:opacity-90 transition-opacity mx-auto"
+              className="btn-primary mx-auto" style={{ padding: "8px 16px" }}
             >
               <Plus size={16} />
               Create First Request
@@ -400,7 +400,7 @@ function CreateSarModal({
                     <button
                       type="submit"
                       disabled={saving}
-                      className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-blue hover:opacity-90 transition-opacity disabled:opacity-50"
+                      className="btn-primary flex-1 justify-center" style={{ padding: "12px 0" }}
                     >
                       {saving ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Create Request"}
                     </button>

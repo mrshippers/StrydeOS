@@ -67,6 +67,7 @@ interface PmsProviderOption {
   label: string;
   icon: string;
   logo?: string;
+  logoDark?: string;
   comingSoon: boolean;
   csvBridge?: boolean;
   recentlyAdded?: boolean;
@@ -116,7 +117,7 @@ interface OnboardingGuide {
 
 const ONBOARDING_PMS_OPTIONS = [
   { id: "writeupp", label: "WriteUpp", icon: "📋", logo: "/integrations/writeupp.svg" },
-  { id: "cliniko", label: "Cliniko", icon: "🗂️", logo: "/integrations/cliniko.png" },
+  { id: "cliniko", label: "Cliniko", icon: "🗂️", logo: "/integrations/cliniko-dark.svg", logoDark: "/integrations/cliniko-light.svg" },
   { id: "tm3", label: "TM3", icon: "⚕️", logo: "/integrations/tm3.svg" },
   { id: "jane", label: "Jane App", icon: "🌿", logo: "/integrations/jane.png" },
   { id: "powerdiary", label: "Zanda (Power Diary)", icon: "📓", logo: "/integrations/powerdiary.png" },
@@ -128,7 +129,7 @@ const INGEST_EMAIL_DOMAIN = "ingest.strydeos.com";
 
 const PMS_PROVIDERS: PmsProviderOption[] = [
   { id: "writeupp", label: "WriteUpp", icon: "📋", logo: "/integrations/writeupp.svg", comingSoon: false, hasApi: false },
-  { id: "cliniko", label: "Cliniko", icon: "🗂️", logo: "/integrations/cliniko.png", comingSoon: false, hasApi: true },
+  { id: "cliniko", label: "Cliniko", icon: "🗂️", logo: "/integrations/cliniko-dark.svg", logoDark: "/integrations/cliniko-light.svg", comingSoon: false, hasApi: true },
   { id: "tm3", label: "TM3", icon: "⚕️", logo: "/integrations/tm3.svg", comingSoon: false, csvBridge: true, hasApi: false },
   { id: "jane", label: "Jane App", icon: "🌿", logo: "/integrations/jane.png", comingSoon: true, hasApi: false },
   { id: "powerdiary", label: "Zanda (Power Diary)", icon: "📓", logo: "/integrations/powerdiary.png", comingSoon: false, recentlyAdded: true, hasApi: true },
@@ -151,6 +152,19 @@ const HEP_PROVIDERS: HepProviderOption[] = [
   { id: "rehab_my_patient", label: "Rehab My Patient", icon: "💪", logo: "/integrations/rehab_my_patient.svg", comingSoon: false },
   { id: "wibbi", label: "Wibbi", icon: "🎯", logo: "/integrations/wibbi.svg", comingSoon: false },
 ];
+
+/** Renders a provider logo with optional dark-mode variant */
+function ProviderLogo({ logo, logoDark, alt, className }: { logo: string; logoDark?: string; alt: string; className?: string }) {
+  if (logoDark) {
+    return (
+      <>
+        <img src={logo} alt={alt} className={`${className ?? ""} block dark:hidden`} />
+        <img src={logoDark} alt={alt} className={`${className ?? ""} hidden dark:block`} />
+      </>
+    );
+  }
+  return <img src={logo} alt={alt} className={className} />;
+}
 
 function RetriggerTourButton() {
   const { user, refreshClinicProfile } = useAuth();
@@ -1236,8 +1250,7 @@ export default function SettingsPage() {
             <button
               onClick={handleSaveUserProfile}
               disabled={savingProfile}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ background: brand.blue }}
+              className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }}
             >
               {savingProfile ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
               Save profile
@@ -1369,8 +1382,7 @@ export default function SettingsPage() {
         <button
           onClick={handleSaveWithOnboarding}
           disabled={saving || !isDirty}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
-          style={{ background: brand.blue }}
+          className="btn-primary"
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           {saving ? "Saving..." : "Save Settings"}
@@ -1475,7 +1487,7 @@ export default function SettingsPage() {
                     title={p.comingSoon ? "Coming soon — integration in development" : undefined}
                   >
                     {p.logo ? (
-                      <img src={p.logo} alt={p.label} className="h-7 w-auto max-w-[68px] object-contain" />
+                      <ProviderLogo logo={p.logo} logoDark={p.logoDark} alt={p.label} className="h-7 w-auto max-w-[68px] object-contain" />
                     ) : (
                       <span className="text-lg leading-none">{p.icon}</span>
                     )}
@@ -1722,7 +1734,7 @@ export default function SettingsPage() {
                       }`}
                     >
                       {p.logo ? (
-                        <img src={p.logo} alt="" className="h-5 w-auto max-w-[52px] object-contain shrink-0" />
+                        <ProviderLogo logo={p.logo} logoDark={(p as PmsProviderOption).logoDark} alt={p.label} className="h-5 w-auto max-w-[52px] object-contain shrink-0" />
                       ) : (
                         <span className="shrink-0">{p.icon}</span>
                       )}
@@ -1804,8 +1816,7 @@ export default function SettingsPage() {
                   </button>
                   <button
                     onClick={() => setWizardStep(2)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90"
-                    style={{ background: brand.blue }}
+                    className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }}
                   >
                     I have my CSV <ChevronRight size={14} />
                   </button>
@@ -1846,8 +1857,7 @@ export default function SettingsPage() {
                   {csvResult?.ok && (
                     <button
                       onClick={() => setWizardStep(4)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90"
-                      style={{ background: brand.blue }}
+                      className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }}
                     >
                       Next: recurring <ChevronRight size={14} />
                     </button>
@@ -1983,8 +1993,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleSaveMapping}
                 disabled={mappingSaving}
-                className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ background: brand.blue }}
+                className="btn-primary"
               >
                 {mappingSaving ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                 {mappingSaving ? "Saving..." : "Save mapping & import"}
@@ -2213,7 +2222,7 @@ export default function SettingsPage() {
                     title={p.comingSoon ? "Coming soon — integration in development" : undefined}
                   >
                     {p.logo ? (
-                      <img src={p.logo} alt={p.label} className="h-7 w-auto max-w-[68px] object-contain" />
+                      <ProviderLogo logo={p.logo} alt={p.label} className="h-7 w-auto max-w-[68px] object-contain" />
                     ) : (
                       <span className="text-lg leading-none">{p.icon}</span>
                     )}

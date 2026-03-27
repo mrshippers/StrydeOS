@@ -640,8 +640,7 @@ function CheckoutInner() {
                 type="button"
                 onClick={handleCheckout}
                 disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ background: meta.color }}
+                className={`btn-primary w-full justify-center py-3.5 ${meta.color === "#0891B2" ? "btn-primary-teal" : meta.color === "#8B5CF6" ? "btn-primary-purple" : ""}`}
                 whileTap={{ scale: 0.97 }}
               >
                 {submitting ? (
