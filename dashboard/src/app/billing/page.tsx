@@ -536,9 +536,34 @@ export default function BillingPage() {
         );
       })()}
 
-      <p className="mt-8 text-center text-[11px] text-muted">
-        All prices in GBP · billed {interval === "month" ? "monthly" : "annually"} · no contracts · cancel anytime
-      </p>
+      {/* Footer */}
+      <div className="mt-8 pt-5 border-t border-border/50 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {/* Visa */}
+            <svg width="32" height="20" viewBox="0 0 32 20" fill="none" aria-label="Visa"><rect width="32" height="20" rx="3" fill="#1A1F71"/><path d="M13.6 13.5l1.7-8.2h2l-1.7 8.2h-2zm8.5-8c-.4-.2-1-.3-1.8-.3-2 0-3.4 1-3.4 2.5 0 1.1 1 1.7 1.8 2 .8.4 1 .7 1 1 0 .5-.6.8-1.2.8-.8 0-1.2-.1-1.9-.4l-.3-.1-.3 1.6c.5.2 1.3.4 2.2.4 2.1 0 3.5-1 3.5-2.6 0-.9-.5-1.5-1.7-2.1-.7-.3-1.1-.6-1.1-1 0-.3.4-.7 1.1-.7.7 0 1.1.1 1.5.3l.2.1.4-1.5zm5.1 0h-1.5c-.5 0-.8.1-1 .6l-2.9 6.4h2.1l.4-1.1h2.5l.2 1.1h1.8L27.2 5.5zm-2.4 5.3l1-2.8.3.9.2.7.3 1.2h-1.8zM12 5.5l-1.9 5.6-.2-1-.7-3.2c-.1-.5-.5-.6-1-.6H5.5l-.1.2c.7.2 1.5.5 2 .8l1.7 6h2.1l3.2-7.8H12z" fill="white"/></svg>
+            {/* Mastercard */}
+            <svg width="32" height="20" viewBox="0 0 32 20" fill="none" aria-label="Mastercard"><rect width="32" height="20" rx="3" fill="#252525"/><circle cx="12.5" cy="10" r="5.5" fill="#EB001B"/><circle cx="19.5" cy="10" r="5.5" fill="#F79E1B"/><path d="M16 5.8a5.5 5.5 0 0 1 0 8.4 5.5 5.5 0 0 1 0-8.4z" fill="#FF5F00"/></svg>
+            {/* Amex */}
+            <svg width="32" height="20" viewBox="0 0 32 20" fill="none" aria-label="American Express"><rect width="32" height="20" rx="3" fill="#006FCF"/><text x="16" y="12.5" textAnchor="middle" fill="white" fontSize="6" fontWeight="bold" fontFamily="sans-serif">AMEX</text></svg>
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] text-muted">
+            <span>Powered by</span>
+            <svg viewBox="0 0 468 222.5" className="h-[13px] w-auto" fill="#635BFF" aria-label="Stripe"><path fillRule="evenodd" clipRule="evenodd" d="M414 113.4c0-25.6-12.4-45.8-36.1-45.8-23.8 0-38.2 20.2-38.2 45.6 0 30.1 17 45.3 41.4 45.3 11.9 0 20.9-2.7 27.7-6.5v-20c-6.8 3.4-14.6 5.5-24.5 5.5-9.7 0-18.3-3.4-19.4-15.2h48.9c0-1.3.2-6.5.2-8.9zm-49.4-9.5c0-11.3 6.9-16 13.2-16 6.1 0 12.6 4.7 12.6 16h-25.8zM301.1 67.6c-9.8 0-16.1 4.6-19.6 7.8l-1.3-6.2h-22v116.6l25-5.3.1-28.3c3.6 2.6 8.9 6.3 17.7 6.3 17.9 0 34.2-14.4 34.2-46.1-.1-29-16.6-44.8-34.1-44.8zm-6 68.9c-5.9 0-9.4-2.1-11.8-4.7l-.1-37.1c2.6-2.9 6.2-4.9 11.9-4.9 9.1 0 15.4 10.2 15.4 23.3 0 13.4-6.2 23.4-15.4 23.4zM223.8 61.7l25.1-5.4V36l-25.1 5.3zM223.8 69.3h25.1v87.5h-25.1zM196.9 76.7l-1.6-7.4h-21.6v87.5h25V97.5c5.9-7.7 15.9-6.3 19-5.2v-23c-3.2-1.2-14.9-3.4-20.8 7.4zM146.9 47.6l-24.4 5.2-.1 80.1c0 14.8 11.1 25.7 25.9 25.7 8.2 0 14.2-1.5 17.5-3.3V135c-3.2 1.3-19 5.9-19-8.9V90.6h19V69.3h-19l.1-21.7zM79.3 94.7c0-3.9 3.2-5.4 8.5-5.4 7.6 0 17.2 2.3 24.8 6.4V72.2c-8.3-3.3-16.5-4.6-24.8-4.6C68.7 67.6 55 78.2 55 95.2c0 26.3 36.3 22.1 36.3 33.4 0 4.6-4 6.1-9.6 6.1-8.3 0-18.9-3.4-27.3-8v23.8c9.3 4 18.7 5.7 27.3 5.7 19.8 0 33.4-9.8 33.4-26.8 0-28.5-36.8-23.3-36.8-34.7z"/></svg>
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-[10px] text-muted">
+          <div className="flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>256-bit SSL encrypted</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <a href="/terms" className="hover:text-navy transition-colors">Terms</a>
+            <a href="/privacy" className="hover:text-navy transition-colors">Privacy</a>
+            <span>All prices GBP · cancel anytime</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
