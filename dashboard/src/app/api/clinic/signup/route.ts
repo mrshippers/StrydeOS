@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getAdminDb, getAdminAuth } from "@/lib/firebase-admin";
+import { setCustomClaims } from "@/lib/set-custom-claims";
 import type {
   UserRole,
   UserStatus,
@@ -278,6 +279,9 @@ async function handler(request: NextRequest) {
     });
 
     await batch.commit();
+
+    // Set custom claims so subsequent API calls skip the Firestore read
+    await setCustomClaims(uid!, { clinicId, role: "owner" });
 
     // Fire server-side funnel event
     try {

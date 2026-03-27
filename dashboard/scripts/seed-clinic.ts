@@ -153,6 +153,10 @@ async function main() {
     console.log("Updated user document for uid:", uid);
   }
 
+  // Stamp custom claims so verifyApiRequest reads from the JWT
+  await auth.setCustomUserClaims(uid, { clinicId, role: "owner" });
+  console.log("Set custom claims for uid:", uid);
+
   console.log("\nDone. Sign in with:");
   console.log("  Email:", email);
   if (temporaryPassword) {

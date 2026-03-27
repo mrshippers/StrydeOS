@@ -73,6 +73,13 @@ async function main() {
     console.log("Created users/" + uid + " with role: superadmin");
   }
 
+  // Stamp custom claims — superadmin may or may not have a clinicId
+  const finalData = (await userRef.get()).data();
+  const claims: Record<string, string> = { role: "superadmin" };
+  if (finalData?.clinicId) claims.clinicId = finalData.clinicId;
+  await auth.setCustomUserClaims(uid, claims);
+  console.log("Set custom claims for uid:", uid);
+
   console.log("\nDone. Next time you sign in as", email, "you will:");
   console.log("  - Be redirected to /admin (Stryde Super User view)");
   console.log("  - See the 'Stryde Super User' link in the sidebar");
