@@ -474,6 +474,10 @@ export default function SettingsPage() {
 
   const cp = user?.clinicProfile ?? null;
 
+  const [profileFirstName, setProfileFirstName] = useState("");
+  const [profileLastName, setProfileLastName] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+
   const [clinicName, setClinicName] = useState("");
   const [clinicAddress, setClinicAddress] = useState("");
   const [clinicPhone, setClinicPhone] = useState("");
@@ -608,7 +612,37 @@ export default function SettingsPage() {
     // API keys are never read from server (stored in integrations_config only)
   }, [cp]);
 
+  useEffect(() => {
+    if (!user) return;
+    setProfileFirstName(user.firstName ?? "");
+    setProfileLastName(user.lastName ?? "");
+  }, [user]);
+
   const clinicId = user?.clinicId;
+
+  async function handleSaveUserProfile() {
+    if (!firebaseUser?.uid || !db) return;
+    const trimFirst = profileFirstName.trim();
+    const trimLast = profileLastName.trim();
+    if (!trimFirst || !trimLast) {
+      toast("Please enter both your first and last name", "error");
+      return;
+    }
+    setSavingProfile(true);
+    try {
+      await updateDoc(doc(db, "users", firebaseUser.uid), {
+        firstName: trimFirst,
+        lastName: trimLast,
+        updatedAt: new Date().toISOString(),
+      });
+      await refreshClinicProfile();
+      toast("Profile updated", "success");
+    } catch {
+      toast("Failed to update profile", "error");
+    } finally {
+      setSavingProfile(false);
+    }
+  }
 
   const handleSaveProfile = useCallback(async () => {
     if (!clinicId || !db) {
@@ -1166,6 +1200,47 @@ export default function SettingsPage() {
       {/* Retrigger tour */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4">
         <RetriggerTourButton />
+      </div>
+
+      {/* Your Profile */}
+      <div id="profile-section" className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+        <h3 className="font-display text-lg text-navy mb-1">Your Profile</h3>
+        <p className="text-xs text-muted mb-4">How your name appears across StrydeOS</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[10px] font-semibold text-navy/60 uppercase tracking-wider mb-1.5">First name</label>
+            <input
+              type="text"
+              value={profileFirstName}
+              onChange={(e) => setProfileFirstName(e.target.value)}
+              placeholder="First name"
+              className="w-full px-3 py-2 rounded-xl border border-border text-sm text-navy focus:border-blue focus:ring-1 focus:ring-blue/20 outline-none transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-navy/60 uppercase tracking-wider mb-1.5">Last name</label>
+            <input
+              type="text"
+              value={profileLastName}
+              onChange={(e) => setProfileLastName(e.target.value)}
+              placeholder="Last name"
+              className="w-full px-3 py-2 rounded-xl border border-border text-sm text-navy focus:border-blue focus:ring-1 focus:ring-blue/20 outline-none transition-colors"
+            />
+          </div>
+        </div>
+        {(profileFirstName !== (user?.firstName ?? "") || profileLastName !== (user?.lastName ?? "")) && (
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={handleSaveUserProfile}
+              disabled={savingProfile}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
+              style={{ background: brand.blue }}
+            >
+              {savingProfile ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+              Save profile
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Security: Password + MFA */}
