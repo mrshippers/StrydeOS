@@ -323,9 +323,7 @@ export default function AvaShowcase() {
         }
       `}</style>
 
-      <audio ref={audioRef} preload="auto">
-        <source src="/audio/ava-intro.mp3" type="audio/mpeg" />
-      </audio>
+      <audio ref={audioRef} src="/ava-demo.mp3" preload="auto" />
 
       <div className="ava-s" style={{
         fontFamily: "'Outfit', sans-serif",
