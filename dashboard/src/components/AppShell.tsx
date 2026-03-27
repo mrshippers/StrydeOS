@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Component, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
@@ -18,6 +18,14 @@ import TrialBanner from "@/components/TrialBanner";
 import DemoBanner from "@/components/ui/DemoBanner";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
 import ClinicPicker from "@/components/ClinicPicker";
+
+/** Catch splash screen crashes so they don't take down the whole app */
+class SplashErrorBoundary extends Component<{ children: ReactNode; onError: () => void }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch() { this.props.onError(); }
+  render() { return this.state.hasError ? null : this.props.children; }
+}
 
 const FirstLoginTour = dynamic(
   () => import("@/components/FirstLoginTour"),
@@ -103,7 +111,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
       <ProgressProvider>
-        {showSplash && <SplashScreen onComplete={() => setAnimDone(true)} />}
+        {showSplash && (
+          <SplashErrorBoundary onError={() => setAnimDone(true)}>
+            <SplashScreen onComplete={() => setAnimDone(true)} />
+          </SplashErrorBoundary>
+        )}
         <ImpersonationBanner />
         <StagingBanner />
         {isChromeless || !user ? (
