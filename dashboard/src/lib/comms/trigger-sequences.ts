@@ -55,13 +55,16 @@ export async function triggerCommsSequences(
   const clinicName = (clinicDoc.data()?.name as string) ?? "the clinic";
 
   // ── Load supporting data ────────────────────────────────────────────────
+  // Safety cap: limit to 1000 patients and 1000 comms_log entries to prevent OOM.
+  // TODO: Convert to cursor-based pagination when clinics exceed 1000 patients.
   const [patientsSnap, cliniciansSnap, allLogsSnap] = await Promise.all([
-    clinicRef.collection("patients").get(),
+    clinicRef.collection("patients").limit(1000).get(),
     clinicRef.collection("clinicians").get(),
     // Load last 200 days of comms_log for step progression queries
     clinicRef
       .collection("comms_log")
       .where("sentAt", ">=", new Date(now.getTime() - 200 * 86_400_000).toISOString())
+      .limit(1000)
       .get(),
   ]);
 

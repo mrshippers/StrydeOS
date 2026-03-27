@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { verifyApiRequest, verifyCronRequest, handleApiError, requireRole } from "@/lib/auth-guard";
+import { verifyApiRequest, verifyCronRequest, handleApiError, requireRole, requireClinic, type VerifiedUser } from "@/lib/auth-guard";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import type { Appointment, AppointmentStatus, AppointmentType } from "@/types";
 import type { PMSIntegrationConfig } from "@/types/pms";
@@ -10,6 +10,7 @@ const COLLECTION_APPOINTMENTS = "appointments";
 const COLLECTION_CLINICIANS = "clinicians";
 const INTEGRATIONS_PMS = "integrations_config";
 const PMS_DOC_ID = "pms";
+const MAX_BATCH_SIZE = 500;
 
 function getWeekRange(weeksBack: number): { dateFrom: string; dateTo: string } {
   const now = new Date();
@@ -24,24 +25,41 @@ function getWeekRange(weeksBack: number): { dateFrom: string; dateTo: string } {
 
 async function handler(request: NextRequest) {
   try {
-    const isCron = request.headers.get("authorization")?.startsWith("Bearer ");
-    if (isCron) {
+    let authedUser: VerifiedUser | null = null;
+    let isCron = false;
+
+    const authHeader = request.headers.get("authorization")?.startsWith("Bearer ");
+    if (authHeader) {
       try {
         verifyCronRequest(request);
+        isCron = true;
       } catch {
-        const user = await verifyApiRequest(request);
-        requireRole(user, ["owner", "admin", "superadmin"]);
+        authedUser = await verifyApiRequest(request);
+        requireRole(authedUser, ["owner", "admin", "superadmin"]);
       }
     } else {
-      const user = await verifyApiRequest(request);
-      requireRole(user, ["owner", "admin", "superadmin"]);
+      authedUser = await verifyApiRequest(request);
+      requireRole(authedUser, ["owner", "admin", "superadmin"]);
     }
 
     const db = getAdminDb();
-    const clinicsSnap = await db.collection("clinics").get();
+
+    // Non-cron, non-superadmin callers are restricted to their own clinic
+    let clinicDocs: FirebaseFirestore.QueryDocumentSnapshot[];
+    if (!isCron && authedUser && authedUser.role !== "superadmin") {
+      const singleDoc = await db.collection("clinics").doc(authedUser.clinicId).get();
+      if (!singleDoc.exists) {
+        return NextResponse.json({ error: "Clinic not found" }, { status: 404 });
+      }
+      clinicDocs = [singleDoc as FirebaseFirestore.QueryDocumentSnapshot];
+    } else {
+      const clinicsSnap = await db.collection("clinics").get();
+      clinicDocs = clinicsSnap.docs;
+    }
+
     const results: { clinicId: string; ok: boolean; count?: number; error?: string }[] = [];
 
-    for (const clinicDoc of clinicsSnap.docs) {
+    for (const clinicDoc of clinicDocs) {
       const clinicId = clinicDoc.id;
       try {
         const configSnap = await db
@@ -72,9 +90,11 @@ async function handler(request: NextRequest) {
         const { dateFrom, dateTo } = getWeekRange(4);
         const pmsAppointments = await adapter.getAppointments({ dateFrom, dateTo });
 
-        const batch = db.batch();
         const ref = db.collection("clinics").doc(clinicId).collection(COLLECTION_APPOINTMENTS);
         const now = new Date().toISOString();
+
+        let batch = db.batch();
+        let batchCount = 0;
 
         for (const pms of pmsAppointments) {
           const clinicianId = externalToInternalClinician[pms.clinicianExternalId] ?? pms.clinicianExternalId;
@@ -97,9 +117,18 @@ async function handler(request: NextRequest) {
           };
           const docRef = ref.doc(pms.externalId);
           batch.set(docRef, doc);
+          batchCount++;
+
+          if (batchCount >= MAX_BATCH_SIZE) {
+            await batch.commit();
+            batch = db.batch();
+            batchCount = 0;
+          }
         }
 
-        await batch.commit();
+        if (batchCount > 0) {
+          await batch.commit();
+        }
         await db
           .collection("clinics")
           .doc(clinicId)

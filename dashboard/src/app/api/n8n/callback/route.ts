@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import type { CommsOutcome, SequenceType, CommsChannel, NpsCategory } from "@/types";
@@ -24,7 +25,11 @@ async function handler(request: NextRequest) {
       request.headers.get("x-webhook-secret") ??
       request.headers.get("authorization")?.replace("Bearer ", "");
 
-    if (!N8N_SECRET || secret !== N8N_SECRET) {
+    if (
+      !N8N_SECRET ||
+      !secret ||
+      !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(N8N_SECRET))
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

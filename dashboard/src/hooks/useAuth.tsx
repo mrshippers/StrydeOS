@@ -30,9 +30,8 @@ async function createServerSession(fbUser: User): Promise<void> {
     });
     if (!res.ok) throw new Error(`Session API returned ${res.status}`);
   } catch {
-    // Fallback: set a basic cookie so middleware doesn't block navigation.
-    // This path only fires if the session API is unreachable (e.g. local dev without SESSION_SECRET).
-    document.cookie = "__session=1; path=/; SameSite=Lax";
+    // Session API unreachable — do not set a client-side cookie fallback.
+    // The middleware will redirect to /login if no valid HMAC-signed session exists.
   }
 }
 
@@ -40,7 +39,7 @@ async function clearServerSession(): Promise<void> {
   try {
     await fetch("/api/auth/session", { method: "DELETE" });
   } catch {
-    document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
+    // Session API unreachable — cookie will expire naturally or on next successful logout.
   }
 }
 

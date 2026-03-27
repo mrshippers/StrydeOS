@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronRequest, handleApiError } from "@/lib/auth-guard";
+import { writeAuditLog } from "@/lib/audit-log";
 import { withRequestLog } from "@/lib/request-logger";
 
 /**
@@ -11,11 +12,17 @@ import { withRequestLog } from "@/lib/request-logger";
  * expired documents from clinic subcollections based on defined TTLs.
  *
  * Retention periods:
- *  - audit_logs:        730 days (2 years)
- *  - comms_log:         365 days (1 year)
- *  - call_log:          365 days (1 year)
- *  - integration_health: 90 days
- *  - funnel_events:     365 days (1 year)
+ *  - audit_logs:         730 days (2 years)
+ *  - comms_log:          365 days (1 year)
+ *  - call_log:           365 days (1 year)
+ *  - integration_health:  90 days
+ *  - funnel_events:      365 days (1 year)
+ *  - appointments:      2920 days (8 years — UK clinical records guidance)
+ *  - clinical_notes:    2920 days (8 years — UK clinical records guidance)
+ *  - outcome_scores:    2920 days (8 years — UK clinical records guidance)
+ *
+ * Also enforces billing grace period: clinics past_due for >14 days
+ * are downgraded to free tier with all features disabled.
  */
 
 interface RetentionPolicy {
@@ -32,6 +39,11 @@ const RETENTION_POLICIES: RetentionPolicy[] = [
   { collection: "call_log", dateField: "startTimestamp", retentionDays: 365, isEpochMs: true },
   { collection: "integration_health", dateField: "timestamp", retentionDays: 90 },
   { collection: "funnel_events", dateField: "timestamp", retentionDays: 365 },
+  // UK clinical records guidance: 8 years from last contact for adults.
+  // Only clinical data records — patient identity docs have separate lifecycle (SAR/erasure).
+  { collection: "appointments", dateField: "date", retentionDays: 2920 },
+  { collection: "clinical_notes", dateField: "createdAt", retentionDays: 2920 },
+  { collection: "outcome_scores", dateField: "recordedAt", retentionDays: 2920 },
 ];
 
 const BATCH_LIMIT = 500;
@@ -59,6 +71,105 @@ async function cleanWebhookDedup(db: FirebaseFirestore.Firestore): Promise<numbe
   }
 
   return totalDeleted;
+}
+
+/** GDPR hard-delete: cascade-remove patients past their 30-day grace period. */
+const PATIENT_SUBCOLLECTIONS = [
+  "appointments",
+  "comms_log",
+  "clinical_notes",
+  "outcome_scores",
+  "call_log",
+  "voiceInteractions",
+] as const;
+
+async function executeGdprHardDeletions(
+  db: FirebaseFirestore.Firestore
+): Promise<{ deleted: number; errors: string[] }> {
+  const result = { deleted: 0, errors: [] as string[] };
+  const now = new Date().toISOString();
+
+  // Query all clinics for patients marked for deletion whose grace period has elapsed
+  const clinicsSnap = await db
+    .collection("clinics")
+    .where("status", "in", ["live", "onboarding"])
+    .get();
+
+  for (const clinicDoc of clinicsSnap.docs) {
+    const clinicId = clinicDoc.id;
+
+    try {
+      const patientsSnap = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("patients")
+        .where("markedForDeletion", "==", true)
+        .where("deletionScheduledAt", "<", now)
+        .get();
+
+      for (const patientDoc of patientsSnap.docs) {
+        const patientId = patientDoc.id;
+
+        try {
+          // Cascade-delete across subcollections referencing this patient
+          for (const subcollection of PATIENT_SUBCOLLECTIONS) {
+            let hasMore = true;
+            while (hasMore) {
+              const subSnap = await db
+                .collection("clinics")
+                .doc(clinicId)
+                .collection(subcollection)
+                .where("patientId", "==", patientId)
+                .limit(BATCH_LIMIT)
+                .get();
+
+              if (subSnap.empty) {
+                hasMore = false;
+                break;
+              }
+
+              const batch = db.batch();
+              for (const doc of subSnap.docs) batch.delete(doc.ref);
+              await batch.commit();
+
+              if (subSnap.size < BATCH_LIMIT) hasMore = false;
+            }
+          }
+
+          // Delete the patient document itself
+          await patientDoc.ref.delete();
+          result.deleted += 1;
+
+          // Audit log for GDPR compliance
+          await writeAuditLog(db, clinicId, {
+            userId: "system:gdpr-cleanup",
+            userEmail: "system@strydeos.com",
+            action: "delete",
+            resource: "patient",
+            resourceId: patientId,
+            metadata: {
+              reason: "gdpr_hard_delete",
+              deletionScheduledAt: patientDoc.data().deletionScheduledAt,
+            },
+          });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          result.errors.push(`${clinicId}/${patientId}: ${message}`);
+          Sentry.captureException(err, {
+            tags: { clinicId, patientId, source: "gdpr_hard_delete" },
+          });
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      result.errors.push(`${clinicId}: ${message}`);
+      Sentry.captureException(err, {
+        tags: { clinicId, source: "gdpr_hard_delete" },
+      });
+    }
+  }
+
+  return result;
 }
 
 async function handler(request: NextRequest) {
@@ -145,7 +256,15 @@ async function handler(request: NextRequest) {
     Sentry.captureException(err, { tags: { source: "webhook_dedup_cleanup" } });
   }
 
-  const totalDeleted = Object.values(summary).reduce((acc, s) => acc + s.deleted, 0) + dedupDeleted;
+  // GDPR: hard-delete patients past their 30-day grace period
+  let gdprResult = { deleted: 0, errors: [] as string[] };
+  try {
+    gdprResult = await executeGdprHardDeletions(db);
+  } catch (err) {
+    Sentry.captureException(err, { tags: { source: "gdpr_hard_delete" } });
+  }
+
+  const totalDeleted = Object.values(summary).reduce((acc, s) => acc + s.deleted, 0) + dedupDeleted + gdprResult.deleted;
 
   return NextResponse.json({
     ok: true,
@@ -153,6 +272,8 @@ async function handler(request: NextRequest) {
     clinicsScanned: clinicsSnap.size,
     totalDeleted,
     webhookDedupDeleted: dedupDeleted,
+    gdprHardDeleted: gdprResult.deleted,
+    gdprErrors: gdprResult.errors.length > 0 ? gdprResult.errors : undefined,
     collections: summary,
   });
 }

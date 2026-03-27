@@ -26,18 +26,6 @@ export async function middleware(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
   if (isAuthRedirect && session) {
-    // Demo users can access these pages — but only outside production
-    if (session === "demo") {
-      const isProduction = process.env.NODE_ENV === "production"
-        && !process.env.ALLOW_DEMO_MODE;
-      if (isProduction) {
-        const response = NextResponse.next();
-        response.cookies.set("__session", "", { path: "/", maxAge: 0 });
-        return response;
-      }
-      return NextResponse.next();
-    }
-
     const payload = await verifySession(session);
     if (payload) {
       // Valid session — skip login/trial, go straight to dashboard
@@ -64,18 +52,6 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
-  }
-
-  // Demo mode: only allowed in non-production environments
-  if (session === "demo") {
-    const isProduction = process.env.NODE_ENV === "production"
-      && !process.env.ALLOW_DEMO_MODE;
-    if (isProduction) {
-      const response = NextResponse.redirect(new URL("/login", request.url));
-      response.cookies.set("__session", "", { path: "/", maxAge: 0 });
-      return response;
-    }
-    return NextResponse.next();
   }
 
   // Verify HMAC-signed session — reject if tampered or expired
@@ -117,5 +93,8 @@ function setSecurityHeaders(response: NextResponse): void {
 }
 
 export const config = {
+  // API routes are intentionally excluded — they use Bearer token auth via
+  // verifyApiRequest() in lib/auth-guard.ts, not session cookies. Defense-in-depth
+  // for API routes is handled at that layer, not in middleware.
   matcher: ["/((?!_next/static|_next/image|favicon\\.ico|api/).*)"],
 };

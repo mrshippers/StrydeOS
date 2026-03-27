@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
-import { initializeApp, getApps } from "firebase-admin/app";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyApiRequest, handleApiError } from "@/lib/auth-guard";
 import { buildAvaCorePrompt } from "@/lib/ava/ava-core-prompt";
 import { compileKnowledgeDocument, type KnowledgeEntry } from "@/lib/ava/ava-knowledge";
 import { withRequestLog } from "@/lib/request-logger";
 
-// Ensure Firebase Admin is initialized
-if (!getApps().length) {
-  initializeApp();
-}
-
-const db = getFirestore();
+const db = getAdminDb();
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
 
@@ -74,15 +68,8 @@ async function updateAgent(agentId: string, config: Partial<ElevenAgentsConfig>)
 
 async function handler(req: NextRequest) {
   try {
-    // Extract clinicId from Authorization header (Firebase token)
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.slice(7);
-    const decodedToken = await getAuth().verifyIdToken(token);
-    const clinicId = decodedToken.custom_claims?.clinicId;
+    const user = await verifyApiRequest(req);
+    const clinicId = user.clinicId;
 
     if (!clinicId) {
       return NextResponse.json({ error: "No clinic associated with user" }, { status: 400 });
@@ -171,12 +158,7 @@ async function handler(req: NextRequest) {
     );
   } catch (error) {
     console.error("[Ava agent creation error]", error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to create/update agent",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 

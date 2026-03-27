@@ -176,5 +176,16 @@ service cloud.firestore {
         allow read, write: if false;
       }
     }
+
+    // ─── Server-only top-level collections — never client-accessible ─────
+    match /_stripe_event_dedup/{document=**} {
+      allow read, write: if false;
+    }
+    match /_webhook_dedup/{document=**} {
+      allow read, write: if false;
+    }
+    match /funnel_events/{document=**} {
+      allow read, write: if false;
+    }
   }
 }

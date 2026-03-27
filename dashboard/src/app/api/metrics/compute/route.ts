@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { verifyApiRequest, verifyCronRequest, handleApiError, requireRole } from "@/lib/auth-guard";
+import { verifyApiRequest, verifyCronRequest, handleApiError, requireRole, requireClinic } from "@/lib/auth-guard";
+import type { VerifiedUser } from "@/lib/auth-guard";
 import { computeWeeklyMetricsForClinic, computeWeeklyMetricsForAllClinics } from "@/lib/metrics/compute-weekly";
 import { withRequestLog } from "@/lib/request-logger";
 
 async function handler(request: NextRequest) {
   try {
+    let authenticatedUser: VerifiedUser | null = null;
+    let isCronAuth = false;
+
     const isCron = request.headers.get("authorization")?.startsWith("Bearer ");
     if (isCron) {
       try {
         verifyCronRequest(request);
+        isCronAuth = true;
       } catch {
-        const user = await verifyApiRequest(request);
-        requireRole(user, ["owner", "admin", "superadmin"]);
+        authenticatedUser = await verifyApiRequest(request);
+        requireRole(authenticatedUser, ["owner", "admin", "superadmin"]);
       }
     } else {
-      const user = await verifyApiRequest(request);
-      requireRole(user, ["owner", "admin", "superadmin"]);
+      authenticatedUser = await verifyApiRequest(request);
+      requireRole(authenticatedUser, ["owner", "admin", "superadmin"]);
     }
 
     const db = getAdminDb();
@@ -25,6 +30,10 @@ async function handler(request: NextRequest) {
     const weeksBack = Math.min(12, Math.max(1, Number(body.weeksBack) || 6));
 
     if (clinicId) {
+      // Tenant isolation: non-superadmin, non-cron users can only target their own clinic
+      if (authenticatedUser && !isCronAuth) {
+        requireClinic(authenticatedUser, clinicId);
+      }
       const { written } = await computeWeeklyMetricsForClinic(db, clinicId, weeksBack);
       return NextResponse.json({ clinicId, written });
     }

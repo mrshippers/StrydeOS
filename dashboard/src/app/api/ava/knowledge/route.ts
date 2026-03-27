@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
-import { initializeApp, getApps } from "firebase-admin/app";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyApiRequest, handleApiError } from "@/lib/auth-guard";
 import { buildAvaCorePrompt } from "@/lib/ava/ava-core-prompt";
 import {
   compileKnowledgeDocument,
@@ -10,11 +9,7 @@ import {
 } from "@/lib/ava/ava-knowledge";
 import { withRequestLog } from "@/lib/request-logger";
 
-if (!getApps().length) {
-  initializeApp();
-}
-
-const db = getFirestore();
+const db = getAdminDb();
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
 
@@ -26,15 +21,8 @@ const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
  */
 async function handler(req: NextRequest) {
   try {
-    // Auth — same pattern as /api/ava/agent
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.slice(7);
-    const decodedToken = await getAuth().verifyIdToken(token);
-    const clinicId = decodedToken.custom_claims?.clinicId;
+    const user = await verifyApiRequest(req);
+    const clinicId = user.clinicId;
 
     if (!clinicId) {
       return NextResponse.json(
@@ -183,15 +171,7 @@ async function handler(req: NextRequest) {
     });
   } catch (error) {
     console.error("[Ava knowledge sync error]", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to sync knowledge base",
-      },
-      { status: 500 },
-    );
+    return handleApiError(error);
   }
 }
 

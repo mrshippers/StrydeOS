@@ -34,6 +34,7 @@ async function handler(request: NextRequest) {
   }
 
   let uid: string | undefined;
+  let stripeCustomerIdForCleanup: string | undefined;
   try {
     const body = await request.json().catch(() => null);
     if (!body) {
@@ -223,6 +224,7 @@ async function handler(request: NextRequest) {
           metadata: { clinicId, source: "self_serve_signup" },
         });
         stripeCustomerId = customer.id;
+        stripeCustomerIdForCleanup = customer.id;
       }
     } catch {
       // Stripe creation failed — continue without it; billing page will handle later
@@ -301,6 +303,14 @@ async function handler(request: NextRequest) {
         await getAdminAuth().deleteUser(uid);
       } catch {
         console.error("[signup cleanup] Failed to delete orphaned auth user:", uid);
+      }
+    }
+    if (stripeCustomerIdForCleanup) {
+      try {
+        const { getStripe } = await import("@/lib/stripe");
+        await getStripe().customers.del(stripeCustomerIdForCleanup);
+      } catch {
+        console.error("[signup cleanup] Failed to delete orphaned Stripe customer:", stripeCustomerIdForCleanup);
       }
     }
     return NextResponse.json(

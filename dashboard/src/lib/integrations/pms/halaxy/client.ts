@@ -117,12 +117,19 @@ export interface FHIRBundle<T> {
  */
 export async function halaxyFetchAll<T>(
   config: HalaxyConfig,
-  path: string
+  path: string,
+  maxPages = 100
 ): Promise<T[]> {
   const results: T[] = [];
   let nextUrl: string | null = path;
+  let page = 0;
 
   while (nextUrl) {
+    if (page >= maxPages) {
+      console.warn(`[halaxyFetchAll] Reached maxPages limit (${maxPages}) for ${path} — results may be incomplete`);
+      break;
+    }
+
     const bundle: FHIRBundle<T> = await halaxyFetch<FHIRBundle<T>>(config, nextUrl);
 
     const entries = bundle.entry ?? [];
@@ -133,6 +140,7 @@ export async function halaxyFetchAll<T>(
     // Follow FHIR next link if present
     const nextLink = bundle.link?.find((l) => l.relation === "next");
     nextUrl = nextLink?.url ?? null;
+    page++;
   }
 
   return results;

@@ -22,6 +22,7 @@ Private Practice Barometer - BM Public.pdf
 
 # Firebase
 firebase-debug.log
+firebase-seed/.env
 
 # Git worktrees
 .worktrees/

@@ -22,6 +22,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import { flagsFromSubscriptionItems, getTierFromMetadata, countExtraSeatsFromItems } from "@/lib/billing";
 import type { StripeSubscriptionStatus } from "@/types";
 import { withRequestLog } from "@/lib/request-logger";
@@ -51,6 +52,13 @@ async function handler(request: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  // ── Idempotency: skip already-processed events (Stripe retries on 5xx) ──
+  const dedupRef = getAdminDb().collection("_stripe_event_dedup").doc(event.id);
+  const dedupSnap = await dedupRef.get();
+  if (dedupSnap.exists) {
+    return NextResponse.json({ received: true, deduplicated: true });
+  }
+
   try {
     switch (event.type) {
       case "customer.subscription.created":
@@ -69,6 +77,9 @@ async function handler(request: NextRequest) {
       default:
         break;
     }
+
+    // Mark event as processed for idempotency
+    await dedupRef.set({ processedAt: new Date().toISOString() });
   } catch (err) {
     console.error(`[Billing webhook] Error processing ${event.type}:`, err);
     Sentry.captureException(err, { tags: { stripeEvent: event.type } });
@@ -191,14 +202,13 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
     .doc(clinic.id)
     .update({
       featureFlags: updatedFlags,
-      billing: {
-        stripeCustomerId: customerId,
-        subscriptionId: subscription.id,
-        subscriptionStatus: status,
-        currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
-        extraSeats,
-        ...(tier ? { tier } : {}),
-      },
+      "billing.stripeCustomerId": customerId,
+      "billing.subscriptionId": subscription.id,
+      "billing.subscriptionStatus": status,
+      "billing.currentPeriodEnd": getSubscriptionPeriodEnd(subscription),
+      "billing.extraSeats": extraSeats,
+      ...(tier ? { "billing.tier": tier } : {}),
+      ...(status === "active" ? { "billing.paymentFailedAt": FieldValue.delete() } : {}),
       updatedAt: now,
     });
 
@@ -236,16 +246,14 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     .doc(clinic.id)
     .update({
       featureFlags: updatedFlags,
-      billing: {
-        stripeCustomerId: customerId,
-        subscriptionId: primary?.id ?? subscription.id,
-        subscriptionStatus: (primary?.status as StripeSubscriptionStatus) ?? "canceled",
-        currentPeriodEnd: primary
-          ? primary.periodEndIso
-          : getSubscriptionPeriodEnd(subscription),
-        extraSeats,
-        ...(tier ? { tier } : {}),
-      },
+      "billing.stripeCustomerId": customerId,
+      "billing.subscriptionId": primary?.id ?? subscription.id,
+      "billing.subscriptionStatus": (primary?.status as StripeSubscriptionStatus) ?? "canceled",
+      "billing.currentPeriodEnd": primary
+        ? primary.periodEndIso
+        : getSubscriptionPeriodEnd(subscription),
+      "billing.extraSeats": extraSeats,
+      ...(tier ? { "billing.tier": tier } : {}),
       updatedAt: now,
     });
 
@@ -286,6 +294,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
     .doc(clinic.id)
     .update({
       "billing.subscriptionStatus": "past_due",
+      "billing.paymentFailedAt": new Date().toISOString(),
       ...(subscriptionId ? { "billing.subscriptionId": subscriptionId } : {}),
       updatedAt: new Date().toISOString(),
     });

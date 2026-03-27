@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { withRequestLog } from "@/lib/request-logger";
 
 /**
@@ -12,39 +13,16 @@ import { withRequestLog } from "@/lib/request-logger";
  * Auth: Bearer {Firebase ID token}
  */
 async function handler(req: NextRequest) {
-  const authHeader = req.headers.get("authorization") ?? "";
-  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  let uid: string;
-  let clinicId: string;
-
   try {
-    const adminAuth = getAdminAuth();
-    const decoded = await adminAuth.verifyIdToken(token);
-    uid = decoded.uid;
-  } catch {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-  }
+    const user = await verifyApiRequest(req);
+    requireRole(user, ["owner", "admin", "superadmin"]);
 
-  try {
-    const db = getAdminDb();
-
-    // Get the calling user's clinicId
-    const userSnap = await db.collection("users").doc(uid).get();
-    if (!userSnap.exists) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const userData = userSnap.data() as { clinicId?: string; role?: string };
-    clinicId = userData.clinicId ?? "";
-
+    const clinicId = user.clinicId;
     if (!clinicId) {
       return NextResponse.json({ error: "User has no clinicId" }, { status: 400 });
     }
+
+    const db = getAdminDb();
 
     // Check current clinic status
     const clinicSnap = await db.collection("clinics").doc(clinicId).get();
@@ -89,7 +67,7 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ promoted: true });
   } catch (err) {
     console.error("[check-go-live] Error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(err);
   }
 }
 

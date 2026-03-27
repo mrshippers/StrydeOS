@@ -5,7 +5,9 @@ import {
   verifyCronRequest,
   handleApiError,
   requireRole,
+  requireClinic,
 } from "@/lib/auth-guard";
+import type { VerifiedUser } from "@/lib/auth-guard";
 import { runPipeline } from "@/lib/pipeline/run-pipeline";
 import { withRequestLog } from "@/lib/request-logger";
 
@@ -19,17 +21,21 @@ import { withRequestLog } from "@/lib/request-logger";
  */
 async function handler(request: NextRequest) {
   try {
+    let authenticatedUser: VerifiedUser | null = null;
+    let isCronAuth = false;
+
     const isCron = request.headers.get("authorization")?.startsWith("Bearer ");
     if (isCron) {
       try {
         verifyCronRequest(request);
+        isCronAuth = true;
       } catch {
-        const user = await verifyApiRequest(request);
-        requireRole(user, ["owner", "admin", "superadmin"]);
+        authenticatedUser = await verifyApiRequest(request);
+        requireRole(authenticatedUser, ["owner", "admin", "superadmin"]);
       }
     } else {
-      const user = await verifyApiRequest(request);
-      requireRole(user, ["owner", "admin", "superadmin"]);
+      authenticatedUser = await verifyApiRequest(request);
+      requireRole(authenticatedUser, ["owner", "admin", "superadmin"]);
     }
 
     const db = getAdminDb();
@@ -37,6 +43,10 @@ async function handler(request: NextRequest) {
     const targetClinicId = body.clinicId as string | undefined;
 
     if (targetClinicId) {
+      // Tenant isolation: non-superadmin, non-cron users can only target their own clinic
+      if (authenticatedUser && !isCronAuth) {
+        requireClinic(authenticatedUser, targetClinicId);
+      }
       const result = await runPipeline(db, targetClinicId, { backfill: true });
       return NextResponse.json(result);
     }

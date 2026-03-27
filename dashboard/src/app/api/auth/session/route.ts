@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth } from "@/lib/firebase-admin";
 import { signSession, SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/session";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { withRequestLog } from "@/lib/request-logger";
 
 /**
  * POST /api/auth/session
  * Receives a Firebase ID token, verifies it server-side,
  * and sets an HMAC-signed HttpOnly session cookie.
  */
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest) {
+  // Rate limit: 10 requests per IP per minute to mitigate brute-force token replay
+  const { limited, remaining } = checkRateLimit(request, { limit: 10, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const { idToken } = await request.json();
     if (!idToken || typeof idToken !== "string") {
@@ -39,7 +50,7 @@ export async function POST(request: NextRequest) {
  * DELETE /api/auth/session
  * Clears the session cookie on logout.
  */
-export async function DELETE() {
+async function deleteHandler(request: NextRequest) {
   const response = NextResponse.json({ ok: true });
   response.cookies.set(SESSION_COOKIE, "", {
     httpOnly: true,
@@ -50,3 +61,6 @@ export async function DELETE() {
   });
   return response;
 }
+
+export const POST = withRequestLog(postHandler);
+export const DELETE = withRequestLog(deleteHandler);

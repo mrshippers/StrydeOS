@@ -28,22 +28,27 @@ async function handler(request: NextRequest) {
     const secret =
       request.headers.get("x-webhook-secret") ??
       request.headers.get("authorization")?.replace("Bearer ", "");
-    if (!WEBHOOK_SECRET || secret !== WEBHOOK_SECRET) {
+    if (
+      !WEBHOOK_SECRET ||
+      !secret ||
+      !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(WEBHOOK_SECRET))
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json().catch(() => ({}));
+    const rawBody = await request.text();
+    let body: Record<string, unknown> = {};
+    try { body = JSON.parse(rawBody); } catch { /* malformed — body stays empty */ }
     const event = body.event as string | undefined;
-    const clinicExternalRef = body.clinic_id as string | undefined;
 
     if (!event) {
       return NextResponse.json({ error: "Missing event" }, { status: 400 });
     }
 
-    // Idempotency: hash event + clinicId + timestamp (rounded to 30s window) to dedup retries
+    // Idempotency: SHA-256 hash of the raw webhook body to dedup exact retries
     const idempotencyKey = crypto
       .createHash("sha256")
-      .update(`${event}:${clinicExternalRef ?? "all"}:${Math.floor(Date.now() / 30_000)}`)
+      .update(rawBody)
       .digest("hex")
       .slice(0, 24);
 

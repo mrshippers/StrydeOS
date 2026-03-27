@@ -111,7 +111,7 @@ async function handler(request: NextRequest) {
         sequenceType,
         channel,
         sentAt: now,
-        outcome: success ? "no_action" : "no_action", // outcome updated later (via webhook/manual)
+        outcome: success ? "no_action" : "send_failed", // no_action = awaiting callback; send_failed = delivery error
       };
       await db.collection("clinics").doc(clinicId).collection("comms_log").add(entry);
     } catch (logErr) {

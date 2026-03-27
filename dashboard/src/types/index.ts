@@ -392,7 +392,7 @@ export interface WeeklyStats {
 // ─── Comms ───────────────────────────────────────────────────────────────────
 
 export type CommsChannel = "email" | "sms" | "whatsapp";
-export type CommsOutcome = "booked" | "no_action" | "unsubscribed" | "responded";
+export type CommsOutcome = "booked" | "no_action" | "unsubscribed" | "responded" | "send_failed";
 export type SequenceType =
   | "hep_reminder"
   | "rebooking_prompt"

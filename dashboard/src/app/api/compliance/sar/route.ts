@@ -77,9 +77,14 @@ async function getHandler(request: NextRequest) {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
 
-    const clinicId = user.clinicId;
-    if (!clinicId && user.role !== "superadmin") {
-      return NextResponse.json({ error: "No clinic" }, { status: 400 });
+    const clinicIdParam = new URL(request.url).searchParams.get("clinicId");
+    const clinicId = user.clinicId ?? clinicIdParam;
+
+    if (!clinicId) {
+      return NextResponse.json(
+        { error: "clinicId query parameter is required for superadmin" },
+        { status: 400 }
+      );
     }
 
     const db = getAdminDb();

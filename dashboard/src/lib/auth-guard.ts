@@ -49,6 +49,19 @@ export async function verifyApiRequest(
   const data = userDoc.data()!;
   const role = data.role as UserRole;
 
+  // Session version check: if the user doc specifies a sessionVersion, reject
+  // tokens issued before the latest password change to force re-authentication.
+  // Tokens without a `v` claim (issued before versioning) are allowed through
+  // for backward compatibility — new sessions will include `v` going forward.
+  const tokenVersion = (decoded as Record<string, unknown>).v as number | undefined;
+  if (
+    typeof data.sessionVersion === "number" &&
+    typeof tokenVersion === "number" &&
+    tokenVersion !== data.sessionVersion
+  ) {
+    throw new ApiAuthError("Session invalidated — please sign in again", 401);
+  }
+
   if (role !== "superadmin" && (!data.clinicId || !data.role)) {
     throw new ApiAuthError("User profile incomplete — missing clinicId or role", 403);
   }

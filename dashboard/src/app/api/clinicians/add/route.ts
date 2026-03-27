@@ -124,21 +124,8 @@ async function handler(request: NextRequest) {
 
     const now = new Date().toISOString();
 
-    // ── Create Firestore user doc at users/{uid} ────────────────────
-    await db.collection("users").doc(newAuthUser.uid).set({
-      clinicId,
-      role: authRole,
-      firstName,
-      lastName,
-      email,
-      status: "invited",
-      firstLogin: true,
-      tourCompleted: false,
-      createdAt: now,
-      createdBy: user.uid,
-    });
-
-    // ── Create clinician doc in clinics/{clinicId}/clinicians ────────
+    // ── Create Firestore docs (with orphan cleanup on failure) ──────
+    let ref: Awaited<ReturnType<ReturnType<typeof db.collection>["add"]>>;
     const clinicianData = {
       name,
       email,
@@ -154,11 +141,37 @@ async function handler(request: NextRequest) {
       createdBy: user.uid,
     };
 
-    const ref = await db
-      .collection("clinics")
-      .doc(clinicId)
-      .collection("clinicians")
-      .add(clinicianData);
+    try {
+      // ── Create Firestore user doc at users/{uid} ──────────────────
+      await db.collection("users").doc(newAuthUser.uid).set({
+        clinicId,
+        role: authRole,
+        firstName,
+        lastName,
+        email,
+        status: "invited",
+        firstLogin: true,
+        tourCompleted: false,
+        createdAt: now,
+        createdBy: user.uid,
+      });
+
+      // ── Create clinician doc in clinics/{clinicId}/clinicians ──────
+      ref = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("clinicians")
+        .add(clinicianData);
+    } catch (firestoreErr) {
+      // Firestore write failed after Auth user was created — clean up orphan
+      console.error("[clinicians/add] Firestore write failed, deleting orphaned Auth user:", firestoreErr);
+      try {
+        await adminAuth.deleteUser(newAuthUser.uid);
+      } catch (deleteErr) {
+        console.error("[clinicians/add] Failed to delete orphaned Auth user:", deleteErr);
+      }
+      throw firestoreErr;
+    }
 
     // ── Send invite email via password reset link ───────────────────
     let emailSent = false;
@@ -169,7 +182,7 @@ async function handler(request: NextRequest) {
 
       const resendKey = process.env.RESEND_API_KEY;
       if (resendKey) {
-        await fetch("https://api.resend.com/emails", {
+        const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${resendKey}`,
@@ -196,7 +209,13 @@ async function handler(request: NextRequest) {
             `,
           }),
         });
-        emailSent = true;
+
+        if (res.ok) {
+          emailSent = true;
+        } else {
+          const errBody = await res.text().catch(() => "unknown");
+          console.error("[clinicians/add] Resend API returned error:", res.status, errBody);
+        }
       }
     } catch (emailErr) {
       console.error("[clinicians/add] Failed to send invite email:", emailErr);

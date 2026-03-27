@@ -37,6 +37,7 @@ export class GooglePlacesClient {
 
     const res = await fetch(url, {
       headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!res.ok) {
@@ -51,7 +52,7 @@ export class GooglePlacesClient {
   async testConnection(placeId: string): Promise<{ ok: boolean; error?: string }> {
     try {
       const url = `${PLACES_BASE}/places/${encodeURIComponent(placeId)}?fields=displayName&key=${this.apiKey}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
       if (!res.ok) {
         const body = await res.text().catch(() => "");
         return { ok: false, error: `API ${res.status}: ${body}` };

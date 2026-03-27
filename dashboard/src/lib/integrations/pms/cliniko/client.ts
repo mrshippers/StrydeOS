@@ -108,12 +108,19 @@ export async function testClinikoConnection(
 export async function clinikoFetchAll<T>(
   config: ClinikoConfig,
   path: string,
-  resourceKey: string
+  resourceKey: string,
+  maxPages = 100
 ): Promise<T[]> {
   const results: T[] = [];
   let nextUrl: string | null = path;
+  let page = 0;
 
   while (nextUrl) {
+    if (page >= maxPages) {
+      console.warn(`[clinikoFetchAll] Reached maxPages limit (${maxPages}) for ${path} — results may be incomplete`);
+      break;
+    }
+
     const response: Record<string, any> = await clinikoFetch<Record<string, any>>(config, nextUrl);
 
     const items = response[resourceKey] as T[] | undefined;
@@ -123,6 +130,7 @@ export async function clinikoFetchAll<T>(
 
     // Follow next link if present
     nextUrl = response.links?.next ?? null;
+    page++;
   }
 
   return results;

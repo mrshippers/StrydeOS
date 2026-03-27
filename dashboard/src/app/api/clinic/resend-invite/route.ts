@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
+import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { withRequestLog } from "@/lib/request-logger";
 
 /**
@@ -12,48 +13,39 @@ import { withRequestLog } from "@/lib/request-logger";
  * Auth: Bearer {Firebase ID token} — must be owner, admin, or superadmin
  */
 async function handler(req: NextRequest) {
-  const authHeader = req.headers.get("authorization") ?? "";
-  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  let callerUid: string;
-
   try {
-    const adminAuth = getAdminAuth();
-    const decoded = await adminAuth.verifyIdToken(token);
-    callerUid = decoded.uid;
-  } catch {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-  }
+    const user = await verifyApiRequest(req);
+    requireRole(user, ["owner", "admin", "superadmin"]);
 
-  let body: { clinicianId?: string; email?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
+    let body: { clinicianId?: string; email?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
-  const { email } = body;
+    const { email } = body;
 
-  if (!email) {
-    return NextResponse.json({ error: "email is required" }, { status: 400 });
-  }
+    if (!email) {
+      return NextResponse.json({ error: "email is required" }, { status: 400 });
+    }
 
-  try {
     const db = getAdminDb();
     const adminAuth = getAdminAuth();
 
-    // Verify caller is owner/admin/superadmin
-    const callerSnap = await db.collection("users").doc(callerUid).get();
-    if (!callerSnap.exists) {
-      return NextResponse.json({ error: "Caller not found" }, { status: 403 });
-    }
-    const callerData = callerSnap.data() as { role?: string };
-    if (!["owner", "admin", "superadmin"].includes(callerData.role ?? "")) {
-      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+    // Tenant isolation: verify target email belongs to a user in the caller's clinic
+    const targetUserSnap = await db
+      .collection("users")
+      .where("email", "==", email)
+      .where("clinicId", "==", user.clinicId)
+      .limit(1)
+      .get();
+
+    if (targetUserSnap.empty) {
+      return NextResponse.json(
+        { error: "Target user not found in your clinic" },
+        { status: 403 },
+      );
     }
 
     // Generate a password reset link (acts as an invite link for new users)
@@ -65,7 +57,7 @@ async function handler(req: NextRequest) {
     const resendKey = process.env.RESEND_API_KEY;
     if (resendKey) {
       try {
-        await fetch("https://api.resend.com/emails", {
+        const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${resendKey}`,
@@ -79,7 +71,7 @@ async function handler(req: NextRequest) {
               <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">
                 <h2 style="color: #0B2545; margin-bottom: 8px;">Welcome to StrydeOS</h2>
                 <p style="color: #6B7280; margin-bottom: 24px;">
-                  You've been invited to join your clinic on StrydeOS — the clinical 
+                  You've been invited to join your clinic on StrydeOS — the clinical
                   operating system built for high-performance physiotherapy practices.
                 </p>
                 <a href="${link}" style="display: inline-block; background: #1C54F2; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
@@ -92,10 +84,17 @@ async function handler(req: NextRequest) {
             `,
           }),
         });
+
+        if (!res.ok) {
+          const errBody = await res.text().catch(() => "unknown");
+          console.error("[resend-invite] Resend API returned error:", res.status, errBody);
+          return NextResponse.json({ sent: false, note: "Email provider returned an error." });
+        }
+
         return NextResponse.json({ sent: true });
       } catch (emailErr) {
         console.error("[resend-invite] Email send failed:", emailErr);
-        // Fall through — return the link anyway
+        // Fall through — return sent: false
       }
     }
 
@@ -105,12 +104,12 @@ async function handler(req: NextRequest) {
     const e = err as { code?: string; message?: string };
     if (e.code === "auth/user-not-found") {
       return NextResponse.json(
-        { error: `No account found for ${email}. Ask admin to create their account first.` },
+        { error: `No account found for this email. Ask admin to create their account first.` },
         { status: 404 }
       );
     }
     console.error("[resend-invite] Error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(err);
   }
 }
 

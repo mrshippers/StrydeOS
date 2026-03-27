@@ -6,8 +6,6 @@ export const runtime = "nodejs";
 
 const ELEVENLABS_WEBHOOK_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
 
-const db = getAdminDb();
-
 interface ElevenLabsWebhookPayload {
   event: string;
   conversation_id: string;
@@ -52,6 +50,8 @@ async function verifyElevenLabsSignature(
 }
 
 async function handler(req: NextRequest) {
+  const db = getAdminDb();
+
   try {
     const rawBody = await req.text();
 
@@ -141,10 +141,14 @@ async function handler(req: NextRequest) {
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error) {
-    // Always return 200 to acknowledge receipt — ElevenLabs handles retries
+    // Return 500 for transient errors so ElevenLabs retries delivery
+    if (error instanceof SyntaxError) {
+      // Non-recoverable: malformed JSON — ack so ElevenLabs doesn't retry
+      return NextResponse.json({ error: "Malformed payload" }, { status: 200 });
+    }
     return NextResponse.json(
       { error: "Webhook processing failed" },
-      { status: 200 }
+      { status: 500 }
     );
   }
 }

@@ -12,6 +12,8 @@ const SESSION_MAX_AGE = 8 * 60 * 60; // 8 hours — matches a clinical workday
 interface SessionPayload {
   uid: string;
   exp: number;
+  /** Session version — incremented on password change to invalidate prior sessions. */
+  v?: number;
 }
 
 function getSecret(): string {
@@ -46,10 +48,11 @@ function base64urlDecode(str: string): Uint8Array {
   return bytes;
 }
 
-export async function signSession(uid: string): Promise<string> {
+export async function signSession(uid: string, sessionVersion?: number): Promise<string> {
   const payload: SessionPayload = {
     uid,
     exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE,
+    ...(sessionVersion !== undefined ? { v: sessionVersion } : {}),
   };
 
   const encoder = new TextEncoder();

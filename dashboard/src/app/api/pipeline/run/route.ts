@@ -81,13 +81,22 @@ async function executePipeline(request: NextRequest, isCronGet = false) {
   }
 
   const clinicsSnap = await db.collection("clinics").get();
-  const settled = await Promise.allSettled(
-    clinicsSnap.docs.map((clinicDoc) => runPipeline(db, clinicDoc.id))
-  );
+  const clinicIds = clinicsSnap.docs.map((d) => d.id);
+
+  // Process clinics in batches of 5 to avoid unbounded concurrent execution
+  const PIPELINE_BATCH_SIZE = 5;
+  const settled: PromiseSettledResult<Awaited<ReturnType<typeof runPipeline>>>[] = [];
+  for (let i = 0; i < clinicIds.length; i += PIPELINE_BATCH_SIZE) {
+    const chunk = clinicIds.slice(i, i + PIPELINE_BATCH_SIZE);
+    const chunkResults = await Promise.allSettled(
+      chunk.map((id) => runPipeline(db, id))
+    );
+    settled.push(...chunkResults);
+  }
 
   const results = settled.map((s, i) => {
     if (s.status === "fulfilled") return s.value;
-    const clinicId = clinicsSnap.docs[i].id;
+    const clinicId = clinicIds[i];
     Sentry.captureException(s.reason, { tags: { clinicId, source: "pipeline_cron" } });
     return { clinicId, ok: false, error: s.reason?.message ?? "Pipeline failed" };
   });

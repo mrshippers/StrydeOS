@@ -86,12 +86,19 @@ export async function testZandaConnection(
 export async function zandaFetchAll<T>(
   config: ZandaConfig,
   path: string,
-  resourceKey = "data"
+  resourceKey = "data",
+  maxPages = 100
 ): Promise<T[]> {
   const results: T[] = [];
   let nextUrl: string | null = path;
+  let page = 0;
 
   while (nextUrl) {
+    if (page >= maxPages) {
+      console.warn(`[zandaFetchAll] Reached maxPages limit (${maxPages}) for ${path} — results may be incomplete`);
+      break;
+    }
+
     const response: Record<string, any> = await zandaFetch<Record<string, any>>(config, nextUrl);
 
     const items = (response[resourceKey] ?? response.data) as T[] | undefined;
@@ -103,6 +110,7 @@ export async function zandaFetchAll<T>(
     const linksNext = response.links?.next ?? null;
     const metaNext = response.meta?.next_page_url ?? null;
     nextUrl = linksNext || metaNext || null;
+    page++;
   }
 
   return results;
