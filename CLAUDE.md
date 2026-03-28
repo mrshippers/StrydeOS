@@ -134,11 +134,11 @@ StrydeOS is built and validated at Spires first.
 | File | Purpose |
 |------|---------|
 | `brand.ts` | Single source of truth for all colour + typography tokens |
-| `monolith.svg` | Canonical logo mark — do not reinterpret |
-| `MonolithLogo.tsx` | Logo React component |
-| `brand-identity-sheet.html` | Brand identity reference |
+| `Marketing Material/Brand Assets/monolith.svg` | Canonical logo mark — do not reinterpret |
+| `Marketing Material/Brand Assets/MonolithLogo.tsx` | Logo React component |
+| `Marketing Material/Brand Assets/brand-identity-sheet.html` | Brand identity reference |
 | `strydeOS-website.jsx` | Marketing website |
-| `email-footer.html` | Email footer template |
+| `Marketing Material/Brand Assets/email-footer.html` | Email footer template |
 
 ### Logo Rules
 - The Monolith mark: gradient glass container (not solid), ghost pillar, three ascending chevrons clipped inside
