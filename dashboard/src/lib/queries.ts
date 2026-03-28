@@ -258,17 +258,26 @@ export function subscribeOutcomeScores(
 export function subscribeCommsLog(
   clinicId: string | null,
   callback: (data: CommsLogEntry[]) => void,
-  onError: (err: Error) => void
+  onError: (err: Error) => void,
+  /** When set, only returns comms for patients assigned to this clinician. */
+  clinicianId?: string | null
 ): Unsubscribe {
   if (!db || !clinicId) {
     callback([]);
     return noopUnsubscribe();
   }
 
+  const constraints: QueryConstraint[] = [
+    orderBy("sentAt", "desc"),
+    limit(100),
+  ];
+  if (clinicianId) {
+    constraints.push(where("clinicianId", "==", clinicianId));
+  }
+
   const q = query(
     clinicCollection(clinicId, "comms_log"),
-    orderBy("sentAt", "desc"),
-    limit(100)
+    ...constraints
   );
 
   return onSnapshot(
