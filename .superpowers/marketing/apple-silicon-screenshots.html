@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrydeOS - Apple Silicon Marketing Screenshots</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B2545;
+    --navy-mid: #132D5E;
+    --blue: #1C54F2;
+    --blue-bright: #2E6BFF;
+    --blue-glow: #4B8BF5;
+    --teal: #0891B2;
+    --purple: #8B5CF6;
+    --cloud: #F2F1EE;
+    --ink: #111827;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Outfit', -apple-system, sans-serif;
+    background: var(--navy);
+    color: white;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .slide {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(28,84,242,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(139,92,246,0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .slide-alt::before {
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 100%, rgba(8,145,178,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 20%, rgba(28,84,242,0.06) 0%, transparent 60%);
+  }
+
+  .headline {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(42px, 5vw, 72px);
+    font-weight: 400;
+    line-height: 1.1;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
+
+  .headline .accent {
+    background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .headline .accent-teal {
+    background: linear-gradient(135deg, #22D3EE, var(--teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .headline .accent-purple {
+    background: linear-gradient(135deg, #C4B5FD, var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subhead {
+    font-size: clamp(16px, 1.8vw, 22px);
+    font-weight: 400;
+    color: rgba(255,255,255,0.65);
+    text-align: center;
+    max-width: 640px;
+    line-height: 1.6;
+    margin-bottom: 60px;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .tag-blue { background: rgba(28,84,242,0.12); color: var(--blue-glow); border: 1px solid rgba(28,84,242,0.2); }
+  .tag-teal { background: rgba(8,145,178,0.12); color: #22D3EE; border: 1px solid rgba(8,145,178,0.2); }
+  .tag-purple { background: rgba(139,92,246,0.12); color: #C4B5FD; border: 1px solid rgba(139,92,246,0.2); }
+
+  .tag-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+
+  /* ─── MacBook Pro Mockup ────────────────────────────────────────── */
+  .macbook { position: relative; width: min(1100px, 90vw); perspective: 1200px; }
+
+  .macbook-screen {
+    position: relative;
+    background: #1a1a1a;
+    border-radius: 16px 16px 0 0;
+    padding: 12px 12px 0 12px;
+    box-shadow: 0 -2px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  .macbook-notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 180px; height: 22px; background: #1a1a1a;
+    border-radius: 0 0 12px 12px; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .macbook-notch::after {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: #2a2a2a; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  .macbook-viewport {
+    position: relative; width: 100%; aspect-ratio: 16 / 10;
+    border-radius: 8px 8px 0 0; overflow: hidden; background: var(--navy);
+  }
+
+  .macbook-viewport img, .macbook-viewport iframe {
+    width: 100%; height: 100%; object-fit: cover; object-position: top left; display: block; border: none;
+  }
+
+  .macbook-base {
+    position: relative; height: 16px;
+    background: linear-gradient(to bottom, #2a2a2d, #1f1f22);
+    border-radius: 0 0 8px 8px; box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+  }
+
+  .macbook-base::before {
+    content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 20%; height: 4px; background: rgba(255,255,255,0.03); border-radius: 0 0 4px 4px;
+  }
+
+  .macbook-base::after {
+    content: ''; position: absolute; bottom: -12px; left: 10%; right: 10%;
+    height: 6px; background: rgba(0,0,0,0.15); border-radius: 50%; filter: blur(6px);
+  }
+
+  /* ─── Screenshot placeholder with watermark ─────────────────────── */
+  .screenshot-placeholder {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; color: rgba(255,255,255,0.3); font-size: 14px; font-weight: 500;
+    letter-spacing: 0.02em; position: relative;
+  }
+
+  .screenshot-placeholder .icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: rgba(255,255,255,0.04); border: 1.5px dashed rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+
+  .screenshot-placeholder small { font-size: 11px; color: rgba(255,255,255,0.2); }
+
+  /* Watermark logo at bottom centre of viewport */
+  .viewport-watermark {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0.15;
+  }
+
+  .viewport-watermark svg { display: block; }
+
+  /* ─── Callout icons (SVG inline — matches website quality) ──────── */
+  .callouts { display: flex; gap: 32px; margin-top: 48px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
+  .callout { flex: 1; min-width: 200px; max-width: 260px; text-align: center; }
+
+  .callout-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px;
+  }
+  .callout-icon-blue { background: rgba(28,84,242,0.12); border: 1px solid rgba(28,84,242,0.15); }
+  .callout-icon-teal { background: rgba(8,145,178,0.12); border: 1px solid rgba(8,145,178,0.15); }
+  .callout-icon-purple { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.15); }
+
+  .callout h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: rgba(255,255,255,0.92); }
+  .callout p { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.5; }
+
+  /* ─── Split layout ──────────────────────────────────────────────── */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; width: min(1100px, 90vw); align-items: center; }
+  .split-text { padding-right: 24px; }
+  .split-text .headline { text-align: left; font-size: clamp(32px, 3.5vw, 52px); }
+  .split-text .subhead { text-align: left; margin-bottom: 32px; }
+  .split-text .tag { display: inline-flex; }
+
+  .feature-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+  .feature-list li { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+  .feature-list .check { width: 20px; height: 20px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .check-blue { background: rgba(28,84,242,0.15); color: var(--blue-glow); }
+  .check-teal { background: rgba(8,145,178,0.15); color: #22D3EE; }
+
+  /* ─── Mini MacBook ──────────────────────────────────────────────── */
+  .macbook-mini { width: 100%; }
+  .macbook-mini .macbook-screen { padding: 8px 8px 0; border-radius: 12px 12px 0 0; }
+  .macbook-mini .macbook-notch { width: 120px; height: 16px; }
+  .macbook-mini .macbook-viewport { border-radius: 6px 6px 0 0; }
+  .macbook-mini .macbook-base { height: 12px; border-radius: 0 0 6px 6px; }
+
+  .footer { text-align: center; padding: 60px 40px; color: rgba(255,255,255,0.3); font-size: 13px; }
+  .footer strong { color: rgba(255,255,255,0.6); }
+
+  .instructions {
+    position: fixed; top: 20px; right: 20px;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+    padding: 20px; max-width: 320px; z-index: 100;
+    font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6;
+  }
+  .instructions h3 { font-size: 14px; font-weight: 600; color: white; margin-bottom: 10px; }
+  .instructions code { font-size: 11px; background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; color: var(--blue-glow); }
+  .instructions .close-btn {
+    position: absolute; top: 12px; right: 12px; width: 24px; height: 24px;
+    border-radius: 6px; border: none; background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.4); cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="instructions" id="instructions">
+  <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
+  <h3>Screenshot guide</h3>
+  Replace each placeholder with <code>&lt;img src="..."&gt;</code>.<br><br>
+  The Monolith watermark at the bottom of each viewport will sit over your screenshot. Remove or keep as desired.<br><br>
+  Cmd+Shift+4 to capture each slide at 2x Retina.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 1 — Hero: Dashboard overview
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="tag tag-blue">
+    <span class="tag-dot" style="background: var(--blue-glow)"></span>
+    March 2026 Update
+  </div>
+  <h1 class="headline">
+    Your clinic's numbers.<br>
+    <span class="accent">Sharper than ever.</span>
+  </h1>
+  <p class="subhead">
+    Premium dark mode polish, session-aware greetings, and redesigned controls across every surface of StrydeOS.
+  </p>
+
+  <div class="macbook">
+    <div class="macbook-screen">
+      <div class="macbook-notch"></div>
+      <div class="macbook-viewport">
+        <img src="screenshots/06-website-hero.png" alt="StrydeOS Dashboard" />
+        <!-- Monolith watermark -->
+        <div class="viewport-watermark">
+          <svg width="28" height="28" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="40" height="40" rx="10" fill="url(#wm1g)"/>
+            <path d="M22 12v5.5M18 23l4-4 4 4M18 28l4-4 4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+            <defs><linearGradient id="wm1g" x1="2" y1="2" x2="42" y2="42" gradientUnits="userSpaceOnUse"><stop stop-color="#2E6BFF"/><stop offset="1" stop-color="#1C54F2"/></linearGradient></defs>
+          </svg>
+          <span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:600;color:white;letter-spacing:0.02em;">StrydeOS</span>
+        </div>
+      </div>
+    </div>
+    <div class="macbook-base"></div>
+  </div>
+
+  <div class="callouts">
+    <div class="callout">
+      <div class="callout-icon callout-icon-blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26z"/></svg>
+      </div>
+      <h4>Premium buttons</h4>
+      <p>Gradient CTAs with module colours across every page</p>
+    </div>
+    <div class="callout">
+      <div class="callout-icon callout-icon-blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </div>
+      <h4>Dark mode visibility</h4>
+      <p>Every text element tuned for contrast on navy surfaces</p>
+    </div>
+    <div class="callout">
+      <div class="callout-icon callout-icon-blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 00-6 0v4"/><rect x="5" y="9" width="14" height="11" rx="2"/><circle cx="12" cy="15" r="1"/></svg>
+      </div>
+      <h4>Smart greetings</h4>
+      <p>Time-aware, session-persistent. 40+ variants across the day</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 2 — Settings: PMS Integration
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt">
+  <div class="tag tag-teal">
+    <span class="tag-dot" style="background: #22D3EE"></span>
+    Integration Hub
+  </div>
+  <h1 class="headline">
+    Keep your PMS.<br>
+    <span class="accent-teal">We'll do the rest.</span>
+  </h1>
+  <p class="subhead">
+    WriteUpp, Cliniko, TM3, Halaxy, Zanda, and more. API or CSV &mdash; whatever your system speaks, we're fluent.
+  </p>
+
+  <div class="split">
+    <div class="split-text">
+      <ul class="feature-list">
+        <li><span class="check check-teal">&#10003;</span>Cliniko SVG logos &mdash; crisp in both light and dark mode</li>
+        <li><span class="check check-teal">&#10003;</span>8 PMS providers live, with API + CSV bridge support</li>
+        <li><span class="check check-teal">&#10003;</span>HEP integration &mdash; Physitrack, Rehab My Patient, Wibbi</li>
+        <li><span class="check check-teal">&#10003;</span>Import history with full audit trail</li>
+      </ul>
+    </div>
+    <div class="macbook-mini">
+      <div class="macbook-screen">
+        <div class="macbook-notch"></div>
+        <div class="macbook-viewport">
+          <img src="screenshots/website-integrations.png" alt="StrydeOS Integrations" />
+          <div class="viewport-watermark">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0891B2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 11.5L4 14l-2-2 2.5-2.5M9.5 4.5L12 2l2 2-2.5 2.5M5.5 10.5l5-5"/><circle cx="17" cy="17" r="4"/><path d="M15 17h4M17 15v4"/></svg>
+            <span style="font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;color:white;letter-spacing:0.02em;">Integrations</span>
+          </div>
+        </div>
+      </div>
+      <div class="macbook-base"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 3 — Intelligence module
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="tag tag-purple">
+    <span class="tag-dot" style="background: #C4B5FD"></span>
+    Intelligence
+  </div>
+  <h1 class="headline">
+    Translate clinical data<br>
+    <span class="accent-purple">into business decisions.</span>
+  </h1>
+  <p class="subhead">
+    Follow-up gaps, churn clusters, revenue leaks &mdash; surfaced before they cost you. Not a report. A second opinion.
+  </p>
+
+  <div class="macbook">
+    <div class="macbook-screen">
+      <div class="macbook-notch"></div>
+      <div class="macbook-viewport">
+        <img src="screenshots/website-products.png" alt="StrydeOS Intelligence" />
+        <div class="viewport-watermark">
+          <svg width="28" height="28" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="40" height="40" rx="10" fill="url(#wm3g)"/>
+            <path d="M22 12v5.5M18 23l4-4 4 4M18 28l4-4 4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+            <defs><linearGradient id="wm3g" x1="2" y1="2" x2="42" y2="42" gradientUnits="userSpaceOnUse"><stop stop-color="#A78BFA"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs>
+          </svg>
+          <span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:600;color:white;letter-spacing:0.02em;">Intelligence</span>
+        </div>
+      </div>
+    </div>
+    <div class="macbook-base"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 4 — Ava voice receptionist
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt">
+  <div class="tag tag-blue">
+    <span class="tag-dot" style="background: var(--blue-glow)"></span>
+    Ava
+  </div>
+  <h1 class="headline">
+    Ava answers at 2am.<br>
+    <span class="accent">You don't have to.</span>
+  </h1>
+  <p class="subhead">
+    AI voice receptionist. Picks up every call, books appointments, and logs it all while you sleep.
+  </p>
+
+  <div class="split" style="direction: rtl;">
+    <div class="split-text" style="direction: ltr; padding-left: 24px; padding-right: 0;">
+      <ul class="feature-list">
+        <li><span class="check check-blue">&#10003;</span>Real-time call volume and booking conversion</li>
+        <li><span class="check check-blue">&#10003;</span>Revenue captured from Ava-booked appointments</li>
+        <li><span class="check check-blue">&#10003;</span>After-hours digest &mdash; wake up to a summary, not a backlog</li>
+        <li><span class="check check-blue">&#10003;</span>Patients don't know the difference. That's the point</li>
+      </ul>
+    </div>
+    <div class="macbook-mini" style="direction: ltr;">
+      <div class="macbook-screen">
+        <div class="macbook-notch"></div>
+        <div class="macbook-viewport">
+          <img src="screenshots/website-products.png" alt="StrydeOS Ava" />
+          <div class="viewport-watermark">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+            <span style="font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;color:white;letter-spacing:0.02em;">Ava</span>
+          </div>
+        </div>
+      </div>
+      <div class="macbook-base"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 5 — Checkout / Premium billing
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="tag tag-blue">
+    <span class="tag-dot" style="background: var(--blue-glow)"></span>
+    Checkout
+  </div>
+  <h1 class="headline">
+    One click to<br>
+    <span class="accent">unlock everything.</span>
+  </h1>
+  <p class="subhead">
+    Module pricing, Stripe-powered checkout, premium gradient buttons that feel as good as they look.
+  </p>
+
+  <div class="macbook">
+    <div class="macbook-screen">
+      <div class="macbook-notch"></div>
+      <div class="macbook-viewport">
+        <img src="screenshots/website-pricing.png" alt="StrydeOS Checkout" />
+        <div class="viewport-watermark">
+          <!-- Stripe badge -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          <span style="font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;color:white;letter-spacing:0.02em;">Powered by Stripe</span>
+        </div>
+      </div>
+    </div>
+    <div class="macbook-base"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 6 — Marketing website dark mode
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt">
+  <div class="tag tag-purple">
+    <span class="tag-dot" style="background: #C4B5FD"></span>
+    Marketing Site
+  </div>
+  <h1 class="headline">
+    The website got<br>
+    <span class="accent-purple">a visibility upgrade too.</span>
+  </h1>
+  <p class="subhead">
+    34+ text elements retuned for contrast. Every word legible on every surface.
+  </p>
+
+  <div class="macbook">
+    <div class="macbook-screen">
+      <div class="macbook-notch"></div>
+      <div class="macbook-viewport">
+        <img src="screenshots/06-website-hero.png" alt="strydeos.com homepage in dark mode" />
+        <div class="viewport-watermark">
+          <svg width="28" height="28" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="40" height="40" rx="10" fill="url(#wm6g)"/>
+            <path d="M22 12v5.5M18 23l4-4 4 4M18 28l4-4 4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+            <defs><linearGradient id="wm6g" x1="2" y1="2" x2="42" y2="42" gradientUnits="userSpaceOnUse"><stop stop-color="#2E6BFF"/><stop offset="1" stop-color="#1C54F2"/></linearGradient></defs>
+          </svg>
+          <span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:600;color:white;letter-spacing:0.02em;">strydeos.com</span>
+        </div>
+      </div>
+    </div>
+    <div class="macbook-base"></div>
+  </div>
+</section>
+
+<div class="footer">
+  <strong>StrydeOS</strong> &mdash; March 2026 update<br>
+  Built by a clinic owner, for clinic owners.
+</div>
+
+</body>
+</html>
