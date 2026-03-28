@@ -18,6 +18,10 @@
       "schedule": "0 7 * * 0"
     },
     {
+      "path": "/api/intelligence/clinician-digest",
+      "schedule": "30 7 * * 1"
+    },
+    {
       "path": "/api/data-health/check-staleness",
       "schedule": "0 8 * * *"
     },
@@ -52,4 +56,3 @@
     }
   ]
 }
-
