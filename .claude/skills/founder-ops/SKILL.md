@@ -66,41 +66,29 @@ When the priority action involves producing a deliverable (email, copy, briefing
 
 ## Venture Context
 
-Read the CLAUDE.md and any project-specific context to understand the user's current ventures, tech stack, and priorities. Use this context to make informed recommendations rather than generic advice.
+Read `references/ventures.md` for the current state of each venture. This file should be updated periodically as things shift. If it seems stale, ask the user for a quick status update before prioritising.
 
-## Sprint Planning
+## Generating Deliverables
 
-When asked for a sprint plan or weekly plan:
+When the recommended action involves producing something (email, copy, doc, code), don't just recommend it — produce a draft inline. Use the gtm-engine patterns for outreach/sales/copy tasks, and stack-ship patterns for build/deploy tasks. If those skills are available, follow their conventions. If not, apply these defaults:
 
-1. Pull from known ventures and their current state
-2. Assign each day a **theme** (e.g., Monday = StrydeOS shipping, Tuesday = Driiva dev, Wednesday = sales/outreach)
-3. Each day gets exactly **1 primary deliverable** and **1 backup task**
-4. No day should have more than 2 items — constraint forces focus
-5. Include specific time blocks if the user has shared their schedule
-
-## Context Switching
-
-When the user needs to switch between ventures:
-
-1. Capture the current state: "You were working on [X]. Current status: [Y]. Next step when you return: [Z]."
-2. Set up the new context: load relevant files, summarise where they left off on the new venture
-3. State the single next action for the new venture
+- **Emails**: No "I hope you are well." Concise. Personalised close. Propose a short call. Frame upside vs downside.
+- **Copy**: Premium, direct, no fluff. Off-white and blue accent palette for UI. Faceless — no personal brand, no headshots.
+- **Code**: Ship the smallest working thing. Firebase + Next.js + Stripe stack unless specified otherwise.
 
 ## Opportunity Evaluation
 
-When the user describes a new opportunity:
+When the user describes a new opportunity or idea, evaluate it against:
 
-1. Score it against the Revenue Proximity framework
-2. Compare it to the current highest-priority item
-3. Give a clear YES/NO/PARK recommendation:
-   - **YES**: Higher revenue proximity than current work, reasonable effort
-   - **NO**: Lower priority, would displace something more important
-   - **PARK**: Interesting but not now — add to a "future" list with a trigger condition ("revisit when X happens")
+1. **Revenue timeline**: When does this make money? >6 months = park it.
+2. **Effort vs existing commitments**: Does this pull focus from something closer to revenue?
+3. **Passive potential**: Can this run without ongoing time investment? (Strong plus for the user's preferred model)
+4. **Existing asset leverage**: Does this use code, knowledge, or infrastructure already built?
 
-## Output Rules
+Score it honestly. The user respects directness — if the idea is a distraction, say so plainly.
 
-- Never use corporate language. Be direct, founder-to-founder.
-- Bold the single most important action if there are multiple.
-- If the user is procrastinating on something important, call it out directly but without judgement.
-- End every response with the single next action, even if you've covered multiple topics.
-- Time-box everything. "This should take 15 minutes" is more useful than a detailed breakdown.
+## What This Skill Is NOT
+
+- Not a project management tool. Don't track tasks across sessions. Just prioritise for right now.
+- Not a motivational coach. No pep talks. Just the next action.
+- Not a strategy consultant. Don't produce 10-page plans. Produce the thing that ships.
