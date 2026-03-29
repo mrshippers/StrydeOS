@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { brand } from "@/lib/brand";
 
 interface ErrorBannerProps {
   message: string;
@@ -10,25 +11,27 @@ interface ErrorBannerProps {
 export default function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
   return (
     <div
-      className="flex items-center justify-between gap-4 px-4 py-2.5 rounded-xl mb-6 text-sm"
+      className="flex items-center justify-between gap-4 px-4 py-2.5 rounded-xl mb-4 text-sm"
       style={{
-        background: "rgba(239, 68, 68, 0.06)",
-        border: "1px solid rgba(239, 68, 68, 0.2)",
+        background: `${brand.warning}08`,
+        border: `1px solid ${brand.warning}20`,
       }}
     >
-      <div className="flex items-center gap-2.5">
-        <AlertTriangle size={14} className="text-red-500 shrink-0" />
-        <span className="text-red-600 font-medium">{message}</span>
+      <span className="text-[13px] font-medium text-muted-strong">{message}</span>
+
+      <div className="flex items-center gap-3 shrink-0">
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            className="flex items-center gap-1.5 text-[12px] font-semibold transition-colors"
+            style={{ color: brand.blue }}
+          >
+            <RefreshCw size={11} />
+            Retry
+          </button>
+        )}
+        <AlertTriangle size={14} style={{ color: brand.warning }} />
       </div>
-      {onRetry && (
-        <button
-          onClick={onRetry}
-          className="flex items-center gap-1.5 text-[12px] font-semibold text-red-500 hover:text-red-700 transition-colors shrink-0"
-        >
-          <RefreshCw size={12} />
-          Retry
-        </button>
-      )}
     </div>
   );
 }

@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useSequences } from "@/hooks/useSequences";
 import { useCommsLog } from "@/hooks/useCommsLog";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import ErrorBanner from "@/components/ui/ErrorBanner";
 import { SessionThresholdStrip } from "@/components/pulse/SessionThresholdStrip";
 import { PatientBoard } from "@/components/pulse/PatientBoard";
 import { SequenceCard } from "@/components/pulse/SequenceCard";
@@ -77,13 +78,13 @@ function ContinuityPage() {
   const [activeView, setActiveView] = useState<View>("patients");
   const [previewSequenceType, setPreviewSequenceType] = useState<string | null>(null);
   const { clinicians } = useClinicians();
-  const { patients, active, churnRisk, postDischarge, sessionAlerts, loading } = usePatients(selectedClinician);
+  const { patients, active, churnRisk, postDischarge, sessionAlerts, loading, error: patientsError } = usePatients(selectedClinician);
   const { toast } = useToast();
   const clinicianMap = Object.fromEntries(clinicians.map((c) => [c.id, c]));
 
   const { sequences, toggleSequence, usingDefaults } = useSequences();
   const { user } = useAuth();
-  const { commsLog, commsStats, statsBySequence, totalAttributedRevenuePence, isDemo: commsIsDemo } = useCommsLog();
+  const { commsLog, commsStats, statsBySequence, totalAttributedRevenuePence, isDemo: commsIsDemo, error: commsError } = useCommsLog();
   const { preferences, updatePreferences } = useUserPreferences();
   const [customiseOpen, setCustomiseOpen] = useState(false);
   const patientMap = Object.fromEntries(patients.map((p) => [p.id, p]));
@@ -141,6 +142,10 @@ function ContinuityPage() {
         onClinicianChange={setSelectedClinician}
         accentColor="#0891B2"
       />
+
+      {/* Error banners */}
+      {patientsError && <ErrorBanner message="Patient data couldn't load — some cards may be incomplete." onRetry={() => window.location.reload()} />}
+      {commsError && <ErrorBanner message="Comms data unavailable right now." onRetry={() => window.location.reload()} />}
 
       {/* Comms summary stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
