@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { brand } from "@/lib/brand";
 import { MonolithMark } from "@/components/MonolithLogo";
 
-const STORAGE_KEY = "strydeos_changelog_v2025_03_29";
+const STORAGE_KEY = "strydeos_changelog_v2026_03_29";
 const GATED_EMAIL = "jamal@spiresphysiotherapy.com";
 
 interface ChangeCard {
@@ -154,7 +154,7 @@ export default function ChangelogSplash() {
                     What&apos;s new in StrydeOS
                   </p>
                   <p className="text-[11px] text-white/30">
-                    Latest updates — 29 March 2025
+                    Latest updates — 29 March 2026
                   </p>
                 </div>
               </div>
