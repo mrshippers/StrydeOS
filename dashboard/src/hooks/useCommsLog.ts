@@ -23,6 +23,10 @@ export function useCommsLog(): UseCommsLogResult {
   const clinicId = user?.clinicId ?? null;
   const isDemo = user?.uid === "demo";
 
+  // Clinicians only see comms for their own patients — no cross-contamination.
+  const scopedClinicianId =
+    user?.role === "clinician" ? (user.clinicianId ?? null) : null;
+
   const [commsLog, setCommsLog] = useState<CommsLogEntry[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState<string | null>(null);
@@ -47,10 +51,11 @@ export function useCommsLog(): UseCommsLogResult {
         console.error("[useCommsLog]", err);
         setError("Failed to load comms log.");
         setLoading(false);
-      }
+      },
+      scopedClinicianId
     );
     return unsub;
-  }, [clinicId, isDemo]);
+  }, [clinicId, isDemo, scopedClinicianId]);
 
   if (isDemo) {
     return {

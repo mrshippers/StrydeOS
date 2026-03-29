@@ -52,6 +52,20 @@ export interface FeatureFlags {
   receptionist: boolean;
   /** Opt-in: enable outcome measures recording + correlation in Intelligence. */
   outcomeTracking?: boolean;
+
+  // ─── Clinician Engagement Layer ───────────────────────────
+  /** Fix 1: Today's Focus nudges on clinician dashboard. Default true. */
+  clinicianNudges?: boolean;
+  /** Fix 2: Weekly digest email to each clinician. Default true. */
+  clinicianDigest?: boolean;
+  /** Fix 3: Auto-sync outcome scores from HEP provider (Physitrack). Default true when hepType is set. */
+  hepOutcomeSync?: boolean;
+  /** Fix 5: Show UK benchmark ranges on StatCards and TargetsCard. Default true. */
+  showBenchmarks?: boolean;
+  /** Fix 7: Simplified nav for clinician role (hide Ava, Clinicians table). Default true. */
+  clinicianNavSimplified?: boolean;
+  /** Fix 8: Mobile-optimised clinician experience. Default true. */
+  clinicianMobileOptimised?: boolean;
 }
 
 export type StripeSubscriptionStatus =
@@ -228,6 +242,8 @@ export interface Clinician {
   physitrackId?: string;
   active: boolean;
   avatar?: string;
+  /** Clinician can opt out of the weekly digest email. Default false. */
+  digestOptOut?: boolean;
   createdAt?: string;
   createdBy?: string;
 }
@@ -405,6 +421,8 @@ export type SequenceType =
 export interface CommsLogEntry {
   id: string;
   patientId: string;
+  /** Denormalised from patient.clinicianId at send time for query scoping. */
+  clinicianId?: string;
   sequenceType: SequenceType;
   channel: CommsChannel;
   sentAt: string;

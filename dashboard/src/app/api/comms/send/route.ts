@@ -116,8 +116,19 @@ async function handler(request: NextRequest) {
     // Log the attempt to Firestore regardless of success/failure
     try {
       const db = getAdminDb();
+
+      // Denormalise clinicianId from patient record for query scoping
+      let clinicianId: string | undefined;
+      try {
+        const patientDoc = await db.doc(`clinics/${clinicId}/patients/${patientId}`).get();
+        clinicianId = patientDoc.exists ? (patientDoc.data()?.clinicianId as string | undefined) : undefined;
+      } catch {
+        // Non-blocking — comms log still written without clinicianId
+      }
+
       const entry: Omit<CommsLogEntry, "id"> = {
         patientId,
+        clinicianId,
         sequenceType,
         channel,
         sentAt: now,

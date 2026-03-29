@@ -80,6 +80,15 @@ export interface InsightEvent {
   ownerNarrative?: string | null;     // LLM-generated business-framed narrative for owners
   clinicianNarrative?: string | null; // LLM-generated clinically-framed narrative for clinicians
   narrativeGeneratedAt?: string | null;
+
+  // ─── Observational patterns (Tier 1 — facts, not causal claims) ───
+  /** Factual observation from clinician's own data, e.g. "Your Thursday DNA rate is 18% vs 4% Tuesday" */
+  observationalNote?: string | null;
+  /** Number of data points backing the observation */
+  sampleSize?: number | null;
+  /** Lookback window for the observation, e.g. "Last 90 days" */
+  timeframe?: string | null;
+
   metadata: Record<string, unknown>;
 }
 
