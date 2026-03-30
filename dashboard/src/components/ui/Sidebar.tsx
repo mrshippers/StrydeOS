@@ -17,9 +17,7 @@ import {
   ChevronUp,
   LogOut,
   UserCircle,
-  ExternalLink,
   Shield,
-  CheckCheck,
   Command,
   Lock,
   CreditCard,
@@ -35,6 +33,10 @@ const HelpPanel = dynamic(
     loading: () => <div className="animate-pulse bg-navy/10 rounded-xl h-full w-[480px] fixed top-0 right-0" />,
     ssr: false,
   }
+);
+const NotificationPanel = dynamic(
+  () => import("@/components/ui/NotificationPanel"),
+  { ssr: false }
 );
 import { useTheme } from "@/components/ThemeProvider";
 import BrightnessStackToggle from "@/components/ui/BrightnessStackToggle";
@@ -142,8 +144,6 @@ export default function Sidebar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
-  const notifBtnRef = useRef<HTMLButtonElement>(null);
-  const notifDropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const { allAlerts, unreadCount, readHashes, markAllRead } = useAlerts();
   const { activeEvents: allInsightEvents, markAsRead: markInsightRead } = useInsightEvents();
@@ -182,13 +182,6 @@ export default function Sidebar() {
 
   useEffect(() => {
     function handler(e: MouseEvent) {
-      const target = e.target as Node;
-      if (
-        notifRef.current && !notifRef.current.contains(target) &&
-        (!notifDropdownRef.current || !notifDropdownRef.current.contains(target))
-      ) {
-        setNotifOpen(false);
-      }
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false);
       }
@@ -379,9 +372,8 @@ export default function Sidebar() {
           </Link>
 
           {/* Notification bell */}
-          <div ref={notifRef} className="relative" data-tour="notification-bell">
+          <div ref={notifRef} data-tour="notification-bell">
             <button
-              ref={notifBtnRef}
               onClick={() => setNotifOpen(!notifOpen)}
               className="relative w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
               aria-label="Notifications"
@@ -396,136 +388,6 @@ export default function Sidebar() {
                 </span>
               )}
             </button>
-
-            {notifOpen && (
-              <div
-                ref={notifDropdownRef}
-                className="fixed w-72 rounded-xl shadow-[var(--shadow-elevated)] overflow-hidden z-50 animate-fade-in"
-                style={{
-                  background: brand.navyMid,
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  top: notifBtnRef.current ? notifBtnRef.current.getBoundingClientRect().bottom + 8 : 60,
-                  left: notifBtnRef.current ? notifBtnRef.current.getBoundingClientRect().left : 20,
-                }}>
-                <div className="px-4 py-3 border-b border-white/8 flex items-center justify-between">
-                  <p className="text-[11px] font-semibold text-white/45 uppercase tracking-widest">
-                    Alerts this week
-                  </p>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllRead}
-                      className="flex items-center gap-1 text-[10px] font-semibold text-white/30 hover:text-white/60 transition-colors"
-                    >
-                      <CheckCheck size={10} />
-                      Mark all read
-                    </button>
-                  )}
-                </div>
-                {allAlerts.length === 0 ? (
-                  <div className="px-4 py-4 text-xs text-white/35 italic">
-                    All metrics on target.
-                  </div>
-                ) : (
-                  <div className="py-1 max-h-72 overflow-y-auto">
-                    {allAlerts.map((alert) => {
-                      const isUnread = !readHashes.has(alert.hash);
-                      return (
-                        <Link
-                          key={alert.hash}
-                          href="/dashboard"
-                          onClick={() => { setNotifOpen(false); setMobileOpen(false); }}
-                          className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors"
-                        >
-                          <div className="relative mt-1.5 shrink-0">
-                            <div
-                              className="w-1.5 h-1.5 rounded-full"
-                              style={{ background: alert.severity === "danger" ? brand.danger : brand.warning }}
-                            />
-                            {isUnread && (
-                              <div
-                                className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
-                                style={{ background: brand.blueGlow }}
-                              />
-                            )}
-                          </div>
-                          <div>
-                            <p className={`text-[13px] leading-tight ${isUnread ? "font-semibold text-white" : "font-medium text-white/65"}`}>
-                              {alert.clinicianName}
-                            </p>
-                            <p className={`text-[12px] mt-0.5 ${isUnread ? "text-white/55" : "text-white/35"}`}>
-                              {alert.metric} — {alert.current < 1 ? `${Math.round(alert.current * 100)}%` : alert.current.toFixed(1)} vs target {alert.target < 1 ? `${Math.round(alert.target * 100)}%` : alert.target.toFixed(1)}
-                            </p>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-                {/* Intelligence insight events */}
-                {insightEvents.length > 0 && (
-                  <>
-                    <div className="px-4 py-2.5 border-t border-white/8">
-                      <p className="text-[11px] font-semibold text-white/45 uppercase tracking-widest">
-                        Intelligence
-                      </p>
-                    </div>
-                    <div className="py-1 max-h-48 overflow-y-auto">
-                      {insightEvents.slice(0, 5).map((event) => {
-                        const isUnread = !event.readAt;
-                        const sevColor =
-                          event.severity === "critical" ? brand.danger :
-                          event.severity === "positive" ? brand.success :
-                          brand.warning;
-                        return (
-                          <Link
-                            key={event.id}
-                            href="/intelligence"
-                            onClick={() => {
-                              if (isUnread) markInsightRead(event.id);
-                              setNotifOpen(false);
-                              setMobileOpen(false);
-                            }}
-                            className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors"
-                          >
-                            <div className="relative mt-1.5 shrink-0">
-                              <div
-                                className="w-1.5 h-1.5 rounded-full"
-                                style={{ background: sevColor }}
-                              />
-                              {isUnread && (
-                                <div
-                                  className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
-                                  style={{ background: brand.purple }}
-                                />
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <p className={`text-[13px] leading-tight truncate ${isUnread ? "font-semibold text-white" : "font-medium text-white/65"}`}>
-                                {event.title.length > 60 ? event.title.slice(0, 60) + "…" : event.title}
-                              </p>
-                              <p className={`text-[12px] mt-0.5 ${isUnread ? "text-white/55" : "text-white/35"}`}>
-                                {event.suggestedAction.length > 50 ? event.suggestedAction.slice(0, 50) + "…" : event.suggestedAction}
-                              </p>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-
-                <div className="px-4 py-2.5 border-t border-white/8">
-                  <Link
-                    href={insightEvents.length > 0 ? "/intelligence" : "/dashboard"}
-                    onClick={() => { setNotifOpen(false); setMobileOpen(false); }}
-                    className="text-[11px] font-semibold hover:text-white transition-colors flex items-center gap-1"
-                    style={{ color: brand.blueGlow }}
-                  >
-                    {insightEvents.length > 0 ? "View all insights" : "View all on dashboard"} <ExternalLink size={10} />
-                  </Link>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -775,6 +637,15 @@ export default function Sidebar() {
       </motion.aside>
 
       <HelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <NotificationPanel
+        open={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        allAlerts={allAlerts}
+        readHashes={readHashes}
+        markAllRead={markAllRead}
+        insightEvents={insightEvents}
+        markInsightRead={markInsightRead}
+      />
     </>
   );
 }

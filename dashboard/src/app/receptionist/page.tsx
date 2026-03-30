@@ -139,21 +139,22 @@ class AvaErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
             subtitle="AI call handling"
             accentColor="#1C54F2"
           />
-          <div className="rounded-[var(--radius-card)] border border-danger/20 bg-danger/5 p-8 flex flex-col items-center gap-4 text-center">
-            <AlertCircle size={32} className="text-danger opacity-60" />
+          <div className="rounded-[var(--radius-card)] border border-border bg-white p-8 flex flex-col items-center gap-4 text-center shadow-[var(--shadow-card)]">
+            <div className="w-12 h-12 rounded-2xl bg-blue/8 flex items-center justify-center">
+              <AlertCircle size={22} className="text-blue opacity-60" />
+            </div>
             <div>
               <p className="font-display text-lg text-navy mb-1">
-                Ava failed to load
+                Ava&apos;s taking a breather
               </p>
               <p className="text-sm text-muted max-w-sm">
-                {this.state.error?.message
-                  ? `Error: ${this.state.error.message}`
-                  : "An unexpected error occurred. Check your ElevenLabs and Firebase configuration."}
+                The call dashboard couldn&apos;t load this time. Your call logs and
+                configuration are safe — give it another go.
               </p>
             </div>
             <button
               onClick={() => this.setState({ hasError: false, error: null })}
-              className="text-sm font-semibold text-blue hover:underline"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white bg-blue transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
             >
               Try again
             </button>

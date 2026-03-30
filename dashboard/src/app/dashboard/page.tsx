@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
-import { ChevronLeft, ChevronRight, RefreshCw, Upload, ArrowRight, Info, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, Upload, ArrowRight, Info, X, AlertTriangle } from "lucide-react";
 import StatCard from "@/components/ui/StatCard";
 import CliniciansTable from "@/components/ui/CliniciansTable";
 import LiveActivityFeed from "@/components/ui/LiveActivityFeed";
@@ -16,9 +16,10 @@ class FeedErrorBoundary extends Component<{ children: ReactNode }, { hasError: b
   render() {
     if (this.state.hasError) {
       return (
-        <div className="rounded-[var(--radius-card)] p-5 h-full flex items-center justify-center"
+        <div className="rounded-[var(--radius-card)] p-5 h-full flex flex-col items-center justify-center gap-2"
           style={{ background: "linear-gradient(135deg, #0B2545 0%, #132D5E 100%)" }}>
-          <p className="text-[11px] text-white/25 italic">Activity feed unavailable</p>
+          <p className="text-[12px] text-white/30 font-medium">Live feed paused</p>
+          <p className="text-[10px] text-white/15">Will resume on next page load</p>
         </div>
       );
     }
@@ -268,9 +269,9 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Error / Demo data banner */}
-      {statsError && <ErrorBanner message={statsError} onRetry={() => window.location.reload()} />}
-      {summaryError && <ErrorBanner message={summaryError} onRetry={() => window.location.reload()} />}
+      {/* Error banners — subtle, triangle on right */}
+      {statsError && <ErrorBanner message="Metrics couldn't load — showing placeholders until the next sync." onRetry={() => window.location.reload()} />}
+      {summaryError && <ErrorBanner message="Clinician summary unavailable right now." onRetry={() => window.location.reload()} />}
 
       {/* ── Week navigation + clinician filter ────────────────────────────── */}
       <motion.div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-tour="clinician-filter" {...staggerItem(0.08)}>
@@ -552,6 +553,46 @@ export default function DashboardPage() {
               <LiveActivityFeed />
             </FeedErrorBoundary>
           </>
+        ) : statsError ? (
+          <>
+            {/* Error placeholder cards — dashes instead of broken data */}
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+              <div className="flex items-start justify-between mb-2">
+                <span className="text-[11px] font-semibold text-muted uppercase tracking-wide">Appointments</span>
+                <AlertTriangle size={13} style={{ color: brand.warning }} />
+              </div>
+              <span className="text-[44px] font-bold text-navy/20 leading-none">——</span>
+              <p className="text-[12px] text-muted mt-1">this week</p>
+              <div className="border-t border-border mt-3 pt-3 flex items-center justify-between">
+                <div><span className="text-lg font-bold text-navy/20">——</span><span className="text-[10px] text-muted ml-1">new patients</span></div>
+                <div><span className="text-lg font-bold text-navy/20">——</span><span className="text-[10px] text-muted ml-1">follow-ups</span></div>
+              </div>
+            </div>
+
+            {/* Performance placeholder */}
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+              <div className="flex items-start justify-between mb-3">
+                <span className="text-[11px] font-semibold text-muted uppercase tracking-wide">Performance</span>
+                <AlertTriangle size={13} style={{ color: brand.warning }} />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-2">
+                <div>
+                  <span className="text-[32px] font-bold text-navy/20 leading-none">——</span>
+                  <p className="text-[10px] text-muted mt-0.5">follow-up rate</p>
+                </div>
+                <div>
+                  <span className="text-[32px] font-bold text-navy/20 leading-none">——</span>
+                  <p className="text-[10px] text-muted mt-0.5">utilisation</p>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted italic">Waiting for data to come back online</p>
+            </div>
+
+            {/* Live Activity Feed still works independently */}
+            <FeedErrorBoundary>
+              <LiveActivityFeed />
+            </FeedErrorBoundary>
+          </>
         ) : null}
       </motion.section>
 
@@ -710,6 +751,46 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
+          </>
+        ) : statsError ? (
+          <>
+            {/* Error placeholder cards for Row 2 */}
+            <StatCard label="Patient Flow" value="——" trend="flat" status="neutral" insight="Unavailable" />
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4">
+              <div className="flex items-start justify-between mb-1">
+                <span className="text-[11px] font-semibold text-muted uppercase tracking-wide">Revenue</span>
+                <AlertTriangle size={13} style={{ color: brand.warning }} />
+              </div>
+              <span className="text-[28px] font-bold text-navy/20 leading-none">——</span>
+              <p className="text-[12px] text-muted mt-1">avg/session</p>
+            </div>
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4">
+              <div className="flex items-start justify-between mb-3">
+                <span className="text-[11px] font-semibold text-muted uppercase tracking-wide">Compliance</span>
+                <AlertTriangle size={13} style={{ color: brand.warning }} />
+              </div>
+              <div className="mb-3">
+                <div className="flex justify-between items-baseline mb-1">
+                  <span className="text-[11px] font-medium text-navy">HEP assigned</span>
+                  <span className="text-[11px] font-bold text-navy/20">——</span>
+                </div>
+                <div className="h-[4px] bg-cloud-dark rounded-full" />
+              </div>
+              <div>
+                <div className="flex justify-between items-baseline mb-1">
+                  <span className="text-[11px] font-medium text-navy">Course completion</span>
+                  <span className="text-[11px] font-bold text-navy/20">——</span>
+                </div>
+                <div className="h-[4px] bg-cloud-dark rounded-full" />
+              </div>
+            </div>
+            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4">
+              <span className="text-[11px] font-semibold text-muted uppercase tracking-wide">6-Week Trend</span>
+              <p className="text-[10px] text-muted mb-2">Rolling performance</p>
+              <div className="h-[100px] flex items-center justify-center">
+                <p className="text-[11px] text-muted/40 italic">No trend data available</p>
+              </div>
+            </div>
           </>
         ) : null}
       </motion.section>
