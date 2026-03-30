@@ -19,6 +19,11 @@ import DemoBanner from "@/components/ui/DemoBanner";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
 import ClinicPicker from "@/components/ClinicPicker";
 
+const WhatsNew = dynamic(
+  () => import("@/components/WhatsNew"),
+  { ssr: false }
+);
+
 /** Catch splash screen crashes so they don't take down the whole app */
 class SplashErrorBoundary extends Component<{ children: ReactNode; onError: () => void }, { hasError: boolean }> {
   state = { hasError: false };
@@ -87,6 +92,7 @@ function AppLayout({ children, impersonating }: { children: React.ReactNode; imp
       <OnboardingWidget />
       <AccountSetupWidget />
       <FirstLoginTour />
+      <WhatsNew />
       <InsightEngineUnlocked />
       <CommandPalette />
     </>

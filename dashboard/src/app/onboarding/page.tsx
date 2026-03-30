@@ -80,13 +80,16 @@ const TIER_OPTIONS: { id: TrialTier; label: string; detail: string }[] = [
 
 // ─── PMS + Pulse options (carried from original) ─────────────────────────────
 
-const PMS_OPTIONS = [
-  { id: "writeupp" as PmsProvider, label: "WriteUpp", description: "Most popular in UK private physio — 50,000+ clinicians", badge: "Recommended" as string | null },
-  { id: "cliniko" as PmsProvider, label: "Cliniko", description: "Global PMS with strong UK adoption via CSP partnership", badge: null },
-  { id: "halaxy" as PmsProvider, label: "Halaxy", description: "UK/EU practice management with FHIR-standard API", badge: null },
-  { id: "powerdiary" as PmsProvider, label: "Zanda (Power Diary)", description: "UK & Australian PMS with self-serve API access", badge: null },
-  { id: "tm3" as PmsProvider, label: "TM3 (Blue Zinc)", description: "Dominant in MSK and insurance-funded UK clinics — CSV bridge", badge: "CSV Bridge" as string | null },
-  { id: "pps" as PmsProvider, label: "PPS (Rushcliff)", description: "Legacy UK incumbent — 2,400+ clinics across physio, podiatry, osteopathy", badge: "Coming Soon" as string | null },
+/** Integration mode per PMS: "api" = self-serve key, "csv" = CSV upload, "coming_soon" = not yet available */
+type PmsIntegration = "api" | "csv" | "coming_soon";
+
+const PMS_OPTIONS: { id: PmsProvider; label: string; description: string; badge: string | null; integration: PmsIntegration }[] = [
+  { id: "writeupp", label: "WriteUpp", description: "Most popular in UK private physio — 50,000+ clinicians", badge: "Recommended", integration: "csv" },
+  { id: "cliniko", label: "Cliniko", description: "Global PMS with strong UK adoption via CSP partnership", badge: null, integration: "api" },
+  { id: "halaxy", label: "Halaxy", description: "UK/EU practice management with FHIR-standard API", badge: null, integration: "api" },
+  { id: "powerdiary", label: "Zanda (Power Diary)", description: "UK & Australian PMS with self-serve API access", badge: null, integration: "api" },
+  { id: "tm3", label: "TM3 (Blue Zinc)", description: "Dominant in MSK and insurance-funded UK clinics — CSV bridge", badge: "CSV Bridge", integration: "csv" },
+  { id: "pps", label: "PPS (Rushcliff)", description: "Legacy UK incumbent — 2,400+ clinics across physio, podiatry, osteopathy", badge: "Coming Soon", integration: "coming_soon" },
 ];
 
 const PULSE_SEQUENCES = [
@@ -158,13 +161,21 @@ export default function OnboardingPage() {
   const isAuthenticated = !!user;
 
   // Guard: clinicians cannot run clinic onboarding — owner/admin only
+  // Guard: if onboarding is already complete, redirect to dashboard
   useEffect(() => {
-    if (!authLoading && user && user.role === "clinician") {
+    if (authLoading) return;
+    if (user && user.role === "clinician") {
       router.replace("/dashboard");
       return;
     }
-    if (!authLoading && !clinicId) {
+    if (!clinicId) {
       router.replace("/dashboard?error=no_clinic");
+      return;
+    }
+    // Clinic already live or past onboarding — don't show wizard again
+    const status = user?.clinicProfile?.status;
+    if (status && status !== "onboarding") {
+      router.replace("/dashboard");
     }
   }, [authLoading, clinicId, user, router]);
 
@@ -289,7 +300,8 @@ export default function OnboardingPage() {
       }
       if (stepId === "pms" && selectedPms) {
         updates.pmsType = selectedPms;
-        const hasCredentials = selectedPms === "tm3" || pmsApiKey.trim().length > 0;
+        const pmsOption = PMS_OPTIONS.find((p) => p.id === selectedPms);
+        const hasCredentials = pmsOption?.integration !== "api" || pmsApiKey.trim().length > 0;
         updates["onboarding.pmsConnected"] = hasCredentials;
       }
       if (stepId === "golive") {
@@ -681,25 +693,62 @@ export default function OnboardingPage() {
                       ))}
                     </div>
 
-                    {selectedPms && selectedPms !== "tm3" && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
-                        <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                          {PMS_OPTIONS.find((p) => p.id === selectedPms)?.label} API Key
-                        </label>
-                        <input type="password" value={pmsApiKey} onChange={(e) => setPmsApiKey(e.target.value)}
-                          placeholder="Paste your API key here"
-                          className="w-full px-3 py-2.5 rounded-lg border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30" />
-                        <p className="text-[11px] text-muted mt-1.5">
-                          Found in your {PMS_OPTIONS.find((p) => p.id === selectedPms)?.label} account under Settings → Integrations → API.
-                        </p>
-                      </motion.div>
-                    )}
+                    {selectedPms && (() => {
+                      const selected = PMS_OPTIONS.find((p) => p.id === selectedPms);
+                      if (!selected) return null;
+
+                      if (selected.integration === "api") {
+                        return (
+                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
+                            <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                              {selected.label} API Key
+                            </label>
+                            <input type="password" value={pmsApiKey} onChange={(e) => setPmsApiKey(e.target.value)}
+                              placeholder="Paste your API key here"
+                              className="w-full px-3 py-2.5 rounded-lg border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30" />
+                            <p className="text-[11px] text-muted mt-1.5">
+                              Found in your {selected.label} account under Settings → Integrations → API.
+                            </p>
+                          </motion.div>
+                        );
+                      }
+
+                      if (selected.integration === "csv") {
+                        return (
+                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
+                            <div className="flex items-start gap-2.5 p-4 rounded-xl bg-blue/5 border border-blue/15">
+                              <HelpCircle size={15} className="text-blue mt-0.5 shrink-0" />
+                              <div className="text-[12px] text-navy/80">
+                                <p className="font-semibold text-navy mb-1">{selected.label} connects via CSV import</p>
+                                <p>We&apos;ll walk you through exporting your data from {selected.label} once you reach your dashboard. It takes about two minutes.</p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      }
+
+                      if (selected.integration === "coming_soon") {
+                        return (
+                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.2 }}>
+                            <div className="flex items-start gap-2.5 p-4 rounded-xl bg-warn/5 border border-warn/15">
+                              <HelpCircle size={15} className="text-warn mt-0.5 shrink-0" />
+                              <div className="text-[12px] text-navy/80">
+                                <p className="font-semibold text-navy mb-1">{selected.label} integration is coming soon</p>
+                                <p>We&apos;ll notify you when it&apos;s ready. In the meantime, you can start with a CSV upload from your dashboard.</p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      }
+
+                      return null;
+                    })()}
 
                     <div className="flex items-start gap-2 p-3 rounded-lg bg-cloud-light border border-border">
                       <HelpCircle size={14} className="text-muted mt-0.5 shrink-0" />
                       <div className="text-[11px] text-muted">
                         <p className="font-semibold text-blue">Don&apos;t have this to hand? No problem.</p>
-                        <p>You can connect your PMS later from Settings, or start with a CSV upload instead.</p>
+                        <p>You can skip this step and connect your PMS later from Settings.</p>
                       </div>
                     </div>
                   </>

@@ -88,6 +88,20 @@ function LoginPageInner() {
     }
   }, [authLoading, user, router, searchParams]);
 
+  // Fallback: if auth context hasn't caught up within 3s of success,
+  // hard-navigate — the session cookie is already set by onAuthStateChanged.
+  useEffect(() => {
+    if (!success) return;
+    const fallback = setTimeout(() => {
+      const next = searchParams.get("next");
+      const dest = next && next.startsWith("/") && !next.startsWith("//")
+        ? next
+        : "/dashboard";
+      window.location.href = dest;
+    }, 3000);
+    return () => clearTimeout(fallback);
+  }, [success, searchParams]);
+
   function switchMode(newMode: AuthMode) {
     setMode(newMode);
     setError(null);
