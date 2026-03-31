@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "./firebase-admin";
 import type { UserRole } from "@/types";
@@ -140,8 +141,12 @@ export function verifyCronRequest(request: NextRequest): void {
   if (!secret) {
     throw new ApiAuthError("CRON_SECRET not configured", 500);
   }
-  const auth = request.headers.get("authorization")?.trim();
-  if (auth !== `Bearer ${secret}`) {
+  const auth = request.headers.get("authorization")?.trim() ?? "";
+  const expected = `Bearer ${secret}`;
+  if (
+    auth.length !== expected.length ||
+    !crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected))
+  ) {
     throw new ApiAuthError("Invalid cron secret", 401);
   }
 }

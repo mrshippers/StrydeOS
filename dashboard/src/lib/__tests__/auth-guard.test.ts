@@ -2,7 +2,7 @@
  * Tests for auth-guard pure logic functions.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ApiAuthError } from "../auth-guard";
 
 // ─── requireRole logic ──────────────────────────────────────────────────────
@@ -97,5 +97,54 @@ describe("requireClinic", () => {
       expect(err).toBeInstanceOf(ApiAuthError);
       expect((err as ApiAuthError).statusCode).toBe(403);
     }
+  });
+});
+
+// ─── verifyCronRequest ──────────────────────────────────────────────────────
+
+describe("verifyCronRequest", () => {
+  const CRON_SECRET = "test-cron-secret-value";
+
+  function makeRequest(authHeader?: string) {
+    const headers = new Headers();
+    if (authHeader) headers.set("authorization", authHeader);
+    return { headers } as import("next/server").NextRequest;
+  }
+
+  beforeEach(() => {
+    vi.stubEnv("CRON_SECRET", CRON_SECRET);
+  });
+
+  it("accepts valid cron secret", async () => {
+    const { verifyCronRequest } = await import("../auth-guard");
+    expect(() => verifyCronRequest(makeRequest(`Bearer ${CRON_SECRET}`))).not.toThrow();
+  });
+
+  it("rejects wrong cron secret", async () => {
+    const { verifyCronRequest } = await import("../auth-guard");
+    expect(() => verifyCronRequest(makeRequest("Bearer wrong-secret"))).toThrow(ApiAuthError);
+    try {
+      verifyCronRequest(makeRequest("Bearer wrong-secret"));
+    } catch (err) {
+      expect((err as ApiAuthError).statusCode).toBe(401);
+    }
+  });
+
+  it("rejects missing authorization header", async () => {
+    const { verifyCronRequest } = await import("../auth-guard");
+    expect(() => verifyCronRequest(makeRequest())).toThrow(ApiAuthError);
+  });
+
+  it("rejects when CRON_SECRET is not configured", async () => {
+    vi.stubEnv("CRON_SECRET", "");
+    const { verifyCronRequest } = await import("../auth-guard");
+    expect(() => verifyCronRequest(makeRequest("Bearer something"))).toThrow(/CRON_SECRET not configured/);
+  });
+
+  it("uses timing-safe comparison (same-length wrong secret)", async () => {
+    const { verifyCronRequest } = await import("../auth-guard");
+    // Same length as CRON_SECRET but different content
+    const sameLength = "x".repeat(CRON_SECRET.length);
+    expect(() => verifyCronRequest(makeRequest(`Bearer ${sameLength}`))).toThrow(ApiAuthError);
   });
 });

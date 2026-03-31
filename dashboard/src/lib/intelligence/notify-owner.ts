@@ -169,7 +169,8 @@ export async function sendWeeklyDigest(
 
   const now = new Date();
   const weekStart = new Date(now);
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1); // Monday
+  const dayOfWeek = weekStart.getDay();
+  weekStart.setDate(weekStart.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); // Monday
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 6); // Sunday
 

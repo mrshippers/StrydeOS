@@ -42,7 +42,7 @@ export function useTodaysFocus(): {
     user?.clinicProfile?.featureFlags?.clinicianNudges !== false;
 
   const clinicianId = user?.clinicianId ?? "all";
-  const { patients, loading: patientsLoading } = usePatients();
+  const { patients, loading: patientsLoading } = usePatients(clinicianId);
   const { stats, loading: statsLoading } = useWeeklyStats(clinicianId);
 
   const loading = patientsLoading || statsLoading;

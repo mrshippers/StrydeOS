@@ -22,7 +22,7 @@ import { DEFAULT_SEQUENCE_DEFINITIONS, resolveTemplate } from "@/types/comms";
 
 const N8N_BASE   = process.env.N8N_WEBHOOK_BASE_URL;
 const N8N_SECRET = process.env.N8N_COMMS_WEBHOOK_SECRET;
-const APP_URL    = process.env.APP_URL ?? "";
+const APP_URL    = process.env.APP_URL ?? "https://portal.strydeos.com";
 const N8N_TIMEOUT = 10_000;
 
 export interface TriggerResult {

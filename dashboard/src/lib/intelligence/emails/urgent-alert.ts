@@ -1,6 +1,6 @@
 import type { InsightEvent } from "@/types/insight-events";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "${APP_URL}";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.strydeos.com";
 
 const SEVERITY_COLORS: Record<string, string> = {
   critical: "#EF4444",
@@ -80,12 +80,12 @@ export function buildUrgentAlertText(event: InsightEvent, clinicName: string): s
 
   lines.push(
     "",
-    "View in Intelligence: ${APP_URL}/intelligence",
+    `View in Intelligence: ${APP_URL}/intelligence`,
     "",
     "---",
     "Powered by StrydeOS Intelligence",
-    "Manage alerts: ${APP_URL}/settings",
-    "Unsubscribe: ${APP_URL}/settings?unsubscribe=urgent"
+    `Manage alerts: ${APP_URL}/settings`,
+    `Unsubscribe: ${APP_URL}/settings?unsubscribe=urgent`
   );
 
   return lines.join("\n");

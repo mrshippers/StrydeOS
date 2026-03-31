@@ -1,6 +1,6 @@
 import type { InsightEvent } from "@/types/insight-events";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "${APP_URL}";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.strydeos.com";
 
 interface DigestData {
   clinicName: string;
@@ -182,12 +182,12 @@ export function buildStateOfClinicText(data: DigestData): string {
   lines.push(`Utilisation: ${fmtPct(curUtil)}`);
   lines.push(`Course Completion: ${fmtPct(curCompletion)}`);
   lines.push("");
-  lines.push("View dashboard: ${APP_URL}/dashboard");
+  lines.push(`View dashboard: ${APP_URL}/dashboard`);
   lines.push("");
   lines.push("---");
   lines.push("Powered by StrydeOS Intelligence");
-  lines.push("Manage preferences: ${APP_URL}/settings");
-  lines.push("Unsubscribe: ${APP_URL}/settings?unsubscribe=digest");
+  lines.push(`Manage preferences: ${APP_URL}/settings`);
+  lines.push(`Unsubscribe: ${APP_URL}/settings?unsubscribe=digest`);
   lines.push("hello@strydeos.com");
 
   return lines.join("\n");

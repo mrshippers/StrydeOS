@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { withRequestLog } from "@/lib/request-logger";
 
 type ServiceStatus = "operational" | "degraded" | "down";
@@ -249,7 +250,13 @@ async function checkAllServices(): Promise<StatusResponse> {
   return { overall, checkedAt: new Date().toISOString(), services };
 }
 
-async function handler() {
+async function handler(request: NextRequest) {
+  // Rate limit: 30 requests per IP per 60 seconds (public endpoint)
+  const { limited } = checkRateLimit(request, { limit: 30, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   const now = Date.now();
   if (cachedResult && now - cacheTimestamp < CACHE_TTL) {
     return NextResponse.json(cachedResult, {

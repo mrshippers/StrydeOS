@@ -58,7 +58,10 @@ export async function sendClinicianDigests(
 
   // Prepare Resend
   const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey) return { results: [] };
+  if (!resendKey) {
+    console.warn("[sendClinicianDigests] RESEND_API_KEY not set — skipping digest emails");
+    return { results: [] };
+  }
 
   const { Resend } = await import("resend");
   const resend = new Resend(resendKey);
@@ -67,7 +70,8 @@ export async function sendClinicianDigests(
   // Week label
   const now = new Date();
   const weekStart = new Date(now);
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+  const dayOfWeek = weekStart.getDay();
+  weekStart.setDate(weekStart.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 6);
   const fmt = (d: Date) =>
@@ -87,13 +91,30 @@ export async function sendClinicianDigests(
     }
 
     try {
-      // Load this clinician's latest weekly stats (scoped to their ID — not "all")
-      const statsSnap = await db
-        .collection(`clinics/${clinicId}/metrics_weekly`)
-        .where("clinicianId", "==", clinicianId)
-        .orderBy("weekStart", "desc")
-        .limit(1)
-        .get();
+      // Parallelise all 4 Firestore reads for this clinician
+      const [statsSnap, atRiskSnap, insightSnap, positiveSnap] = await Promise.all([
+        db.collection(`clinics/${clinicId}/metrics_weekly`)
+          .where("clinicianId", "==", clinicianId)
+          .orderBy("weekStart", "desc")
+          .limit(1)
+          .get(),
+        db.collection(`clinics/${clinicId}/patients`)
+          .where("clinicianId", "==", clinicianId)
+          .where("discharged", "==", false)
+          .limit(200)
+          .get(),
+        db.collection(`clinics/${clinicId}/insight_events`)
+          .where("clinicianId", "==", clinicianId)
+          .orderBy("createdAt", "desc")
+          .limit(1)
+          .get(),
+        db.collection(`clinics/${clinicId}/insight_events`)
+          .where("clinicianId", "==", clinicianId)
+          .where("severity", "==", "positive")
+          .orderBy("createdAt", "desc")
+          .limit(1)
+          .get(),
+      ]);
 
       if (statsSnap.empty) {
         results.push({ clinicianId, clinicianName, sent: false, error: "no_stats" });
@@ -102,31 +123,14 @@ export async function sendClinicianDigests(
 
       const statsData = statsSnap.docs[0].data();
 
-      // Count patients needing action (scoped to this clinician)
-      const atRiskSnap = await db
-        .collection(`clinics/${clinicId}/patients`)
-        .where("clinicianId", "==", clinicianId)
-        .where("discharged", "==", false)
-        .limit(200)
-        .get();
-
       const patientsNeedingAction = atRiskSnap.docs.filter((d) => {
         const p = d.data();
         const state = p.lifecycleState as string | undefined;
         return (state === "AT_RISK" || state === "LAPSED") && !p.nextSessionDate;
       }).length;
 
-      // Load most recent insight event for this clinician (for focus note)
-      const insightSnap = await db
-        .collection(`clinics/${clinicId}/insight_events`)
-        .where("clinicianId", "==", clinicianId)
-        .orderBy("createdAt", "desc")
-        .limit(1)
-        .get();
-
       const latestInsight = insightSnap.empty ? null : insightSnap.docs[0].data();
 
-      // Determine focus note from observational note or insight
       let focusNote: string | null = null;
       if (latestInsight?.observationalNote) {
         focusNote = latestInsight.observationalNote as string;
@@ -134,16 +138,7 @@ export async function sendClinicianDigests(
         focusNote = latestInsight.clinicianNarrative as string;
       }
 
-      // Determine win note
       let winNote: string | null = null;
-      const positiveSnap = await db
-        .collection(`clinics/${clinicId}/insight_events`)
-        .where("clinicianId", "==", clinicianId)
-        .where("severity", "==", "positive")
-        .orderBy("createdAt", "desc")
-        .limit(1)
-        .get();
-
       if (!positiveSnap.empty) {
         const pe = positiveSnap.docs[0].data();
         winNote = (pe.clinicianNarrative as string) ?? (pe.title as string) ?? null;
