@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/session";
 
@@ -71,7 +70,9 @@ export async function middleware(request: NextRequest) {
 function setSecurityHeaders(response: NextResponse): void {
   // Generate a per-request nonce for CSP. Pass it to the page via a request
   // header so that layout.tsx can read it and inject it into <Script> tags.
-  const nonce = crypto.randomBytes(16).toString("base64");
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const nonce = btoa(String.fromCharCode(...bytes));
   response.headers.set("x-csp-nonce", nonce);
 
   response.headers.set("X-Content-Type-Options", "nosniff");

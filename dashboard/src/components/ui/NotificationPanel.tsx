@@ -228,7 +228,7 @@ export default function NotificationPanel({
                         >
                           <button
                             onClick={() => {
-                              if (isUnread) markInsightRead(event.id);
+                              if (isUnread) void markInsightRead(event.id);
                             }}
                             className="w-full text-left flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors"
                           >

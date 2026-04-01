@@ -6,9 +6,26 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { ChevronLeft, ChevronRight, RefreshCw, Upload, ArrowRight, Info, X, AlertTriangle } from "lucide-react";
-import StatCard from "@/components/ui/StatCard";
-import CliniciansTable from "@/components/ui/CliniciansTable";
-import LiveActivityFeed from "@/components/ui/LiveActivityFeed";
+const StatCard = dynamic(() => import("@/components/ui/StatCard"), {
+  loading: () => <div className="animate-pulse bg-cloud-light rounded-[var(--radius-card)] h-[200px]" />,
+});
+const CliniciansTable = dynamic(() => import("@/components/ui/CliniciansTable"), {
+  loading: () => <div className="animate-pulse bg-cloud-light rounded-[var(--radius-card)] h-[200px]" />,
+});
+const LiveActivityFeed = dynamic(() => import("@/components/ui/LiveActivityFeed"), {
+  loading: () => (
+    <div className="rounded-[var(--radius-card)] p-5 h-full animate-pulse"
+      style={{ background: "linear-gradient(135deg, #0B2545 0%, #132D5E 100%)" }}>
+      <div className="h-3 w-20 bg-white/10 rounded mb-4" />
+      <div className="space-y-2">
+        <div className="h-6 bg-white/5 rounded" />
+        <div className="h-6 bg-white/5 rounded" />
+        <div className="h-6 bg-white/5 rounded" />
+      </div>
+    </div>
+  ),
+  ssr: false,
+});
 
 class FeedErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };

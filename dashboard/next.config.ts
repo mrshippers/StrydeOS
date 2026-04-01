@@ -18,6 +18,13 @@ const nextConfig: NextConfig = {
     "@google-cloud/firestore",
     "@opentelemetry/api",
   ],
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "motion/react",
+      "recharts",
+    ],
+  },
   async headers() {
     return [
       {
