@@ -36,12 +36,13 @@ const METRICS: { value: string; label: string }[] = [
 ];
 
 const SEQUENCES: { value: SequenceType; label: string }[] = [
-  { value: "early_intervention", label: "Early Intervention" },
-  { value: "rebooking_prompt",   label: "Re-booking Prompt" },
-  { value: "hep_reminder",       label: "HEP Reminder" },
-  { value: "review_prompt",      label: "Review Prompt" },
-  { value: "reactivation_90d",   label: "90-Day Reactivation" },
-  { value: "reactivation_180d",  label: "180-Day Reactivation" },
+  { value: "early_intervention",  label: "Early Intervention" },
+  { value: "rebooking_prompt",    label: "Re-booking Prompt" },
+  { value: "hep_reminder",        label: "HEP Reminder" },
+  { value: "review_prompt",       label: "Review Prompt" },
+  { value: "pre_auth_collection", label: "Pre-Auth Collection" },
+  { value: "reactivation_90d",    label: "90-Day Reactivation" },
+  { value: "reactivation_180d",   label: "180-Day Reactivation" },
 ];
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {

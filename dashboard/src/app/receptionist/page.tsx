@@ -44,14 +44,14 @@ const DEFAULT_APPOINTMENT_VALUE = 85;
 // Map call outcome → display config
 const OUTCOME_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   booked: { bg: "bg-success/10", text: "text-success", label: "Booked" },
-  follow_up_required: { bg: "bg-warn/10", text: "text-warn", label: "Cancelled" },
-  resolved: { bg: "bg-blue/10", text: "text-blue", label: "Info" },
-  voicemail: { bg: "bg-danger/10", text: "text-danger", label: "Missed" },
+  follow_up_required: { bg: "bg-warn/10", text: "text-warn", label: "Follow-up Needed" },
+  resolved: { bg: "bg-blue/10", text: "text-blue", label: "Handled" },
+  voicemail: { bg: "bg-danger/10", text: "text-danger", label: "Voicemail" },
   escalated: { bg: "bg-purple/10", text: "text-purple", label: "Escalated" },
   // Fallback for legacy demo data
   cancelled: { bg: "bg-warn/10", text: "text-warn", label: "Cancelled" },
-  info: { bg: "bg-blue/10", text: "text-blue", label: "Info" },
-  missed: { bg: "bg-danger/10", text: "text-danger", label: "Missed" },
+  info: { bg: "bg-blue/10", text: "text-blue", label: "Handled" },
+  missed: { bg: "bg-danger/10", text: "text-danger", label: "Voicemail" },
   transferred: { bg: "bg-purple/10", text: "text-purple", label: "Transferred" },
 };
 

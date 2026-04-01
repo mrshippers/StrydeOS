@@ -58,12 +58,11 @@ export function useCommsLog(): UseCommsLogResult {
   }, [clinicId, isDemo, scopedClinicianId]);
 
   if (isDemo) {
+    const demoLog = getDemoCommsLog();
     return {
-      commsLog:                    getDemoCommsLog(),
+      commsLog:                    demoLog,
       commsStats:                  getDemoCommsStats(),
-      statsBySequence:             {},
-      totalAttributedRevenuePence: 0,
-      attributedThisMonthPence:    0,
+      ...deriveSequenceStats(demoLog),
       loading,
       isDemo:                      true,
       error:                       null,

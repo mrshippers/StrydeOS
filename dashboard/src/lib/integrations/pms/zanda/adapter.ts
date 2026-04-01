@@ -48,6 +48,7 @@ export function createZandaAdapter(config: ZandaConfig): PMSAdapter {
 
       // Handle both wrapped { data: {...} } and direct object responses
       const row = (data as { data?: ZandaClientRow }).data ?? (data as ZandaClientRow);
+      if (!row?.id) throw new Error(`Zanda returned invalid patient data for ID ${externalId}`);
       return mapZandaClient(row);
     },
 

@@ -509,13 +509,13 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     const unsubReviews = subscribeReviews(
       clinicId,
       (data) => { setReviews(data); setReviewsReady(true); },
-      () => { setReviewsReady(true); }
+      () => { setFirestoreError("Failed to load reviews. Check your connection and try again."); setReviewsReady(true); }
     );
 
     const unsubOutcomes = subscribeOutcomeScoresAll(
       clinicId,
       (data) => { setOutcomeScores(data); setOutcomesReady(true); },
-      () => { setOutcomesReady(true); }
+      () => { setFirestoreError("Failed to load outcome scores. Check your connection and try again."); setOutcomesReady(true); }
     );
 
     return () => {
