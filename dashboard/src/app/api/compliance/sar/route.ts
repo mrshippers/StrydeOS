@@ -97,7 +97,10 @@ async function getHandler(request: NextRequest) {
     requireRole(user, ["owner", "admin", "superadmin"]);
 
     const clinicIdParam = new URL(request.url).searchParams.get("clinicId");
-    const clinicId = user.clinicId ?? clinicIdParam;
+    // Superadmins may target any clinic via query param; all others are locked to their own clinicId.
+    const clinicId = user.role === "superadmin"
+      ? (clinicIdParam ?? user.clinicId)
+      : user.clinicId;
 
     if (!clinicId) {
       return NextResponse.json(

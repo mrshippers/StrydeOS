@@ -18,7 +18,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { getFirebaseAuth, db, isFirebaseConfigured } from "@/lib/firebase";
-import type { AuthUser, ClinicProfile, UserRole, UserStatus, FeatureFlags, BillingState } from "@/types";
+import type { AuthUser, ClinicProfile, UserRole, UserStatus, FeatureFlags, BillingState, StripeSubscriptionStatus, ClinicStatus, PmsProvider } from "@/types";
 
 async function createServerSession(fbUser: User): Promise<void> {
   try {
@@ -48,6 +48,63 @@ const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
   continuity: false,
   receptionist: false,
 };
+
+/**
+ * Single source of truth for parsing a raw Firestore clinic document into a ClinicProfile.
+ * Eliminates divergent defaults across fetchUserProfile, onSnapshot, and switchClinic.
+ */
+function parseClinicProfile(id: string, raw: Record<string, unknown>): ClinicProfile {
+  const billingRaw = raw.billing as Record<string, unknown> | undefined;
+  const billing: BillingState | undefined = billingRaw
+    ? {
+        stripeCustomerId: (billingRaw.stripeCustomerId as string) ?? null,
+        subscriptionId: (billingRaw.subscriptionId as string) ?? null,
+        subscriptionStatus: (billingRaw.subscriptionStatus as StripeSubscriptionStatus) ?? null,
+        currentPeriodEnd: (billingRaw.currentPeriodEnd as string) ?? null,
+      }
+    : undefined;
+
+  const targetsRaw = raw.targets as Record<string, unknown> | undefined;
+  const onboardingRaw = raw.onboarding as Record<string, boolean> | undefined;
+
+  return {
+    id,
+    name: (raw.name as string) ?? "",
+    timezone: (raw.timezone as string) ?? "Europe/London",
+    ownerEmail: (raw.ownerEmail as string) ?? "",
+    address: raw.address as string | undefined,
+    phone: raw.phone as string | undefined,
+    sessionPricePence: raw.sessionPricePence as number | undefined,
+    parkingInfo: raw.parkingInfo as string | undefined,
+    website: raw.website as string | undefined,
+    status: (raw.status as ClinicStatus) ?? "onboarding",
+    pmsType: (raw.pmsType as PmsProvider) ?? null,
+    pmsLastSyncAt: (raw.pmsLastSyncAt as string) ?? ((raw.pms as Record<string, unknown>)?.lastSyncAt as string) ?? null,
+    featureFlags: {
+      ...DEFAULT_FEATURE_FLAGS,
+      ...((raw.featureFlags as Partial<FeatureFlags>) ?? {}),
+    },
+    targets: {
+      followUpRate: (targetsRaw?.followUpRate as number) ?? 4.0,
+      hepRate: (targetsRaw?.hepRate as number) ?? (targetsRaw?.physitrackRate as number) ?? 95,
+      utilisationRate: (targetsRaw?.utilisationRate as number) ?? 75,
+      dnaRate: (targetsRaw?.dnaRate as number) ?? 6,
+      courseCompletionTarget: (targetsRaw?.courseCompletionTarget as number) ?? 80,
+    },
+    brandConfig: (raw.brandConfig as Record<string, unknown>) ?? {},
+    onboarding: {
+      pmsConnected: onboardingRaw?.pmsConnected ?? false,
+      cliniciansConfirmed: onboardingRaw?.cliniciansConfirmed ?? false,
+      targetsSet: onboardingRaw?.targetsSet ?? false,
+    },
+    onboardingV2: raw.onboardingV2 as ClinicProfile["onboardingV2"] ?? undefined,
+    billing,
+    compliance: raw.compliance as ClinicProfile["compliance"] ?? undefined,
+    trialStartedAt: (raw.trialStartedAt as string) ?? null,
+    createdAt: (raw.createdAt as string) ?? "",
+    updatedAt: (raw.updatedAt as string) ?? "",
+  };
+}
 
 const DEMO_USER: AuthUser = {
   uid: "demo",
@@ -168,54 +225,7 @@ async function fetchUserProfile(fbUser: User): Promise<AuthUser | null> {
         doc(db, "clinics", userData.clinicId)
       );
       if (clinicDoc.exists()) {
-        const raw = clinicDoc.data();
-        const billingRaw = raw.billing;
-        const billing: BillingState | undefined = billingRaw
-          ? {
-              stripeCustomerId: billingRaw.stripeCustomerId ?? null,
-              subscriptionId: billingRaw.subscriptionId ?? null,
-              subscriptionStatus: billingRaw.subscriptionStatus ?? null,
-              currentPeriodEnd: billingRaw.currentPeriodEnd ?? null,
-            }
-          : undefined;
-
-        clinicProfile = {
-          id: clinicDoc.id,
-          name: raw.name ?? "",
-          timezone: raw.timezone ?? "Europe/London",
-          ownerEmail: raw.ownerEmail ?? "",
-          address: raw.address ?? undefined,
-          phone: raw.phone ?? undefined,
-          sessionPricePence: raw.sessionPricePence ?? undefined,
-          parkingInfo: raw.parkingInfo ?? undefined,
-          website: raw.website ?? undefined,
-          status: raw.status ?? "onboarding",
-          pmsType: raw.pmsType ?? null,
-          pmsLastSyncAt: raw.pmsLastSyncAt ?? raw.pms?.lastSyncAt ?? null,
-          featureFlags: {
-            ...DEFAULT_FEATURE_FLAGS,
-            ...(raw.featureFlags ?? {}),
-          },
-          targets: {
-            followUpRate: raw.targets?.followUpRate ?? 4.0,
-            hepRate: raw.targets?.hepRate ?? raw.targets?.physitrackRate ?? 95,
-            utilisationRate: raw.targets?.utilisationRate ?? 75,
-            dnaRate: raw.targets?.dnaRate ?? 6,
-            courseCompletionTarget: raw.targets?.courseCompletionTarget ?? 80,
-          },
-          brandConfig: raw.brandConfig ?? {},
-          onboarding: {
-            pmsConnected: raw.onboarding?.pmsConnected ?? false,
-            cliniciansConfirmed: raw.onboarding?.cliniciansConfirmed ?? false,
-            targetsSet: raw.onboarding?.targetsSet ?? false,
-          },
-          onboardingV2: raw.onboardingV2 ?? undefined,
-          billing,
-          compliance: raw.compliance ?? undefined,
-          trialStartedAt: raw.trialStartedAt ?? null,
-          createdAt: raw.createdAt ?? "",
-          updatedAt: raw.updatedAt ?? "",
-        };
+        clinicProfile = parseClinicProfile(clinicDoc.id, clinicDoc.data());
       }
     }
 
@@ -329,52 +339,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       doc(db, "clinics", user.clinicId),
       (snap) => {
         if (snap.exists()) {
-          const raw = snap.data();
-          const billingRaw = raw.billing;
-          const billing: BillingState | undefined = billingRaw
-            ? {
-                stripeCustomerId: billingRaw.stripeCustomerId ?? null,
-                subscriptionId: billingRaw.subscriptionId ?? null,
-                subscriptionStatus: billingRaw.subscriptionStatus ?? null,
-                currentPeriodEnd: billingRaw.currentPeriodEnd ?? null,
-              }
-            : undefined;
-
-          const profile: ClinicProfile = {
-            id: snap.id,
-            name: raw.name ?? "",
-            timezone: raw.timezone ?? "Europe/London",
-            ownerEmail: raw.ownerEmail ?? "",
-            address: raw.address ?? undefined,
-            phone: raw.phone ?? undefined,
-            sessionPricePence: raw.sessionPricePence ?? undefined,
-            parkingInfo: raw.parkingInfo ?? undefined,
-            website: raw.website ?? undefined,
-            status: raw.status ?? "onboarding",
-            pmsType: raw.pmsType ?? null,
-            pmsLastSyncAt: raw.pmsLastSyncAt ?? raw.pms?.lastSyncAt ?? null,
-            featureFlags: {
-              ...DEFAULT_FEATURE_FLAGS,
-              ...(raw.featureFlags ?? {}),
-            },
-            targets: {
-              followUpRate: raw.targets?.followUpRate ?? 4.0,
-              hepRate: raw.targets?.hepRate ?? raw.targets?.physitrackRate ?? 95,
-              utilisationRate: raw.targets?.utilisationRate ?? 85,
-              dnaRate: raw.targets?.dnaRate ?? 5,
-              courseCompletionTarget: raw.targets?.courseCompletionTarget ?? 80,
-            },
-            brandConfig: raw.brandConfig ?? {},
-            onboarding: {
-              pmsConnected: raw.onboarding?.pmsConnected ?? false,
-              cliniciansConfirmed: raw.onboarding?.cliniciansConfirmed ?? false,
-              targetsSet: raw.onboarding?.targetsSet ?? false,
-            },
-            billing,
-            trialStartedAt: raw.trialStartedAt ?? null,
-            createdAt: raw.createdAt ?? "",
-            updatedAt: raw.updatedAt ?? "",
-          };
+          const profile = parseClinicProfile(snap.id, snap.data());
           setUser((prev) => (prev ? { ...prev, clinicProfile: profile } : prev));
         }
       }
@@ -436,54 +401,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const clinicDoc = await getDoc(doc(db, "clinics", targetClinicId));
     if (!clinicDoc.exists()) return;
 
-    const raw = clinicDoc.data();
-    const billingRaw = raw.billing;
-    const billing: BillingState | undefined = billingRaw
-      ? {
-          stripeCustomerId: billingRaw.stripeCustomerId ?? null,
-          subscriptionId: billingRaw.subscriptionId ?? null,
-          subscriptionStatus: billingRaw.subscriptionStatus ?? null,
-          currentPeriodEnd: billingRaw.currentPeriodEnd ?? null,
-        }
-      : undefined;
-
-    const profile: ClinicProfile = {
-      id: clinicDoc.id,
-      name: raw.name ?? "",
-      timezone: raw.timezone ?? "Europe/London",
-      ownerEmail: raw.ownerEmail ?? "",
-      address: raw.address ?? undefined,
-      phone: raw.phone ?? undefined,
-      sessionPricePence: raw.sessionPricePence ?? undefined,
-      parkingInfo: raw.parkingInfo ?? undefined,
-      website: raw.website ?? undefined,
-      status: raw.status ?? "onboarding",
-      pmsType: raw.pmsType ?? null,
-      pmsLastSyncAt: raw.pmsLastSyncAt ?? raw.pms?.lastSyncAt ?? null,
-      featureFlags: {
-        ...DEFAULT_FEATURE_FLAGS,
-        ...(raw.featureFlags ?? {}),
-      },
-      targets: {
-        followUpRate: raw.targets?.followUpRate ?? 4.0,
-        hepRate: raw.targets?.hepRate ?? raw.targets?.physitrackRate ?? 95,
-        utilisationRate: raw.targets?.utilisationRate ?? 75,
-        dnaRate: raw.targets?.dnaRate ?? 6,
-        courseCompletionTarget: raw.targets?.courseCompletionTarget ?? 80,
-      },
-      brandConfig: raw.brandConfig ?? {},
-      onboarding: {
-        pmsConnected: raw.onboarding?.pmsConnected ?? false,
-        cliniciansConfirmed: raw.onboarding?.cliniciansConfirmed ?? false,
-        targetsSet: raw.onboarding?.targetsSet ?? false,
-      },
-      onboardingV2: raw.onboardingV2 ?? undefined,
-      billing,
-      compliance: raw.compliance ?? undefined,
-      trialStartedAt: raw.trialStartedAt ?? null,
-      createdAt: raw.createdAt ?? "",
-      updatedAt: raw.updatedAt ?? "",
-    };
+    const profile = parseClinicProfile(clinicDoc.id, clinicDoc.data());
 
     setUser((prev) =>
       prev

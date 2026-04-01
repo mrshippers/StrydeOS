@@ -17,6 +17,7 @@
  * Returns: { clinicId, uid, email, passwordResetLink }
  */
 
+import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, getAdminAuth } from "@/lib/firebase-admin";
 import type {
@@ -37,7 +38,13 @@ async function handler(request: NextRequest) {
   try {
     // ── Auth check: both admin secret AND superadmin Firebase token required ──
     const adminSecret = request.headers.get("x-admin-secret");
-    if (!adminSecret || adminSecret !== process.env.STRYDE_ADMIN_SECRET) {
+    const expectedSecret = process.env.STRYDE_ADMIN_SECRET;
+    if (
+      !adminSecret ||
+      !expectedSecret ||
+      adminSecret.length !== expectedSecret.length ||
+      !crypto.timingSafeEqual(Buffer.from(adminSecret), Buffer.from(expectedSecret))
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

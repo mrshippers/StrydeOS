@@ -26,6 +26,7 @@
  *   or { error: string } with appropriate status code
  */
 
+import crypto from "node:crypto";
 import * as Sentry from "@sentry/nextjs";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -113,7 +114,12 @@ async function handler(request: NextRequest) {
       request.headers.get("x-webhook-secret") ??
       request.headers.get("authorization")?.replace("Bearer ", "");
 
-    if (!BOOKING_SECRET || secret !== BOOKING_SECRET) {
+    if (
+      !BOOKING_SECRET ||
+      !secret ||
+      secret.length !== BOOKING_SECRET.length ||
+      !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(BOOKING_SECRET))
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

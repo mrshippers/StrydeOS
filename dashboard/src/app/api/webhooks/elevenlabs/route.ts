@@ -46,7 +46,15 @@ async function verifyElevenLabsSignature(
 
   // ElevenLabs may send "v0=<hex>" or just "<hex>"
   const provided = signatureHeader.replace(/^v\d+=/, "");
-  return expected === provided;
+  if (expected.length !== provided.length) return false;
+  const a = new TextEncoder().encode(expected);
+  const b = new TextEncoder().encode(provided);
+  // Constant-time comparison to prevent timing attacks
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a[i] ^ b[i];
+  }
+  return result === 0;
 }
 
 async function handler(req: NextRequest) {

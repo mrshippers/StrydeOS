@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { verifyApiRequest, handleApiError } from "@/lib/auth-guard";
+import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { buildAvaCorePrompt } from "@/lib/ava/ava-core-prompt";
 import { compileKnowledgeDocument, type KnowledgeEntry } from "@/lib/ava/ava-knowledge";
 import { withRequestLog } from "@/lib/request-logger";
 
-const db = getAdminDb();
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
 
@@ -78,7 +77,9 @@ async function handler(req: NextRequest) {
   }
 
   try {
+    const db = getAdminDb();
     const user = await verifyApiRequest(req);
+    requireRole(user, ["owner", "admin", "superadmin"]);
     const clinicId = user.clinicId;
 
     if (!clinicId) {

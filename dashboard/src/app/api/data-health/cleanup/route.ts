@@ -208,11 +208,9 @@ async function enforcePaymentGracePeriod(
       await clinicDoc.ref.update({
         "billing.subscriptionStatus": "unpaid",
         "billing.tier": "free",
-        "features.ava": false,
-        "features.pulse": false,
-        "features.intelligence": false,
-        "features.comms": false,
-        "features.dataHealth": false,
+        "featureFlags.intelligence": false,
+        "featureFlags.continuity": false,
+        "featureFlags.receptionist": false,
       });
 
       await writeAuditLog(db, clinicId, {
