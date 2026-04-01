@@ -177,6 +177,13 @@ service cloud.firestore {
       }
     }
 
+    // ─── Nemoclaw QA runs — public read, server-only write ──────────────
+    // Operational data only (test pass/fail counts). No PHI.
+    match /nemoclaw-runs/{runId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // ─── Server-only top-level collections — never client-accessible ─────
     match /_stripe_event_dedup/{document=**} {
       allow read, write: if false;
