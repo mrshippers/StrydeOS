@@ -74,7 +74,8 @@ function aggregateWeek(
   clinicianName: string,
   targets: { followUpRate: number; hepRate: number },
   patients: PatientLike[],
-  reviews: ReviewLike[]
+  reviews: ReviewLike[],
+  sessionPricePence: number = 0
 ): Omit<WeeklyStats, "id"> {
   const completed = appointments.filter((a) => a.status === "completed");
   const total = completed.length;
@@ -102,7 +103,7 @@ function aggregateWeek(
   const hepComplianceRate = hepRate;
 
   const revenueTotal = completed.reduce(
-    (sum, a) => sum + (a.revenueAmountPence ?? 0),
+    (sum, a) => sum + (a.revenueAmountPence || sessionPricePence),
     0
   );
   const revenuePerSessionPence = total > 0 ? Math.round(revenueTotal / total) : 0;
@@ -112,7 +113,7 @@ function aggregateWeek(
   const revenueByAppointmentType: Record<string, number> = {};
   for (const a of completed) {
     const type = a.appointmentType ?? "unknown";
-    revenueByAppointmentType[type] = (revenueByAppointmentType[type] ?? 0) + (a.revenueAmountPence ?? 0);
+    revenueByAppointmentType[type] = (revenueByAppointmentType[type] ?? 0) + (a.revenueAmountPence || sessionPricePence);
   }
 
   // Insurance vs self-pay revenue split — PBB: "PMI clinics: 83% more revenue but 5pp lower margin"
@@ -123,7 +124,7 @@ function aggregateWeek(
   let insuranceRevenuePence = 0;
   let selfPayRevenuePence = 0;
   for (const a of completed) {
-    const revenue = a.revenueAmountPence ?? 0;
+    const revenue = a.revenueAmountPence || sessionPricePence;
     if (a.patientId && patientInsuranceMap.get(a.patientId)) {
       insuranceRevenuePence += revenue;
     } else {
@@ -249,6 +250,7 @@ export async function computeWeeklyMetricsForClinic(
   const clinicDoc = await db.collection("clinics").doc(clinicId).get();
   if (!clinicDoc.exists) return { written: 0 };
   const clinicData = clinicDoc.data();
+  const sessionPricePence: number = clinicData?.sessionPricePence ?? 0;
   const targets = {
     followUpRate: clinicData?.targets?.followUpRate ?? 4.0,
     hepRate: clinicData?.targets?.hepRate ?? clinicData?.targets?.physitrackRate ?? 95,
@@ -337,7 +339,8 @@ export async function computeWeeklyMetricsForClinic(
         cid === "all" ? "All Clinicians" : name,
         targets,
         patients,
-        reviews
+        reviews,
+        sessionPricePence
       );
       const docId = `${weekStart}_${cid}`;
       await metricsRef.doc(docId).set(stats);

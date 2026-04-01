@@ -118,6 +118,34 @@ export default function DashboardPage() {
   const { startLoading, stopLoading } = useProgress();
   const router = useRouter();
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleManualSync = async () => {
+    if (syncing || !user) return;
+    setSyncing(true);
+    try {
+      const { getIdToken } = await import("firebase/auth");
+      const { getFirebaseAuth } = await import("@/lib/firebase");
+      const auth = getFirebaseAuth();
+      if (!auth?.currentUser) return;
+      const token = await getIdToken(auth.currentUser);
+      const res = await fetch("/api/pms/sync", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Sync failed");
+      // Also trigger metrics recompute after sync
+      await fetch("/api/metrics/compute", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      window.location.reload();
+    } catch {
+      // Fail silently — the staleness banner will remain visible
+    } finally {
+      setSyncing(false);
+    }
+  };
   const firstName = user?.firstName || "";
   const [isFirstMount] = useState(() => {
     try {
@@ -219,7 +247,12 @@ export default function DashboardPage() {
               </div>
             )}
             {lastSync && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cloud-light border border-border text-[12px] text-muted shrink-0">
+              <button
+                onClick={handleManualSync}
+                disabled={syncing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cloud-light border border-border text-[12px] text-muted shrink-0 hover:border-navy/20 hover:text-navy transition-all disabled:opacity-50 cursor-pointer"
+                title="Click to sync now"
+              >
                 <span
                   className="w-1.5 h-1.5 rounded-full shrink-0"
                   style={{
@@ -229,16 +262,26 @@ export default function DashboardPage() {
                       "#EF4444",
                   }}
                 />
-                <RefreshCw size={10} className={loading ? "animate-spin" : ""} />
-                Synced {lastSync.label}
-              </div>
+                <RefreshCw size={10} className={syncing || loading ? "animate-spin" : ""} />
+                {syncing ? "Syncing…" : `Synced ${lastSync.label}`}
+              </button>
+            )}
+            {!lastSync && user?.clinicProfile?.pmsType && !loading && (
+              <button
+                onClick={handleManualSync}
+                disabled={syncing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cloud-light border border-border text-[12px] text-muted shrink-0 hover:border-navy/20 hover:text-navy transition-all disabled:opacity-50"
+              >
+                <RefreshCw size={10} className={syncing ? "animate-spin" : ""} />
+                {syncing ? "Syncing…" : "Sync data"}
+              </button>
             )}
           </div>
         </div>
       </motion.div>
 
-      {/* ── Data staleness nudge (CSV-bridge clinics) ─────────────────────── */}
-      {isCurrentWeek && !loading && lastSync?.staleness === "very-stale" && ["tm3"].includes(user?.clinicProfile?.pmsType ?? "") && (
+      {/* ── Data staleness nudge (all PMS types) ─────────────────────────── */}
+      {isCurrentWeek && !loading && lastSync?.staleness === "very-stale" && user?.clinicProfile?.pmsType && (
         <motion.div
           className="flex items-center gap-3 p-3 rounded-xl border border-warn/20 bg-warn/5"
           initial={{ opacity: 0, y: 6 }}
@@ -249,23 +292,57 @@ export default function DashboardPage() {
             <RefreshCw size={14} className="text-warn" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-navy">Data import overdue</p>
-            <p className="text-[11px] text-muted">Last import was {lastSync.label}. Upload a new CSV to keep your metrics current.</p>
+            <p className="text-sm font-medium text-navy">Data sync overdue</p>
+            <p className="text-[11px] text-muted">
+              Last sync was {lastSync.label}. {user.clinicProfile.pmsType === "tm3" ? "Upload a new CSV to keep your metrics current." : "Trigger a manual sync or check your PMS connection."}
+            </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <a
-              href="/settings#csv-import-section"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
-            >
-              <Upload size={11} /> Upload CSV
-            </a>
+            {user.clinicProfile.pmsType === "tm3" ? (
+              <a
+                href="/settings#csv-import-section"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
+              >
+                <Upload size={11} /> Upload CSV
+              </a>
+            ) : (
+              <button
+                onClick={handleManualSync}
+                disabled={syncing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={11} className={syncing ? "animate-spin" : ""} /> {syncing ? "Syncing…" : "Sync now"}
+              </button>
+            )}
             <a
               href="/settings"
               className="flex items-center gap-1 text-[11px] font-medium text-muted hover:text-navy transition-colors"
             >
-              Auto-import <ArrowRight size={10} />
+              Settings <ArrowRight size={10} />
             </a>
           </div>
+        </motion.div>
+      )}
+
+      {/* ── Gentle stale nudge (24-72h) — only for non-webhook PMS ────────── */}
+      {isCurrentWeek && !loading && lastSync?.staleness === "stale" && user?.clinicProfile?.pmsType && (
+        <motion.div
+          className="flex items-center gap-3 p-2.5 rounded-xl border border-border bg-cloud-light"
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+        >
+          <RefreshCw size={13} className="text-muted shrink-0" />
+          <p className="text-[11px] text-muted flex-1">
+            Your data was last synced {lastSync.label}. For the most accurate weekly metrics, sync before your end-of-week review.
+          </p>
+          <button
+            onClick={handleManualSync}
+            disabled={syncing}
+            className="text-[11px] font-semibold text-blue hover:text-blue-bright transition-colors whitespace-nowrap disabled:opacity-50"
+          >
+            {syncing ? "Syncing…" : "Sync now"}
+          </button>
         </motion.div>
       )}
 

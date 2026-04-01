@@ -36,6 +36,10 @@ export async function runPipeline(
   const startedAt = new Date().toISOString();
   const stages: StageResult[] = [];
 
+  const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+  const clinicData = clinicDoc.data();
+  const sessionPricePence: number = clinicData?.sessionPricePence ?? 0;
+
   const configBase = db
     .collection("clinics")
     .doc(clinicId)
@@ -82,7 +86,7 @@ export async function runPipeline(
     clinicId,
     pmsAdapter,
     clinicianMap,
-    options
+    { ...options, sessionPricePence }
   );
   stages.push(s2);
   await logIntegrationHealth(db, clinicId, pmsConfig.provider, "pms", s2);
