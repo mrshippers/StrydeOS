@@ -58,7 +58,7 @@ const MODULE_CONFIG: Record<ValueModule, { label: string; color: string }> = {
 
 export function useValueLedger(selectedClinician: string): ValueLedgerData {
   const { user } = useAuth();
-  const clinicId = user?.activeClinicId ?? null;
+  const clinicId = user?.clinicId ?? null;
 
   const [events, setEvents] = useState<ValueEvent[]>([]);
   const [summary, setSummary] = useState<ValueSummary | null>(null);

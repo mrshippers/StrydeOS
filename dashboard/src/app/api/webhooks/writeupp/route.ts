@@ -8,6 +8,7 @@ import { syncAppointments } from "@/lib/pipeline/sync-appointments";
 import { syncPatients } from "@/lib/pipeline/sync-patients";
 import { computePatientFields } from "@/lib/pipeline/compute-patients";
 import { triggerCommsSequences } from "@/lib/comms/trigger-sequences";
+import { computeWeeklyMetricsForClinic } from "@/lib/metrics/compute-weekly";
 import type { PMSIntegrationConfig } from "@/types/pms";
 import { withRequestLog } from "@/lib/request-logger";
 
@@ -111,6 +112,10 @@ async function handler(request: NextRequest) {
 
           if (!config?.apiKey?.trim() || config.provider !== "writeupp") continue;
 
+          // Read clinic session price for revenue fallback
+          const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+          const sessionPricePence: number = clinicDoc.data()?.sessionPricePence ?? 0;
+
           const adapter = createPMSAdapter(config);
           const clinicianMap = await buildClinicianMap(db, clinicId);
 
@@ -119,7 +124,7 @@ async function handler(request: NextRequest) {
             clinicId,
             adapter,
             clinicianMap,
-            { backfill: false }
+            { backfill: false, sessionPricePence }
           );
 
           const s3 = await syncPatients(
@@ -134,6 +139,17 @@ async function handler(request: NextRequest) {
 
           await triggerCommsSequences(db, clinicId).catch((e) => {
             console.error(`[WriteUpp webhook] comms error for ${clinicId}:`, e);
+          });
+
+          // Recompute weekly metrics so dashboard reflects fresh data immediately
+          await computeWeeklyMetricsForClinic(db, clinicId, 8).catch((e) => {
+            console.error(`[WriteUpp webhook] metrics compute error for ${clinicId}:`, e);
+          });
+
+          // Update pmsLastSyncAt so the dashboard staleness indicator refreshes
+          await db.collection("clinics").doc(clinicId).update({
+            pmsLastSyncAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           });
         } catch (err) {
           console.error(`[WriteUpp webhook] pipeline error for ${clinicId}:`, err);

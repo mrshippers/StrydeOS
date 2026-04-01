@@ -32,32 +32,34 @@ import {
 } from "lucide-react";
 
 const SEQUENCE_PREVIEWS: Record<string, { channel: "sms" | "email"; subject?: string; body: string }> = {
-  hep_reminder: {
+  early_intervention: {
     channel: "sms",
-    body: "Hi [Name], just a reminder to complete your home exercises before your next appointment on [Date]. Keeping up with them will really help your progress. Reply STOP to opt out.",
+    body: "Hi [Name], we noticed you're early in your treatment at [ClinicName]. These first few sessions are important — let's keep the momentum going. Book your next: [BookingUrl]",
+  },
+  hep_reminder: {
+    channel: "email",
+    body: "Hi [Name], your next session at [ClinicName] is coming up. Have you been keeping up with your exercises? Completing them makes a real difference to your recovery.",
   },
   rebooking_prompt: {
     channel: "sms",
-    body: "Hi [Name], we noticed you haven't booked your next appointment yet. You've made great progress — let's keep the momentum going. Book online: [Link] or reply to this message.",
+    body: "Hi [Name], we noticed you haven't booked your next appointment at [ClinicName]. Staying on track with your sessions helps you recover faster. Book now: [BookingUrl]",
   },
   pre_auth_collection: {
     channel: "email",
     subject: "Insurance authorisation needed before your appointment",
-    body: "Dear [Name],\n\nWe've noticed your upcoming appointment is being processed through [Insurer]. To avoid any delays, please ensure you have your pre-authorisation reference number ready.\n\nIf you need help, reply to this email or call us on [Phone].\n\nKind regards,\nThe team at [Clinic]",
+    body: "Dear [Name],\n\nWe've noticed your upcoming appointment is being processed through [Insurer]. To avoid any delays, please ensure you have your pre-authorisation reference number ready.\n\nIf you need help, reply to this email or call us on [Phone].\n\nKind regards,\nThe team at [ClinicName]",
   },
   review_prompt: {
     channel: "sms",
-    body: "Hi [Name], we hope you're feeling the benefit of your treatment! If you have a moment, we'd really appreciate a review — it helps other patients find us. [Google Review Link] Thank you!",
+    body: "Hi [Name], thank you for choosing [ClinicName]. On a scale of 0-10, how likely are you to recommend us? Simply reply with a number.",
   },
   reactivation_90d: {
-    channel: "email",
-    subject: "How are you feeling, [Name]?",
-    body: "Dear [Name],\n\nIt's been a while since we've seen you, and we just wanted to check in. If you've had any new symptoms or your old ones have returned, we're here to help.\n\nBook your appointment: [Link]\n\nBest wishes,\nThe team at [Clinic]",
+    channel: "sms",
+    body: "Hi [Name], it's been a while since your last visit to [ClinicName]. If you've got any new niggles or want a check-up, we're here: [BookingUrl]",
   },
   reactivation_180d: {
-    channel: "email",
-    subject: "Time for a check-up, [Name]?",
-    body: "Dear [Name],\n\nIt's been 6 months since your last visit. Many of our patients find a maintenance session every few months keeps them moving well and prevents recurrence.\n\nIf you'd like to book, click here: [Link]\n\nBest,\nThe team at [Clinic]",
+    channel: "sms",
+    body: "Hi [Name], it's been 6 months since your last session at [ClinicName]. Many patients find a periodic check-up keeps them moving well. We're here if you need us: [BookingUrl]",
   },
 };
 
@@ -89,7 +91,7 @@ function ContinuityPage() {
   const [customiseOpen, setCustomiseOpen] = useState(false);
   const patientMap = Object.fromEntries(patients.map((p) => [p.id, p]));
 
-  async function handleSendReminder(patientId: string) {
+  async function sendComms(patientId: string, sequenceType: string, messageBody: string) {
     const patient = patients.find((p) => p.id === patientId);
     if (!patient) return;
 
@@ -103,9 +105,6 @@ function ContinuityPage() {
     const clinicId = user?.clinicId;
     if (!clinicId) return;
 
-    const REBOOKING_BODY =
-      "Hi [Name], we noticed you haven't booked your next appointment yet. You've made great progress — let's keep the momentum going. Reply to this message or call us on [Phone].";
-
     try {
       const res = await fetch("/api/comms/send", {
         method: "POST",
@@ -114,17 +113,33 @@ function ContinuityPage() {
           clinicId,
           patientId: patient.id,
           patientName: patient.name,
-          sequenceType: "rebooking_prompt",
+          sequenceType,
           channel,
           to,
-          body: REBOOKING_BODY,
+          body: messageBody,
         }),
       });
       if (!res.ok) throw new Error(await res.text());
-      toast(`Re-engagement ${channel === "sms" ? "SMS" : "email"} sent to ${patient.name}`, "success");
+      toast(`${channel === "sms" ? "SMS" : "Email"} sent to ${patient.name}`, "success");
     } catch {
       toast(`Failed to send to ${patient.name}`, "error");
     }
+  }
+
+  function handleSendReminder(patientId: string) {
+    sendComms(
+      patientId,
+      "rebooking_prompt",
+      "Hi [Name], we noticed you haven't booked your next appointment yet. You've made great progress — let's keep the momentum going. Reply to this message or call us on [Phone]."
+    );
+  }
+
+  function handleSendEarlyIntervention(patientId: string) {
+    sendComms(
+      patientId,
+      "early_intervention",
+      "Hi [Name], just checking in after your first session. How are you feeling? If you have any questions about your exercises or want to book your next appointment, reply here or call us on [Phone]."
+    );
   }
 
   const channelIcon = (ch: string) =>
@@ -211,7 +226,7 @@ function ContinuityPage() {
             <SessionThresholdStrip
               patients={sessionAlerts}
               clinicianMap={clinicianMap}
-              onSendEarlyIntervention={handleSendReminder}
+              onSendEarlyIntervention={handleSendEarlyIntervention}
             />
           )}
 
