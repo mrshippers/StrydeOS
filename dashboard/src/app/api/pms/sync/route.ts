@@ -61,6 +61,8 @@ async function handler(request: NextRequest) {
 
     for (const clinicDoc of clinicDocs) {
       const clinicId = clinicDoc.id;
+      const clinicData = clinicDoc.data();
+      const sessionPricePence: number = clinicData?.sessionPricePence ?? 0;
       try {
         const configSnap = await db
           .collection("clinics")
@@ -108,7 +110,7 @@ async function handler(request: NextRequest) {
             appointmentType: (pms.appointmentType as AppointmentType) ?? "follow_up",
             isInitialAssessment: false,
             hepAssigned: false,
-            revenueAmountPence: pms.revenueAmountPence ?? 0,
+            revenueAmountPence: pms.revenueAmountPence ?? sessionPricePence ?? 0,
             followUpBooked: false,
             source: "pms_sync",
             pmsExternalId: pms.externalId,

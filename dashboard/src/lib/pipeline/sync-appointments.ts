@@ -62,7 +62,7 @@ export async function syncAppointments(
   clinicId: string,
   adapter: PMSAdapter,
   clinicianMap: Map<string, string>,
-  options: { backfill?: boolean }
+  options: { backfill?: boolean; sessionPricePence?: number }
 ): Promise<StageResult & { patientExternalIds: Set<string> }> {
   const start = Date.now();
   const errors: string[] = [];
@@ -174,7 +174,7 @@ export async function syncAppointments(
         status,
         appointmentType,
         isInitialAssessment,
-        revenueAmountPence: pms.revenueAmountPence ?? 0,
+        revenueAmountPence: pms.revenueAmountPence ?? options.sessionPricePence ?? 0,
         followUpBooked: false,
         source: "pms_sync" as const,
         pmsExternalId: pms.externalId,

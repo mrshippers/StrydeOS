@@ -39,7 +39,7 @@ import type { VoiceInteraction } from "@/lib/firebase/voiceInteractions";
 
 type View = "dashboard" | "config";
 
-const AVG_APPOINTMENT_VALUE = 85;
+const DEFAULT_APPOINTMENT_VALUE = 85;
 
 // Map call outcome → display config
 const OUTCOME_COLORS: Record<string, { bg: string; text: string; label: string }> = {
@@ -171,6 +171,9 @@ class AvaErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
 function ReceptionistContent() {
   const { calls, isDemo, isLoading, activeCall, error: callsError } = useCallLogs();
   const { user } = useAuth();
+  const avgAppointmentValue = user?.clinicProfile?.sessionPricePence
+    ? Math.round(user.clinicProfile.sessionPricePence / 100)
+    : DEFAULT_APPOINTMENT_VALUE;
   const { config, rules, loading: configLoading, saving, toggleEnabled, toggleRule, updateConfigField, save, createOrUpdateAgent } = useAvaConfig(user?.clinicId);
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [expandedCallId, setExpandedCallId] = useState<string | null>(null);
@@ -228,7 +231,7 @@ function ReceptionistContent() {
             totalCalls
         )
       : 0;
-  const revenueCaptured = booked * AVG_APPOINTMENT_VALUE;
+  const revenueCaptured = booked * avgAppointmentValue;
 
   const volumeData = useMemo(() => buildVolumeBuckets(calls), [calls]);
 
@@ -326,7 +329,7 @@ function ReceptionistContent() {
               value={`£${revenueCaptured}`}
               unit={`est. from ${booked} bookings`}
               status={booked > 0 ? "ok" : "neutral"}
-              insight={`£${AVG_APPOINTMENT_VALUE} avg session value`}
+              insight={`£${avgAppointmentValue} avg session value`}
             />
           </div>
 
