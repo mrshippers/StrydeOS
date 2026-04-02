@@ -9,6 +9,9 @@ import {
   PhoneMultiFactorGenerator,
   TotpMultiFactorGenerator,
   MultiFactorError,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
   type MultiFactorResolver,
 } from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +22,7 @@ import { StrydeOSLogo } from "@/components/MonolithLogo";
 import { trackCTAClick } from "@/lib/funnel-events";
 
 const LAST_EMAIL_KEY = "strydeos_last_email";
+const REMEMBER_ME_KEY = "strydeos_remember_me";
 
 type AuthMode = "signin" | "signup";
 
@@ -65,9 +69,14 @@ function LoginPageInner() {
   const [mfaCode, setMfaCode] = useState("");
   const [mfaVerifying, setMfaVerifying] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   useEffect(() => {
     try {
+      const storedRemember = localStorage.getItem(REMEMBER_ME_KEY);
+      if (storedRemember !== null) {
+        setRememberMe(storedRemember === "true");
+      }
       const stored = localStorage.getItem(LAST_EMAIL_KEY);
       if (stored) {
         setEmail(stored);
@@ -185,10 +194,16 @@ function LoginPageInner() {
         return;
       }
 
+      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      
+
       try {
-        localStorage.setItem(LAST_EMAIL_KEY, email.trim());
+        localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe));
+        if (rememberMe) {
+          localStorage.setItem(LAST_EMAIL_KEY, email.trim());
+        } else {
+          localStorage.removeItem(LAST_EMAIL_KEY);
+        }
       } catch {
         // localStorage unavailable
       }
@@ -256,11 +271,16 @@ function LoginPageInner() {
       await mfaResolver.resolveSignIn(assertion);
 
       try {
-        localStorage.setItem(LAST_EMAIL_KEY, email.trim());
+        localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe));
+        if (rememberMe) {
+          localStorage.setItem(LAST_EMAIL_KEY, email.trim());
+        } else {
+          localStorage.removeItem(LAST_EMAIL_KEY);
+        }
       } catch {
         // localStorage unavailable
       }
-      
+
       setSuccess(true);
     } catch (err: unknown) {
       console.error("[MFA verify error]", err);
@@ -568,6 +588,22 @@ function LoginPageInner() {
                             <p className="text-[13px] text-danger">{resetError}</p>
                           </div>
                         )}
+
+                        <label className="flex items-center gap-2.5 cursor-pointer select-none group -mt-1">
+                          <span className="relative flex items-center justify-center">
+                            <input
+                              type="checkbox"
+                              checked={rememberMe}
+                              onChange={(e) => setRememberMe(e.target.checked)}
+                              className="peer sr-only"
+                            />
+                            <span className="h-[18px] w-[18px] rounded-[5px] border border-border bg-cloud-light transition-all peer-checked:bg-blue peer-checked:border-blue peer-focus-visible:ring-2 peer-focus-visible:ring-blue/30 group-hover:border-navy/30" />
+                            <Check size={12} className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" strokeWidth={3} />
+                          </span>
+                          <span className="text-[13px] text-navy/70 group-hover:text-navy transition-colors">
+                            Remember me
+                          </span>
+                        </label>
 
                         <AnimatePresence>
                           {error && (
