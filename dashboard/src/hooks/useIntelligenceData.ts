@@ -424,6 +424,50 @@ function deriveClinicianKpis(allStats: WeeklyStats[], patients: Patient[]): Clin
   });
 }
 
+// ─── Benchmarks from real data ──────────────────────────────────────────────
+
+function deriveBenchmarks(
+  allStats: WeeklyStats[],
+  clinicianKpis: ClinicianKpiRow[],
+  nps: NpsData,
+  avgRevPerSessionPence: number,
+): BenchmarkComparison[] {
+  // Compute clinic-wide "You:" values from real data
+  // Latest "all" stat for utilisation & DNA
+  const latestAll = [...allStats]
+    .filter((s) => s.clinicianId === "all")
+    .sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0];
+
+  // Rebook rate = weighted average across clinicians (or from latest "all" stat)
+  const yourRebook = clinicianKpis.length > 0
+    ? clinicianKpis.reduce((sum, c) => sum + c.rebookRate, 0) / clinicianKpis.length
+    : latestAll?.followUpRate ?? 0;
+
+  const yourDna = latestAll?.dnaRate ?? (
+    clinicianKpis.length > 0
+      ? clinicianKpis.reduce((sum, c) => sum + c.dnaRate, 0) / clinicianKpis.length
+      : 0
+  );
+
+  const yourUtilisation = latestAll?.utilisationRate ?? (
+    clinicianKpis.length > 0
+      ? clinicianKpis.reduce((sum, c) => sum + c.utilisationRate, 0) / clinicianKpis.length
+      : 0
+  );
+
+  const yourNps = nps.totalResponses > 0 ? nps.score : 0;
+  const yourRps = avgRevPerSessionPence > 0 ? avgRevPerSessionPence : 0;
+
+  // Peer baselines are static until multi-clinic aggregation is built
+  return [
+    { metric: "Rebook Rate", yourValue: Math.round(yourRebook * 10) / 10, peerMedian: 2.2, peerTop25: 3.5, unit: "ratio", higherIsBetter: true },
+    { metric: "DNA Rate", yourValue: Math.round(yourDna * 100) / 100, peerMedian: 0.08, peerTop25: 0.04, unit: "percent", higherIsBetter: false },
+    { metric: "Utilisation", yourValue: Math.round(yourUtilisation * 100) / 100, peerMedian: 0.74, peerTop25: 0.90, unit: "percent", higherIsBetter: true },
+    { metric: "NPS Score", yourValue: yourNps, peerMedian: 58, peerTop25: 78, unit: "number", higherIsBetter: true },
+    { metric: "Rev / Session", yourValue: yourRps, peerMedian: 7500, peerTop25: 9000, unit: "pence", higherIsBetter: true },
+  ];
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export interface IntelligenceData {
@@ -589,20 +633,32 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     // Demo user — always show demo data with banner
     if (isDemo) return DEMO_RESULT;
 
-    // Still loading — return skeleton state
+    // Still loading — return empty skeleton state (never flash demo data for real users)
     if (loading) {
-      return { ...DEMO_RESULT, loading: true, usedDemo: false, error: null };
-    }
-
-    // Firestore error — return empty data + error, never demo
-    if (firestoreError) {
+      const emptyNps = { score: 0, promoters: 0, passives: 0, detractors: 0, totalResponses: 0, trend: [] };
       return {
         revByClinician: [], revByCondition: [],
         dnaByDay: [], dnaBySlot: [],
         referrals: [], outcomeTrends: [],
-        nps: { score: 0, promoters: 0, passives: 0, detractors: 0, totalResponses: 0, trend: [] },
+        nps: emptyNps,
         reviewVelocity: { platform: "Google", totalReviews: 0, avgRating: 0, monthlyVelocity: [] },
-        clinicianKpis: [], benchmarks: getDemoBenchmarks(),
+        clinicianKpis: [], benchmarks: [],
+        loading: true, usedDemo: false,
+        outcomesDemoFallback: false, reputationDemoFallback: false,
+        error: null,
+      };
+    }
+
+    // Firestore error — return empty data + error, never demo
+    if (firestoreError) {
+      const emptyNps = { score: 0, promoters: 0, passives: 0, detractors: 0, totalResponses: 0, trend: [] };
+      return {
+        revByClinician: [], revByCondition: [],
+        dnaByDay: [], dnaBySlot: [],
+        referrals: [], outcomeTrends: [],
+        nps: emptyNps,
+        reviewVelocity: { platform: "Google", totalReviews: 0, avgRating: 0, monthlyVelocity: [] },
+        clinicianKpis: [], benchmarks: deriveBenchmarks([], [], emptyNps, 0),
         loading: false, usedDemo: false,
         outcomesDemoFallback: false, reputationDemoFallback: false,
         error: firestoreError,
@@ -628,6 +684,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     const nps = deriveNps(reviews, allStats);
     const reviewVelocity = deriveReviewVelocity(reviews);
     const clinicianKpis = deriveClinicianKpis(flatPerClinicianStats, patients);
+    const benchmarks = deriveBenchmarks(allStats, clinicianKpis, nps, avgRevPerSession);
 
     // Fall back to demo data when real data is empty for specific sections
     const outcomesDemoFallback = outcomeTrends.length === 0;
@@ -643,7 +700,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
       nps,
       reviewVelocity,
       clinicianKpis,
-      benchmarks: getDemoBenchmarks(),
+      benchmarks,
       loading,
       error: null,
       usedDemo: false,

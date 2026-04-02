@@ -894,25 +894,28 @@ export default function IntelligencePage() {
         <p className="text-xs text-muted mb-5">Your clinic vs. similar UK private physio practices (3–5 clinicians) · anonymised aggregate data</p>
         <div className="space-y-4">
           {benchmarks.map((b) => {
+            const hasData = b.yourValue > 0;
             const formatVal = (v: number) =>
               b.unit === "percent" ? `${Math.round(v * 100)}%` :
               b.unit === "pence" ? `£${(v / 100).toFixed(0)}` :
               b.unit === "ratio" ? `${v.toFixed(1)}x` :
               String(v);
-            const yourPct = b.higherIsBetter
-              ? Math.min(100, (b.yourValue / b.peerTop25) * 100)
-              : Math.min(100, ((b.peerTop25 * 2 - b.yourValue) / (b.peerTop25 * 2 - b.peerTop25)) * 100);
+            const yourPct = hasData
+              ? b.higherIsBetter
+                ? Math.min(100, (b.yourValue / b.peerTop25) * 100)
+                : Math.min(100, ((b.peerTop25 * 2 - b.yourValue) / (b.peerTop25 * 2 - b.peerTop25)) * 100)
+              : 0;
             const peerPct = b.higherIsBetter
               ? Math.min(100, (b.peerMedian / b.peerTop25) * 100)
               : 50;
-            const beating = b.higherIsBetter ? b.yourValue > b.peerMedian : b.yourValue < b.peerMedian;
+            const beating = hasData && (b.higherIsBetter ? b.yourValue > b.peerMedian : b.yourValue < b.peerMedian);
             return (
               <div key={b.metric}>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-sm font-medium text-navy">{b.metric}</span>
                   <div className="flex items-center gap-3 text-xs">
-                    <span className={`font-bold ${beating ? "text-success" : "text-warn"}`}>
-                      You: {formatVal(b.yourValue)}
+                    <span className={`font-bold ${!hasData ? "text-muted" : beating ? "text-success" : "text-warn"}`}>
+                      You: {hasData ? formatVal(b.yourValue) : "—"}
                     </span>
                     <span className="text-muted">Peers: {formatVal(b.peerMedian)}</span>
                     <span className="text-muted">Top 25%: {formatVal(b.peerTop25)}</span>
@@ -935,7 +938,7 @@ export default function IntelligencePage() {
             );
           })}
         </div>
-        <p className="text-[11px] text-muted mt-4 italic">Benchmark data initialised with Spires MSK baseline. Expands automatically as more practices join StrydeOS.</p>
+        <p className="text-[11px] text-muted mt-4 italic">Your metrics are live from clinic data. Peer benchmarks are UK private physio baselines — will refine as more practices join StrydeOS.</p>
       </div>
 
       {/* Tab navigation */}
