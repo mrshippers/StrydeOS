@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
  * Dismissal is tracked in Firestore (users/{uid}.whatsNewSeenVersion)
  * so it works cross-device for ALL clinic users.
  */
-const CURRENT_VERSION = "2026-04-01";
+const CURRENT_VERSION = "2026-04-03";
 
 interface UpdateEntry {
   tag: string;
@@ -23,39 +23,39 @@ interface UpdateEntry {
 
 const UPDATES: UpdateEntry[] = [
   {
-    tag: "Dashboard",
-    tagColor: "#1C54F2",
-    title: "Manual sync + staleness alerts",
-    description:
-      "You can now trigger a data sync directly from the dashboard. Staleness warnings now appear for all PMS types — not just TM3.",
-  },
-  {
     tag: "Intelligence",
     tagColor: "#8B5CF6",
-    title: "Revenue now reads your session price",
+    title: "Live benchmarks from your data",
     description:
-      "Revenue per session and weekly totals now fall back to your configured session price in Settings when the PMS doesn't provide per-appointment pricing.",
+      "Peer benchmarks now pull from your real clinic metrics — rebook rate, DNA, utilisation, NPS, revenue per session. No more placeholder values.",
+  },
+  {
+    tag: "Security",
+    tagColor: "#EF4444",
+    title: "Webhook + billing hardening",
+    description:
+      "Booking, admin, and voice webhooks now use tamper-proof secret verification. Billing enforcement fixed — feature access now correctly revokes after grace period.",
+  },
+  {
+    tag: "Dashboard",
+    tagColor: "#1C54F2",
+    title: "Consistent clinic profile",
+    description:
+      "Fixed a bug where KPI targets could silently change between login and real-time updates. Utilisation and DNA rate defaults are now consistent everywhere.",
   },
   {
     tag: "Pulse",
     tagColor: "#0891B2",
-    title: "Early Intervention fixed + template sync",
+    title: "Early Intervention + template sync",
     description:
-      "The Early Intervention button now sends the correct sequence. Preview templates match what's actually sent via SMS/email.",
-  },
-  {
-    tag: "Ava",
-    tagColor: "#1C54F2",
-    title: "Session price from clinic settings",
-    description:
-      "Ava's revenue-per-call calculation now uses your real session price from Settings instead of a hardcoded £85.",
+      "Early Intervention button now sends the correct sequence. Preview templates match what's actually sent. Revenue falls back to your configured session price.",
   },
   {
     tag: "Platform",
     tagColor: "#059669",
-    title: "PMS adapter safety layer",
+    title: "Notification bell + demo data warning",
     description:
-      "All PMS integrations now validate appointment data before syncing — appointments with missing patient or clinician references are filtered out with logged warnings.",
+      "Notification bell is now always accessible regardless of sidebar state. Dashboard clearly warns when showing sample data instead of real metrics.",
   },
 ];
 
