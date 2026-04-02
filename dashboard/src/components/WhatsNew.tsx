@@ -3,14 +3,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Sparkles, ArrowRight } from "lucide-react";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 
 /**
  * Bump CURRENT_VERSION each time you add new entries to UPDATES.
- * Users see the modal once per version, stored in localStorage.
+ * Dismissal is tracked in Firestore (users/{uid}.whatsNewSeenVersion)
+ * so it works cross-device for ALL clinic users.
  */
-const CURRENT_VERSION = "2026-03-30";
-const STORAGE_KEY = "strydeos_whats_new_seen";
+const CURRENT_VERSION = "2026-04-01";
 
 interface UpdateEntry {
   tag: string;
@@ -21,65 +23,95 @@ interface UpdateEntry {
 
 const UPDATES: UpdateEntry[] = [
   {
+    tag: "Dashboard",
+    tagColor: "#1C54F2",
+    title: "Manual sync + staleness alerts",
+    description:
+      "You can now trigger a data sync directly from the dashboard. Staleness warnings now appear for all PMS types — not just TM3.",
+  },
+  {
     tag: "Intelligence",
     tagColor: "#8B5CF6",
-    title: "Clinician engagement nudges",
+    title: "Revenue now reads your session price",
     description:
-      "Today's Focus cards now appear on each clinician's dashboard with their top priority action for the day — based on live KPI data.",
+      "Revenue per session and weekly totals now fall back to your configured session price in Settings when the PMS doesn't provide per-appointment pricing.",
   },
   {
     tag: "Pulse",
     tagColor: "#0891B2",
-    title: "Rebooking prompt sequences",
+    title: "Early Intervention fixed + template sync",
     description:
-      "Automated SMS and email sequences now trigger when a patient hasn't rebooked within 72 hours of their last session.",
+      "The Early Intervention button now sends the correct sequence. Preview templates match what's actually sent via SMS/email.",
+  },
+  {
+    tag: "Ava",
+    tagColor: "#1C54F2",
+    title: "Session price from clinic settings",
+    description:
+      "Ava's revenue-per-call calculation now uses your real session price from Settings instead of a hardcoded £85.",
   },
   {
     tag: "Platform",
-    tagColor: "#1C54F2",
-    title: "CSV import for WriteUpp & TM3",
+    tagColor: "#059669",
+    title: "PMS adapter safety layer",
     description:
-      "Clinics using WriteUpp or TM3 can now import appointment and programme data via a guided CSV upload in Settings.",
+      "All PMS integrations now validate appointment data before syncing — appointments with missing patient or clinician references are filtered out with logged warnings.",
   },
 ];
-
-function hasSeenVersion(): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    return localStorage.getItem(STORAGE_KEY) === CURRENT_VERSION;
-  } catch {
-    return true;
-  }
-}
-
-function markVersionSeen(): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, CURRENT_VERSION);
-  } catch {
-    // ignore
-  }
-}
 
 export default function WhatsNew() {
   const { user } = useAuth();
   const [visible, setVisible] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    // Only show to returning users (not first login, not demo)
-    if (user.uid === "demo") return;
-    if (user.firstLogin) return;
-    if (hasSeenVersion()) return;
+    if (user.uid === "demo") { setChecking(false); return; }
+    if (user.firstLogin) { setChecking(false); return; }
 
-    // Delay so it appears after the splash screen exits
-    const t = setTimeout(() => setVisible(true), 800);
-    return () => clearTimeout(t);
+    // Check Firestore for dismissal — works cross-device for all users
+    if (!db) {
+      // Fallback to localStorage if Firestore not available
+      try {
+        if (localStorage.getItem("strydeos_whats_new_seen") === CURRENT_VERSION) {
+          setChecking(false);
+          return;
+        }
+      } catch { /* ignore */ }
+      const t = setTimeout(() => { setVisible(true); setChecking(false); }, 800);
+      return () => clearTimeout(t);
+    }
+
+    const userRef = doc(db, "users", user.uid);
+    getDoc(userRef).then((snap) => {
+      const seenVersion = snap.data()?.whatsNewSeenVersion;
+      if (seenVersion === CURRENT_VERSION) {
+        setChecking(false);
+        return;
+      }
+      // Show after splash screen exits
+      setTimeout(() => { setVisible(true); setChecking(false); }, 800);
+    }).catch(() => {
+      setChecking(false);
+    });
   }, [user]);
 
   const dismiss = useCallback(() => {
     setVisible(false);
-    markVersionSeen();
-  }, []);
+
+    if (!user || user.uid === "demo") return;
+
+    // Persist to Firestore so all devices see it as dismissed
+    if (db) {
+      const userRef = doc(db, "users", user.uid);
+      updateDoc(userRef, { whatsNewSeenVersion: CURRENT_VERSION }).catch(() => {
+        // Fallback to localStorage
+        try { localStorage.setItem("strydeos_whats_new_seen", CURRENT_VERSION); } catch { /* ignore */ }
+      });
+    } else {
+      try { localStorage.setItem("strydeos_whats_new_seen", CURRENT_VERSION); } catch { /* ignore */ }
+    }
+  }, [user]);
 
   return (
     <AnimatePresence>
