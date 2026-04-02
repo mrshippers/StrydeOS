@@ -34,10 +34,7 @@ const HelpPanel = dynamic(
     ssr: false,
   }
 );
-const NotificationPanel = dynamic(
-  () => import("@/components/ui/NotificationPanel"),
-  { ssr: false }
-);
+import NotificationPanel from "@/components/ui/NotificationPanel";
 import { useTheme } from "@/components/ThemeProvider";
 import BrightnessStackToggle from "@/components/ui/BrightnessStackToggle";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
@@ -237,9 +234,12 @@ export default function Sidebar() {
   const handleSidebarLeave = useCallback(() => {
     isHoveredRef.current = false;
     leaveTimerRef.current = setTimeout(() => {
+      // Don't collapse if notification or help panel is open — the user is
+      // interacting with a portal that's visually anchored to the sidebar.
+      if (notifOpen || helpOpen) return;
       setCollapsed(true);
     }, 400);
-  }, []);
+  }, [notifOpen, helpOpen]);
 
   const statusLabel =
     clinicStatus === "live"
