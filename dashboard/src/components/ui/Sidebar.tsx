@@ -297,6 +297,36 @@ export default function Sidebar() {
         <MonolithMark size={32} />
       </motion.div>
 
+      {/* Desktop: floating notification bell — always visible top-right */}
+      <motion.div
+        className="fixed top-5 right-5 z-[45] hidden lg:flex"
+        initial={false}
+        animate={{
+          opacity: 1,
+          scale: 1,
+        }}
+      >
+        <button
+          onClick={() => setNotifOpen(!notifOpen)}
+          className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
+          style={{
+            background: notifOpen ? "rgba(28,84,242,0.15)" : "rgba(11,37,69,0.06)",
+            border: `1px solid ${notifOpen ? "rgba(28,84,242,0.2)" : "rgba(11,37,69,0.08)"}`,
+          }}
+          aria-label="Notifications"
+        >
+          <Bell size={15} className={notifOpen ? "text-blue" : "text-navy/40 hover:text-navy/70"} style={{ transition: "color 0.15s" }} />
+          {totalBellCount > 0 && (
+            <span
+              className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+              style={{ background: brand.danger, boxShadow: `0 2px 6px ${brand.danger}40` }}
+            >
+              {totalBellCount}
+            </span>
+          )}
+        </button>
+      </motion.div>
+
       {/* Desktop: left-edge hover trigger strip when collapsed */}
       <motion.div
         className="fixed top-0 left-0 z-[36] hidden lg:block h-full"

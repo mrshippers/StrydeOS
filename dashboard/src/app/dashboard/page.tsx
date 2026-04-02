@@ -363,6 +363,46 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
+      {/* ── Demo data warning ────────────────────────────────────────────── */}
+      {!loading && usedDemo && user?.uid !== "demo" && (
+        <motion.div
+          className="flex items-center gap-3 p-3 rounded-xl border border-warn/25 bg-warn/5"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="w-8 h-8 rounded-lg bg-warn/10 flex items-center justify-center shrink-0">
+            <AlertTriangle size={14} className="text-warn" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-navy">You&apos;re viewing sample data</p>
+            <p className="text-[11px] text-muted">
+              {user?.clinicProfile?.pmsType
+                ? "No metrics found — try syncing your PMS data."
+                : "Connect your PMS in Settings to see real clinic metrics."}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {user?.clinicProfile?.pmsType ? (
+              <button
+                onClick={handleManualSync}
+                disabled={syncing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={11} className={syncing ? "animate-spin" : ""} /> {syncing ? "Syncing…" : "Sync now"}
+              </button>
+            ) : (
+              <a
+                href="/settings"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
+              >
+                Connect PMS <ArrowRight size={10} />
+              </a>
+            )}
+          </div>
+        </motion.div>
+      )}
+
       {/* Error banners — subtle, triangle on right */}
       {statsError && <ErrorBanner message="Metrics couldn't load — showing placeholders until the next sync." onRetry={() => window.location.reload()} />}
       {summaryError && <ErrorBanner message="Clinician summary unavailable right now." onRetry={() => window.location.reload()} />}
