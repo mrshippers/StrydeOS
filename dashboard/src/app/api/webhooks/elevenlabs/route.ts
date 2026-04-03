@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { withRequestLog } from "@/lib/request-logger";
+import { processCallerInput, type AvaAction } from "@/lib/ava/graph";
 
 export const runtime = "nodejs";
 
@@ -129,22 +130,67 @@ async function handler(req: NextRequest) {
     // Merge with existing call data if it exists
     await callRef.set(callData, { merge: true });
 
-    // If call ended, calculate outcome
+    // If call ended, run LangGraph for intent classification + guardrail check
     if (payload.event === "conversation.ended" && payload.summary) {
-      const summary = payload.summary.toLowerCase();
-      let outcome = "resolved";
+      const clinicData = clinicSnap.docs[0].data();
+      const clinicName = clinicData?.name ?? "Clinic";
 
-      if (summary.includes("book") || summary.includes("appointment")) {
-        outcome = "booked";
-      } else if (summary.includes("cancel") || summary.includes("cancelled")) {
-        outcome = "follow_up_required";
-      } else if (summary.includes("voicemail") || !payload.transcript) {
-        outcome = "voicemail";
-      } else if (summary.includes("escalat") || summary.includes("urgent")) {
-        outcome = "escalated";
+      // Process through LangGraph state machine
+      let outcome = "resolved";
+      let graphAction: AvaAction = "continue";
+      let graphMetadata: Record<string, unknown> = {};
+
+      try {
+        const graphResult = await processCallerInput(
+          payload.summary + (payload.reason_for_call ? ` | Reason: ${payload.reason_for_call}` : ""),
+          {
+            clinicId,
+            clinicName,
+            callerPhone: payload.caller_phone ?? "",
+          },
+        );
+        graphAction = graphResult.action;
+        graphMetadata = graphResult.metadata ?? {};
+
+        // Map graph actions to call outcomes
+        switch (graphAction) {
+          case "book_appointment":
+            outcome = "booked";
+            break;
+          case "escalate_999":
+            outcome = "escalated";
+            break;
+          case "callback_request":
+            outcome = "follow_up_required";
+            break;
+          case "relay_message":
+            outcome = "follow_up_required";
+            break;
+          case "end_call":
+            outcome = "resolved";
+            break;
+          default:
+            // Fallback to keyword match for edge cases
+            const summary = payload.summary.toLowerCase();
+            if (summary.includes("book") || summary.includes("appointment")) outcome = "booked";
+            else if (!payload.transcript) outcome = "voicemail";
+            break;
+        }
+      } catch {
+        // LangGraph unavailable — fall back to keyword matching
+        const summary = payload.summary.toLowerCase();
+        if (summary.includes("book") || summary.includes("appointment")) outcome = "booked";
+        else if (summary.includes("cancel")) outcome = "follow_up_required";
+        else if (!payload.transcript) outcome = "voicemail";
+        else if (summary.includes("escalat") || summary.includes("urgent")) outcome = "escalated";
       }
 
-      await callRef.update({ outcome });
+      await callRef.update({
+        outcome,
+        graphAction,
+        graphIntent: graphMetadata.reason ?? null,
+        graphMetadata: Object.keys(graphMetadata).length > 0 ? graphMetadata : null,
+      });
     }
 
     return NextResponse.json({ ok: true }, { status: 200 });
