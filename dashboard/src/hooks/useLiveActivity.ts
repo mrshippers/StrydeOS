@@ -37,11 +37,16 @@ export function useLiveActivity(maxItems = 4): { items: ActivityItem[]; loading:
 
     // Intelligence insight events → activity items
     for (const e of insights.slice(0, 6)) {
+      // createdAt may be a Firestore Timestamp, ISO string, or number
+      const raw = e.createdAt as unknown;
+      const ts = raw && typeof raw === "object" && "toDate" in (raw as Record<string, unknown>)
+        ? (raw as { toDate: () => Date }).toDate()
+        : new Date(e.createdAt);
       all.push({
         id: `insight-${e.id}`,
         module: "intelligence",
         text: e.title.length > 55 ? e.title.slice(0, 52) + "…" : e.title,
-        timestamp: new Date(e.createdAt),
+        timestamp: isNaN(ts.getTime()) ? new Date() : ts,
         href: "/intelligence",
       });
     }

@@ -684,8 +684,15 @@ export default function IntelligencePage() {
     error: intelligenceError,
   } = useIntelligenceData(selectedClinician);
 
-  const totalRevenue = revByClinician.reduce((s, r) => s + r.totalRevenuePence, 0);
-  const totalSessions = revByClinician.reduce((s, r) => s + r.sessionsDelivered, 0);
+  const perClinicianRevenue = revByClinician.reduce((s, r) => s + r.totalRevenuePence, 0);
+  const perClinicianSessions = revByClinician.reduce((s, r) => s + r.sessionsDelivered, 0);
+  // Fall back to "all" weekly stats when per-clinician breakdown hasn't loaded yet
+  const totalRevenue = perClinicianRevenue > 0
+    ? perClinicianRevenue
+    : latest ? (latest.revenuePerSessionPence ?? 0) * (latest.appointmentsTotal ?? 0) : 0;
+  const totalSessions = perClinicianSessions > 0
+    ? perClinicianSessions
+    : latest?.appointmentsTotal ?? 0;
   const avgRevPerSession = totalSessions > 0 ? Math.round(totalRevenue / totalSessions) : 0;
   const totalReferrals = referrals.reduce((s, r) => s + r.patientsReferred, 0);
   const totalConverted = referrals.reduce((s, r) => s + r.convertedToBooking, 0);
@@ -726,7 +733,7 @@ export default function IntelligencePage() {
         />
         <StatCard
           label="Weekly Revenue"
-          value={formatPence(revByClinician.length > 0 ? Math.round(totalRevenue / revByClinician.length) : 0)}
+          value={formatPence(totalRevenue > 0 ? Math.round(totalRevenue / Math.max(revByClinician.length, 1)) : 0)}
           unit="avg/week"
           status="neutral"
         />
@@ -746,7 +753,8 @@ export default function IntelligencePage() {
           value={reputationDemoFallback && !usedDemo ? "—" : reviews.totalReviews}
           unit={reputationDemoFallback && !usedDemo ? "" : `${reviews.avgRating} avg`}
           status={reputationDemoFallback && !usedDemo ? "neutral" : "ok"}
-          insight={reputationDemoFallback && !usedDemo ? "Awaiting first responses" : `${reviews.monthlyVelocity.length > 0 ? reviews.monthlyVelocity[reviews.monthlyVelocity.length - 1].count : 0} this month`}
+          insight={reputationDemoFallback && !usedDemo ? "Connect your Google Business Profile" : `${reviews.monthlyVelocity.length > 0 ? reviews.monthlyVelocity[reviews.monthlyVelocity.length - 1].count : 0} this month`}
+          action={reputationDemoFallback && !usedDemo ? { label: "Set up in Reputation tab", onClick: () => setActiveTab("reputation") } : undefined}
         />
         <StatCard
           label="Referral Conv."
@@ -1404,13 +1412,39 @@ export default function IntelligencePage() {
                 >
                   <Star size={18} style={{ color: brand.purple }} />
                 </div>
-                <h3 className="font-display text-base text-navy mb-1">NPS collection starts automatically</h3>
+                <h3 className="font-display text-base text-navy mb-1">Connect your reputation data</h3>
                 <p className="text-sm text-muted max-w-md mx-auto mb-3">
-                  After each appointment, patients receive a short SMS asking how likely they are to recommend you.
-                  Promoters get a Google Review nudge. Detractors trigger an owner alert.
+                  Two data sources feed this tab:
                 </p>
+                <div className="text-left max-w-sm mx-auto space-y-3 mb-4">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-[10px] font-bold text-success">1</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-navy">NPS — automatic</p>
+                      <p className="text-xs text-muted">After each appointment, patients receive a short SMS asking how likely they are to recommend you. Promoters get a Google Review nudge. Detractors trigger an owner alert.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-5 h-5 rounded-full bg-blue/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-[10px] font-bold text-blue">2</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-navy">Google Reviews — needs your Place ID</p>
+                      <p className="text-xs text-muted">
+                        To pull in your Google Business reviews, add your Google Place ID in Settings.
+                        Find it at{" "}
+                        <a href="https://developers.google.com/maps/documentation/places/web-service/place-id-finder" target="_blank" rel="noopener noreferrer" className="text-blue hover:underline">
+                          Google's Place ID Finder
+                        </a>
+                        {" "}— search your clinic name and copy the ID.
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <p className="text-xs text-muted">
-                  Data will appear here once your first patients respond — usually within a week of going live.
+                  NPS data appears once your first patients respond — usually within a week of going live.
                 </p>
               </div>
             )}

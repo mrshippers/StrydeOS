@@ -90,7 +90,7 @@ function setSecurityHeaders(response: NextResponse): void {
       "default-src 'self'",
       // Nonce + unsafe-inline: browsers that support nonces ignore unsafe-inline,
       // older browsers fall back to unsafe-inline. This is the recommended upgrade path.
-      `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'wasm-unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.vercel-insights.com https://*.vercel-scripts.com`,
+      `script-src 'self' 'nonce-${nonce}' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} 'wasm-unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.vercel-insights.com https://*.vercel-scripts.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
