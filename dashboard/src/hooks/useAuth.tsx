@@ -18,7 +18,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { getFirebaseAuth, db, isFirebaseConfigured } from "@/lib/firebase";
-import type { AuthUser, ClinicProfile, UserRole, UserStatus, FeatureFlags, BillingState, StripeSubscriptionStatus, ClinicStatus, PmsProvider } from "@/types";
+import type { AuthUser, ClinicProfile, UserRole, UserStatus, FeatureFlags, BillingState, BillingTier, StripeSubscriptionStatus, ClinicStatus, PmsProvider, HepProvider, NpsConfig } from "@/types";
 
 async function createServerSession(fbUser: User): Promise<void> {
   try {
@@ -61,6 +61,8 @@ function parseClinicProfile(id: string, raw: Record<string, unknown>): ClinicPro
         subscriptionId: (billingRaw.subscriptionId as string) ?? null,
         subscriptionStatus: (billingRaw.subscriptionStatus as StripeSubscriptionStatus) ?? null,
         currentPeriodEnd: (billingRaw.currentPeriodEnd as string) ?? null,
+        tier: (billingRaw.tier as BillingTier) ?? null,
+        extraSeats: billingRaw.extraSeats as number | undefined,
       }
     : undefined;
 
