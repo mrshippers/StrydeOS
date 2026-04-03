@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { brand } from "@/lib/brand";
 import { ChevronRight, ChevronLeft, X } from "lucide-react";
+import { usePortalTarget } from "@/hooks/usePortalTarget";
 
 export interface TourStepDef {
   target: string;
@@ -82,11 +83,7 @@ export default function TourStep({
   const [pos, setPos] = useState<Position | null>(null);
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const portalTarget = usePortalTarget();
 
   const recalc = useCallback(() => {
     const el = document.querySelector(step.target);
@@ -109,7 +106,7 @@ export default function TourStep({
     return () => window.removeEventListener("resize", recalc);
   }, [recalc]);
 
-  if (!mounted) return null;
+  if (!portalTarget) return null;
 
   return createPortal(
     <AnimatePresence mode="wait">
@@ -244,6 +241,6 @@ export default function TourStep({
         )}
       </motion.div>
     </AnimatePresence>,
-    document.body
+    portalTarget
   );
 }

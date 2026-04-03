@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 /* ─── Timing constants (ms) — match the standalone HTML exactly ─── */
 const AUTO_DISMISS_MS = 5200;
@@ -216,13 +217,7 @@ export default function SplashScreen({ onComplete }: { onComplete?: () => void }
   }, [triggerExit]);
 
   /* Lock body scroll while splash is visible */
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
+  useBodyScrollLock(!exiting);
 
   return (
     <>

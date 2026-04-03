@@ -71,6 +71,7 @@ export default async function RootLayout({
             </AuthProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
+        <div id="portal-root" />
         <Analytics />
         <SpeedInsights />
       </body>

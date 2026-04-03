@@ -21,6 +21,7 @@ import {
   type HelpEntry,
 } from "@/data/helpContent";
 import { brand } from "@/lib/brand";
+import { usePortalTarget } from "@/hooks/usePortalTarget";
 
 interface HelpPanelProps {
   open: boolean;
@@ -290,11 +291,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
 }
 
 export default function HelpPanel({ open, onClose }: HelpPanelProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const portalTarget = usePortalTarget();
 
   // Keyboard dismiss
   useEffect(() => {
@@ -306,7 +303,7 @@ export default function HelpPanel({ open, onClose }: HelpPanelProps) {
     return () => document.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  if (!mounted) return null;
+  if (!portalTarget) return null;
 
   return createPortal(
     <AnimatePresence>
@@ -342,6 +339,6 @@ export default function HelpPanel({ open, onClose }: HelpPanelProps) {
         </>
       )}
     </AnimatePresence>,
-    document.body
+    portalTarget
   );
 }

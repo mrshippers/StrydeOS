@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
@@ -13,6 +13,8 @@ import {
   Bell,
 } from "lucide-react";
 import { brand } from "@/lib/brand";
+import { usePortalTarget } from "@/hooks/usePortalTarget";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import type { AlertFlagProps } from "@/types";
 import type { InsightEvent } from "@/types/insight-events";
 
@@ -35,11 +37,8 @@ export default function NotificationPanel({
   insightEvents,
   markInsightRead,
 }: NotificationPanelProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const portalTarget = usePortalTarget();
+  useBodyScrollLock(open);
 
   // Escape key dismiss
   useEffect(() => {
@@ -51,15 +50,7 @@ export default function NotificationPanel({
     return () => document.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  // Lock body scroll when open
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = ""; };
-    }
-  }, [open]);
-
-  if (!mounted) return null;
+  if (!portalTarget) return null;
 
   const unreadAlertCount = allAlerts.filter((a) => !readHashes.has(a.hash)).length;
   const unreadInsightCount = insightEvents.filter((e) => !e.readAt).length;
@@ -303,6 +294,6 @@ export default function NotificationPanel({
         </>
       )}
     </AnimatePresence>,
-    document.body
+    portalTarget
   );
 }
