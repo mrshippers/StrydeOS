@@ -124,14 +124,30 @@ export async function syncPatients(
         const primaryClinician = getPrimaryClinician(extId);
 
         if (existingDocId) {
-          // Update primary clinician and contact info if we fetched new data
-          await patientsRef.doc(existingDocId).set(
-            {
-              clinicianId: primaryClinician,
-              updatedAt: now,
-            },
-            { merge: true }
-          );
+          // Re-fetch from PMS to keep name + contact in sync
+          const updateData: Record<string, unknown> = {
+            clinicianId: primaryClinician,
+            updatedAt: now,
+          };
+          try {
+            const pmsPatient = await adapter.getPatient(extId);
+            const pmsName = [pmsPatient.firstName, pmsPatient.lastName]
+              .filter(Boolean)
+              .join(" ");
+            if (pmsName && pmsName !== "Unknown") {
+              updateData.name = pmsName;
+            }
+            if (pmsPatient.email) updateData["contact.email"] = pmsPatient.email;
+            if (pmsPatient.phone) updateData["contact.phone"] = pmsPatient.phone;
+            if (pmsPatient.dob) updateData.dob = pmsPatient.dob;
+            if (pmsPatient.insurerName) {
+              updateData.insurerName = pmsPatient.insurerName;
+              updateData.insuranceFlag = true;
+            }
+          } catch {
+            // PMS call failed — update clinician assignment only
+          }
+          await patientsRef.doc(existingDocId).set(updateData, { merge: true });
         } else {
           const newRef = patientsRef.doc();
           await newRef.set({
