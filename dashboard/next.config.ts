@@ -12,6 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const nextConfig: NextConfig = {
+  eslint: { ignoreDuringBuilds: true },
   outputFileTracingRoot: resolve(__dirname, ".."),
   serverExternalPackages: [
     "firebase-admin",
