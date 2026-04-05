@@ -48,6 +48,7 @@ import {
   UserMinus,
   UserPlus,
   Shield,
+  RefreshCw,
 } from "lucide-react";
 
 type Tab = "insights" | "revenue" | "dna" | "referrals" | "outcomes" | "reputation" | "value";
@@ -660,11 +661,32 @@ export default function IntelligencePage() {
   const [activeTab, setActiveTab] = useState<Tab>("insights");
   const [selectedClinician, setSelectedClinician] = useState("all");
   const [expandedClinician, setExpandedClinician] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshResult, setRefreshResult] = useState<string | null>(null);
   const { clinicians } = useClinicians();
   const { stats, usedDemo: weeklyUsedDemo, error: weeklyError } = useWeeklyStats(selectedClinician);
   const latest = stats.length > 0 ? stats[stats.length - 1] : null;
   const { patients } = usePatients();
   const valueLedger = useValueLedger(selectedClinician);
+
+  const handleRefreshData = useCallback(async () => {
+    setRefreshing(true);
+    setRefreshResult(null);
+    try {
+      const res = await fetch("/api/pipeline/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        setRefreshResult(`Sync failed: ${err.error ?? res.statusText}`);
+      } else {
+        setRefreshResult("Data synced — reloading…");
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    } catch (e) {
+      setRefreshResult(`Sync failed: ${e instanceof Error ? e.message : "Network error"}`);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   const {
     revByClinician,
@@ -684,16 +706,14 @@ export default function IntelligencePage() {
     error: intelligenceError,
   } = useIntelligenceData(selectedClinician);
 
-  const perClinicianRevenue = revByClinician.reduce((s, r) => s + r.totalRevenuePence, 0);
-  const perClinicianSessions = revByClinician.reduce((s, r) => s + r.sessionsDelivered, 0);
-  // Fall back to "all" weekly stats when per-clinician breakdown hasn't loaded yet
-  const totalRevenue = perClinicianRevenue > 0
-    ? perClinicianRevenue
-    : latest ? (latest.revenuePerSessionPence ?? 0) * (latest.appointmentsTotal ?? 0) : 0;
-  const totalSessions = perClinicianSessions > 0
-    ? perClinicianSessions
-    : latest?.appointmentsTotal ?? 0;
-  const avgRevPerSession = totalSessions > 0 ? Math.round(totalRevenue / totalSessions) : 0;
+  // KPI cards: use LATEST WEEK data, not cumulative totals
+  const latestWeekRevenue = latest
+    ? (latest.revenuePerSessionPence ?? 0) * (latest.appointmentsTotal ?? 0)
+    : 0;
+  const latestWeekSessions = latest?.appointmentsTotal ?? 0;
+  const avgRevPerSession = latestWeekSessions > 0
+    ? Math.round(latestWeekRevenue / latestWeekSessions)
+    : 0;
   const totalReferrals = referrals.reduce((s, r) => s + r.patientsReferred, 0);
   const totalConverted = referrals.reduce((s, r) => s + r.convertedToBooking, 0);
 
@@ -711,6 +731,39 @@ export default function IntelligencePage() {
         onClinicianChange={setSelectedClinician}
         accentColor={brand.purple}
       />
+
+      {/* Data freshness bar */}
+      {(() => {
+        const computedDate = latest?.computedAt ? new Date(latest.computedAt) : null;
+        const daysSinceSync = computedDate ? Math.floor((Date.now() - computedDate.getTime()) / 86400000) : null;
+        const isStale = daysSinceSync != null && daysSinceSync > 7;
+        return (
+      <div className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border text-sm ${isStale ? "bg-amber-50 border-amber-200" : "bg-cloud-light border-border"}`}>
+        <span className={isStale ? "text-amber-700" : "text-muted"}>
+          {isStale && <AlertTriangle size={14} className="inline mr-1.5 -mt-0.5 text-amber-500" />}
+          {computedDate
+            ? `Last synced: ${computedDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} at ${computedDate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}${isStale ? ` (${daysSinceSync} days ago — data is stale)` : ""}`
+            : "No data synced yet — hit Refresh Data to pull from your PMS"}
+          {latest?.weekStart && <span className={`ml-2 ${isStale ? "text-amber-500" : "text-muted/60"}`}>· Week of {latest.weekStart}</span>}
+        </span>
+        <div className="flex items-center gap-2">
+          {refreshResult && (
+            <span className={`text-xs ${refreshResult.startsWith("Data synced") ? "text-emerald-600" : "text-red-500"}`}>
+              {refreshResult}
+            </span>
+          )}
+          <button
+            onClick={handleRefreshData}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple/10 text-purple text-xs font-medium hover:bg-purple/20 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
+            {refreshing ? "Syncing…" : "Refresh Data"}
+          </button>
+        </div>
+      </div>
+        );
+      })()}
 
       {(intelligenceError || weeklyError) && (
         <ErrorBanner
@@ -733,8 +786,8 @@ export default function IntelligencePage() {
         />
         <StatCard
           label="Weekly Revenue"
-          value={formatPence(totalRevenue > 0 ? Math.round(totalRevenue / Math.max(revByClinician.length, 1)) : 0)}
-          unit="avg/week"
+          value={formatPence(latestWeekRevenue)}
+          unit={latest?.weekStart ? `w/c ${latest.weekStart}` : ""}
           status="neutral"
         />
         <StatCard
