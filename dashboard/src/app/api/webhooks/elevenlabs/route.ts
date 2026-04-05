@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { withRequestLog } from "@/lib/request-logger";
-import { processCallerInput, type AvaAction } from "@/lib/ava/graph";
+import type { AvaAction } from "@/lib/ava/graph";
 
 export const runtime = "nodejs";
 
@@ -141,6 +141,9 @@ async function handler(req: NextRequest) {
       let graphMetadata: Record<string, unknown> = {};
 
       try {
+        // Dynamic import to avoid loading LangChain at module level
+        // (requires ANTHROPIC_API_KEY which may not be set in all environments)
+        const { processCallerInput } = await import("@/lib/ava/graph");
         const graphResult = await processCallerInput(
           payload.summary + (payload.reason_for_call ? ` | Reason: ${payload.reason_for_call}` : ""),
           {
