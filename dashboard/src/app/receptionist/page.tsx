@@ -15,6 +15,8 @@ import {
   Radio,
   AlertCircle,
   Lock,
+  Phone,
+  Loader2,
 } from "lucide-react";
 import KnowledgeBaseEditor from "@/components/ava/KnowledgeBaseEditor";
 import {
@@ -174,7 +176,11 @@ function ReceptionistContent() {
   const avgAppointmentValue = user?.clinicProfile?.sessionPricePence
     ? Math.round(user.clinicProfile.sessionPricePence / 100)
     : DEFAULT_APPOINTMENT_VALUE;
-  const { config, rules, loading: configLoading, saving, toggleEnabled, toggleRule, updateConfigField, save, createOrUpdateAgent } = useAvaConfig(user?.clinicId);
+  const {
+    config, rules, loading: configLoading, saving, provisioning,
+    toggleEnabled, toggleRule, updateConfigField, save,
+    createOrUpdateAgent, provisionNumber, error: configError, setError: setConfigError,
+  } = useAvaConfig(user?.clinicId);
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [expandedCallId, setExpandedCallId] = useState<string | null>(null);
   const [digestExpanded, setDigestExpanded] = useState(false);
@@ -608,6 +614,12 @@ function ReceptionistContent() {
               }}
             />
           )}
+          {configError && (
+            <ErrorBanner
+              message={configError}
+              onRetry={() => setConfigError(null)}
+            />
+          )}
           {/* Master On/Off Switch */}
           <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
             <div className="flex items-center justify-between">
@@ -624,17 +636,22 @@ function ReceptionistContent() {
               </div>
               <button
                 onClick={() => {
+                  setConfigError(null);
                   toggleEnabled()
                     .then(() => createOrUpdateAgent().catch((err) => {
                       console.error("[Agent update error]", err);
                       setAgentError(err instanceof Error ? err.message : "Failed to update agent");
                     }))
-                    .catch(console.error);
+                    .catch((err) => {
+                      // toggleEnabled throws if no phone — show inline, don't crash
+                      if (err instanceof Error && err.message.includes("No phone")) return;
+                      console.error(err);
+                    });
                 }}
-                disabled={saving}
+                disabled={saving || provisioning}
                 className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
                   config.enabled ? "bg-success" : "bg-muted/20"
-                } ${saving ? "opacity-50 cursor-not-allowed" : ""}`}
+                } ${saving || provisioning ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <span
                   className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
@@ -740,13 +757,42 @@ function ReceptionistContent() {
                 <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
                   Clinic Phone Number (Ava&apos;s number)
                 </label>
-                <input
-                  type="tel"
-                  value={configDraft.phone}
-                  onChange={(e) => handleConfigChange("phone", e.target.value)}
-                  disabled={saving || !isOwner}
-                  className={`w-full px-3 py-2.5 rounded-lg border border-border text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 transition-colors ${!isOwner ? "bg-cloud-light cursor-not-allowed" : "bg-white"}`}
-                />
+                {configDraft.phone ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-success/30 bg-success/5 text-sm text-navy">
+                      <Phone size={14} className="text-success shrink-0" />
+                      <span className="font-medium">{configDraft.phone}</span>
+                    </div>
+                  </div>
+                ) : isOwner ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConfigError(null);
+                      provisionNumber("London").catch(() => {
+                        // Error is set by hook
+                      });
+                    }}
+                    disabled={provisioning}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 border-dashed border-blue/30 bg-blue/5 text-sm font-semibold text-blue hover:bg-blue/10 hover:border-blue/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {provisioning ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        Provisioning number...
+                      </>
+                    ) : (
+                      <>
+                        <Phone size={14} />
+                        Provision a UK phone number
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <div className="px-3 py-2.5 rounded-lg border border-border bg-cloud-light text-sm text-muted">
+                    No number assigned — contact your clinic owner
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">

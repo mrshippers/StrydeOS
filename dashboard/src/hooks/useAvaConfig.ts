@@ -71,6 +71,7 @@ export function useAvaConfig(clinicId: string | undefined) {
   const [hours, setHours] = useState(DEFAULT_HOURS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [provisioning, setProvisioning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load settings from Firestore
@@ -191,16 +192,18 @@ export function useAvaConfig(clinicId: string | undefined) {
     [clinicId]
   );
 
+  // Helper to get a fresh Firebase ID token
+  const getToken = useCallback(async () => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+    return user.getIdToken();
+  }, []);
+
   // Create or update ElevenLabs agent via API route
   const createOrUpdateAgent = useCallback(async () => {
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      const token = await user.getIdToken();
+      const token = await getToken();
       const response = await fetch("/api/ava/agent", {
         method: "POST",
         headers: {
@@ -220,20 +223,30 @@ export function useAvaConfig(clinicId: string | undefined) {
       console.error("[Agent creation error]", err);
       throw err;
     }
-  }, []);
+  }, [getToken]);
 
-  // Toggle Ava on/off
+  // Toggle Ava on/off — validates phone number exists before enabling
   const toggleEnabled = useCallback(async () => {
-    await save({ config: { ...config, enabled: !config.enabled } });
+    const newEnabled = !config.enabled;
+
+    // Don't allow enabling without a provisioned phone number
+    if (newEnabled && !config.phone) {
+      setError("Provision a phone number before enabling Ava");
+      throw new Error("No phone number provisioned");
+    }
+
+    await save({ config: { ...config, enabled: newEnabled } });
   }, [config, save]);
 
-  // Toggle individual rule
+  // Toggle individual rule — also triggers agent update so ElevenLabs prompt stays in sync
   const toggleRule = useCallback(
     async (rule: keyof AvaRules) => {
       const newRules = { ...rules, [rule]: !rules[rule] };
       await save({ rules: newRules });
+      // Rules affect system prompt behaviour — sync to ElevenLabs
+      await createOrUpdateAgent();
     },
-    [rules, save]
+    [rules, save, createOrUpdateAgent]
   );
 
   // Update config field with debounce
@@ -247,18 +260,62 @@ export function useAvaConfig(clinicId: string | undefined) {
     [config]
   );
 
+  // Provision a new Twilio number for this clinic
+  const provisionNumber = useCallback(
+    async (locality?: string) => {
+      if (!clinicId) throw new Error("No clinic ID");
+      setProvisioning(true);
+      setError(null);
+
+      try {
+        const token = await getToken();
+        const response = await fetch("/api/ava/provision-number", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ locality }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to provision number");
+        }
+
+        const data = await response.json();
+
+        // Update local state with the provisioned number
+        setConfig((prev) => ({ ...prev, phone: data.phone }));
+
+        return data;
+      } catch (err) {
+        console.error("[Number provisioning error]", err);
+        const message = err instanceof Error ? err.message : "Failed to provision number";
+        setError(message);
+        throw err;
+      } finally {
+        setProvisioning(false);
+      }
+    },
+    [clinicId, getToken]
+  );
+
   return {
     config,
     rules,
     hours,
     loading,
     saving,
+    provisioning,
     error,
+    setError,
     toggleEnabled,
     toggleRule,
     updateConfigField,
     save,
     reload: load,
     createOrUpdateAgent,
+    provisionNumber,
   };
 }
