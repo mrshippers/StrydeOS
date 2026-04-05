@@ -48,10 +48,10 @@ async function handler(req: NextRequest) {
       return NextResponse.json({ promoted: false, reason: "no_admin_users" });
     }
 
-    // Check all have completed first login (firstLogin === true)
+    // Check all have completed first login (firstLogin starts as true, set to false after tour)
     const allDone = usersSnap.docs.every((doc) => {
       const data = doc.data() as { firstLogin?: boolean };
-      return data.firstLogin === true;
+      return data.firstLogin === false;
     });
 
     if (!allDone) {

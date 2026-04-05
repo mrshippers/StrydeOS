@@ -78,6 +78,30 @@ async function handleOutboundCallback(body: Record<string, unknown>) {
   }
 
   const db  = getAdminDb();
+
+  // Validate clinicId exists — prevents writes to arbitrary clinic paths
+  const clinicSnap = await db.collection("clinics").doc(clinicId).get();
+  if (!clinicSnap.exists) {
+    return NextResponse.json({ error: "Invalid clinicId" }, { status: 400 });
+  }
+
+  // Validate patientId belongs to this clinic
+  if (patientId) {
+    const patientSnap = await db
+      .collection("clinics").doc(clinicId)
+      .collection("patients")
+      .where("pmsExternalId", "==", patientId)
+      .limit(1)
+      .get();
+    const directSnap = await db
+      .collection("clinics").doc(clinicId)
+      .collection("patients").doc(patientId)
+      .get();
+    if (patientSnap.empty && !directSnap.exists) {
+      return NextResponse.json({ error: "Patient not found in this clinic" }, { status: 400 });
+    }
+  }
+
   const now = new Date().toISOString();
   const clinicRef    = db.collection("clinics").doc(clinicId);
   const commsLogColl = clinicRef.collection("comms_log");

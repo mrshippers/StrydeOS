@@ -261,7 +261,16 @@ function guardrailGate(
     flags.gdprBlock = true;
   }
 
-  return { guardrails: flags };
+  return {
+    guardrails: {
+      emergencyDetected: flags.emergencyDetected ?? false,
+      insuranceQuery: flags.insuranceQuery ?? false,
+      clinicalAdviceSought: flags.clinicalAdviceSought ?? false,
+      gdprBlock: flags.gdprBlock ?? false,
+      mentalHealthCrisis: flags.mentalHealthCrisis ?? false,
+      abusiveCaller: flags.abusiveCaller ?? false,
+    },
+  };
 }
 
 // ─── Action Nodes ───────────────────────────────────────────────────────────

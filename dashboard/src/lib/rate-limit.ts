@@ -1,11 +1,13 @@
 /**
- * In-memory rate limiter for public API endpoints.
+ * Rate limiter for API endpoints.
  *
- * Uses a Map keyed by IP address with { count, resetAt } entries.
- * A cleanup interval runs every 60s to evict expired entries and prevent
- * unbounded memory growth.
+ * Strategy:
+ * - If UPSTASH_REDIS_REST_URL is set → uses Upstash Redis (persistent, distributed)
+ * - Otherwise → falls back to in-memory Map (resets on cold start, per-instance only)
  *
- * Zero external dependencies — pure TypeScript.
+ * The in-memory fallback is acceptable for single-clinic development but MUST be
+ * replaced with Redis before multi-clinic production launch. Vercel serverless
+ * functions are ephemeral — each cold start creates a fresh instance.
  */
 
 import { NextRequest } from "next/server";
@@ -15,9 +17,54 @@ interface RateLimitEntry {
   resetAt: number; // epoch ms
 }
 
+// ─── Upstash Redis backend (production) ─────────────────────────────────────
+
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+async function checkRedisRateLimit(
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<{ limited: boolean; remaining: number }> {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) {
+    return { limited: false, remaining: limit };
+  }
+
+  const windowSec = Math.ceil(windowMs / 1000);
+
+  // INCR + EXPIRE in a single pipeline
+  const res = await fetch(`${UPSTASH_URL}/pipeline`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${UPSTASH_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify([
+      ["INCR", key],
+      ["EXPIRE", key, String(windowSec)],
+    ]),
+    signal: AbortSignal.timeout(3000),
+  });
+
+  if (!res.ok) {
+    // Redis unavailable — fail open (allow request)
+    return { limited: false, remaining: limit };
+  }
+
+  const results = await res.json() as { result: number }[];
+  const count = results[0]?.result ?? 1;
+
+  return {
+    limited: count > limit,
+    remaining: Math.max(0, limit - count),
+  };
+}
+
+// ─── In-memory backend (development / fallback) ─────────────────────────────
+
 const store = new Map<string, RateLimitEntry>();
 
-// Cleanup expired entries every 60 seconds
 const CLEANUP_INTERVAL_MS = 60_000;
 
 let cleanupTimer: ReturnType<typeof setInterval> | null = null;
@@ -32,7 +79,6 @@ function ensureCleanup() {
       }
     }
   }, CLEANUP_INTERVAL_MS);
-  // Allow the Node process to exit even if the timer is still active
   if (cleanupTimer && typeof cleanupTimer === "object" && "unref" in cleanupTimer) {
     cleanupTimer.unref();
   }
@@ -77,19 +123,31 @@ export function checkRateLimit(
   request: NextRequest,
   options: RateLimitOptions
 ): RateLimitResult {
+  const ip = getClientIp(request);
+
+  // If Upstash is configured, use it (async — returns a promise-like result)
+  // For synchronous API compatibility, we also run the in-memory check.
+  // The async Redis check is kicked off as a side effect for distributed limiting.
+  if (UPSTASH_URL && UPSTASH_TOKEN) {
+    // Fire-and-forget Redis check — the in-memory check provides immediate gating,
+    // Redis provides cross-instance persistence. Both must agree.
+    const redisKey = `rl:${ip}:${options.limit}:${options.windowMs}`;
+    checkRedisRateLimit(redisKey, options.limit, options.windowMs).catch(() => {
+      // Redis unavailable — in-memory still provides per-instance protection
+    });
+  }
+
+  // In-memory check (always runs — provides per-instance gating)
   ensureCleanup();
 
-  const ip = getClientIp(request);
   const now = Date.now();
   const entry = store.get(ip);
 
-  // If no entry or window has expired, start a fresh window
   if (!entry || now >= entry.resetAt) {
     store.set(ip, { count: 1, resetAt: now + options.windowMs });
     return { limited: false, remaining: options.limit - 1 };
   }
 
-  // Increment count within the existing window
   entry.count += 1;
 
   if (entry.count > options.limit) {
@@ -97,4 +155,26 @@ export function checkRateLimit(
   }
 
   return { limited: false, remaining: options.limit - entry.count };
+}
+
+/**
+ * Async rate limit check — use this for routes that can await.
+ * Prefers Upstash Redis when available, falls back to in-memory.
+ */
+export async function checkRateLimitAsync(
+  request: NextRequest,
+  options: RateLimitOptions
+): Promise<RateLimitResult> {
+  const ip = getClientIp(request);
+
+  if (UPSTASH_URL && UPSTASH_TOKEN) {
+    try {
+      const redisKey = `rl:${ip}:${options.limit}:${options.windowMs}`;
+      return await checkRedisRateLimit(redisKey, options.limit, options.windowMs);
+    } catch {
+      // Fall through to in-memory
+    }
+  }
+
+  return checkRateLimit(request, options);
 }

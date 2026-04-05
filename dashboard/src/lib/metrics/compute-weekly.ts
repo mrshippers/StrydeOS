@@ -75,7 +75,8 @@ function aggregateWeek(
   targets: { followUpRate: number; hepRate: number },
   patients: PatientLike[],
   reviews: ReviewLike[],
-  sessionPricePence: number = 0
+  sessionPricePence: number = 0,
+  weeklyCapacitySlots: number = 40,
 ): Omit<WeeklyStats, "id"> {
   const completed = appointments.filter((a) => a.status === "completed");
   const total = completed.length;
@@ -200,13 +201,12 @@ function aggregateWeek(
   }
 
   // Utilisation: booked slots (completed + DNA) ÷ available capacity
-  // Estimate capacity as 8 slots/day × 5 working days = 40 slots/week per clinician
-  // For "all" aggregate, scale by number of clinicians with appointments
+  // Uses clinic-configured weeklyCapacitySlots (default 40 = 8/day × 5 days)
   const bookedSlots = total + dnaCount;
   const activeClinicians = clinicianId === "all"
     ? new Set(appointments.map((a) => a.clinicianId)).size || 1
     : 1;
-  const estimatedCapacity = activeClinicians * 40; // 8 patients/day × 5 days
+  const estimatedCapacity = activeClinicians * weeklyCapacitySlots;
   const utilisationRate = estimatedCapacity > 0
     ? Math.min(1, bookedSlots / estimatedCapacity)
     : 0;
@@ -251,6 +251,7 @@ export async function computeWeeklyMetricsForClinic(
   if (!clinicDoc.exists) return { written: 0 };
   const clinicData = clinicDoc.data();
   const sessionPricePence: number = clinicData?.sessionPricePence ?? 0;
+  const weeklyCapacitySlots: number = clinicData?.targets?.weeklyCapacitySlots ?? 40;
   const targets = {
     followUpRate: clinicData?.targets?.followUpRate ?? 4.0,
     hepRate: clinicData?.targets?.hepRate ?? clinicData?.targets?.physitrackRate ?? 95,
@@ -340,7 +341,8 @@ export async function computeWeeklyMetricsForClinic(
         targets,
         patients,
         reviews,
-        sessionPricePence
+        sessionPricePence,
+        weeklyCapacitySlots,
       );
       const docId = `${weekStart}_${cid}`;
       await metricsRef.doc(docId).set(stats);

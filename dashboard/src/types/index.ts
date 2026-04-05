@@ -95,6 +95,8 @@ export interface ClinicTargets {
   utilisationRate: number;
   dnaRate: number;
   courseCompletionTarget: number;
+  /** Available appointment slots per clinician per week (default: 40 = 8/day × 5 days). */
+  weeklyCapacitySlots?: number;
 }
 
 export interface BrandConfig {
