@@ -150,7 +150,7 @@ export default function NotificationPanel({
                           transition={{ duration: 0.3, ease: "easeOut" }}
                         >
                           <Link
-                            href="/dashboard"
+                            href="/intelligence"
                             onClick={onClose}
                             className="flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors"
                           >
@@ -217,9 +217,11 @@ export default function NotificationPanel({
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, ease: "easeOut", delay: i * 0.03 }}
                         >
-                          <button
+                          <Link
+                            href="/intelligence"
                             onClick={() => {
                               if (isUnread) void markInsightRead(event.id);
+                              onClose();
                             }}
                             className="w-full text-left flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors"
                           >
@@ -240,7 +242,7 @@ export default function NotificationPanel({
                                 {event.suggestedAction}
                               </p>
                             </div>
-                          </button>
+                          </Link>
                         </motion.div>
                       );
                     })}
@@ -271,7 +273,7 @@ export default function NotificationPanel({
                     <ArrowRight size={13} className="text-white/20 group-hover:text-white/50 transition-colors" />
                   </Link>
                   <Link
-                    href="/dashboard"
+                    href="/intelligence"
                     onClick={onClose}
                     className="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-medium text-white/60 hover:text-white hover:bg-white/5 transition-colors group"
                   >
