@@ -162,6 +162,25 @@ function ContinuityPage() {
       {patientsError && <ErrorBanner message="Patient data couldn't load — some cards may be incomplete." onRetry={() => window.location.reload()} />}
       {commsError && <ErrorBanner message="Comms data unavailable right now." onRetry={() => window.location.reload()} />}
 
+      {/* Setup banner — shown when no comms have been sent yet (real user only) */}
+      {!commsIsDemo && commsStats.totalSent === 0 && !loading && (
+        <div className="rounded-[var(--radius-card)] border border-teal/20 bg-white p-5">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-teal/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Zap size={14} className="text-teal" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-navy mb-1">Pulse is ready — no messages sent yet</p>
+              <p className="text-xs text-muted">
+                Patient data is live from your PMS. To start sending automated SMS and email sequences (rebooking prompts, HEP reminders, reactivation nudges),
+                toggle them on in the <button onClick={() => setActiveView("sequences")} className="text-teal font-semibold hover:underline">Comms Sequences</button> tab.
+                Manual sends work immediately via the Re-engage buttons on patient cards.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Comms summary stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -311,6 +330,14 @@ function ContinuityPage() {
                   </tr>
                 </thead>
                 <tbody>
+                  {commsLog.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center">
+                        <p className="text-sm text-muted">No messages sent yet.</p>
+                        <p className="text-xs text-muted mt-1">Use the Re-engage buttons on patient cards or enable automated sequences to get started.</p>
+                      </td>
+                    </tr>
+                  )}
                   {commsLog.map((entry) => {
                     const patient = patientMap[entry.patientId];
                     const sentDate = new Date(entry.sentAt);
