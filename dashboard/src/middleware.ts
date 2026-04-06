@@ -68,13 +68,6 @@ export async function middleware(request: NextRequest) {
 }
 
 function setSecurityHeaders(response: NextResponse): void {
-  // Generate a per-request nonce for CSP. Pass it to the page via a request
-  // header so that layout.tsx can read it and inject it into <Script> tags.
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  const nonce = btoa(String.fromCharCode(...bytes));
-  response.headers.set("x-csp-nonce", nonce);
-
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -88,9 +81,9 @@ function setSecurityHeaders(response: NextResponse): void {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      // Nonce + unsafe-inline: browsers that support nonces ignore unsafe-inline,
-      // older browsers fall back to unsafe-inline. This is the recommended upgrade path.
-      `script-src 'self' 'nonce-${nonce}' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} 'wasm-unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.vercel-insights.com https://*.vercel-scripts.com`,
+      // unsafe-inline required for Next.js inline hydration scripts.
+      // TODO: wire up Next.js nonce support (experimental.appDir CSP) to use nonce-based CSP instead.
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} 'wasm-unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.vercel-insights.com https://*.vercel-scripts.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
