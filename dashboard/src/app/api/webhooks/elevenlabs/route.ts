@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { withRequestLog } from "@/lib/request-logger";
 import type { AvaAction } from "@/lib/ava/graph";
+import { sendCallbackNotification } from "@/lib/ava/notify-callback";
 
 export const runtime = "nodejs";
 
@@ -166,18 +167,22 @@ async function handler(req: NextRequest) {
           case "callback_request":
             outcome = "follow_up_required";
             break;
+          case "transfer_call":
+            outcome = "transferred";
+            break;
           case "relay_message":
             outcome = "follow_up_required";
             break;
           case "end_call":
             outcome = "resolved";
             break;
-          default:
+          default: {
             // Fallback to keyword match for edge cases
             const summary = payload.summary.toLowerCase();
             if (summary.includes("book") || summary.includes("appointment")) outcome = "booked";
             else if (!payload.transcript) outcome = "voicemail";
             break;
+          }
         }
       } catch {
         // LangGraph unavailable — fall back to keyword matching
@@ -194,6 +199,20 @@ async function handler(req: NextRequest) {
         graphIntent: graphMetadata.reason ?? null,
         graphMetadata: Object.keys(graphMetadata).length > 0 ? graphMetadata : null,
       });
+
+      // Fire-and-forget SMS notification for escalated / callback calls
+      if (outcome === "follow_up_required" || outcome === "escalated") {
+        void sendCallbackNotification({
+          clinicId,
+          callerPhone: payload.caller_phone ?? null,
+          callbackType: (graphMetadata.callbackType as string) ?? "general",
+          reason:
+            (graphMetadata.reason as string) ??
+            payload.reason_for_call ??
+            null,
+          conversationId,
+        });
+      }
     }
 
     return NextResponse.json({ ok: true }, { status: 200 });
