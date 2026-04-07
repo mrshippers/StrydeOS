@@ -71,7 +71,20 @@ async function handler(req: NextRequest) {
     });
 
     if (!result.success) {
-      // Transfer failed — tell ElevenLabs so Ava can fall back to callback
+      // Out-of-hours — give Ava a specific script so she doesn't say "transfer failed"
+      if (result.error?.startsWith("out_of_hours:")) {
+        const [, start, end] = result.error.split(":");
+        const startStr = formatHour(parseFloat(start));
+        const endStr = formatHour(parseFloat(end));
+        return NextResponse.json(
+          {
+            result: `out_of_hours. Reception is open ${startStr} to ${endStr}. Do NOT attempt transfer. Instead say: "The team are away from the phones at the moment — our reception is open ${startStr} to ${endStr}. Can I take your name and number and have someone call you back first thing?" Then take their details.`,
+          },
+          { status: 200 }
+        );
+      }
+
+      // Other failure — fall back to callback
       return NextResponse.json(
         {
           result: `Transfer unavailable: ${result.error}. Please take the caller's name and number and arrange a callback instead.`,
@@ -96,3 +109,12 @@ async function handler(req: NextRequest) {
 }
 
 export const POST = handler;
+
+/** Convert decimal hour (e.g. 17.5) to "5:30pm" display string. */
+function formatHour(hour: number): string {
+  const h = Math.floor(hour);
+  const m = Math.round((hour - h) * 60);
+  const period = h < 12 ? "am" : "pm";
+  const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  return m > 0 ? `${displayH}:${String(m).padStart(2, "0")}${period}` : `${displayH}${period}`;
+}

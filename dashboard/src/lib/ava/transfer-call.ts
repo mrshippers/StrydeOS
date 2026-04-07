@@ -1,5 +1,6 @@
-import { getTwilio, getTwilioPhone } from "@/lib/twilio";
+import { getTwilio } from "@/lib/twilio";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { DEFAULT_AVA_ATTRIBUTION_CONFIG } from "@/types/value-ledger";
 
 /**
  * Warm-transfer a live Twilio call to the clinic's reception/Moneypenny number.
@@ -48,6 +49,25 @@ export async function transferCallToReception(
 
     if (!receptionPhone) {
       return { success: false, error: "No reception phone configured for transfer" };
+    }
+
+    // 2. Out-of-hours check — don't attempt live transfer outside reception hours
+    const timezone = clinicData.timezone || "Europe/London";
+    const avaAttrib = clinicData.ava?.attributionConfig ?? DEFAULT_AVA_ATTRIBUTION_CONFIG;
+    const startHour: number = avaAttrib.receptionStartHour ?? DEFAULT_AVA_ATTRIBUTION_CONFIG.receptionStartHour;
+    const endHour: number = avaAttrib.receptionEndHour ?? DEFAULT_AVA_ATTRIBUTION_CONFIG.receptionEndHour;
+
+    const nowInClinicTz = new Date(
+      new Date().toLocaleString("en-GB", { timeZone: timezone })
+    );
+    const currentHour = nowInClinicTz.getHours() + nowInClinicTz.getMinutes() / 60;
+    const isWithinHours = currentHour >= startHour && currentHour < endHour;
+
+    if (!isWithinHours) {
+      return {
+        success: false,
+        error: `out_of_hours:${startHour}:${endHour}`,
+      };
     }
 
     const avaPhone = clinicData.ava?.config?.phone;
