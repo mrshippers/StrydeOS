@@ -20,11 +20,13 @@ const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN ?? "";
  * clinicId — never accepted from query params to prevent toll fraud.
  */
 export async function POST(req: NextRequest) {
-  // Validate Twilio signature
+  // Validate Twilio signature — POST body params must be included in HMAC
   if (TWILIO_AUTH_TOKEN) {
     const sig = req.headers.get("x-twilio-signature") ?? "";
-    const url = req.url;
-    const isValid = twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, url, {});
+    const body = await req.text();
+    const params: Record<string, string> = {};
+    new URLSearchParams(body).forEach((v, k) => { params[k] = v; });
+    const isValid = twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, req.url, params);
     if (!isValid) {
       return new NextResponse("Forbidden", { status: 403 });
     }
