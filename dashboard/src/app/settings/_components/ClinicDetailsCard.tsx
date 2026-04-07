@@ -7,6 +7,8 @@ interface ClinicDetailsCardProps {
   setClinicAddress: (v: string) => void;
   clinicPhone: string;
   setClinicPhone: (v: string) => void;
+  receptionPhone: string;
+  setReceptionPhone: (v: string) => void;
   sessionPrice: string;
   setSessionPrice: (v: string) => void;
   clinicWebsite: string;
@@ -24,6 +26,8 @@ export default function ClinicDetailsCard({
   setClinicAddress,
   clinicPhone,
   setClinicPhone,
+  receptionPhone,
+  setReceptionPhone,
   sessionPrice,
   setSessionPrice,
   clinicWebsite,
@@ -88,6 +92,19 @@ export default function ClinicDetailsCard({
               className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
             />
           </div>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+            Reception Phone Number
+          </label>
+          <input
+            type="tel"
+            value={receptionPhone}
+            onChange={(e) => setReceptionPhone(e.target.value)}
+            placeholder="020 7946 0958"
+            className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
+          />
+          <p className="text-[10px] text-muted mt-1">The number Ava gives callers when they ask to speak to reception. If blank, Ava uses her own inbound number.</p>
         </div>
         <div>
           <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">

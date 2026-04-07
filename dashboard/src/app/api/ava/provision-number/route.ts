@@ -55,11 +55,31 @@ async function handler(req: NextRequest) {
     const clinicData = clinicDoc.data()!;
 
     // Guard: don't provision if a number is already assigned
+    // Use a Firestore transaction to prevent race conditions (double-purchase)
     const existingPhone = clinicData.phone || clinicData.ava?.config?.phone;
     const existingTrunk = clinicData.ava?.twilioTrunkSid;
     if (existingPhone && existingTrunk) {
       return NextResponse.json(
         { error: "This clinic already has a provisioned number", phone: existingPhone },
+        { status: 409 }
+      );
+    }
+
+    // Double-check via transaction to prevent TOCTOU race
+    const alreadyProvisioned = await db.runTransaction(async (txn) => {
+      const freshDoc = await txn.get(db.collection("clinics").doc(clinicId));
+      const freshData = freshDoc.data();
+      if (freshData?.ava?.twilioTrunkSid) return true;
+      // Set a provisioning lock so concurrent requests see it
+      txn.update(db.collection("clinics").doc(clinicId), {
+        "ava.provisioningInProgress": true,
+      });
+      return false;
+    });
+
+    if (alreadyProvisioned) {
+      return NextResponse.json(
+        { error: "This clinic already has a provisioned number" },
         { status: 409 }
       );
     }
@@ -78,12 +98,15 @@ async function handler(req: NextRequest) {
       const { buildAvaCorePrompt } = await import("@/lib/ava/ava-core-prompt");
       const { compileKnowledgeDocument } = await import("@/lib/ava/ava-knowledge");
       const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+      if (!ELEVENLABS_API_KEY) {
+        return NextResponse.json({ error: "ELEVENLABS_API_KEY is not configured" }, { status: 500 });
+      }
       const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
 
       const corePrompt = buildAvaCorePrompt({
         clinic_name: clinicData.name || "Clinic",
         clinic_email: clinicData.email || "info@clinic.com",
-        clinic_phone: phoneNumber,
+        clinic_phone: clinicData.receptionPhone || phoneNumber,
       });
 
       const knowledgeEntries = clinicData.ava?.knowledge || [];
@@ -92,7 +115,7 @@ async function handler(req: NextRequest) {
         ? `${corePrompt}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCLINIC KNOWLEDGE BASE\n\n${knowledgeDoc}`
         : corePrompt;
 
-      const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://localhost:3000"}/api/webhooks/elevenlabs`;
+      const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/elevenlabs`;
 
       const agentResponse = await fetch(`${ELEVENLABS_API_URL}/convai/agents`, {
         method: "POST",
@@ -110,6 +133,7 @@ async function handler(req: NextRequest) {
             { name: "book_appointment", description: "Book an appointment for the patient", webhook_url: webhookUrl },
             { name: "check_availability", description: "Check clinician availability", webhook_url: webhookUrl },
             { name: "update_booking", description: "Reschedule or cancel an appointment", webhook_url: webhookUrl },
+            { name: "transfer_to_reception", description: "Transfer the caller to the clinic reception desk. Use when the caller has a complaint, wants to speak to a manager, or needs human assistance that you cannot provide.", webhook_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/ava/transfer` },
           ],
         }),
       });

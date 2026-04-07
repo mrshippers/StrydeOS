@@ -497,6 +497,7 @@ export default function SettingsPage() {
   const [clinicName, setClinicName] = useState("");
   const [clinicAddress, setClinicAddress] = useState("");
   const [clinicPhone, setClinicPhone] = useState("");
+  const [receptionPhone, setReceptionPhone] = useState("");
   const [sessionPrice, setSessionPrice] = useState("");
   const [parkingInfo, setParkingInfo] = useState("");
   const [clinicWebsite, setClinicWebsite] = useState("");
@@ -513,6 +514,7 @@ export default function SettingsPage() {
       clinicName: cp.name ?? "",
       clinicAddress: cp.address ?? "",
       clinicPhone: cp.phone ?? "",
+      receptionPhone: cp.receptionPhone ?? "",
       sessionPrice: cp.sessionPricePence ? String(cp.sessionPricePence / 100) : "",
       parkingInfo: cp.parkingInfo ?? "",
       clinicWebsite: cp.website ?? "",
@@ -529,6 +531,7 @@ export default function SettingsPage() {
       clinicName !== savedValues.clinicName ||
       clinicAddress !== savedValues.clinicAddress ||
       clinicPhone !== savedValues.clinicPhone ||
+      receptionPhone !== savedValues.receptionPhone ||
       sessionPrice !== savedValues.sessionPrice ||
       parkingInfo !== savedValues.parkingInfo ||
       clinicWebsite !== savedValues.clinicWebsite ||
@@ -537,7 +540,7 @@ export default function SettingsPage() {
       hepTarget !== savedValues.hepTarget ||
       utilisationTarget !== savedValues.utilisationTarget
     );
-  }, [clinicName, clinicAddress, clinicPhone, sessionPrice, parkingInfo, clinicWebsite, timezone, followUpTarget, hepTarget, utilisationTarget, savedValues]);
+  }, [clinicName, clinicAddress, clinicPhone, receptionPhone, sessionPrice, parkingInfo, clinicWebsite, timezone, followUpTarget, hepTarget, utilisationTarget, savedValues]);
 
   const { showDialog, confirmLeave, cancelLeave } = useUnsavedChanges({ isDirty });
 
@@ -603,6 +606,7 @@ export default function SettingsPage() {
     setClinicName(cp.name ?? "");
     setClinicAddress(cp.address ?? "");
     setClinicPhone(cp.phone ?? "");
+    setReceptionPhone(cp.receptionPhone ?? "");
     setSessionPrice(cp.sessionPricePence ? String(cp.sessionPricePence / 100) : "");
     setParkingInfo(cp.parkingInfo ?? "");
     setClinicWebsite(cp.website ?? "");
@@ -672,6 +676,7 @@ export default function SettingsPage() {
         name: clinicName,
         address: clinicAddress || null,
         phone: clinicPhone || null,
+        receptionPhone: receptionPhone || null,
         sessionPricePence: sessionPrice ? Math.round(parseFloat(sessionPrice) * 100) : null,
         parkingInfo: parkingInfo || null,
         website: clinicWebsite || null,
@@ -695,7 +700,7 @@ export default function SettingsPage() {
     } finally {
       setSaving(false);
     }
-  }, [clinicId, clinicName, clinicAddress, clinicPhone, sessionPrice, parkingInfo, clinicWebsite, timezone, followUpTarget, hepTarget, utilisationTarget, refreshClinicProfile, toast]);
+  }, [clinicId, clinicName, clinicAddress, clinicPhone, receptionPhone, sessionPrice, parkingInfo, clinicWebsite, timezone, followUpTarget, hepTarget, utilisationTarget, refreshClinicProfile, toast]);
 
   async function handleTestPms() {
     if (!pmsProvider || !pmsApiKey.trim()) {
@@ -1364,6 +1369,7 @@ export default function SettingsPage() {
           clinicName={clinicName} setClinicName={setClinicName}
           clinicAddress={clinicAddress} setClinicAddress={setClinicAddress}
           clinicPhone={clinicPhone} setClinicPhone={setClinicPhone}
+          receptionPhone={receptionPhone} setReceptionPhone={setReceptionPhone}
           sessionPrice={sessionPrice} setSessionPrice={setSessionPrice}
           clinicWebsite={clinicWebsite} setClinicWebsite={setClinicWebsite}
           parkingInfo={parkingInfo} setParkingInfo={setParkingInfo}

@@ -22,6 +22,7 @@ import {
 export type VoiceInteractionOutcome =
   | "booked"
   | "escalated"
+  | "transferred"
   | "voicemail"
   | "follow_up_required"
   | "resolved"
@@ -32,6 +33,14 @@ export type VoiceInteractionUrgency =
   | "medium"
   | "high"
   | "urgent"
+  | null;
+
+export type CallbackType =
+  | "back_office"
+  | "clinician"
+  | "manager"
+  | "clinician_message"
+  | "general"
   | null;
 
 export interface VoiceInteraction {
@@ -57,6 +66,9 @@ export interface VoiceInteraction {
   startTimestamp: number | null;
   endTimestamp: number | null;
   disconnectionReason: string | null;
+  callbackType: CallbackType;
+  actionedAt: string | null;
+  actionedBy: string | null;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
 }
@@ -200,6 +212,9 @@ export function subscribeTodaysElevenLabsCalls(
           startTimestamp: data.startTimestamp,
           endTimestamp: null,
           disconnectionReason: null,
+          callbackType: data.callbackType || null,
+          actionedAt: data.actionedAt || null,
+          actionedBy: data.actionedBy || null,
           createdAt: null,
           updatedAt: null,
         } as VoiceInteraction;

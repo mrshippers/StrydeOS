@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { verifyApiRequest, handleApiError } from "@/lib/auth-guard";
+import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { buildAvaCorePrompt } from "@/lib/ava/ava-core-prompt";
 import {
   compileKnowledgeDocument,
@@ -10,7 +10,6 @@ import {
 } from "@/lib/ava/ava-knowledge";
 import { withRequestLog } from "@/lib/request-logger";
 
-const db = getAdminDb();
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
 
@@ -31,7 +30,9 @@ async function handler(req: NextRequest) {
   }
 
   try {
+    const db = getAdminDb();
     const user = await verifyApiRequest(req);
+    requireRole(user, ["owner", "admin", "superadmin"]);
     const clinicId = user.clinicId;
 
     if (!clinicId) {
@@ -60,6 +61,13 @@ async function handler(req: NextRequest) {
       return NextResponse.json(
         { error: "Ava agent not set up — create agent first" },
         { status: 400 },
+      );
+    }
+
+    if (!ELEVENLABS_API_KEY) {
+      return NextResponse.json(
+        { error: "ELEVENLABS_API_KEY is not configured" },
+        { status: 500 },
       );
     }
 
@@ -139,7 +147,7 @@ async function handler(req: NextRequest) {
       const corePrompt = buildAvaCorePrompt({
         clinic_name: clinicData.name || "Clinic",
         clinic_email: clinicData.email || "info@clinic.com",
-        clinic_phone: avaConfig.config?.phone || "",
+        clinic_phone: clinicData.receptionPhone || avaConfig.config?.phone || "",
       });
 
       const knowledgeDoc = compileKnowledgeDocument(entries);

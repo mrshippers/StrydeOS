@@ -112,6 +112,7 @@ export interface CallMeta {
   clinicName: string;
   callerPhone: string;
   clinicianNames?: string[];
+  clinicEmail?: string;
   callStartTime?: string;
 }
 
@@ -460,9 +461,7 @@ function faqNode(
 function solicitorSalesNode(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
-  const clinicEmail = state.callMeta.clinicName
-    ? `info@${state.callMeta.clinicName.toLowerCase().replace(/\s+/g, "")}.com`
-    : "our email address";
+  const clinicEmail = state.callMeta.clinicEmail || "our email address";
 
   return {
     currentNode: "solicitor_sales",

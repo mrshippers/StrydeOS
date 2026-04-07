@@ -17,7 +17,11 @@ import {
   Lock,
   Phone,
   Loader2,
+  CheckCheck,
 } from "lucide-react";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import type { CallbackType } from "@/lib/firebase/voiceInteractions";
 import KnowledgeBaseEditor from "@/components/ava/KnowledgeBaseEditor";
 import {
   ResponsiveContainer,
@@ -55,6 +59,16 @@ const OUTCOME_COLORS: Record<string, { bg: string; text: string; label: string }
   info: { bg: "bg-blue/10", text: "text-blue", label: "Handled" },
   missed: { bg: "bg-danger/10", text: "text-danger", label: "Voicemail" },
   transferred: { bg: "bg-purple/10", text: "text-purple", label: "Transferred" },
+};
+
+type CallFilter = "all" | "needs_callback" | "escalated";
+
+const CALLBACK_TYPE_LABELS: Record<NonNullable<CallbackType>, string> = {
+  back_office: "Back Office",
+  clinician: "Clinician",
+  manager: "Manager",
+  clinician_message: "Message",
+  general: "General",
 };
 
 function formatTime(ts: number | null): string {
@@ -184,6 +198,8 @@ function ReceptionistContent() {
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [expandedCallId, setExpandedCallId] = useState<string | null>(null);
   const [digestExpanded, setDigestExpanded] = useState(false);
+  const [callFilter, setCallFilter] = useState<CallFilter>("all");
+  const [actioningCallId, setActioningCallId] = useState<string | null>(null);
   const [configDraft, setConfigDraft] = useState(config);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
   const [agentError, setAgentError] = useState<string | null>(null);
@@ -194,6 +210,13 @@ function ReceptionistContent() {
   useEffect(() => {
     setConfigDraft(config);
   }, [config]);
+
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [debounceTimer]);
 
   // Debounced save on config field changes
   const handleConfigChange = (field: keyof typeof config, value: string) => {
@@ -223,6 +246,45 @@ function ReceptionistContent() {
       (c) => c.startTimestamp && c.startTimestamp >= todayStart.getTime()
     );
   }, [calls]);
+
+  // Client-side filtered view of today's calls
+  const filteredCalls = useMemo(() => {
+    switch (callFilter) {
+      case "needs_callback":
+        return todaysCalls.filter(
+          (c) => c.outcome === "follow_up_required" && !c.actionedAt
+        );
+      case "escalated":
+        return todaysCalls.filter((c) => c.outcome === "escalated");
+      default:
+        return todaysCalls;
+    }
+  }, [todaysCalls, callFilter]);
+
+  // Counts for filter badges
+  const needsCallbackCount = useMemo(
+    () => todaysCalls.filter((c) => c.outcome === "follow_up_required" && !c.actionedAt).length,
+    [todaysCalls]
+  );
+  const escalatedCount = useMemo(
+    () => todaysCalls.filter((c) => c.outcome === "escalated").length,
+    [todaysCalls]
+  );
+
+  // Mark a follow_up_required call as actioned in Firestore
+  async function markAsActioned(callId: string) {
+    if (!user?.clinicId || !db) return;
+    setActioningCallId(callId);
+    try {
+      const callRef = doc(db, "clinics", user.clinicId, "call_log", callId);
+      await updateDoc(callRef, {
+        actionedAt: new Date().toISOString(),
+        actionedBy: user.uid,
+      });
+    } finally {
+      setActioningCallId(null);
+    }
+  }
 
   const totalCalls = todaysCalls.length;
   const booked = todaysCalls.filter((c) => c.outcome === "booked").length;
@@ -387,12 +449,56 @@ function ReceptionistContent() {
           {/* Today's call log */}
           <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
             <div className="p-6 pb-0">
-              <h3 className="font-display text-lg text-navy mb-1">
-                Today&apos;s Calls
-              </h3>
-              <p className="text-xs text-muted mb-4">
-                Real-time log of Ava-handled calls
-              </p>
+              <div className="flex items-start justify-between mb-1">
+                <div>
+                  <h3 className="font-display text-lg text-navy mb-1">
+                    Today&apos;s Calls
+                  </h3>
+                  <p className="text-xs text-muted mb-4">
+                    Real-time log of Ava-handled calls
+                  </p>
+                </div>
+              </div>
+
+              {/* Filter tabs */}
+              <div className="flex items-center gap-1 mb-4">
+                {([
+                  { id: "all" as const, label: "All calls", count: todaysCalls.length },
+                  { id: "needs_callback" as const, label: "Needs callback", count: needsCallbackCount },
+                  { id: "escalated" as const, label: "Escalated", count: escalatedCount },
+                ]).map(({ id, label, count }) => (
+                  <button
+                    key={id}
+                    onClick={() => setCallFilter(id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      callFilter === id
+                        ? id === "needs_callback"
+                          ? "bg-warn/10 text-warn"
+                          : id === "escalated"
+                          ? "bg-purple/10 text-purple"
+                          : "bg-navy/8 text-navy"
+                        : "text-muted hover:text-navy hover:bg-cloud-light"
+                    }`}
+                  >
+                    {label}
+                    {count > 0 && (
+                      <span
+                        className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold ${
+                          callFilter === id
+                            ? id === "needs_callback"
+                              ? "bg-warn/20 text-warn"
+                              : id === "escalated"
+                              ? "bg-purple/20 text-purple"
+                              : "bg-navy/10 text-navy"
+                            : "bg-cloud-light text-muted"
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -419,7 +525,7 @@ function ReceptionistContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {todaysCalls.map((call) => {
+                  {filteredCalls.map((call) => {
                     const outcomeKey = call.outcome ?? "resolved";
                     const oc =
                       OUTCOME_COLORS[outcomeKey] ?? OUTCOME_COLORS.resolved;
@@ -484,11 +590,41 @@ function ReceptionistContent() {
                               "—"}
                           </td>
                           <td className="py-3 px-4">
-                            <span
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${oc.bg} ${oc.text}`}
-                            >
-                              {oc.label}
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span
+                                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${oc.bg} ${oc.text}`}
+                              >
+                                {oc.label}
+                              </span>
+                              {call.callbackType && (
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue/8 text-blue">
+                                  {CALLBACK_TYPE_LABELS[call.callbackType]}
+                                </span>
+                              )}
+                              {call.actionedAt && (
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-success/10 text-success flex items-center gap-0.5">
+                                  <CheckCheck size={10} />
+                                  Actioned
+                                </span>
+                              )}
+                              {call.outcome === "follow_up_required" && !call.actionedAt && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    markAsActioned(call.id);
+                                  }}
+                                  disabled={actioningCallId === call.id}
+                                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-success/30 text-success hover:bg-success/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-0.5"
+                                >
+                                  {actioningCallId === call.id ? (
+                                    <Loader2 size={10} className="animate-spin" />
+                                  ) : (
+                                    <CheckCircle size={10} />
+                                  )}
+                                  Mark actioned
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                         {isExpanded && call.transcript && (
@@ -525,13 +661,17 @@ function ReceptionistContent() {
                       </Fragment>
                     );
                   })}
-                  {todaysCalls.length === 0 && (
+                  {filteredCalls.length === 0 && (
                     <tr>
                       <td
                         colSpan={6}
                         className="py-12 text-center text-sm text-muted"
                       >
-                        No calls recorded today yet
+                        {callFilter === "all"
+                          ? "No calls recorded today yet"
+                          : callFilter === "needs_callback"
+                          ? "No calls needing callback"
+                          : "No escalated calls"}
                       </td>
                     </tr>
                   )}

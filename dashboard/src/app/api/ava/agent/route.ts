@@ -97,6 +97,15 @@ async function handler(req: NextRequest) {
       return NextResponse.json({ error: "Clinic data is empty" }, { status: 400 });
     }
 
+    if (!ELEVENLABS_API_KEY) {
+      return NextResponse.json({ error: "ELEVENLABS_API_KEY is not configured" }, { status: 500 });
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+      return NextResponse.json({ error: "NEXT_PUBLIC_APP_URL is not configured" }, { status: 500 });
+    }
+
     const avaConfig = clinicData.ava;
 
     if (!avaConfig?.config) {
@@ -107,7 +116,7 @@ async function handler(req: NextRequest) {
     const corePrompt = buildAvaCorePrompt({
       clinic_name: clinicData.name || "Clinic",
       clinic_email: clinicData.email || "info@clinic.com",
-      clinic_phone: avaConfig.config?.phone || "",
+      clinic_phone: clinicData.receptionPhone || avaConfig.config?.phone || "",
     });
 
     // If knowledge entries exist, compile and append as fallback context
@@ -119,7 +128,7 @@ async function handler(req: NextRequest) {
       ? `${corePrompt}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCLINIC KNOWLEDGE BASE\n\n${knowledgeDoc}`
       : corePrompt;
 
-    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://localhost:3000"}/api/webhooks/elevenlabs`;
+    const webhookUrl = `${appUrl}/api/webhooks/elevenlabs`;
 
     const agentConfig: ElevenAgentsConfig = {
       name: `${clinicData.name || "Clinic"} - Ava`,
@@ -141,6 +150,11 @@ async function handler(req: NextRequest) {
           name: "update_booking",
           description: "Reschedule or cancel an appointment",
           webhook_url: webhookUrl,
+        },
+        {
+          name: "transfer_to_reception",
+          description: "Transfer the caller to the clinic reception desk. Use when the caller has a complaint, wants to speak to a manager, or needs human assistance that you cannot provide. Say 'Let me put you through to someone who can help right away' before triggering this tool.",
+          webhook_url: `${appUrl}/api/ava/transfer`,
         },
       ],
     };

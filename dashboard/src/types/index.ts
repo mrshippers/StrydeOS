@@ -205,6 +205,7 @@ export interface ClinicProfile {
   ownerEmail: string;
   address?: string;
   phone?: string;
+  receptionPhone?: string;
   sessionPricePence?: number;
   parkingInfo?: string;
   website?: string;
