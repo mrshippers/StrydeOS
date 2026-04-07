@@ -9,8 +9,7 @@ import { withRequestLog } from "@/lib/request-logger";
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
 
-// Voice ID for ElevenLabs (can be customizable per clinic)
-const DEFAULT_VOICE_ID = "OnKmvBo8ZskQurHsyps5";
+const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "OnKmvBo8ZskQurHsyps5";
 
 interface ElevenAgentsConfig {
   name: string;

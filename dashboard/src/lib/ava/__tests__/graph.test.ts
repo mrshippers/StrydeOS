@@ -111,14 +111,6 @@ describeIntegration("Ava LangGraph — Insurance Gate (HARD BLOCK)", () => {
     );
   });
 
-  it("blocks excess amount questions", async () => {
-    await expectAction(
-      "How much is my excess fee with AXA Health?",
-      "callback_request",
-      "Insurance — excess query"
-    );
-  });
-
   it("blocks coverage questions", async () => {
     await expectAction(
       "What's covered under my Vitality policy for physiotherapy?",
@@ -141,6 +133,97 @@ describeIntegration("Ava LangGraph — Insurance Gate (HARD BLOCK)", () => {
       "callback_request",
       "Insurance — policy detail query"
     );
+  });
+});
+
+describeIntegration("Ava LangGraph — Excess Handling (Split)", () => {
+  // Case A: General excess questions — FAQ deflection, action: continue
+  // The patient is asking about their insurer excess amount, not owing the clinic money.
+
+  it("deflects general 'how much is my excess' as FAQ (continue)", async () => {
+    const result = await expectAction(
+      "How much is my excess with AXA Health?",
+      "continue",
+      "Excess — general FAQ deflection"
+    );
+    expect(result.message).toContain("insurer");
+  });
+
+  it("deflects 'what's my excess amount' as FAQ (continue)", async () => {
+    const result = await expectAction(
+      "Do you know what my excess amount is? I'm with Bupa",
+      "continue",
+      "Excess — general amount query"
+    );
+    expect(result.message).toContain("insurer");
+  });
+
+  it("deflects 'how much excess do I have to pay' as FAQ (continue)", async () => {
+    const result = await expectAction(
+      "How much excess do I have to pay on my Vitality plan?",
+      "continue",
+      "Excess — general how-much query"
+    );
+    expect(result.message).toContain("insurer");
+  });
+
+  it("deflects excess fee question aimed at insurer as FAQ (continue)", async () => {
+    const result = await expectAction(
+      "How much is my excess fee with AXA Health?",
+      "continue",
+      "Excess — fee question aimed at insurer"
+    );
+    expect(result.message).toContain("insurer");
+  });
+
+  // Case B: Outstanding excess owed to the clinic — billing matter, action: callback_request
+  // The patient owes money to the clinic (e.g. Spires) for their excess.
+
+  it("routes outstanding excess payment to callback (callback_request)", async () => {
+    const result = await expectAction(
+      "I need to pay my excess to the clinic",
+      "callback_request",
+      "Excess — outstanding payment to clinic"
+    );
+    expect(result.metadata).toBeDefined();
+    expect(result.metadata?.reason).toBe("excess_payment");
+    expect(result.metadata?.alertType).toBe("billing");
+  });
+
+  it("routes 'do I have an outstanding excess' to callback (callback_request)", async () => {
+    const result = await expectAction(
+      "Do I have an outstanding excess balance with you?",
+      "callback_request",
+      "Excess — outstanding balance query"
+    );
+    expect(result.metadata?.reason).toBe("excess_payment");
+  });
+
+  it("routes 'pay my excess balance' to callback (callback_request)", async () => {
+    const result = await expectAction(
+      "I'd like to settle my excess — I think I owe you from my last appointment",
+      "callback_request",
+      "Excess — settle excess owed"
+    );
+    expect(result.metadata?.reason).toBe("excess_payment");
+  });
+
+  it("routes 'excess invoice from clinic' to callback (callback_request)", async () => {
+    const result = await expectAction(
+      "I got an invoice for my excess from Spires — how do I pay it?",
+      "callback_request",
+      "Excess — invoice from clinic for excess"
+    );
+    expect(result.metadata?.reason).toBe("excess_payment");
+  });
+
+  it("routes 'owe excess to the practice' to callback (callback_request)", async () => {
+    const result = await expectAction(
+      "I think I still owe my excess to the practice from a few weeks ago",
+      "callback_request",
+      "Excess — owes excess to practice"
+    );
+    expect(result.metadata?.reason).toBe("excess_payment");
   });
 });
 
@@ -358,5 +441,75 @@ describeIntegration("Ava LangGraph — Real Spires Edge Cases (from Moneypenny e
       SPIRES_META,
     );
     expect(["relay_message", "continue", "callback_request"]).toContain(result.action);
+  });
+});
+
+describeIntegration("Ava LangGraph — Insured Booking (PMI Intake)", () => {
+  // When a patient calls to book AND mentions their insurer/pre-auth,
+  // Ava should continue the booking flow — NOT hard-block to callback.
+  // This is "I'm with Bupa" (informational) vs "What does Bupa cover?" (query).
+
+  it("continues booking when patient mentions insurer", async () => {
+    const result = await expectAction(
+      "I'd like to book an initial assessment please. I'm insured through Bupa",
+      "continue",
+      "Insured booking — new patient with insurer name"
+    );
+    // Should indicate this is an insured booking, not a plain booking
+    expect(result.metadata?.insurerDetected).toBe(true);
+  });
+
+  it("continues booking when patient provides pre-auth code", async () => {
+    const result = await expectAction(
+      "I need to book my first appointment. I'm with AXA Health, pre-authorisation reference AXA-2026-7890",
+      "continue",
+      "Insured booking — new patient with pre-auth code"
+    );
+    expect(result.metadata?.insurerDetected).toBe(true);
+  });
+
+  it("continues booking for returning insured patient", async () => {
+    const result = await expectAction(
+      "I need a follow-up with Andrew — I'm with Vitality",
+      "continue",
+      "Insured booking — returning patient with insurer"
+    );
+    expect(result.metadata?.insurerDetected).toBe(true);
+  });
+
+  it("asks for pre-auth when insurer mentioned but no code given", async () => {
+    const result = await expectAction(
+      "I'd like to book in please, I'm coming through Bupa",
+      "continue",
+      "Insured booking — should prompt for pre-auth"
+    );
+    // Message should mention pre-authorisation
+    expect(result.message.toLowerCase()).toMatch(/pre.?authoris/);
+  });
+
+  it("still hard-blocks pure insurance coverage queries", async () => {
+    // This is NOT a booking — just asking about coverage
+    await expectAction(
+      "Can you tell me what's covered under my Bupa policy for physiotherapy?",
+      "callback_request",
+      "Pure insurance query — still blocked"
+    );
+  });
+
+  it("still hard-blocks pre-auth status checks (not providing, asking)", async () => {
+    await expectAction(
+      "Has my pre-authorisation gone through yet? I submitted it to AXA last week",
+      "callback_request",
+      "Pre-auth status query — still blocked"
+    );
+  });
+
+  it("third-party insured booking continues", async () => {
+    const result = await expectAction(
+      "I'm calling on behalf of my mum — she needs to book in, she's with Aviva",
+      "continue",
+      "Insured booking — third party with insurer"
+    );
+    expect(result.metadata?.insurerDetected).toBe(true);
   });
 });

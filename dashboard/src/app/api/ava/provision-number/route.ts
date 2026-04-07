@@ -126,7 +126,7 @@ async function handler(req: NextRequest) {
         body: JSON.stringify({
           name: `${clinicData.name || "Clinic"} - Ava`,
           system_prompt: systemPrompt,
-          voice_id: "OnKmvBo8ZskQurHsyps5",
+          voice_id: process.env.ELEVENLABS_VOICE_ID ?? "OnKmvBo8ZskQurHsyps5",
           webhook_url: webhookUrl,
           language: "en",
           tools: [

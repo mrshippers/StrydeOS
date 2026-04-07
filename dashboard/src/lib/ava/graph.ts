@@ -47,6 +47,9 @@ export const AvaState = Annotation.Root({
     reducer: (a, b) => ({
       emergencyDetected: a.emergencyDetected || b.emergencyDetected,
       insuranceQuery: a.insuranceQuery || b.insuranceQuery,
+      insurerDetected: a.insurerDetected || b.insurerDetected,
+      excessFaq: a.excessFaq || b.excessFaq,
+      excessPaymentQuery: a.excessPaymentQuery || b.excessPaymentQuery,
       clinicalAdviceSought: a.clinicalAdviceSought || b.clinicalAdviceSought,
       gdprBlock: a.gdprBlock || b.gdprBlock,
       mentalHealthCrisis: a.mentalHealthCrisis || b.mentalHealthCrisis,
@@ -55,6 +58,9 @@ export const AvaState = Annotation.Root({
     default: () => ({
       emergencyDetected: false,
       insuranceQuery: false,
+      insurerDetected: false,
+      excessFaq: false,
+      excessPaymentQuery: false,
       clinicalAdviceSought: false,
       gdprBlock: false,
       mentalHealthCrisis: false,
@@ -119,6 +125,9 @@ export interface CallMeta {
 export interface GuardrailFlags {
   emergencyDetected: boolean;
   insuranceQuery: boolean;
+  insurerDetected: boolean;
+  excessFaq: boolean;
+  excessPaymentQuery: boolean;
   clinicalAdviceSought: boolean;
   gdprBlock: boolean;
   mentalHealthCrisis: boolean;
@@ -237,11 +246,54 @@ function guardrailGate(
     flags.emergencyDetected = true;
   }
 
+  // Insurer name detection — patient mentions their insurer (informational, not a query).
+  // This flag is used by the routing logic to allow insured bookings to proceed.
+  const insurerNamePattern = /(?:i'm|i am|coming|insured|through|with)\s*(?:bupa|axa|vitality|aviva|cigna|allianz|wpa|healix|nuffield|simply\s*health)/i;
+  if (insurerNamePattern.test(lower)) {
+    flags.insurerDetected = true;
+  }
+
+  // ── Excess handling: split into Case B (outstanding payment to clinic) vs Case A (general FAQ) ──
+
+  // Case B — Outstanding excess owed TO THE CLINIC (billing matter)
+  // Patient owes money, wants to pay, or is asking about an outstanding balance.
+  // These mention the clinic/practice, owing, paying, settling, invoices for excess.
+  const excessPaymentPatterns = [
+    /(?:pay|settle|clear)\s*(?:my\s*)?excess/,                      // "pay my excess", "settle my excess"
+    /excess\s*(?:payment|invoice|bill)\s*(?:to|from|for|at|with)\s*(?:the\s*)?(?:clinic|practice|spires|you)/,
+    /(?:owe|owing)\s*(?:my\s*)?(?:the\s*)?excess/,                  // "I owe my excess"
+    /(?:owe|owing)\s*(?:.*?)excess\s*(?:to\s*(?:the\s*)?(?:clinic|practice|you))?/, // "owe excess to the practice"
+    /outstanding\s*excess/,                                          // "outstanding excess"
+    /excess\s*(?:balance|outstanding|owed|owing|due)/,               // "excess balance", "excess owed"
+    /invoice\s*(?:for|about)\s*(?:my\s*)?excess/,                    // "invoice for my excess"
+    /excess\s*(?:from|for)\s*(?:my\s*)?(?:last|previous|recent)/,    // "excess from my last appointment"
+  ];
+
+  if (excessPaymentPatterns.some((p) => p.test(lower))) {
+    flags.excessPaymentQuery = true;
+  }
+
+  // Case A — General excess FAQ (patient asking their insurer excess amount)
+  // "How much is my excess?", "What's my excess with Bupa?"
+  // These do NOT mention owing/paying the clinic — they're asking about the insurer figure.
+  // Only match if Case B didn't already match.
+  const excessFaqPatterns = [
+    /(?:how\s*much|what)\s*(?:is|'s)\s*(?:my\s*)?excess/,           // "how much is my excess", "what's my excess"
+    /(?:my|the)\s*excess\s*(?:amount|fee|figure)/,                   // "my excess amount", "the excess fee"
+    /excess\s*(?:with|on|for|under)\s*(?:my\s*)?(?:bupa|axa|vitality|aviva|cigna|allianz|wpa|healix|nuffield|simply\s*health)/i,
+    /(?:do\s*you\s*)?know\s*(?:what\s*)?(?:my\s*)?excess/,          // "do you know what my excess is"
+    /how\s*much\s*excess\s*(?:do\s*)?(?:i|I)\s*(?:have\s*to\s*)?pay/, // "how much excess do I have to pay"
+  ];
+
+  if (!flags.excessPaymentQuery && excessFaqPatterns.some((p) => p.test(lower))) {
+    flags.excessFaq = true;
+  }
+
   // Insurance keywords — hard gate, no discussion allowed
+  // Excess patterns are now handled separately above.
   const insurancePatterns = [
     /pre.?auth/,
     /authoris?ation\s*(code|number|ref)/,
-    /excess\s*(fee|payment|amount)/,
     /how\s*much\s*(will|does|is)\s*(my\s*)?(insurance|insurer|bupa|axa|vitality|aviva)/,
     /coverage?\s*(amount|limit|detail)/,
     /claim\s*(code|number|form)/,
@@ -253,7 +305,8 @@ function guardrailGate(
     flags.insuranceQuery = true;
   }
 
-  // Billing keywords — also routed to back-office callback (same as insurance)
+  // Billing keywords — routed to back-office callback
+  // Note: excess-specific billing is already caught by excessPaymentPatterns above.
   const billingPatterns = [
     /invoic(e|es|ing)/,
     /billing\s*(query|question|issue|dispute|problem)/,
@@ -281,6 +334,9 @@ function guardrailGate(
     guardrails: {
       emergencyDetected: flags.emergencyDetected ?? false,
       insuranceQuery: flags.insuranceQuery ?? false,
+      insurerDetected: flags.insurerDetected ?? false,
+      excessFaq: flags.excessFaq ?? false,
+      excessPaymentQuery: flags.excessPaymentQuery ?? false,
       clinicalAdviceSought: flags.clinicalAdviceSought ?? false,
       gdprBlock: flags.gdprBlock ?? false,
       mentalHealthCrisis: flags.mentalHealthCrisis ?? false,
@@ -326,7 +382,79 @@ function insuranceGateNode(
       metadata: {
         callbackType: "back_office",
         reason: "insurance_query",
-        neverDiscuss: ["coverage amounts", "policy numbers", "claim codes", "authorisation codes", "excess amounts"],
+        neverDiscuss: ["coverage amounts", "policy numbers", "claim codes", "authorisation codes"],
+      },
+    },
+  };
+}
+
+/**
+ * Case A — General excess FAQ.
+ * Patient is asking "how much is my excess?" — this is between them and their insurer.
+ * Ava deflects with a helpful answer and continues the conversation.
+ */
+function excessFaqNode(
+  state: typeof AvaState.State
+): Partial<typeof AvaState.State> {
+  return {
+    currentNode: "excess_faq",
+    response: {
+      action: "continue",
+      message: "Your excess amount is agreed between you and your insurer — they'll be able to confirm the exact figure for you. Is there anything else I can help with?",
+      metadata: {
+        flow: "excess_faq",
+      },
+    },
+  };
+}
+
+/**
+ * Case B — Outstanding excess owed to the clinic.
+ * Patient owes excess money to the clinic (e.g. Spires). This is a billing matter.
+ * Routes to callback_request so back-office can follow up with:
+ *   1. An alert/notification to the clinic owner
+ *   2. An email to the patient about the outstanding amount
+ */
+function excessPaymentNode(
+  state: typeof AvaState.State
+): Partial<typeof AvaState.State> {
+  return {
+    currentNode: "excess_payment",
+    response: {
+      action: "callback_request",
+      message: "Let me get our back office to help you with that — can I take your name and number, and someone will be in touch today about the excess payment?",
+      metadata: {
+        callbackType: "back_office",
+        reason: "excess_payment",
+        alertType: "billing",
+        alertOwner: true,
+        emailPatient: true,
+      },
+    },
+  };
+}
+
+/**
+ * Insured booking — patient is booking AND has mentioned their insurer.
+ * Ava continues the booking flow but asks for pre-authorisation details.
+ * This avoids the insurance hard-block for legitimate booking enquiries.
+ */
+function insuranceBookingNode(
+  state: typeof AvaState.State
+): Partial<typeof AvaState.State> {
+  const isNew = state.intent === "booking_new" || state.intent === "third_party_booking";
+  return {
+    currentNode: "insurance_booking",
+    response: {
+      action: "continue",
+      message: isNew
+        ? "Lovely — let's get you booked in. Do you have your pre-authorisation number from your insurer? It'll usually be on your approval letter or email."
+        : "Of course — let me find you a slot. Do you have your pre-authorisation reference to hand? We'll need that for your insurer.",
+      metadata: {
+        bookingType: isNew ? "insured_initial" : "insured_follow_up",
+        insurerDetected: true,
+        requiredFields: ["firstName", "lastName", "phone", "preAuthCode", "address"],
+        flow: "insurance_booking_flow",
       },
     },
   };
@@ -495,7 +623,26 @@ function routeAfterGuardrails(
   // Hard gates — these ALWAYS override intent classification
   if (g.emergencyDetected) return "emergency";
   if (g.mentalHealthCrisis) return "mental_health";
-  if (g.insuranceQuery) return "insurance_gate";
+
+  // Excess handling — checked BEFORE general insurance gate.
+  // Case B (outstanding payment to clinic) takes priority over Case A (FAQ).
+  if (g.excessPaymentQuery) return "excess_payment";
+  if (g.excessFaq) return "excess_faq";
+
+  if (g.insuranceQuery) {
+    // If the caller is booking AND mentions an insurer, it's an insured booking — not a query.
+    // Let the booking flow handle it with insurance metadata.
+    const bookingIntents: AvaIntent[] = ["booking_new", "booking_returning", "third_party_booking"];
+    if (g.insurerDetected && bookingIntents.includes(state.intent)) return "insurance_booking";
+    return "insurance_gate";
+  }
+
+  // If no insurance query fired but an insurer was mentioned during a booking, route to insured booking
+  if (g.insurerDetected) {
+    const bookingIntents: AvaIntent[] = ["booking_new", "booking_returning", "third_party_booking"];
+    if (bookingIntents.includes(state.intent)) return "insurance_booking";
+  }
+
   if (g.gdprBlock) return "gdpr_block";
 
   // Intent-based routing
@@ -546,6 +693,9 @@ export function buildAvaGraph() {
     .addNode("emergency", emergencyNode)
     .addNode("mental_health", mentalHealthNode)
     .addNode("insurance_gate", insuranceGateNode)
+    .addNode("excess_faq", excessFaqNode)
+    .addNode("excess_payment", excessPaymentNode)
+    .addNode("insurance_booking", insuranceBookingNode)
     .addNode("clinical_boundary", clinicalBoundaryNode)
     .addNode("gdpr_block", gdprBlockNode)
     .addNode("message_relay", messageRelayNode)
@@ -564,6 +714,9 @@ export function buildAvaGraph() {
       "emergency",
       "mental_health",
       "insurance_gate",
+      "excess_faq",
+      "excess_payment",
+      "insurance_booking",
       "clinical_boundary",
       "gdpr_block",
       "message_relay",
@@ -580,6 +733,9 @@ export function buildAvaGraph() {
     .addEdge("emergency", END)
     .addEdge("mental_health", END)
     .addEdge("insurance_gate", END)
+    .addEdge("excess_faq", END)
+    .addEdge("excess_payment", END)
+    .addEdge("insurance_booking", END)
     .addEdge("clinical_boundary", END)
     .addEdge("gdpr_block", END)
     .addEdge("message_relay", END)

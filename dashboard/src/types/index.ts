@@ -255,6 +255,22 @@ export interface Clinician {
 
 export type PreAuthStatus = "pending" | "confirmed" | "rejected" | "not_required";
 
+export interface PreAuth {
+  id: string;
+  patientId: string;
+  insurerName: string;
+  preAuthCode: string;
+  sessionsAuthorised: number;
+  sessionsUsed: number;
+  expiryDate?: string;
+  excessAmountPence?: number;
+  excessCollected?: boolean;
+  status: PreAuthStatus;
+  confirmedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PatientContact {
   email?: string;
   phone?: string;

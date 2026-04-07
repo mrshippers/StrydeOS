@@ -32,14 +32,15 @@ async function handler(req: NextRequest) {
 
     const body = JSON.parse(rawBody);
 
-    // ElevenLabs sends tool calls with agent_id and conversation context
+    // ElevenLabs sends tool calls with agent_id and conversation context.
+    // callerPhone may be absent on withheld CLI — transfer-call handles the fallback.
     const agentId = body.agent_id;
     const conversationId = body.conversation_id;
-    const callerPhone = body.caller_phone || body.from;
+    const callerPhone = body.caller_phone ?? "";
 
-    if (!agentId || !callerPhone) {
+    if (!agentId) {
       return NextResponse.json(
-        { error: "Missing agent_id or caller_phone" },
+        { error: "Missing agent_id" },
         { status: 400 }
       );
     }

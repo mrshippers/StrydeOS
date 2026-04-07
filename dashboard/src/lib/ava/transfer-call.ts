@@ -55,13 +55,24 @@ export async function transferCallToReception(
       return { success: false, error: "No Ava phone number found" };
     }
 
-    // 2. Find the active call on Ava's number from this caller
-    const activeCalls = await tw.calls.list({
+    // 2. Find the active call on Ava's number from this caller.
+    // Primary: match by from+to. Fallback: match any in-progress call to avaPhone
+    // — needed when CLI is withheld on UK SIP trunks (caller number not forwarded).
+    let activeCalls = await tw.calls.list({
       to: avaPhone,
       from: req.callerPhone,
       status: "in-progress",
       limit: 1,
     });
+
+    if (!activeCalls.length) {
+      // Withheld CLI fallback — find any in-progress call to the Ava number
+      activeCalls = await tw.calls.list({
+        to: avaPhone,
+        status: "in-progress",
+        limit: 1,
+      });
+    }
 
     if (!activeCalls.length) {
       return { success: false, error: "No active call found for transfer" };
