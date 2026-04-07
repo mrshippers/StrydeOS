@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 /* ─── Timing constants (ms) — match the standalone HTML exactly ─── */
-const AUTO_DISMISS_MS = 5200;
+const AUTO_DISMISS_MS = 3200;
 const EXIT_WIPE_MS = 700;
 const EXIT_DELAY_MS = 250;
 
@@ -277,17 +277,6 @@ export default function SplashScreen({ onComplete }: { onComplete?: () => void }
         @keyframes splashWordIn {
           0%   { opacity: 0; transform: translateY(6px); filter: blur(4px); }
           100% { opacity: 1; transform: translateY(0); filter: blur(0); }
-        }
-
-        /* Progress bar */
-        @keyframes splashProgShow { to { opacity: 1; } }
-        @keyframes splashProgGo {
-          0%   { width: 0%; }
-          18%  { width: 22%; }
-          38%  { width: 42%; }
-          55%  { width: 64%; }
-          75%  { width: 86%; }
-          100% { width: 100%; }
         }
 
         /* Exit wipe */
@@ -599,29 +588,6 @@ export default function SplashScreen({ onComplete }: { onComplete?: () => void }
             Stryde<span style={{ color: "#4B8BF5" }}>OS</span>
           </div>
 
-          {/* ── Progress bar ── */}
-          <div
-            style={{
-              width: 160,
-              height: 2,
-              background: "rgba(28,84,242,0.1)",
-              borderRadius: 1,
-              overflow: "hidden",
-              opacity: 0,
-              animation: "splashProgShow 0.5s ease 2.4s forwards",
-            }}
-          >
-            <div
-              style={{
-                width: "0%",
-                height: "100%",
-                background: "linear-gradient(90deg, #1C54F2, #4B8BF5)",
-                borderRadius: 1,
-                animation: "splashProgGo 2.4s cubic-bezier(0.4,0,0.2,1) 2.6s forwards",
-                boxShadow: "0 0 8px rgba(46,107,255,0.45)",
-              }}
-            />
-          </div>
         </div>
       </div>
     </>
