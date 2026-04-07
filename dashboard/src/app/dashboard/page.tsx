@@ -146,16 +146,12 @@ export default function DashboardPage() {
       const auth = getFirebaseAuth();
       if (!auth?.currentUser) return;
       const token = await getIdToken(auth.currentUser);
-      const res = await fetch("/api/pms/sync", {
+      const res = await fetch("/api/pipeline/run", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({}),
       });
       if (!res.ok) throw new Error("Sync failed");
-      // Also trigger metrics recompute after sync
-      await fetch("/api/metrics/compute", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
       window.location.reload();
     } catch {
       // Fail silently — the staleness banner will remain visible

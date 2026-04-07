@@ -676,11 +676,10 @@ export default function SettingsPage() {
         parkingInfo: parkingInfo || null,
         website: clinicWebsite || null,
         timezone,
-        targets: {
-          followUpRate: parseFloat(followUpTarget),
-          hepRate: parseFloat(hepTarget),
-          utilisationRate: parseFloat(utilisationTarget),
-        },
+        // Dot-notation so updateDoc merges into targets (preserves weeklyCapacitySlots etc.)
+        "targets.followUpRate": parseFloat(followUpTarget),
+        "targets.hepRate": parseFloat(hepTarget),
+        "targets.utilisationRate": parseFloat(utilisationTarget),
         // Mirror shared fields to ava.config so Ava receptionist page stays in sync
         "ava.config.phone": clinicPhone || null,
         "ava.config.address": clinicAddress || null,
@@ -1044,9 +1043,9 @@ export default function SettingsPage() {
         return;
       }
       setHepConnected(true);
-      setHepApiKey("");
+      setHepApiKey(""); // Clear from memory — key stored server-side only
       await refreshClinicProfile();
-      toast("HEP platform connected and key saved securely", "success");
+      toast("HEP platform connected — API key saved securely", "success");
     } catch {
       toast("Connection failed. Check your API key and try again.", "error");
     } finally {

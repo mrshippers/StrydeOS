@@ -87,9 +87,9 @@ export default function HepIntegrationCard({
         return;
       }
       setHepConnected(true);
-      setHepApiKey("");
+      setHepApiKey(""); // Clear from memory — key stored server-side only
       await refreshClinicProfile();
-      toast("HEP platform connected and key saved securely", "success");
+      toast("HEP platform connected — API key saved securely", "success");
     } catch {
       toast("Connection failed. Check your API key and try again.", "error");
     } finally {

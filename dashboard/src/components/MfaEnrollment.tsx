@@ -49,9 +49,16 @@ export function MfaEnrollment({ onComplete, onSkip }: MfaEnrollmentProps) {
       const qrUrl = await QRCode.toDataURL(otpauthUrl);
       setQrCodeUrl(qrUrl);
       setStep("verify");
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("[MFA setup error]", err);
-      setError("Failed to setup MFA. Please try again.");
+      const code = (err as { code?: string })?.code ?? "";
+      if (code === "auth/operation-not-allowed" || code === "auth/unsupported-first-factor") {
+        setError("MFA requires Firebase Identity Platform to be enabled. Contact your administrator.");
+      } else if (code === "auth/unverified-email") {
+        setError("Please verify your email address before enabling MFA.");
+      } else {
+        setError("Failed to setup MFA. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
