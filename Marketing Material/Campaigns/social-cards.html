@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrydeOS — Social Media Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B2545;
+    --navy-deep: #060F1E;
+    --blue: #1C54F2;
+    --blue-bright: #2E6BFF;
+    --blue-glow: #4B8BF5;
+    --teal: #0891B2;
+    --purple: #8B5CF6;
+    --green: #059669;
+    --red: #EF4444;
+    --amber: #F59E0B;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Outfit', -apple-system, sans-serif;
+    background: #111;
+    color: white;
+    -webkit-font-smoothing: antialiased;
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 48px;
+  }
+
+  .page-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 8px;
+  }
+
+  .page-subtitle {
+    font-size: 15px;
+    color: rgba(255,255,255,0.2);
+    margin-bottom: 32px;
+    text-align: center;
+  }
+
+  /* ─── Card row ────────────────────────────────────────────────── */
+  .card-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    max-width: 1160px;
+    width: 100%;
+  }
+
+  /* ─── Social card — 1080×1080 ratio ───────────────────────────── */
+  .social-card {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 56px 48px;
+    text-align: center;
+  }
+
+  .social-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* Backgrounds */
+  .card-navy {
+    background: var(--navy);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .card-navy::before {
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(28,84,242,0.1) 0%, transparent 70%),
+      radial-gradient(ellipse 30% 40% at 80% 80%, rgba(139,92,246,0.06) 0%, transparent 60%);
+  }
+
+  .card-deep {
+    background: var(--navy-deep);
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .card-deep::before {
+    background:
+      radial-gradient(ellipse 50% 50% at 50% 100%, rgba(28,84,242,0.08) 0%, transparent 70%);
+  }
+
+  .card-red-tint {
+    background: var(--navy-deep);
+    border: 1px solid rgba(239,68,68,0.12);
+  }
+  .card-red-tint::before {
+    background:
+      radial-gradient(ellipse 50% 40% at 40% 20%, rgba(239,68,68,0.12) 0%, transparent 70%);
+  }
+
+  .card-green-tint {
+    background: var(--navy-deep);
+    border: 1px solid rgba(5,150,105,0.12);
+  }
+  .card-green-tint::before {
+    background:
+      radial-gradient(ellipse 50% 40% at 60% 80%, rgba(5,150,105,0.12) 0%, transparent 70%);
+  }
+
+  .card-purple-tint {
+    background: var(--navy-deep);
+    border: 1px solid rgba(139,92,246,0.12);
+  }
+  .card-purple-tint::before {
+    background:
+      radial-gradient(ellipse 50% 40% at 30% 60%, rgba(139,92,246,0.12) 0%, transparent 70%);
+  }
+
+  .card-amber-tint {
+    background: var(--navy-deep);
+    border: 1px solid rgba(245,158,11,0.12);
+  }
+  .card-amber-tint::before {
+    background:
+      radial-gradient(ellipse 50% 40% at 70% 30%, rgba(245,158,11,0.1) 0%, transparent 70%);
+  }
+
+  /* Dot grid overlay */
+  .card-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* ─── Card elements ───────────────────────────────────────────── */
+  .card-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card-number {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card-number-xl { font-size: min(18vw, 120px); }
+  .card-number-lg { font-size: min(14vw, 96px); }
+
+  .card-headline {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: min(5vw, 32px);
+    line-height: 1.15;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card-body {
+    font-size: min(3.2vw, 16px);
+    font-weight: 400;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.6;
+    max-width: 400px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card-body strong { color: rgba(255,255,255,0.8); font-weight: 600; }
+
+  .card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin-top: 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .badge-blue {
+    background: rgba(28,84,242,0.12);
+    border: 1px solid rgba(28,84,242,0.25);
+    color: var(--blue-glow);
+  }
+
+  .badge-green {
+    background: rgba(5,150,105,0.12);
+    border: 1px solid rgba(5,150,105,0.25);
+    color: #34D399;
+  }
+
+  /* ─── Card logo ───────────────────────────────────────────────── */
+  .card-logo {
+    position: absolute;
+    bottom: 32px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    z-index: 1;
+  }
+
+  .card-logo span {
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .card-logo .os { color: rgba(75,139,245,0.5); }
+
+  /* ─── Section labels ──────────────────────────────────────────── */
+  .section-label {
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.15);
+    letter-spacing: 0.04em;
+    align-self: flex-start;
+    max-width: 1160px;
+    width: 100%;
+    padding-left: 4px;
+    margin-top: 24px;
+  }
+
+  /* ─── Responsive ──────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    body { padding: 24px; }
+    .card-row { grid-template-columns: 1fr; }
+    .social-card { padding: 40px 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">StrydeOS &mdash; Social Card Pack</div>
+<p class="page-subtitle">1:1 ratio cards for LinkedIn, Instagram, and social campaigns. Screenshot at 2&times; for 1080&times;1080.</p>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     ROW 1: The hero stat cards
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="section-label">Hero Stats</div>
+
+<div class="card-row">
+
+  <!-- Card 1: DNA — £17K -->
+  <div class="social-card card-red-tint">
+    <div class="card-grid"></div>
+    <div class="card-eyebrow" style="color: #F87171;">DNA &middot; The Silent Killer</div>
+    <div class="card-number card-number-xl" style="color: var(--red);">&pound;17K</div>
+    <div class="card-headline">Burned every year<br>on empty chairs.</div>
+    <div class="card-body">
+      No automated reminders. No cancellation recovery.<br>
+      StrydeOS + Ava pays for itself <strong>2.4&times; over</strong> on DNA reduction alone.
+    </div>
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+  <!-- Card 2: Admin Leak — £139K -->
+  <div class="social-card card-amber-tint">
+    <div class="card-grid"></div>
+    <div class="card-eyebrow" style="color: #FCD34D;">The Admin Gap</div>
+    <div class="card-number card-number-xl" style="color: var(--amber);">&pound;139K</div>
+    <div class="card-headline">Leaking from your<br>10-clinician practice.</div>
+    <div class="card-body">
+      &pound;13.9K per clinician without proper admin support.<br>
+      StrydeOS delivers it for <strong>&pound;7.2K/yr</strong> instead of a &pound;25K hire.
+    </div>
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+  <!-- Card 3: 74% blind -->
+  <div class="social-card card-purple-tint">
+    <div class="card-grid"></div>
+    <div class="card-eyebrow" style="color: #C4B5FD;">The Blind Spot</div>
+    <div class="card-number card-number-xl" style="background: linear-gradient(135deg, #C4B5FD, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">74%</div>
+    <div class="card-headline">of sub-&pound;1M clinics run on<br>vibes and a spreadsheet.</div>
+    <div class="card-body">
+      No BI dashboard. No practice manager.<br>
+      StrydeOS replaces both for <strong>&pound;599/mo</strong>.
+    </div>
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+  <!-- Card 4: CAC Delta — £128K -->
+  <div class="social-card card-green-tint">
+    <div class="card-grid"></div>
+    <div class="card-eyebrow" style="color: #34D399;">The Winning Edge</div>
+    <div class="card-number card-number-lg" style="color: #34D399;">+&pound;128K</div>
+    <div class="card-headline">&pound;200K clinic &rarr; &pound;328K clinic.<br>Same postcode.</div>
+    <div class="card-body">
+      Clinics that track their CAC earn <strong>&pound;128K more</strong> per year.<br>
+      StrydeOS includes acquisition analytics as standard.
+    </div>
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     ROW 2: The swagger cards (Charlie Sheen energy)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="section-label">Swagger One-Liners</div>
+
+<div class="card-row">
+
+  <!-- Card 5: Sue's coffee -->
+  <div class="social-card card-navy">
+    <div class="card-grid"></div>
+    <div class="card-eyebrow" style="color: var(--blue-glow);">Ava &middot; AI Receptionist</div>
+    <div class="card-headline" style="font-size: min(6vw, 38px); margin-bottom: 20px;">
+      Let Sue enjoy her coffee.<br>
+      <span style="background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Ava's got the phones.</span>
+    </div>
+    <div class="card-body">
+      Your front desk does a hundred things brilliantly.<br>
+      Answering every call isn't one of them &mdash; and that's fine.<br>
+      <strong>Every ring. Every time. 24/7.</strong>
+    </div>
+    <div class="card-badge badge-blue">From &pound;149/mo &middot; No contracts</div>
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+  <!-- Card 6: Some clinics guess -->
+  <div class="social-card card-deep">
+    <div class="card-grid"></div>
+    <div class="card-eyebrow" style="color: rgba(255,255,255,0.25);">Intelligence &middot; Dashboard</div>
+    <div class="card-headline" style="font-size: min(6vw, 38px); margin-bottom: 20px;">
+      Some clinics guess.<br>
+      <span style="background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Ours don't.</span>
+    </div>
+    <div class="card-body">
+      Follow-up rate. DNA. HEP compliance. Utilisation.<br>
+      Revenue per session. NPS.<br>
+      <strong>Six numbers that run a practice. All in one place.</strong>
+    </div>
+    <div class="card-badge badge-blue">From &pound;129/mo</div>
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+  <!-- Card 7: Practice Manager comparison -->
+  <div class="social-card card-navy">
+    <div class="card-grid"></div>
+    <div class="card-eyebrow" style="color: var(--blue-glow);">Full Stack</div>
+    <div class="card-headline" style="font-size: min(5.5vw, 36px); margin-bottom: 20px;">
+      &pound;25K hires a practice manager.<br>
+      <span style="background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">&pound;7.2K runs StrydeOS.</span>
+    </div>
+    <div class="card-body">
+      Same admin coverage. No sick days. No notice period.<br>
+      No "can we have a chat about my workload."<br>
+      <strong>And it works weekends.</strong>
+    </div>
+    <div class="card-badge badge-green">Save &pound;17.8K/yr</div>
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+  <!-- Card 8: The hobby line -->
+  <div class="social-card card-deep">
+    <div class="card-grid"></div>
+    <div class="card-eyebrow" style="color: rgba(255,255,255,0.25);">Hard Truth</div>
+    <div class="card-headline" style="font-size: min(5.5vw, 36px); margin-bottom: 20px;">
+      Do you know which clinician<br>is a profit centre and which<br>
+      <span style="color: var(--amber);">is a very expensive hobby?</span>
+    </div>
+    <div class="card-body">
+      If you can't answer that in under 10 seconds,<br>
+      you don't have a dashboard problem.<br>
+      <strong>You have a visibility problem.</strong>
+    </div>
+    <div class="card-badge badge-blue">StrydeOS Intelligence</div>
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     ROW 3: Quote cards (text-forward, high-impact)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="section-label">Quote Cards</div>
+
+<div class="card-row">
+
+  <!-- Card 9: The Google Ads dig -->
+  <div class="social-card card-green-tint" style="justify-content: flex-end; padding-bottom: 80px;">
+    <div class="card-grid"></div>
+    <div class="card-headline" style="font-size: min(5.5vw, 34px); font-style: italic; color: rgba(255,255,255,0.7); margin-bottom: 12px; line-height: 1.35;">
+      "One owner knows what a new patient costs and where they come from.<br><br>
+      The other one <span style="color:#34D399">'just does a bit of Google Ads.'</span>"
+    </div>
+    <div style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.25); letter-spacing: 0.06em; text-transform: uppercase; position: relative; z-index: 1;">&pound;128K difference. Real clinics. Real data.</div>
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+  <!-- Card 10: Not a feature gap -->
+  <div class="social-card card-purple-tint" style="justify-content: flex-end; padding-bottom: 80px;">
+    <div class="card-grid"></div>
+    <div class="card-headline" style="font-size: min(5.5vw, 34px); font-style: italic; color: rgba(255,255,255,0.7); margin-bottom: 12px; line-height: 1.35;">
+      "74% of sub-&pound;1M clinics have no BI dashboard and no practice manager.<br><br>
+      That's not a feature gap.<br>
+      <span style="background: linear-gradient(135deg, #C4B5FD, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">That's the entire value proposition.</span>"
+    </div>
+    <div style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.25); letter-spacing: 0.06em; text-transform: uppercase; position: relative; z-index: 1;">StrydeOS replaces both for &pound;599/mo</div>
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     ROW 4: Comparison / Before-After cards
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="section-label">Before / After</div>
+
+<div class="card-row">
+
+  <!-- Card 11: DNA Before/After -->
+  <div class="social-card card-navy" style="padding: 48px 40px;">
+    <div class="card-grid"></div>
+    <div class="card-eyebrow" style="color: var(--blue-glow);">DNA Reduction</div>
+
+    <div style="width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; position: relative; z-index: 1;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.3); width: 60px; text-align: right;">Before</span>
+        <div style="flex: 1; height: 36px; border-radius: 8px; background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(239,68,68,0.1)); border: 1px solid rgba(239,68,68,0.25); display: flex; align-items: center; padding: 0 16px;">
+          <span style="font-size: 14px; font-weight: 700; color: #F87171;">&pound;17K/yr lost to no-shows</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.3); width: 60px; text-align: right;">After</span>
+        <div style="flex: 1; height: 36px; border-radius: 8px; background: linear-gradient(135deg, rgba(5,150,105,0.2), rgba(5,150,105,0.1)); border: 1px solid rgba(5,150,105,0.25); display: flex; align-items: center; padding: 0 16px; width: 40%;">
+          <span style="font-size: 14px; font-weight: 700; color: #34D399;">2.4&times; ROI recovered</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-headline" style="font-size: 28px;">
+      Ava doesn't just answer calls.<br>
+      <span style="background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">She fills empty chairs.</span>
+    </div>
+
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+  <!-- Card 12: Revenue Delta -->
+  <div class="social-card card-navy" style="padding: 48px 40px;">
+    <div class="card-grid"></div>
+    <div class="card-eyebrow" style="color: #34D399;">Acquisition Analytics</div>
+
+    <div style="width: 100%; display: flex; justify-content: center; gap: 40px; margin-bottom: 24px; position: relative; z-index: 1;">
+      <div style="text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">No CAC</div>
+        <div style="font-family: 'DM Serif Display', serif; font-size: 52px; color: rgba(255,255,255,0.15);">&pound;200K</div>
+      </div>
+      <div style="display: flex; align-items: center;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </div>
+      <div style="text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; color: #34D399; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">With CAC</div>
+        <div style="font-family: 'DM Serif Display', serif; font-size: 52px; background: linear-gradient(135deg, #34D399, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">&pound;328K</div>
+      </div>
+    </div>
+
+    <div class="card-headline" style="font-size: 28px;">
+      Same clinic. Same team.<br>
+      <span style="color: #34D399;">+&pound;128K.</span>
+    </div>
+
+    <div class="card-logo">
+      <span>Stryde<span class="os">OS</span></span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

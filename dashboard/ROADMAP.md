@@ -2,40 +2,69 @@
 
 Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analytics), **Pulse** (continuity & comms).
 
-## Current State — v0.10.0 (26 Mar 2026)
+## Current State — v0.11.0 (7 Apr 2026)
 
 
-| Module                          | Status      | Notes                                                        |
-| ------------------------------- | ----------- | ------------------------------------------------------------ |
-| Dashboard (KPIs)                | Live        | 7 core KPIs, context-aware greeting, daily snapshot          |
-| **Intelligence** (Analytics)    | Live        | Insight engine, event detection, email digest, InsightBanner  |
-| **Pulse** (Continuity / Comms)  | Live        | Risk scoring, lifecycle states, sequences, Heidi complexity   |
-| **Ava** (Voice AI Receptionist) | Live        | ElevenLabs + Twilio, knowledge base editor, core prompt      |
-| PMS Layer (WriteUpp)            | Live        | Real Spires data flowing                                     |
-| PMS Layer (Cliniko)             | Built       | Adapter, client, mappers                                     |
-| PMS Layer (Halaxy)              | Built       | Adapter, client, mappers                                     |
-| PMS Layer (Zanda/Power Diary)   | Built       | Adapter, client, mappers                                     |
-| HEP Layer (Physitrack)          | Live        | Real data at Spires                                          |
-| HEP Layer (Rehab My Patient)    | Built       | Adapter, client, mappers                                     |
-| HEP Layer (Wibbi)               | Pending     | Auth model needs rework                                      |
-| Heidi Health                    | Built       | REST client, JWT auth, complexity signals, clinical notes     |
-| Patient Profiles                | Live        | Timeline, risk factors, complexity panel, clinical notes      |
-| Billing (Stripe)                | Live        | Seat limits, tier gates, checkout flow                        |
-| Auth (Firebase)                 | Live        | 4-tier RBAC, MFA, demo mode, enterprise role enforcement      |
-| RBAC                            | **Live**    | **Enterprise RBAC: superadmin > owner > admin > clinician**   |
-| Account Setup Widget            | **Live**    | **5-step onboarding checklist, floating top-right UI**        |
-| Invite Guard                    | **Live**    | **Prevents duplicate clinic creation for invited clinicians** |
-| Status Page                     | Live        | 17 services, live health checks, 30-day uptime bars           |
-| API Docs                        | Live        | 37+ endpoints, dual-view (business + developer)              |
-| GDPR / Compliance               | Live        | Cookie consent, SAR templates, security audit checklist       |
-| Marketing Website               | Live        | Next.js App Router, all module pages, pricing, checkout wiring |
-| i18n (Dashboard)                | Foundation  | next-intl wired, en.json messages, locale-aware layout        |
-| Stryde Super User               | Live        | Multi-clinic monitoring                                      |
+| Module                          | Status      | Notes                                                                     |
+| ------------------------------- | ----------- | ------------------------------------------------------------------------- |
+| Dashboard (KPIs)                | Live        | 7 core KPIs, context-aware greeting, live benchmarks, data freshness bar  |
+| **Intelligence** (Analytics)    | Live        | Insight engine, event detection, email digest, InsightBanner, live benchmarks |
+| **Pulse** (Continuity / Comms)  | Live        | Risk scoring, lifecycle states, sequences, Heidi complexity, honest empty states |
+| **Ava** (Voice AI Receptionist) | Live        | ElevenLabs + Twilio, LangGraph state machine, warm transfers, phone provisioning |
+| PMS Layer (WriteUpp)            | Live        | Real Spires data flowing, patient sync refresh on every run               |
+| PMS Layer (Cliniko)             | Built       | Adapter, client, mappers                                                  |
+| PMS Layer (Halaxy)              | Built       | Adapter, client, mappers                                                  |
+| PMS Layer (Zanda/Power Diary)   | Built       | Adapter, client, mappers                                                  |
+| HEP Layer (Physitrack)          | Live        | Real data at Spires                                                       |
+| HEP Layer (Rehab My Patient)    | Built       | Adapter, client, mappers                                                  |
+| HEP Layer (Wibbi)               | Pending     | Auth model needs rework                                                   |
+| Heidi Health                    | Built       | REST client, JWT auth, complexity signals, clinical notes                 |
+| Patient Profiles                | Live        | Timeline, risk factors, complexity panel, clinical notes                  |
+| Billing (Stripe)                | Live        | Seat limits, tier gates, checkout flow, billing tier parsing              |
+| Auth (Firebase)                 | Live        | 4-tier RBAC, MFA, demo mode, enterprise enforcement, Remember Me toggle  |
+| RBAC                            | **Live**    | **Enterprise RBAC: superadmin > owner > admin > clinician**               |
+| Account Setup Widget            | **Live**    | **5-step onboarding checklist, floating top-right UI**                    |
+| Invite Guard                    | **Live**    | **Prevents duplicate clinic creation for invited clinicians**             |
+| Clinician Engagement            | **Live**    | **Comms API, digest service, engagement toggles, observational notes**    |
+| WhatsNew System                 | **Live**    | **Firestore-backed changelog popup, per-user dismiss tracking**           |
+| Status Page                     | Live        | 17 services, live health checks, 30-day uptime bars                      |
+| API Docs                        | Live        | 40+ endpoints, dual-view (business + developer)                          |
+| GDPR / Compliance               | Live        | Cookie consent, SAR templates, security audit checklist                  |
+| Marketing Website               | Live        | Next.js App Router, all module pages, pricing, checkout wiring            |
+| i18n (Dashboard)                | Foundation  | next-intl wired, en.json messages, locale-aware layout                   |
+| Stryde Super User               | Live        | Multi-clinic monitoring                                                  |
 
 
 ---
 
-## Shipped This Session (26 Mar 2026)
+## Shipped (27 Mar – 7 Apr 2026)
+
+| Feature                                        | What it does                                                                     |
+| ---------------------------------------------- | -------------------------------------------------------------------------------- |
+| **Ava call transfer (warm)**                   | Complaint detection → warm transfer to reception/Moneypenny via Twilio TwiML     |
+| **Ava phone provisioning pipeline**            | One-click UK number purchase, SIP trunk config, agent creation — all automated   |
+| **Ava LangGraph state machine**                | Conversation routing via LangGraph — structured call flow with state transitions |
+| **Ava transfer_call action + callback SMS**    | Fallback path when transfer fails: take details, send SMS to clinic              |
+| **Ava insurance guardrail**                    | Prevents Ava from giving insurance/billing advice — redirects to reception       |
+| **Intelligence live benchmarks**               | KPI benchmarks wired to live clinic data with zero-data handling                 |
+| **Intelligence data freshness bar**            | Visual indicator of how recent the dashboard data is                             |
+| **WhatsNew popup (Firestore-backed)**          | Changelog modal shown to all clinic users, per-user dismiss via Firestore        |
+| **Remember Me toggle**                         | Sign-in persistence control (session vs local) via Firebase Auth                 |
+| **Clinician engagement layer**                 | Comms API, digest service, engagement toggles, observational notes on insights   |
+| **Superadmin account + AuthGuard fix**         | Superadmin provisioning, Spires data patching, AuthGuard pathname hardening      |
+| **ElevenLabs shared signature verification**   | Extracted reusable module for webhook signature validation across Ava routes     |
+| **Notification panel v2**                      | Click-to-navigate on insights, null guard, error boundary, always-accessible bell |
+| **Pulse honest empty states**                  | Module-specific empty states and setup banners instead of generic fallbacks       |
+| **Settings data loss fix + 2FA error handling**| Prevented field overwrites on save, improved MFA enrollment error UX             |
+| **Critical security + data integrity fixes**   | 7-file sweep: auth, sync, webhooks, adapters                                    |
+| **Sync pipeline hardening**                    | Patient name/contact refresh on every PMS run, PMS adapter nil safety            |
+| **Idle timeout removal**                       | Removed 30min idle timeout that was blocking all API calls                        |
+| **Splash screen cleanup**                      | Removed progress bar, reduced auto-dismiss delay                                 |
+
+
+---
+
+## Shipped (26 Mar 2026)
 
 | Feature                                        | What it does                                                                |
 | ---------------------------------------------- | --------------------------------------------------------------------------- |
@@ -52,7 +81,7 @@ Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analyt
 
 ---
 
-## Shipped Previously (22–24 Mar 2026)
+## Shipped (22–24 Mar 2026)
 
 | Feature                                  | What it does                                                              |
 | ---------------------------------------- | ------------------------------------------------------------------------- |
@@ -75,7 +104,7 @@ Three product domains: **Ava** (voice AI receptionist), **Intelligence** (analyt
 | Demo Mode Overhaul                       | 5 rotational scenarios, realistic numbers, no welcome flash               |
 | Password Visibility Toggle              | Show/hide on sign-in and sign-up                                         |
 | Live Status Page                         | 17 services pinged in parallel, latency, auto-refresh                    |
-| API Docs Page                            | 37 endpoints, searchable, responsive, sidebar link                       |
+| API Docs Page                            | 42 endpoints, searchable, responsive, sidebar link                       |
 | Dark Mode Contrast Pass                  | WCAG AA fixes across tooltips, badges, overlays, charts                  |
 | Error Boundary                           | Global error.tsx recovery UI                                             |
 | CI/CD Fixes                              | TS errors, ESLint downgrade, Firebase Admin env handling in CI            |
@@ -104,7 +133,7 @@ A living intelligence layer that proactively surfaces what matters — the dashb
 
 ---
 
-## Next: v0.9.0 — "Second Clinic Onboarding"
+## Next: v0.12.0 — "Second Clinic Onboarding"
 
 Priority: Prove StrydeOS works at a clinic that isn't Spires.
 

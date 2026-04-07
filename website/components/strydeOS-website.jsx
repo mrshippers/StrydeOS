@@ -3111,6 +3111,14 @@ const FAQ = ({ darkMode }) => {
 const Changelog = ({ darkMode }) => {
   const moduleColors = { Platform: C.navy, Ava: C.blue, Intelligence: "#8B5CF6", Pulse: C.teal };
   const entries = [
+    { version: "v1.4.0", date: "7 Apr", module: "Ava", title: "Warm call transfers", desc: "Ava detects complaints and transfers live calls to your reception desk. No dropped calls, no callback promises. Smooth handoff via Twilio." },
+    { version: "v1.3.2", date: "4 Apr", module: "Ava", title: "One-click phone provisioning", desc: "Dedicated UK number, SIP trunk, and ElevenLabs agent — all set up in one click. No Twilio console required." },
+    { version: "v1.3.1", date: "3 Apr", module: "Intelligence", title: "Live benchmarks + data freshness", desc: "KPIs now show how you compare against real clinic benchmarks. Plus a freshness bar so you always know when data last synced." },
+    { version: "v1.3.0", date: "1 Apr", module: "Ava", title: "LangGraph conversation engine", desc: "Ava's call routing is now a proper state machine. Structured flows, better context handling, fewer edge-case surprises." },
+    { version: "v1.2.4", date: "31 Mar", module: "Platform", title: "Clinician engagement layer", desc: "Comms API, digest opt-outs, and observational notes on insights. Clinicians see what matters to them — owners see the full picture." },
+    { version: "v1.2.3", date: "30 Mar", module: "Platform", title: "WhatsNew changelog popup", desc: "In-app changelog modal backed by Firestore. Every user in the clinic sees what shipped, once. No notification fatigue." },
+    { version: "v1.2.2", date: "29 Mar", module: "Platform", title: "Remember Me + security hardening", desc: "Session persistence toggle on sign-in. Plus a 7-file security sweep across auth, sync, and webhooks." },
+    { version: "v1.2.1", date: "27 Mar", module: "Platform", title: "Superadmin tooling + sync fixes", desc: "Superadmin provisioning, patient data refresh on every PMS run, and the 30-minute idle timeout that was blocking API calls — gone." },
     { version: "v1.2.0", date: "18 Mar", module: "Platform", title: "Terms of Service updated", desc: "Tightened data handling clauses, added multi-region compliance language, and made the legal team slightly less nervous." },
     { version: "v1.1.4", date: "14 Mar", module: "Ava", title: "Three-way call transfers", desc: "If Ava can't help, she knows who can. Warm transfers to your nominated clinician or front desk." },
     { version: "v1.1.3", date: "10 Mar", module: "Intelligence", title: "Weekly digest redesigned", desc: "Less noise, more signal. Your Monday morning just got 30 seconds shorter." },
@@ -3148,7 +3156,7 @@ const Changelog = ({ darkMode }) => {
             What we've shipped
           </h2>
           <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginTop: 12 }}>
-            Jan–Mar 2026
+            Jan–Apr 2026
           </p>
         </div>
         </AnimIn>

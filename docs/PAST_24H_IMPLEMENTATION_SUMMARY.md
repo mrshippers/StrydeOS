@@ -1,126 +1,92 @@
 # Implementation Summary
 
-**Date:** 24 March 2026
-**Status:** All prior work committed. Current session: docs update + push.
+**Date:** 7 April 2026
+**Status:** All work committed. Covers 27 Mar – 7 Apr 2026 session.
 
 ---
 
-## What’s New (Implemented)
+## What’s New (27 Mar – 7 Apr 2026)
+
+### Ava Voice AI — Major Upgrades
+- **Warm call transfers** — Ava detects complaints/escalation requests and transfers the live call to reception via Twilio TwiML. Caller hears “One moment — I’m connecting you now.” If reception doesn’t answer, graceful fallback message.
+- **Phone provisioning pipeline** — One-click UK number purchase + SIP trunk configuration + ElevenLabs agent creation. Transaction-safe to prevent double-purchase. Rate-limited (2/min).
+- **LangGraph state machine** — Conversation routing now uses LangGraph for structured call flows with state transitions. Lazy-imported in webhook to prevent module-level crashes.
+- **Transfer_call action + callback SMS** — When warm transfer fails, Ava takes caller details and sends a callback SMS to the clinic.
+- **Insurance guardrail** — Ava cannot give insurance/billing advice; redirects to reception.
+- **ElevenLabs shared signature verification** — Extracted reusable `verify-signature.ts` module used across all Ava webhook routes.
+
+**New routes:**
+- `POST /api/ava/transfer` — ElevenLabs webhook for transfer_to_reception tool
+- `POST /api/ava/transfer-twiml` — TwiML endpoint for warm transfer (Dial + comfort message)
+- `POST /api/ava/transfer-twiml/status` — Dial status callback (handles no-answer)
+- `POST /api/ava/provision-number` — Buy UK number + configure SIP + create agent
+
+**Modified:** `/api/ava/agent` (added transfer tool), `/api/ava/knowledge` (updates), `ava-core-prompt.ts`, `graph.ts` (LangGraph).
+
+---
+
+### Intelligence & Dashboard
+- **Live benchmarks** — KPI benchmarks wired to live clinic data with zero-data handling.
+- **Data freshness bar** — Visual indicator showing when data last synced.
+- **KPIs show latest week** — Fixed Intelligence to display most recent week, not stale data.
+- **Revenue fallback** — Handles NaN timestamps, CSP dev mode, Google Reviews setup prompt.
+
+---
+
+### Platform & Auth
+- **WhatsNew popup (Firestore-backed)** — In-app changelog modal, per-user dismiss tracking, shown to all clinic users. Version: v2026-04-03.
+- **Remember Me toggle** — Session persistence control (session vs local) via Firebase Auth.
+- **Superadmin account** — Provisioning flow, Spires data patching, AuthGuard pathname hardening.
+- **Clinician engagement layer** — Comms API, digest service, engagement toggles (FeatureFlags), observational notes on CLINICIAN_FOLLOWUP_DROP and HIGH_DNA_STREAK insights.
+
+---
+
+### Stability & Security
+- **Critical security sweep** — 7-file fix across auth, sync, webhooks, adapters.
+- **Sync pipeline hardening** — Patient name/contact refresh on every PMS run, PMS adapter nil safety.
+- **Idle timeout removal** — Removed 30min idle timeout that was blocking all API calls.
+- **Notification panel v2** — Click-to-navigate on insights, null guard, error boundary, always-accessible bell.
+- **Settings data loss fix** — Prevented field overwrites on save, improved MFA enrollment error UX.
+- **CSP nonce fix** — Removed nonce that blocked all inline scripts (blank page fix).
+- **Pulse honest empty states** — Module-specific empty states and setup banners.
+- **Splash screen cleanup** — Removed progress bar, reduced auto-dismiss delay.
+
+---
+
+## Cumulative State (All Sessions)
 
 ### Auth & Security
-- **Login page** (`/login`) — Sign-in, sign-up, password reset, **MFA challenge flow** (TOTP + phone), “Try demo”, last-email memory, role-based redirect (superadmin → `/admin`, others → `/dashboard`).
-- **MFA setup page** (`/mfa-setup`) — Dedicated enrollment for TOTP/phone; HIPAA compliance copy when `mfaRequired`; skip only when not required.
-- **AuthGuard** — Tighter handling when Firebase isn’t configured; avoids flash of protected content.
-- **useAuth** — Small fixes for demo/Firebase state.
+- Login page with sign-in, sign-up, reset, MFA challenge, Remember Me, demo mode
+- 4-tier RBAC enforced across all pages, sidebar, API routes
+- Session cookie: HMAC-signed, HttpOnly, 1hr TTL
+- Pre-commit hook for secret detection
 
-**Where:** `dashboard/src/app/login/page.tsx`, `dashboard/src/app/mfa-setup/page.tsx`, `dashboard/src/components/AuthGuard.tsx`, `dashboard/src/hooks/useAuth.tsx`.
+### Ava Voice AI
+- ElevenLabs Conversational AI + Twilio SIP
+- LangGraph conversation state machine
+- Warm call transfers (complaint → reception)
+- Phone provisioning pipeline (one-click)
+- Knowledge base CRUD editor
+- Transfer fallback with callback SMS
+- Insurance guardrail
 
----
+### Intelligence
+- Insight engine with event detection, ranking, email notifications
+- Live benchmarks, data freshness bar
+- Context-aware dashboard greeting (KPI-driven subtext)
 
-### Admin & Ops
-- **Integration Health** — New admin page and API:
-  - **Page:** `/admin/integration-health` — Per-clinic, per-provider health (PMS + Physitrack, etc.), success rate, last sync, status badges (healthy/degraded/down), expandable stage-level stats. Superadmin only.
-  - **API:** `GET /api/admin/integration-health?days=30&clinicId=...` — Reads `integration_health` collection (server-side); role-gated.
-- **WriteUpp probe** — `POST /api/debug/writeupp-probe` — Admin diagnostic: live WriteUpp API call, returns key shape of first 3 appointments (no PHI). Used to validate mappers.
+### Pulse
+- Risk scoring, lifecycle states, comms sequences
+- Heidi clinical complexity layer
+- Honest empty states with setup banners
+- Clinician engagement layer
 
-**Where:**  
-`dashboard/src/app/admin/integration-health/page.tsx`,  
-`dashboard/src/app/api/admin/integration-health/route.ts`,  
-`dashboard/src/app/api/debug/writeupp-probe/route.ts`.
-
----
-
-### Settings & Sidebar (Global UI)
-- **Settings** (`/settings`) — Expanded: profile, **billing/portal**, **MFA management**, pipeline “Sync now”, PMS connection status. Central place for account and clinic config.
-- **Sidebar** — **Billing** link, **Integration health** link (superadmin), **MFA/security** cues, theme toggle (Moon/Sun), Help, alerts badge, Pulse churn badge. Nav reflects new routes and roles.
-
-**Where:** `dashboard/src/app/settings/page.tsx`, `dashboard/src/components/ui/Sidebar.tsx`.
-
----
-
-### Backend & Integrations
-- **PMS disconnect** — `POST /api/pms/disconnect` — Clears PMS config for a clinic (owner/admin/superadmin).
-- **PMS save-config** — `POST /api/pms/save-config` — Validates and stores PMS credentials; improved error handling.
-- **Physitrack (HEP)** — Client and adapter extended: better error handling, **typed responses** (`dashboard/src/lib/integrations/hep/types.ts`), program/compliance mapping fixes. Sync pipeline uses updated adapter.
-- **WriteUpp adapter** — Small fixes for field mapping/robustness.
-- **Pipeline sync-hep** — Physitrack sync stage updated to use new adapter and types; more resilient to API quirks.
-
-**Where:**  
-`dashboard/src/app/api/pms/disconnect/route.ts`,  
-`dashboard/src/app/api/pms/save-config/route.ts`,  
-`dashboard/src/lib/integrations/hep/physitrack/adapter.ts`,  
-`dashboard/src/lib/integrations/hep/physitrack/client.ts`,  
-`dashboard/src/lib/integrations/hep/types.ts`,  
-`dashboard/src/lib/integrations/pms/writeupp/adapter.ts`,  
-`dashboard/src/lib/pipeline/sync-hep.ts`.
-
----
-
-### Data & Compliance
-- **SAR email templates** — Centralised Subject Access Request templates (acknowledgement, completion for access/erasure, refusal) for privacy workflow.
-
-**Where:** `dashboard/src/data/sar-email-templates.ts`.
-
----
-
-### Firestore & Docs
-- **Firestore rules** — `integration_health` and `sar_requests` (and existing subcollections) covered; `integration_health` read/write server-only; SAR create allowed for owners/admins.
-- **Dependency risk analysis** — `docs/DEPENDENCY_RISK_ANALYSIS.md` updated with integration partners, uptime notes, and mitigation.
-
-**Where:** `dashboard/firestore.rules`, `docs/DEPENDENCY_RISK_ANALYSIS.md`.
-
----
-
-### Dependencies
-- **package.json / package-lock.json** — New or version bumps for dashboard (e.g. motion, deps for admin/health UI). No breaking changes.
-
-**Where:** `dashboard/package.json`, `dashboard/package-lock.json`.
-
----
-
-## Global Visual / UI Summary
-
-| Area | Change |
-|------|--------|
-| **Login** | Single page for sign-in, sign-up, reset, MFA challenge; demo CTA; gradient background. |
-| **Sidebar** | Billing, Integration health (admin), theme toggle, Help, alerts/Pulse badges. |
-| **Settings** | One place for profile, billing, MFA, sync, PMS. |
-| **Admin** | New Integration Health page with provider status and history. |
-
-No global design system or brand token changes; existing Navy/Blue/Teal/Purple and Outfit/DM Serif remain.
-
----
-
-## What’s Left (Pre–Live Checklist)
-
-- [x] **Env vars** — Vercel has `CRON_SECRET`, Firebase, Sentry, `CSV_INBOUND_SECRET` (see RUNBOOK.md).
-- [x] **Stripe** — Billing/portal and webhooks configured.
-- [x] **Firebase** — Rules deployed.
-- [x] **Cron** — 4-hour pipeline cron confirmed.
-- [ ] **Smoke test** — Full login → dashboard → settings → billing → admin integration health; trigger “Sync now” once.
-
----
-
-## Recent Sessions (22–24 Mar 2026)
-
-### Website Overhaul
-- Vite → Next.js App Router migration (SSR, SEO, file-system routing)
-- Hero carousel, modular pricing banner, Pulse interactive showcase
-- FAQ overhaul with categorised accordion and search
-- Checkout wiring (pricing cards + Full Stack CTA → portal checkout)
-- Scroll animations and typography standardisation
-- Cookie consent fix (decline button)
-
-### Dashboard i18n Foundation
-- next-intl wired with NextIntlClientProvider
-- en.json messages, type-safe declarations, locale-aware layout
-
-### Prior Session (13 Mar 2026)
-- Auth: Login page, MFA challenge flow, AuthGuard tightening
-- Admin: Integration Health page + API, WriteUpp probe
-- Settings: Billing, MFA management, pipeline sync
-- Backend: PMS disconnect, Physitrack adapter improvements
-- Compliance: SAR email templates, Firestore rules for integration_health
+### Platform
+- WhatsNew system (Firestore-backed)
+- Account setup widget (5-step checklist)
+- Stripe billing (checkout, webhooks, portal, multi-subscription merge)
+- Status page (17 services), API docs (42 endpoints)
+- Marketing website (Next.js App Router, all module pages)
 
 ---
 
@@ -129,15 +95,20 @@ No global design system or brand token changes; existing Navy/Blue/Teal/Purple a
 | Feature | Route / API | Role |
 |--------|-------------|------|
 | Login (sign-in, sign-up, reset, MFA) | `/login` | All |
-| MFA enrollment | `/mfa-setup` | Logged-in users (required if `mfaRequired`) |
+| MFA enrollment | `/mfa-setup` | Logged-in users |
 | Settings (profile, billing, MFA, sync, PMS) | `/settings` | Owner / admin |
+| Receptionist dashboard | `/receptionist` | Owner / admin |
 | Integration health | `/admin/integration-health` | Superadmin |
-| Integration health API | `GET /api/admin/integration-health` | Superadmin (or scoped by clinic) |
-| WriteUpp probe | `POST /api/debug/writeupp-probe` | Owner / admin / superadmin |
+| Ava agent create/update | `POST /api/ava/agent` | Authenticated |
+| Ava phone provisioning | `POST /api/ava/provision-number` | Owner / admin / superadmin |
+| Ava call transfer webhook | `POST /api/ava/transfer` | ElevenLabs webhook |
+| Ava transfer TwiML | `POST /api/ava/transfer-twiml` | Twilio |
+| Ava transfer status | `POST /api/ava/transfer-twiml/status` | Twilio |
+| Ava knowledge base | `GET/PUT /api/ava/knowledge` | Owner / admin |
+| Integration health API | `GET /api/admin/integration-health` | Superadmin |
 | PMS disconnect | `POST /api/pms/disconnect` | Owner / admin / superadmin |
 | PMS save config | `POST /api/pms/save-config` | Owner / admin / superadmin |
-| SAR email copy | `dashboard/src/data/sar-email-templates.ts` | N/A (server/ops) |
 
 ---
 
-*Updated 24 March 2026.*
+*Updated 7 April 2026.*

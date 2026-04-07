@@ -497,7 +497,7 @@
 <header class="header">
   <div class="header-inner">
     <h1>Stryde<span>OS</span> API Reference</h1>
-    <p>37 endpoints &middot; Last updated March 2026</p>
+    <p>42 endpoints &middot; Last updated April 2026</p>
 
     <div class="view-toggle">
       <button class="view-btn active" onclick="setView('business')">API Architecture</button>
@@ -1347,7 +1347,7 @@ type, status, notes, price, duration</span></pre>
   </div>
 
   <!-- ── Ava Voice ── -->
-  <div class="section" data-search="ava voice elevenlabs twilio booking call agent">
+  <div class="section" data-search="ava voice elevenlabs twilio booking call agent transfer provision">
     <div class="section-title">
       <div class="section-icon" style="background:#EFF6FF;color:var(--blue);">📞</div>
       Ava — Voice &amp; Bookings
@@ -1371,7 +1371,116 @@ type, status, notes, price, duration</span></pre>
           <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">agent_id</span>, <span class="key">message</span> }</pre></div>
           <div class="detail-block full-width">
             <h4>Agent Tools</h4>
-            <ul><li><code>book_appointment</code> — create booking via PMS</li><li><code>check_availability</code> — query open slots</li><li><code>update_booking</code> — modify existing appointment</li></ul>
+            <ul><li><code>book_appointment</code> — create booking via PMS</li><li><code>check_availability</code> — query open slots</li><li><code>update_booking</code> — modify existing appointment</li><li><code>transfer_to_reception</code> — warm transfer to clinic reception desk</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="ava provision number twilio sip trunk phone buy uk">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/ava/provision-number</span>
+          </div>
+          <div class="card-desc">Provisions a dedicated UK phone number for the clinic's Ava instance. Buys number, configures SIP trunk, creates ElevenLabs agent if needed.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request Body</h4>
+            <pre><span class="key">locality</span>:  <span class="type">string</span> <span class="comment">← optional, e.g. "London" for local number</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Response (200)</h4>
+            <pre>{ <span class="key">phone</span>, <span class="key">agent_id</span>, <span class="key">trunk_sid</span>, <span class="key">message</span> }</pre>
+            <h4 style="margin-top:12px;">Conflict (409)</h4>
+            <pre>{ <span class="key">error</span>: "Already provisioned", <span class="key">phone</span> }</pre>
+          </div>
+          <div class="detail-block full-width">
+            <h4>Notes</h4>
+            <ul><li>Rate-limited: 2 requests / minute (costs money)</li><li>Uses Firestore transaction to prevent double-purchase</li><li>Stores number, agent ID, and trunk SID atomically</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="ava transfer call complaint reception warm handoff">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/ava/transfer</span>
+          </div>
+          <div class="card-desc">Webhook for ElevenLabs <code>transfer_to_reception</code> tool. Warm-transfers the live call to the clinic's reception number via Twilio.</div>
+          <div class="card-tags"><span class="tag tag-webhook">HMAC-SHA256</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Trigger</h4>
+            <pre><span class="comment">Called by ElevenLabs when Ava's
+transfer_to_reception tool fires
+(complaint, escalation, human help needed)</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Response (200)</h4>
+            <pre>{ <span class="key">result</span>: "Call is being transferred..." }
+<span class="comment">// or graceful fallback message if transfer fails</span></pre>
+          </div>
+          <div class="detail-block full-width">
+            <h4>Flow</h4>
+            <ul><li>Verifies ElevenLabs webhook signature</li><li>Resolves clinic from agent_id</li><li>Redirects live Twilio call to reception number via TwiML</li><li>If transfer fails: returns fallback message so Ava takes caller details instead</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="ava transfer twiml dial reception comfort message">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/ava/transfer-twiml</span>
+          </div>
+          <div class="card-desc">TwiML endpoint for warm transfer. Plays comfort message, dials reception with 30s timeout, handles no-answer fallback.</div>
+          <div class="card-tags"><span class="tag tag-webhook">Twilio Signature</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block full-width">
+            <h4>TwiML Flow</h4>
+            <ul><li><strong>Say:</strong> "One moment — I'm connecting you now."</li><li><strong>Dial:</strong> Reception number (from Firestore, never from query params — toll fraud prevention)</li><li><strong>Timeout:</strong> 30 seconds → status callback</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="ava transfer status callback dial result no answer">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/ava/transfer-twiml/status</span>
+          </div>
+          <div class="card-desc">Dial status callback — handles no-answer/busy/failed after transfer attempt. Apologises and promises callback.</div>
+          <div class="card-tags"><span class="tag tag-webhook">Twilio Signature</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block full-width">
+            <h4>Dial Outcomes</h4>
+            <ul><li><strong>completed / answered:</strong> Empty TwiML (call connected successfully)</li><li><strong>busy / no-answer / failed:</strong> "The team aren't available — someone will call you back."</li></ul>
           </div>
         </div>
       </div>
