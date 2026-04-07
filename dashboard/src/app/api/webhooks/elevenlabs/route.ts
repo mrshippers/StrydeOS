@@ -3,10 +3,9 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { withRequestLog } from "@/lib/request-logger";
 import type { AvaAction } from "@/lib/ava/graph";
 import { sendCallbackNotification } from "@/lib/ava/notify-callback";
+import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
 
 export const runtime = "nodejs";
-
-const ELEVENLABS_WEBHOOK_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
 
 interface ElevenLabsWebhookPayload {
   event: string;
@@ -23,42 +22,6 @@ interface ElevenLabsWebhookPayload {
   custom_metadata?: Record<string, unknown>;
 }
 
-/**
- * Verify ElevenLabs webhook signature (HMAC-SHA256).
- * ElevenLabs sends the signature in the `elevenlabs-signature` header.
- */
-async function verifyElevenLabsSignature(
-  body: string,
-  signatureHeader: string | null
-): Promise<boolean> {
-  if (!ELEVENLABS_WEBHOOK_SECRET || !signatureHeader) return false;
-
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(ELEVENLABS_WEBHOOK_SECRET),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
-  const expected = Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  // ElevenLabs may send "v0=<hex>" or just "<hex>"
-  const provided = signatureHeader.replace(/^v\d+=/, "");
-  if (expected.length !== provided.length) return false;
-  const a = new TextEncoder().encode(expected);
-  const b = new TextEncoder().encode(provided);
-  // Constant-time comparison to prevent timing attacks
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a[i] ^ b[i];
-  }
-  return result === 0;
-}
-
 async function handler(req: NextRequest) {
   const db = getAdminDb();
 
@@ -66,7 +29,7 @@ async function handler(req: NextRequest) {
     const rawBody = await req.text();
 
     // Verify webhook signature — fail closed if secret not configured
-    if (!ELEVENLABS_WEBHOOK_SECRET) {
+    if (!isWebhookSecretConfigured()) {
       console.error("[ElevenLabs webhook] ELEVENLABS_WEBHOOK_SECRET is not configured");
       return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });
     }
