@@ -168,7 +168,7 @@ export default function NotificationPanel({
                                 {alert.clinicianName}
                               </p>
                               <p className={`text-[12px] mt-0.5 ${isUnread ? "text-white/50" : "text-white/30"}`}>
-                                {alert.metric} — {alert.current < 1 ? `${Math.round(alert.current * 100)}%` : alert.current.toFixed(1)} vs target {alert.target < 1 ? `${Math.round(alert.target * 100)}%` : alert.target.toFixed(1)}
+                                {alert.metric} — {alert.current != null ? (alert.current < 1 ? `${Math.round(alert.current * 100)}%` : alert.current.toFixed(1)) : "—"} vs target {alert.target != null ? (alert.target < 1 ? `${Math.round(alert.target * 100)}%` : alert.target.toFixed(1)) : "—"}
                               </p>
                             </div>
                           </Link>

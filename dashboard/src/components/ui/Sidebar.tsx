@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, Component, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
@@ -35,6 +35,16 @@ const HelpPanel = dynamic(
   }
 );
 import NotificationPanel from "@/components/ui/NotificationPanel";
+
+class NotificationErrorBoundary extends Component<{ children: ReactNode; onClose: () => void }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode; onClose: () => void }) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error: Error) { console.error("[NotificationPanel crash]", error); }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
 import { useTheme } from "@/components/ThemeProvider";
 import BrightnessStackToggle from "@/components/ui/BrightnessStackToggle";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
@@ -667,15 +677,17 @@ export default function Sidebar() {
       </motion.aside>
 
       <HelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />
-      <NotificationPanel
-        open={notifOpen}
-        onClose={() => setNotifOpen(false)}
-        allAlerts={allAlerts}
-        readHashes={readHashes}
-        markAllRead={markAllRead}
-        insightEvents={insightEvents}
-        markInsightRead={markInsightRead}
-      />
+      <NotificationErrorBoundary onClose={() => setNotifOpen(false)}>
+        <NotificationPanel
+          open={notifOpen}
+          onClose={() => setNotifOpen(false)}
+          allAlerts={allAlerts}
+          readHashes={readHashes}
+          markAllRead={markAllRead}
+          insightEvents={insightEvents}
+          markInsightRead={markInsightRead}
+        />
+      </NotificationErrorBoundary>
     </>
   );
 }
