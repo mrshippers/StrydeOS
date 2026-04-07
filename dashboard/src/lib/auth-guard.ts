@@ -67,15 +67,10 @@ export async function verifyApiRequest(
     throw new ApiAuthError("User profile incomplete — missing clinicId or role", 403);
   }
 
-  // Throttled idle-timeout check (30 min idle, updates at most every 5 min)
+  // Track last activity (throttled to every 5 min to reduce Firestore writes)
   const lastActive = data.lastActiveAt ? new Date(data.lastActiveAt).getTime() : 0;
   const now = Date.now();
-  const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
   const ACTIVITY_UPDATE_INTERVAL_MS = 5 * 60 * 1000;
-
-  if (lastActive > 0 && (now - lastActive) > IDLE_TIMEOUT_MS) {
-    throw new ApiAuthError("Session expired due to inactivity", 401);
-  }
 
   if ((now - lastActive) > ACTIVITY_UPDATE_INTERVAL_MS) {
     // Fire-and-forget — don't block the request
