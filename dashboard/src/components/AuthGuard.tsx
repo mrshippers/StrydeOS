@@ -30,7 +30,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     // User authenticated but missing clinic assignment — broken profile
-    if (user && !user.clinicId && !isPublicPath) {
+    // Superadmin users don't need a clinicId (they access all clinics via /admin)
+    if (user && !user.clinicId && user.role !== "superadmin" && !isPublicPath) {
       console.error("[AuthGuard] User has no clinicId — broken profile, redirecting to login", user.uid);
       router.replace("/login");
       return;
