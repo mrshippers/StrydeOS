@@ -130,6 +130,7 @@ export type AvaAction =
   | "relay_message"    // Forward message to clinician
   | "escalate_999"     // Emergency — direct to 999
   | "callback_request" // Arrange clinician/back-office callback
+  | "transfer_call"    // Warm-transfer to reception/Moneypenny
   | "end_call"         // Politely end the call
   | "waitlist_add";    // Add to priority waitlist
 
@@ -248,6 +249,20 @@ function guardrailGate(
   ];
 
   if (insurancePatterns.some((p) => p.test(lower))) {
+    flags.insuranceQuery = true;
+  }
+
+  // Billing keywords — also routed to back-office callback (same as insurance)
+  const billingPatterns = [
+    /invoic(e|es|ing)/,
+    /billing\s*(query|question|issue|dispute|problem)/,
+    /discuss\s*(my\s*)?invoic/,
+    /payment\s*(query|question|issue|dispute|problem|outstanding)/,
+    /outstanding\s*(balance|payment|amount)/,
+    /receipt|refund/,
+  ];
+
+  if (billingPatterns.some((p) => p.test(lower))) {
     flags.insuranceQuery = true;
   }
 
@@ -404,9 +419,9 @@ function complaintNode(
   return {
     currentNode: "complaint",
     response: {
-      action: "callback_request",
-      message: "I'm sorry to hear that. I'll make sure the right person gets back to you today. Can I take your name and number?",
-      metadata: { callbackType: "manager", reason: "complaint" },
+      action: "transfer_call",
+      message: "I'm sorry to hear that — let me put you through to someone who can help right away. One moment.",
+      metadata: { callbackType: "manager", reason: "complaint", transferTo: "reception" },
     },
   };
 }
