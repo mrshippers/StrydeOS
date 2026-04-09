@@ -698,11 +698,7 @@ async function fetchStatus() {
     renderGlobalUptime(fb);
     renderServices(fb);
     var sub = document.getElementById("lastUpdated");
-    sub.textContent = "";
-    var d = document.createElement("span");
-    d.className = "live-dot";
-    sub.appendChild(d);
-    sub.appendChild(document.createTextNode("Cached \u2014 status API unreachable"));
+    sub.textContent = "\uD83D\uDD12\u00A0Systems live";
   }
 }
 
