@@ -28,6 +28,7 @@ async function handler(request: NextRequest) {
     if (
       !N8N_SECRET ||
       !secret ||
+      secret.length !== N8N_SECRET.length ||
       !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(N8N_SECRET))
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

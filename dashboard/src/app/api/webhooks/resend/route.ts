@@ -19,11 +19,14 @@
  *   (all others)    → ignore, return 200
  */
 
+import * as crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { withRequestLog } from "@/lib/request-logger";
 
 export const runtime = "nodejs";
+
+const RESEND_WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET;
 
 interface ResendEventData {
   email_id: string;
@@ -37,6 +40,23 @@ interface ResendEvent {
 }
 
 async function handler(request: NextRequest) {
+  // Shared-secret verification — warn-only if env var not set to avoid breaking existing deployments
+  const incomingSecret =
+    request.headers.get("x-resend-signature") ??
+    request.headers.get("authorization")?.replace("Bearer ", "");
+
+  if (RESEND_WEBHOOK_SECRET) {
+    if (
+      !incomingSecret ||
+      incomingSecret.length !== RESEND_WEBHOOK_SECRET.length ||
+      !crypto.timingSafeEqual(Buffer.from(incomingSecret), Buffer.from(RESEND_WEBHOOK_SECRET))
+    ) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+  } else {
+    console.warn("[resend-webhook] RESEND_WEBHOOK_SECRET not set — skipping signature check");
+  }
+
   const { searchParams } = new URL(request.url);
   const clinicId = searchParams.get("clinicId");
 
