@@ -147,8 +147,9 @@ async function handler(req: NextRequest) {
             break;
           }
         }
-      } catch {
+      } catch (err) {
         // LangGraph unavailable — fall back to keyword matching
+        console.error("[ElevenLabs webhook] LangGraph processing failed:", err instanceof Error ? err.message : String(err));
         const summary = payload.summary.toLowerCase();
         if (summary.includes("book") || summary.includes("appointment")) outcome = "booked";
         else if (summary.includes("cancel")) outcome = "follow_up_required";
@@ -165,7 +166,7 @@ async function handler(req: NextRequest) {
 
       // Fire-and-forget SMS notification for escalated / callback calls
       if (outcome === "follow_up_required" || outcome === "escalated") {
-        void sendCallbackNotification({
+        sendCallbackNotification({
           clinicId,
           callerPhone: payload.caller_phone ?? null,
           callbackType: (graphMetadata.callbackType as string) ?? "general",
@@ -174,7 +175,7 @@ async function handler(req: NextRequest) {
             payload.reason_for_call ??
             null,
           conversationId,
-        });
+        }).catch((err) => { console.error("[sendCallbackNotification] Failed:", err instanceof Error ? err.message : String(err)); });
       }
     }
 

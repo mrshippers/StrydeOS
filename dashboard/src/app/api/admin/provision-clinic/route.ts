@@ -57,7 +57,7 @@ async function handler(request: NextRequest) {
     const token = authHeader.slice(7);
     try {
       const adminAuth = getAdminAuth();
-      const decoded = await adminAuth.verifyIdToken(token);
+      const decoded = await adminAuth.verifyIdToken(token, true);
       const userDoc = await getAdminDb().collection("users").doc(decoded.uid).get();
       if (!userDoc.exists || userDoc.data()?.role !== "superadmin") {
         return NextResponse.json({ error: "Superadmin role required" }, { status: 403 });

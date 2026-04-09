@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, handleApiError } from "@/lib/auth-guard";
+import type { UserRole } from "@/types";
 import { withRequestLog } from "@/lib/request-logger";
 
 const ADMIN_ROLES = new Set(["owner", "admin", "superadmin"]);
@@ -29,7 +30,14 @@ async function handler(
     const user = await verifyApiRequest(request);
     const { id: clinicianId } = await params;
 
-    const isAdmin = ADMIN_ROLES.has(user.role);
+    let effectiveRole: UserRole = user.role;
+    if (ADMIN_ROLES.has(user.role)) {
+      // Re-verify role via fresh Firestore lookup — don't trust cached token for privileged ops
+      const freshUserDoc = await getAdminDb().collection("users").doc(user.uid).get();
+      effectiveRole = (freshUserDoc.data()?.role as UserRole) ?? user.role;
+    }
+
+    const isAdmin = ADMIN_ROLES.has(effectiveRole);
     const isSelf = user.clinicianId === clinicianId;
 
     // Clinicians can only update their own record

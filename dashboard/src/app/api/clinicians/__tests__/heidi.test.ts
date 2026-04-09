@@ -33,7 +33,7 @@ vi.mock("@/lib/request-logger", () => ({
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function makeDb(clinicianData?: Record<string, unknown>) {
+function makeDb(clinicianData?: Record<string, unknown>, ownerRole = "owner") {
   const updateImpl = vi.fn().mockResolvedValue(undefined);
   const getImpl = vi.fn().mockResolvedValue({
     exists: !!clinicianData,
@@ -42,17 +42,19 @@ function makeDb(clinicianData?: Record<string, unknown>) {
 
   // Leaf doc (the actual clinician doc): has get + update
   const clinicianDocRef = { get: getImpl, update: updateImpl };
-
-  // clinicians collection: doc() returns the leaf
   const cliniciansColRef = { doc: vi.fn().mockReturnValue(clinicianDocRef) };
-
-  // clinic doc (intermediate): only needs .collection() for "clinicians"
   const clinicDocRef = { collection: vi.fn().mockReturnValue(cliniciansColRef) };
-
-  // top-level clinics collection
   const clinicsColRef = { doc: vi.fn().mockReturnValue(clinicDocRef) };
 
-  const db = { collection: vi.fn().mockReturnValue(clinicsColRef) };
+  // users collection — for the admin role re-verification in the route
+  const userDocRef = { get: vi.fn().mockResolvedValue({ data: () => ({ role: ownerRole }) }) };
+  const usersColRef = { doc: vi.fn().mockReturnValue(userDocRef) };
+
+  const db = {
+    collection: vi.fn().mockImplementation((name: string) =>
+      name === "users" ? usersColRef : clinicsColRef,
+    ),
+  };
   return { db, getImpl, updateImpl };
 }
 
