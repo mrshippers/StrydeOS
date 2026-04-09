@@ -81,15 +81,18 @@ async function handler(request: NextRequest) {
     const now = new Date().toISOString();
     let success = false;
     let errorDetail: string | null = null;
+    let twilioSid: string | undefined;
+    let resendId: string | undefined;
 
     try {
       if (channel === "sms") {
         const twilio = getTwilio();
-        await twilio.messages.create({
+        const msg = await twilio.messages.create({
           body: resolvedBody,
           from: getTwilioPhone(),
           to,
         });
+        twilioSid = msg.sid;
         success = true;
       } else if (channel === "email") {
         if (!subject) {
@@ -97,13 +100,14 @@ async function handler(request: NextRequest) {
         }
         const fromEmail = process.env.RESEND_FROM_EMAIL ?? "noreply@strydeos.com";
         const resend = getResend();
-        const { error } = await resend.emails.send({
+        const { data, error } = await resend.emails.send({
           from: fromEmail,
           to,
           subject: resolveTemplate(subject, templateVars),
           text: resolvedBody,
         });
         if (error) throw new Error(error.message);
+        resendId = data?.id;
         success = true;
       } else {
         return NextResponse.json({ error: `Unsupported channel: ${channel}` }, { status: 400 });
@@ -133,6 +137,8 @@ async function handler(request: NextRequest) {
         channel,
         sentAt: now,
         outcome: success ? "no_action" : "send_failed", // no_action = awaiting callback; send_failed = delivery error
+        ...(twilioSid ? { twilioSid } : {}),
+        ...(resendId ? { resendId } : {}),
       };
       await db.collection("clinics").doc(clinicId).collection("comms_log").add(entry);
     } catch (logErr) {

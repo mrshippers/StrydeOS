@@ -464,6 +464,9 @@ export interface CommsLogEntry {
   // Attribution
   attributedRevenuePence?: number;               // populated when outcome = 'booked'
   attributedAppointmentId?: string;
+  // Delivery tracking IDs (populated at send time for webhook correlation)
+  twilioSid?: string;   // Twilio MessageSid — matched by /api/webhooks/twilio
+  resendId?: string;    // Resend email_id — matched by /api/webhooks/resend
   // Inbound reply
   inboundReply?: string | null;
   inboundAt?: string | null;

@@ -30,38 +30,23 @@ import {
   Smartphone,
   SlidersHorizontal,
 } from "lucide-react";
+import { resolveTemplate, DEFAULT_SEQUENCE_DEFINITIONS } from "@/types/comms";
 
-const SEQUENCE_PREVIEWS: Record<string, { channel: "sms" | "email"; subject?: string; body: string }> = {
-  early_intervention: {
-    channel: "sms",
-    body: "Hi [Name], we noticed you're early in your treatment at [ClinicName]. These first few sessions are important — let's keep the momentum going. Book your next: [BookingUrl]",
-  },
-  hep_reminder: {
-    channel: "email",
-    body: "Hi [Name], your next session at [ClinicName] is coming up. Have you been keeping up with your exercises? Completing them makes a real difference to your recovery.",
-  },
-  rebooking_prompt: {
-    channel: "sms",
-    body: "Hi [Name], we noticed you haven't booked your next appointment at [ClinicName]. Staying on track with your sessions helps you recover faster. Book now: [BookingUrl]",
-  },
-  pre_auth_collection: {
-    channel: "email",
-    subject: "Insurance authorisation needed before your appointment",
-    body: "Dear [Name],\n\nWe've noticed your upcoming appointment is being processed through [Insurer]. To avoid any delays, please ensure you have your pre-authorisation reference number ready.\n\nIf you need help, reply to this email or call us on [Phone].\n\nKind regards,\nThe team at [ClinicName]",
-  },
-  review_prompt: {
-    channel: "sms",
-    body: "Hi [Name], thank you for choosing [ClinicName]. On a scale of 0-10, how likely are you to recommend us? Simply reply with a number.",
-  },
-  reactivation_90d: {
-    channel: "sms",
-    body: "Hi [Name], it's been a while since your last visit to [ClinicName]. If you've got any new niggles or want a check-up, we're here: [BookingUrl]",
-  },
-  reactivation_180d: {
-    channel: "sms",
-    body: "Hi [Name], it's been 6 months since your last session at [ClinicName]. Many patients find a periodic check-up keeps them moving well. We're here if you need us: [BookingUrl]",
-  },
-};
+// Derive previews from the canonical sequence definitions + SMS_TEMPLATES.
+// Each preview shows the first step body so what users see matches what patients receive.
+const SEQUENCE_PREVIEWS: Record<string, { channel: "sms" | "email"; subject?: string; body: string }> =
+  Object.fromEntries(
+    DEFAULT_SEQUENCE_DEFINITIONS.map((seq) => {
+      const step = seq.steps[0];
+      return [
+        seq.sequenceType,
+        {
+          channel: step.channel,
+          body: resolveTemplate(step.templateKey, "standard"),
+        },
+      ];
+    }),
+  );
 
 type View = "patients" | "sequences" | "log";
 
@@ -127,19 +112,11 @@ function ContinuityPage() {
   }
 
   function handleSendReminder(patientId: string) {
-    sendComms(
-      patientId,
-      "rebooking_prompt",
-      "Hi [Name], we noticed you haven't booked your next appointment yet. You've made great progress — let's keep the momentum going. Reply to this message or call us on [Phone]."
-    );
+    sendComms(patientId, "rebooking_prompt", resolveTemplate("rebooking_step1", "standard"));
   }
 
   function handleSendEarlyIntervention(patientId: string) {
-    sendComms(
-      patientId,
-      "early_intervention",
-      "Hi [Name], just checking in after your first session. How are you feeling? If you have any questions about your exercises or want to book your next appointment, reply here or call us on [Phone]."
-    );
+    sendComms(patientId, "early_intervention", resolveTemplate("early_intervention_step1", "standard"));
   }
 
   const channelIcon = (ch: string) =>
