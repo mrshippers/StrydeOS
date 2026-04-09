@@ -234,8 +234,16 @@ async function handler(request: NextRequest) {
     // 4. Write Firestore docs atomically
     const batch = db.batch();
 
+    // Pre-generate a ref so we can include the clinicianId in the user doc atomically
+    const ownerClinicianRef = db
+      .collection("clinics")
+      .doc(clinicId)
+      .collection("clinicians")
+      .doc();
+
     batch.set(db.collection("users").doc(uid!), {
       clinicId,
+      clinicianId: ownerClinicianRef.id,
       role: "owner" as UserRole,
       firstName: (firstName as string)?.trim() || "",
       lastName: (lastName as string)?.trim() || "",
@@ -247,6 +255,27 @@ async function handler(request: NextRequest) {
       updatedAt: now,
       createdBy: "self_serve_signup",
       updatedBy: "self_serve_signup",
+    });
+
+    // Create a clinician doc for the founding owner so they appear in Clinic Management
+    const ownerFirstName = (firstName as string)?.trim() || "";
+    const ownerLastName = (lastName as string)?.trim() || "";
+    const ownerDisplayName = ownerFirstName
+      ? `${ownerFirstName} ${ownerLastName}`.trim()
+      : trimmedName;
+    batch.set(ownerClinicianRef, {
+      name: ownerDisplayName,
+      email: trimmedEmail,
+      role: "Practice Owner",
+      authRole: "owner",
+      authUid: uid!,
+      status: "registered",
+      active: true,
+      avatar: null,
+      pmsExternalId: null,
+      physitrackId: null,
+      createdAt: now,
+      createdBy: "self_serve_signup",
     });
 
     batch.set(clinicRef, {

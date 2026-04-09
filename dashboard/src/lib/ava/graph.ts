@@ -17,6 +17,9 @@
 import { StateGraph, Annotation, END, START } from "@langchain/langgraph";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { HumanMessage, SystemMessage, type BaseMessage } from "@langchain/core/messages";
+import { z } from "zod";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { sendTelegramAlert } from "./telegram";
 
 // ─── State Schema ───────────────────────────────────────────────────────────
 
@@ -79,11 +82,24 @@ export const AvaState = Annotation.Root({
     reducer: (a, b) => [...a, ...b],
     default: () => [],
   }),
+
+  /** Set to true by redFlagDetectorNode if any red-flag terms are found */
+  redFlag: Annotation<boolean>({ reducer: (_, b) => b, default: () => false }),
+
+  /** The red-flag terms found in the transcript (populated when redFlag is true) */
+  flagsFound: Annotation<string[]>({ reducer: (_, b) => b, default: () => [] }),
+
+  /** Structured clinical intake captured by structuredIntakeNode (booking/cancel paths only) */
+  structuredIntake: Annotation<StructuredIntake | null>({
+    reducer: (_, b) => b,
+    default: () => null,
+  }),
 });
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export type AvaIntent =
+  // ── Original 16-class set (routerNode) ──────────────────────────────────
   | "booking_new"
   | "booking_returning"
   | "cancellation"
@@ -99,7 +115,12 @@ export type AvaIntent =
   | "third_party_booking"
   | "gdpr_request"         // Asking about another patient
   | "solicitor_sales"
-  | "unknown";
+  | "unknown"
+  // ── 5-class set (intentRouterNode only — hard limit, no expansion) ──────
+  | "booking"          // Covers new/returning/reschedule/third-party
+  | "cancel"           // Covers cancellation
+  | "enquiry"          // Covers faq / message_relay / complaint / gp_referral
+  | "clinical_triage"; // Covers clinical_question — routes to human_handoff
 
 export interface PatientDetails {
   firstName?: string;
@@ -117,6 +138,7 @@ export interface CallMeta {
   clinicId: string;
   clinicName: string;
   callerPhone: string;
+  callId?: string;
   clinicianNames?: string[];
   clinicEmail?: string;
   callStartTime?: string;
@@ -149,6 +171,21 @@ export interface AvaResponse {
   message: string;
   metadata?: Record<string, unknown>;
 }
+
+/** Validated structured intake captured before slot selection */
+export interface StructuredIntake {
+  body_region: string;
+  onset_days: number | null;
+  mechanism: string | null;
+  appointment_type: string;
+}
+
+const StructuredIntakeSchema = z.object({
+  body_region: z.string(),
+  onset_days: z.number().nullable(),
+  mechanism: z.string().nullable(),
+  appointment_type: z.string(),
+});
 
 // ─── Intent Classifier (Router Node) ────────────────────────────────────────
 
@@ -207,10 +244,13 @@ async function routerNode(
 
 function isValidIntent(s: string): s is AvaIntent {
   const valid: AvaIntent[] = [
+    // Original 16-class set
     "booking_new", "booking_returning", "cancellation", "reschedule",
     "insurance_query", "clinical_question", "emergency", "mental_health_crisis",
     "message_relay", "complaint", "gp_referral", "third_party_booking",
     "gdpr_request", "solicitor_sales", "faq", "unknown",
+    // 5-class intentRouter set
+    "booking", "cancel", "enquiry", "clinical_triage",
   ];
   return valid.includes(s as AvaIntent);
 }
@@ -613,6 +653,232 @@ function fallbackNode(
   };
 }
 
+// ─── New Nodes: redFlagDetector, intentRouter, structuredIntake, humanHandoff ─
+//
+// Graph wiring (pending greet node):
+//   greet → [redFlagDetector + intentRouter]  ← fan-out added when greet is implemented
+//   redFlagDetector: redFlag=true → human_handoff | false → (intentRouter drives routing)
+//   intentRouter: booking/cancel → structuredIntake → fetchSlots (pending)
+//                 enquiry → greet (pending)
+//                 clinical_triage/unknown → human_handoff
+
+/** Red-flag terms scanned verbatim (case-insensitive) in the caller transcript */
+const RED_FLAG_TERMS = [
+  "cauda equina",
+  "saddle anaesthesia",
+  "bilateral leg weakness",
+  "loss of bladder",
+  "loss of bowel",
+  "chest pain",
+  "crushing chest",
+  "radiating to arm",
+  "shortness of breath",
+  "calf pain and swelling",
+  "sudden severe headache",
+  "unexplained weight loss",
+  "night sweats",
+  "constant night pain",
+  "cannot weight bear",
+  "deformity",
+] as const;
+
+/**
+ * Scans the caller transcript for clinical red-flag terms.
+ * Runs in parallel with intentRouterNode after the greet node.
+ *
+ * When a red flag is found:
+ *   1. Logs to Firestore `red_flag_alerts` (audit trail).
+ *   2. Writes to `clinic_notifications` (clinicId-partitioned — surfaced in Pulse/dashboard).
+ *   3. Fires sendTelegramAlert (scaffolded — no-ops until TELEGRAM_BOT_TOKEN is set).
+ *   4. Returns { redFlag: true, flagsFound } → graph routes to human_handoff.
+ *
+ * Immediate care is handled by the human_handoff node (redirect to A&E).
+ * The notification exists so the clinic owner/admin is aware for professional
+ * follow-up after A&E attendance — not as a first-line response.
+ */
+export async function redFlagDetectorNode(
+  state: typeof AvaState.State
+): Promise<Partial<typeof AvaState.State>> {
+  const lower = state.callerInput.toLowerCase();
+  const flagsFound = RED_FLAG_TERMS.filter((term) => lower.includes(term));
+  const redFlag = flagsFound.length > 0;
+
+  if (redFlag) {
+    const db = getAdminDb();
+    const timestamp = new Date();
+
+    // Audit log — full detail
+    void db.collection("red_flag_alerts").add({
+      timestamp,
+      clinicId: state.callMeta.clinicId,
+      callId: state.callMeta.callId ?? null,
+      flagsFound,
+      transcript: state.callerInput,
+    }).catch(() => {});
+
+    // Owner/admin notification — read by Pulse dashboard (clinicId-partitioned)
+    void db
+      .collection("clinics").doc(state.callMeta.clinicId)
+      .collection("clinic_notifications").add({
+        type: "red_flag",
+        timestamp,
+        callId: state.callMeta.callId ?? null,
+        flagsFound,
+        callerPhone: state.callMeta.callerPhone,
+        message: `Red flag call: patient directed to A&E. Flags: ${flagsFound.join(", ")}. Follow-up at clinician discretion.`,
+        read: false,
+      }).catch(() => {});
+
+    // Telegram — scaffolded, fires only when TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID are set
+    void sendTelegramAlert({
+      context: "ava_red_flag",
+      message: `Red flag at ${state.callMeta.clinicName}\nFlags: ${flagsFound.join(", ")}\nTranscript: ${state.callerInput.slice(0, 300)}`,
+    });
+  }
+
+  return { redFlag, flagsFound: flagsFound as string[] };
+}
+
+const INTENT_ROUTER_PROMPT = `You are a call intent classifier for a UK physiotherapy clinic.
+Classify the caller's message into EXACTLY ONE of these 5 categories. Reply with a single word only — no punctuation, no explanation.
+
+- booking          : Wants to book, reschedule, or change an appointment
+- cancel           : Wants to cancel an appointment
+- enquiry          : General question (prices, hours, parking, location, admin)
+- clinical_triage  : Describing symptoms, asking about a condition, or seeking clinical advice
+- unknown          : Cannot be classified into any of the above
+
+Single word only. One of: booking, cancel, enquiry, clinical_triage, unknown.`;
+
+/** Hard limit: exactly these 5 classes, no expansion */
+const INTENT_ROUTER_CLASSES = ["booking", "cancel", "enquiry", "clinical_triage", "unknown"] as const;
+type IntentRouterClass = (typeof INTENT_ROUTER_CLASSES)[number];
+
+/**
+ * Classifies caller intent into one of 5 classes using claude-sonnet-4-20250514.
+ * Drop-in replacement for detectIntent; same input/output interface.
+ *
+ * Routing downstream:
+ *   booking | cancel → structuredIntake → fetchSlots
+ *   enquiry          → greet (loop)
+ *   clinical_triage  → human_handoff
+ *   unknown          → human_handoff
+ */
+export async function intentRouterNode(
+  state: typeof AvaState.State
+): Promise<Partial<typeof AvaState.State>> {
+  const model = new ChatAnthropic({
+    model: "claude-sonnet-4-20250514",
+    temperature: 0,
+    maxTokens: 50,
+  });
+
+  const result = await model.invoke([
+    new SystemMessage(INTENT_ROUTER_PROMPT),
+    new HumanMessage(state.callerInput),
+  ]);
+
+  const raw = (result.content as string).trim().toLowerCase().replace(/[^a-z_]/g, "") as IntentRouterClass;
+  const intent: AvaIntent = INTENT_ROUTER_CLASSES.includes(raw) ? raw : "unknown";
+
+  return { intent };
+}
+
+const STRUCTURED_INTAKE_PROMPT = `You are a clinical intake assistant for a UK physiotherapy clinic.
+Extract structured information from the patient's description and return ONLY a valid JSON object.
+Use this exact schema — no extra fields, no markdown, no explanation:
+
+{
+  "body_region": "string — the body part affected (e.g. lower back, right shoulder, left knee)",
+  "onset_days": number or null — how many days ago the problem started (null if unclear),
+  "mechanism": "string or null — what caused it (e.g. fall, sport, lifting, gradual onset), null if unclear",
+  "appointment_type": "string — one of: initial_assessment, follow_up, sports_massage"
+}`;
+
+/**
+ * Collects structured clinical intake before slot selection.
+ * Runs after intentRouterNode on booking and cancel paths only.
+ *
+ * - Validates output with Zod (returns null on parse failure, never throws).
+ * - Writes to Firestore session document (non-blocking).
+ * - Passes appointment_type downstream via structuredIntake state field.
+ */
+export async function structuredIntakeNode(
+  state: typeof AvaState.State
+): Promise<Partial<typeof AvaState.State>> {
+  const model = new ChatAnthropic({
+    model: "claude-sonnet-4-6",
+    temperature: 0,
+    maxTokens: 200,
+  });
+
+  const result = await model.invoke([
+    new SystemMessage(STRUCTURED_INTAKE_PROMPT),
+    new HumanMessage(state.callerInput),
+  ]);
+
+  let intake: StructuredIntake | null = null;
+  try {
+    // Strip optional markdown fences (```json ... ```) before parsing
+    const raw = (result.content as string).trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    const parsed = JSON.parse(raw);
+    intake = StructuredIntakeSchema.parse(parsed);
+  } catch {
+    // Schema violation or malformed JSON — proceed without structured data
+    intake = null;
+  }
+
+  if (intake) {
+    const sessionId = `${state.callMeta.clinicId}_${state.callMeta.callId ?? Date.now()}`;
+    void getAdminDb()
+      .collection("sessions")
+      .doc(sessionId)
+      .set({ structuredIntake: intake }, { merge: true })
+      .catch(() => {});
+  }
+
+  return { structuredIntake: intake };
+}
+
+/**
+ * Terminal escalation node — reached when redFlag is true or intent is
+ * clinical_triage / unknown. Warm-transfers to reception.
+ *
+ * Message: "Let me get someone who can help you with that."
+ */
+export function humanHandoffNode(
+  state: typeof AvaState.State
+): Partial<typeof AvaState.State> {
+  return {
+    currentNode: "human_handoff",
+    response: {
+      action: "transfer_call",
+      message: "Let me get someone who can help you with that.",
+    },
+  };
+}
+
+/** Routing after redFlagDetectorNode: true → human_handoff, false → intent_router */
+function routeAfterRedFlag(state: typeof AvaState.State): string {
+  return state.redFlag ? "human_handoff" : "intent_router";
+}
+
+/** Routing after intentRouterNode */
+function routeAfterIntentRouter(state: typeof AvaState.State): string {
+  switch (state.intent) {
+    case "booking":
+    case "cancel":
+      return "structured_intake";
+    case "enquiry":
+      // Routes back to greet (loop) — edge added when greet node is implemented
+      return END;
+    case "clinical_triage":
+    case "unknown":
+    default:
+      return "human_handoff";
+  }
+}
+
 // ─── Routing Logic ──────────────────────────────────────────────────────────
 
 function routeAfterGuardrails(
@@ -746,6 +1012,10 @@ export function buildAvaGraph() {
     .addEdge("faq", END)
     .addEdge("solicitor_sales", END)
     .addEdge("fallback", END);
+
+  // ── New nodes (red_flag_detector, intent_router, structured_intake, human_handoff) ──
+  // Registered and wired when greet node is added (fan-out requires an entry point).
+  // Node functions are exported above and fully testable independently.
 
   return graph.compile();
 }

@@ -102,9 +102,12 @@ async function handler(request: NextRequest) {
     }
 
     // ── Check for existing Firebase Auth user with this email ────────
-    let existingUser: { uid: string } | null = null;
+    // If they already have an account (e.g. signed up independently), we enrol
+    // them into this clinic rather than blocking with a 409.
+    let existingAuthUid: string | null = null;
     try {
-      existingUser = await adminAuth.getUserByEmail(email);
+      const existing = await adminAuth.getUserByEmail(email);
+      existingAuthUid = existing.uid;
     } catch (err: unknown) {
       const e = err as { code?: string };
       if (e.code !== "auth/user-not-found") {
@@ -112,18 +115,72 @@ async function handler(request: NextRequest) {
       }
     }
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: `An account with email ${email} already exists` },
-        { status: 409 }
-      );
-    }
-
-    // ── Create Firebase Auth user ───────────────────────────────────
-    const tempPassword = crypto.randomBytes(24).toString("base64url");
+    const now = new Date().toISOString();
     const nameParts = name.split(/\s+/);
     const firstName = nameParts[0] ?? "";
     const lastName = nameParts.slice(1).join(" ") || "";
+
+    let ref: Awaited<ReturnType<ReturnType<typeof db.collection>["add"]>>;
+
+    if (existingAuthUid) {
+      // ── Existing Firebase Auth user — enrol into this clinic ───────
+      // Check they're not already in this clinic's clinicians subcollection
+      const existingClinicianSnap = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("clinicians")
+        .where("authUid", "==", existingAuthUid)
+        .limit(1)
+        .get();
+
+      if (!existingClinicianSnap.empty) {
+        return NextResponse.json(
+          { error: `${name} is already a member of this clinic` },
+          { status: 409 }
+        );
+      }
+
+      const clinicianData = {
+        name,
+        email,
+        role: (body.role ?? "Physiotherapist").trim(),
+        authRole,
+        authUid: existingAuthUid,
+        status: "registered" as const,
+        pmsExternalId: body.pmsExternalId ?? null,
+        physitrackId: body.physitrackId ?? null,
+        active: true,
+        avatar: null,
+        createdAt: now,
+        createdBy: user.uid,
+      };
+
+      ref = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("clinicians")
+        .add(clinicianData);
+
+      // Update the existing user doc to point at this clinic + link clinicianId
+      await db.collection("users").doc(existingAuthUid).update({
+        clinicId,
+        clinicianId: ref.id,
+        role: authRole,
+      });
+
+      return NextResponse.json(
+        {
+          id: ref.id,
+          clinician: { id: ref.id, ...clinicianData },
+          emailSent: false,
+          note: "Existing account enrolled into clinic — no invite email sent.",
+        },
+        { status: 201 }
+      );
+    }
+
+    // ── New user: create Firebase Auth user ─────────────────────────
+    const tempPassword = crypto.randomBytes(24).toString("base64url");
 
     const newAuthUser = await adminAuth.createUser({
       email,
@@ -132,10 +189,6 @@ async function handler(request: NextRequest) {
       emailVerified: false,
     });
 
-    const now = new Date().toISOString();
-
-    // ── Create Firestore docs (with orphan cleanup on failure) ──────
-    let ref: Awaited<ReturnType<ReturnType<typeof db.collection>["add"]>>;
     const clinicianData = {
       name,
       email,
@@ -152,9 +205,17 @@ async function handler(request: NextRequest) {
     };
 
     try {
-      // ── Create Firestore user doc at users/{uid} ──────────────────
+      // ── Create clinician doc first to get its ID ──────────────────
+      ref = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("clinicians")
+        .add(clinicianData);
+
+      // ── Create Firestore user doc with clinicianId linked ─────────
       await db.collection("users").doc(newAuthUser.uid).set({
         clinicId,
+        clinicianId: ref.id,
         role: authRole,
         firstName,
         lastName,
@@ -165,13 +226,6 @@ async function handler(request: NextRequest) {
         createdAt: now,
         createdBy: user.uid,
       });
-
-      // ── Create clinician doc in clinics/{clinicId}/clinicians ──────
-      ref = await db
-        .collection("clinics")
-        .doc(clinicId)
-        .collection("clinicians")
-        .add(clinicianData);
     } catch (firestoreErr) {
       // Firestore write failed after Auth user was created — clean up orphan
       console.error("[clinicians/add] Firestore write failed, deleting orphaned Auth user:", firestoreErr);
