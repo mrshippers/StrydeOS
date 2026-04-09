@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { withRequestLog } from "@/lib/request-logger";
 
-type ServiceStatus = "operational" | "degraded" | "down";
+type ServiceStatus = "operational" | "degraded" | "down" | "not_configured";
 
 interface ServiceCheck {
   name: string;
@@ -10,7 +10,7 @@ interface ServiceCheck {
   latency: number;
   checkedAt: string;
   uptimeHistory: number[];
-  statusSource?: string; // "statuspage" | "ping" | "cached"
+  statusSource?: string; // "statuspage" | "ping" | "cached" | "static"
 }
 
 interface StatusResponse {
@@ -164,19 +164,12 @@ async function checkFirebaseStatus(history: number[]): Promise<ServiceCheck> {
   }
 }
 
-// ── Generate seeded 30-day history (deterministic per service per day) ──
+// ── Placeholder history (no real uptime tracking yet) ──
+// Returns empty array — the frontend should handle this gracefully.
+// Real uptime tracking requires a cron job writing to Firestore.
 
-function seedHistory(name: string): number[] {
-  const seed = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const dayOfYear = Math.floor(Date.now() / 86400000);
-  const history: number[] = [];
-  for (let i = 0; i < 30; i++) {
-    const hash = (seed * 31 + (dayOfYear - 29 + i) * 17) % 100;
-    if (hash < 1) history.push(0); // 1% down
-    else if (hash < 3) history.push(0.5); // 2% degraded
-    else history.push(1);
-  }
-  return history;
+function emptyHistory(): number[] {
+  return [];
 }
 
 // ── Main check ──
@@ -184,52 +177,52 @@ function seedHistory(name: string): number[] {
 async function checkAllServices(): Promise<StatusResponse> {
   const checks = await Promise.allSettled([
     // StrydeOS itself
-    pingService("strydeos", "https://strydeos.vercel.app/login", seedHistory("strydeos")),
+    pingService("strydeos", process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/login` : "https://portal.strydeos.com/login", emptyHistory()),
 
     // Firebase — Google Cloud status feed
-    checkFirebaseStatus(seedHistory("firebase")),
+    checkFirebaseStatus(emptyHistory()),
 
     // Vercel — Atlassian Statuspage
-    checkStatuspage("vercel", "https://www.vercel-status.com", seedHistory("vercel")),
+    checkStatuspage("vercel", "https://www.vercel-status.com", emptyHistory()),
 
     // Sentry — Atlassian Statuspage
-    checkStatuspage("sentry", "https://status.sentry.io", seedHistory("sentry")),
+    checkStatuspage("sentry", "https://status.sentry.io", emptyHistory()),
 
     // ElevenLabs — Atlassian Statuspage (Conversational AI voice agent)
-    checkStatuspage("elevenlabs", "https://status.elevenlabs.io", seedHistory("elevenlabs")),
+    checkStatuspage("elevenlabs", "https://status.elevenlabs.io", emptyHistory()),
 
     // Twilio — Atlassian Statuspage (telephony + SMS)
-    checkStatuspage("twilio", "https://status.twilio.com", seedHistory("twilio")),
+    checkStatuspage("twilio", "https://status.twilio.com", emptyHistory()),
 
     // Resend — direct ping
-    pingService("resend", "https://api.resend.com", seedHistory("resend")),
+    pingService("resend", "https://api.resend.com", emptyHistory()),
 
     // n8n — direct ping
-    pingService("n8n", process.env.N8N_WEBHOOK_BASE_URL || "https://n8n.strydeos.com", seedHistory("n8n")),
+    pingService("n8n", process.env.N8N_WEBHOOK_BASE_URL || "https://n8n.strydeos.com", emptyHistory()),
 
     // Stripe — Atlassian Statuspage
-    checkStatuspage("stripe", "https://status.stripe.com", seedHistory("stripe")),
+    checkStatuspage("stripe", "https://status.stripe.com", emptyHistory()),
 
     // WriteUpp — direct ping
-    pingService("writeupp", "https://app.writeupp.com", seedHistory("writeupp")),
+    pingService("writeupp", "https://app.writeupp.com", emptyHistory()),
 
     // Cliniko — direct ping
-    pingService("cliniko", "https://api.au1.cliniko.com/v1", seedHistory("cliniko")),
+    pingService("cliniko", "https://api.au1.cliniko.com/v1", emptyHistory()),
 
-    // Halaxy — direct ping
-    pingService("halaxy", "https://api.halaxy.com", seedHistory("halaxy")),
+    // Halaxy — not yet integrated
+    Promise.resolve({ name: "halaxy", status: "not_configured" as ServiceStatus, latency: 0, checkedAt: new Date().toISOString(), uptimeHistory: [], statusSource: "static" }),
 
-    // Zanda (Power Diary) — direct ping
-    pingService("zanda", "https://api.powerdiary.com", seedHistory("zanda")),
+    // Zanda (Power Diary) — not yet integrated
+    Promise.resolve({ name: "zanda", status: "not_configured" as ServiceStatus, latency: 0, checkedAt: new Date().toISOString(), uptimeHistory: [], statusSource: "static" }),
 
     // Physitrack — direct ping
-    pingService("physitrack", "https://api.physitrack.com", seedHistory("physitrack")),
+    pingService("physitrack", "https://api.physitrack.com", emptyHistory()),
 
     // Heidi Health — direct ping
-    pingService("heidi", "https://registrar.api.heidihealth.com", seedHistory("heidi")),
+    pingService("heidi", "https://registrar.api.heidihealth.com", emptyHistory()),
 
     // Google Places — direct ping
-    pingService("google_places", "https://places.googleapis.com", seedHistory("google_places")),
+    pingService("google_places", "https://places.googleapis.com", emptyHistory()),
   ]);
 
   const services: Record<string, ServiceCheck> = {};
@@ -240,8 +233,9 @@ async function checkAllServices(): Promise<StatusResponse> {
     if (result.status === "fulfilled") {
       const svc = result.value;
       services[svc.name] = svc;
+      // Don't count "not_configured" services toward overall status
       if (svc.status === "down") hasDown = true;
-      if (svc.status === "degraded") hasDegraded = true;
+      else if (svc.status === "degraded") hasDegraded = true;
     }
   }
 

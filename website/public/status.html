@@ -207,6 +207,7 @@
   }
   .svc-dot.degraded { background: var(--warning); box-shadow: 0 0 6px rgba(245,158,11,0.4); }
   .svc-dot.down { background: var(--dead); }
+  .svc-dot.not_configured { background: var(--dead); opacity: 0.5; }
   .svc-info { flex: 1; min-width: 0; }
   .svc-name { font-size: 14px; font-weight: 600; color: var(--ink); }
   .svc-desc { font-size: 12px; color: var(--muted); margin-top: 1px; }
@@ -222,6 +223,7 @@
   .svc-badge.operational { color: #1C54F2; background: rgba(28,84,242,0.08); }
   .svc-badge.degraded { color: #92400E; background: rgba(245,158,11,0.1); }
   .svc-badge.down { color: var(--muted); background: var(--cloud); }
+  .svc-badge.not_configured { color: var(--muted); background: var(--cloud); opacity: 0.7; }
   .svc-chevron {
     color: var(--border); transition: transform 0.2s; flex-shrink: 0;
   }
@@ -342,7 +344,7 @@
 </footer>
 
 <script>
-const STATUS_API = "https://strydeos.vercel.app/api/status";
+const STATUS_API = "/api/status";
 
 const SERVICE_MAP = [
   { group: "Core Platform", icon: "monitor", color: "rgba(108,196,232,0.1)", accent: "#4BA8D4",
@@ -396,7 +398,7 @@ function makeSvg(type) {
 }
 
 function statusLabel(s) {
-  return s === "operational" ? "Operational" : s === "degraded" ? "Degraded" : "Down";
+  return s === "operational" ? "Operational" : s === "degraded" ? "Degraded" : s === "not_configured" ? "Not Configured" : "Down";
 }
 
 function latencyStr(ms) {
@@ -448,9 +450,9 @@ function renderServices(data) {
 
     grp.services.forEach(function(sdef) {
       var svc = data.services[sdef.key];
-      var status = svc ? svc.status : "down";
+      var status = svc ? svc.status : "not_configured";
       var latency = svc ? svc.latency : -1;
-      var history = svc ? svc.uptimeHistory : seedHistory(sdef.key);
+      var history = svc ? svc.uptimeHistory : [];
       var upPct = uptimePct(history);
 
       var card = document.createElement("div");

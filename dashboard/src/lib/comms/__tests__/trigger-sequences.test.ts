@@ -6,6 +6,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+// Save the real fetch before any test file can pollute it
+const _realFetch = globalThis.fetch;
 import type { Firestore } from "firebase-admin/firestore";
 import {
   triggerCommsSequences,
@@ -302,6 +305,7 @@ describe("triggerCommsSequences — integration (requires Firestore mock)", () =
     } else {
       process.env.N8N_COMMS_WEBHOOK_SECRET = originalSecret;
     }
+    globalThis.fetch = _realFetch;
     vi.restoreAllMocks();
   });
 
@@ -1031,6 +1035,7 @@ describe("edge cases and error handling", () => {
     } else {
       process.env.N8N_COMMS_WEBHOOK_SECRET = originalSecret;
     }
+    globalThis.fetch = _realFetch;
     vi.restoreAllMocks();
   });
 
