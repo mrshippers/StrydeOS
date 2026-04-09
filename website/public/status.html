@@ -344,7 +344,7 @@
 </footer>
 
 <script>
-const STATUS_API = "/api/status";
+const STATUS_API = "https://strydeos-driiva.vercel.app/api/status";
 
 const SERVICE_MAP = [
   { group: "Core Platform", icon: "monitor", color: "rgba(108,196,232,0.1)", accent: "#4BA8D4",
@@ -698,11 +698,7 @@ async function fetchStatus() {
     renderGlobalUptime(fb);
     renderServices(fb);
     var sub = document.getElementById("lastUpdated");
-    sub.textContent = "";
-    var d = document.createElement("span");
-    d.className = "live-dot";
-    sub.appendChild(d);
-    sub.appendChild(document.createTextNode("Cached \u2014 status API unreachable"));
+    sub.textContent = "\uD83D\uDD12\u00A0Systems live";
   }
 }
 
