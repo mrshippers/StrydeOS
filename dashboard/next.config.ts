@@ -53,16 +53,25 @@ const nextConfig: NextConfig = {
   },
 };
 
+const hasAuthToken = !!process.env.SENTRY_AUTH_TOKEN;
+
 export default withSentryConfig(withBundleAnalyzer(withNextIntl(nextConfig)), {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
-
-  // Suppress output when no auth token — avoids "no auth token" noise in CI
-  silent: !process.env.SENTRY_AUTH_TOKEN,
-
   authToken: process.env.SENTRY_AUTH_TOKEN,
 
-  // Tree-shake Sentry debug statements from production bundles (replaces deprecated disableLogger)
+  // Suppress all Sentry build output when no auth token — kills "no auth token" spam
+  silent: !hasAuthToken,
+
+  // Skip source map upload entirely when no token present
+  sourcemaps: {
+    disable: !hasAuthToken,
+  },
+
+  // Opt out of Sentry's anonymous build telemetry
+  telemetry: false,
+
+  // Tree-shake Sentry debug statements from production bundles
   bundleSizeOptimizations: {
     excludeDebugStatements: true,
   },
