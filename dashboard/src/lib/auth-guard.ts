@@ -28,7 +28,7 @@ export async function verifyApiRequest(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[verifyApiRequest] Firebase token verification failed:", msg);
-    throw new ApiAuthError(`Token verification failed: ${msg}`, 401);
+    throw new ApiAuthError("Authentication failed", 401);
   }
 
   let userDoc;

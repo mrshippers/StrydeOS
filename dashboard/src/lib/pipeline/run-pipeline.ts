@@ -27,6 +27,7 @@ import {
   INCREMENTAL_WEEKS,
 } from "./types";
 import { logIntegrationHealth, cleanOldHealthLogs } from "./health-logger";
+import { isEncrypted, decryptCredential } from "@/lib/crypto/credentials";
 
 export async function runPipeline(
   db: Firestore,
@@ -52,6 +53,11 @@ export async function runPipeline(
   // ── Load PMS config ──────────────────────────────────────────────────────
   const pmsSnap = await configBase.doc(PMS_DOC_ID).get();
   const pmsConfig = pmsSnap.data() as PMSIntegrationConfig | undefined;
+
+  // Decrypt PMS API key if it was stored encrypted (backward compatible)
+  if (pmsConfig?.apiKey && isEncrypted(pmsConfig.apiKey)) {
+    pmsConfig.apiKey = decryptCredential(pmsConfig.apiKey, clinicId);
+  }
 
   if (!pmsConfig?.apiKey?.trim() || !pmsConfig?.provider) {
     return {
@@ -105,6 +111,11 @@ export async function runPipeline(
   // ── Stage 4: Enrich HEP Data ────────────────────────────────────────────
   const hepSnap = await configBase.doc(HEP_DOC_ID).get();
   const hepConfig = hepSnap.data() as HEPIntegrationConfig | undefined;
+
+  // Decrypt HEP API key if it was stored encrypted (backward compatible)
+  if (hepConfig?.apiKey && isEncrypted(hepConfig.apiKey)) {
+    hepConfig.apiKey = decryptCredential(hepConfig.apiKey, clinicId);
+  }
 
   if (hepConfig?.apiKey?.trim() && hepConfig?.provider) {
     const hepAdapter = createHEPAdapter(hepConfig);

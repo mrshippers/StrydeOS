@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { brand } from "@/lib/brand";
 import { MonolithMark } from "@/components/MonolithLogo";
 import { RotateCcw } from "lucide-react";
@@ -14,6 +15,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error("[StrydeOS] Unhandled error:", error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (

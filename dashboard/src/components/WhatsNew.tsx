@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
  * Dismissal is tracked in Firestore (users/{uid}.whatsNewSeenVersion)
  * so it works cross-device for ALL clinic users.
  */
-const CURRENT_VERSION = "2026-04-03";
+const CURRENT_VERSION = "2026-04-09";
 
 interface UpdateEntry {
   tag: string;
@@ -23,39 +23,39 @@ interface UpdateEntry {
 
 const UPDATES: UpdateEntry[] = [
   {
-    tag: "Intelligence",
-    tagColor: "#8B5CF6",
-    title: "Live benchmarks from your data",
+    tag: "Ava",
+    tagColor: "#1C54F2",
+    title: "Out-of-hours transfers + insurance pre-auth",
     description:
-      "Peer benchmarks now pull from your real clinic metrics — rebook rate, DNA, utilisation, NPS, revenue per session. No more placeholder values.",
+      "Ava now handles call transfers outside clinic hours and can run insurance pre-authorisation checks during booking. Receptionist UI updated to match.",
+  },
+  {
+    tag: "Ava",
+    tagColor: "#1C54F2",
+    title: "Critical voice bug fixes",
+    description:
+      "Fixed model ID mismatch, Twilio signature validation, and HMAC comparison bugs that could cause calls to drop. ElevenLabs verification extracted into a shared module.",
   },
   {
     tag: "Security",
     tagColor: "#EF4444",
-    title: "Webhook + billing hardening",
+    title: "Production audit — 5 of 6 issues resolved",
     description:
-      "Booking, admin, and voice webhooks now use tamper-proof secret verification. Billing enforcement fixed — feature access now correctly revokes after grace period.",
-  },
-  {
-    tag: "Dashboard",
-    tagColor: "#1C54F2",
-    title: "Consistent clinic profile",
-    description:
-      "Fixed a bug where KPI targets could silently change between login and real-time updates. Utilisation and DNA rate defaults are now consistent everywhere.",
-  },
-  {
-    tag: "Pulse",
-    tagColor: "#0891B2",
-    title: "Early Intervention + template sync",
-    description:
-      "Early Intervention button now sends the correct sequence. Preview templates match what's actually sent. Revenue falls back to your configured session price.",
+      "Addressed security and config findings from the latest production audit. Idle timeout that blocked all API calls after 30 minutes has been removed.",
   },
   {
     tag: "Platform",
     tagColor: "#059669",
-    title: "Notification bell + demo data warning",
+    title: "Notification panel + splash screen fixes",
     description:
-      "Notification bell is now always accessible regardless of sidebar state. Dashboard clearly warns when showing sample data instead of real metrics.",
+      "Notification panel no longer crashes on empty state. Click an insight to mark it read and jump to Intelligence. Splash screen progress bar removed for cleaner startup.",
+  },
+  {
+    tag: "Dashboard",
+    tagColor: "#8B5CF6",
+    title: "Settings data loss fix + 2FA error handling",
+    description:
+      "Fixed a bug where Settings changes could silently disappear. 2FA setup errors now surface properly. Dashboard sync improved for real-time consistency.",
   },
 ];
 
@@ -67,25 +67,28 @@ export default function WhatsNew() {
   useEffect(() => {
     if (!user) return;
     if (user.uid === "demo") { setChecking(false); return; }
-    if (user.firstLogin) { setChecking(false); return; }
+    if (user.firstLogin && !user.tourCompleted) { setChecking(false); return; }
 
-    // Check Firestore for dismissal — works cross-device for all users
+    // Check localStorage first (fast, covers Firestore-write-failure fallback)
+    try {
+      if (localStorage.getItem("strydeos_whats_new_seen") === CURRENT_VERSION) {
+        setChecking(false);
+        return;
+      }
+    } catch { /* ignore */ }
+
     if (!db) {
-      // Fallback to localStorage if Firestore not available
-      try {
-        if (localStorage.getItem("strydeos_whats_new_seen") === CURRENT_VERSION) {
-          setChecking(false);
-          return;
-        }
-      } catch { /* ignore */ }
       const t = setTimeout(() => { setVisible(true); setChecking(false); }, 800);
       return () => clearTimeout(t);
     }
 
+    // Then check Firestore for cross-device dismissal
     const userRef = doc(db, "users", user.uid);
     getDoc(userRef).then((snap) => {
       const seenVersion = snap.data()?.whatsNewSeenVersion;
       if (seenVersion === CURRENT_VERSION) {
+        // Sync localStorage so future checks are instant
+        try { localStorage.setItem("strydeos_whats_new_seen", CURRENT_VERSION); } catch { /* ignore */ }
         setChecking(false);
         return;
       }
@@ -101,15 +104,13 @@ export default function WhatsNew() {
 
     if (!user || user.uid === "demo") return;
 
-    // Persist to Firestore so all devices see it as dismissed
+    // Always write localStorage (instant on next load, survives Firestore failures)
+    try { localStorage.setItem("strydeos_whats_new_seen", CURRENT_VERSION); } catch { /* ignore */ }
+
+    // Also persist to Firestore for cross-device dismissal
     if (db) {
       const userRef = doc(db, "users", user.uid);
-      updateDoc(userRef, { whatsNewSeenVersion: CURRENT_VERSION }).catch(() => {
-        // Fallback to localStorage
-        try { localStorage.setItem("strydeos_whats_new_seen", CURRENT_VERSION); } catch { /* ignore */ }
-      });
-    } else {
-      try { localStorage.setItem("strydeos_whats_new_seen", CURRENT_VERSION); } catch { /* ignore */ }
+      updateDoc(userRef, { whatsNewSeenVersion: CURRENT_VERSION }).catch(() => { /* localStorage already set */ });
     }
   }, [user]);
 

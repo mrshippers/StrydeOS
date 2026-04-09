@@ -108,11 +108,7 @@ async function handler(request: NextRequest) {
 
     // ── Create Firebase Auth user ────────────────────────────────────────────────
     // Generate a cryptographically random temp password — user will reset via email
-    const tempPassword = Array.from({ length: 24 }, () =>
-      "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$".charAt(
-        Math.floor(Math.random() * 59)
-      )
-    ).join("");
+    const tempPassword = crypto.randomBytes(24).toString("base64url");
 
     try {
       const userRecord = await auth.createUser({

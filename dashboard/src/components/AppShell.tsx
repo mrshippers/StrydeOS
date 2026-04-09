@@ -42,10 +42,6 @@ const InsightEngineUnlocked = dynamic(
   { ssr: false }
 );
 
-const ChangelogSplash = dynamic(
-  () => import("@/components/ChangelogSplash"),
-  { ssr: false }
-);
 
 const CommandPalette = dynamic(
   () => import("@/components/CommandPalette"),
@@ -99,7 +95,6 @@ function AppLayout({ children, impersonating }: { children: React.ReactNode; imp
       <FirstLoginTour />
       <WhatsNew />
       <InsightEngineUnlocked />
-      <ChangelogSplash />
       <CommandPalette />
     </>
   );

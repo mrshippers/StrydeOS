@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { runCSVImport } from "@/lib/csv-import/run-import";
@@ -28,8 +29,12 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Inbound import not configured" }, { status: 503 });
   }
 
-  const secret = request.headers.get("x-inbound-secret")?.trim();
-  if (secret !== INBOUND_SECRET) {
+  const secret = request.headers.get("x-inbound-secret")?.trim() ?? "";
+  if (
+    !secret ||
+    secret.length !== INBOUND_SECRET.length ||
+    !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(INBOUND_SECRET))
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

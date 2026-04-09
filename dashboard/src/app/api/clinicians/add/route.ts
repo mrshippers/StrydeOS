@@ -21,7 +21,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { getAdminDb, getAdminAuth } from "@/lib/firebase-admin";
 import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { canAddClinician } from "@/lib/billing";
@@ -31,8 +31,8 @@ import crypto from "crypto";
 export const runtime = "nodejs";
 
 async function handler(request: NextRequest) {
-  // Rate limit: 10 requests per IP per 60 seconds
-  const { limited, remaining } = checkRateLimit(request, { limit: 10, windowMs: 60_000 });
+  // Rate limit: 10 requests per IP per 60 seconds (async for distributed Redis enforcement)
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 10, windowMs: 60_000 });
   if (limited) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },

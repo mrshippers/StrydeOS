@@ -5,6 +5,7 @@ import { verifyApiRequest, handleApiError, requireRole } from "@/lib/auth-guard"
 import type { HEPIntegrationConfig } from "@/lib/integrations/hep/types";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
 import { withRequestLog } from "@/lib/request-logger";
+import { encryptCredential } from "@/lib/crypto/credentials";
 
 const INTEGRATIONS_CONFIG = "integrations_config";
 const HEP_DOC_ID = "hep";
@@ -36,6 +37,8 @@ async function handler(request: NextRequest) {
 
     const db = getAdminDb();
 
+    const encryptedApiKey = encryptCredential(apiKey.trim(), clinicId);
+
     await db
       .collection("clinics")
       .doc(clinicId)
@@ -44,7 +47,7 @@ async function handler(request: NextRequest) {
       .set(
         {
           provider,
-          apiKey: apiKey.trim(),
+          apiKey: encryptedApiKey,
         },
         { merge: true }
       );

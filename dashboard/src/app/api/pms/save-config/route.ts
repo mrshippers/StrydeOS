@@ -5,6 +5,7 @@ import { verifyApiRequest, handleApiError, requireRole } from "@/lib/auth-guard"
 import type { PmsProvider } from "@/types";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
 import { withRequestLog } from "@/lib/request-logger";
+import { encryptCredential } from "@/lib/crypto/credentials";
 
 const INTEGRATIONS_PMS = "integrations_config";
 const PMS_DOC_ID = "pms";
@@ -39,6 +40,8 @@ async function handler(request: NextRequest) {
     const db = getAdminDb();
     const now = new Date().toISOString();
 
+    const encryptedApiKey = encryptCredential(apiKey.trim(), clinicId);
+
     await db
       .collection("clinics")
       .doc(clinicId)
@@ -47,7 +50,7 @@ async function handler(request: NextRequest) {
       .set(
         {
           provider,
-          apiKey: apiKey.trim(),
+          apiKey: encryptedApiKey,
           ...(baseUrl ? { baseUrl } : {}),
           connectedAt: now,
           lastSyncAt: null,

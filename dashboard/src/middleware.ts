@@ -68,6 +68,11 @@ export async function middleware(request: NextRequest) {
 }
 
 function setSecurityHeaders(response: NextResponse): void {
+  // Generate a per-request nonce for CSP script-src.
+  // Next.js 15 app router reads this from the x-nonce response header.
+  const nonce = crypto.randomUUID();
+  response.headers.set("x-nonce", nonce);
+
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -81,9 +86,9 @@ function setSecurityHeaders(response: NextResponse): void {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      // unsafe-inline required for Next.js inline hydration scripts.
-      // TODO: wire up Next.js nonce support (experimental.appDir CSP) to use nonce-based CSP instead.
-      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} 'wasm-unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.vercel-insights.com https://*.vercel-scripts.com`,
+      `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} 'wasm-unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.vercel-insights.com https://*.vercel-scripts.com`,
+      // unsafe-inline kept for style-src — Tailwind/Next.js injects styles that
+      // cannot practically be nonce-gated without a custom document wrapper.
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",

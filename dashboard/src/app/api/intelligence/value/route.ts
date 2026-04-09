@@ -41,6 +41,11 @@ async function handler(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const targetClinicId = (body.clinicId as string | undefined) ?? userClinicId;
 
+    // Tenant isolation: non-superadmin users can only process their own clinic
+    if (targetClinicId && userClinicId && targetClinicId !== userClinicId) {
+      return NextResponse.json({ error: "Forbidden: clinic mismatch" }, { status: 403 });
+    }
+
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;

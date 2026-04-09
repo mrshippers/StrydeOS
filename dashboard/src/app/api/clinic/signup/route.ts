@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { getAdminDb, getAdminAuth } from "@/lib/firebase-admin";
 import { setCustomClaims } from "@/lib/set-custom-claims";
 import type {
@@ -25,8 +25,8 @@ import { deriveJurisdictionFromCountry } from "@/data/compliance-config";
 import { withRequestLog } from "@/lib/request-logger";
 
 async function handler(request: NextRequest) {
-  // Rate limit: 5 requests per IP per 15 minutes
-  const { limited, remaining } = checkRateLimit(request, { limit: 5, windowMs: 15 * 60 * 1000 });
+  // Rate limit: 5 requests per IP per 15 minutes (async for distributed Redis enforcement)
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 5, windowMs: 15 * 60 * 1000 });
   if (limited) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },

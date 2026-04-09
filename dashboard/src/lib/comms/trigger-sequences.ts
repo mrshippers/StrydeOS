@@ -20,8 +20,9 @@ import type { SequenceType } from "@/types";
 import type { SequenceDefinition, N8nSequencePayload } from "@/types/comms";
 import { DEFAULT_SEQUENCE_DEFINITIONS, resolveTemplate } from "@/types/comms";
 
-const N8N_BASE   = process.env.N8N_WEBHOOK_BASE_URL;
-const N8N_SECRET = process.env.N8N_COMMS_WEBHOOK_SECRET;
+// Read at call time so tests can set env vars after import
+const getN8nBase   = () => process.env.N8N_WEBHOOK_BASE_URL;
+const getN8nSecret = () => process.env.N8N_COMMS_WEBHOOK_SECRET;
 const APP_URL    = process.env.APP_URL ?? "https://portal.strydeos.com";
 const N8N_TIMEOUT = 10_000;
 
@@ -37,6 +38,8 @@ export async function triggerCommsSequences(
   db: Firestore,
   clinicId: string
 ): Promise<TriggerResult> {
+  const N8N_BASE = getN8nBase();
+  const N8N_SECRET = getN8nSecret();
   if (!N8N_BASE?.trim()) {
     return { fired: 0, skipped: 0, errors: ["N8N_WEBHOOK_BASE_URL not set — comms skipped"] };
   }
@@ -282,7 +285,7 @@ export async function triggerCommsSequences(
 
 // ─── Seed / load sequence definitions ────────────────────────────────────────
 
-async function loadOrSeedDefinitions(
+export async function loadOrSeedDefinitions(
   db: Firestore,
   clinicId: string
 ): Promise<SequenceDefinition[]> {
@@ -310,7 +313,7 @@ async function loadOrSeedDefinitions(
 
 // ─── Step progression ─────────────────────────────────────────────────────────
 
-function getNextStep(
+export function getNextStep(
   def: SequenceDefinition,
   priorLogs: Array<{ stepNumber: number; sentAt: string; outcome: string }>,
   triggerDate: Date,
@@ -344,7 +347,7 @@ function getNextStep(
  * For most sequences this is lastSessionDate.
  * Returns null if the required data is absent.
  */
-function getTriggerDate(
+export function getTriggerDate(
   patient: Record<string, unknown>,
   sequenceType: SequenceType
 ): Date | null {
@@ -369,7 +372,7 @@ function getTriggerDate(
 
 // ─── Eligibility ──────────────────────────────────────────────────────────────
 
-function isEligible(
+export function isEligible(
   patient: Record<string, unknown>,
   sequenceType: SequenceType,
   now: Date,

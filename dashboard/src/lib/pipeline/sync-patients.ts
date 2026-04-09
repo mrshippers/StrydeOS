@@ -47,7 +47,7 @@ export async function syncPatients(
       .collection("patients");
 
     // Build index of existing patients by pmsExternalId
-    const existingSnap = await patientsRef.get();
+    const existingSnap = await patientsRef.limit(10000).get();
     const byExternalId = new Map<string, string>();
     for (const doc of existingSnap.docs) {
       const extId = doc.data().pmsExternalId;

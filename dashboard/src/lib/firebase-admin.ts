@@ -57,9 +57,9 @@ function getAdminApp(): App {
         "[firebase-admin] Failed to initialize with env credentials:",
         err instanceof Error ? err.message : err
       );
-      console.error("[firebase-admin] FIREBASE_PROJECT_ID:", projectId);
-      console.error("[firebase-admin] FIREBASE_CLIENT_EMAIL:", clientEmail ? `${clientEmail.slice(0, 12)}...` : "MISSING");
-      console.error("[firebase-admin] FIREBASE_PRIVATE_KEY length:", rawKey?.length ?? 0);
+      console.error("[firebase-admin] FIREBASE_PROJECT_ID:", projectId ? "SET" : "MISSING");
+      console.error("[firebase-admin] FIREBASE_CLIENT_EMAIL:", clientEmail ? "SET" : "MISSING");
+      console.error("[firebase-admin] FIREBASE_PRIVATE_KEY:", rawKey ? "SET" : "MISSING");
       throw err;
     }
   }

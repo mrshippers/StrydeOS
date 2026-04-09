@@ -25,7 +25,7 @@ export async function syncClinicians(
       .doc(clinicId)
       .collection("clinicians");
 
-    const existingSnap = await cliniciansRef.get();
+    const existingSnap = await cliniciansRef.limit(500).get();
     const byExternalId = new Map<string, string>();
     const allInternalIds = new Set<string>();
 

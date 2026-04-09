@@ -48,16 +48,21 @@ const RETENTION_POLICIES: RetentionPolicy[] = [
 
 const BATCH_LIMIT = 500;
 
-/** Clean up the _webhook_dedup collection (top-level, not per-clinic). */
-async function cleanWebhookDedup(db: FirebaseFirestore.Firestore): Promise<number> {
-  const cutoff = new Date(Date.now() - 7 * 86400000).toISOString(); // 7 days
+/** Clean up top-level dedup collections (not per-clinic). */
+async function cleanDedupCollection(
+  db: FirebaseFirestore.Firestore,
+  collectionName: string,
+  dateField: string = "processedAt",
+  retentionDays: number = 7
+): Promise<number> {
+  const cutoff = new Date(Date.now() - retentionDays * 86400000).toISOString();
   let totalDeleted = 0;
   let hasMore = true;
 
   while (hasMore) {
     const snap = await db
-      .collection("_webhook_dedup")
-      .where("processedAt", "<", cutoff)
+      .collection(collectionName)
+      .where(dateField, "<", cutoff)
       .limit(BATCH_LIMIT)
       .get();
 
@@ -317,12 +322,21 @@ async function handler(request: NextRequest) {
     }
   }
 
-  // Clean top-level webhook dedup collection
+  // Clean top-level dedup collections
   let dedupDeleted = 0;
   try {
-    dedupDeleted = await cleanWebhookDedup(db);
+    dedupDeleted += await cleanDedupCollection(db, "_webhook_dedup");
   } catch (err) {
     Sentry.captureException(err, { tags: { source: "webhook_dedup_cleanup" } });
+  }
+
+  // Stripe event dedup — 7-day TTL (matches Stripe retry window)
+  let stripeDedupDeleted = 0;
+  try {
+    stripeDedupDeleted = await cleanDedupCollection(db, "_stripe_event_dedup");
+    dedupDeleted += stripeDedupDeleted;
+  } catch (err) {
+    Sentry.captureException(err, { tags: { source: "stripe_dedup_cleanup" } });
   }
 
   // GDPR: hard-delete patients past their 30-day grace period
@@ -348,7 +362,8 @@ async function handler(request: NextRequest) {
     processedAt: new Date().toISOString(),
     clinicsScanned: clinicsSnap.size,
     totalDeleted,
-    webhookDedupDeleted: dedupDeleted,
+    webhookDedupDeleted: dedupDeleted - stripeDedupDeleted,
+    stripeDedupDeleted,
     gdprHardDeleted: gdprResult.deleted,
     gdprErrors: gdprResult.errors.length > 0 ? gdprResult.errors : undefined,
     billingDowngraded: billingResult.downgraded,

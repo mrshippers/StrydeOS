@@ -19,6 +19,16 @@ const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN ?? "";
  * Security: The reception phone number is looked up from Firestore using the
  * clinicId — never accepted from query params to prevent toll fraud.
  */
+const FALLBACK_TWIML = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="alice" language="en-GB">I'm sorry, I'm unable to connect you right now. Someone from the clinic will call you back shortly.</Say>
+  <Hangup/>
+</Response>`;
+
+function twimlResponse(body: string, status = 200): NextResponse {
+  return new NextResponse(body, { status, headers: { "Content-Type": "text/xml" } });
+}
+
 export async function POST(req: NextRequest) {
   // Validate Twilio signature — POST body params must be included in HMAC
   if (TWILIO_AUTH_TOKEN) {
@@ -36,35 +46,26 @@ export async function POST(req: NextRequest) {
   const clinicId = url.searchParams.get("clinicId");
 
   if (!clinicId) {
-    const fallbackTwiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say voice="alice" language="en-GB">I'm sorry, I'm unable to connect you right now. Someone from the clinic will call you back shortly.</Say>
-  <Hangup/>
-</Response>`;
-
-    return new NextResponse(fallbackTwiml, {
-      status: 200,
-      headers: { "Content-Type": "text/xml" },
-    });
+    return twimlResponse(FALLBACK_TWIML);
   }
 
   // Look up reception phone from Firestore — never trust query params for phone numbers
-  const db = getAdminDb();
-  const clinicDoc = await db.collection("clinics").doc(clinicId).get();
-  const clinicData = clinicDoc.data();
-  const to = clinicData?.receptionPhone || clinicData?.notificationPhone;
+  let to: string | undefined;
+  try {
+    const db = getAdminDb();
+    const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+    const clinicData = clinicDoc.data();
+    to = clinicData?.receptionPhone || clinicData?.notificationPhone;
+  } catch (err) {
+    console.error(
+      `[transfer-twiml] Firestore lookup failed for clinic ${clinicId}:`,
+      err instanceof Error ? err.message : String(err)
+    );
+    return twimlResponse(FALLBACK_TWIML);
+  }
 
   if (!to) {
-    const fallbackTwiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say voice="alice" language="en-GB">I'm sorry, I'm unable to connect you right now. Someone from the clinic will call you back shortly.</Say>
-  <Hangup/>
-</Response>`;
-
-    return new NextResponse(fallbackTwiml, {
-      status: 200,
-      headers: { "Content-Type": "text/xml" },
-    });
+    return twimlResponse(FALLBACK_TWIML);
   }
 
   // Caller ID: use the clinic's Ava number so reception sees it's an Ava transfer
@@ -82,10 +83,7 @@ export async function POST(req: NextRequest) {
   </Dial>
 </Response>`;
 
-  return new NextResponse(twiml, {
-    status: 200,
-    headers: { "Content-Type": "text/xml" },
-  });
+  return twimlResponse(twiml);
 }
 
 function escapeXml(str: string): string {
