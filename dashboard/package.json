@@ -8,7 +8,7 @@
     "build": "next build",
     "analyze": "ANALYZE=true next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint src",
     "seed:spires": "node scripts/seed-spires-user.js",
     "seed:production": "npx tsx scripts/seed-spires-production.ts",
     "seed:clinic": "npx tsx scripts/seed-clinic.ts",

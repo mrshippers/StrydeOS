@@ -97,7 +97,7 @@ async function handler(req: NextRequest) {
       { result: "Call is being transferred to reception now." },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (_error) {
     // Return a graceful message so Ava can fall back
     return NextResponse.json(
       {

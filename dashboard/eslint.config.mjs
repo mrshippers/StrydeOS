@@ -42,6 +42,11 @@ export default [
       "scripts/**",
       "*.config.*",
       "next-env.d.ts",
+      "**/__tests__/**",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
     ],
   },
 ];

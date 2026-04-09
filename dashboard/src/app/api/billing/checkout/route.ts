@@ -120,7 +120,7 @@ async function handler(request: NextRequest) {
           price: getPriceId(module, tier, interval),
           quantity: 1,
         };
-      } catch (e) {
+      } catch (_e) {
         const varName = `STRIPE_PRICE_${module.toUpperCase()}_${tier.toUpperCase()}_${interval.toUpperCase()}`;
         throw new Error(`Missing or invalid Stripe configuration: ${varName} is not set`);
       }
@@ -131,7 +131,7 @@ async function handler(request: NextRequest) {
     if (needsAvaSetup) {
       try {
         lineItems.push({ price: getAvaSetupFeePriceId(), quantity: 1 });
-      } catch (e) {
+      } catch (_e) {
         throw new Error("Ava module is not properly configured. Contact support.");
       }
     }
