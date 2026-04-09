@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Sparkles, ArrowRight } from "lucide-react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
@@ -11,8 +11,11 @@ import { useAuth } from "@/hooks/useAuth";
  * Bump CURRENT_VERSION each time you add new entries to UPDATES.
  * Dismissal is tracked in Firestore (users/{uid}.whatsNewSeenVersion)
  * so it works cross-device for ALL clinic users.
+ *
+ * Show logic: modal appears once per version bump, on next login after
+ * the version changes. Once dismissed it stays dismissed until the next bump.
  */
-const CURRENT_VERSION = "2026-04-09";
+const CURRENT_VERSION = "2026-04-09-v2";
 
 interface UpdateEntry {
   tag: string;
@@ -25,37 +28,37 @@ const UPDATES: UpdateEntry[] = [
   {
     tag: "Ava",
     tagColor: "#1C54F2",
-    title: "Out-of-hours transfers + insurance pre-auth",
+    title: "LangGraph call routing + phone provisioning",
     description:
-      "Ava now handles call transfers outside clinic hours and can run insurance pre-authorisation checks during booking. Receptionist UI updated to match.",
+      "Ava now uses a LangGraph state machine for intelligent call routing — transfers, holds, and voicemail are context-aware. Phone numbers auto-provision when you enable Ava for a clinic.",
   },
   {
     tag: "Ava",
     tagColor: "#1C54F2",
-    title: "Critical voice bug fixes",
+    title: "Insurance pre-auth + out-of-hours transfers",
     description:
-      "Fixed model ID mismatch, Twilio signature validation, and HMAC comparison bugs that could cause calls to drop. ElevenLabs verification extracted into a shared module.",
+      "Ava can run insurance pre-authorisation checks during booking and route calls outside clinic hours with callback SMS notifications.",
+  },
+  {
+    tag: "Intelligence",
+    tagColor: "#8B5CF6",
+    title: "Live benchmarks + data freshness indicators",
+    description:
+      "Intelligence KPIs now pull from live clinic data with week-by-week breakdowns. A freshness bar shows exactly how current your numbers are.",
   },
   {
     tag: "Security",
     tagColor: "#EF4444",
-    title: "Production audit — 5 of 6 issues resolved",
+    title: "Production hardening — 492 tests, PMS encryption",
     description:
-      "Addressed security and config findings from the latest production audit. Idle timeout that blocked all API calls after 30 minutes has been removed.",
+      "Full security audit pass with encrypted PMS credentials, superadmin account controls, and a new comms engine. Test coverage expanded to 492 tests across the platform.",
   },
   {
-    tag: "Platform",
-    tagColor: "#059669",
-    title: "Notification panel + splash screen fixes",
+    tag: "Pulse",
+    tagColor: "#0891B2",
+    title: "Honest empty states + setup guidance",
     description:
-      "Notification panel no longer crashes on empty state. Click an insight to mark it read and jump to Intelligence. Splash screen progress bar removed for cleaner startup.",
-  },
-  {
-    tag: "Dashboard",
-    tagColor: "#8B5CF6",
-    title: "Settings data loss fix + 2FA error handling",
-    description:
-      "Fixed a bug where Settings changes could silently disappear. 2FA setup errors now surface properly. Dashboard sync improved for real-time consistency.",
+      "Pulse pages now show clear setup prompts instead of misleading zeros. Patient sync refreshes names and contacts from your PMS on every run.",
   },
 ];
 
@@ -114,6 +117,49 @@ export default function WhatsNew() {
     }
   }, [user]);
 
+  // Focus trap: keep Tab/Shift+Tab inside modal, Escape to dismiss
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    previousFocusRef.current = document.activeElement as HTMLElement;
+
+    const timer = setTimeout(() => {
+      const gotItBtn = dialogRef.current?.querySelector<HTMLElement>("[data-autofocus]");
+      gotItBtn?.focus();
+    }, 100);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { dismiss(); return; }
+      if (e.key !== "Tab") return;
+
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable || focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocusRef.current?.focus();
+    };
+  }, [visible, dismiss]);
+
   return (
     <AnimatePresence>
       {visible && (
@@ -127,9 +173,11 @@ export default function WhatsNew() {
             background: "rgba(11, 37, 69, 0.55)",
             backdropFilter: "blur(6px)",
           }}
+          role="presentation"
           onClick={dismiss}
         >
           <motion.div
+            ref={dialogRef}
             initial={{ opacity: 0, scale: 0.93, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -8 }}
@@ -138,6 +186,9 @@ export default function WhatsNew() {
               delay: 0.08,
               ease: [0.22, 1, 0.36, 1],
             }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="whats-new-title"
             className="w-full max-w-lg rounded-2xl overflow-hidden bg-cream"
             style={{ boxShadow: "0 32px 80px rgba(0, 0, 0, 0.25)" }}
             onClick={(e) => e.stopPropagation()}
@@ -151,9 +202,10 @@ export default function WhatsNew() {
               }}
             >
               <button
+                type="button"
                 onClick={dismiss}
                 className="absolute top-4 right-4 p-1.5 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors"
-                aria-label="Close"
+                aria-label="Close what's new"
               >
                 <X size={16} />
               </button>
@@ -166,11 +218,12 @@ export default function WhatsNew() {
                       "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))",
                     border: "1px solid rgba(255,255,255,0.1)",
                   }}
+                  aria-hidden="true"
                 >
                   <Sparkles size={18} className="text-white" />
                 </div>
                 <div>
-                  <h2 className="font-display text-[20px] text-white leading-tight">
+                  <h2 id="whats-new-title" className="font-display text-[20px] text-white leading-tight">
                     What&apos;s new
                   </h2>
                   <p className="text-[12px] text-white/40 mt-0.5">
@@ -181,15 +234,17 @@ export default function WhatsNew() {
             </div>
 
             {/* Updates list */}
-            <div className="px-8 py-5 space-y-4 max-h-[340px] overflow-y-auto">
+            <div className="px-8 py-5 space-y-4 max-h-[340px] overflow-y-auto" role="list">
               {UPDATES.map((entry) => (
                 <div
                   key={entry.title}
                   className="flex items-start gap-3"
+                  role="listitem"
                 >
                   <div
                     className="mt-1 w-2 h-2 rounded-full shrink-0"
                     style={{ background: entry.tagColor }}
+                    aria-hidden="true"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-0.5">
@@ -217,7 +272,9 @@ export default function WhatsNew() {
             {/* Footer */}
             <div className="px-8 py-5 border-t border-border">
               <button
+                type="button"
                 onClick={dismiss}
+                data-autofocus
                 className="btn-primary w-full justify-center"
               >
                 Got it

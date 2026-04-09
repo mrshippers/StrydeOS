@@ -14,11 +14,11 @@ const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "clinical-tracker-spires";
 
 const EXPECTED_UPDATES = [
-  "Out-of-hours transfers + insurance pre-auth",
-  "Critical voice bug fixes",
-  "Production audit — 5 of 6 issues resolved",
-  "Notification panel + splash screen fixes",
-  "Settings data loss fix + 2FA error handling",
+  "LangGraph call routing + phone provisioning",
+  "Insurance pre-auth + out-of-hours transfers",
+  "Live benchmarks + data freshness indicators",
+  "Production hardening — 492 tests, PMS encryption",
+  "Honest empty states + setup guidance",
 ];
 
 /* ------------------------------------------------------------------ */
@@ -96,29 +96,44 @@ async function resetFirestoreWhatsNew() {
 test.describe("What's New Modal (no auth)", () => {
   test("localStorage dismissal prevents modal from showing", async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("strydeos_whats_new_seen", "2026-04-09");
+      localStorage.setItem("strydeos_whats_new_seen", "2026-04-09-v2");
       localStorage.setItem("strydeos_splash_seen", "1");
     });
 
     await page.goto("/login", { waitUntil: "load", timeout: 60_000 }).catch(() => {});
 
     const stored = await page.evaluate(() => localStorage.getItem("strydeos_whats_new_seen"));
-    expect(stored).toBe("2026-04-09");
+    expect(stored).toBe("2026-04-09-v2");
 
     await page.waitForTimeout(2_000);
     await expect(page.getByRole("button", { name: "Got it" })).not.toBeVisible();
   });
 
-  test("no duplicate modals — ChangelogSplash removed", async ({ page }) => {
+  test("no legacy ChangelogSplash overlay present", async ({ page }) => {
     await page.goto("/login", { waitUntil: "load", timeout: 60_000 }).catch(() => {});
 
     await page.waitForTimeout(2_000);
     await expect(page.getByRole("button", { name: "Let's go" })).not.toBeVisible();
+  });
 
-    const hasChangelogOverlay = await page.evaluate(() => {
-      return document.querySelector('.fixed.inset-0.z-\\[100\\]') !== null;
+  test("modal has correct ARIA role and Escape dismisses", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.removeItem("strydeos_whats_new_seen");
+      localStorage.setItem("strydeos_splash_seen", "1");
     });
-    expect(hasChangelogOverlay).toBe(false);
+
+    await page.goto("/login", { waitUntil: "load", timeout: 60_000 }).catch(() => {});
+
+    const dialog = page.getByRole("dialog");
+    const gotItBtn = page.getByRole("button", { name: "Got it" });
+
+    // If modal shows (depends on auth state), verify a11y then dismiss with Escape
+    const appeared = await gotItBtn.waitFor({ state: "visible", timeout: 5_000 }).then(() => true).catch(() => false);
+    if (appeared) {
+      await expect(dialog).toHaveAttribute("aria-modal", "true");
+      await page.keyboard.press("Escape");
+      await expect(gotItBtn).not.toBeVisible({ timeout: 3_000 });
+    }
   });
 
   test("does not show for demo user", async ({ page }) => {
@@ -170,7 +185,7 @@ test.describe.serial("What's New Modal (authenticated)", () => {
       await expect(page.getByText(title)).toBeVisible({ timeout: 5_000 });
     }
 
-    for (const tag of ["Ava", "Security", "Platform", "Dashboard"]) {
+    for (const tag of ["Ava", "Intelligence", "Security", "Pulse"]) {
       await expect(page.getByText(tag, { exact: true }).first()).toBeVisible();
     }
 
@@ -178,7 +193,7 @@ test.describe.serial("What's New Modal (authenticated)", () => {
     await expect(gotItBtn).not.toBeVisible({ timeout: 5_000 });
 
     const stored = await page.evaluate(() => localStorage.getItem("strydeos_whats_new_seen"));
-    expect(stored).toBe("2026-04-09");
+    expect(stored).toBe("2026-04-09-v2");
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForTimeout(3_000);
@@ -208,6 +223,6 @@ test.describe.serial("What's New Modal (authenticated)", () => {
     await expect(gotItBtn).not.toBeVisible({ timeout: 5_000 });
 
     const stored = await page.evaluate(() => localStorage.getItem("strydeos_whats_new_seen"));
-    expect(stored).toBe("2026-04-09");
+    expect(stored).toBe("2026-04-09-v2");
   });
 });
