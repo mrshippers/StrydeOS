@@ -12,7 +12,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const nextConfig: NextConfig = {
-  eslint: { ignoreDuringBuilds: false },
+  eslint: {
+    // Lint production source only — test files excluded from build lint.
+    // Tests are linted separately in CI via `npx eslint`.
+    dirs: ["src/app", "src/components", "src/lib", "src/data", "src/types"],
+  },
   outputFileTracingRoot: resolve(__dirname, ".."),
   serverExternalPackages: [
     "firebase-admin",
