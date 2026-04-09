@@ -71,7 +71,8 @@ export function useInsightEngineUnlock(): UseInsightEngineUnlockResult {
       const ref = doc(db, "clinics", clinicId, "milestones", "insight_engine_unlocked");
       await updateDoc(ref, { displayedAt: new Date().toISOString() });
     } catch (err) {
-      console.error("[useInsightEngineUnlock] markDisplayed failed:", err);
+      console.error("[useInsightEngineUnlock] markDisplayed failed:", err instanceof Error ? err.message : err);
+      throw err;
     }
   }, [clinicId]);
 
@@ -82,7 +83,8 @@ export function useInsightEngineUnlock(): UseInsightEngineUnlockResult {
       await updateDoc(ref, { dismissedAt: new Date().toISOString() });
       setShouldShow(false);
     } catch (err) {
-      console.error("[useInsightEngineUnlock] dismiss failed:", err);
+      console.error("[useInsightEngineUnlock] dismiss failed:", err instanceof Error ? err.message : err);
+      throw err;
     }
   }, [clinicId]);
 

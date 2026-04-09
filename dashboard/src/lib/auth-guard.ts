@@ -74,7 +74,9 @@ export async function verifyApiRequest(
 
   if ((now - lastActive) > ACTIVITY_UPDATE_INTERVAL_MS) {
     // Fire-and-forget — don't block the request
-    userDoc.ref.update({ lastActiveAt: new Date().toISOString() }).catch(() => {});
+    userDoc.ref.update({ lastActiveAt: new Date().toISOString() }).catch((err) => {
+      console.warn("[auth-guard] lastActiveAt update failed:", err instanceof Error ? err.message : err);
+    });
   }
 
   return {

@@ -714,7 +714,9 @@ export async function redFlagDetectorNode(
       callId: state.callMeta.callId ?? null,
       flagsFound,
       transcript: state.callerInput,
-    }).catch(() => {});
+    }).catch((err) => {
+      console.error("[red_flag_detector] Failed to write audit log:", err instanceof Error ? err.message : err);
+    });
 
     // Owner/admin notification — read by Pulse dashboard (clinicId-partitioned)
     void db
@@ -727,7 +729,9 @@ export async function redFlagDetectorNode(
         callerPhone: state.callMeta.callerPhone,
         message: `Red flag call: patient directed to A&E. Flags: ${flagsFound.join(", ")}. Follow-up at clinician discretion.`,
         read: false,
-      }).catch(() => {});
+      }).catch((err) => {
+        console.error("[red_flag_detector] Failed to write clinic notification:", err instanceof Error ? err.message : err);
+      });
 
     // Telegram — scaffolded, fires only when TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID are set
     void sendTelegramAlert({
@@ -834,7 +838,9 @@ export async function structuredIntakeNode(
       .collection("sessions")
       .doc(sessionId)
       .set({ structuredIntake: intake }, { merge: true })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("[structuredIntakeNode] Failed to persist intake:", err instanceof Error ? err.message : err);
+      });
   }
 
   return { structuredIntake: intake };

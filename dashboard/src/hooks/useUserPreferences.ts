@@ -102,7 +102,9 @@ export function useUserPreferences() {
         if (debounceTimer.current) clearTimeout(debounceTimer.current);
         debounceTimer.current = setTimeout(() => {
           if (mountedRef.current) {
-            setDoc(doc(firestore, "user_preferences", userId), next).catch(() => {});
+            setDoc(doc(firestore, "user_preferences", userId), next).catch((err) => {
+              console.error("[useUserPreferences] Failed to persist preferences:", err instanceof Error ? err.message : err);
+            });
           }
         }, 500);
 

@@ -314,14 +314,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // On first login, self-heal: ensure clinician doc exists and is linked.
               // Fire-and-forget — non-blocking so it doesn't delay the dashboard render.
               if (profile.firstLogin && profile.clinicId) {
-                getIdToken(fbUser).then((idToken) => {
-                  fetch("/api/clinic/ensure-clinician", {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${idToken}` },
-                  }).catch(() => {
+                getIdToken(fbUser)
+                  .then((idToken) =>
+                    fetch("/api/clinic/ensure-clinician", {
+                      method: "POST",
+                      headers: { Authorization: `Bearer ${idToken}` },
+                    })
+                  )
+                  .then((res) => {
+                    if (res && !res.ok) {
+                      console.warn("[useAuth] ensure-clinician returned", res.status);
+                    }
+                  })
+                  .catch((err) => {
                     // Non-fatal — the user can still use the app
+                    console.warn("[useAuth] First-login self-heal failed:", err instanceof Error ? err.message : err);
                   });
-                }).catch(() => {});
               }
             } else {
               await clearServerSession();

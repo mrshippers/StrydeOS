@@ -85,7 +85,9 @@ export default function AccountSetupWidget() {
       where("active", "==", true),
       limit(1),
     );
-    getDocs(q).then((snap) => setHasClinicians(!snap.empty)).catch(() => {});
+    getDocs(q).then((snap) => setHasClinicians(!snap.empty)).catch((err) => {
+      console.error("[AccountSetupWidget] Failed to check clinician count:", err instanceof Error ? err.message : err);
+    });
   }, [clinicId]);
 
   const steps: SetupStep[] = useMemo(() => {
