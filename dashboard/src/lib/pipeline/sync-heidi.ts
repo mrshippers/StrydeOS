@@ -73,10 +73,9 @@ export async function syncHeidi(
       }
     } catch { /* CREDENTIAL_MASTER_SECRET not set — use as-is */ }
     const clientConfig = { apiKey, region: config.region };
-    const clinicianEmailMap = config.clinicianEmailMap ?? {};
     const since = config.lastSyncAt ?? undefined;
 
-    // ── Load clinicians for email mapping ──────────────────────────────────
+    // ── Load opted-in clinicians (heidiEnabled = true, heidiEmail set) ────
     const cliniciansSnap = await db
       .collection("clinics")
       .doc(clinicId)
@@ -84,11 +83,14 @@ export async function syncHeidi(
       .where("active", "==", true)
       .get();
 
-    const clinicians = cliniciansSnap.docs.map((d) => ({
-      id: d.id,
-      name: d.data().name as string,
-      email: (clinicianEmailMap[d.id] ?? d.data().email) as string | undefined,
-    }));
+    const clinicians = cliniciansSnap.docs
+      .map((d) => ({
+        id: d.id,
+        name: d.data().name as string,
+        heidiEnabled: d.data().heidiEnabled as boolean | undefined,
+        email: d.data().heidiEmail as string | undefined,
+      }))
+      .filter((c) => c.heidiEnabled === true && !!c.email);
 
     // ── Load patients for matching ─────────────────────────────────────────
     const patientsSnap = await db
@@ -117,13 +119,8 @@ export async function syncHeidi(
       .doc(clinicId)
       .collection("patients");
 
-    // ── Process each clinician ──────────────────────────────────────────────
+    // ── Process each opted-in clinician ────────────────────────────────────
     for (const clinician of clinicians) {
-      if (!clinician.email) {
-        errors.push(`Clinician ${clinician.name} has no Heidi email — skipping`);
-        continue;
-      }
-
       let jwt: string;
       try {
         jwt = await getHeidiJwt(clientConfig, clinician.email, clinician.id);

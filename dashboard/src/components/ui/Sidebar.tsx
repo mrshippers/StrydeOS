@@ -136,7 +136,13 @@ function useAlerts() {
 }
 
 function usePulseBadge(): number {
+  const { user } = useAuth();
   const { churnRisk } = usePatients();
+  // Only show the badge when the clinic has Pulse enabled (featureFlag: continuity).
+  // Without it, churnRisk patients are imported from the PMS but Pulse has never
+  // attempted any comms — surfacing a count would be meaningless / alarming.
+  const pulseEnabled = user?.clinicProfile?.featureFlags?.continuity ?? false;
+  if (!pulseEnabled) return 0;
   return churnRisk.length;
 }
 
@@ -159,6 +165,13 @@ export default function Sidebar() {
   const insightUnreadCount = insightEvents.filter((e) => !e.readAt).length;
   const pulseBadge = usePulseBadge();
   const totalBellCount = unreadCount + insightUnreadCount;
+
+  // Marks every alert AND every unread insight event as read in a single action
+  const markEverythingRead = useCallback(async () => {
+    markAllRead();
+    const unreadInsights = insightEvents.filter((e) => !e.readAt);
+    await Promise.allSettled(unreadInsights.map((e) => markInsightRead(e.id)));
+  }, [markAllRead, insightEvents, markInsightRead]);
 
   // ─── Collapsible sidebar state (shared via context for layout sync) ────────
   const { collapsed, setCollapsed } = useSidebar();
@@ -683,7 +696,7 @@ export default function Sidebar() {
           onClose={() => setNotifOpen(false)}
           allAlerts={allAlerts}
           readHashes={readHashes}
-          markAllRead={markAllRead}
+          markAllRead={markEverythingRead}
           insightEvents={insightEvents}
           markInsightRead={markInsightRead}
         />

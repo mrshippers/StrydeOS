@@ -102,34 +102,37 @@ export default function NotificationPanel({
                   </span>
                 )}
               </div>
-              <button
-                onClick={onClose}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
-              >
-                <X size={15} />
-              </button>
+              <div className="flex items-center gap-2">
+                {totalUnread > 0 && (
+                  <button
+                    type="button"
+                    onClick={markAllRead}
+                    className="flex items-center gap-1 text-[10px] font-semibold text-white/25 hover:text-white/50 transition-colors"
+                  >
+                    <CheckCheck size={10} />
+                    Mark all read
+                  </button>
+                )}
+                <button
+                  type="button"
+                  aria-label="Close notifications"
+                  onClick={onClose}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
+                >
+                  <X size={15} />
+                </button>
+              </div>
             </div>
 
             {/* ── Scrollable content ────────────────────────────── */}
             <div className="flex-1 overflow-y-auto">
               {/* ─── Tier 1: Alerts ─────────────────────────────── */}
               <div className="px-5 pt-4 pb-2">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle size={12} className="text-white/30" />
-                    <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
-                      Alerts
-                    </p>
-                  </div>
-                  {unreadAlertCount > 0 && (
-                    <button
-                      onClick={markAllRead}
-                      className="flex items-center gap-1 text-[10px] font-semibold text-white/25 hover:text-white/50 transition-colors"
-                    >
-                      <CheckCheck size={10} />
-                      Mark all read
-                    </button>
-                  )}
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle size={12} className="text-white/30" />
+                  <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
+                    Alerts
+                  </p>
                 </div>
 
                 {allAlerts.length === 0 ? (
