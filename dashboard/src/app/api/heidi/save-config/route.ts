@@ -3,6 +3,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, handleApiError, requireRole } from "@/lib/auth-guard";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
 import { validateApiKey } from "@/lib/integrations/heidi/client";
+import { encryptCredential } from "@/lib/crypto/credentials";
 import { withRequestLog } from "@/lib/request-logger";
 
 const INTEGRATIONS_CONFIG = "integrations_config";
@@ -55,7 +56,7 @@ async function handler(request: NextRequest) {
       .set(
         {
           enabled: true,
-          apiKey: apiKey.trim(),
+          apiKey: encryptCredential(apiKey.trim(), clinicId),
           region,
           configuredAt: now,
           status: "connected",

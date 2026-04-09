@@ -30,8 +30,11 @@ function twimlResponse(body: string, status = 200): NextResponse {
 }
 
 export async function POST(req: NextRequest) {
-  // Validate Twilio signature — POST body params must be included in HMAC
-  if (TWILIO_AUTH_TOKEN) {
+  // Validate Twilio signature — fail closed if auth not configured
+  if (!TWILIO_AUTH_TOKEN) {
+    return new NextResponse("Twilio auth not configured", { status: 500 });
+  }
+  {
     const sig = req.headers.get("x-twilio-signature") ?? "";
     const body = await req.text();
     const params: Record<string, string> = {};

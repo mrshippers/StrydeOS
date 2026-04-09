@@ -12,8 +12,11 @@ const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN ?? "";
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
 
-  // Validate Twilio signature
-  if (TWILIO_AUTH_TOKEN) {
+  // Validate Twilio signature — fail closed if auth not configured
+  if (!TWILIO_AUTH_TOKEN) {
+    return new NextResponse("Twilio auth not configured", { status: 500 });
+  }
+  {
     const sig = req.headers.get("x-twilio-signature") ?? "";
     const params: Record<string, string> = {};
     formData.forEach((value, key) => { params[key] = value.toString(); });

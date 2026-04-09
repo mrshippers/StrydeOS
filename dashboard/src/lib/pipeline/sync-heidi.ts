@@ -64,7 +64,15 @@ export async function syncHeidi(
       };
     }
 
-    const clientConfig = { apiKey: config.apiKey, region: config.region };
+    // Decrypt API key if encrypted (backward-compatible with plaintext)
+    let apiKey = config.apiKey;
+    try {
+      const { isEncrypted, decryptCredential } = await import("@/lib/crypto/credentials");
+      if (isEncrypted(apiKey)) {
+        apiKey = decryptCredential(apiKey, clinicId);
+      }
+    } catch { /* CREDENTIAL_MASTER_SECRET not set — use as-is */ }
+    const clientConfig = { apiKey, region: config.region };
     const clinicianEmailMap = config.clinicianEmailMap ?? {};
     const since = config.lastSyncAt ?? undefined;
 
