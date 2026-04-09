@@ -57,14 +57,15 @@ export default withSentryConfig(withBundleAnalyzer(withNextIntl(nextConfig)), {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
 
-  // Upload source maps during CI builds only — keeps local builds fast
-  silent: !process.env.CI,
+  // Suppress output when no auth token — avoids "no auth token" noise in CI
+  silent: !process.env.SENTRY_AUTH_TOKEN,
 
-  // Disable source map upload when no auth token is present
   authToken: process.env.SENTRY_AUTH_TOKEN,
 
-  // Tree-shake Sentry debug code from production bundles
-  disableLogger: true,
+  // Tree-shake Sentry debug statements from production bundles (replaces deprecated disableLogger)
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+  },
 
   // Tunnel Sentry requests through our origin to avoid ad-blockers
   tunnelRoute: "/monitoring",
