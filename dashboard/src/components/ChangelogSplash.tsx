@@ -8,7 +8,6 @@ import { brand } from "@/lib/brand";
 import { MonolithMark } from "@/components/MonolithLogo";
 
 const STORAGE_KEY = "strydeos_changelog_v2026_03_29";
-const GATED_EMAIL = "jamal@spiresphysiotherapy.com";
 
 interface ChangeCard {
   tag: string;
@@ -69,7 +68,6 @@ export default function ChangelogSplash() {
 
   useEffect(() => {
     if (!user?.email) return;
-    if (user.email !== GATED_EMAIL) return;
     try {
       if (localStorage.getItem(STORAGE_KEY)) return;
     } catch {

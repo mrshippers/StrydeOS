@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth } from "@/lib/firebase-admin";
 import { signSession, SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/session";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { withRequestLog } from "@/lib/request-logger";
 
 /**
@@ -11,7 +11,8 @@ import { withRequestLog } from "@/lib/request-logger";
  */
 async function postHandler(request: NextRequest) {
   // Rate limit: 10 requests per IP per minute to mitigate brute-force token replay
-  const { limited, remaining } = checkRateLimit(request, { limit: 10, windowMs: 60_000 });
+  // Uses async check to prefer Upstash Redis (distributed) over in-memory (per cold-start only)
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 10, windowMs: 60_000 });
   if (limited) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },

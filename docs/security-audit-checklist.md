@@ -39,7 +39,7 @@
 - [x] **Superadmin bypass is explicit** — not accidental; clearly coded and auditable
 - [x] **Cron endpoints verify secret** — `CRON_SECRET` header checked on scheduled routes
 - [x] **Webhook endpoints verify signatures** — HMAC/signature validation on inbound webhooks
-- [x] **Session/token expiry** — auth tokens have reasonable TTL (1hr HMAC-signed cookie)
+- [x] **Session/token expiry** — auth tokens have reasonable TTL (8hr HMAC-signed cookie, matches clinical workday)
 - [x] **Middleware protects UI routes** — unauthenticated users redirected to login
 - [x] **No auth bypass via direct URL** — protected pages can't be accessed by guessing paths
 - [x] **Enterprise RBAC enforcement** — 4-tier hierarchy (superadmin > owner > admin > clinician) enforced at page, component, sidebar, API, and Firestore layers

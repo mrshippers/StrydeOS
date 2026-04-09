@@ -38,6 +38,46 @@ Full list of optional env vars (PMS, comms, n8n, etc.) is in [.env.example](.env
 
 ---
 
+## 1b. Configure Upstash Redis (CRITICAL for multi-clinic)
+
+**Required before multi-clinic production launch.** The app uses rate limiting for API endpoints via Upstash Redis. See `src/lib/rate-limit.ts` lines 8–10: "The in-memory fallback is acceptable for single-clinic development but MUST be replaced with Redis before multi-clinic production launch."
+
+### Why Redis is required
+
+Vercel serverless functions are **ephemeral** — each cold start creates a new instance. The in-memory rate limit store resets on cold start, so:
+- Instance 1 serves requests 1–50 from IP `203.0.113.1`
+- Cold start → Instance 2 created
+- Instance 2 resets rate limit counter for IP `203.0.113.1` to 0
+- Attacker can bypass limits by triggering cold starts
+
+**Redis solves this:** Rate limit state persists across instances.
+
+### Setup
+
+1. **Create Upstash Redis database:**
+   - Go to https://console.upstash.com
+   - Create a new Redis database (free tier available; pick `eu-west-1` for London data residency)
+   - Copy **REST API URL** and **REST API Token**
+
+2. **Set environment variables in Vercel:**
+   - `UPSTASH_REDIS_REST_URL` = REST API URL from Upstash console
+   - `UPSTASH_REDIS_REST_TOKEN` = REST API Token from Upstash console
+
+3. **Verify Redis is working:**
+   - Call `/api/health` from your app (once implemented; see Immediate Actions)
+   - If Redis is unavailable, the health check will report it
+
+### Fallback behavior
+
+If Redis credentials are missing or Redis is unavailable:
+- Rate limiting falls back to in-memory per-instance (development only)
+- Logs a warning but does NOT block requests (fail-open strategy)
+- Multi-clinic production WILL bypass rate limits — this is a **silent failure**
+
+**Action:** Always verify `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set in production.
+
+---
+
 ## 2. Seed production Firestore (and Auth)
 
 From your machine (with Firebase Admin credentials for the **production** project):

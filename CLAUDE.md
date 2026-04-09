@@ -224,7 +224,7 @@ Irreversible = multi-tenant data modelling, real-time listener architecture, com
 - **Four-tier role hierarchy:** `superadmin > owner > admin > clinician`
 - Role is **always read from Firestore** (`users/{uid}.role`) — never from JWT claims or client state
 - Permissions enforced at **four layers:** middleware (session cookie), AuthGuard (client redirect), API routes (`requireRole()`), Firestore security rules
-- Session cookie: HMAC-signed, HttpOnly, 1hr TTL — contains only `{ uid, exp }`, no role
+- Session cookie: HMAC-signed, HttpOnly, 8hr TTL (matches clinical workday) — contains only `{ uid, exp }`, no role
 
 #### Role Access Summary
 

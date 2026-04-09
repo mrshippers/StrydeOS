@@ -42,8 +42,23 @@ export default function SecurityCard() {
       return;
     }
 
-    if (newPassword.length < 8) {
-      toast("New password must be at least 8 characters", "error");
+    if (newPassword.length < 10) {
+      toast("New password must be at least 10 characters", "error");
+      return;
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+      toast("Password must contain at least one uppercase letter", "error");
+      return;
+    }
+
+    if (!/\d/.test(newPassword)) {
+      toast("Password must contain at least one number", "error");
+      return;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      toast("Password must contain at least one special character", "error");
       return;
     }
 
@@ -182,7 +197,7 @@ export default function SecurityCard() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password (min 8 characters)"
+                placeholder="Min 10 chars, uppercase, number, special char"
                 className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
                 disabled={changingPassword}
               />
@@ -215,7 +230,7 @@ export default function SecurityCard() {
             </button>
 
             <p className="text-[11px] text-muted mt-2">
-              Your password must be at least 8 characters long and different from your current password.
+              At least 10 characters with an uppercase letter, a number, and a special character.
             </p>
           </div>
         </div>

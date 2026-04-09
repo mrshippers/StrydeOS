@@ -25,6 +25,13 @@ export async function writeAuditLog(
       .add(auditEntry);
   } catch (err) {
     console.error("[audit log write error]", err);
+    // Audit log failures must be tracked — silent loss of audit trail is a compliance risk
+    try {
+      const Sentry = await import("@sentry/nextjs");
+      Sentry.captureException(err, { tags: { context: "audit_log_write", clinicId } });
+    } catch {
+      // Sentry unavailable — console.error above is the last resort
+    }
   }
 }
 

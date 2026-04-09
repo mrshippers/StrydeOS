@@ -67,7 +67,7 @@ interface ReviewLike {
   platform?: string;
 }
 
-function aggregateWeek(
+export function aggregateWeek(
   appointments: AppointmentLike[],
   weekStart: string,
   clinicianId: string,
