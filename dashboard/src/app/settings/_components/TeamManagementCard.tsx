@@ -4,10 +4,13 @@ import { Plus, Check, X, Loader2, CheckCircle2, ArrowRight, Trash2 } from "lucid
 import { brand } from "@/lib/brand";
 import { getInitials } from "@/lib/utils";
 import type { Clinician, ClinicProfile, OnboardingState } from "@/types";
+import ClinicianHeidiToggle from "./ClinicianHeidiToggle";
 
 interface TeamManagementCardProps {
   clinicProfile: ClinicProfile | null;
   clinicians: Clinician[];
+  /** True when the clinic-level Heidi integration is connected (apiKey saved, enabled). */
+  clinicHeidiConnected?: boolean;
   canManageTeam: boolean;
   showOnboarding: boolean;
   onboarding: OnboardingState;
@@ -40,6 +43,7 @@ interface TeamManagementCardProps {
 export default function TeamManagementCard({
   clinicProfile: cp,
   clinicians,
+  clinicHeidiConnected = false,
   canManageTeam,
   showOnboarding,
   onboarding,
@@ -286,6 +290,12 @@ export default function TeamManagementCard({
                       </p>
                     )}
                   </div>
+
+                  {/* Heidi clinical notes opt-in */}
+                  <ClinicianHeidiToggle
+                    clinician={c}
+                    clinicHeidiConnected={clinicHeidiConnected}
+                  />
 
                   {/* Remove clinician */}
                   {canManageTeam && (

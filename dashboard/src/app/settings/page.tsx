@@ -494,6 +494,31 @@ export default function SettingsPage() {
   const [profileLastName, setProfileLastName] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
 
+  // Clinic-level Heidi integration status — gates the per-clinician opt-in
+  // toggle in Clinic Management. Subscribes separately so it stays live when
+  // the user connects Heidi in the Integrations section on the same page.
+  const [clinicHeidiConnected, setClinicHeidiConnected] = useState(false);
+  useEffect(() => {
+    if (!user?.clinicId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { getDoc, doc: fbDoc } = await import("firebase/firestore");
+        const { db: clientDb } = await import("@/lib/firebase");
+        if (!clientDb) return;
+        const snap = await getDoc(
+          fbDoc(clientDb, "clinics", user.clinicId, "integrations_config", "heidi"),
+        );
+        if (cancelled) return;
+        const data = snap.exists() ? snap.data() : null;
+        setClinicHeidiConnected(!!data?.enabled && !!data?.apiKey);
+      } catch {
+        if (!cancelled) setClinicHeidiConnected(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.clinicId]);
+
   const [clinicName, setClinicName] = useState("");
   const [clinicAddress, setClinicAddress] = useState("");
   const [clinicPhone, setClinicPhone] = useState("");
@@ -2337,6 +2362,7 @@ export default function SettingsPage() {
       <TeamManagementCard
         clinicProfile={cp}
         clinicians={clinicians}
+        clinicHeidiConnected={clinicHeidiConnected}
         canManageTeam={canManageTeam}
         showOnboarding={showOnboarding}
         onboarding={onboarding}

@@ -31,10 +31,12 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { resolveTemplate, DEFAULT_SEQUENCE_DEFINITIONS } from "@/types/comms";
+import type { CommsChannel } from "@/types";
 
 // Derive previews from the canonical sequence definitions + SMS_TEMPLATES.
 // Each preview shows the first step body so what users see matches what patients receive.
-const SEQUENCE_PREVIEWS: Record<string, { channel: "sms" | "email"; subject?: string; body: string }> =
+// Only SMS/email previews render — whatsapp sequences (if any) fall through to the string fallback.
+const SEQUENCE_PREVIEWS: Record<string, { channel: CommsChannel; subject?: string; body: string }> =
   Object.fromEntries(
     DEFAULT_SEQUENCE_DEFINITIONS.map((seq) => {
       const step = seq.steps[0];

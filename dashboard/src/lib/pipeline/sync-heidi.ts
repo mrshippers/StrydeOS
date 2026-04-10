@@ -90,7 +90,10 @@ export async function syncHeidi(
         heidiEnabled: d.data().heidiEnabled as boolean | undefined,
         email: d.data().heidiEmail as string | undefined,
       }))
-      .filter((c) => c.heidiEnabled === true && !!c.email);
+      .filter(
+        (c): c is { id: string; name: string; heidiEnabled: boolean; email: string } =>
+          c.heidiEnabled === true && !!c.email,
+      );
 
     // ── Load patients for matching ─────────────────────────────────────────
     const patientsSnap = await db
