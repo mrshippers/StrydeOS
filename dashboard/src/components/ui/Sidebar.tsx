@@ -83,8 +83,11 @@ const SYSTEM_ITEMS = [
 
 const READ_ALERTS_KEY = "strydeos_read_alerts";
 
-function alertHash(clinicianName: string, alert: AlertFlagProps): string {
-  return `${clinicianName}:${alert.metric}:${alert.current}`;
+// Hash keyed on clinician + metric + week, NOT the current value.
+// Including the live metric value caused dismissed alerts to reappear
+// every time metrics synced (new value → new hash → unread again).
+function alertHash(clinicianName: string, alert: AlertFlagProps, weekStart: string): string {
+  return `${clinicianName}:${alert.metric}:${weekStart}`;
 }
 
 function useAlerts() {
@@ -103,7 +106,7 @@ function useAlerts() {
       computeAlerts(stats).map((alert) => ({
         ...alert,
         clinicianName,
-        hash: alertHash(clinicianName, alert),
+        hash: alertHash(clinicianName, alert, stats.weekStart),
       }))
     );
   }, [rows]);

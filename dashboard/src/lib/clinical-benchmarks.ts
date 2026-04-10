@@ -13,8 +13,7 @@
  */
 
 import type { MetricStatus } from "@/types";
-
-const SESSION_RATE_PENCE = 6500;
+import { SESSION_RATE_PENCE } from "@/lib/constants";
 
 export interface MetricBenchmark {
   key: string;

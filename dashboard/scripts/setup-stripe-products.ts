@@ -34,24 +34,24 @@ const stripe = new Stripe(SECRET_KEY, { apiVersion: "2026-02-25.clover" });
 
 const PRICING = {
   intelligence: {
-    solo:   { month:  7900, year:  75840 },
+    solo:   { month:  6900, year:  66240 },
+    studio: { month: 10900, year: 104640 },
+    clinic: { month: 17900, year: 171840 },
+  },
+  ava: {
+    solo:   { month: 11900, year: 114240 },
+    studio: { month: 17900, year: 171840 },
+    clinic: { month: 25900, year: 248640 },
+  },
+  pulse: {
+    solo:   { month:  8900, year:  85440 },
     studio: { month: 12900, year: 123840 },
     clinic: { month: 19900, year: 191040 },
   },
-  ava: {
-    solo:   { month: 14900, year: 143040 },
-    studio: { month: 19900, year: 191040 },
-    clinic: { month: 29900, year: 287040 },
-  },
-  pulse: {
-    solo:   { month:  9900, year:  95040 },
-    studio: { month: 14900, year: 143040 },
-    clinic: { month: 22900, year: 219840 },
-  },
   fullstack: {
-    solo:   { month: 27900, year: 267840 },
-    studio: { month: 39900, year: 383040 },
-    clinic: { month: 59900, year: 575040 },
+    solo:   { month: 22900, year: 219840 },
+    studio: { month: 34900, year: 335040 },
+    clinic: { month: 49900, year: 479040 },
   },
 } as const;
 
@@ -214,7 +214,7 @@ async function main() {
   console.log("\n" + "─".repeat(60));
   console.log("\nNext steps:");
   console.log("  1. Paste the block above into .env.local (keep STRIPE_SECRET_KEY and add STRIPE_WEBHOOK_SECRET).");
-  console.log("  2. Local dev: run 'stripe listen --forward-to localhost:3000/api/billing/webhooks' and set STRIPE_WEBHOOK_SECRET=whsec_... from the output.");
+  console.log("  2. Local dev: run 'stripe listen --forward-to localhost:3000/api/billing/webhooks' and set STRIPE_WEBHOOK_SECRET from the whsec_... value in the output.");
   console.log("  3. Production: add the same price IDs + STRIPE_WEBHOOK_SECRET in Vercel; register the webhook URL in Stripe Dashboard (customer.subscription.*, invoice.payment_failed).");
   console.log("  4. Restart dev server: npm run dev\n");
 }

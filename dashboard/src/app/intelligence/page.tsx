@@ -283,16 +283,6 @@ function MiniSparkline({ data: rawData, color, higherIsBetter }: { data: number[
 
 // ─── Value Tab ────────────────────────────────────────────────────────────────
 
-/** Format pence as £ with comma separators */
-function fmtPence(pence: number): string {
-  const pounds = Math.round(pence / 100);
-  return `£${pounds.toLocaleString("en-GB")}`;
-}
-
-function fmtPenceDecimal(pence: number): string {
-  const pounds = pence / 100;
-  return `£${pounds.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-}
 
 const MODULE_DESCRIPTIONS: Record<string, (s: { callsHandled?: number; bookingsFromAva?: number; patientsReengaged?: number; insightsActedOn?: number }) => string> = {
   ava: (s) => `${s.callsHandled ?? 0} calls handled, ${s.bookingsFromAva ?? 0} bookings`,
@@ -366,7 +356,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
           <div>
             <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">This Month</p>
             <h2 className="font-display text-3xl md:text-4xl text-navy leading-tight">
-              StrydeOS generated {fmtPence(totalValueThisMonth)}
+              StrydeOS generated {formatPence(totalValueThisMonth)}
             </h2>
           </div>
           <div className="flex items-center gap-3 shrink-0">
@@ -387,15 +377,15 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
                 color: isPositiveRoi ? brand.success : brand.danger,
               }}
             >
-              {isPositiveRoi ? "+" : ""}{fmtPence(netValueThisMonth)} net value
+              {isPositiveRoi ? "+" : ""}{formatPence(netValueThisMonth)} net value
             </span>
           </div>
         </div>
         {summary && (
           <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 pt-4 border-t border-border">
             <span className="text-xs text-muted">{summary.totalEvents} events</span>
-            <span className="text-xs text-muted">High-confidence: {fmtPence(summary.highConfidenceValuePence)}</span>
-            <span className="text-xs text-muted">Subscription: {fmtPence(summary.subscriptionCostPence)}/mo</span>
+            <span className="text-xs text-muted">High-confidence: {formatPence(summary.highConfidenceValuePence)}</span>
+            <span className="text-xs text-muted">Subscription: {formatPence(summary.subscriptionCostPence)}/mo</span>
           </div>
         )}
       </div>
@@ -409,7 +399,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
           >
             <div className="absolute top-0 left-0 right-0 h-1" style={{ background: mod.color }} />
             <h4 className="text-sm font-semibold text-navy mb-1 mt-1">{mod.label}</h4>
-            <p className="font-display text-2xl text-navy mb-2">{fmtPence(mod.totalPence)}</p>
+            <p className="font-display text-2xl text-navy mb-2">{formatPence(mod.totalPence)}</p>
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted">{mod.eventCount} events</span>
               <span className="text-xs text-muted">
@@ -457,7 +447,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
                     <p className="text-xs text-muted leading-relaxed">{evt.description}</p>
                     <p className="text-[11px] text-muted mt-0.5">{timeStr}</p>
                   </div>
-                  <span className="text-sm font-bold text-navy shrink-0 ml-2">{fmtPence(evt.valuePence)}</span>
+                  <span className="text-sm font-bold text-navy shrink-0 ml-2">{formatPence(evt.valuePence)}</span>
                 </div>
               );
             })}
@@ -479,11 +469,11 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
                 </div>
                 <h4 className="text-sm font-semibold text-navy">Cost of Empty Chair</h4>
               </div>
-              <p className="font-display text-2xl text-navy mb-1">{fmtPence(deepMetrics.costOfEmptyChairPence)}</p>
+              <p className="font-display text-2xl text-navy mb-1">{formatPence(deepMetrics.costOfEmptyChairPence)}</p>
               <p className="text-xs text-muted mb-2">per week</p>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted">{deepMetrics.dnaSlots} DNAs + {deepMetrics.unfilledSlots} unfilled</span>
-                <span className="font-semibold text-danger">{fmtPenceDecimal(deepMetrics.costOfEmptyChairAnnualisedPence)}/yr</span>
+                <span className="font-semibold text-danger">{formatPence(deepMetrics.costOfEmptyChairAnnualisedPence)}/yr</span>
               </div>
             </div>
 
@@ -548,12 +538,12 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
                 </div>
                 <h4 className="text-sm font-semibold text-navy">Patient Lifetime Value</h4>
               </div>
-              <p className="font-display text-2xl text-navy mb-1">{fmtPence(deepMetrics.avgLifetimeValuePence)}</p>
-              <p className="text-xs text-muted mb-2">average (median {fmtPence(deepMetrics.medianLifetimeValuePence)})</p>
+              <p className="font-display text-2xl text-navy mb-1">{formatPence(deepMetrics.avgLifetimeValuePence)}</p>
+              <p className="text-xs text-muted mb-2">average (median {formatPence(deepMetrics.medianLifetimeValuePence)})</p>
               {(deepMetrics.insuranceLtvPence != null || deepMetrics.selfPayLtvPence != null) && (
                 <div className="flex items-center gap-4 text-xs text-muted">
-                  {deepMetrics.insuranceLtvPence != null && <span>Insurance: {fmtPence(deepMetrics.insuranceLtvPence)}</span>}
-                  {deepMetrics.selfPayLtvPence != null && <span>Self-pay: {fmtPence(deepMetrics.selfPayLtvPence)}</span>}
+                  {deepMetrics.insuranceLtvPence != null && <span>Insurance: {formatPence(deepMetrics.insuranceLtvPence)}</span>}
+                  {deepMetrics.selfPayLtvPence != null && <span>Self-pay: {formatPence(deepMetrics.selfPayLtvPence)}</span>}
                 </div>
               )}
             </div>
@@ -566,11 +556,11 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
                 </div>
                 <h4 className="text-sm font-semibold text-navy">Revenue per Hour</h4>
               </div>
-              <p className="font-display text-2xl text-navy mb-1">{fmtPence(deepMetrics.revenuePerDeliveredHourPence)}</p>
+              <p className="font-display text-2xl text-navy mb-1">{formatPence(deepMetrics.revenuePerDeliveredHourPence)}</p>
               <p className="text-xs text-muted mb-2">per delivered hour</p>
               {deepMetrics.revenuePerAvailableHourPence != null && (
                 <div className="text-xs text-muted">
-                  Available hour: {fmtPence(deepMetrics.revenuePerAvailableHourPence)}
+                  Available hour: {formatPence(deepMetrics.revenuePerAvailableHourPence)}
                 </div>
               )}
             </div>
@@ -604,7 +594,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
                   <Tooltip
                     content={<ChartTooltip />}
                     formatter={(v: number, name: string) => [
-                      name === "percentOfInitial" ? `${v.toFixed(0)}%` : fmtPence(v),
+                      name === "percentOfInitial" ? `${v.toFixed(0)}%` : formatPence(v),
                       name === "percentOfInitial" ? "Retained" : "Revenue Lost",
                     ]}
                   />
@@ -642,7 +632,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
                           </span>
                         </td>
                         <td className="py-2 px-3 text-right text-muted">{step.dropoffFromPrevious.toFixed(0)}%</td>
-                        <td className="py-2 px-3 text-right font-semibold text-danger">{fmtPence(step.revenueLostPence)}</td>
+                        <td className="py-2 px-3 text-right font-semibold text-danger">{formatPence(step.revenueLostPence)}</td>
                       </tr>
                     ))}
                   </tbody>

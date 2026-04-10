@@ -51,6 +51,9 @@ async function executePipeline(request: NextRequest, isCronGet = false) {
   const db = getAdminDb();
   const body = isCronGet ? {} : await request.json().catch(() => ({}));
   const targetClinicId = body.clinicId as string | undefined;
+  // backfill=true recomputes all historical weeks using the correct sessionPricePence
+  // fallback — use this once after the revenue fix to repair old metrics_weekly docs.
+  const backfill = body.backfill === true;
   const ip = extractIpFromRequest(request);
 
   if (targetClinicId) {
@@ -58,14 +61,14 @@ async function executePipeline(request: NextRequest, isCronGet = false) {
       requireClinic({ uid: userId, email: userEmail, clinicId: userClinicId!, role: isSuperadmin ? "superadmin" : "owner" } as import("@/lib/auth-guard").VerifiedUser, targetClinicId);
     }
 
-    const result = await runPipeline(db, targetClinicId);
+    const result = await runPipeline(db, targetClinicId, { backfill });
 
     await writeAuditLog(db, targetClinicId, {
       userId,
       userEmail,
       action: "write",
       resource: "pipeline",
-      metadata: { trigger: isCron ? "cron" : "manual", result },
+      metadata: { trigger: isCron ? "cron" : "manual", backfill, result },
       ip,
     });
 
@@ -76,7 +79,7 @@ async function executePipeline(request: NextRequest, isCronGet = false) {
     if (!userClinicId) {
       return NextResponse.json({ error: "No clinic associated" }, { status: 400 });
     }
-    const result = await runPipeline(db, userClinicId);
+    const result = await runPipeline(db, userClinicId, { backfill });
     return NextResponse.json(result);
   }
 

@@ -296,8 +296,11 @@ function CheckoutInner() {
     if (!parsed) return null;
 
     if (shouldRedirectTrial) {
-      if (user) return "/onboarding";
-      return `/login?mode=signup&next=${encodeURIComponent("/onboarding")}`;
+      // No billing=now in URL — treat as purchase intent, not trial.
+      // Authenticated: show checkout with billing=now so they can pay.
+      // Unauthenticated: send to login then return here with billing=now.
+      if (user) return `/checkout?plan=${planParam}&billing=now`;
+      return `/login?mode=signup&next=${encodeURIComponent(`/checkout?plan=${planParam}&billing=now`)}`;
     }
 
     if (shouldRedirectLogin) {

@@ -28,6 +28,7 @@ import type {
   WeeklyStats,
 } from "@/types";
 import type { InsightEvent } from "@/types/insight-events";
+import { SESSION_RATE_PENCE } from "@/lib/constants";
 
 // ─── Result ──────────────────────────────────────────────────────────────────
 
@@ -40,7 +41,6 @@ interface DetectionResult {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const SESSION_RATE_PENCE = 6500;
 const DEDUP_WINDOW_DAYS = 30;
 
 // ─── Main Entry Point ────────────────────────────────────────────────────────

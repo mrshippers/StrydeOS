@@ -131,8 +131,8 @@ export default function FirstLoginTour() {
 
         if (firebaseUser) {
           const token = await firebaseUser.getIdToken();
-          const base = typeof window !== "undefined" ? window.location.origin : "";
-          await fetch(`${base}/api/clinic/check-go-live`, {
+          
+          await fetch(`/api/clinic/check-go-live`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
           });

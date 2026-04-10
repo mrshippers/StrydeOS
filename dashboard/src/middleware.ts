@@ -21,11 +21,21 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const session = request.cookies.get("__session")?.value;
 
+  // Demo mode cookie — intentionally not HMAC-signed. The client sets this
+  // when "Try demo" is clicked. Demo users only ever read from useDemoData.ts
+  // (clinicId "demo-clinic" has no real Firestore documents), so there is no
+  // real data exposure risk. Bypass all HMAC checks for this value.
+  const isDemoSession = session === "demo";
+
   // ── Authenticated users hitting login/trial → bounce to dashboard ──
   const isAuthRedirect = AUTH_REDIRECT_PATHS.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
   if (isAuthRedirect && session) {
+    if (isDemoSession) {
+      // Demo session — let them back through to login (they can dismiss demo there)
+      return NextResponse.next();
+    }
     const payload = await verifySession(session);
     if (payload) {
       // Valid session — skip login/trial, go straight to dashboard
@@ -52,6 +62,13 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Demo mode bypasses HMAC — allow through to protected routes
+  if (isDemoSession) {
+    const response = NextResponse.next();
+    setSecurityHeaders(response);
+    return response;
   }
 
   // Verify HMAC-signed session — reject if tampered or expired

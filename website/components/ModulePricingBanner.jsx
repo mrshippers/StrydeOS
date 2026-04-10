@@ -28,9 +28,9 @@ const TIERS = [
 ];
 
 const PRICING = {
-  solo:   { ava: 149, pulse: 99,  intelligence: 79  },
-  studio: { ava: 199, pulse: 149, intelligence: 129 },
-  clinic: { ava: 299, pulse: 229, intelligence: 199 },
+  solo:   { ava: 119, pulse: 89,  intelligence: 69  },
+  studio: { ava: 179, pulse: 129, intelligence: 109 },
+  clinic: { ava: 259, pulse: 199, intelligence: 179 },
 };
 
 const SETUP = {

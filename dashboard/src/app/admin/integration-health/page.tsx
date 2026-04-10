@@ -100,9 +100,9 @@ export default function IntegrationHealthPage() {
     setError(null);
     try {
       const token = await firebaseUser.getIdToken();
-      const base = typeof window !== "undefined" ? window.location.origin : "";
+      
       const res = await fetch(
-        `${base}/api/admin/integration-health?days=${days}`,
+        `/api/admin/integration-health?days=${days}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.ok) {

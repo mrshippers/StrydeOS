@@ -2384,9 +2384,9 @@ const ROICalc = ({ darkMode }) => {
 
 /* ─── Pricing ────────────────────────────────────────────────────────────────── */
 const PRICING_DATA_MONTHLY = {
-  solo:   { Intelligence: 79,  Ava: 149, Pulse: 99,  full: 279, fullSetup: "£250" },
-  studio: { Intelligence: 129, Ava: 199, Pulse: 149, full: 399, fullSetup: "£250" },
-  clinic: { Intelligence: 199, Ava: 299, Pulse: 229, full: 599, fullSetup: "£250" },
+  solo:   { Intelligence: 69,  Ava: 119, Pulse: 89,  full: 229, fullSetup: "£250" },
+  studio: { Intelligence: 109, Ava: 179, Pulse: 129, full: 349, fullSetup: "£250" },
+  clinic: { Intelligence: 179, Ava: 259, Pulse: 199, full: 499, fullSetup: "£250" },
 };
 const getPricing = (tier, billing) => {
   const m = PRICING_DATA_MONTHLY[tier];
@@ -2598,7 +2598,9 @@ const PricingCard = ({ mod, price, billing, tier, darkMode }) => {
       </div>
 
       <a
-        href={`/${mod.name.toLowerCase()}`}
+        href={`https://portal.strydeos.com/checkout?plan=${mod.name.toLowerCase()}-${tier}&billing=now&interval=${billing === "annual" ? "year" : "month"}`}
+        target="_blank"
+        rel="noopener noreferrer"
         style={{
         display: "block", width: "100%", padding: "14px 0", borderRadius: 14,
         fontSize: 14, fontWeight: 700, fontFamily: "'Outfit', sans-serif",

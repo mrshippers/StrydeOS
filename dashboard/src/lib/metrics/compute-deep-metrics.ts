@@ -16,10 +16,9 @@
 import type { Firestore } from "firebase-admin/firestore";
 import type { Appointment, Patient } from "@/types";
 import type { DeepMetrics, RetentionStep } from "@/types/value-ledger";
+import { SESSION_RATE_PENCE } from "@/lib/constants";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-
-const SESSION_RATE_PENCE = 6500;
 const ESTIMATED_SLOTS_PER_CLINICIAN_PER_WEEK = 40; // 8/day × 5 days
 const GHOST_THRESHOLD_DAYS = 30;
 const REBOOKING_LAG_RISK_DAYS = 14;

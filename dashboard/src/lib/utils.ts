@@ -23,7 +23,7 @@ export function formatRate(value: number): string {
 }
 
 export function formatPence(pence: number): string {
-  return `£${(pence / 100).toFixed(0)}`;
+  return `£${Math.round(pence / 100).toLocaleString("en-GB")}`;
 }
 
 export function getFollowUpStatus(

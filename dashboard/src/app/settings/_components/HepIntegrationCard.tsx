@@ -64,8 +64,8 @@ export default function HepIntegrationCard({
     setHepTesting(true);
     try {
       const token = await firebaseUser.getIdToken();
-      const base = typeof window !== "undefined" ? window.location.origin : "";
-      const testRes = await fetch(`${base}/api/hep/test-connection`, {
+      
+      const testRes = await fetch(`/api/hep/test-connection`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ provider: hepProvider, apiKey: hepApiKey.trim() }),
@@ -76,7 +76,7 @@ export default function HepIntegrationCard({
         setHepTesting(false);
         return;
       }
-      const saveRes = await fetch(`${base}/api/hep/save-config`, {
+      const saveRes = await fetch(`/api/hep/save-config`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ provider: hepProvider, apiKey: hepApiKey.trim() }),
@@ -127,8 +127,8 @@ export default function HepIntegrationCard({
               if (!clinicId || !firebaseUser) return;
               try {
                 const token = await firebaseUser.getIdToken();
-                const base = typeof window !== "undefined" ? window.location.origin : "";
-                const res = await fetch(`${base}/api/hep/disconnect`, {
+                
+                const res = await fetch(`/api/hep/disconnect`, {
                   method: "POST",
                   headers: { Authorization: `Bearer ${token}` },
                 });

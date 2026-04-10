@@ -30,9 +30,9 @@ const TIERS = [
 ];
 
 const PRICING = {
-  solo:   { Intelligence: "£79",  Ava: "£129", Pulse: "£99",  full: "£259", fullSetup: "£250" },
-  studio: { Intelligence: "£129", Ava: "£199", Pulse: "£149", full: "£399", fullSetup: "£250" },
-  clinic: { Intelligence: "£199", Ava: "£299", Pulse: "£229", full: "£599", fullSetup: "£250" },
+  solo:   { Intelligence: "£69",  Ava: "£119", Pulse: "£89",  full: "£229", fullSetup: "£250" },
+  studio: { Intelligence: "£109", Ava: "£179", Pulse: "£129", full: "£349", fullSetup: "£250" },
+  clinic: { Intelligence: "£179", Ava: "£259", Pulse: "£199", full: "£499", fullSetup: "£250" },
 };
 
 const MODULES = [
@@ -290,23 +290,24 @@ function PricingCard({ mod, price, tier, delay }) {
       </div>
 
       {/* CTA */}
-      <button style={{
-        width: "100%", padding: "14px 0", borderRadius: 14,
-        fontSize: 14, fontWeight: 700, fontFamily: "'Outfit', sans-serif",
-        cursor: "pointer", position: "relative",
-        letterSpacing: "0.02em",
-        background: h
-          ? "rgba(255,255,255,0.95)"
-          : "transparent",
-        color: h ? c : T.blue,
-        border: h ? "none" : `1.5px solid ${T.blue}30`,
-        boxShadow: h
-          ? `0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8)`
-          : "none",
-        transition: "all 0.35s ease",
-      }}>
+      <a
+        href={`https://portal.strydeos.com/checkout?plan=${mod.name.toLowerCase()}-${tier}&billing=now`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "block", width: "100%", padding: "14px 0", borderRadius: 14,
+          fontSize: 14, fontWeight: 700, fontFamily: "'Outfit', sans-serif",
+          cursor: "pointer", position: "relative",
+          letterSpacing: "0.02em", textAlign: "center", textDecoration: "none",
+          background: h ? "rgba(255,255,255,0.95)" : "transparent",
+          color: h ? c : T.blue,
+          border: h ? "none" : `1.5px solid ${T.blue}30`,
+          boxShadow: h ? `0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8)` : "none",
+          transition: "all 0.35s ease",
+        }}
+      >
         Get started
-      </button>
+      </a>
     </div>
   );
 }

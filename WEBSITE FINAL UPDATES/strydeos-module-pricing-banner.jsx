@@ -13,20 +13,20 @@ const MODULE_META = {
   Ava: {
     color: T.blue, bright: T.blueBright, glow: T.blueGlow,
     setup: "£250 one-time setup",
-    trialUrl: "/onboarding?module=ava",
-    buyUrl: "/pricing#ava",
+    trialUrl: "https://portal.strydeos.com/trial",
+    buyUrlBase: "https://portal.strydeos.com/checkout?plan=ava",
   },
   Pulse: {
     color: T.teal, bright: T.tealBright, glow: T.tealGlow,
     setup: "No setup fee",
-    trialUrl: "/onboarding?module=pulse",
-    buyUrl: "/pricing#pulse",
+    trialUrl: "https://portal.strydeos.com/trial",
+    buyUrlBase: "https://portal.strydeos.com/checkout?plan=pulse",
   },
   Intelligence: {
     color: T.purple, bright: T.purpleBright, glow: T.purpleGlow,
     setup: "No setup fee",
-    trialUrl: "/onboarding?module=intelligence",
-    buyUrl: "/pricing#intelligence",
+    trialUrl: "https://portal.strydeos.com/trial",
+    buyUrlBase: "https://portal.strydeos.com/checkout?plan=intelligence",
   },
 };
 
@@ -37,15 +37,15 @@ const TIERS = [
 ];
 
 const PRICING = {
-  solo:   { Ava: "129", Pulse: "99",  Intelligence: "79"  },
-  studio: { Ava: "199", Pulse: "149", Intelligence: "129" },
-  clinic: { Ava: "299", Pulse: "229", Intelligence: "199" },
+  solo:   { Ava: "119", Pulse: "89",  Intelligence: "69"  },
+  studio: { Ava: "179", Pulse: "129", Intelligence: "109" },
+  clinic: { Ava: "259", Pulse: "199", Intelligence: "179" },
 };
 
 const SETUP = {
-  solo:   { Ava: "£150 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
+  solo:   { Ava: "£250 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
   studio: { Ava: "£250 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
-  clinic: { Ava: "£350 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
+  clinic: { Ava: "£250 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
 };
 
 export default function ModulePricingBanner({ module = "Ava" }) {
@@ -71,6 +71,7 @@ export default function ModulePricingBanner({ module = "Ava" }) {
   const m = MODULE_META[module];
   const price = PRICING[tier][module];
   const setup = SETUP[tier][module];
+  const buyUrl = `${m.buyUrlBase}-${tier}&billing=now`;
 
   return (
     <>
@@ -245,7 +246,7 @@ export default function ModulePricingBanner({ module = "Ava" }) {
 
             {/* Secondary — Buy now */}
             <a
-              href={m.buyUrl}
+              href={buyUrl}
               onMouseEnter={() => setSecondaryHover(true)}
               onMouseLeave={() => setSecondaryHover(false)}
               style={{

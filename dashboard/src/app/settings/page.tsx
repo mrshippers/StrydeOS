@@ -741,8 +741,8 @@ export default function SettingsPage() {
     setPmsTestFailed(false);
     try {
       const token = await firebaseUser.getIdToken();
-      const base = typeof window !== "undefined" ? window.location.origin : "";
-      const testRes = await fetch(`${base}/api/pms/test-connection`, {
+      
+      const testRes = await fetch(`/api/pms/test-connection`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ provider: pmsProvider, apiKey: pmsApiKey.trim() }),
@@ -754,7 +754,7 @@ export default function SettingsPage() {
         setPmsTesting(false);
         return;
       }
-      const saveRes = await fetch(`${base}/api/pms/save-config`, {
+      const saveRes = await fetch(`/api/pms/save-config`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ provider: pmsProvider, apiKey: pmsApiKey.trim(), baseUrl: testData.resolvedBase }),
@@ -779,8 +779,8 @@ export default function SettingsPage() {
     if (!clinicId || !firebaseUser) return;
     try {
       const token = await firebaseUser.getIdToken();
-      const base = typeof window !== "undefined" ? window.location.origin : "";
-      const res = await fetch(`${base}/api/pms/disconnect`, {
+      
+      const res = await fetch(`/api/pms/disconnect`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -835,8 +835,8 @@ export default function SettingsPage() {
     setSyncResult(null);
     try {
       const token = await firebaseUser.getIdToken();
-      const base = typeof window !== "undefined" ? window.location.origin : "";
-      const res = await fetch(`${base}/api/pipeline/run`, {
+      
+      const res = await fetch(`/api/pipeline/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ clinicId: user?.clinicId, ...(backfill ? { backfill: true } : {}) }),
@@ -872,12 +872,12 @@ export default function SettingsPage() {
     setCsvResult(null);
     try {
       const token = await firebaseUser.getIdToken();
-      const base = typeof window !== "undefined" ? window.location.origin : "";
+      
       const form = new FormData();
       form.append("file", file);
       form.append("fileType", fileType);
       if (schemaId) form.append("schemaId", schemaId);
-      const res = await fetch(`${base}/api/pms/import-csv`, {
+      const res = await fetch(`/api/pms/import-csv`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: form,
@@ -942,9 +942,9 @@ export default function SettingsPage() {
     setMappingSaving(true);
     try {
       const token = await firebaseUser.getIdToken();
-      const base = typeof window !== "undefined" ? window.location.origin : "";
+      
 
-      const schemaRes = await fetch(`${base}/api/pms/csv-schema`, {
+      const schemaRes = await fetch(`/api/pms/csv-schema`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -971,8 +971,8 @@ export default function SettingsPage() {
     setHistoryLoading(true);
     try {
       const token = await firebaseUser.getIdToken();
-      const base = typeof window !== "undefined" ? window.location.origin : "";
-      const res = await fetch(`${base}/api/pms/import-history?limit=20`, {
+      
+      const res = await fetch(`/api/pms/import-history?limit=20`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json().catch(() => ({}));
@@ -1050,8 +1050,8 @@ export default function SettingsPage() {
     setHepTesting(true);
     try {
       const token = await firebaseUser.getIdToken();
-      const base = typeof window !== "undefined" ? window.location.origin : "";
-      const testRes = await fetch(`${base}/api/hep/test-connection`, {
+      
+      const testRes = await fetch(`/api/hep/test-connection`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ provider: hepProvider, apiKey: hepApiKey.trim() }),
@@ -1062,7 +1062,7 @@ export default function SettingsPage() {
         setHepTesting(false);
         return;
       }
-      const saveRes = await fetch(`${base}/api/hep/save-config`, {
+      const saveRes = await fetch(`/api/hep/save-config`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ provider: hepProvider, apiKey: hepApiKey.trim() }),
@@ -1176,8 +1176,8 @@ export default function SettingsPage() {
     setInviteResult((prev) => ({ ...prev, [clinicianId]: "" }));
     try {
       const token = await firebaseUser.getIdToken();
-      const base = typeof window !== "undefined" ? window.location.origin : "";
-      const res = await fetch(`${base}/api/clinic/resend-invite`, {
+      
+      const res = await fetch(`/api/clinic/resend-invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ clinicianId, email }),
@@ -2206,8 +2206,8 @@ export default function SettingsPage() {
                 if (!clinicId || !firebaseUser) return;
                 try {
                   const token = await firebaseUser.getIdToken();
-                  const base = typeof window !== "undefined" ? window.location.origin : "";
-                  const res = await fetch(`${base}/api/hep/disconnect`, {
+                  
+                  const res = await fetch(`/api/hep/disconnect`, {
                     method: "POST",
                     headers: { Authorization: `Bearer ${token}` },
                   });

@@ -152,7 +152,6 @@ export default function DashboardPage() {
         body: JSON.stringify({}),
       });
       if (!res.ok) throw new Error("Sync failed");
-      window.location.reload();
     } catch {
       // Fail silently — the staleness banner will remain visible
     } finally {
@@ -400,8 +399,8 @@ export default function DashboardPage() {
       )}
 
       {/* Error banners — subtle, triangle on right */}
-      {statsError && <ErrorBanner message="Metrics couldn't load — showing placeholders until the next sync." onRetry={() => window.location.reload()} />}
-      {summaryError && <ErrorBanner message="Clinician summary unavailable right now." onRetry={() => window.location.reload()} />}
+      {statsError && <ErrorBanner message="Metrics couldn't load — showing placeholders until the next sync." onRetry={() => router.refresh()} />}
+      {summaryError && <ErrorBanner message="Clinician summary unavailable right now." onRetry={() => router.refresh()} />}
 
       {/* ── Week navigation + clinician filter ────────────────────────────── */}
       <motion.div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-tour="clinician-filter" {...staggerItem(0.08)}>
