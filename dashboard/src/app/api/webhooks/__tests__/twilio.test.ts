@@ -23,6 +23,12 @@ vi.mock("@/lib/request-logger", () => ({
   withRequestLog: (fn: unknown) => fn,
 }));
 
+// Twilio SDK — default to a passing signature so existing tests don't need to mock it
+const mockValidateRequest = vi.fn().mockReturnValue(true);
+vi.mock("twilio", () => ({
+  default: { validateRequest: mockValidateRequest },
+}));
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeTwilioBody(params: Record<string, string>): string {
@@ -66,6 +72,8 @@ describe("POST /api/webhooks/twilio", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    process.env.TWILIO_AUTH_TOKEN = "test-auth-token";
+    mockValidateRequest.mockReturnValue(true);
   });
 
   it("sets outcome to 'delivered' when MessageStatus is delivered", async () => {
@@ -163,5 +171,25 @@ describe("POST /api/webhooks/twilio", () => {
     const { POST } = await import("../twilio/route");
     const res = await POST(req);
     expect(res.status).toBe(400);
+  });
+
+  it("returns 403 when Twilio signature is invalid", async () => {
+    mockValidateRequest.mockReturnValueOnce(false);
+    const { db } = makeDb({ outcome: "no_action" });
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const req = await makeRequest({ MessageSid: "SM123", MessageStatus: "delivered" });
+    const { POST } = await import("../twilio/route");
+    const res = await POST(req);
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 500 when TWILIO_AUTH_TOKEN is not set", async () => {
+    delete process.env.TWILIO_AUTH_TOKEN;
+    const req = await makeRequest({ MessageSid: "SM123", MessageStatus: "delivered" });
+    const { POST } = await import("../twilio/route");
+    const res = await POST(req);
+    expect(res.status).toBe(500);
   });
 });

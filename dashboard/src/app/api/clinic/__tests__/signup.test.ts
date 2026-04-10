@@ -81,7 +81,8 @@ function createMockBatch() {
 let currentBatch = createMockBatch();
 
 function createMockDocRef(existsVal = false, data: Record<string, unknown> = {}) {
-  return {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ref: any = {
     id: "mock-clinic-id-abc",
     get: vi.fn().mockResolvedValue({
       exists: existsVal,
@@ -89,6 +90,14 @@ function createMockDocRef(existsVal = false, data: Record<string, unknown> = {})
     }),
     set: vi.fn().mockResolvedValue(undefined),
   };
+  // Subcollection support — route does .collection("clinicians").doc() on the clinic ref
+  ref.collection = vi.fn().mockReturnValue({
+    doc: vi.fn().mockReturnValue({
+      id: "mock-clinician-id",
+      set: vi.fn().mockResolvedValue(undefined),
+    }),
+  });
+  return ref;
 }
 
 const mockCollections: Record<string, ReturnType<typeof createMockDocRef>> = {};
@@ -181,8 +190,8 @@ describe("POST /api/clinic/signup", () => {
         })
       );
 
-      // Firestore batch written (user doc + clinic doc)
-      expect(currentBatch.set).toHaveBeenCalledTimes(2);
+      // Firestore batch written (user doc + owner clinician doc + clinic doc)
+      expect(currentBatch.set).toHaveBeenCalledTimes(3);
       expect(currentBatch.commit).toHaveBeenCalledOnce();
     });
 
