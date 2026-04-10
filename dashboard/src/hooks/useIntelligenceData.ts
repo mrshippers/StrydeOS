@@ -8,8 +8,9 @@ import {
   subscribePatients,
   subscribeReviews,
   subscribeOutcomeScoresAll,
+  subscribeAppointments,
 } from "@/lib/queries";
-import type { WeeklyStats, Patient, Review, OutcomeScore, OutcomeMeasureType } from "@/types";
+import type { WeeklyStats, Patient, Review, OutcomeScore, OutcomeMeasureType, Appointment } from "@/types";
 import {
   getDemoRevenueByClinician,
   getDemoRevenueByCondition,
@@ -32,6 +33,7 @@ import {
   type ClinicianKpiRow,
   type BenchmarkComparison,
 } from "@/hooks/useDemoIntelligence";
+import { deriveRevenueByCondition } from "@/lib/intelligence/derive-revenue-by-condition";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -90,12 +92,6 @@ function deriveRevenueByClinician(
     revenuePerSessionPence: v.sessions > 0 ? Math.round(v.totalPence / v.sessions) : 0,
     insurancePct: 0, // not yet derivable without insurance flag on appointments
   }));
-}
-
-function deriveRevenueByCondition(patients: Patient[], avgRevPerSession: number): RevenueByCondition[] {
-  // Requires conditionTag on patients (future: from appointments.conditionTag)
-  // Until PMS populates it, return empty — UI shows empty state
-  return [];
 }
 
 function deriveDnaByDay(allStats: WeeklyStats[], clinicianId: string): DnaByDay[] {
@@ -513,11 +509,13 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
   const [patients, setPatients] = useState<Patient[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [outcomeScores, setOutcomeScores] = useState<OutcomeScore[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   const [statsReady, setStatsReady] = useState(false);
   const [patientsReady, setPatientsReady] = useState(false);
   const [reviewsReady, setReviewsReady] = useState(false);
   const [outcomesReady, setOutcomesReady] = useState(false);
+  const [appointmentsReady, setAppointmentsReady] = useState(false);
 
   const [usedDemo, setUsedDemo] = useState(false);
   const [firestoreError, setFirestoreError] = useState<string | null>(null);
@@ -530,6 +528,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
       setPatientsReady(true);
       setReviewsReady(true);
       setOutcomesReady(true);
+      setAppointmentsReady(true);
       return;
     }
 
@@ -562,11 +561,24 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
       () => { setFirestoreError("Failed to load outcome scores. Check your connection and try again."); setOutcomesReady(true); }
     );
 
+    // Appointments for revenue-by-condition aggregation.
+    // Scope: last 90 days, clinician filter honours Intelligence selection for clinicians
+    // (owners/admins see all when `effectivePatientClinicianId` is null).
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const unsubAppointments = subscribeAppointments(
+      clinicId,
+      effectivePatientClinicianId,
+      ninetyDaysAgo,
+      (data) => { setAppointments(data); setAppointmentsReady(true); },
+      () => { setFirestoreError("Failed to load appointments. Check your connection and try again."); setAppointmentsReady(true); }
+    );
+
     return () => {
       unsubStats();
       unsubPatients();
       unsubReviews();
       unsubOutcomes();
+      unsubAppointments();
     };
   }, [clinicId, isDemo, effectivePatientClinicianId]);
 
@@ -609,7 +621,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     return result;
   }, [perClinicianStatsMap]);
 
-  const loading = !statsReady || !patientsReady || !reviewsReady || !outcomesReady;
+  const loading = !statsReady || !patientsReady || !reviewsReady || !outcomesReady || !appointmentsReady;
 
   const DEMO_RESULT = useMemo<IntelligenceData>(() => ({
     revByClinician: getDemoRevenueByClinician(),
@@ -670,7 +682,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     const avgRevPerSession = latestAll?.revenuePerSessionPence ?? 0;
 
     const revByClinician = deriveRevenueByClinician(flatPerClinicianStats, []);
-    const revByCondition = deriveRevenueByCondition(patients, avgRevPerSession);
+    const revByCondition = deriveRevenueByCondition(appointments);
     const dnaByDay = deriveDnaByDay(
       selectedClinician === "all" ? allStats : flatPerClinicianStats,
       selectedClinician
@@ -707,7 +719,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
       outcomesDemoFallback,
       reputationDemoFallback,
     };
-  }, [allStats, flatPerClinicianStats, patients, reviews, outcomeScores, loading, isDemo, selectedClinician, firestoreError, DEMO_RESULT]);
+  }, [allStats, flatPerClinicianStats, patients, reviews, outcomeScores, appointments, loading, isDemo, selectedClinician, firestoreError, DEMO_RESULT]);
 
   return { ...derived, loading };
 }
