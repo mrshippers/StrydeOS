@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import AvaShowcase from "../ava-conversation-card";
 import BrightnessStackToggle from "./BrightnessStackToggle";
+import ChangelogMap from "./ChangelogMap";
 
 const C = {
   // Backgrounds
@@ -3110,99 +3111,7 @@ const FAQ = ({ darkMode }) => {
 };
 
 /* ─── Changelog ─────────────────────────────────────────────────────────────── */
-const Changelog = ({ darkMode }) => {
-  const moduleColors = { Platform: C.navy, Ava: C.blue, Intelligence: "#8B5CF6", Pulse: C.teal };
-  const entries = [
-    { version: "v1.4.0", date: "7 Apr", module: "Ava", title: "Warm transfers", desc: "Ava catches the complaint before it becomes a missed call. Transfers live to your desk. Clean handoff via Twilio — no dropped lines, no callback promises." },
-    { version: "v1.3.2", date: "5 Apr", module: "Ava", title: "One-click provisioning", desc: "UK number, SIP trunk, ElevenLabs agent. Sorted in one click. No Twilio console required." },
-    { version: "v1.3.1", date: "3 Apr", module: "Intelligence", title: "Benchmarks", desc: "Your KPIs against real clinic data. Know where you stand — not just how you feel." },
-    { version: "v1.3.0", date: "1 Apr", module: "Ava", title: "Ava rebuilt on LangGraph", desc: "Proper state machine. Real conversation memory. Structured routing. The version we always intended to ship." },
-    { version: "v1.2.4", date: "28 Mar", module: "Platform", title: "Clinician layer", desc: "Digest opt-outs. Observational notes on insights. Clinicians see what's relevant to them. Owners see everything." },
-    { version: "v1.2.3", date: "24 Mar", module: "Platform", title: "In-app changelog", desc: "What shipped, when, for whom. Every user in the clinic sees it once. Then it's gone." },
-    { version: "v1.2.2", date: "19 Mar", module: "Platform", title: "Session security", desc: "Remember Me toggle. HMAC-signed cookies. 8hr clinical workday TTL. A 7-file sweep no one will notice — until they try something." },
-    { version: "v1.2.1", date: "14 Mar", module: "Platform", title: "Sync reliability", desc: "Superadmin provisioning, patient data refreshed on every PMS run. The 30-minute idle bug that was silently breaking API calls — gone." },
-    { version: "v1.2.0", date: "8 Mar", module: "Platform", title: "Terms updated", desc: "Tighter data handling. Multi-region compliance language. Legal is slightly less nervous." },
-    { version: "v1.1.4", date: "3 Mar", module: "Ava", title: "Call transfers", desc: "Ava knows when she's out of her depth. Warm transfer to the right person. Every time." },
-    { version: "v1.1.3", date: "25 Feb", module: "Intelligence", title: "Weekly digest", desc: "Same signal. Less noise. Your Monday is now 30 seconds shorter." },
-    { version: "v1.1.2", date: "18 Feb", module: "Pulse", title: "Opt-outs honoured", desc: "Patient communication preferences enforced across every sequence. Opt-out means opt-out." },
-    { version: "v1.1.1", date: "10 Feb", module: "Platform", title: "Dark mode", desc: "Because 11pm exists." },
-    { version: "v1.1.0", date: "3 Feb", module: "Platform", title: "Multi-PMS pipeline", desc: "Cliniko, WriteUpp, CSV. We process what you send us." },
-    { version: "v1.0.3", date: "27 Jan", module: "Ava", title: "Voice tuned", desc: "Stability 67%, similarity 85%. Less robotic. More Ava." },
-    { version: "v1.0.2", date: "21 Jan", module: "Platform", title: "ROI calculator", desc: "Corrected a bug where the numbers were too generous. We prefer conservative." },
-    { version: "v1.0.1", date: "19 Jan", module: "Platform", title: "Onboarding wizard", desc: "PMS → Ava → Pulse → live. Five steps. Done in a week." },
-    { version: "v1.0.0", date: "17 Jan", module: "Platform", title: "StrydeOS ships", desc: "Intelligence, Ava, and Pulse. Available as modules or Full Stack. Built at the clinic. Validated at the clinic. Now available to yours." },
-    { version: "v0.9.2", date: "13 Jan", module: "Platform", title: "Security sweep", desc: "42 edge cases across 15 domains. Nine fixes shipped before anyone asked." },
-    { version: "v0.9.1", date: "8 Jan", module: "Platform", title: "Billing", desc: "Monthly plans. No lock-in. Cancel anytime." },
-    { version: "v0.9.0", date: "2 Jan", module: "Platform", title: "Beta closes", desc: "Three pilot clinics onboarded. Data flowing. Time to ship." },
-  ];
-
-  return (
-    <section id="changelog" style={{
-      padding: "100px 24px",
-      background: C.navy,
-      position: "relative", overflow: "hidden",
-    }}>
-      <RadialGlow color={C.blue} size={600} opacity={0.08} style={{ top: -200, right: -100 }} />
-      <RadialGlow color="#8B5CF6" size={400} opacity={0.06} style={{ bottom: -100, left: -100 }} />
-
-      <div style={{ maxWidth: 720, margin: "0 auto", position: "relative", zIndex: 2 }}>
-        <AnimIn>
-        <div style={{ textAlign: "center", marginBottom: 60 }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px",
-            borderRadius: 50, background: `${C.blue}25`, border: `1px solid ${C.blue}40`,
-            color: C.blueGlow, fontSize: 11, fontWeight: 600, letterSpacing: "0.1em",
-            textTransform: "uppercase", marginBottom: 16,
-          }}>Changelog</div>
-          <h2 className="serif section-h2" style={{ fontSize: 44, color: "white", fontWeight: 400, lineHeight: 1.1 }}>
-            What we've shipped
-          </h2>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginTop: 12 }}>
-            Jan–Apr 2026
-          </p>
-        </div>
-        </AnimIn>
-
-        <div style={{ position: "relative", paddingLeft: 40 }}>
-          {/* Vertical line */}
-          <div style={{
-            position: "absolute", left: 11, top: 8, bottom: 8, width: 2,
-            background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%)",
-            borderRadius: 1,
-          }} />
-
-          {entries.map((entry, i) => {
-            const modColor = moduleColors[entry.module] || C.blue;
-            return (
-              <div key={i} style={{ position: "relative", marginBottom: 28, paddingLeft: 0 }}>
-                {/* Dot */}
-                <div style={{
-                  position: "absolute", left: -34, top: 6,
-                  width: 12, height: 12, borderRadius: "50%",
-                  background: entry.module === "Platform" ? "rgba(255,255,255,0.15)" : `${modColor}50`,
-                  border: `2px solid ${entry.module === "Platform" ? "rgba(255,255,255,0.25)" : modColor}`,
-                }} />
-
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", fontFamily: "'Outfit',sans-serif" }}>{entry.version}</span>
-                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }}>{entry.date} 2026</span>
-                  <span style={{
-                    fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
-                    padding: "2px 8px", borderRadius: 4,
-                    background: entry.module === "Platform" ? "rgba(255,255,255,0.06)" : `${modColor}20`,
-                    color: entry.module === "Platform" ? "rgba(255,255,255,0.4)" : modColor,
-                  }}>{entry.module}</span>
-                </div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: "white", marginBottom: 4 }}>{entry.title}</div>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.65 }}>{entry.desc}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-};
+/* Changelog section — now a U-Bahn map, implemented in ChangelogMap.jsx */
 
 /* ─── CTA ──────────────────────────────────────────────────────────────────── */
 const CtaSection = () => (
@@ -3436,7 +3345,7 @@ export function ChangelogPage() {
       <style>{globalStyles}</style>
       <Nav darkMode={darkMode} setDarkMode={setDarkMode} />
       <div style={{ paddingTop: 70 }}>
-        <Changelog darkMode={darkMode} />
+        <ChangelogMap darkMode={darkMode} />
       </div>
       <Footer />
     </>
