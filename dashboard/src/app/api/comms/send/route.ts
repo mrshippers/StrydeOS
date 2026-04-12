@@ -146,7 +146,8 @@ async function handler(request: NextRequest) {
     }
 
     if (!success) {
-      return NextResponse.json({ error: errorDetail ?? "Send failed" }, { status: 500 });
+      console.error("[comms/send] Send failed:", errorDetail);
+      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true, sentAt: now });

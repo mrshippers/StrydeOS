@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, verifyCronRequest, handleApiError, requireRole, requireClinic, type VerifiedUser } from "@/lib/auth-guard";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import type { Appointment, AppointmentStatus, AppointmentType } from "@/types";
 import type { PMSIntegrationConfig } from "@/types/pms";
@@ -24,6 +25,15 @@ function getWeekRange(weeksBack: number): { dateFrom: string; dateTo: string } {
 }
 
 async function handler(request: NextRequest) {
+  // Rate limit: 10 requests per IP per 60 seconds (heavy Firestore batch writes)
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 10, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     let authedUser: VerifiedUser | null = null;
     let isCron = false;

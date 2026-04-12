@@ -21,11 +21,21 @@ import {
   handleApiError,
 } from "@/lib/auth-guard";
 import { setCustomClaims } from "@/lib/set-custom-claims";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import type { UserRole } from "@/types";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 requests per IP per 60 seconds
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 5, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const caller = await verifyApiRequest(request);
     requireRole(caller, ["owner", "admin", "superadmin"]);

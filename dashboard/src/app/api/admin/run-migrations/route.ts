@@ -17,11 +17,21 @@ import {
   handleApiError,
 } from "@/lib/auth-guard";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { runMigrations, MIGRATIONS } from "@/lib/migrations";
 import type { MigrationResult } from "@/lib/migrations";
 import { withRequestLog } from "@/lib/request-logger";
 
 async function handler(request: NextRequest) {
+  // Rate limit: 5 requests per IP per 60 seconds (destructive schema migrations)
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 5, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["superadmin"]);

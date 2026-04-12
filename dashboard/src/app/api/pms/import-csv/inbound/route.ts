@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { runCSVImport } from "@/lib/csv-import/run-import";
 import { withRequestLog } from "@/lib/request-logger";
 
@@ -25,6 +26,15 @@ function extractClinicIdFromRecipient(recipient: string): string | null {
 }
 
 async function handler(request: NextRequest): Promise<NextResponse> {
+  // Rate limit: 120 requests per 60 seconds (external email-to-CSV inbound webhook)
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 120, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   if (!INBOUND_SECRET) {
     return NextResponse.json({ error: "Inbound import not configured" }, { status: 503 });
   }
@@ -83,8 +93,9 @@ async function handler(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(result);
   } catch (e) {
+    console.error("[pms/import-csv/inbound]", e);
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

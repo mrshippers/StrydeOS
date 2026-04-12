@@ -5,6 +5,7 @@ import {
   handleApiError,
   requireRole,
 } from "@/lib/auth-guard";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import type { IntegrationHealthEntry } from "@/lib/pipeline/health-logger";
 import { withRequestLog } from "@/lib/request-logger";
 
@@ -129,6 +130,15 @@ function aggregateByProvider(entries: IntegrationHealthEntry[]): Record<string, 
  * Superadmin only. Returns aggregated integration health for all clinics.
  */
 async function handler(request: NextRequest) {
+  // Rate limit: 20 requests per IP per 60 seconds (sensitive cross-clinic health read)
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 20, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["superadmin"]);

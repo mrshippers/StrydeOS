@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronRequest, verifyApiRequest, requireRole } from "@/lib/auth-guard";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { withRequestLog } from "@/lib/request-logger";
 
 /**
@@ -14,6 +15,15 @@ const CSV_BRIDGE_PMS_TYPES = ["tm3", "csv_import"];
 const STALENESS_THRESHOLD_DAYS = 7;
 
 async function handler(request: NextRequest) {
+  // Rate limit: 10 requests per IP per 60 seconds
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 10, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   const isCron =
     request.method === "GET" ||
     request.headers.get("authorization")?.startsWith("Bearer ");

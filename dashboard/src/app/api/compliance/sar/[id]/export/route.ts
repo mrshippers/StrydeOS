@@ -18,6 +18,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
 import { withRequestLog } from "@/lib/request-logger";
 
@@ -53,6 +54,15 @@ async function handler(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Rate limit: 5 requests per IP per 60 seconds (exports large patient PII datasets)
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 5, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);

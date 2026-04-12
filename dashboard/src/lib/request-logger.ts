@@ -46,8 +46,9 @@ export function withRequestLog<
     let status = 500;
     let errorMsg: string | undefined;
 
+    let response: NextResponse | undefined;
     try {
-      const response = await handler(request, ...rest);
+      response = await handler(request, ...rest);
       status = response.status;
       // Attach correlation ID to response for client-side tracing
       response.headers.set("x-request-id", requestId);
@@ -58,9 +59,13 @@ export function withRequestLog<
     } finally {
       const durationMs = Math.round(performance.now() - start);
 
-      // Best-effort clinicId extraction from common header patterns
+      // Prefer clinicId stamped on the response by the route handler (via
+      // auth-guard's withClinicId helper), fall back to the request header for
+      // any route that sets it directly on the inbound request.
       const clinicId =
-        request.headers.get("x-clinic-id") ?? undefined;
+        response?.headers.get("x-clinic-id") ??
+        request.headers.get("x-clinic-id") ??
+        undefined;
 
       const entry: RequestLogEntry = {
         timestamp: new Date().toISOString(),

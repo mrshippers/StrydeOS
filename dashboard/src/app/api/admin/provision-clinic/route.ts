@@ -20,6 +20,7 @@
 import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb, getAdminAuth } from "@/lib/firebase-admin";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import type {
   UserRole,
   UserStatus,
@@ -34,6 +35,15 @@ import type {
 import { withRequestLog } from "@/lib/request-logger";
 
 async function handler(request: NextRequest) {
+  // Rate limit: 5 requests per IP per 60 seconds (creates Firebase Auth users + Firestore docs)
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 5, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   let uid: string | undefined;
   try {
     // ── Auth check: both admin secret AND superadmin Firebase token required ──

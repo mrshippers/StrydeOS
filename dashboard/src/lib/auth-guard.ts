@@ -119,6 +119,9 @@ export class ApiAuthError extends Error {
 
 export function handleApiError(error: unknown): NextResponse {
   if (error instanceof ApiAuthError) {
+    // Auth errors are security-relevant — log them so they're visible in
+    // structured request logs alongside the x-request-id correlation header.
+    console.warn("[handleApiError] Auth error:", error.statusCode, error.message);
     return NextResponse.json(
       { error: error.message },
       { status: error.statusCode }
@@ -131,6 +134,19 @@ export function handleApiError(error: unknown): NextResponse {
     { error: "Internal server error" },
     { status: 500 }
   );
+}
+
+/**
+ * Stamps a clinicId onto a NextResponse header so the request logger can
+ * include it in the structured log entry without requiring a response body
+ * parse. Use this when constructing success responses from authenticated routes.
+ *
+ * Example:
+ *   return withClinicId(NextResponse.json({ ok: true }), user.clinicId);
+ */
+export function withClinicId(response: NextResponse, clinicId: string): NextResponse {
+  response.headers.set("x-clinic-id", clinicId);
+  return response;
 }
 
 export function verifyCronRequest(request: NextRequest): void {

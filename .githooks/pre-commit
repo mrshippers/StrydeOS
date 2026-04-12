@@ -27,7 +27,7 @@ PATTERNS=(
   '-----BEGIN (RSA |EC )?PRIVATE KEY-----'
 )
 
-STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -v '\.githooks/' || true)
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -v '\.githooks/' | grep -v '\.env\.example' || true)
 
 if [ -z "$STAGED" ]; then
   exit 0

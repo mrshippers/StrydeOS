@@ -6,6 +6,7 @@ import {
   handleApiError,
   requireRole,
 } from "@/lib/auth-guard";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { detectValueEvents } from "@/lib/intelligence/detect-value-events";
 import { computeValueSummary } from "@/lib/intelligence/compute-value-summary";
 import { withRequestLog } from "@/lib/request-logger";
@@ -19,6 +20,15 @@ import { withRequestLog } from "@/lib/request-logger";
  * Body: { clinicId?: string }
  */
 async function handler(request: NextRequest) {
+  // Rate limit: 10 requests per IP per 60 seconds (heavy computation + writes)
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 10, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const isCron = request.headers.get("authorization")?.startsWith("Bearer ");
     let userClinicId: string | undefined;

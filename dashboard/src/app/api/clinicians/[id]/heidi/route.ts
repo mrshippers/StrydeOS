@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, handleApiError } from "@/lib/auth-guard";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import type { UserRole } from "@/types";
 import { withRequestLog } from "@/lib/request-logger";
 
@@ -26,6 +27,15 @@ async function handler(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  // Rate limit: 10 requests per IP per 60 seconds
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 10, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     const user = await verifyApiRequest(request);
     const { id: clinicianId } = await params;

@@ -2,10 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, verifyCronRequest, handleApiError, requireRole, requireClinic } from "@/lib/auth-guard";
 import type { VerifiedUser } from "@/lib/auth-guard";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { computeWeeklyMetricsForClinic, computeWeeklyMetricsForAllClinics } from "@/lib/metrics/compute-weekly";
 import { withRequestLog } from "@/lib/request-logger";
 
 async function handler(request: NextRequest) {
+  // Rate limit: 10 requests per IP per 60 seconds (heavy computation)
+  const { limited, remaining } = await checkRateLimitAsync(request, { limit: 10, windowMs: 60_000 });
+  if (limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+    );
+  }
+
   try {
     let authenticatedUser: VerifiedUser | null = null;
     let isCronAuth = false;

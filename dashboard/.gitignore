@@ -12,6 +12,9 @@ build
 .env
 .env.local
 .env*.local
+firebase-key.json
+*-service-account*.json
+*.pem
 scripts/serviceAccountKey.json
 scripts/*firebase-adminsdk*.json
 
