@@ -101,7 +101,7 @@ async function handler(request: NextRequest) {
         const fromEmail = process.env.RESEND_FROM_EMAIL ?? "noreply@strydeos.com";
         const resend = getResend();
         const { data, error } = await resend.emails.send({
-          from: fromEmail,
+          from: `StrydeOS Pulse <${fromEmail}>`,
           to,
           subject: resolveTemplate(subject, templateVars),
           text: resolvedBody,

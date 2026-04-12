@@ -27,6 +27,7 @@ import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard"
 import { canAddClinician } from "@/lib/billing";
 import { withRequestLog } from "@/lib/request-logger";
 import crypto from "crypto";
+import { buildInviteEmail, buildInviteText } from "@/lib/intelligence/emails/invite";
 
 export const runtime = "nodejs";
 
@@ -267,21 +268,8 @@ async function handler(request: NextRequest) {
             from: "StrydeOS <noreply@strydeos.com>",
             to: [email],
             subject: "Your StrydeOS invite — set your password to get started",
-            html: `
-              <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">
-                <h2 style="color: #0B2545; margin-bottom: 8px;">Welcome to StrydeOS</h2>
-                <p style="color: #6B7280; margin-bottom: 24px;">
-                  You've been invited to join your clinic on StrydeOS — the clinical
-                  operating system built for high-performance physiotherapy practices.
-                </p>
-                <a href="${resetLink}" style="display: inline-block; background: #1C54F2; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
-                  Set your password &amp; sign in
-                </a>
-                <p style="color: #9CA3AF; font-size: 12px; margin-top: 24px;">
-                  This link expires in 1 hour. If you weren't expecting this email, you can safely ignore it.
-                </p>
-              </div>
-            `,
+            html: buildInviteEmail(resetLink),
+            text: buildInviteText(resetLink),
           }),
         });
 
