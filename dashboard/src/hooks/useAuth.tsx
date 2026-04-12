@@ -23,14 +23,18 @@ import type { AuthUser, ClinicProfile, UserRole, UserStatus, FeatureFlags, Billi
 async function createServerSession(fbUser: User): Promise<void> {
   try {
     const idToken = await getIdToken(fbUser);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5_000);
     const res = await fetch("/api/auth/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ idToken }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     if (!res.ok) throw new Error(`Session API returned ${res.status}`);
   } catch {
-    // Session API unreachable — do not set a client-side cookie fallback.
+    // Session API unreachable or timed out — do not set a client-side cookie fallback.
     // The middleware will redirect to /login if no valid HMAC-signed session exists.
   }
 }
@@ -310,7 +314,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const profile = await fetchUserProfile(fbUser);
             setUser(profile);
             if (profile) {
-              await createServerSession(fbUser);
+              // Fire-and-forget — session cookie is for subsequent navigations,
+              // not needed for the current page load (already past middleware).
+              createServerSession(fbUser);
               // On first login, self-heal: ensure clinician doc exists and is linked.
               // Fire-and-forget — non-blocking so it doesn't delay the dashboard render.
               if (profile.firstLogin && profile.clinicId) {

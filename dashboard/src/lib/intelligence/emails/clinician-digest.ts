@@ -119,6 +119,7 @@ export function buildClinicianDigestEmail(data: ClinicianDigestData): string {
     footerLinks: [
       { label: "Notification preferences", href: `${APP_URL}/settings` },
     ],
+    signature: "system",
   });
 }
 

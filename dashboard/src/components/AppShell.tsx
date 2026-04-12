@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Component, type ReactNode } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
@@ -13,7 +13,6 @@ import OnboardingWidget from "@/components/OnboardingWidget";
 import AccountSetupWidget from "@/components/AccountSetupWidget";
 import TopProgressBar, { ProgressProvider } from "@/components/TopProgressBar";
 import StagingBanner from "@/components/StagingBanner";
-import SplashScreen from "@/components/SplashScreen";
 import TrialBanner from "@/components/TrialBanner";
 import DemoBanner from "@/components/ui/DemoBanner";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
@@ -23,14 +22,6 @@ const WhatsNew = dynamic(
   () => import("@/components/WhatsNew"),
   { ssr: false }
 );
-
-/** Catch splash screen crashes so they don't take down the whole app */
-class SplashErrorBoundary extends Component<{ children: ReactNode; onError: () => void }, { hasError: boolean }> {
-  state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
-  componentDidCatch() { this.props.onError(); }
-  render() { return this.state.hasError ? null : this.props.children; }
-}
 
 const FirstLoginTour = dynamic(
   () => import("@/components/FirstLoginTour"),
@@ -105,24 +96,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, impersonating } = useAuth();
   const isChromeless = CHROMELESS_PATHS.some((p) => pathname.startsWith(p));
 
-  /* ─── Dual-gate splash: animation must finish AND app must hydrate ─── */
-  const [animDone, setAnimDone] = useState(false);
-  const [appReady, setAppReady] = useState(false);
-  const showSplash = !animDone || !appReady;
-
-  useEffect(() => {
-    /* App is "ready" once this client effect fires (hydration complete) */
-    setAppReady(true);
-  }, []);
-
   return (
     <AuthGuard>
       <ProgressProvider>
-        {showSplash && (
-          <SplashErrorBoundary onError={() => setAnimDone(true)}>
-            <SplashScreen onComplete={() => setAnimDone(true)} />
-          </SplashErrorBoundary>
-        )}
         <ImpersonationBanner />
         <StagingBanner />
         {isChromeless || !user ? (

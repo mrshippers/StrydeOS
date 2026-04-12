@@ -24,6 +24,7 @@ export function buildInviteEmail(resetLink: string): string {
   return wrapEmailLayout(body, {
     subtitle: "Clinician Invite",
     accentColor: "#1C54F2",
+    signature: "system",
   });
 }
 

@@ -2,7 +2,7 @@ import type { InsightEvent } from "@/types/insight-events";
 import { wrapEmailLayout, escHtml, textFooter } from "./layout";
 
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: "#EF4444",
+  critical: "#E8913A",
   warning: "#F59E0B",
   positive: "#059669",
 };
@@ -10,7 +10,7 @@ const SEVERITY_COLORS: Record<string, string> = {
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.strydeos.com";
 
 export function buildUrgentAlertEmail(event: InsightEvent, clinicName: string): string {
-  const sevColor = SEVERITY_COLORS[event.severity] ?? "#EF4444";
+  const sevColor = SEVERITY_COLORS[event.severity] ?? "#E8913A";
 
   const body = `
     <!-- Severity indicator -->
@@ -37,7 +37,7 @@ export function buildUrgentAlertEmail(event: InsightEvent, clinicName: string): 
 
   return wrapEmailLayout(body, {
     subtitle: `Urgent Alert \u2014 ${clinicName}`,
-    accentColor: "#EF4444",
+    accentColor: "#E8913A",
     moduleLabel: "Intelligence",
     unsubscribeType: "urgent",
     footerNote: "Powered by StrydeOS Intelligence",
@@ -45,6 +45,7 @@ export function buildUrgentAlertEmail(event: InsightEvent, clinicName: string): 
       { label: "Manage alerts", href: `${APP_URL}/settings` },
       { label: "Unsubscribe", href: `${APP_URL}/settings?unsubscribe=urgent` },
     ],
+    signature: "system",
   });
 }
 

@@ -12,7 +12,7 @@ interface DigestData {
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: "#EF4444",
+  critical: "#E8913A",
   warning: "#F59E0B",
   positive: "#059669",
 };
@@ -123,6 +123,7 @@ export function buildStateOfClinicEmail(data: DigestData): string {
     moduleLabel: "Intelligence",
     unsubscribeType: "digest",
     footerNote: "Powered by StrydeOS Intelligence",
+    signature: "founder",
   });
 }
 
