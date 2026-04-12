@@ -49,12 +49,12 @@ describe("session.ts", () => {
       expect(payload!.v).toBe(3);
     });
 
-    it("should not include v field when session version is undefined", async () => {
+    it("should include v:1 by default when no session version is specified", async () => {
       const cookie = await signSession("user-789");
       const payload = await verifySession(cookie);
 
       expect(payload).not.toBeNull();
-      expect(payload!.v).toBeUndefined();
+      expect(payload!.v).toBe(1);
     });
 
     it("should produce cookie in format: base64url.base64url", async () => {
