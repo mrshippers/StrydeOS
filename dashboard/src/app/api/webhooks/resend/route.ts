@@ -54,7 +54,7 @@ async function handler(request: NextRequest) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
   } else {
-    console.warn("[resend-webhook] RESEND_WEBHOOK_SECRET not set — skipping signature check");
+    return new NextResponse("Webhook secret not configured", { status: 500 });
   }
 
   const { searchParams } = new URL(request.url);

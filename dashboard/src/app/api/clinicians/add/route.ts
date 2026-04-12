@@ -161,6 +161,17 @@ async function handler(request: NextRequest) {
         .collection("clinicians")
         .add(clinicianData);
 
+      // Guard: reject if this user already belongs to a different clinic.
+      // Silently overwriting clinicId would transfer their account without consent.
+      const existingUserSnap = await db.collection("users").doc(existingAuthUid).get();
+      const existingUserData = existingUserSnap.data();
+      if (existingUserData?.clinicId && existingUserData.clinicId !== clinicId) {
+        return NextResponse.json(
+          { error: "This user already belongs to another clinic and cannot be re-assigned." },
+          { status: 409 }
+        );
+      }
+
       // Update the existing user doc to point at this clinic + link clinicianId
       await db.collection("users").doc(existingAuthUid).update({
         clinicId,

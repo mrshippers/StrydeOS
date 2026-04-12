@@ -37,7 +37,7 @@ service cloud.firestore {
       allow update: if isAuthenticated()
         && request.auth.uid == uid
         && !request.resource.data.diff(resource.data).affectedKeys()
-             .hasAny(['role', 'clinicId', 'clinicianId', 'status']);
+             .hasAny(['role', 'clinicId', 'clinicianId', 'status', 'allowedClinicIds']);
       allow create, delete: if false;
     }
 

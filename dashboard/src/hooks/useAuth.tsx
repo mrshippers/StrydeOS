@@ -170,7 +170,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshClinicProfile: () => Promise<void>;
-  enterDemoMode: () => void;
+  enterDemoMode: () => Promise<void>;
   isFirebaseConfigured: boolean;
   impersonating: boolean;
   impersonationTarget: ClinicProfile | null;
@@ -187,7 +187,7 @@ const AuthContext = createContext<AuthContextValue>({
   signIn: async () => {},
   signOut: async () => {},
   refreshClinicProfile: async () => {},
-  enterDemoMode: () => {},
+  enterDemoMode: async () => {},
   isFirebaseConfigured: false,
   impersonating: false,
   impersonationTarget: null,
@@ -393,11 +393,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [firebaseUser]);
 
-  const enterDemoMode = useCallback(() => {
+  const enterDemoMode = useCallback(async () => {
+    // Get an HMAC-signed session cookie for uid "demo" from the server.
+    // This replaces the old unsigned document.cookie write.
+    await fetch("/api/auth/demo", { method: "POST" });
     setUser(DEMO_USER);
     setFirebaseUser(null);
-    // Demo mode uses a simple cookie — no server session needed
-    document.cookie = "__session=demo; path=/; SameSite=Lax";
     // Pick a random demo data scenario (0–4) for this session
     try {
       sessionStorage.setItem("strydeos_demo_scenario", String(Math.floor(Math.random() * 5)));
