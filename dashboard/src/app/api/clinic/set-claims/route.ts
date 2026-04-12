@@ -71,6 +71,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Role hierarchy enforcement — caller cannot stamp a role >= their own rank.
+    // superadmin (3) > owner (2) > admin (1) > clinician (0)
+    const ROLE_RANK: Record<UserRole, number> = {
+      clinician: 0,
+      admin: 1,
+      owner: 2,
+      superadmin: 3,
+    };
+    const callerRank = ROLE_RANK[caller.role as UserRole] ?? -1;
+    const targetRank = ROLE_RANK[targetRole] ?? -1;
+    if (targetRank >= callerRank) {
+      return NextResponse.json(
+        {
+          error:
+            "Access denied — you cannot assign a role equal to or higher than your own",
+        },
+        { status: 403 }
+      );
+    }
+
     // Non-superadmin callers can only set claims for users in their own clinic
     if (caller.role !== "superadmin") {
       if (targetClinicId !== caller.clinicId) {

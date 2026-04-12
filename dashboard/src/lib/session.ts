@@ -3,7 +3,11 @@
  *
  * Uses Web Crypto API so it works in both Edge middleware and Node.js API routes.
  * Cookie format: base64url(payload).base64url(signature)
- * Payload: { uid: string; exp: number }
+ * Payload: { uid: string; exp: number; v: number }
+ *
+ * v: session version — default 1. Bump SESSION_VERSION to invalidate all sessions
+ * of a specific version without rotating SESSION_SECRET. verifySession accepts
+ * sessions without v for backwards compatibility during rolling deploys.
  */
 
 const SESSION_COOKIE = "__session";
@@ -48,11 +52,11 @@ function base64urlDecode(str: string): Uint8Array {
   return bytes;
 }
 
-export async function signSession(uid: string, sessionVersion?: number): Promise<string> {
+export async function signSession(uid: string, sessionVersion: number = 1): Promise<string> {
   const payload: SessionPayload = {
     uid,
     exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE,
-    ...(sessionVersion !== undefined ? { v: sessionVersion } : {}),
+    v: sessionVersion,
   };
 
   const encoder = new TextEncoder();

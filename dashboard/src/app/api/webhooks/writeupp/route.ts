@@ -29,10 +29,13 @@ async function handler(request: NextRequest) {
     const secret =
       request.headers.get("x-webhook-secret") ??
       request.headers.get("authorization")?.replace("Bearer ", "");
+    const secretBuf = Buffer.from(secret ?? "");
+    const expectedBuf = Buffer.from(WEBHOOK_SECRET ?? "");
     if (
       !WEBHOOK_SECRET ||
       !secret ||
-      !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(WEBHOOK_SECRET))
+      secretBuf.length !== expectedBuf.length ||
+      !crypto.timingSafeEqual(secretBuf, expectedBuf)
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
