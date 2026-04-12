@@ -24,20 +24,12 @@ async function handler(request: NextRequest) {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
 
-    const body = await request.json().catch(() => null);
-    if (!body || !body.clinicId) {
+    // clinicId is authoritative from the verified token — never trust body.clinicId
+    const clinicId = user.clinicId;
+    if (!clinicId) {
       return NextResponse.json(
-        { error: "clinicId is required" },
+        { error: "No clinic associated with this account" },
         { status: 400 }
-      );
-    }
-
-    const { clinicId } = body;
-
-    if (user.clinicId !== clinicId && user.role !== "superadmin") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 }
       );
     }
 
