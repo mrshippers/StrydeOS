@@ -65,10 +65,7 @@
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
       "position": [720, 400],
-      "credentials": {
-        "twilioApi": { "id": "opIFeEUAVLBs6GS9", "name": "Twilio" }
-      },
-      "notes": "Sends SMS via Twilio. Requires Twilio credentials configured in n8n.\n\nEnv vars:\n  TWILIO_PHONE_NUMBER — the from number (e.g. +447XXXXXXXXX)"
+      "notes": "Sends SMS via Twilio. Requires Twilio credentials configured in n8n (wire in the n8n UI after import).\n\nEnv vars:\n  TWILIO_PHONE_NUMBER — the from number (e.g. +447XXXXXXXXX)"
     },
     {
       "parameters": {

@@ -28,7 +28,7 @@ process.env.STRIPE_PRICE_AVA_SETUP = "price_ava_setup";
 process.env.STRIPE_PRICE_EXTRA_SEAT_MONTH = "price_seat_month";
 process.env.STRIPE_PRICE_EXTRA_SEAT_YEAR = "price_seat_year";
 process.env.STRIPE_SECRET_KEY = "sk_test_fake";
-process.env.APP_URL = "https://app.strydeos.com";
+process.env.APP_URL = "https://portal.strydeos.com";
 
 // ─── Mock stores ────────────────────────────────────────────────────────────
 
@@ -200,7 +200,7 @@ function makeWebhookRequest(body: string, sig?: string): NextRequest {
   if (sig !== undefined) {
     headers["stripe-signature"] = sig;
   }
-  return new NextRequest("https://app.strydeos.com/api/billing/webhooks", {
+  return new NextRequest("https://portal.strydeos.com/api/billing/webhooks", {
     method: "POST",
     body,
     headers,
@@ -301,7 +301,7 @@ describe("POST /api/billing/webhooks", () => {
     it("returns 400 when stripe-signature header is missing", async () => {
       const req = makeWebhookRequest("{}", undefined);
       // Remove the header entirely by creating request without it
-      const reqNoSig = new NextRequest("https://app.strydeos.com/api/billing/webhooks", {
+      const reqNoSig = new NextRequest("https://portal.strydeos.com/api/billing/webhooks", {
         method: "POST",
         body: "{}",
         headers: { "content-type": "application/json" },
@@ -838,7 +838,7 @@ describe("POST /api/billing/checkout", () => {
   });
 
   function makeCheckoutRequest(body: Record<string, unknown>): NextRequest {
-    return new NextRequest("https://app.strydeos.com/api/billing/checkout", {
+    return new NextRequest("https://portal.strydeos.com/api/billing/checkout", {
       method: "POST",
       body: JSON.stringify(body),
       headers: {
