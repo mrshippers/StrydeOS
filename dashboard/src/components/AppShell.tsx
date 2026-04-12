@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Component, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
@@ -17,6 +17,21 @@ import TrialBanner from "@/components/TrialBanner";
 import DemoBanner from "@/components/ui/DemoBanner";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
 import ClinicPicker from "@/components/ClinicPicker";
+
+const SplashScreen = dynamic(
+  () => import("@/components/SplashScreen"),
+  { ssr: false }
+);
+
+const SPLASH_SEEN_KEY = "strydeos_splash_seen";
+
+/** Catch splash screen crashes so they don't take down the whole app */
+class SplashErrorBoundary extends Component<{ children: ReactNode; onError: () => void }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch() { this.props.onError(); }
+  render() { return this.state.hasError ? null : this.props.children; }
+}
 
 const WhatsNew = dynamic(
   () => import("@/components/WhatsNew"),
@@ -96,9 +111,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, impersonating } = useAuth();
   const isChromeless = CHROMELESS_PATHS.some((p) => pathname.startsWith(p));
 
+  /* Show splash only on the very first visit — never again */
+  const [showSplash, setShowSplash] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return !localStorage.getItem(SPLASH_SEEN_KEY);
+    } catch {
+      return false;
+    }
+  });
+
+  function dismissSplash() {
+    try { localStorage.setItem(SPLASH_SEEN_KEY, "1"); } catch { /* ignore */ }
+    setShowSplash(false);
+  }
+
   return (
     <AuthGuard>
       <ProgressProvider>
+        {showSplash && (
+          <SplashErrorBoundary onError={dismissSplash}>
+            <SplashScreen onComplete={dismissSplash} />
+          </SplashErrorBoundary>
+        )}
         <ImpersonationBanner />
         <StagingBanner />
         {isChromeless || !user ? (

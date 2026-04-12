@@ -314,9 +314,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const profile = await fetchUserProfile(fbUser);
             setUser(profile);
             if (profile) {
-              // Fire-and-forget — session cookie is for subsequent navigations,
-              // not needed for the current page load (already past middleware).
-              createServerSession(fbUser);
+              // Must complete before setLoading(false) so the __session cookie
+              // is set before the login page navigates to /dashboard.
+              // AbortController timeout (5s) prevents this from hanging forever.
+              await createServerSession(fbUser);
               // On first login, self-heal: ensure clinician doc exists and is linked.
               // Fire-and-forget — non-blocking so it doesn't delay the dashboard render.
               if (profile.firstLogin && profile.clinicId) {
