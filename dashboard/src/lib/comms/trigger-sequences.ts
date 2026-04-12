@@ -146,7 +146,7 @@ export async function triggerCommsSequences(
       }
 
       // ── Eligibility ───────────────────────────────────────────────────
-      const triggerDate = getTriggerDate(patient, def.sequenceType);
+      const triggerDate = getTriggerDate(patient, def.sequenceType, now);
       if (!triggerDate) { skipped++; continue; }
 
       if (!isEligible(patient, def.sequenceType, now, priorLogs.length > 0)) { skipped++; continue; }
@@ -349,7 +349,8 @@ export function getNextStep(
  */
 export function getTriggerDate(
   patient: Record<string, unknown>,
-  sequenceType: SequenceType
+  sequenceType: SequenceType,
+  now: Date = new Date()
 ): Date | null {
   const lastSession = patient.lastSessionDate
     ? new Date(patient.lastSessionDate as string)
@@ -364,7 +365,10 @@ export function getTriggerDate(
     case "reactivation_180d":
       return lastSession;
     case "pre_auth_collection":
-      return new Date(); // fires immediately on eligibility
+      // Fires immediately. Must reuse the same `now` as getNextStep's comparison,
+      // otherwise `triggerDate > now` causes daysSinceTrigger to floor to -1 and
+      // the step 1 (daysAfterTrigger: 0) check fails.
+      return now;
     default:
       return lastSession;
   }
