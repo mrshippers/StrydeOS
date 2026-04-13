@@ -155,11 +155,15 @@ function createMockFirestore(opts: MockFirestoreOptions = {}): {
       }),
       limit: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      startAfter: vi.fn().mockReturnThis(),
     };
 
-    // Make limit/where chainable and still return get
+    // Make limit/where/orderBy/startAfter chainable and still return get
     ref.limit.mockImplementation(() => ref);
     ref.where.mockImplementation(() => ref);
+    ref.orderBy.mockImplementation(() => ref);
+    ref.startAfter.mockImplementation(() => ref);
 
     return ref;
   }
@@ -798,9 +802,13 @@ describe("triggerCommsSequences — integration (requires Firestore mock)", () =
         get: vi.fn(async () => ({ docs: [], empty: true })),
         limit: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        startAfter: vi.fn().mockReturnThis(),
       };
       ref.limit.mockImplementation(() => ref);
       ref.where.mockImplementation(() => ref);
+      ref.orderBy.mockImplementation(() => ref);
+      ref.startAfter.mockImplementation(() => ref);
       return ref;
     };
 

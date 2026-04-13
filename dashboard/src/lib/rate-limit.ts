@@ -10,6 +10,7 @@
  * functions are ephemeral — each cold start creates a fresh instance.
  */
 
+import * as Sentry from "@sentry/nextjs";
 import { NextRequest } from "next/server";
 
 interface RateLimitEntry {
@@ -132,19 +133,27 @@ export function checkRateLimit(
     // Fire-and-forget Redis check — the in-memory check provides immediate gating,
     // Redis provides cross-instance persistence. Both must agree.
     const redisKey = `rl:${ip}:${options.limit}:${options.windowMs}`;
-    checkRedisRateLimit(redisKey, options.limit, options.windowMs).catch(() => {
-      // Redis unavailable — in-memory still provides per-instance protection
+    checkRedisRateLimit(redisKey, options.limit, options.windowMs).catch((err) => {
+      Sentry.addBreadcrumb({
+        category: "rate-limit",
+        message: "Upstash Redis unavailable — falling back to in-memory rate limiting",
+        level: "warning",
+        data: { error: err instanceof Error ? err.message : String(err) },
+      });
     });
   }
 
   // In-memory check (always runs — provides per-instance gating)
+  // Key includes pathname so different routes get separate buckets
+  const pathname = request.nextUrl?.pathname ?? "/";
+  const memKey = `${ip}:${pathname}:${options.limit}:${options.windowMs}`;
   ensureCleanup();
 
   const now = Date.now();
-  const entry = store.get(ip);
+  const entry = store.get(memKey);
 
   if (!entry || now >= entry.resetAt) {
-    store.set(ip, { count: 1, resetAt: now + options.windowMs });
+    store.set(memKey, { count: 1, resetAt: now + options.windowMs });
     return { limited: false, remaining: options.limit - 1 };
   }
 
@@ -171,8 +180,13 @@ export async function checkRateLimitAsync(
     try {
       const redisKey = `rl:${ip}:${options.limit}:${options.windowMs}`;
       return await checkRedisRateLimit(redisKey, options.limit, options.windowMs);
-    } catch {
-      // Fall through to in-memory
+    } catch (err) {
+      Sentry.addBreadcrumb({
+        category: "rate-limit",
+        message: "Upstash Redis unavailable — falling back to in-memory rate limiting",
+        level: "warning",
+        data: { error: err instanceof Error ? err.message : String(err) },
+      });
     }
   }
 

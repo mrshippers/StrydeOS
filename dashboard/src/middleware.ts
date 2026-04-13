@@ -83,11 +83,6 @@ export async function middleware(request: NextRequest) {
 }
 
 function setSecurityHeaders(response: NextResponse): void {
-  // Generate a per-request nonce for CSP script-src.
-  // Next.js 15 app router reads this from the x-nonce response header.
-  const nonce = crypto.randomUUID();
-  response.headers.set("x-nonce", nonce);
-
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -97,13 +92,15 @@ function setSecurityHeaders(response: NextResponse): void {
   );
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  // Hash-based CSP — nonce approach removed because Next.js App Router does not
+  // propagate middleware-generated nonces to <script> tags in production builds,
+  // which caused blank pages (all JS blocked). 'unsafe-inline' is required for
+  // Next.js inline bootstrap scripts; 'unsafe-eval' only in dev for HMR.
   response.headers.set(
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} 'wasm-unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.vercel-insights.com https://*.vercel-scripts.com`,
-      // unsafe-inline kept for style-src — Tailwind/Next.js injects styles that
-      // cannot practically be nonce-gated without a custom document wrapper.
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} 'wasm-unsafe-eval' https://*.firebaseio.com https://*.googleapis.com https://*.sentry.io https://*.vercel-insights.com https://*.vercel-scripts.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",

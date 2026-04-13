@@ -15,7 +15,7 @@
  *   - prior comms_log entry for this patient+sequence has outcome 'unsubscribed'
  */
 
-import type { Firestore } from "firebase-admin/firestore";
+import type { Firestore, Query, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import type { SequenceType } from "@/types";
 import type { SequenceDefinition, N8nSequencePayload } from "@/types/comms";
 import { DEFAULT_SEQUENCE_DEFINITIONS, resolveTemplate } from "@/types/comms";
@@ -58,18 +58,40 @@ export async function triggerCommsSequences(
   const clinicName = (clinicDoc.data()?.name as string) ?? "the clinic";
 
   // ── Load supporting data ────────────────────────────────────────────────
-  // Safety cap: limit to 1000 patients and 1000 comms_log entries to prevent OOM.
-  // TODO: Convert to cursor-based pagination when clinics exceed 1000 patients.
-  const [patientsSnap, cliniciansSnap, allLogsSnap] = await Promise.all([
-    clinicRef.collection("patients").limit(1000).get(),
+  // Cursor-based pagination: fetch all patients and comms_log entries in batches
+  // to avoid OOM on large clinics while not silently dropping data past 1000.
+  const PAGE_SIZE = 500;
+
+  async function fetchAllDocs(query: Query) {
+    const docs: QueryDocumentSnapshot[] = [];
+    let lastDoc: QueryDocumentSnapshot | undefined;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      let page = query.limit(PAGE_SIZE);
+      if (lastDoc) page = page.startAfter(lastDoc);
+      const snap = await page.get();
+      if (snap.empty) break;
+      docs.push(...snap.docs);
+      lastDoc = snap.docs[snap.docs.length - 1];
+      if (snap.docs.length < PAGE_SIZE) break;
+    }
+    return docs;
+  }
+
+  const [patientDocs, cliniciansSnap, logDocs] = await Promise.all([
+    fetchAllDocs(clinicRef.collection("patients").orderBy("__name__")),
     clinicRef.collection("clinicians").get(),
-    // Load last 200 days of comms_log for step progression queries
-    clinicRef
-      .collection("comms_log")
-      .where("sentAt", ">=", new Date(now.getTime() - 200 * 86_400_000).toISOString())
-      .limit(1000)
-      .get(),
+    fetchAllDocs(
+      clinicRef
+        .collection("comms_log")
+        .where("sentAt", ">=", new Date(now.getTime() - 200 * 86_400_000).toISOString())
+        .orderBy("sentAt")
+    ),
   ]);
+
+  // Wrap in a shape compatible with the rest of the function
+  const patientsSnap = { docs: patientDocs };
+  const allLogsSnap = { docs: logDocs };
 
   const clinicianNames: Record<string, string> = {};
   for (const doc of cliniciansSnap.docs) {
