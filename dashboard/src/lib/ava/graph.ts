@@ -488,12 +488,14 @@ function insuranceBookingNode(
     response: {
       action: "continue",
       message: isNew
-        ? "Lovely — let's get you booked in. Do you have your pre-authorisation number from your insurer? It'll usually be on your approval letter or email."
-        : "Of course — let me find you a slot. Do you have your pre-authorisation reference to hand? We'll need that for your insurer.",
+        ? `Lovely — let's get you booked in. Do you have your pre-authorisation number from your insurer? It'll usually be on your approval letter or email. If you don't have it to hand, no worries — just bring it along to your appointment or email it over to ${state.callMeta.clinicEmail || "us"} beforehand.`
+        : `Of course — let me find you a slot. Do you have your pre-authorisation reference to hand? We'll need that for your insurer. If you can't find it right now, that's absolutely fine — just bring it along to the appointment or email it to ${state.callMeta.clinicEmail || "us"} before you come in.`,
       metadata: {
         bookingType: isNew ? "insured_initial" : "insured_follow_up",
         insurerDetected: true,
         requiredFields: ["firstName", "lastName", "phone", "preAuthCode", "address"],
+        preAuthRequired: true,
+        preAuthFallback: "bring_to_appointment_or_email",
         flow: "insurance_booking_flow",
       },
     },
