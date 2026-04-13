@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, ArrowRight, ArrowLeft, ChevronRight, Activity, Users, TrendingUp, MessageSquare } from "lucide-react";
+import { X, ArrowRight, ArrowLeft, ChevronRight, Activity, Users, TrendingUp, MessageSquare, PhoneCall, Brain, Calendar, Shield } from "lucide-react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,9 +16,9 @@ import PulseMark from "@/components/PulseMark";
  * Show logic: modal appears once per version bump, on next login after
  * the version changes. Once dismissed it stays dismissed until the next bump.
  */
-const CURRENT_VERSION = "2026-04-12-pulse";
+const CURRENT_VERSION = "2026-04-13-ava";
 
-const TOTAL_CARDS = 2;
+const TOTAL_CARDS = 3;
 
 export default function WhatsNew() {
   const { user } = useAuth();
@@ -172,6 +172,93 @@ export default function WhatsNew() {
               <AnimatePresence mode="wait" initial={false}>
                 {card === 0 && (
                   <motion.div
+                    key="ava"
+                    initial={{ opacity: 0, x: 60 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -60 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {/* ── Card 0: Ava improvements ── */}
+                    <div
+                      className="px-8 pt-7 pb-6 relative"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #0B2545 0%, #132D5E 50%, #1C54F2 100%)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3.5 mb-3">
+                        <div
+                          className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(255,255,255,0.10)" }}
+                        >
+                          <PhoneCall size={22} className="text-white" />
+                        </div>
+                        <div>
+                          <h2 id="whats-new-title" className="font-display text-[22px] text-white leading-tight">
+                            Ava is fully live
+                          </h2>
+                          <p className="text-[12px] text-white/50 mt-0.5">
+                            AI receptionist — end-to-end
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-[13px] text-white/70 leading-relaxed">
+                        The full call pipeline is now wired up — from first ring
+                        to booking confirmation. Every fix from this sprint is
+                        live at Spires.
+                      </p>
+                    </div>
+
+                    <div className="px-8 py-5 space-y-3.5">
+                      {[
+                        {
+                          icon: Brain,
+                          color: "#1C54F2",
+                          label: "LangGraph router live",
+                          detail: "Intent classification and guardrail gates are routing every call correctly — model ID fix applied",
+                        },
+                        {
+                          icon: Calendar,
+                          color: "#1C54F2",
+                          label: "Live booking tools",
+                          detail: "Ava checks availability, books, and updates appointments in real time during the call",
+                        },
+                        {
+                          icon: Shield,
+                          color: "#1C54F2",
+                          label: "Insurance pre-auth flow",
+                          detail: "Insured callers are guided through pre-authorisation — with a fallback if they don\u2019t have the reference to hand",
+                        },
+                        {
+                          icon: MessageSquare,
+                          color: "#1C54F2",
+                          label: "Transfer + SMS confirmation",
+                          detail: "Warm transfers work even with withheld numbers. Booking confirmations SMS\u2019d to patients automatically",
+                        },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-start gap-3">
+                          <div
+                            className="mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ background: `${item.color}14` }}
+                          >
+                            <item.icon size={14} style={{ color: item.color }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-navy leading-snug">
+                              {item.label}
+                            </p>
+                            <p className="text-[12px] text-muted leading-relaxed mt-0.5">
+                              {item.detail}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {card === 1 && (
+                  <motion.div
                     key="pulse"
                     initial={{ opacity: 0, x: 60 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -189,7 +276,7 @@ export default function WhatsNew() {
                       <div className="flex items-center gap-3.5 mb-3">
                         <PulseMark size={48} />
                         <div>
-                          <h2 id="whats-new-title" className="font-display text-[22px] text-white leading-tight">
+                          <h2 className="font-display text-[22px] text-white leading-tight">
                             Pulse is live
                           </h2>
                           <p className="text-[12px] text-white/50 mt-0.5">
@@ -252,7 +339,7 @@ export default function WhatsNew() {
                   </motion.div>
                 )}
 
-                {card === 1 && (
+                {card === 2 && (
                   <motion.div
                     key="platform"
                     initial={{ opacity: 0, x: 60 }}
@@ -368,7 +455,7 @@ export default function WhatsNew() {
                       style={{
                         width: card === i ? 20 : 6,
                         height: 6,
-                        background: card === i ? "#0891B2" : "#0B254520",
+                        background: card === i ? "#1C54F2" : "#0B254520",
                       }}
                     />
                   </button>

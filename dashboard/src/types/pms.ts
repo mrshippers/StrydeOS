@@ -46,6 +46,14 @@ export interface CreateAppointmentParams {
   notes?: string;
 }
 
+export interface CreatePatientParams {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  email?: string;
+  dob?: string;
+}
+
 // ─── PMS Adapter Interface ───────────────────────────────────────────────────
 
 export interface PMSAdapter {
@@ -73,6 +81,12 @@ export interface PMSAdapter {
   getClinicians(): Promise<PMSClinician[]>;
 
   getInsuranceInfo(patientExternalId: string): Promise<InsuranceInfo | null>;
+
+  /** Optional: create a new patient record in the PMS. Not all providers support this. */
+  createPatient?(params: CreatePatientParams): Promise<{ externalId: string }>;
+
+  /** Optional: find a patient in the PMS by phone number. Returns externalId or null. */
+  findPatientByPhone?(phone: string): Promise<string | null>;
 }
 
 // ─── PMS Integration Config (server-side only) ──────────────────────────────

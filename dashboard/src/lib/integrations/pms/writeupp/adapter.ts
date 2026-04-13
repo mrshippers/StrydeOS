@@ -1,4 +1,4 @@
-import type { PMSAdapter, PMSAppointment, PMSPatient, PMSClinician, InsuranceInfo } from "@/types/pms";
+import type { PMSAdapter, PMSAppointment, PMSPatient, PMSClinician, InsuranceInfo, CreatePatientParams } from "@/types/pms";
 import type { AppointmentStatus } from "@/types";
 import { writeUppFetch, testWriteUppConnection, type WriteUppConfig } from "./client";
 import { mapWriteUppAppointment, mapWriteUppClinician } from "./mappers";
@@ -90,6 +90,51 @@ export function createWriteUppAdapter(config: WriteUppConfig): PMSAdapter {
       } catch {
         return null;
       }
+    },
+
+    async findPatientByPhone(phone: string): Promise<string | null> {
+      try {
+        // WriteUpp supports ?search= query param for patient lookup
+        const data = await writeUppFetch<
+          | { data?: Array<{ id?: string | number }>; patients?: Array<{ id?: string | number }> }
+          | Array<{ id?: string | number }>
+        >(config, `/patients?search=${encodeURIComponent(phone)}&limit=5`);
+
+        const rows = Array.isArray(data)
+          ? data
+          : (data as { data?: Array<{ id?: string | number }> }).data ??
+            (data as { patients?: Array<{ id?: string | number }> }).patients ??
+            [];
+
+        if (rows.length > 0 && rows[0].id != null) {
+          return String(rows[0].id);
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    },
+
+    async createPatient(params: CreatePatientParams): Promise<{ externalId: string }> {
+      const body: Record<string, string | undefined> = {
+        first_name: params.firstName,
+        last_name: params.lastName,
+      };
+      if (params.phone) body.phone_number = params.phone;
+      if (params.email) body.email = params.email;
+      if (params.dob) body.date_of_birth = params.dob;
+
+      const data = await writeUppFetch<{ id?: string | number; patient?: { id?: string | number } }>(
+        config,
+        "/patients",
+        { method: "POST", body: JSON.stringify(body) },
+      );
+
+      const id = data?.id ?? (data as { patient?: { id?: string | number } }).patient?.id;
+      if (!id) {
+        throw new Error("WriteUpp patient creation returned no ID");
+      }
+      return { externalId: String(id) };
     },
   };
 }
