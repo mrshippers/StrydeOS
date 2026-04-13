@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, Fragment } from "react";
+import { useRouter } from "next/navigation";
 import {
   ResponsiveContainer,
   BarChart,
@@ -647,6 +648,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
 }
 
 export default function IntelligencePage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("insights");
   const [selectedClinician, setSelectedClinician] = useState("all");
@@ -669,7 +671,7 @@ export default function IntelligencePage() {
         setRefreshResult(`Sync failed: ${err.error ?? res.statusText}`);
       } else {
         setRefreshResult("Data synced — reloading…");
-        setTimeout(() => window.location.reload(), 1500);
+        setTimeout(() => router.refresh(), 1500);
       }
     } catch (e) {
       setRefreshResult(`Sync failed: ${e instanceof Error ? e.message : "Network error"}`);
@@ -758,7 +760,7 @@ export default function IntelligencePage() {
       {(intelligenceError || weeklyError) && (
         <ErrorBanner
           message={intelligenceError ?? weeklyError ?? "Failed to load data."}
-          onRetry={() => window.location.reload()}
+          onRetry={() => router.refresh()}
         />
       )}
       {/* Summary stat cards */}

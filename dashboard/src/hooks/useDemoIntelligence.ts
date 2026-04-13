@@ -126,9 +126,9 @@ export function getDemoDnaBySlot(): DnaBySlot[] {
 export function getDemoReferralSources(): ReferralSource[] {
   const rps = getDemoRevPerSession();
   return [
-    { source: "Dr. Sarah Howell (GP)", type: "gp", patientsReferred: 8, convertedToBooking: 7, totalRevenuePence: 7 * 5.6 * rps, avgCourseLength: 5.6 },
+    { source: "Local GP Practice", type: "gp", patientsReferred: 8, convertedToBooking: 7, totalRevenuePence: 7 * 5.6 * rps, avgCourseLength: 5.6 },
     { source: "Self-referred (Google)", type: "online", patientsReferred: 12, convertedToBooking: 10, totalRevenuePence: 10 * 4.2 * rps, avgCourseLength: 4.2 },
-    { source: "Mr. James Chen (Ortho)", type: "consultant", patientsReferred: 4, convertedToBooking: 4, totalRevenuePence: 4 * 7.0 * rps, avgCourseLength: 7.0 },
+    { source: "Consultant Referral (Ortho)", type: "consultant", patientsReferred: 4, convertedToBooking: 4, totalRevenuePence: 4 * 7.0 * rps, avgCourseLength: 7.0 },
     { source: "Word of Mouth", type: "word_of_mouth", patientsReferred: 6, convertedToBooking: 5, totalRevenuePence: 5 * 4.8 * rps, avgCourseLength: 4.8 },
     { source: "Bupa Direct", type: "insurance", patientsReferred: 5, convertedToBooking: 5, totalRevenuePence: 5 * 6.0 * rps, avgCourseLength: 6.0 },
     { source: "AXA Health", type: "insurance", patientsReferred: 3, convertedToBooking: 3, totalRevenuePence: 3 * 5.5 * rps, avgCourseLength: 5.5 },

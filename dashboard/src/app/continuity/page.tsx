@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
@@ -61,6 +61,7 @@ export default function ContinuityPageWrapper() {
 }
 
 function ContinuityPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialClinician = searchParams.get("clinician") ?? "all";
   const [selectedClinician, setSelectedClinician] = useState(initialClinician);
@@ -138,8 +139,8 @@ function ContinuityPage() {
       />
 
       {/* Error banners */}
-      {patientsError && <ErrorBanner message="Patient data couldn't load — some cards may be incomplete." onRetry={() => window.location.reload()} />}
-      {commsError && <ErrorBanner message="Comms data unavailable right now." onRetry={() => window.location.reload()} />}
+      {patientsError && <ErrorBanner message="Patient data couldn't load — some cards may be incomplete." onRetry={() => router.refresh()} />}
+      {commsError && <ErrorBanner message="Comms data unavailable right now." onRetry={() => router.refresh()} />}
 
       {/* Setup banner — shown when no comms have been sent yet (real user only) */}
       {!commsIsDemo && commsStats.totalSent === 0 && !loading && (

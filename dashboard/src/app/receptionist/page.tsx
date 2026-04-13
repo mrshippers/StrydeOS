@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, Fragment, Component, type ReactNode, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Settings,
   Clock,
@@ -185,6 +186,7 @@ class AvaErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
 // ─── Page content ─────────────────────────────────────────────────────────────
 
 function ReceptionistContent() {
+  const router = useRouter();
   const { calls, isDemo, isLoading, activeCall, error: callsError } = useCallLogs();
   const { user } = useAuth();
   const avgAppointmentValue = user?.clinicProfile?.sessionPricePence
@@ -331,7 +333,7 @@ function ReceptionistContent() {
         accentColor="#1C54F2"
       />
 
-      {callsError && <ErrorBanner message={callsError} onRetry={() => window.location.reload()} />}
+      {callsError && <ErrorBanner message={callsError} onRetry={() => router.refresh()} />}
       {/* Active call indicator */}
       {activeCall && (
         <div className="rounded-[var(--radius-card)] bg-blue/5 border border-blue/20 p-4 flex items-center gap-3">

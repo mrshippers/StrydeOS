@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
@@ -19,6 +20,7 @@ const MfaEnrollment = dynamic(
 );
 
 export default function SecurityCard() {
+  const router = useRouter();
   const { user, firebaseUser, refreshClinicProfile } = useAuth();
   const { toast } = useToast();
 
@@ -123,7 +125,7 @@ export default function SecurityCard() {
   function handleMfaEnrollmentComplete() {
     setShowMfaEnrollment(false);
     toast("Two-factor authentication enabled", "success");
-    window.location.reload();
+    router.refresh();
   }
 
   async function handleMfaUnenroll() {
@@ -147,7 +149,7 @@ export default function SecurityCard() {
       if (enrolledFactors.length > 0) {
         await multiFactor(firebaseUser).unenroll(enrolledFactors[0]);
         toast("Two-factor authentication disabled", "success");
-        window.location.reload();
+        router.refresh();
       }
     } catch (err) {
       console.error("[MFA unenroll error]", err);

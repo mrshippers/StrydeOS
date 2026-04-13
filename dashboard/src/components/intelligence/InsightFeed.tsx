@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Lightbulb, CheckCheck } from "lucide-react";
 import { brand } from "@/lib/brand";
 import { useInsightEvents } from "@/hooks/useInsightEvents";
@@ -12,6 +13,7 @@ import ErrorBanner from "@/components/ui/ErrorBanner";
  * Used in the "Insights" tab on the Intelligence page.
  */
 export default function InsightFeed() {
+  const router = useRouter();
   const { events, activeEvents, markAsRead, loading, error } = useInsightEvents();
   const [showDismissed, setShowDismissed] = useState(false);
   const displayEvents = showDismissed ? events : activeEvents;
@@ -27,7 +29,7 @@ export default function InsightFeed() {
   }
 
   if (error) {
-    return <ErrorBanner message={error} onRetry={() => window.location.reload()} />;
+    return <ErrorBanner message={error} onRetry={() => router.refresh()} />;
   }
 
   if (events.length === 0) {
