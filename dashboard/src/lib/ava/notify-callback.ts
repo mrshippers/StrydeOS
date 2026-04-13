@@ -45,6 +45,46 @@ function formatSmsBody(notification: CallbackNotification): string {
 }
 
 /**
+ * Send an SMS booking acknowledgement to the patient.
+ * Sent immediately after a call ends with outcome "booked".
+ * Fire-and-forget: do NOT await.
+ */
+export async function sendBookingAcknowledgement(params: {
+  clinicId: string;
+  callerPhone: string;
+  conversationId: string;
+}): Promise<void> {
+  try {
+    const db = getAdminDb();
+    const clinicDoc = await db.collection("clinics").doc(params.clinicId).get();
+    if (!clinicDoc.exists) return;
+
+    const clinicData = clinicDoc.data() as Record<string, unknown>;
+    const clinicName = (clinicData.name as string) || "the clinic";
+    const clinicPhone = (
+      (clinicData.receptionPhone as string) ||
+      (clinicData.phone as string) ||
+      ""
+    );
+
+    const tw = getTwilio();
+    const fromPhone = getTwilioPhone();
+
+    const body = clinicPhone
+      ? `Hi, thanks for calling ${clinicName}. Your appointment request has been received — we'll confirm your slot by text within the hour. Questions? Call us on ${clinicPhone}.`
+      : `Hi, thanks for calling ${clinicName}. Your appointment request has been received — we'll confirm your slot by text within the hour.`;
+
+    await tw.messages.create({
+      to: params.callerPhone,
+      from: fromPhone,
+      body,
+    });
+  } catch {
+    // Swallow errors — fire-and-forget.
+  }
+}
+
+/**
  * Send an SMS notification for a callback request.
  * This is fire-and-forget — wrap the call in a void promise, do NOT await.
  */

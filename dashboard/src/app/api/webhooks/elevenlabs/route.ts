@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { withRequestLog } from "@/lib/request-logger";
 import type { AvaAction } from "@/lib/ava/graph";
-import { sendCallbackNotification } from "@/lib/ava/notify-callback";
+import { sendCallbackNotification, sendBookingAcknowledgement } from "@/lib/ava/notify-callback";
 import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
 
 export const runtime = "nodejs";
@@ -163,6 +163,15 @@ async function handler(req: NextRequest) {
         graphIntent: graphMetadata.reason ?? null,
         graphMetadata: Object.keys(graphMetadata).length > 0 ? graphMetadata : null,
       });
+
+      // Booking acknowledgement SMS to patient
+      if (outcome === "booked" && payload.caller_phone) {
+        sendBookingAcknowledgement({
+          clinicId,
+          callerPhone: payload.caller_phone,
+          conversationId,
+        }).catch((err) => { console.error("[sendBookingAcknowledgement] Failed:", err instanceof Error ? err.message : String(err)); });
+      }
 
       // Fire-and-forget SMS notification for escalated / callback calls
       if (outcome === "follow_up_required" || outcome === "escalated") {
