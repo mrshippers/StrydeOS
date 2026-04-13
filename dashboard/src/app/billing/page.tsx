@@ -347,7 +347,7 @@ export default function BillingPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not add seat");
-      window.location.reload();
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {

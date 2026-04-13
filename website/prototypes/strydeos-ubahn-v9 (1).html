@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Changelog | StrydeOS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B2545;--navy-mid:#132D5E;
+  --blue:#1C54F2;--blue-bright:#2E6BFF;--blue-glow:#4B8BF5;
+  --teal:#0891B2;--purple:#8B5CF6;--amber:#F59E0B;
+  --cream:#FAF9F7;--cloud:#F2F1EE;--cloud-dark:#E8E6E0;
+  --ink:#111827;--muted:#6B7280;--border:#E2DFDA;
+  --ava:#0891B2;--platform:#4B8BF5;--intel:#F59E0B;--pulse:#8B5CF6;
+}
+
+/* ── THEME TOKENS ── */
+[data-theme="dark"]{
+  --bg:var(--navy);--bg-nav:rgba(11,37,69,0.9);
+  --text:white;--text-dim:rgba(255,255,255,0.42);--text-muted:rgba(255,255,255,0.28);
+  --text-sub:rgba(255,255,255,0.7);
+  --ring-stroke:rgba(255,255,255,0.025);--sector-stroke:rgba(255,255,255,0.018);
+  --station-bg:var(--navy);
+  --pop-bg:rgba(11,37,69,0.94);--pop-border:rgba(75,139,245,0.1);
+  --pop-shadow:rgba(0,0,0,0.45);
+  --foot-border:rgba(255,255,255,0.03);--foot-text:rgba(255,255,255,0.2);
+  --toggle-bg:rgba(255,255,255,0.06);--toggle-border:rgba(255,255,255,0.08);
+  --toggle-icon-show-dark:none;--toggle-icon-show-light:block;
+  --grain-opacity:0.02;
+  --line-opacity:0.75;--glass-opacity:0.14;--spec-opacity:0.25;
+  --glow-base:0.1;
+}
+[data-theme="light"]{
+  --bg:var(--cream);--bg-nav:rgba(250,249,247,0.92);
+  --text:var(--ink);--text-dim:var(--muted);--text-muted:rgba(0,0,0,0.22);
+  --text-sub:rgba(17,24,39,0.6);
+  --ring-stroke:rgba(0,0,0,0.04);--sector-stroke:rgba(0,0,0,0.03);
+  --station-bg:var(--cream);
+  --pop-bg:rgba(250,249,247,0.96);--pop-border:rgba(0,0,0,0.08);
+  --pop-shadow:rgba(0,0,0,0.12);
+  --foot-border:rgba(0,0,0,0.06);--foot-text:rgba(0,0,0,0.3);
+  --toggle-bg:rgba(0,0,0,0.04);--toggle-border:rgba(0,0,0,0.08);
+  --toggle-icon-show-dark:block;--toggle-icon-show-light:none;
+  --grain-opacity:0.012;
+  --line-opacity:0.85;--glass-opacity:0.2;--spec-opacity:0.3;
+  --glow-base:0.06;
+  --blue-glow:#1C54F2;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;height:100%}
+body{
+  font-family:'Outfit',sans-serif;
+  background:var(--bg);color:var(--text);
+  overflow-x:hidden;
+  min-height:100%;
+  display:flex;flex-direction:column;
+  transition:background 0.4s ease,color 0.4s ease;
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  opacity:var(--grain-opacity);
+  background:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:150px;
+}
+main{flex:1}
+
+/* ── NAV ── */
+.nav{
+  position:sticky;top:0;z-index:200;
+  padding:0.9rem 2rem;
+  display:flex;align-items:center;justify-content:center;gap:2.5rem;
+  background:var(--bg-nav);
+  backdrop-filter:blur(24px) saturate(1.4);
+  border-bottom:1px solid var(--pop-border);
+  transition:background 0.4s,border-color 0.4s;
+}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-wordmark{font-weight:700;font-size:17px;letter-spacing:-0.02em;color:var(--text);transition:color 0.4s}
+.nav-wordmark span{color:var(--blue-glow);transition:color 0.4s}
+.nav a.nav-link{
+  font-size:13.5px;font-weight:500;
+  color:var(--text-dim);text-decoration:none;transition:color 0.2s;
+}
+.nav a.nav-link:hover{color:var(--text)}
+
+/* theme toggle */
+.theme-toggle{
+  position:absolute;right:2rem;
+  width:34px;height:34px;border-radius:10px;
+  background:var(--toggle-bg);
+  border:1px solid var(--toggle-border);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background 0.3s,border-color 0.3s;
+}
+.theme-toggle:hover{border-color:var(--blue-glow)}
+.theme-toggle .icon-sun{display:var(--toggle-icon-show-dark)}
+.theme-toggle .icon-moon{display:var(--toggle-icon-show-light)}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:4.5rem 2rem 1rem;position:relative}
+.hero::before{
+  content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);
+  width:700px;height:500px;
+  background:radial-gradient(ellipse,rgba(28,84,242,0.07) 0%,rgba(8,145,178,0.04) 40%,transparent 70%);
+  pointer-events:none;
+}
+[data-theme="light"] .hero::before{
+  background:radial-gradient(ellipse,rgba(28,84,242,0.04) 0%,rgba(8,145,178,0.02) 40%,transparent 70%);
+}
+.hero h1{
+  font-family:'DM Serif Display',serif;font-weight:400;
+  font-size:clamp(2.2rem,5vw,3.4rem);color:var(--text);line-height:1.1;margin-bottom:0.6rem;
+  transition:color 0.4s;
+}
+.hero .sub{
+  font-family:'DM Serif Display',serif;font-weight:400;
+  color:var(--text-sub);font-size:clamp(1rem,2.2vw,1.3rem);
+  max-width:440px;margin:0 auto;line-height:1.45;
+  text-shadow:0 0 30px rgba(75,139,245,0.15);
+  transition:color 0.4s;
+}
+[data-theme="light"] .hero .sub{text-shadow:none}
+
+/* ── LEGEND ── */
+.legend{
+  display:flex;justify-content:center;gap:2rem;padding:1.2rem 2rem 0.5rem;flex-wrap:wrap;
+}
+.legend-item{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:600;letter-spacing:0.06em;
+  color:var(--text-dim);text-transform:uppercase;
+  cursor:pointer;transition:color 0.2s;
+}
+.legend-item:hover{color:var(--text)}
+.legend-swatch{width:22px;height:3px;border-radius:2px}
+
+/* ── MAP ── */
+.map-container{
+  display:flex;justify-content:center;align-items:center;
+  padding:1rem 1rem 2rem;position:relative;
+}
+.map-viewport{
+  position:relative;
+  width:min(92vw,880px);height:min(92vw,880px);
+  max-width:880px;max-height:880px;
+}
+.map-svg{position:absolute;inset:0;width:100%;height:100%}
+
+.map-viewport::before{
+  content:'';position:absolute;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  width:120%;height:120%;border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%,rgba(28,84,242,0.12) 0%,transparent 40%),
+    radial-gradient(circle at 30% 30%,rgba(8,145,178,0.08) 0%,transparent 35%),
+    radial-gradient(circle at 70% 70%,rgba(139,92,246,0.07) 0%,transparent 35%),
+    radial-gradient(circle at 65% 25%,rgba(245,158,11,0.06) 0%,transparent 30%);
+  animation:mapPulse 5s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+[data-theme="light"] .map-viewport::before{
+  background:
+    radial-gradient(circle at 50% 50%,rgba(28,84,242,0.06) 0%,transparent 40%),
+    radial-gradient(circle at 30% 30%,rgba(8,145,178,0.04) 0%,transparent 35%),
+    radial-gradient(circle at 70% 70%,rgba(139,92,246,0.04) 0%,transparent 35%),
+    radial-gradient(circle at 65% 25%,rgba(245,158,11,0.03) 0%,transparent 30%);
+}
+@keyframes mapPulse{
+  0%{opacity:0.7;transform:translate(-50%,-50%) scale(0.96)}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}
+}
+
+.center-hub{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  z-index:20;display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+.center-hub .logo-wrap{position:relative;width:46px;height:46px}
+.center-hub .logo-wrap svg{
+  width:46px;height:46px;
+  filter:
+    drop-shadow(0 0 16px rgba(28,84,242,0.5))
+    drop-shadow(0 0 40px rgba(46,107,255,0.25))
+    drop-shadow(0 0 70px rgba(75,139,245,0.12));
+}
+[data-theme="light"] .center-hub .logo-wrap svg{
+  filter:
+    drop-shadow(0 0 12px rgba(28,84,242,0.25))
+    drop-shadow(0 0 30px rgba(46,107,255,0.1));
+}
+.center-hub .logo-wrap::after{
+  content:'';position:absolute;
+  top:2px;left:6px;width:34px;height:18px;border-radius:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,0.18) 0%,rgba(255,255,255,0) 100%);
+  pointer-events:none;
+}
+.center-label{
+  font-size:8.5px;font-weight:700;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--text-muted);white-space:nowrap;
+  transition:color 0.4s;
+}
+[data-theme="dark"] .center-label{text-shadow:0 0 16px rgba(75,139,245,0.3)}
+
+.ring-guide{fill:none;stroke:var(--ring-stroke);stroke-width:1;transition:stroke 0.4s}
+.sector-div{stroke:var(--sector-stroke);stroke-width:1;stroke-dasharray:4 6;transition:stroke 0.4s}
+
+.line-glow{fill:none;stroke-linecap:round;stroke-linejoin:round;transition:stroke-opacity 0.4s,stroke-width 0.4s}
+.line-main{
+  fill:none;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;
+  stroke-opacity:var(--line-opacity);
+  stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+  animation:drawLine 2s ease-out forwards;
+  transition:stroke-opacity 0.3s,stroke-width 0.3s;
+}
+.line-glass{
+  fill:none;stroke:white;stroke-width:1.8;stroke-opacity:var(--glass-opacity);
+  stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+  animation:drawLine 2s ease-out forwards;transition:stroke-opacity 0.3s;
+}
+[data-theme="light"] .line-glass{stroke:white}
+.line-specular{
+  fill:none;stroke:white;stroke-width:0.6;stroke-opacity:var(--spec-opacity);
+  stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+  animation:drawLine 2s ease-out forwards;transition:stroke-opacity 0.3s;
+}
+@keyframes drawLine{to{stroke-dashoffset:0}}
+
+.map-viewport[class*="highlight-"] .line-main{stroke-opacity:0.12!important}
+.map-viewport[class*="highlight-"] .line-glow{stroke-opacity:0.01!important}
+.map-viewport[class*="highlight-"] .line-glass{stroke-opacity:0.03!important}
+.map-viewport[class*="highlight-"] .line-specular{stroke-opacity:0.04!important}
+.map-viewport.highlight-ava .line-main[data-cat="ava"],
+.map-viewport.highlight-platform .line-main[data-cat="platform"],
+.map-viewport.highlight-intel .line-main[data-cat="intel"],
+.map-viewport.highlight-pulse .line-main[data-cat="pulse"]{stroke-opacity:1!important;stroke-width:4.5!important}
+.map-viewport.highlight-ava .line-glow[data-cat="ava"],
+.map-viewport.highlight-platform .line-glow[data-cat="platform"],
+.map-viewport.highlight-intel .line-glow[data-cat="intel"],
+.map-viewport.highlight-pulse .line-glow[data-cat="pulse"]{stroke-opacity:0.3!important;stroke-width:20!important}
+.map-viewport.highlight-ava .line-glass[data-cat="ava"],
+.map-viewport.highlight-platform .line-glass[data-cat="platform"],
+.map-viewport.highlight-intel .line-glass[data-cat="intel"],
+.map-viewport.highlight-pulse .line-glass[data-cat="pulse"]{stroke-opacity:0.25!important;stroke-width:2.2!important}
+.map-viewport.highlight-ava .line-specular[data-cat="ava"],
+.map-viewport.highlight-platform .line-specular[data-cat="platform"],
+.map-viewport.highlight-intel .line-specular[data-cat="intel"],
+.map-viewport.highlight-pulse .line-specular[data-cat="pulse"]{stroke-opacity:0.45!important}
+.map-viewport[class*="highlight-"] .station{opacity:0.2!important;transition:opacity 0.3s}
+.map-viewport.highlight-ava .station.cat-ava,
+.map-viewport.highlight-platform .station.cat-platform,
+.map-viewport.highlight-intel .station.cat-intel,
+.map-viewport.highlight-pulse .station.cat-pulse{opacity:1!important}
+
+.station{
+  position:absolute;width:12px;height:12px;border-radius:50%;
+  border:2.5px solid;background:var(--station-bg);
+  cursor:pointer;transform:translate(-50%,-50%);
+  transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.3s,background 0.2s,opacity 0.3s;
+  z-index:10;
+}
+.station:hover{transform:translate(-50%,-50%) scale(1.7);background:currentColor}
+.station.cat-ava{border-color:var(--ava);color:var(--ava)}
+.station.cat-platform{border-color:var(--platform);color:var(--platform)}
+.station.cat-intel{border-color:var(--intel);color:var(--intel)}
+.station.cat-pulse{border-color:var(--pulse);color:var(--pulse)}
+.station.cat-ava:hover{box-shadow:0 0 22px rgba(8,145,178,0.6)}
+.station.cat-platform:hover{box-shadow:0 0 22px rgba(75,139,245,0.6)}
+.station.cat-intel:hover{box-shadow:0 0 22px rgba(245,158,11,0.6)}
+.station.cat-pulse:hover{box-shadow:0 0 22px rgba(139,92,246,0.6)}
+.s-label{
+  position:absolute;white-space:nowrap;font-size:9px;font-weight:600;
+  color:var(--text-muted);pointer-events:none;transition:color 0.2s;
+}
+.station:hover .s-label{color:var(--text)}
+
+.popover{
+  position:absolute;width:250px;padding:0.9rem 1.1rem;
+  background:var(--pop-bg);
+  backdrop-filter:blur(20px) saturate(1.5);
+  border:1px solid var(--pop-border);border-radius:11px;
+  pointer-events:none;opacity:0;transform:scale(0.92);
+  transition:opacity 0.22s,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),background 0.4s,border-color 0.4s;
+  z-index:100;
+  box-shadow:0 10px 40px var(--pop-shadow);
+}
+.station:hover .popover{opacity:1;transform:scale(1);pointer-events:auto}
+.pop-meta{display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+.pop-ver{font-size:10px;font-weight:700;color:var(--text-dim);font-family:monospace}
+.pop-date{font-size:10px;color:var(--text-muted)}
+.pop-tag{font-size:8px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:2px 6px;border-radius:100px}
+.pop-tag.t-ava{background:rgba(8,145,178,0.12);color:var(--ava);border:1px solid rgba(8,145,178,0.18)}
+.pop-tag.t-platform{background:rgba(75,139,245,0.12);color:var(--platform);border:1px solid rgba(75,139,245,0.18)}
+.pop-tag.t-intel{background:rgba(245,158,11,0.12);color:var(--intel);border:1px solid rgba(245,158,11,0.18)}
+.pop-tag.t-pulse{background:rgba(139,92,246,0.12);color:var(--pulse);border:1px solid rgba(139,92,246,0.18)}
+.popover h4{font-family:'DM Serif Display',serif;font-weight:400;font-size:14px;color:var(--text);margin-bottom:2px;transition:color 0.4s}
+.popover p{font-size:11.5px;color:var(--text-dim);line-height:1.5;transition:color 0.4s}
+
+.quad-label{
+  position:absolute;font-size:9.5px;font-weight:700;letter-spacing:0.18em;
+  text-transform:uppercase;pointer-events:none;z-index:5;
+  transition:opacity 0.4s;
+}
+
+/* ── FOOTER — always at bottom ── */
+.footer{
+  text-align:center;padding:2rem 2rem;
+  border-top:1px solid var(--foot-border);
+  color:var(--foot-text);font-size:12px;
+  transition:border-color 0.4s,color 0.4s;
+  margin-top:auto;
+}
+
+@keyframes dotIn{from{opacity:0;transform:translate(-50%,-50%) scale(0)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes linePulse{0%{stroke-opacity:0.08;stroke-width:12}100%{stroke-opacity:0.22;stroke-width:20}}
+
+/* ── 3D DEPTH SYSTEM ── */
+
+/* perspective container for mouse-reactive tilt */
+.map-container{perspective:1800px}
+.map-viewport{
+  transform-style:preserve-3d;
+  transition:transform 0.1s ease-out;
+}
+
+/* depth shadow on stations — outer rings feel more elevated */
+.station{
+  transform-style:preserve-3d;
+}
+.station::after{
+  content:'';position:absolute;
+  bottom:-3px;left:50%;
+  width:10px;height:4px;
+  border-radius:50%;
+  background:rgba(0,0,0,0.25);
+  filter:blur(2px);
+  transform:translateX(-50%) translateZ(-2px);
+  opacity:0;transition:opacity 0.3s;
+}
+.station:hover::after{opacity:1}
+
+/* data pulse dots traveling along lines */
+.data-pulse{
+  fill:currentColor;
+  opacity:0;
+  r:3;
+}
+.data-pulse.active{
+  opacity:1;
+  filter:drop-shadow(0 0 4px currentColor);
+}
+
+/* floating ambient particles */
+.particle-canvas{
+  position:absolute;inset:0;
+  pointer-events:none;z-index:1;
+  overflow:hidden;
+}
+.particle{
+  position:absolute;
+  width:2px;height:2px;
+  border-radius:50%;
+  background:rgba(75,139,245,0.15);
+  animation:particleDrift linear infinite;
+  pointer-events:none;
+}
+[data-theme="light"] .particle{background:rgba(28,84,242,0.08)}
+@keyframes particleDrift{
+  0%{transform:translateY(0) translateX(0);opacity:0}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{transform:translateY(-200px) translateX(40px);opacity:0}
+}
+
+/* monolith 3D float */
+.center-hub .logo-wrap{
+  animation:logoFloat 4s ease-in-out infinite;
+  transform-style:preserve-3d;
+}
+@keyframes logoFloat{
+  0%,100%{transform:translateY(0) translateZ(0)}
+  50%{transform:translateY(-4px) translateZ(8px)}
+}
+/* shadow under logo */
+.center-hub::after{
+  content:'';
+  width:36px;height:8px;
+  border-radius:50%;
+  background:rgba(28,84,242,0.15);
+  filter:blur(6px);
+  animation:logoShadow 4s ease-in-out infinite;
+  margin-top:-2px;
+}
+[data-theme="light"] .center-hub::after{background:rgba(28,84,242,0.08)}
+@keyframes logoShadow{
+  0%,100%{transform:scale(1);opacity:0.8}
+  50%{transform:scale(0.75);opacity:0.4}
+}
+
+/* depth-of-field: outer ring labels slightly hazier */
+.station[data-ring="5"] .s-label{filter:blur(0.3px)}
+.station[data-ring="4"] .s-label{filter:blur(0.15px)}
+
+/* ring parallax layers */
+.ring-layer{
+  position:absolute;inset:0;
+  transition:transform 0.15s ease-out;
+  pointer-events:none;
+}
+.ring-layer svg{width:100%;height:100%}
+
+@media(max-width:600px){
+  .nav{gap:1.2rem;flex-wrap:wrap;justify-content:center}
+  .theme-toggle{position:static;order:10}
+  .hero{padding:3rem 1.5rem 0.8rem}
+  .hero h1{font-size:1.8rem}.hero .sub{font-size:0.95rem}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="https://www.strydeos.com" class="nav-logo">
+    <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="nc" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient><radialGradient id="nr" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient><linearGradient id="nt" x1="0.05" y1="1" x2="0.35" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0.55"/><stop offset="100%" stop-color="white" stop-opacity="0.97"/></linearGradient><linearGradient id="nb" x1="0.1" y1="0" x2="0.4" y2="1"><stop offset="0%" stop-color="#7ABBFF" stop-opacity="0.65"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0.06"/></linearGradient><clipPath id="np"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath><clipPath id="na"><polygon points="35,52 57,40 57,20 35,20"/></clipPath></defs><rect width="100" height="100" rx="24" fill="url(#nc)"/><rect width="100" height="100" rx="24" fill="url(#nr)"/><rect width="100" height="100" rx="24" fill="none" stroke="url(#nb)" stroke-width="1.2"/><rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/><rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/><g clip-path="url(#np)"><polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g><rect x="35" y="20" width="22" height="60" rx="5" fill="url(#nt)" clip-path="url(#na)"/><line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/></svg>
+    <div class="nav-wordmark">Stryde<span>OS</span></div>
+  </a>
+  <a href="https://www.strydeos.com/#products" class="nav-link">Products</a>
+  <a href="https://www.strydeos.com/#how-it-works" class="nav-link">How it works</a>
+  <a href="https://www.strydeos.com/#pricing" class="nav-link">Pricing</a>
+  <a href="https://www.strydeos.com/#about" class="nav-link">About</a>
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <!-- Sun icon (shown in dark mode → click to go light) -->
+    <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    <!-- Moon icon (shown in light mode → click to go dark) -->
+    <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+</nav>
+
+<main>
+<section class="hero">
+  <h1>Changelog</h1>
+  <p class="sub">Find out where Stryde currently is, and see where we're going.</p>
+</section>
+
+<div class="legend">
+  <div class="legend-item" data-highlight="ava"><div class="legend-swatch" style="background:var(--ava)"></div>Ava</div>
+  <div class="legend-item" data-highlight="platform"><div class="legend-swatch" style="background:var(--platform)"></div>Platform</div>
+  <div class="legend-item" data-highlight="intel"><div class="legend-swatch" style="background:var(--intel)"></div>Intelligence</div>
+  <div class="legend-item" data-highlight="pulse"><div class="legend-swatch" style="background:var(--pulse)"></div>Pulse</div>
+</div>
+
+<div class="map-container">
+  <div class="map-viewport" id="viewport">
+    <svg class="map-svg" id="mapSvg" viewBox="0 0 880 880" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="particle-canvas" id="particles"></div>
+    <div class="center-hub">
+      <div class="logo-wrap">
+        <svg width="46" height="46" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ig-c" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient><radialGradient id="ig-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient><linearGradient id="ig-t" x1="0.05" y1="1" x2="0.35" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0.55"/><stop offset="100%" stop-color="white" stop-opacity="0.97"/></linearGradient><linearGradient id="ig-m" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0"/><stop offset="28%" stop-color="white" stop-opacity="0.60"/><stop offset="65%" stop-color="white" stop-opacity="0.12"/><stop offset="100%" stop-color="white" stop-opacity="0"/></linearGradient><clipPath id="ig-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath><clipPath id="ig-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath></defs><rect width="100" height="100" rx="50" fill="url(#ig-c)"/><rect width="100" height="100" rx="50" fill="url(#ig-r)"/><path d="M 17 21 Q 50 12 83 21" stroke="url(#ig-m)" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/><rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/><g clip-path="url(#ig-p)"><polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g><rect x="35" y="20" width="22" height="60" rx="5" fill="url(#ig-t)" clip-path="url(#ig-a)"/><line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/></svg>
+      </div>
+      <div class="center-label">v1.0.0 · Launch</div>
+    </div>
+  </div>
+</div>
+</main>
+
+<footer class="footer">Built for clinics that want to see clearly. © 2026 StrydeOS Ltd.</footer>
+
+<script>
+// Theme toggle
+const toggle = document.getElementById('themeToggle');
+const html = document.documentElement;
+const stored = localStorage.getItem('stryde-theme');
+if (stored) html.dataset.theme = stored;
+
+toggle.addEventListener('click', () => {
+  const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+  html.dataset.theme = next;
+  localStorage.setItem('stryde-theme', next);
+});
+
+const CX=440,CY=440,LOGO_R=52;
+const RINGS=[0,100,165,235,310,385];
+const COLORS={ava:'#0891B2',platform:'#4B8BF5',intel:'#F59E0B',pulse:'#8B5CF6'};
+const CAT_LABELS={ava:'Ava',platform:'Platform',intel:'Intelligence',pulse:'Pulse'};
+
+function polar(ring,deg){
+  const r=RINGS[ring],rad=(deg-90)*Math.PI/180;
+  return{x:CX+r*Math.cos(rad),y:CY+r*Math.sin(rad)};
+}
+function logoEdge(deg){
+  const rad=(deg-90)*Math.PI/180;
+  return{x:CX+LOGO_R*Math.cos(rad),y:CY+LOGO_R*Math.sin(rad)};
+}
+
+const STATIONS=[
+  // AVA (320°–40°) — shifted angles away from 0° to avoid logo top
+  {id:'v103', v:'v1.0.3', date:'27 Jan',  cat:'ava',  title:'Voice tuned',           desc:'Stability 67%, similarity 85%. Less robotic. More Ava.',                           ring:1, angle:340},
+  {id:'v110a',v:'v1.1.0', date:'3 Feb',   cat:'ava',  title:'Ava goes live',          desc:'First voice agent deployed. Retell AI backbone, n8n orchestration, Firebase state.',ring:2, angle:328},
+  {id:'v114', v:'v1.1.4', date:'3 Mar',   cat:'ava',  title:'Call transfers',         desc:"Ava knows when she's out of her depth. Warm transfer to the right person.",         ring:2, angle:14},
+  {id:'v130a',v:'v1.3.0', date:'1 Apr',   cat:'ava',  title:'Rebuilt on LangGraph',   desc:'Proper state machine. Real conversation memory. Structured routing.',               ring:3, angle:345},
+  {id:'v132', v:'v1.3.2', date:'5 Apr',   cat:'ava',  title:'One-click provisioning', desc:'UK number, SIP trunk, ElevenLabs agent. Sorted in one click.',                      ring:4, angle:335},
+  {id:'v140', v:'v1.4.0', date:'7 Apr',   cat:'ava',  title:'Warm transfers',         desc:'Catches the complaint before it becomes a missed call. Clean handoff via Twilio.',   ring:5, angle:350},
+
+  // INTELLIGENCE (50°–130°) — 4 + 2 new = 6
+  {id:'v111i',v:'v1.1.1', date:'10 Feb',  cat:'intel', title:'Dark mode',             desc:'Because 11pm exists.',                                                              ring:1, angle:80},
+  {id:'v113', v:'v1.1.3', date:'25 Feb',  cat:'intel', title:'Weekly digest',         desc:'Same signal. Less noise. Your Monday is now 30 seconds shorter.',                    ring:2, angle:65},
+  {id:'v120i',v:'v1.2.0', date:'8 Mar',   cat:'intel', title:'Terms updated',         desc:'Tighter data handling. Multi-region compliance language.',                           ring:2, angle:105},
+  {id:'v124i',v:'v1.2.4', date:'28 Mar',  cat:'intel', title:'Clinician scorecards',  desc:'Rebooking rate, average course length, DNA rate. Per-clinician. Coaching-ready.',    ring:3, angle:80},
+  {id:'v131', v:'v1.3.1', date:'3 Apr',   cat:'intel', title:'Benchmarks',            desc:'Your KPIs against real clinic data. Know where you stand — not just how you feel.',  ring:4, angle:90},
+  {id:'v133i',v:'v1.3.3', date:'6 Apr',   cat:'intel', title:'Revenue forecasting',   desc:'30/60/90-day projections based on pipeline, rebooking, and seasonal patterns.',      ring:5, angle:75},
+
+  // PLATFORM (140°–220°)
+  {id:'v090', v:'v0.9.0', date:'2 Jan',   cat:'platform',title:'Beta closes',         desc:'Three pilot clinics onboarded. Data flowing. Time to ship.',                        ring:5, angle:215},
+  {id:'v091', v:'v0.9.1', date:'8 Jan',   cat:'platform',title:'Billing',             desc:'Monthly plans. No lock-in. Cancel anytime.',                                        ring:4, angle:210},
+  {id:'v092', v:'v0.9.2', date:'13 Jan',  cat:'platform',title:'Security sweep',      desc:'42 edge cases across 15 domains. Nine fixes shipped before anyone asked.',           ring:3, angle:215},
+  {id:'v101', v:'v1.0.1', date:'19 Jan',  cat:'platform',title:'Onboarding wizard',   desc:'PMS → Ava → Pulse → live. Five steps. Done in a week.',                             ring:1, angle:168},
+  {id:'v102', v:'v1.0.2', date:'21 Jan',  cat:'platform',title:'ROI calculator',      desc:'Corrected a bug where the numbers were too generous. We prefer conservative.',       ring:1, angle:205},
+  {id:'v121', v:'v1.2.1', date:'14 Mar',  cat:'platform',title:'Sync reliability',    desc:'Patient data refreshed on every PMS run. The 30-minute idle bug — gone.',            ring:3, angle:165},
+  {id:'v122', v:'v1.2.2', date:'19 Mar',  cat:'platform',title:'Session security',    desc:'Remember Me toggle. HMAC-signed cookies. 8hr clinical workday TTL.',                 ring:3, angle:145},
+  {id:'v123', v:'v1.2.3', date:'24 Mar',  cat:'platform',title:'In-app changelog',    desc:"What shipped, when, for whom. Every user sees it once. Then it's gone.",             ring:4, angle:175},
+  {id:'v124', v:'v1.2.4', date:'28 Mar',  cat:'platform',title:'Clinician layer',     desc:"Observational notes. Clinicians see what's relevant. Owners see everything.",        ring:4, angle:148},
+
+  // PULSE (230°–310°) — 2 + 2 new = 4
+  {id:'v112', v:'v1.1.2', date:'18 Feb',  cat:'pulse', title:'Opt-outs honoured',     desc:'Patient communication preferences enforced across every sequence.',                  ring:2, angle:270},
+  {id:'v122p',v:'v1.2.2', date:'19 Mar',  cat:'pulse', title:'Review prompts',        desc:'Automated Google review requests timed to peak satisfaction. 4.8★ without asking.',  ring:3, angle:290},
+  {id:'v130p',v:'v1.3.0', date:'1 Apr',   cat:'pulse', title:'Retention engine',      desc:'Rebooking sequences, dropout detection, win-back campaigns. All in one module.',     ring:3, angle:250},
+  {id:'v132p',v:'v1.3.2', date:'5 Apr',   cat:'pulse', title:'SMS sequences',         desc:'Multi-step SMS workflows. Reminders, follow-ups, check-ins. All automated.',         ring:4, angle:270},
+];
+
+STATIONS.forEach(s=>{const p=polar(s.ring,s.angle);s.x=p.x;s.y=p.y});
+const stMap={};STATIONS.forEach(s=>stMap[s.id]=s);
+
+const LINES=[
+  {cat:'ava',ids:['EDGE:340','v103','v110a','v130a','v132','v140'],delay:0},
+  {cat:'ava',ids:['EDGE:14','v114'],delay:0.12},
+  {cat:'intel',ids:['EDGE:80','v111i','v113','v124i','v131','v133i'],delay:0.3},
+  {cat:'intel',ids:['EDGE:105','v120i'],delay:0.4},
+  {cat:'platform',ids:['v090','v091','v092','EDGE:200'],delay:0.5},
+  {cat:'platform',ids:['EDGE:168','v101','v122','v124'],delay:0.55},
+  {cat:'platform',ids:['EDGE:205','v102','v121','v123'],delay:0.65},
+  {cat:'pulse',ids:['EDGE:265','v112','v130p','v132p'],delay:0.8},
+  {cat:'pulse',ids:['EDGE:285','v122p'],delay:0.9},
+];
+
+function resolvePoint(id){
+  if(typeof id==='string'&&id.startsWith('EDGE:'))return logoEdge(parseFloat(id.split(':')[1]));
+  return stMap[id];
+}
+
+const svg=document.getElementById('mapSvg');
+const viewport=document.getElementById('viewport');
+
+[1,2,3,4,5].forEach(i=>{
+  const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx',CX);c.setAttribute('cy',CY);c.setAttribute('r',RINGS[i]);
+  c.classList.add('ring-guide');svg.appendChild(c);
+});
+[45,135,225,315].forEach(a=>{
+  const p=polar(5,a);const ep={x:CX+(p.x-CX)*1.06,y:CY+(p.y-CY)*1.06};
+  const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1',CX);l.setAttribute('y1',CY);l.setAttribute('x2',ep.x);l.setAttribute('y2',ep.y);
+  l.classList.add('sector-div');svg.appendChild(l);
+});
+
+LINES.forEach(line=>{
+  const pts=line.ids.map(id=>resolvePoint(id)).filter(Boolean);
+  if(pts.length<2)return;
+  const col=COLORS[line.cat];
+  let d=`M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  for(let i=1;i<pts.length;i++){
+    const p=pts[i-1],c=pts[i];
+    const dx=c.x-p.x,dy=c.y-p.y,adx=Math.abs(dx),ady=Math.abs(dy);
+    if(adx<1&&ady<1){d+=` L ${c.x.toFixed(1)} ${c.y.toFixed(1)}`;continue}
+    const diag=Math.min(adx,ady);
+    d+=` L ${(p.x+diag*Math.sign(dx)).toFixed(1)} ${(p.y+diag*Math.sign(dy)).toFixed(1)} L ${c.x.toFixed(1)} ${c.y.toFixed(1)}`;
+  }
+  const glow=document.createElementNS('http://www.w3.org/2000/svg','path');
+  glow.setAttribute('d',d);glow.setAttribute('fill','none');
+  glow.setAttribute('stroke',col);glow.setAttribute('stroke-width','14');
+  glow.setAttribute('stroke-opacity','0.1');
+  glow.setAttribute('stroke-linecap','round');glow.setAttribute('stroke-linejoin','round');
+  glow.classList.add('line-glow');glow.dataset.cat=line.cat;
+  glow.style.animation='linePulse 4s ease-in-out infinite alternate';
+  glow.style.animationDelay=line.delay+'s';
+  svg.appendChild(glow);
+
+  const main=document.createElementNS('http://www.w3.org/2000/svg','path');
+  main.setAttribute('d',d);main.setAttribute('stroke',col);
+  main.classList.add('line-main');main.dataset.cat=line.cat;
+  main.style.animationDelay=line.delay+'s';
+  svg.appendChild(main);
+
+  const glass=document.createElementNS('http://www.w3.org/2000/svg','path');
+  glass.setAttribute('d',d);
+  glass.classList.add('line-glass');glass.dataset.cat=line.cat;
+  glass.style.animationDelay=line.delay+'s';
+  svg.appendChild(glass);
+
+  const spec=document.createElementNS('http://www.w3.org/2000/svg','path');
+  spec.setAttribute('d',d);
+  spec.classList.add('line-specular');spec.dataset.cat=line.cat;
+  spec.style.animationDelay=line.delay+'s';
+  svg.appendChild(spec);
+
+  requestAnimationFrame(()=>{
+    const len=main.getTotalLength();
+    [main,glass,spec].forEach(el=>el.style.setProperty('--len',len));
+  });
+});
+
+STATIONS.forEach((s,idx)=>{
+  const el=document.createElement('div');
+  el.className=`station cat-${s.cat}`;el.dataset.cat=s.cat;
+  el.style.left=(s.x/880*100)+'%';el.style.top=(s.y/880*100)+'%';
+  el.style.opacity='0';el.style.animation='dotIn 0.35s ease forwards';
+  el.style.animationDelay=(0.5+idx*0.035)+'s';
+
+  const lbl=document.createElement('span');
+  lbl.className='s-label';lbl.textContent=s.v;
+  const a=s.angle%360;
+  if(a>=320||a<40){lbl.style.bottom='calc(100% + 6px)';lbl.style.left='50%';lbl.style.transform='translateX(-50%)'}
+  else if(a>=40&&a<140){lbl.style.left='calc(100% + 7px)';lbl.style.top='50%';lbl.style.transform='translateY(-50%)'}
+  else if(a>=140&&a<220){lbl.style.top='calc(100% + 6px)';lbl.style.left='50%';lbl.style.transform='translateX(-50%)'}
+  else{lbl.style.right='calc(100% + 7px)';lbl.style.top='50%';lbl.style.transform='translateY(-50%)';lbl.style.textAlign='right'}
+  el.appendChild(lbl);
+
+  const pop=document.createElement('div');pop.className='popover';
+  if(a>=320||a<40){pop.style.bottom='calc(100% + 18px)';pop.style.left='50%';pop.style.marginLeft='-125px'}
+  else if(a>=40&&a<140){pop.style.left='calc(100% + 18px)';pop.style.top='50%';pop.style.marginTop='-50px'}
+  else if(a>=140&&a<220){pop.style.top='calc(100% + 18px)';pop.style.left='50%';pop.style.marginLeft='-125px'}
+  else{pop.style.right='calc(100% + 18px)';pop.style.top='50%';pop.style.marginTop='-50px'}
+  pop.innerHTML=`<div class="pop-meta"><span class="pop-ver">${s.v}</span><span class="pop-date">${s.date} 2026</span><span class="pop-tag t-${s.cat}">${CAT_LABELS[s.cat]}</span></div><h4>${s.title}</h4><p>${s.desc}</p>`;
+  el.appendChild(pop);
+
+  el.addEventListener('mouseenter',()=>viewport.classList.add('highlight-'+s.cat));
+  el.addEventListener('mouseleave',()=>viewport.classList.remove('highlight-'+s.cat));
+  viewport.appendChild(el);
+});
+
+const qlOffset=RINGS[5]+42;
+[{text:'Ava',color:'var(--ava)',angle:0},{text:'Intelligence',color:'var(--intel)',angle:90},{text:'Platform',color:'var(--platform)',angle:180},{text:'Pulse',color:'var(--pulse)',angle:270}].forEach(q=>{
+  const rad=(q.angle-90)*Math.PI/180;
+  const x=CX+qlOffset*Math.cos(rad),y=CY+qlOffset*Math.sin(rad);
+  const el=document.createElement('div');el.className='quad-label';
+  el.style.left=(x/880*100)+'%';el.style.top=(y/880*100)+'%';
+  el.style.transform='translate(-50%,-50%)';el.style.color=q.color;el.style.opacity='0.4';
+  el.textContent=q.text;viewport.appendChild(el);
+});
+
+document.querySelectorAll('.legend-item[data-highlight]').forEach(li=>{
+  const cat=li.dataset.highlight;
+  li.addEventListener('mouseenter',()=>viewport.classList.add('highlight-'+cat));
+  li.addEventListener('mouseleave',()=>viewport.classList.remove('highlight-'+cat));
+});
+
+// ── 3D DEPTH EFFECTS ──
+
+// 1. Mouse-reactive perspective tilt
+const mapContainer = document.querySelector('.map-container');
+let tiltX = 0, tiltY = 0, targetTiltX = 0, targetTiltY = 0;
+
+mapContainer.addEventListener('mousemove', e => {
+  const rect = mapContainer.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width - 0.5;
+  const y = (e.clientY - rect.top) / rect.height - 0.5;
+  targetTiltX = y * -4; // max 2deg tilt
+  targetTiltY = x * 4;
+});
+mapContainer.addEventListener('mouseleave', () => {
+  targetTiltX = 0; targetTiltY = 0;
+});
+
+function animateTilt() {
+  tiltX += (targetTiltX - tiltX) * 0.08;
+  tiltY += (targetTiltY - tiltY) * 0.08;
+  viewport.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+  requestAnimationFrame(animateTilt);
+}
+animateTilt();
+
+// 2. Data pulses — dots that travel along the transit lines
+const allMainPaths = svg.querySelectorAll('.line-main');
+const pulseGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+svg.appendChild(pulseGroup);
+
+function createPulse(path, color, delay) {
+  const len = path.getTotalLength();
+  if (len < 10) return;
+
+  const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  dot.setAttribute('r', '2.5');
+  dot.setAttribute('fill', color);
+  dot.style.filter = `drop-shadow(0 0 4px ${color})`;
+  dot.style.opacity = '0';
+  pulseGroup.appendChild(dot);
+
+  // Trail dot (dimmer, slightly behind)
+  const trail = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  trail.setAttribute('r', '1.5');
+  trail.setAttribute('fill', color);
+  trail.style.opacity = '0';
+  pulseGroup.appendChild(trail);
+
+  let progress = 0;
+  const speed = 0.003 + Math.random() * 0.002;
+  let started = false;
+
+  function tick() {
+    if (!started) {
+      if (delay > 0) { delay -= 16; requestAnimationFrame(tick); return; }
+      started = true;
+    }
+    progress += speed;
+    if (progress > 1) progress = 0;
+
+    const pt = path.getPointAtLength(progress * len);
+    dot.setAttribute('cx', pt.x);
+    dot.setAttribute('cy', pt.y);
+    dot.style.opacity = progress < 0.05 || progress > 0.95 ? '0' : '0.8';
+
+    // Trail follows slightly behind
+    const trailProg = Math.max(0, progress - 0.03);
+    const tpt = path.getPointAtLength(trailProg * len);
+    trail.setAttribute('cx', tpt.x);
+    trail.setAttribute('cy', tpt.y);
+    trail.style.opacity = trailProg < 0.05 || progress > 0.95 ? '0' : '0.3';
+
+    requestAnimationFrame(tick);
+  }
+  // Start after lines finish drawing
+  setTimeout(() => requestAnimationFrame(tick), 2500 + delay);
+}
+
+// Wait for draw animation to finish, then spawn pulses
+setTimeout(() => {
+  allMainPaths.forEach(path => {
+    const cat = path.dataset.cat;
+    const col = COLORS[cat];
+    // 1-2 pulses per line
+    createPulse(path, col, Math.random() * 3000);
+    if (Math.random() > 0.4) createPulse(path, col, 2000 + Math.random() * 4000);
+  });
+}, 500);
+
+// 3. Floating ambient particles
+const particleCanvas = document.getElementById('particles');
+const PARTICLE_COUNT = 18;
+
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left = (10 + Math.random() * 80) + '%';
+  p.style.top = (20 + Math.random() * 60) + '%';
+  p.style.width = (1.5 + Math.random() * 1.5) + 'px';
+  p.style.height = p.style.width;
+  p.style.animationDuration = (8 + Math.random() * 12) + 's';
+  p.style.animationDelay = (Math.random() * 10) + 's';
+  // Vary colors between the four line colors
+  const colors = ['rgba(8,145,178,0.12)','rgba(75,139,245,0.12)','rgba(245,158,11,0.1)','rgba(139,92,246,0.1)'];
+  p.style.background = colors[Math.floor(Math.random() * colors.length)];
+  particleCanvas.appendChild(p);
+}
+
+// 4. Add data-ring attributes to stations for depth-of-field CSS
+document.querySelectorAll('.station').forEach(el => {
+  const cat = el.dataset.cat;
+  const s = STATIONS.find(st => st.cat === cat && 
+    Math.abs(parseFloat(el.style.left) - (st.x/880*100)) < 0.5);
+  if (s) el.dataset.ring = s.ring;
+});
+</script>
+</body>
+</html>

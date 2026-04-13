@@ -1,0 +1,293 @@
+import { useState, useEffect } from "react";
+
+const T = {
+  navy: "#0B2545", navyMid: "#132D5E", navyLight: "#1A3A6E",
+  blue: "#1C54F2", blueBright: "#2E6BFF", blueGlow: "#4B8BF5",
+  teal: "#0891B2", tealBright: "#06B6D4", tealGlow: "#22D3EE",
+  purple: "#8B5CF6", purpleBright: "#A78BFA", purpleGlow: "#C4B5FD",
+  success: "#059669",
+  muted: "#8A8780", ink: "#2C2A26",
+};
+
+const MODULE_META = {
+  Ava: {
+    color: T.blue, bright: T.blueBright, glow: T.blueGlow,
+    setup: "£250 one-time setup",
+    trialUrl: "https://portal.strydeos.com/trial",
+    buyUrlBase: "https://portal.strydeos.com/checkout?plan=ava",
+  },
+  Pulse: {
+    color: T.teal, bright: T.tealBright, glow: T.tealGlow,
+    setup: "No setup fee",
+    trialUrl: "https://portal.strydeos.com/trial",
+    buyUrlBase: "https://portal.strydeos.com/checkout?plan=pulse",
+  },
+  Intelligence: {
+    color: T.purple, bright: T.purpleBright, glow: T.purpleGlow,
+    setup: "No setup fee",
+    trialUrl: "https://portal.strydeos.com/trial",
+    buyUrlBase: "https://portal.strydeos.com/checkout?plan=intelligence",
+  },
+};
+
+const TIERS = [
+  { id: "solo", label: "Solo", sub: "(1)" },
+  { id: "studio", label: "Studio", sub: "(2–5)" },
+  { id: "clinic", label: "Clinic", sub: "(6+)" },
+];
+
+const PRICING = {
+  solo:   { Ava: "119", Pulse: "89",  Intelligence: "69"  },
+  studio: { Ava: "179", Pulse: "129", Intelligence: "109" },
+  clinic: { Ava: "259", Pulse: "199", Intelligence: "179" },
+};
+
+const SETUP = {
+  solo:   { Ava: "£250 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
+  studio: { Ava: "£250 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
+  clinic: { Ava: "£250 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
+};
+
+export default function ModulePricingBanner({ module = "Ava" }) {
+  const [tier, setTier] = useState("studio");
+  const [loaded, setLoaded] = useState(false);
+  const [primaryHover, setPrimaryHover] = useState(false);
+  const [secondaryHover, setSecondaryHover] = useState(false);
+  const [priceAnim, setPriceAnim] = useState(false);
+
+  useEffect(() => { requestAnimationFrame(() => requestAnimationFrame(() => setLoaded(true))); }, []);
+
+  const handleTierChange = (newTier) => {
+    if (newTier === tier) return;
+    setPriceAnim(true);
+    setTimeout(() => {
+      setTier(newTier);
+      setTimeout(() => setPriceAnim(false), 30);
+    }, 150);
+  };
+
+  const tierIndex = TIERS.findIndex(t => t.id === tier);
+
+  const m = MODULE_META[module];
+  const price = PRICING[tier][module];
+  const setup = SETUP[tier][module];
+  const buyUrl = `${m.buyUrlBase}-${tier}&billing=now`;
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Serif+Display&display=swap');
+        .mpb * { box-sizing: border-box; margin: 0; padding: 0; }
+        @keyframes driftGlow {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 1; }
+          50% { transform: translate(15px, -10px) scale(1.08); opacity: 0.7; }
+        }
+      `}</style>
+
+      <div className="mpb" style={{
+        fontFamily: "'Outfit', sans-serif", width: "100%", maxWidth: 560, margin: "0 auto",
+      }}>
+        <div style={{
+          position: "relative", overflow: "hidden",
+          borderRadius: 20,
+          padding: "30px 32px 28px",
+          background: `radial-gradient(ellipse 80% 60% at 50% 30%, ${T.navyLight}40, ${T.navy} 70%)`,
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: `
+            0 8px 40px rgba(0,0,0,0.25),
+            0 1px 2px rgba(0,0,0,0.2),
+            inset 0 1px 0 rgba(255,255,255,0.04)
+          `,
+          textAlign: "center",
+          opacity: loaded ? 1 : 0,
+          transform: loaded ? "translateY(0)" : "translateY(12px)",
+          transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
+        }}>
+
+          {/* Ambient glows */}
+          <div style={{
+            position: "absolute", top: -100, left: "50%", marginLeft: -200,
+            width: 400, height: 400, borderRadius: "50%",
+            background: `radial-gradient(circle, ${m.color}06, transparent 70%)`,
+            pointerEvents: "none",
+            animation: "driftGlow 8s ease-in-out infinite",
+          }} />
+          <div style={{
+            position: "absolute", bottom: -80, right: -60,
+            width: 300, height: 300, borderRadius: "50%",
+            background: `radial-gradient(circle, ${m.color}04, transparent 70%)`,
+            pointerEvents: "none",
+            animation: "driftGlow 8s ease-in-out 2s infinite reverse",
+          }} />
+
+          {/* Glass highlight */}
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0, height: 60,
+            background: "linear-gradient(180deg, rgba(255,255,255,0.015) 0%, transparent 100%)",
+            borderRadius: "20px 20px 0 0",
+            pointerEvents: "none",
+          }} />
+
+          {/* ─── Tier Toggle ─── */}
+          <div style={{
+            display: "inline-flex", alignItems: "stretch",
+            padding: 4, borderRadius: 16,
+            backgroundColor: "rgba(0,0,0,0.25)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            boxShadow: "inset 0 2px 8px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.03)",
+            marginBottom: 28,
+            position: "relative",
+          }}>
+            {/* Sliding indicator */}
+            <div style={{
+              position: "absolute", top: 4, bottom: 4,
+              width: `calc(${100 / TIERS.length}% - ${2}px)`,
+              left: `calc(${tierIndex * (100 / TIERS.length)}% + 2px)`,
+              borderRadius: 12,
+              background: `linear-gradient(135deg, ${m.bright}, ${m.color})`,
+              boxShadow: `0 2px 10px ${m.color}30, 0 0 0 1px ${m.bright}20, inset 0 1px 0 rgba(255,255,255,0.15)`,
+              transition: "left 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+              zIndex: 1,
+            }} />
+
+            {TIERS.map((t) => {
+              const active = tier === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => handleTierChange(t.id)}
+                  style={{
+                    position: "relative", zIndex: 2,
+                    padding: "10px 28px 8px",
+                    borderRadius: 12, border: "none", cursor: "pointer",
+                    fontFamily: "'Outfit', sans-serif",
+                    background: "transparent",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  <span style={{
+                    fontSize: 14, fontWeight: active ? 700 : 500,
+                    color: active ? "white" : "rgba(255,255,255,0.3)",
+                    transition: "color 0.3s ease",
+                  }}>
+                    {t.label}
+                  </span>
+                  <span style={{
+                    fontSize: 12, fontWeight: 400, marginLeft: 4,
+                    color: active ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.18)",
+                    transition: "color 0.3s ease",
+                  }}>
+                    {t.sub}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ─── Price ─── */}
+          <div style={{
+            marginBottom: 6, position: "relative",
+            opacity: priceAnim ? 0 : 1,
+            transform: priceAnim ? "translateY(6px)" : "translateY(0)",
+            transition: "all 0.15s ease",
+          }}>
+            <span style={{
+              fontFamily: "'DM Serif Display', serif",
+              fontSize: 16, color: "rgba(255,255,255,0.35)",
+              position: "relative", top: -22,
+            }}>£</span>
+            <span style={{
+              fontFamily: "'DM Serif Display', serif",
+              fontSize: 64, color: "white", lineHeight: 1,
+              letterSpacing: "-0.02em",
+            }}>
+              {price}
+            </span>
+          </div>
+
+          <div style={{
+            fontSize: 14, color: "rgba(255,255,255,0.35)",
+            marginBottom: 26,
+            opacity: priceAnim ? 0 : 1,
+            transform: priceAnim ? "translateY(4px)" : "translateY(0)",
+            transition: "all 0.15s ease 0.03s",
+          }}>
+            p/m · {setup}
+          </div>
+
+          {/* ─── CTAs ─── */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            gap: 12, marginBottom: 18,
+          }}>
+            {/* Primary — Start free trial */}
+            <a
+              href={m.trialUrl}
+              onMouseEnter={() => setPrimaryHover(true)}
+              onMouseLeave={() => setPrimaryHover(false)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "13px 30px", borderRadius: 50,
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 14, fontWeight: 700, color: "white",
+                textDecoration: "none", cursor: "pointer",
+                background: primaryHover
+                  ? `linear-gradient(135deg, ${m.bright}, ${m.color})`
+                  : `linear-gradient(135deg, ${m.color}, ${m.color}E6)`,
+                boxShadow: primaryHover
+                  ? `0 4px 16px ${m.color}28, 0 0 0 1px ${m.bright}18, inset 0 1px 0 rgba(255,255,255,0.15)`
+                  : `0 2px 8px ${m.color}18, inset 0 1px 0 rgba(255,255,255,0.08)`,
+                transform: primaryHover ? "translateY(-1px)" : "translateY(0)",
+                transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
+              }}
+            >
+              Start free trial <span style={{ fontSize: 16 }}>→</span>
+            </a>
+
+            {/* Secondary — Buy now */}
+            <a
+              href={buyUrl}
+              onMouseEnter={() => setSecondaryHover(true)}
+              onMouseLeave={() => setSecondaryHover(false)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "13px 30px", borderRadius: 50,
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 14, fontWeight: 700,
+                textDecoration: "none", cursor: "pointer",
+                color: secondaryHover ? "white" : "rgba(255,255,255,0.7)",
+                background: secondaryHover
+                  ? `linear-gradient(135deg, ${m.bright}20, ${m.color}15)`
+                  : "transparent",
+                border: secondaryHover
+                  ? `1.5px solid ${m.bright}50`
+                  : "1.5px solid rgba(255,255,255,0.15)",
+                boxShadow: secondaryHover
+                  ? `0 0 12px ${m.color}08, inset 0 1px 0 rgba(255,255,255,0.04)`
+                  : "none",
+                transform: secondaryHover ? "translateY(-1px)" : "translateY(0)",
+                transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
+              }}
+            >
+              Buy now <span style={{ fontSize: 16 }}>→</span>
+            </a>
+          </div>
+
+          {/* Compare link */}
+          <a
+            href="/pricing"
+            style={{
+              fontSize: 13, color: "rgba(255,255,255,0.3)",
+              textDecoration: "none", cursor: "pointer",
+              transition: "color 0.2s ease",
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = "rgba(255,255,255,0.55)"}
+            onMouseLeave={(e) => e.currentTarget.style.color = "rgba(255,255,255,0.3)"}
+          >
+            Compare all plans ↓
+          </a>
+        </div>
+      </div>
+    </>
+  );
+}
