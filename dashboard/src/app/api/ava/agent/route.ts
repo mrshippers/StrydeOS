@@ -128,6 +128,8 @@ async function handler(req: NextRequest) {
       : corePrompt;
 
     const webhookUrl = `${appUrl}/api/webhooks/elevenlabs`;
+    const toolsUrl = `${appUrl}/api/ava/tools`;
+    const transferUrl = `${appUrl}/api/ava/transfer`;
 
     const agentConfig: ElevenAgentsConfig = {
       name: `${clinicData.name || "Clinic"} - Ava`,
@@ -136,24 +138,24 @@ async function handler(req: NextRequest) {
       webhook_url: webhookUrl,
       tools: [
         {
-          name: "book_appointment",
-          description: "Book an appointment for the patient",
-          webhook_url: webhookUrl,
+          name: "check_availability",
+          description: "Check clinician availability for a given day or week. Use this BEFORE booking to find open slots. Returns available times that you should read back to the caller.",
+          webhook_url: toolsUrl,
         },
         {
-          name: "check_availability",
-          description: "Check clinician availability",
-          webhook_url: webhookUrl,
+          name: "book_appointment",
+          description: "Book an appointment for the patient. Only call this AFTER you have confirmed all details with the caller: their name, phone number, email, the date/time, and which clinician. Read back the full booking details and wait for the caller to confirm before triggering this tool.",
+          webhook_url: toolsUrl,
         },
         {
           name: "update_booking",
-          description: "Reschedule or cancel an appointment",
-          webhook_url: webhookUrl,
+          description: "Cancel or reschedule an existing appointment. Ask the caller for their booking reference or look it up by their name.",
+          webhook_url: toolsUrl,
         },
         {
           name: "transfer_to_reception",
           description: "Transfer the caller to the clinic reception desk. Use when the caller has a complaint, wants to speak to a manager, or needs human assistance that you cannot provide. Say 'Let me put you through to someone who can help right away' before triggering this tool.",
-          webhook_url: `${appUrl}/api/ava/transfer`,
+          webhook_url: transferUrl,
         },
       ],
     };

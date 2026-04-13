@@ -115,7 +115,10 @@ async function handler(req: NextRequest) {
         ? `${corePrompt}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCLINIC KNOWLEDGE BASE\n\n${knowledgeDoc}`
         : corePrompt;
 
-      const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/elevenlabs`;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+      const webhookUrl = `${appUrl}/api/webhooks/elevenlabs`;
+      const toolsUrl = `${appUrl}/api/ava/tools`;
+      const transferUrl = `${appUrl}/api/ava/transfer`;
 
       const agentResponse = await fetch(`${ELEVENLABS_API_URL}/convai/agents`, {
         method: "POST",
@@ -130,10 +133,10 @@ async function handler(req: NextRequest) {
           webhook_url: webhookUrl,
           language: "en",
           tools: [
-            { name: "book_appointment", description: "Book an appointment for the patient", webhook_url: webhookUrl },
-            { name: "check_availability", description: "Check clinician availability", webhook_url: webhookUrl },
-            { name: "update_booking", description: "Reschedule or cancel an appointment", webhook_url: webhookUrl },
-            { name: "transfer_to_reception", description: "Transfer the caller to the clinic reception desk. Use when the caller has a complaint, wants to speak to a manager, or needs human assistance that you cannot provide.", webhook_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/ava/transfer` },
+            { name: "check_availability", description: "Check clinician availability for a given day or week. Use this BEFORE booking to find open slots.", webhook_url: toolsUrl },
+            { name: "book_appointment", description: "Book an appointment for the patient. Only call this AFTER confirming all details with the caller.", webhook_url: toolsUrl },
+            { name: "update_booking", description: "Cancel or reschedule an existing appointment.", webhook_url: toolsUrl },
+            { name: "transfer_to_reception", description: "Transfer the caller to the clinic reception desk. Use when the caller has a complaint, wants to speak to a manager, or needs human assistance.", webhook_url: transferUrl },
           ],
         }),
       });
