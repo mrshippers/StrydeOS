@@ -256,51 +256,189 @@ export default function AvaShowcase() {
   const [playing, setPlaying] = useState(false);
   const [glow, setGlow] = useState(0);
   const [elapsed, setElapsed] = useState(0);
-  const [cardHover, setCardHover] = useState(false); // FIX #4
-  const audioRef = useRef(null);
+  const [cardHover, setCardHover] = useState(false);
+  const wsRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
   const tickRef = useRef(null);
+  const keepaliveRef = useRef(null);
 
-  // Refs for canvas (FIX #5)
+  // Refs for canvas
   const playingRef = useRef(false);
   const progressRef = useRef(0);
+  const elapsedRef = useRef(0);
 
   useEffect(() => { playingRef.current = playing; }, [playing]);
   useEffect(() => { requestAnimationFrame(() => setLoaded(true)); }, []);
 
-  // Progress synced to real audio playback
+  // Progress animation loop
   useEffect(() => {
     if (!playing) {
       progressRef.current = 0;
       setGlow(0);
+      elapsedRef.current = 0;
       setElapsed(0);
       return;
     }
     const tick = () => {
-      const a = audioRef.current;
-      if (a && a.duration && isFinite(a.duration)) {
-        const p = a.currentTime / a.duration;
-        progressRef.current = p;
-        setGlow(envelope(p));
-        setElapsed(Math.floor(a.currentTime));
-      }
+      elapsedRef.current += 0.016;
+      progressRef.current = Math.min(elapsedRef.current / 30, 1);
+      setGlow(envelope(progressRef.current));
+      setElapsed(Math.floor(elapsedRef.current));
       tickRef.current = requestAnimationFrame(tick);
     };
     tickRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(tickRef.current);
   }, [playing]);
 
-  const toggle = () => {
+  const toggle = async () => {
     if (playing) {
-      audioRef.current?.pause();
-      setPlaying(false);
-    } else {
-      const a = audioRef.current;
-      if (a) {
-        a.currentTime = 0;
-        a.play().catch(() => {});
-        a.onended = () => setPlaying(false);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
       }
-      setPlaying(true);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+      }
+      if (keepaliveRef.current) {
+        clearInterval(keepaliveRef.current);
+      }
+      setPlaying(false);
+      return;
+    }
+
+    try {
+      // Request mic access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Initialize AudioContext if needed
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      const audioContext = audioContextRef.current;
+
+      // Setup MediaRecorder to capture user audio
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: "audio/webm",
+      });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (ev) => {
+        audioChunksRef.current.push(ev.data);
+      };
+
+      // Connect WebSocket
+      const ws = new WebSocket(
+        "wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent_6301kp6cxhx4e3vt35a2vbd9m8wq"
+      );
+
+      ws.onopen = () => {
+        mediaRecorder.start(100); // Send audio chunks every 100ms
+        
+        // Setup keepalive ping
+        keepaliveRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "ping" }));
+          }
+        }, 30000); // Ping every 30 seconds
+
+        setPlaying(true);
+      };
+
+      ws.onmessage = async (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "audio") {
+          // Decode base64 audio and play
+          const audioData = atob(data.audio);
+          const audioBuffer = new Uint8Array(audioData.length);
+          for (let i = 0; i < audioData.length; i++) {
+            audioBuffer[i] = audioData.charCodeAt(i);
+          }
+
+          // Decode and play through AudioContext
+          if (audioContextRef.current) {
+            audioContextRef.current
+              .decodeAudioData(audioBuffer.buffer)
+              .then((decodedData) => {
+                const source = audioContextRef.current.createBufferSource();
+                source.buffer = decodedData;
+                source.connect(audioContextRef.current.destination);
+                source.start(0);
+              })
+              .catch((err) => console.error("Audio decode error:", err));
+          }
+        }
+
+        if (data.type === "pong") {
+          // Keepalive response
+        }
+
+        if (data.type === "user_transcript") {
+          // Optional: handle user transcript if needed
+        }
+
+        if (data.type === "agent_transcript") {
+          // Optional: handle agent transcript if needed
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        setPlaying(false);
+        mediaRecorder.stop();
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      ws.onclose = () => {
+        setPlaying(false);
+        if (mediaRecorderRef.current) {
+          mediaRecorderRef.current.stop();
+        }
+        stream.getTracks().forEach((track) => track.stop());
+        if (keepaliveRef.current) {
+          clearInterval(keepaliveRef.current);
+        }
+      };
+
+      wsRef.current = ws;
+
+      // Stream user audio chunks to the WebSocket
+      mediaRecorder.onstop = () => {
+        audioChunksRef.current = [];
+      };
+
+      // Send audio chunks as they are recorded
+      const audioTrack = stream.getAudioTracks()[0];
+      const audioContext_ = audioContextRef.current;
+      const source = audioContext_.createMediaStreamSource(stream);
+      const processor = audioContext_.createScriptProcessor(4096, 1, 1);
+
+      processor.onaudioprocess = (e) => {
+        const audioData = e.inputBuffer.getChannelData(0);
+        const int16data = new Int16Array(audioData.length);
+        for (let i = 0; i < audioData.length; i++) {
+          int16data[i] = Math.max(-1, Math.min(1, audioData[i])) * 0x7fff;
+        }
+
+        const base64 = btoa(String.fromCharCode.apply(null, int16data));
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(
+            JSON.stringify({
+              type: "audio",
+              audio: base64,
+            })
+          );
+        }
+      };
+
+      source.connect(processor);
+      processor.connect(audioContext_.destination);
+    } catch (error) {
+      console.error("Microphone access denied or WebSocket error:", error);
+      setPlaying(false);
     }
   };
 
@@ -322,8 +460,6 @@ export default function AvaShowcase() {
           100% { transform: scaleY(1); opacity: 0.65; }
         }
       `}</style>
-
-      <audio ref={audioRef} src="/ava-demo.mp3" preload="auto" />
 
       <div className="ava-s" style={{
         fontFamily: "'Outfit', sans-serif",
