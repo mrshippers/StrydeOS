@@ -318,6 +318,11 @@ export default function AvaShowcase() {
       }
       const audioContext = audioContextRef.current;
 
+      // Resume audio context if suspended (browser requirement for audio playback)
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+
       // Setup MediaRecorder to capture user audio
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: "audio/webm",
@@ -351,24 +356,39 @@ export default function AvaShowcase() {
         const data = JSON.parse(event.data);
 
         if (data.type === "audio") {
-          // Decode base64 audio and play
-          const audioData = atob(data.audio);
-          const audioBuffer = new Uint8Array(audioData.length);
-          for (let i = 0; i < audioData.length; i++) {
-            audioBuffer[i] = audioData.charCodeAt(i);
+          // Resume AudioContext if needed (browser requirement)
+          if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+            await audioContextRef.current.resume();
           }
 
-          // Decode and play through AudioContext
+          // Decode base64 audio (raw PCM16 samples from ElevenLabs)
+          const audioData = atob(data.audio);
+          const uint8Array = new Uint8Array(audioData.length);
+          for (let i = 0; i < audioData.length; i++) {
+            uint8Array[i] = audioData.charCodeAt(i);
+          }
+
+          // Convert Uint8Array to Int16Array (PCM16 samples)
+          const int16Array = new Int16Array(uint8Array.buffer);
+
+          // Convert PCM16 to float32 samples
+          const float32Array = new Float32Array(int16Array.length);
+          for (let i = 0; i < int16Array.length; i++) {
+            float32Array[i] = int16Array[i] / 32768.0; // Normalize to -1.0 to 1.0
+          }
+
+          // Create AudioBuffer and play
           if (audioContextRef.current) {
-            audioContextRef.current
-              .decodeAudioData(audioBuffer.buffer)
-              .then((decodedData) => {
-                const source = audioContextRef.current.createBufferSource();
-                source.buffer = decodedData;
-                source.connect(audioContextRef.current.destination);
-                source.start(0);
-              })
-              .catch((err) => console.error("Audio decode error:", err));
+            const ctx = audioContextRef.current;
+            const audioBuffer = ctx.createBuffer(1, float32Array.length, ctx.sampleRate);
+            audioBuffer.getChannelData(0).set(float32Array);
+
+            const source = ctx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(ctx.destination);
+            source.start(0);
+
+            console.log(`Playing ${int16Array.length} samples at ${ctx.sampleRate}Hz`);
           }
         }
 
