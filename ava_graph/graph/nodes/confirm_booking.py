@@ -101,7 +101,7 @@ async def confirm_booking(state: AvaState) -> AvaState:
         return {
             **state,
             "booking_id": booking_id,
-            "response_message": state["response_message"],
+            "response_message": state.get("response_message", "Thank you for your booking."),
             "messages": messages,
         }
 
@@ -113,6 +113,7 @@ async def confirm_booking(state: AvaState) -> AvaState:
             patient_name,
             clinic_id,
             str(e),
+            exc_info=True,
         )
 
         messages.append(f"SYSTEM: Booking error - {str(e)}")

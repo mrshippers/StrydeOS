@@ -25,7 +25,7 @@ JANE_BASE_URL = "https://api.integratedhealthtech.com"
 TM3_BASE_URL = "https://api.tm3.co.uk"
 
 # HTTP client configuration
-DEFAULT_TIMEOUT = 30.0  # seconds
+DEFAULT_TIMEOUT = 60.0  # increased from 30s as PMS APIs can take 15-20+ seconds
 DEFAULT_MAX_RETRIES = 3
 
 
