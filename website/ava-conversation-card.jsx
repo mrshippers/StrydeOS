@@ -309,18 +309,23 @@ export default function AvaShowcase() {
     }
 
     try {
+      console.log("[Ava] User clicked. Requesting microphone access...");
+      
       // Request mic access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("[Ava] Microphone access granted");
       
       // Initialize AudioContext if needed
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        console.log("[Ava] Created new AudioContext");
       }
       const audioContext = audioContextRef.current;
 
       // Resume audio context if suspended (browser requirement for audio playback)
       if (audioContext.state === "suspended") {
         await audioContext.resume();
+        console.log("[Ava] Resumed suspended AudioContext");
       }
 
       // Setup MediaRecorder to capture user audio
@@ -335,11 +340,13 @@ export default function AvaShowcase() {
       };
 
       // Connect WebSocket
+      console.log("[Ava] Connecting to ElevenLabs WebSocket...");
       const ws = new WebSocket(
         "wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent_6301kp6cxhx4e3vt35a2vbd9m8wq"
       );
 
       ws.onopen = () => {
+        console.log("[Ava] WebSocket connected!");
         mediaRecorder.start(100); // Send audio chunks every 100ms
         
         // Setup keepalive ping
@@ -353,69 +360,75 @@ export default function AvaShowcase() {
       };
 
       ws.onmessage = async (event) => {
-        const data = JSON.parse(event.data);
+        try {
+          const data = JSON.parse(event.data);
 
-        if (data.type === "audio") {
-          // Resume AudioContext if needed (browser requirement)
-          if (audioContextRef.current && audioContextRef.current.state === "suspended") {
-            await audioContextRef.current.resume();
+          if (data.type === "audio") {
+            // Resume AudioContext if needed (browser requirement)
+            if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+              await audioContextRef.current.resume();
+            }
+
+            // Decode base64 audio (raw PCM16 samples from ElevenLabs)
+            const audioData = atob(data.audio);
+            const uint8Array = new Uint8Array(audioData.length);
+            for (let i = 0; i < audioData.length; i++) {
+              uint8Array[i] = audioData.charCodeAt(i);
+            }
+
+            // Convert Uint8Array to Int16Array (PCM16 samples)
+            const int16Array = new Int16Array(uint8Array.buffer);
+
+            // Convert PCM16 to float32 samples
+            const float32Array = new Float32Array(int16Array.length);
+            for (let i = 0; i < int16Array.length; i++) {
+              float32Array[i] = int16Array[i] / 32768.0; // Normalize to -1.0 to 1.0
+            }
+
+            // Create AudioBuffer and play
+            if (audioContextRef.current) {
+              const ctx = audioContextRef.current;
+              const audioBuffer = ctx.createBuffer(1, float32Array.length, ctx.sampleRate);
+              audioBuffer.getChannelData(0).set(float32Array);
+
+              const source = ctx.createBufferSource();
+              source.buffer = audioBuffer;
+              source.connect(ctx.destination);
+              source.start(0);
+
+              console.log(`[Ava] Playing ${int16Array.length} samples at ${ctx.sampleRate}Hz`);
+            }
           }
 
-          // Decode base64 audio (raw PCM16 samples from ElevenLabs)
-          const audioData = atob(data.audio);
-          const uint8Array = new Uint8Array(audioData.length);
-          for (let i = 0; i < audioData.length; i++) {
-            uint8Array[i] = audioData.charCodeAt(i);
+          if (data.type === "pong") {
+            // Keepalive response
           }
 
-          // Convert Uint8Array to Int16Array (PCM16 samples)
-          const int16Array = new Int16Array(uint8Array.buffer);
-
-          // Convert PCM16 to float32 samples
-          const float32Array = new Float32Array(int16Array.length);
-          for (let i = 0; i < int16Array.length; i++) {
-            float32Array[i] = int16Array[i] / 32768.0; // Normalize to -1.0 to 1.0
+          if (data.type === "user_transcript") {
+            console.log(`[Ava] User said: ${data.user_transcript}`);
           }
 
-          // Create AudioBuffer and play
-          if (audioContextRef.current) {
-            const ctx = audioContextRef.current;
-            const audioBuffer = ctx.createBuffer(1, float32Array.length, ctx.sampleRate);
-            audioBuffer.getChannelData(0).set(float32Array);
-
-            const source = ctx.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(ctx.destination);
-            source.start(0);
-
-            console.log(`Playing ${int16Array.length} samples at ${ctx.sampleRate}Hz`);
+          if (data.type === "agent_transcript") {
+            console.log(`[Ava] Agent said: ${data.agent_transcript}`);
           }
-        }
-
-        if (data.type === "pong") {
-          // Keepalive response
-        }
-
-        if (data.type === "user_transcript") {
-          // Optional: handle user transcript if needed
-        }
-
-        if (data.type === "agent_transcript") {
-          // Optional: handle agent transcript if needed
+        } catch (err) {
+          console.error("[Ava] Error processing message:", err);
         }
       };
 
       ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
+        console.error("[Ava] WebSocket error:", error);
+        alert("Connection error. Check console for details.");
         setPlaying(false);
-        mediaRecorder.stop();
+        try { mediaRecorder.stop(); } catch (e) {}
         stream.getTracks().forEach((track) => track.stop());
       };
 
       ws.onclose = () => {
+        console.log("[Ava] WebSocket closed");
         setPlaying(false);
         if (mediaRecorderRef.current) {
-          mediaRecorderRef.current.stop();
+          try { mediaRecorderRef.current.stop(); } catch (e) {}
         }
         stream.getTracks().forEach((track) => track.stop());
         if (keepaliveRef.current) {
@@ -457,7 +470,14 @@ export default function AvaShowcase() {
       source.connect(processor);
       processor.connect(audioContext_.destination);
     } catch (error) {
-      console.error("Microphone access denied or WebSocket error:", error);
+      console.error("[Ava] Fatal error:", error);
+      if (error.name === "NotAllowedError") {
+        alert("Microphone access denied. Please allow microphone access and try again.");
+      } else if (error.name === "NotFoundError") {
+        alert("No microphone found. Please check your audio device.");
+      } else {
+        alert(`Error: ${error.message}`);
+      }
       setPlaying(false);
     }
   };
