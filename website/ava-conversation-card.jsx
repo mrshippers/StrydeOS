@@ -393,40 +393,65 @@ export default function AvaShowcase() {
           console.log("[Ava] Received message type:", data.type);
 
           if (data.type === "audio") {
-            console.log("[Ava] Received audio from agent, decoding...");
+            console.log("[Ava] Received audio from agent, attempting to decode...");
+            
+            // Validate that audio is actually base64
+            if (!data.audio || typeof data.audio !== 'string') {
+              console.error("[Ava] ✗ Audio payload is not a string:", typeof data.audio, data.audio);
+              return;
+            }
+            
+            if (data.audio.length === 0) {
+              console.warn("[Ava] Audio payload is empty string");
+              return;
+            }
+            
+            // Check if it looks like base64 (should only contain alphanumeric, +, /, =)
+            if (!/^[A-Za-z0-9+/]*={0,2}$/.test(data.audio)) {
+              console.error("[Ava] ✗ Audio is NOT valid base64. First 100 chars:", data.audio.substring(0, 100));
+              console.error("[Ava] This suggests the agent response is malformed or not an audio payload");
+              return;
+            }
+            
             // Resume AudioContext if needed (browser requirement)
             if (audioContextRef.current && audioContextRef.current.state === "suspended") {
               await audioContextRef.current.resume();
             }
 
-            // Decode base64 audio (raw PCM16 samples from ElevenLabs)
-            const audioData = atob(data.audio);
-            const uint8Array = new Uint8Array(audioData.length);
-            for (let i = 0; i < audioData.length; i++) {
-              uint8Array[i] = audioData.charCodeAt(i);
-            }
+            try {
+              // Decode base64 audio (raw PCM16 samples from ElevenLabs)
+              const audioData = atob(data.audio);
+              const uint8Array = new Uint8Array(audioData.length);
+              for (let i = 0; i < audioData.length; i++) {
+                uint8Array[i] = audioData.charCodeAt(i);
+              }
 
-            // Convert Uint8Array to Int16Array (PCM16 samples)
-            const int16Array = new Int16Array(uint8Array.buffer);
+              // Convert Uint8Array to Int16Array (PCM16 samples)
+              const int16Array = new Int16Array(uint8Array.buffer);
 
-            // Convert PCM16 to float32 samples
-            const float32Array = new Float32Array(int16Array.length);
-            for (let i = 0; i < int16Array.length; i++) {
-              float32Array[i] = int16Array[i] / 32768.0; // Normalize to -1.0 to 1.0
-            }
+              // Convert PCM16 to float32 samples
+              const float32Array = new Float32Array(int16Array.length);
+              for (let i = 0; i < int16Array.length; i++) {
+                float32Array[i] = int16Array[i] / 32768.0; // Normalize to -1.0 to 1.0
+              }
 
-            // Create AudioBuffer and play
-            if (audioContextRef.current) {
-              const ctx = audioContextRef.current;
-              const audioBuffer = ctx.createBuffer(1, float32Array.length, ctx.sampleRate);
-              audioBuffer.getChannelData(0).set(float32Array);
+              // Create AudioBuffer and play
+              if (audioContextRef.current) {
+                const ctx = audioContextRef.current;
+                const audioBuffer = ctx.createBuffer(1, float32Array.length, ctx.sampleRate);
+                audioBuffer.getChannelData(0).set(float32Array);
 
-              const source = ctx.createBufferSource();
-              source.buffer = audioBuffer;
-              source.connect(ctx.destination);
-              source.start(0);
+                const source = ctx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(ctx.destination);
+                source.start(0);
 
-              console.log(`[Ava] ✓ Playing agent audio: ${int16Array.length} samples at ${ctx.sampleRate}Hz`);
+                console.log(`[Ava] ✓ Playing agent audio: ${int16Array.length} samples at ${ctx.sampleRate}Hz`);
+              }
+            } catch (decodeErr) {
+              console.error("[Ava] ✗ atob() decode failed:", decodeErr.message);
+              console.error("[Ava] This usually means the agent didn't send valid audio data");
+              console.error("[Ava] Check: is the ElevenLabs agent ID correct and configured?");
             }
           }
 
