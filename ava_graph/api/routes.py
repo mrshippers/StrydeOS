@@ -158,10 +158,9 @@ async def handle_call_started(
 
         graph = build_ava_graph()
         
-        # Run graph synchronously in thread pool to avoid blocking async event loop
-        # graph.invoke() is synchronous but needs to run in async context
-        result = await asyncio.to_thread(
-            graph.invoke,
+        # Use ainvoke() because graph nodes are async
+        # This properly handles async node execution without blocking
+        result = await graph.ainvoke(
             initial_state,
             config={"configurable": {"thread_id": webhook.call_id}}
         )
@@ -236,7 +235,7 @@ async def handle_patient_confirmed(
         # and then continue the graph execution from where it left off
         try:
             # Get the current state from checkpoint
-            state_snapshot = await asyncio.to_thread(graph.get_state, config)
+            state_snapshot = graph.get_state(config)
             if state_snapshot and state_snapshot.values:
                 # Update the checkpoint state with patient_confirmed flag
                 existing_state = dict(state_snapshot.values)
@@ -244,27 +243,24 @@ async def handle_patient_confirmed(
                 logger.debug(f"Loaded state from checkpoint for session {webhook.session_id}")
 
                 # Update the checkpoint with the new state
-                await asyncio.to_thread(graph.update_state, config, existing_state)
+                graph.update_state(config, existing_state)
 
-                # Now invoke with empty dict to continue from the interrupt point
-                result = await asyncio.to_thread(
-                    graph.invoke,
+                # Now ainvoke with empty dict to continue from the interrupt point
+                result = await graph.ainvoke(
                     None,  # Use None to indicate we're continuing from checkpoint
                     config=config,
                 )
             else:
                 # No checkpoint found, use confirmation_state with just the confirmed flag
                 logger.warning(f"No checkpoint found for session {webhook.session_id}, using minimal state")
-                result = await asyncio.to_thread(
-                    graph.invoke,
+                result = await graph.ainvoke(
                     confirmation_state,
                     config=config,
                 )
         except (AttributeError, TypeError) as e:
             # get_state or update_state might not exist, fall back to using confirmation_state
             logger.debug(f"Could not use checkpoint methods, falling back to state dict: {e}")
-            result = await asyncio.to_thread(
-                graph.invoke,
+            result = await graph.ainvoke(
                 confirmation_state,
                 config=config,
             )
