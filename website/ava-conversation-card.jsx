@@ -293,27 +293,35 @@ export default function AvaShowcase() {
   }, [playing]);
 
   const toggle = async () => {
+    console.log("[Ava] Toggle called. Current playing state:", playing);
+    
     if (playing) {
+      console.log("[Ava] Already playing, stopping...");
       if (wsRef.current) {
+        console.log("[Ava] Closing WebSocket...");
         wsRef.current.close();
         wsRef.current = null;
       }
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        console.log("[Ava] Stopping MediaRecorder...");
         mediaRecorderRef.current.stop();
       }
       if (keepaliveRef.current) {
+        console.log("[Ava] Clearing keepalive interval...");
         clearInterval(keepaliveRef.current);
       }
       setPlaying(false);
+      console.log("[Ava] Stopped. State set to playing=false");
       return;
     }
 
+    console.log("[Ava] Starting new call...");
     try {
       console.log("[Ava] User clicked. Requesting microphone access...");
       
       // Request mic access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log("[Ava] Microphone access granted");
+      console.log("[Ava] Microphone access granted, got stream:", stream.id);
       
       // Initialize AudioContext if needed
       if (!audioContextRef.current) {
@@ -344,26 +352,33 @@ export default function AvaShowcase() {
       const ws = new WebSocket(
         "wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent_6301kp6cxhx4e3vt35a2vbd9m8wq"
       );
+      console.log("[Ava] WebSocket object created, readyState=", ws.readyState, "(0=CONNECTING)");
 
       ws.onopen = () => {
-        console.log("[Ava] WebSocket connected!");
+        console.log("[Ava] ✓✓✓ WebSocket CONNECTED! ✓✓✓");
+        console.log("[Ava] WebSocket readyState:", ws.readyState, "(1=OPEN)");
         mediaRecorder.start(100); // Send audio chunks every 100ms
+        console.log("[Ava] MediaRecorder started");
         
         // Setup keepalive ping
         keepaliveRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: "ping" }));
+            console.log("[Ava] Keepalive ping sent");
           }
         }, 30000); // Ping every 30 seconds
 
         setPlaying(true);
+        console.log("[Ava] Set playing=true");
       };
 
       ws.onmessage = async (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log("[Ava] Received message type:", data.type);
 
           if (data.type === "audio") {
+            console.log("[Ava] Received audio from agent, decoding...");
             // Resume AudioContext if needed (browser requirement)
             if (audioContextRef.current && audioContextRef.current.state === "suspended") {
               await audioContextRef.current.resume();
@@ -396,20 +411,20 @@ export default function AvaShowcase() {
               source.connect(ctx.destination);
               source.start(0);
 
-              console.log(`[Ava] Playing ${int16Array.length} samples at ${ctx.sampleRate}Hz`);
+              console.log(`[Ava] ✓ Playing agent audio: ${int16Array.length} samples at ${ctx.sampleRate}Hz`);
             }
           }
 
           if (data.type === "pong") {
-            // Keepalive response
+            console.log("[Ava] Keepalive pong received");
           }
 
           if (data.type === "user_transcript") {
-            console.log(`[Ava] User said: ${data.user_transcript}`);
+            console.log(`[Ava] 👤 User said: "${data.user_transcript}"`);
           }
 
           if (data.type === "agent_transcript") {
-            console.log(`[Ava] Agent said: ${data.agent_transcript}`);
+            console.log(`[Ava] 🤖 Agent said: "${data.agent_transcript}"`);
           }
         } catch (err) {
           console.error("[Ava] Error processing message:", err);
@@ -417,18 +432,19 @@ export default function AvaShowcase() {
       };
 
       ws.onerror = (error) => {
-        console.error("[Ava] WebSocket error:", error);
-        alert("Connection error. Check console for details.");
+        console.error("[Ava] ✗✗✗ WebSocket ERROR ✗✗✗", error);
+        console.error("[Ava] Error details:", error.type, error.message);
+        alert(`[Ava] Connection error: ${error.message || error.type || 'Unknown error'}. Check console for details.`);
         setPlaying(false);
-        try { mediaRecorder.stop(); } catch (e) {}
+        try { mediaRecorder.stop(); } catch (e) { console.error("[Ava] Error stopping mediaRecorder:", e); }
         stream.getTracks().forEach((track) => track.stop());
       };
 
       ws.onclose = () => {
-        console.log("[Ava] WebSocket closed");
+        console.log("[Ava] WebSocket closed (readyState:", ws.readyState, ")");
         setPlaying(false);
         if (mediaRecorderRef.current) {
-          try { mediaRecorderRef.current.stop(); } catch (e) {}
+          try { mediaRecorderRef.current.stop(); } catch (e) { console.error("[Ava] Error stopping mediaRecorder:", e); }
         }
         stream.getTracks().forEach((track) => track.stop());
         if (keepaliveRef.current) {
@@ -452,6 +468,13 @@ export default function AvaShowcase() {
       processor.onaudioprocess = (e) => {
         try {
           const audioData = e.inputBuffer.getChannelData(0);
+          
+          // Find max amplitude to detect silence
+          let maxAmp = 0;
+          for (let i = 0; i < audioData.length; i++) {
+            maxAmp = Math.max(maxAmp, Math.abs(audioData[i]));
+          }
+          
           const int16data = new Int16Array(audioData.length);
           for (let i = 0; i < audioData.length; i++) {
             int16data[i] = Math.max(-1, Math.min(1, audioData[i])) * 0x7fff;
@@ -475,6 +498,11 @@ export default function AvaShowcase() {
                 audio: base64,
               })
             );
+            if (maxAmp > 0.01) {
+              console.log(`[Ava] Audio sent (${uint8View.length} bytes, amplitude=${maxAmp.toFixed(3)})`);
+            }
+          } else {
+            console.warn(`[Ava] WebSocket not ready for audio (readyState=${ws?.readyState})`);
           }
         } catch (err) {
           console.error("[Ava] Error encoding audio:", err);
@@ -484,11 +512,17 @@ export default function AvaShowcase() {
       source.connect(processor);
       processor.connect(audioContext_.destination);
     } catch (error) {
-      console.error("[Ava] Fatal error:", error);
+      console.error("[Ava] ✗ Fatal error in toggle():", error);
+      console.error("[Ava] Error type:", error.name);
+      console.error("[Ava] Error message:", error.message);
+      console.error("[Ava] Full error object:", error);
+      
       if (error.name === "NotAllowedError") {
         alert("Microphone access denied. Please allow microphone access and try again.");
       } else if (error.name === "NotFoundError") {
         alert("No microphone found. Please check your audio device.");
+      } else if (error.name === "NotSupportedError") {
+        alert("Your browser doesn't support getUserMedia. Try a modern browser (Chrome, Firefox, Edge, Safari).");
       } else {
         alert(`Error: ${error.message}`);
       }
@@ -515,9 +549,23 @@ export default function AvaShowcase() {
         }
       `}</style>
 
+      {/* DEBUG: State Monitor */}
+      {typeof window !== 'undefined' && window.location?.hash === '#debug' && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0,
+          backgroundColor: "rgba(0,0,0,0.9)", color: "#00ff00",
+          fontFamily: "monospace", fontSize: 11, padding: 8, zIndex: 9999,
+          borderBottom: "2px solid #00ff00",
+        }}>
+          <div>[Ava DEBUG] playing={String(playing)} | glow={glow.toFixed(2)} | elapsed={elapsed}s | cardHover={String(cardHover)}</div>
+          <div>[Ava DEBUG] ws={wsRef.current ? wsRef.current.readyState : "null"} | mediaRecorder={mediaRecorderRef.current ? mediaRecorderRef.current.state : "null"}</div>
+        </div>
+      )}
+
       <div className="ava-s" style={{
         fontFamily: "'Outfit', sans-serif",
         width: "100%", maxWidth: 520, margin: "0 auto",
+        marginTop: typeof window !== 'undefined' && window.location?.hash === '#debug' ? 60 : 0,
       }}>
         {/* FIX #4: card hover lift */}
         <div
