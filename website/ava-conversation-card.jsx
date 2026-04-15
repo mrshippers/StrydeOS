@@ -450,20 +450,34 @@ export default function AvaShowcase() {
       const processor = audioContext_.createScriptProcessor(4096, 1, 1);
 
       processor.onaudioprocess = (e) => {
-        const audioData = e.inputBuffer.getChannelData(0);
-        const int16data = new Int16Array(audioData.length);
-        for (let i = 0; i < audioData.length; i++) {
-          int16data[i] = Math.max(-1, Math.min(1, audioData[i])) * 0x7fff;
-        }
+        try {
+          const audioData = e.inputBuffer.getChannelData(0);
+          const int16data = new Int16Array(audioData.length);
+          for (let i = 0; i < audioData.length; i++) {
+            int16data[i] = Math.max(-1, Math.min(1, audioData[i])) * 0x7fff;
+          }
 
-        const base64 = btoa(String.fromCharCode.apply(null, int16data));
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(
-            JSON.stringify({
-              type: "audio",
-              audio: base64,
-            })
-          );
+          // Convert Int16Array bytes to base64
+          // Get the raw bytes from the Int16Array buffer
+          const uint8View = new Uint8Array(int16data.buffer, int16data.byteOffset, int16data.byteLength);
+          
+          // Convert bytes to base64 safely (avoid InvalidCharacterError)
+          let binaryString = '';
+          for (let i = 0; i < uint8View.length; i++) {
+            binaryString += String.fromCharCode(uint8View[i]);
+          }
+          const base64 = btoa(binaryString);
+
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(
+              JSON.stringify({
+                type: "audio",
+                audio: base64,
+              })
+            );
+          }
+        } catch (err) {
+          console.error("[Ava] Error encoding audio:", err);
         }
       };
 
