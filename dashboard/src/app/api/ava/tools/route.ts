@@ -18,7 +18,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
-import type { PMSIntegrationConfig, PMSClinician } from "@/types/pms";
+import { withRequestLog } from "@/lib/request-logger";
+import type { PMSIntegrationConfig } from "@/types/pms";
 
 export const runtime = "nodejs";
 
@@ -29,7 +30,10 @@ interface ToolCallPayload {
   conversation_id?: string;
   caller_phone?: string;
   tool_name: string;
-  tool_input: Record<string, unknown>;
+  // ElevenLabs sends collected params under `parameters`; `tool_input` is kept
+  // as a legacy alias in case an older agent version sends it instead.
+  parameters?: Record<string, unknown>;
+  tool_input?: Record<string, unknown>;
 }
 
 // ─── Tool Handlers ──────────────────────────────────────────────────────────
@@ -199,28 +203,52 @@ async function handleBookAppointment(
   const durationMinutes = appointmentType === "initial_assessment" ? 60 : 30;
   const endTime = new Date(dt.getTime() + durationMinutes * 60_000).toISOString();
 
-  // Look up or create patient
-  let patientExternalId = "";
+  // Normalise phone to E.164
   const normalizedPhone = phone.startsWith("0")
     ? `+44${phone.slice(1)}`
     : phone.startsWith("+")
       ? phone
       : `+${phone}`;
 
+  // ── Resolve patient external ID ──────────────────────────────────────────
+  // Priority: Firestore cache → PMS phone search → PMS patient create
+  let patientExternalId = "";
+
+  // 1. Check Firestore cache (synced patients)
+  let isReturningPatient = false;
   const patientSnap = await clinicRef
     .collection("patients")
     .where("contact.phone", "==", normalizedPhone)
     .limit(1)
     .get();
 
-  let patientIsNew = true;
   if (!patientSnap.empty) {
-    const existingPatient = patientSnap.docs[0].data();
-    patientExternalId = existingPatient.pmsExternalId ?? patientSnap.docs[0].id;
-    patientIsNew = false;
+    patientExternalId = patientSnap.docs[0].data().pmsExternalId ?? patientSnap.docs[0].id;
+    isReturningPatient = true;
   }
+
+  // 2. If not in Firestore, search PMS directly by phone (handles existing PMS patients not yet synced)
+  if (!patientExternalId && adapter.findPatientByPhone) {
+    const foundId = await adapter.findPatientByPhone(normalizedPhone);
+    if (foundId) {
+      patientExternalId = foundId;
+      isReturningPatient = true;
+    }
+  }
+
+  // 3. Still not found — create patient in PMS (genuinely new patient)
   if (!patientExternalId) {
-    patientExternalId = `ava_${normalizedPhone.replace(/\D/g, "")}`;
+    if (adapter.createPatient) {
+      try {
+        const created = await adapter.createPatient({ firstName, lastName, phone: normalizedPhone, email: email ?? undefined });
+        patientExternalId = created.externalId;
+        isReturningPatient = false;
+      } catch {
+        patientExternalId = `ava_${normalizedPhone.replace(/\D/g, "")}`;
+      }
+    } else {
+      patientExternalId = `ava_${normalizedPhone.replace(/\D/g, "")}`;
+    }
   }
 
   // Write to PMS
@@ -315,7 +343,10 @@ async function handleBookAppointment(
       hour12: true,
     });
 
-    return `Lovely — I've booked you in for ${dateStr} at ${timeStr} with ${resolvedClinicianName}. That's a ${durationMinutes}-minute ${appointmentType === "initial_assessment" ? "initial assessment" : "follow-up"}. You'll receive a confirmation text shortly.`;
+    const opener = isReturningPatient
+      ? "Welcome back — I've got you booked in"
+      : "All sorted — I've set you up and booked you in";
+    return `${opener} for ${dateStr} at ${timeStr} with ${resolvedClinicianName}. That's a ${durationMinutes}-minute ${appointmentType === "initial_assessment" ? "initial assessment" : "follow-up"}. You'll receive a confirmation text shortly.`;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     // Log the failure but give Ava a graceful script
@@ -447,7 +478,10 @@ async function handler(req: NextRequest) {
     }
 
     const body: ToolCallPayload = JSON.parse(rawBody);
-    const { agent_id, conversation_id, caller_phone, tool_name, tool_input } = body;
+    const { agent_id, conversation_id, caller_phone, tool_name } = body;
+    // ElevenLabs sends collected parameters under `parameters`; fall back to
+    // the legacy `tool_input` field in case of older agent versions.
+    const toolInput = (body.parameters ?? body.tool_input ?? {}) as Record<string, unknown>;
 
     if (!agent_id) {
       return NextResponse.json({ error: "Missing agent_id" }, { status: 400 });
@@ -487,7 +521,6 @@ async function handler(req: NextRequest) {
     }
 
     const adapter = createPMSAdapter(pmsConfig);
-    const toolInput = tool_input ?? {};
 
     // Dispatch by tool name
     let result: string;
@@ -521,4 +554,4 @@ async function handler(req: NextRequest) {
   }
 }
 
-export const POST = handler;
+export const POST = withRequestLog(handler);

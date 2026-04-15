@@ -1188,7 +1188,7 @@ export default function SettingsPage() {
           ...prev,
           [clinicianId]: data.sent
             ? `Invite sent to ${email}`
-            : `Link generated — no email provider configured. Link: ${data.link ?? ""}`,
+            : "Invite created — configure RESEND_API_KEY to send invite emails automatically.",
         }));
       } else {
         setInviteResult((prev) => ({

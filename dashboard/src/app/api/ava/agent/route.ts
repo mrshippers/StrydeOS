@@ -11,16 +11,31 @@ const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
 
 const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "OnKmvBo8ZskQurHsyps5";
 
+interface ElevenLabsToolParamProp {
+  type: string;
+  description: string;
+  enum?: string[];
+}
+
+interface ElevenLabsToolParameters {
+  type: "object";
+  properties: Record<string, ElevenLabsToolParamProp>;
+  required?: string[];
+}
+
+interface ElevenAgentsTool {
+  name: string;
+  description: string;
+  webhook_url: string;
+  parameters?: ElevenLabsToolParameters;
+}
+
 interface ElevenAgentsConfig {
   name: string;
   system_prompt: string;
   voice_id: string;
   webhook_url: string;
-  tools: Array<{
-    name: string;
-    description: string;
-    webhook_url: string;
-  }>;
+  tools: ElevenAgentsTool[];
 }
 
 async function createAgent(config: ElevenAgentsConfig): Promise<string> {
@@ -141,16 +156,59 @@ async function handler(req: NextRequest) {
           name: "check_availability",
           description: "Check clinician availability for a given day or week. Use this BEFORE booking to find open slots. Returns available times that you should read back to the caller.",
           webhook_url: toolsUrl,
+          parameters: {
+            type: "object",
+            properties: {
+              preferred_day: {
+                type: "string",
+                description: "The day or date to check, e.g. 'Monday', 'tomorrow', 'next Tuesday', or an ISO date like '2026-04-20'.",
+              },
+              clinician_name: {
+                type: "string",
+                description: "Name of the specific clinician to check availability for. Omit to check all clinicians.",
+              },
+            },
+          },
         },
         {
           name: "book_appointment",
           description: "Book an appointment for the patient. Only call this AFTER you have confirmed all details with the caller: their name, phone number, email, the date/time, and which clinician. Read back the full booking details and wait for the caller to confirm before triggering this tool.",
           webhook_url: toolsUrl,
+          parameters: {
+            type: "object",
+            properties: {
+              patient_first_name: { type: "string", description: "Patient's first name." },
+              patient_last_name: { type: "string", description: "Patient's last name." },
+              patient_phone: { type: "string", description: "Patient's phone number." },
+              patient_email: { type: "string", description: "Patient's email address (optional)." },
+              slot_datetime: { type: "string", description: "Confirmed appointment date and time in ISO 8601 format, e.g. '2026-04-20T10:00:00'." },
+              clinician_name: { type: "string", description: "Name of the clinician to book with (optional)." },
+              appointment_type: {
+                type: "string",
+                description: "Type of appointment.",
+                enum: ["initial_assessment", "follow_up"],
+              },
+            },
+            required: ["patient_first_name", "patient_last_name", "patient_phone", "slot_datetime"],
+          },
         },
         {
           name: "update_booking",
           description: "Cancel or reschedule an existing appointment. Ask the caller for their booking reference or look it up by their name.",
           webhook_url: toolsUrl,
+          parameters: {
+            type: "object",
+            properties: {
+              action: {
+                type: "string",
+                description: "Whether to cancel or reschedule the appointment.",
+                enum: ["cancel", "reschedule"],
+              },
+              booking_id: { type: "string", description: "The booking reference or appointment ID." },
+              new_datetime: { type: "string", description: "New date and time in ISO 8601 format (required for reschedule)." },
+            },
+            required: ["action", "booking_id"],
+          },
         },
         {
           name: "transfer_to_reception",

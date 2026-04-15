@@ -133,9 +133,50 @@ async function handler(req: NextRequest) {
           webhook_url: webhookUrl,
           language: "en",
           tools: [
-            { name: "check_availability", description: "Check clinician availability for a given day or week. Use this BEFORE booking to find open slots.", webhook_url: toolsUrl },
-            { name: "book_appointment", description: "Book an appointment for the patient. Only call this AFTER confirming all details with the caller.", webhook_url: toolsUrl },
-            { name: "update_booking", description: "Cancel or reschedule an existing appointment.", webhook_url: toolsUrl },
+            {
+              name: "check_availability",
+              description: "Check clinician availability for a given day or week. Use this BEFORE booking to find open slots.",
+              webhook_url: toolsUrl,
+              parameters: {
+                type: "object",
+                properties: {
+                  preferred_day: { type: "string", description: "Day or date to check, e.g. 'Monday', 'tomorrow', or ISO date." },
+                  clinician_name: { type: "string", description: "Specific clinician name (optional)." },
+                },
+              },
+            },
+            {
+              name: "book_appointment",
+              description: "Book an appointment for the patient. Only call this AFTER confirming all details with the caller.",
+              webhook_url: toolsUrl,
+              parameters: {
+                type: "object",
+                properties: {
+                  patient_first_name: { type: "string", description: "Patient's first name." },
+                  patient_last_name: { type: "string", description: "Patient's last name." },
+                  patient_phone: { type: "string", description: "Patient's phone number." },
+                  patient_email: { type: "string", description: "Patient's email address (optional)." },
+                  slot_datetime: { type: "string", description: "Confirmed appointment datetime in ISO 8601 format." },
+                  clinician_name: { type: "string", description: "Clinician to book with (optional)." },
+                  appointment_type: { type: "string", description: "initial_assessment or follow_up.", enum: ["initial_assessment", "follow_up"] },
+                },
+                required: ["patient_first_name", "patient_last_name", "patient_phone", "slot_datetime"],
+              },
+            },
+            {
+              name: "update_booking",
+              description: "Cancel or reschedule an existing appointment.",
+              webhook_url: toolsUrl,
+              parameters: {
+                type: "object",
+                properties: {
+                  action: { type: "string", description: "cancel or reschedule.", enum: ["cancel", "reschedule"] },
+                  booking_id: { type: "string", description: "Booking reference or appointment ID." },
+                  new_datetime: { type: "string", description: "New ISO 8601 datetime (required for reschedule)." },
+                },
+                required: ["action", "booking_id"],
+              },
+            },
             { name: "transfer_to_reception", description: "Transfer the caller to the clinic reception desk. Use when the caller has a complaint, wants to speak to a manager, or needs human assistance.", webhook_url: transferUrl },
           ],
         }),

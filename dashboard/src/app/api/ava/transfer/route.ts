@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { transferCallToReception } from "@/lib/ava/transfer-call";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
+import { withRequestLog } from "@/lib/request-logger";
 
 export const runtime = "nodejs";
 
@@ -108,7 +109,7 @@ async function handler(req: NextRequest) {
   }
 }
 
-export const POST = handler;
+export const POST = withRequestLog(handler);
 
 /** Convert decimal hour (e.g. 17.5) to "5:30pm" display string. */
 function formatHour(hour: number): string {

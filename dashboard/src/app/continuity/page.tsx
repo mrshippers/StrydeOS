@@ -73,7 +73,7 @@ function ContinuityPage() {
   const clinicianMap = Object.fromEntries(clinicians.map((c) => [c.id, c]));
 
   const { sequences, toggleSequence, usingDefaults } = useSequences();
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
   const { commsLog, commsStats, statsBySequence, totalAttributedRevenuePence, isDemo: commsIsDemo, error: commsError } = useCommsLog();
   const { preferences, updatePreferences } = useUserPreferences();
   const [customiseOpen, setCustomiseOpen] = useState(false);
@@ -94,9 +94,10 @@ function ContinuityPage() {
     if (!clinicId) return;
 
     try {
+      const token = await firebaseUser?.getIdToken();
       const res = await fetch("/api/comms/send", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           clinicId,
           patientId: patient.id,

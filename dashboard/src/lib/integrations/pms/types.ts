@@ -5,6 +5,7 @@ export type {
   PMSClinician,
   InsuranceInfo,
   CreateAppointmentParams,
+  CreatePatientParams,
   PMSIntegrationConfig,
   PMSStatusMap,
 } from "@/types/pms";
