@@ -9,6 +9,8 @@ class AvaState(TypedDict):
     preferred_time: str            # User's preference (e.g., "Tuesday 3pm")
     clinic_id: str                 # Multi-tenant identifier
     pms_type: str                  # "cliniko" | "writeupp" | "jane" | "tm3"
+    api_key: str                   # Per-clinic PMS API key (injected from Firestore at call time)
+    base_url: str                  # PMS base URL override (empty = use provider default)
     available_slots: List[str]     # List of available datetime strings
     confirmed_slot: str            # Final confirmed booking slot
     patient_confirmed: bool        # Patient verbal confirmation flag

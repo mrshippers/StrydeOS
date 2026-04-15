@@ -19,6 +19,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
 import { withRequestLog } from "@/lib/request-logger";
+import { proxyToEngine } from "@/lib/ava/engine-proxy";
 import type { PMSIntegrationConfig } from "@/types/pms";
 
 export const runtime = "nodejs";
@@ -518,6 +519,27 @@ async function handler(req: NextRequest) {
         { result: "The booking system isn't connected for this clinic yet. Let me take your details and have someone call you back." },
         { status: 200 },
       );
+    }
+
+    // ── Python engine proxy ──────────────────────────────────────────────────
+    // If AVA_ENGINE_URL is configured, forward the tool call to the Python
+    // service for richer booking negotiation. Fall back to TS adapters on any
+    // failure (timeout, engine down, validation error).
+    const engineUrl = process.env.AVA_ENGINE_URL;
+    if (engineUrl) {
+      const engineResult = await proxyToEngine(engineUrl, {
+        tool_name,
+        tool_input: toolInput,
+        clinic_id: clinicId,
+        pms_type: pmsConfig.provider,
+        api_key: pmsConfig.apiKey,
+        base_url: pmsConfig.baseUrl ?? "",
+      });
+
+      if (engineResult !== null) {
+        return NextResponse.json({ result: engineResult.result }, { status: 200 });
+      }
+      // null → fall through to TypeScript PMS handlers below
     }
 
     const adapter = createPMSAdapter(pmsConfig);

@@ -118,6 +118,8 @@ async def check_availability(state: AvaState) -> AvaState:
 
         # Route to correct PMS tool
         pms_type = state.get("pms_type", "").lower()
+        api_key = state.get("api_key", "")
+        base_url = state.get("base_url", "")
         available_slots = []
 
         if pms_type == "writeupp":
@@ -125,6 +127,8 @@ async def check_availability(state: AvaState) -> AvaState:
                 clinic_id=state["clinic_id"],
                 start_date=start_date,
                 duration_minutes=60,
+                api_key=api_key,
+                base_url=base_url,
             )
         elif pms_type == "cliniko":
             available_slots = await get_cliniko_availability(
@@ -132,18 +136,24 @@ async def check_availability(state: AvaState) -> AvaState:
                 start_date=start_date,
                 duration_minutes=60,
                 days_ahead=14,
+                api_key=api_key,
+                base_url=base_url,
             )
         elif pms_type == "jane":
             available_slots = await get_jane_availability(
                 clinic_id=state["clinic_id"],
                 start_date=start_date,
                 duration_minutes=60,
+                api_key=api_key,
+                base_url=base_url,
             )
         elif pms_type == "tm3":
             available_slots = await get_tm3_availability(
                 clinic_id=state["clinic_id"],
                 start_date=start_date,
                 duration_minutes=60,
+                api_key=api_key,
+                base_url=base_url,
             )
         else:
             logger.error(f"Unknown PMS type: {pms_type}")

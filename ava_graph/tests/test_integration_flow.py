@@ -5,9 +5,9 @@ Tests the full end-to-end booking flow with mocked external dependencies:
 - patient_confirmed webhook: Resumes from checkpoint → route_after_confirmation → confirm_booking → send_confirmation
 
 Mocked external I/O:
-- Cliniko availability and booking APIs
+- Cliniko availability and booking APIs (patched at import location in each node)
 - Twilio SMS
-- OpenAI LLM for slot proposal
+- Claude Haiku LLM for slot proposal
 """
 
 import pytest
@@ -39,8 +39,8 @@ def mock_twilio_sms():
 
 
 @pytest.fixture
-def mock_openai_llm():
-    """Mock OpenAI LLM for propose_slot node."""
+def mock_anthropic_llm():
+    """Mock Claude LLM for propose_slot node."""
     mock_response = MagicMock()
     mock_response.content = "I have Monday the 16th at 2pm available, does that work for you?"
 
@@ -53,10 +53,10 @@ def mock_openai_llm():
     return mock_llm_class
 
 
-@patch("ava_graph.graph.nodes.propose_slot.ChatOpenAI")
-@patch("ava_graph.graph.nodes.send_confirmation.send_booking_confirmation_sms")
-@patch("ava_graph.tools.cliniko.book_cliniko_appointment")
-@patch("ava_graph.tools.cliniko.get_cliniko_availability")
+@patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic")
+@patch("ava_graph.graph.nodes.send_confirmation.send_booking_confirmation_sms", new_callable=AsyncMock)
+@patch("ava_graph.graph.nodes.confirm_booking.book_cliniko_appointment", new_callable=AsyncMock)
+@patch("ava_graph.graph.nodes.check_availability.get_cliniko_availability", new_callable=AsyncMock)
 def test_complete_booking_flow_with_checkpoint(
     mock_cliniko_availability,
     mock_cliniko_booking,
@@ -165,8 +165,8 @@ def test_complete_booking_flow_with_checkpoint(
     mock_twilio_sms.assert_called()
 
 
-@patch("ava_graph.graph.nodes.propose_slot.ChatOpenAI")
-@patch("ava_graph.tools.cliniko.get_cliniko_availability")
+@patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic")
+@patch("ava_graph.graph.nodes.check_availability.get_cliniko_availability", new_callable=AsyncMock)
 def test_booking_flow_with_patient_rejection(mock_cliniko_avail, mock_openai):
     """
     Test that patient rejection routes back to propose_slot (up to max retries).
@@ -230,9 +230,9 @@ def test_booking_flow_with_patient_rejection(mock_cliniko_avail, mock_openai):
         f"Expected status in ['awaiting_confirmation', 'ended'], got {data2['status']}"
 
 
-@patch("ava_graph.graph.nodes.propose_slot.ChatOpenAI")
-@patch("ava_graph.tools.cliniko.book_cliniko_appointment")
-@patch("ava_graph.tools.cliniko.get_cliniko_availability")
+@patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic")
+@patch("ava_graph.graph.nodes.confirm_booking.book_cliniko_appointment", new_callable=AsyncMock)
+@patch("ava_graph.graph.nodes.check_availability.get_cliniko_availability", new_callable=AsyncMock)
 def test_booking_flow_with_max_retries_exceeded(
     mock_cliniko_avail, mock_cliniko_book, mock_openai
 ):
@@ -360,8 +360,8 @@ def test_booking_flow_missing_pms_type():
     assert response.status_code == 400
 
 
-@patch("ava_graph.graph.nodes.propose_slot.ChatOpenAI")
-@patch("ava_graph.tools.cliniko.get_cliniko_availability")
+@patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic")
+@patch("ava_graph.graph.nodes.check_availability.get_cliniko_availability", new_callable=AsyncMock)
 def test_booking_flow_phone_normalization(mock_cliniko_avail, mock_openai):
     """
     Test that phone numbers are normalized correctly during workflow.
@@ -395,8 +395,8 @@ def test_booking_flow_phone_normalization(mock_cliniko_avail, mock_openai):
     assert response1.status_code == 200
 
 
-@patch("ava_graph.graph.nodes.propose_slot.ChatOpenAI")
-@patch("ava_graph.tools.cliniko.get_cliniko_availability")
+@patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic")
+@patch("ava_graph.graph.nodes.check_availability.get_cliniko_availability", new_callable=AsyncMock)
 def test_booking_flow_with_multiple_clinics_isolated(mock_cliniko_avail, mock_openai):
     """
     Test that booking flow correctly isolates data per clinic_id (multi-tenancy).

@@ -4,7 +4,8 @@ import logging
 import re
 from typing import Optional
 
-from ava_graph.config import get_twilio_client, TWILIO_FROM_NUMBER
+from twilio.rest import Client as TwilioClient
+from ava_graph.config import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,8 @@ async def send_booking_confirmation_sms(
     booking_slot: str,
     clinic_name: str,
     from_number: Optional[str] = None,
+    account_sid: Optional[str] = None,
+    auth_token: Optional[str] = None,
 ) -> str:
     """
     Send SMS booking confirmation to patient.
@@ -80,8 +83,10 @@ async def send_booking_confirmation_sms(
             f"for {booking_slot}. Please reply CONFIRM to confirm or CANCEL to reschedule."
         )
 
-        # Get Twilio client and send
-        client = get_twilio_client()
+        # Get Twilio client and send — prefer per-call creds, fall back to env vars
+        sid = account_sid or TWILIO_ACCOUNT_SID
+        token = auth_token or TWILIO_AUTH_TOKEN
+        client = TwilioClient(sid, token)
         message = client.messages.create(
             to=to_number,
             from_=sms_from,

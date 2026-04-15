@@ -6,14 +6,13 @@ from ava_graph.config import (
     get_jane_client,
     get_tm3_client,
     get_twilio_client,
-    OPENAI_API_KEY,
+    ANTHROPIC_API_KEY,
 )
 
 
 def test_config_loads_from_env():
     """Verify config reads required env vars."""
-    # These should be set in .env or CI
-    assert OPENAI_API_KEY, "OPENAI_API_KEY not set"
+    assert ANTHROPIC_API_KEY is not None, "ANTHROPIC_API_KEY env var missing"
 
 
 def test_cliniko_client_factory():

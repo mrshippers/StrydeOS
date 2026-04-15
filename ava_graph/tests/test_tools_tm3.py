@@ -1,99 +1,103 @@
-"""Tests for TM3 (Blue Zinc) availability and booking tools."""
+"""Tests for TM3 (Blue Zinc) availability and booking tools (multi-tenant API)."""
 
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from ava_graph.tools.tm3 import get_tm3_availability, book_tm3_appointment
 
+FAKE_KEY = "tm3_test_key"
 
-@pytest.mark.asyncio
-async def test_get_tm3_availability_returns_slots():
-    """Verify TM3 availability returns list of datetime strings."""
-    with patch("ava_graph.tools.tm3.get_tm3_client") as mock_client_factory:
-        mock_client = AsyncMock()
-        mock_response = AsyncMock()
-        mock_response.json = AsyncMock(
-            return_value={
-                "slots": [
-                    {"dateTime": "2026-03-16T14:00:00", "available": True},
-                    {"dateTime": "2026-03-16T15:00:00", "available": True},
-                    {"dateTime": "2026-03-16T16:00:00", "available": False},
-                ]
-            }
-        )
-        mock_response.raise_for_status = lambda: None
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client_factory.return_value = mock_client
 
-        slots = await get_tm3_availability(
-            clinic_id="clinic_001", start_date="2026-03-16", duration_minutes=60
-        )
-
-        assert isinstance(slots, list)
-        assert len(slots) == 2  # Only available slots
-        assert "2026-03-16T14:00:00" in slots
-        assert "2026-03-16T15:00:00" in slots
+def _mock_client_ctx(response):
+    mc = AsyncMock()
+    mc.__aenter__ = AsyncMock(return_value=mc)
+    mc.__aexit__ = AsyncMock(return_value=False)
+    mc.get = AsyncMock(return_value=response)
+    mc.post = AsyncMock(return_value=response)
+    return mc
 
 
 @pytest.mark.asyncio
-async def test_get_tm3_availability_empty_slots():
-    """Verify TM3 availability returns empty list when no slots available."""
-    with patch("ava_graph.tools.tm3.get_tm3_client") as mock_client_factory:
-        mock_client = AsyncMock()
-        mock_response = AsyncMock()
-        mock_response.json = AsyncMock(return_value={"slots": []})
-        mock_response.raise_for_status = lambda: None
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client_factory.return_value = mock_client
+async def test_get_tm3_availability_returns_only_available_slots():
+    """TM3 should only return slots where available=True."""
+    resp = MagicMock()
+    resp.raise_for_status = MagicMock()
+    resp.json = MagicMock(return_value={
+        "slots": [
+            {"dateTime": "2026-04-21T14:00:00", "available": True},
+            {"dateTime": "2026-04-21T15:00:00", "available": True},
+            {"dateTime": "2026-04-21T16:00:00", "available": False},
+        ]
+    })
+    mc = _mock_client_ctx(resp)
 
+    with patch("ava_graph.tools.tm3._make_client", return_value=mc):
         slots = await get_tm3_availability(
-            clinic_id="clinic_001", start_date="2026-03-16", duration_minutes=60
+            clinic_id="clinic_001",
+            start_date="2026-04-21",
+            duration_minutes=60,
+            api_key=FAKE_KEY,
         )
 
-        assert isinstance(slots, list)
-        assert len(slots) == 0
+    assert len(slots) == 2
+    assert "2026-04-21T14:00:00" in slots
+    assert "2026-04-21T15:00:00" in slots
+    assert "2026-04-21T16:00:00" not in slots
+
+
+@pytest.mark.asyncio
+async def test_get_tm3_availability_empty():
+    """Empty slots returns empty list."""
+    resp = MagicMock()
+    resp.raise_for_status = MagicMock()
+    resp.json = MagicMock(return_value={"slots": []})
+    mc = _mock_client_ctx(resp)
+
+    with patch("ava_graph.tools.tm3._make_client", return_value=mc):
+        slots = await get_tm3_availability(
+            clinic_id="c1", start_date="2026-04-21", duration_minutes=60, api_key=FAKE_KEY
+        )
+
+    assert slots == []
 
 
 @pytest.mark.asyncio
 async def test_book_tm3_appointment_returns_booking_id():
     """Verify TM3 booking creates appointment and returns ID."""
-    with patch("ava_graph.tools.tm3.get_tm3_client") as mock_client_factory:
-        mock_client = AsyncMock()
-        mock_response = AsyncMock()
-        mock_response.json = AsyncMock(return_value={"appointmentId": "tm3_12345"})
-        mock_response.raise_for_status = lambda: None
-        mock_client.post = AsyncMock(return_value=mock_response)
-        mock_client_factory.return_value = mock_client
+    resp = MagicMock()
+    resp.raise_for_status = MagicMock()
+    resp.json = MagicMock(return_value={"appointmentId": "tm3_12345"})
+    mc = _mock_client_ctx(resp)
 
+    with patch("ava_graph.tools.tm3._make_client", return_value=mc):
         booking_id = await book_tm3_appointment(
             clinic_id="clinic_001",
             patient_name="John Doe",
             patient_phone="07700000000",
             service_type="Physio",
-            slot="2026-03-16T14:00:00",
+            slot="2026-04-21T14:00:00",
+            api_key=FAKE_KEY,
         )
 
-        assert booking_id == "tm3_12345"
-        mock_client.post.assert_called_once()
+    assert booking_id == "tm3_12345"
 
 
 @pytest.mark.asyncio
 async def test_book_tm3_appointment_with_email():
     """Verify TM3 booking can include patient email."""
-    with patch("ava_graph.tools.tm3.get_tm3_client") as mock_client_factory:
-        mock_client = AsyncMock()
-        mock_response = AsyncMock()
-        mock_response.json = AsyncMock(return_value={"appointmentId": "tm3_67890"})
-        mock_response.raise_for_status = lambda: None
-        mock_client.post = AsyncMock(return_value=mock_response)
-        mock_client_factory.return_value = mock_client
+    resp = MagicMock()
+    resp.raise_for_status = MagicMock()
+    resp.json = MagicMock(return_value={"appointmentId": "tm3_67890"})
+    mc = _mock_client_ctx(resp)
 
+    with patch("ava_graph.tools.tm3._make_client", return_value=mc):
         booking_id = await book_tm3_appointment(
-            clinic_id="clinic_001",
+            clinic_id="c1",
             patient_name="Jane Smith",
             patient_phone="07700111111",
-            patient_email="jane@example.com",
             service_type="Physio",
-            slot="2026-03-16T15:00:00",
+            slot="2026-04-21T15:00:00",
+            api_key=FAKE_KEY,
+            patient_email="jane@example.com",
         )
 
-        assert booking_id == "tm3_67890"
+    assert booking_id == "tm3_67890"

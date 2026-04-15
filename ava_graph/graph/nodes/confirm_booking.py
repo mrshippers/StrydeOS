@@ -29,6 +29,8 @@ async def confirm_booking(state: AvaState) -> AvaState:
     service_type = state["requested_service"]
     confirmed_slot = state["confirmed_slot"]
     pms_type = state["pms_type"]
+    api_key = state.get("api_key", "")
+    base_url = state.get("base_url", "")
     messages = state["messages"].copy() if state["messages"] else []
 
     try:
@@ -50,6 +52,8 @@ async def confirm_booking(state: AvaState) -> AvaState:
                 patient_phone=patient_phone,
                 service_type=service_type,
                 slot=confirmed_slot,
+                api_key=api_key,
+                base_url=base_url,
             )
         elif pms_type == "cliniko":
             booking_id = await book_cliniko_appointment(
@@ -58,6 +62,8 @@ async def confirm_booking(state: AvaState) -> AvaState:
                 patient_phone=patient_phone,
                 service_type=service_type,
                 slot=confirmed_slot,
+                api_key=api_key,
+                base_url=base_url,
             )
         elif pms_type == "jane":
             booking_id = await book_jane_appointment(
@@ -66,6 +72,8 @@ async def confirm_booking(state: AvaState) -> AvaState:
                 patient_phone=patient_phone,
                 service_type=service_type,
                 slot=confirmed_slot,
+                api_key=api_key,
+                base_url=base_url,
             )
         elif pms_type == "tm3":
             booking_id = await book_tm3_appointment(
@@ -74,6 +82,8 @@ async def confirm_booking(state: AvaState) -> AvaState:
                 patient_phone=patient_phone,
                 service_type=service_type,
                 slot=confirmed_slot,
+                api_key=api_key,
+                base_url=base_url,
             )
         else:
             # Unknown PMS type

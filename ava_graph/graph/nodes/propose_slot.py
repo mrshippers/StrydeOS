@@ -4,11 +4,11 @@ import logging
 from datetime import datetime
 from typing import List
 
-from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from ava_graph.graph.state import AvaState
-from ava_graph.config import OPENAI_API_KEY
+from ava_graph.config import ANTHROPIC_API_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -108,10 +108,11 @@ async def propose_slot(state: AvaState) -> AvaState:
 
     # Call LLM to generate response
     try:
-        llm = ChatOpenAI(
-            model="gpt-4-turbo",
+        llm = ChatAnthropic(
+            model="claude-haiku-4-5-20251001",
             temperature=0.7,
-            api_key=OPENAI_API_KEY,
+            api_key=ANTHROPIC_API_KEY,
+            max_tokens=200,
         )
 
         response = llm.invoke([system_prompt, human_prompt])

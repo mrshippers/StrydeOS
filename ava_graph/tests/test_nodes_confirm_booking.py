@@ -39,6 +39,8 @@ async def test_confirm_booking_writes_to_writeupp():
             patient_phone="07700000000",
             service_type="Physio Assessment",
             slot="2026-03-16T14:00:00",
+            api_key="",
+            base_url="",
         )
 
 

@@ -2,7 +2,8 @@
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -142,6 +143,8 @@ async def handle_call_started(
         "preferred_time": webhook.preferred_time,
         "clinic_id": clinic_id,
         "pms_type": pms_type,
+        "api_key": "",
+        "base_url": "",
         "available_slots": [],
         "confirmed_slot": "",
         "patient_confirmed": False,
@@ -170,10 +173,12 @@ async def handle_call_started(
 
         logger.info(
             f"Graph invocation complete for call {webhook.call_id}. "
-            f"Returning at interrupt point."
+            f"Returning at interrupt point. Message: {response_message}"
         )
 
         return {
+            "response": response_message,
+            "end_conversation": False,
             "session_id": webhook.call_id,
             "response_message": response_message,
             "status": "awaiting_confirmation",
@@ -215,6 +220,8 @@ async def handle_patient_confirmed(
         "preferred_time": "",
         "clinic_id": "",
         "pms_type": "",
+        "api_key": "",
+        "base_url": "",
         "available_slots": [],
         "confirmed_slot": "",
         "patient_confirmed": webhook.confirmed,
@@ -266,39 +273,217 @@ async def handle_patient_confirmed(
             )
 
         booking_id = result.get("booking_id", "")
+        response_message = result.get("response_message", "Booking confirmed.")
 
-        # Determine status based on booking outcome
+        # Determine if conversation should end
+        end_conversation = False
         if booking_id:
-            status = "confirmed"
+            # Booking successful, end the call
+            end_conversation = True
             logger.info(
                 f"Graph resumed and completed for session {webhook.session_id}. "
                 f"Booking ID: {booking_id}"
             )
         else:
             # If no booking_id, check if we're still waiting for confirmation or if graph ended
-            # If patient_confirmed is True but no booking_id, it's an error
-            # If patient_confirmed is False, we're back in the proposal loop
             patient_confirmed_final = result.get("patient_confirmed", False)
             if patient_confirmed_final and not booking_id:
-                status = "error"
+                # Confirmation but booking failed
+                end_conversation = True
                 logger.error(
                     f"Graph completed but booking failed for session {webhook.session_id}"
                 )
             else:
-                # Still in rejection loop or graph ended without confirmation
-                status = "awaiting_confirmation"
+                # Still in rejection loop or waiting for confirmation
+                end_conversation = False
                 logger.info(
                     f"Graph resumed for session {webhook.session_id}. "
                     f"Patient not confirmed, remaining in proposal loop"
                 )
 
+        status = "confirmed" if booking_id else "awaiting_confirmation"
         return {
+            "response": response_message,
+            "end_conversation": bool(booking_id),
             "session_id": webhook.session_id,
-            "booking_id": booking_id,
             "status": status,
+            "booking_id": booking_id,
+            "response_message": response_message,
         }
     except Exception as e:
         logger.error(f"Graph invocation failed for session {webhook.session_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Failed to invoke graph: {str(e)}"
         )
+
+
+# ─── Tool Execution Endpoint ──────────────────────────────────────────────────
+
+class ToolExecuteRequest(BaseModel):
+    """Request model for direct PMS tool execution (bypasses graph for live calls)."""
+
+    tool_name: str = Field(..., description="Tool to call: check_availability | book_appointment")
+    tool_input: Dict[str, Any] = Field(..., description="Tool-specific parameters")
+    clinic_id: str = Field(..., description="Clinic ID for multi-tenancy")
+    pms_type: str = Field(..., description="PMS: writeupp | cliniko | jane | tm3")
+    api_key: str = Field(default="", description="Per-clinic PMS API key")
+    base_url: str = Field(default="", description="PMS base URL override (empty = use default)")
+
+
+class ToolExecuteResponse(BaseModel):
+    """Response model for tool execution."""
+
+    result: str = Field(..., description="Human-readable result string for ElevenLabs to speak")
+    booking_id: Optional[str] = Field(default=None, description="PMS booking ID (book_appointment only)")
+    slots: Optional[List[str]] = Field(default=None, description="ISO datetime strings (check_availability only)")
+
+
+@router.post("/tools/execute", response_model=ToolExecuteResponse)
+async def execute_tool(body: ToolExecuteRequest) -> ToolExecuteResponse:
+    """
+    Execute a PMS tool directly without invoking the LangGraph workflow.
+
+    Used by the dashboard to proxy live ElevenLabs tool calls to the Python service.
+    Supports check_availability and book_appointment for all integrated PMS systems.
+
+    Args:
+        body: Tool name, input params, clinic config, and PMS credentials
+
+    Returns:
+        ToolExecuteResponse with human-readable result and optional booking_id / slots
+    """
+    from ava_graph.tools.writeupp import get_writeupp_availability, book_writeupp_appointment
+    from ava_graph.tools.cliniko import get_cliniko_availability, book_cliniko_appointment
+    from ava_graph.tools.jane import get_jane_availability, book_jane_appointment
+    from ava_graph.tools.tm3 import get_tm3_availability, book_tm3_appointment
+
+    pms = body.pms_type.lower()
+    tool = body.tool_name
+
+    logger.info(
+        "Tool execute: tool=%s, pms=%s, clinic=%s", tool, pms, body.clinic_id
+    )
+
+    try:
+        if tool == "check_availability":
+            start_date = body.tool_input.get("start_date", datetime.now().date().isoformat())
+            duration = int(body.tool_input.get("duration_minutes", 60))
+            days_ahead = int(body.tool_input.get("days_ahead", 14))
+
+            if pms == "writeupp":
+                slots = await get_writeupp_availability(
+                    clinic_id=body.clinic_id,
+                    start_date=start_date,
+                    duration_minutes=duration,
+                    api_key=body.api_key,
+                    base_url=body.base_url,
+                    days_ahead=days_ahead,
+                )
+            elif pms == "cliniko":
+                slots = await get_cliniko_availability(
+                    clinic_id=body.clinic_id,
+                    start_date=start_date,
+                    duration_minutes=duration,
+                    days_ahead=days_ahead,
+                    api_key=body.api_key,
+                    base_url=body.base_url,
+                )
+            elif pms == "jane":
+                slots = await get_jane_availability(
+                    clinic_id=body.clinic_id,
+                    start_date=start_date,
+                    duration_minutes=duration,
+                    api_key=body.api_key,
+                    base_url=body.base_url,
+                )
+            elif pms == "tm3":
+                slots = await get_tm3_availability(
+                    clinic_id=body.clinic_id,
+                    start_date=start_date,
+                    duration_minutes=duration,
+                    api_key=body.api_key,
+                )
+            else:
+                raise HTTPException(status_code=400, detail=f"Unknown pms_type: {pms}")
+
+            if not slots:
+                result = "No available slots found in the requested period."
+            else:
+                readable = ", ".join(
+                    datetime.fromisoformat(s).strftime("%A %d %b at %I:%M %p").lstrip("0")
+                    for s in slots[:5]
+                )
+                result = f"Available slots: {readable}"
+
+            return ToolExecuteResponse(result=result, slots=slots)
+
+        elif tool == "book_appointment":
+            patient_name = body.tool_input.get("patient_name", "")
+            patient_phone = body.tool_input.get("patient_phone", "")
+            service_type = body.tool_input.get("service_type", "Physiotherapy")
+            slot = body.tool_input.get("slot", "")
+            patient_email = body.tool_input.get("patient_email")
+
+            if not all([patient_name, patient_phone, slot]):
+                raise HTTPException(
+                    status_code=400,
+                    detail="book_appointment requires patient_name, patient_phone, and slot in tool_input",
+                )
+
+            if pms == "writeupp":
+                booking_id = await book_writeupp_appointment(
+                    clinic_id=body.clinic_id,
+                    patient_name=patient_name,
+                    patient_phone=patient_phone,
+                    service_type=service_type,
+                    slot=slot,
+                    api_key=body.api_key,
+                    base_url=body.base_url,
+                )
+            elif pms == "cliniko":
+                booking_id = await book_cliniko_appointment(
+                    clinic_id=body.clinic_id,
+                    patient_name=patient_name,
+                    patient_phone=patient_phone,
+                    service_type=service_type,
+                    slot=slot,
+                    api_key=body.api_key,
+                    base_url=body.base_url,
+                )
+            elif pms == "jane":
+                booking_id = await book_jane_appointment(
+                    clinic_id=body.clinic_id,
+                    patient_name=patient_name,
+                    patient_phone=patient_phone,
+                    service_type=service_type,
+                    slot=slot,
+                    api_key=body.api_key,
+                    base_url=body.base_url,
+                )
+            elif pms == "tm3":
+                booking_id = await book_tm3_appointment(
+                    clinic_id=body.clinic_id,
+                    patient_name=patient_name,
+                    patient_phone=patient_phone,
+                    service_type=service_type,
+                    slot=slot,
+                    api_key=body.api_key,
+                    patient_email=patient_email,
+                )
+            else:
+                raise HTTPException(status_code=400, detail=f"Unknown pms_type: {pms}")
+
+            slot_dt = datetime.fromisoformat(slot)
+            readable_slot = slot_dt.strftime("%A %d %b at %I:%M %p").lstrip("0")
+            result = f"Booked {patient_name} in for {readable_slot}. Booking ID: {booking_id}"
+
+            return ToolExecuteResponse(result=result, booking_id=booking_id)
+
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown tool_name: {tool}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Tool execute failed: tool=%s pms=%s error=%s", tool, pms, e, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Tool execution failed: {str(e)}")

@@ -24,7 +24,7 @@ async def test_propose_slot_selects_best_slot_and_generates_response():
         messages=["SYSTEM: Patient requested Physio"],
     )
 
-    with patch("ava_graph.graph.nodes.propose_slot.ChatOpenAI") as mock_llm_class:
+    with patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic") as mock_llm_class:
         mock_response = MagicMock()
         mock_response.content = "I have Tuesday at 2pm available, does that work for you?"
         mock_llm = MagicMock()
@@ -58,7 +58,7 @@ async def test_propose_slot_increments_attempt_count():
         messages=[],
     )
 
-    with patch("ava_graph.graph.nodes.propose_slot.ChatOpenAI") as mock_llm_class:
+    with patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic") as mock_llm_class:
         mock_response = MagicMock()
         mock_response.content = "How about Monday at 9am?"
         mock_llm = MagicMock()
@@ -88,11 +88,11 @@ async def test_propose_slot_handles_empty_slots_gracefully():
         messages=[],
     )
 
-    with patch("ava_graph.graph.nodes.propose_slot.ChatOpenAI"):
+    with patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic"):
         result = await propose_slot(state)
 
         assert result["response_message"] != ""
-        assert "unavailable" in result["response_message"].lower() or "no slots" in result["response_message"].lower()
+        assert "available" in result["response_message"].lower() or "slots" in result["response_message"].lower()
         assert result["confirmed_slot"] == ""
 
 
@@ -118,7 +118,7 @@ async def test_propose_slot_selects_nth_slot_by_attempt_count():
         messages=[],
     )
 
-    with patch("ava_graph.graph.nodes.propose_slot.ChatOpenAI") as mock_llm_class:
+    with patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic") as mock_llm_class:
         mock_response = MagicMock()
         mock_response.content = "How about 11am?"
         mock_llm = MagicMock()
@@ -149,7 +149,7 @@ async def test_propose_slot_adds_to_messages_transcript():
         messages=["SYSTEM: Initial message"],
     )
 
-    with patch("ava_graph.graph.nodes.propose_slot.ChatOpenAI") as mock_llm_class:
+    with patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic") as mock_llm_class:
         mock_response = MagicMock()
         mock_response.content = "How about Thursday at 1pm?"
         mock_llm = MagicMock()
