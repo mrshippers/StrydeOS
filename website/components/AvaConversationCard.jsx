@@ -359,7 +359,7 @@ export default function AvaConversationCard() {
 
           {/* Pills */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 18, position: "relative" }}>
-            <Pill variant="accent">ElevenAgents</Pill>
+            <Pill variant="accent">Ava Lite</Pill>
             <Pill variant="connected">
               <span style={{
                 width: 7, height: 7, borderRadius: "50%",

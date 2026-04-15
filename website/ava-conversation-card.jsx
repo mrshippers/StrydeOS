@@ -34,6 +34,21 @@ function envelope(t) {
   return 0.03;
 }
 
+// ——— Downsample float32 PCM to target sample rate ————————————————————————————
+function downsample(buffer, inRate, outRate) {
+  if (inRate === outRate) return buffer;
+  const ratio = inRate / outRate;
+  const out = new Float32Array(Math.round(buffer.length / ratio));
+  for (let i = 0; i < out.length; i++) {
+    const start = Math.floor(i * ratio);
+    const end = Math.min(Math.floor((i + 1) * ratio), buffer.length);
+    let sum = 0;
+    for (let j = start; j < end; j++) sum += buffer[j];
+    out[i] = sum / (end - start);
+  }
+  return out;
+}
+
 // ——— Monolith Mark (FIX #1: hover scale) —————————————————————————————————————
 function MonolithMark({ size = 44, glow = 0, playing, onClick }) {
   const id = useRef(`m-${Math.random().toString(36).slice(2, 8)}`).current;
@@ -392,79 +407,57 @@ export default function AvaShowcase() {
           const data = JSON.parse(event.data);
           console.log("[Ava] Received message type:", data.type);
 
+          // ElevenLabs sends audio in audio_event.audio_base_64 (PCM16 @ 16000 Hz)
           if (data.type === "audio") {
-            console.log("[Ava] Received audio from agent, attempting to decode...");
-            
-            // Validate that audio is actually base64
-            if (!data.audio || typeof data.audio !== 'string') {
-              console.error("[Ava] ✗ Audio payload is not a string:", typeof data.audio, data.audio);
+            const b64 = data.audio_event?.audio_base_64;
+            if (!b64 || typeof b64 !== "string" || b64.length === 0) {
+              console.warn("[Ava] audio message missing audio_event.audio_base_64");
               return;
             }
-            
-            if (data.audio.length === 0) {
-              console.warn("[Ava] Audio payload is empty string");
-              return;
-            }
-            
-            // Check if it looks like base64 (should only contain alphanumeric, +, /, =)
-            if (!/^[A-Za-z0-9+/]*={0,2}$/.test(data.audio)) {
-              console.error("[Ava] ✗ Audio is NOT valid base64. First 100 chars:", data.audio.substring(0, 100));
-              console.error("[Ava] This suggests the agent response is malformed or not an audio payload");
-              return;
-            }
-            
-            // Resume AudioContext if needed (browser requirement)
+
             if (audioContextRef.current && audioContextRef.current.state === "suspended") {
               await audioContextRef.current.resume();
             }
 
             try {
-              // Decode base64 audio (raw PCM16 samples from ElevenLabs)
-              const audioData = atob(data.audio);
-              const uint8Array = new Uint8Array(audioData.length);
-              for (let i = 0; i < audioData.length; i++) {
-                uint8Array[i] = audioData.charCodeAt(i);
-              }
+              const raw = atob(b64);
+              const uint8 = new Uint8Array(raw.length);
+              for (let i = 0; i < raw.length; i++) uint8[i] = raw.charCodeAt(i);
 
-              // Convert Uint8Array to Int16Array (PCM16 samples)
-              const int16Array = new Int16Array(uint8Array.buffer);
+              const int16 = new Int16Array(uint8.buffer);
+              const float32 = new Float32Array(int16.length);
+              for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768.0;
 
-              // Convert PCM16 to float32 samples
-              const float32Array = new Float32Array(int16Array.length);
-              for (let i = 0; i < int16Array.length; i++) {
-                float32Array[i] = int16Array[i] / 32768.0; // Normalize to -1.0 to 1.0
-              }
-
-              // Create AudioBuffer and play
               if (audioContextRef.current) {
                 const ctx = audioContextRef.current;
-                const audioBuffer = ctx.createBuffer(1, float32Array.length, ctx.sampleRate);
-                audioBuffer.getChannelData(0).set(float32Array);
-
+                // ElevenLabs sends PCM16 @ 16000 Hz — use 16000 so browser resamples correctly
+                const audioBuffer = ctx.createBuffer(1, float32.length, 16000);
+                audioBuffer.getChannelData(0).set(float32);
                 const source = ctx.createBufferSource();
                 source.buffer = audioBuffer;
                 source.connect(ctx.destination);
                 source.start(0);
-
-                console.log(`[Ava] ✓ Playing agent audio: ${int16Array.length} samples at ${ctx.sampleRate}Hz`);
+                console.log(`[Ava] ✓ Playing ${float32.length} samples @ 16000 Hz`);
               }
-            } catch (decodeErr) {
-              console.error("[Ava] ✗ atob() decode failed:", decodeErr.message);
-              console.error("[Ava] This usually means the agent didn't send valid audio data");
-              console.error("[Ava] Check: is the ElevenLabs agent ID correct and configured?");
+            } catch (err) {
+              console.error("[Ava] ✗ Audio decode failed:", err.message);
             }
           }
 
-          if (data.type === "pong") {
-            console.log("[Ava] Keepalive pong received");
+          if (data.type === "conversation_initiation_metadata") {
+            console.log("[Ava] Session initiated:", data.conversation_initiation_metadata_event?.conversation_id);
+          }
+
+          if (data.type === "ping") {
+            ws.send(JSON.stringify({ type: "pong", event_id: data.ping_event?.event_id }));
           }
 
           if (data.type === "user_transcript") {
-            console.log(`[Ava] 👤 User said: "${data.user_transcript}"`);
+            console.log(`[Ava] 👤 User said: "${data.user_transcription_event?.user_transcript}"`);
           }
 
-          if (data.type === "agent_transcript") {
-            console.log(`[Ava] 🤖 Agent said: "${data.agent_transcript}"`);
+          if (data.type === "agent_response") {
+            console.log(`[Ava] 🤖 Agent: "${data.agent_response_event?.agent_response}"`);
           }
         } catch (err) {
           console.error("[Ava] Error processing message:", err);
@@ -514,42 +507,28 @@ export default function AvaShowcase() {
 
       processor.onaudioprocess = (e) => {
         try {
-          const audioData = e.inputBuffer.getChannelData(0);
-          
-          // Find max amplitude to detect silence
-          let maxAmp = 0;
-          for (let i = 0; i < audioData.length; i++) {
-            maxAmp = Math.max(maxAmp, Math.abs(audioData[i]));
-          }
-          
-          const int16data = new Int16Array(audioData.length);
-          for (let i = 0; i < audioData.length; i++) {
-            int16data[i] = Math.max(-1, Math.min(1, audioData[i])) * 0x7fff;
+          const rawFloat = e.inputBuffer.getChannelData(0);
+
+          // Downsample from browser native rate (44100/48000) to 16000 Hz (ElevenLabs requirement)
+          const pcm16k = downsample(rawFloat, audioContext_.sampleRate, 16000);
+
+          // Convert float32 → int16 PCM
+          const int16 = new Int16Array(pcm16k.length);
+          for (let i = 0; i < pcm16k.length; i++) {
+            int16[i] = Math.max(-32768, Math.min(32767, pcm16k[i] * 32768));
           }
 
-          // Convert Int16Array bytes to base64
-          // Get the raw bytes from the Int16Array buffer
-          const uint8View = new Uint8Array(int16data.buffer, int16data.byteOffset, int16data.byteLength);
-          
-          // Convert bytes to base64 safely (avoid InvalidCharacterError)
-          let binaryString = '';
-          for (let i = 0; i < uint8View.length; i++) {
-            binaryString += String.fromCharCode(uint8View[i]);
-          }
-          const base64 = btoa(binaryString);
+          // Int16 bytes → base64
+          const uint8 = new Uint8Array(int16.buffer, int16.byteOffset, int16.byteLength);
+          let bin = "";
+          for (let i = 0; i < uint8.length; i++) bin += String.fromCharCode(uint8[i]);
+          const b64 = btoa(bin);
 
           if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(
-              JSON.stringify({
-                type: "audio",
-                audio: base64,
-              })
-            );
-            if (maxAmp > 0.01) {
-              console.log(`[Ava] Audio sent (${uint8View.length} bytes, amplitude=${maxAmp.toFixed(3)})`);
-            }
+            // ElevenLabs ConvAI expects user_audio_chunk (not type:"audio")
+            ws.send(JSON.stringify({ user_audio_chunk: b64 }));
           } else {
-            console.warn(`[Ava] WebSocket not ready for audio (readyState=${ws?.readyState})`);
+            console.warn(`[Ava] WebSocket not ready (readyState=${ws?.readyState})`);
           }
         } catch (err) {
           console.error("[Ava] Error encoding audio:", err);
@@ -741,7 +720,7 @@ export default function AvaShowcase() {
               }} />
               Connected
             </Pill>
-            <Pill variant="accent">ElevenAgents</Pill>
+            <Pill variant="accent">Ava Lite</Pill>
           </div>
 
           {/* ——— Waveform Bar ——— */}

@@ -11,7 +11,7 @@
  *   - update_booking: cancels or reschedules via PMS
  *
  * Auth: ElevenLabs HMAC signature (same as /api/ava/transfer).
- * Returns { result: string } — ElevenLabs speaks this back to the caller.
+ * Returns { response: string } — ElevenLabs speaks this back to the caller.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -498,7 +498,7 @@ async function handler(req: NextRequest) {
 
     if (clinicSnap.empty) {
       return NextResponse.json(
-        { result: "I'm having trouble accessing the system right now. Let me take your details and have someone call you back." },
+        { response: "I'm having trouble accessing the system right now. Let me take your details and have someone call you back." },
         { status: 200 },
       );
     }
@@ -516,7 +516,7 @@ async function handler(req: NextRequest) {
 
     if (!pmsConfig?.apiKey?.trim()) {
       return NextResponse.json(
-        { result: "The booking system isn't connected for this clinic yet. Let me take your details and have someone call you back." },
+        { response: "The booking system isn't connected for this clinic yet. Let me take your details and have someone call you back." },
         { status: 200 },
       );
     }
@@ -537,7 +537,7 @@ async function handler(req: NextRequest) {
       });
 
       if (engineResult !== null) {
-        return NextResponse.json({ result: engineResult.result }, { status: 200 });
+        return NextResponse.json({ response: engineResult.result ?? engineResult.response }, { status: 200 });
       }
       // null → fall through to TypeScript PMS handlers below
     }
@@ -567,10 +567,10 @@ async function handler(req: NextRequest) {
         result = "I'm not sure how to help with that. Can I take a message and have someone call you back?";
     }
 
-    return NextResponse.json({ result }, { status: 200 });
+    return NextResponse.json({ response: result }, { status: 200 });
   } catch (_error) {
     return NextResponse.json(
-      { result: "I'm having a bit of trouble right now. Let me take your details and someone will call you back shortly." },
+      { response: "I'm having a bit of trouble right now. Let me take your details and someone will call you back shortly." },
       { status: 200 },
     );
   }
