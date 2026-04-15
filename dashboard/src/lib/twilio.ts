@@ -23,11 +23,13 @@ export function getTwilioPhone(): string {
 /**
  * Purchase a UK phone number from Twilio near the clinic's area code.
  * Falls back to any available UK number if locality search fails.
+ * Returns both the E.164 phone number and its Twilio SID.
  */
 export async function purchaseUkNumber(opts?: {
   locality?: string;
   areaCode?: string;
-}): Promise<string> {
+  voiceUrl?: string;
+}): Promise<{ phoneNumber: string; phoneSid: string }> {
   const tw = getTwilio();
 
   // Try locality-based search first (e.g. "London", "Manchester")
@@ -64,14 +66,15 @@ export async function purchaseUkNumber(opts?: {
     throw new Error("No UK phone numbers available from Twilio");
   }
 
-  // Purchase the number
+  // Purchase the number, wiring the voice URL immediately
   const purchased = await tw.incomingPhoneNumbers.create({
     phoneNumber: available[0].phoneNumber,
     friendlyName: "StrydeOS Ava",
-    voiceUrl: "", // Will be set by SIP trunk
+    voiceUrl: opts?.voiceUrl ?? "",
+    voiceMethod: "POST",
   });
 
-  return purchased.phoneNumber;
+  return { phoneNumber: purchased.phoneNumber, phoneSid: purchased.sid };
 }
 
 /**

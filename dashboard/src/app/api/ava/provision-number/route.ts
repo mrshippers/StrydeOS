@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
-import { purchaseUkNumber, getPhoneNumberSid, configureSipTrunk } from "@/lib/twilio";
+import { verifyApiRequest, requireRole, ApiAuthError } from "@/lib/auth-guard";
+import { purchaseUkNumber } from "@/lib/twilio";
 import { withRequestLog } from "@/lib/request-logger";
+import { createAvaTools, createAvaAgent } from "@/lib/ava/elevenlabs-agent";
 
 /**
  * POST /api/ava/provision-number
@@ -11,12 +12,16 @@ import { withRequestLog } from "@/lib/request-logger";
  * Provisions a dedicated Twilio phone number for the clinic's Ava instance:
  * 1. Buys a UK number (near clinic locality if possible)
  * 2. Creates ElevenLabs agent if one doesn't exist yet
- * 3. Configures SIP trunk to route inbound calls to ElevenLabs
- * 4. Stores the number + trunk SID in Firestore
+ * 3. Wires the number's voiceUrl to /api/ava/inbound-call?clinicId=xxx
+ *    so inbound calls route directly to the ElevenLabs ConvAI agent via SIP
+ * 4. Stores the number + agent ID in Firestore
  * 5. Returns the provisioned number
  *
  * Requires: owner / admin / superadmin role.
  */
+
+const db = getAdminDb();
+
 async function handler(req: NextRequest) {
   // Strict rate limit — this costs money
   const { limited, remaining } = checkRateLimit(req, { limit: 2, windowMs: 60_000 });
@@ -27,11 +32,12 @@ async function handler(req: NextRequest) {
     );
   }
 
+  let clinicId: string | undefined;
+
   try {
-    const db = getAdminDb();
     const user = await verifyApiRequest(req);
     requireRole(user, ["owner", "admin", "superadmin"]);
-    const clinicId = user.clinicId;
+    clinicId = user.clinicId;
 
     if (!clinicId) {
       return NextResponse.json({ error: "No clinic associated with user" }, { status: 400 });
@@ -54,59 +60,68 @@ async function handler(req: NextRequest) {
 
     const clinicData = clinicDoc.data()!;
 
-    // Guard: don't provision if a number is already assigned
-    // Use a Firestore transaction to prevent race conditions (double-purchase)
-    const existingPhone = clinicData.phone || clinicData.ava?.config?.phone;
-    const existingTrunk = clinicData.ava?.twilioTrunkSid;
-    if (existingPhone && existingTrunk) {
+    // Guard: don't provision if an Ava number is already assigned
+    const existingAvaPhone = clinicData.ava?.config?.phone;
+    if (existingAvaPhone) {
       return NextResponse.json(
-        { error: "This clinic already has a provisioned number", phone: existingPhone },
+        { error: "This clinic already has a provisioned number", phone: existingAvaPhone },
         { status: 409 }
       );
     }
 
-    // Double-check via transaction to prevent TOCTOU race
-    const alreadyProvisioned = await db.runTransaction(async (txn) => {
-      const freshDoc = await txn.get(db.collection("clinics").doc(clinicId));
+    // Transaction prevents concurrent purchases. The lock auto-expires after
+    // PROVISION_LOCK_TTL_MS so a crashed request can't permanently block retries.
+    const PROVISION_LOCK_TTL_MS = 2 * 60 * 1000;
+    const lockResult = await db.runTransaction(async (txn) => {
+      const freshDoc = await txn.get(db.collection("clinics").doc(clinicId!));
       const freshData = freshDoc.data();
-      if (freshData?.ava?.twilioTrunkSid) return true;
-      // Set a provisioning lock so concurrent requests see it
-      txn.update(db.collection("clinics").doc(clinicId), {
+
+      if (freshData?.ava?.config?.phone) {
+        return { blocked: true as const, reason: "already_provisioned" as const };
+      }
+
+      const lockAtRaw = freshData?.ava?.provisioningLockAt;
+      const lockAt = typeof lockAtRaw === "string" ? new Date(lockAtRaw).getTime() : 0;
+      const lockAge = Date.now() - lockAt;
+      if (freshData?.ava?.provisioningInProgress && lockAge < PROVISION_LOCK_TTL_MS) {
+        return { blocked: true as const, reason: "in_progress" as const };
+      }
+
+      txn.update(db.collection("clinics").doc(clinicId!), {
         "ava.provisioningInProgress": true,
+        "ava.provisioningLockAt": new Date().toISOString(),
       });
-      return false;
+      return { blocked: false as const };
     });
 
-    if (alreadyProvisioned) {
-      return NextResponse.json(
-        { error: "This clinic already has a provisioned number" },
-        { status: 409 }
-      );
+    if (lockResult.blocked) {
+      const msg = lockResult.reason === "in_progress"
+        ? "A provisioning request is already in progress. Please wait a moment and try again."
+        : "This clinic already has a provisioned number";
+      return NextResponse.json({ error: msg }, { status: 409 });
     }
 
-    // 1. Purchase UK number
-    const phoneNumber = await purchaseUkNumber({ locality });
-
-    // 2. Get the phone number SID (needed for SIP trunk association)
-    const phoneSid = await getPhoneNumberSid(phoneNumber);
-
-    // 3. Ensure ElevenLabs agent exists
-    let agentId = clinicData.ava?.agent_id;
+    // 1. Ensure ElevenLabs agent exists
+    let agentId = clinicData.ava?.agent_id as string | undefined;
+    let toolIds = clinicData.ava?.toolIds as string[] | undefined;
     if (!agentId) {
-      // Create the agent via internal call to the agent route
-      // We'll do it inline to avoid an extra HTTP round-trip
       const { buildAvaCorePrompt } = await import("@/lib/ava/ava-core-prompt");
       const { compileKnowledgeDocument } = await import("@/lib/ava/ava-knowledge");
+
       const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
       if (!ELEVENLABS_API_KEY) {
-        return NextResponse.json({ error: "ELEVENLABS_API_KEY is not configured" }, { status: 500 });
+        throw new Error("ELEVENLABS_API_KEY is not configured");
       }
-      const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+      if (!appUrl) {
+        throw new Error("NEXT_PUBLIC_APP_URL is not configured");
+      }
 
       const corePrompt = buildAvaCorePrompt({
         clinic_name: clinicData.name || "Clinic",
         clinic_email: clinicData.email || "info@clinic.com",
-        clinic_phone: clinicData.receptionPhone || phoneNumber,
+        clinic_phone: clinicData.receptionPhone || "",
       });
 
       const knowledgeEntries = clinicData.ava?.knowledge || [];
@@ -115,112 +130,62 @@ async function handler(req: NextRequest) {
         ? `${corePrompt}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCLINIC KNOWLEDGE BASE\n\n${knowledgeDoc}`
         : corePrompt;
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-      const webhookUrl = `${appUrl}/api/webhooks/elevenlabs`;
-      const toolsUrl = `${appUrl}/api/ava/tools`;
-      const transferUrl = `${appUrl}/api/ava/transfer`;
-
-      const agentResponse = await fetch(`${ELEVENLABS_API_URL}/convai/agents`, {
-        method: "POST",
-        headers: {
-          "xi-api-key": ELEVENLABS_API_KEY || "",
-          "Content-Type": "application/json",
+      toolIds = await createAvaTools(appUrl, ELEVENLABS_API_KEY);
+      agentId = await createAvaAgent(
+        {
+          clinicName: clinicData.name || "Clinic",
+          systemPrompt,
+          voiceId: process.env.ELEVENLABS_VOICE_ID ?? "OnKmvBo8ZskQurHsyps5",
+          appUrl,
+          apiKey: ELEVENLABS_API_KEY,
         },
-        body: JSON.stringify({
-          name: `${clinicData.name || "Clinic"} - Ava`,
-          system_prompt: systemPrompt,
-          voice_id: process.env.ELEVENLABS_VOICE_ID ?? "OnKmvBo8ZskQurHsyps5",
-          webhook_url: webhookUrl,
-          language: "en",
-          tools: [
-            {
-              name: "check_availability",
-              description: "Check clinician availability for a given day or week. Use this BEFORE booking to find open slots.",
-              webhook_url: toolsUrl,
-              parameters: {
-                type: "object",
-                properties: {
-                  preferred_day: { type: "string", description: "Day or date to check, e.g. 'Monday', 'tomorrow', or ISO date." },
-                  clinician_name: { type: "string", description: "Specific clinician name (optional)." },
-                },
-              },
-            },
-            {
-              name: "book_appointment",
-              description: "Book an appointment for the patient. Only call this AFTER confirming all details with the caller.",
-              webhook_url: toolsUrl,
-              parameters: {
-                type: "object",
-                properties: {
-                  patient_first_name: { type: "string", description: "Patient's first name." },
-                  patient_last_name: { type: "string", description: "Patient's last name." },
-                  patient_phone: { type: "string", description: "Patient's phone number." },
-                  patient_email: { type: "string", description: "Patient's email address (optional)." },
-                  slot_datetime: { type: "string", description: "Confirmed appointment datetime in ISO 8601 format." },
-                  clinician_name: { type: "string", description: "Clinician to book with (optional)." },
-                  appointment_type: { type: "string", description: "initial_assessment or follow_up.", enum: ["initial_assessment", "follow_up"] },
-                },
-                required: ["patient_first_name", "patient_last_name", "patient_phone", "slot_datetime"],
-              },
-            },
-            {
-              name: "update_booking",
-              description: "Cancel or reschedule an existing appointment.",
-              webhook_url: toolsUrl,
-              parameters: {
-                type: "object",
-                properties: {
-                  action: { type: "string", description: "cancel or reschedule.", enum: ["cancel", "reschedule"] },
-                  booking_id: { type: "string", description: "Booking reference or appointment ID." },
-                  new_datetime: { type: "string", description: "New ISO 8601 datetime (required for reschedule)." },
-                },
-                required: ["action", "booking_id"],
-              },
-            },
-            { name: "transfer_to_reception", description: "Transfer the caller to the clinic reception desk. Use when the caller has a complaint, wants to speak to a manager, or needs human assistance.", webhook_url: transferUrl },
-          ],
-        }),
-      });
-
-      if (!agentResponse.ok) {
-        const error = await agentResponse.json();
-        throw new Error(`ElevenLabs agent creation failed: ${JSON.stringify(error)}`);
-      }
-
-      const agentData = await agentResponse.json();
-      agentId = agentData.agent_id;
+        toolIds,
+      );
     }
 
-    // 4. Configure SIP trunk (Twilio → ElevenLabs)
-    const trunkSid = await configureSipTrunk({
-      phoneNumber,
-      phoneSid,
-      agentId: agentId as string,
-      clinicName: clinicData.name || "Clinic",
-    });
+    // 2. Buy a UK number, wiring its voiceUrl to the inbound-call TwiML endpoint
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const voiceUrl = `${appUrl}/api/ava/inbound-call?clinicId=${clinicId}`;
+    const { phoneNumber, phoneSid } = await purchaseUkNumber({ locality, voiceUrl });
 
-    // 5. Write everything to Firestore atomically
+    // 3. Persist to Firestore
     const now = new Date().toISOString();
     await db.collection("clinics").doc(clinicId).update({
-      phone: phoneNumber,
       "ava.config.phone": phoneNumber,
       "ava.agent_id": agentId,
+      "ava.toolIds": toolIds ?? [],
       "ava.provider": "elevenlabs",
       "ava.twilioPhoneSid": phoneSid,
-      "ava.twilioTrunkSid": trunkSid,
       "ava.provisionedAt": now,
+      "ava.provisioningInProgress": false,
+      "ava.provisioningLockAt": null,
       updatedAt: now,
     });
 
     return NextResponse.json({
       phone: phoneNumber,
       agent_id: agentId,
-      trunk_sid: trunkSid,
-      message: "Number provisioned and SIP trunk configured successfully",
+      message: "Number provisioned and configured successfully",
     });
   } catch (error) {
+    // Clear provisioning lock so the user can retry
+    if (clinicId) {
+      db.collection("clinics").doc(clinicId).update({
+        "ava.provisioningInProgress": false,
+        "ava.provisioningLockAt": null,
+      }).catch(() => { /* best-effort */ });
+    }
+
     console.error("[Ava provision-number error]", error);
-    return handleApiError(error);
+
+    // Auth errors have structured status codes — preserve them
+    if (error instanceof ApiAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
+
+    // Surface the actual error message (not just "Internal server error")
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

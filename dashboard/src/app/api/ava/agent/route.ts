@@ -5,80 +5,11 @@ import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard"
 import { buildAvaCorePrompt } from "@/lib/ava/ava-core-prompt";
 import { compileKnowledgeDocument, type KnowledgeEntry } from "@/lib/ava/ava-knowledge";
 import { withRequestLog } from "@/lib/request-logger";
+import { createAvaTools, createAvaAgent, updateAvaAgent } from "@/lib/ava/elevenlabs-agent";
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
 
 const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "OnKmvBo8ZskQurHsyps5";
-
-interface ElevenLabsToolParamProp {
-  type: string;
-  description: string;
-  enum?: string[];
-}
-
-interface ElevenLabsToolParameters {
-  type: "object";
-  properties: Record<string, ElevenLabsToolParamProp>;
-  required?: string[];
-}
-
-interface ElevenAgentsTool {
-  name: string;
-  description: string;
-  webhook_url: string;
-  parameters?: ElevenLabsToolParameters;
-}
-
-interface ElevenAgentsConfig {
-  name: string;
-  system_prompt: string;
-  voice_id: string;
-  webhook_url: string;
-  tools: ElevenAgentsTool[];
-}
-
-async function createAgent(config: ElevenAgentsConfig): Promise<string> {
-  const response = await fetch(`${ELEVENLABS_API_URL}/convai/agents`, {
-    method: "POST",
-    headers: {
-      "xi-api-key": ELEVENLABS_API_KEY || "",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name: config.name,
-      system_prompt: config.system_prompt,
-      voice_id: config.voice_id,
-      webhook_url: config.webhook_url,
-      tools: config.tools,
-      language: "en",
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`ElevenLabs API error: ${JSON.stringify(error)}`);
-  }
-
-  const data = await response.json();
-  return data.agent_id;
-}
-
-async function updateAgent(agentId: string, config: Partial<ElevenAgentsConfig>): Promise<void> {
-  const response = await fetch(`${ELEVENLABS_API_URL}/convai/agents/${agentId}`, {
-    method: "PATCH",
-    headers: {
-      "xi-api-key": ELEVENLABS_API_KEY || "",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(config),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`ElevenLabs API error: ${JSON.stringify(error)}`);
-  }
-}
 
 async function handler(req: NextRequest) {
   // Rate limit: 5 requests per IP per 60 seconds
@@ -142,96 +73,30 @@ async function handler(req: NextRequest) {
       ? `${corePrompt}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCLINIC KNOWLEDGE BASE\n\n${knowledgeDoc}`
       : corePrompt;
 
-    const webhookUrl = `${appUrl}/api/webhooks/elevenlabs`;
-    const toolsUrl = `${appUrl}/api/ava/tools`;
-    const transferUrl = `${appUrl}/api/ava/transfer`;
-
-    const agentConfig: ElevenAgentsConfig = {
-      name: `${clinicData.name || "Clinic"} - Ava`,
-      system_prompt: systemPrompt,
-      voice_id: DEFAULT_VOICE_ID,
-      webhook_url: webhookUrl,
-      tools: [
-        {
-          name: "check_availability",
-          description: "Check clinician availability for a given day or week. Use this BEFORE booking to find open slots. Returns available times that you should read back to the caller.",
-          webhook_url: toolsUrl,
-          parameters: {
-            type: "object",
-            properties: {
-              preferred_day: {
-                type: "string",
-                description: "The day or date to check, e.g. 'Monday', 'tomorrow', 'next Tuesday', or an ISO date like '2026-04-20'.",
-              },
-              clinician_name: {
-                type: "string",
-                description: "Name of the specific clinician to check availability for. Omit to check all clinicians.",
-              },
-            },
-          },
-        },
-        {
-          name: "book_appointment",
-          description: "Book an appointment for the patient. Only call this AFTER you have confirmed all details with the caller: their name, phone number, email, the date/time, and which clinician. Read back the full booking details and wait for the caller to confirm before triggering this tool.",
-          webhook_url: toolsUrl,
-          parameters: {
-            type: "object",
-            properties: {
-              patient_first_name: { type: "string", description: "Patient's first name." },
-              patient_last_name: { type: "string", description: "Patient's last name." },
-              patient_phone: { type: "string", description: "Patient's phone number." },
-              patient_email: { type: "string", description: "Patient's email address (optional)." },
-              slot_datetime: { type: "string", description: "Confirmed appointment date and time in ISO 8601 format, e.g. '2026-04-20T10:00:00'." },
-              clinician_name: { type: "string", description: "Name of the clinician to book with (optional)." },
-              appointment_type: {
-                type: "string",
-                description: "Type of appointment.",
-                enum: ["initial_assessment", "follow_up"],
-              },
-            },
-            required: ["patient_first_name", "patient_last_name", "patient_phone", "slot_datetime"],
-          },
-        },
-        {
-          name: "update_booking",
-          description: "Cancel or reschedule an existing appointment. Ask the caller for their booking reference or look it up by their name.",
-          webhook_url: toolsUrl,
-          parameters: {
-            type: "object",
-            properties: {
-              action: {
-                type: "string",
-                description: "Whether to cancel or reschedule the appointment.",
-                enum: ["cancel", "reschedule"],
-              },
-              booking_id: { type: "string", description: "The booking reference or appointment ID." },
-              new_datetime: { type: "string", description: "New date and time in ISO 8601 format (required for reschedule)." },
-            },
-            required: ["action", "booking_id"],
-          },
-        },
-        {
-          name: "transfer_to_reception",
-          description: "Transfer the caller to the clinic reception desk. Use when the caller has a complaint, wants to speak to a manager, or needs human assistance that you cannot provide. Say 'Let me put you through to someone who can help right away' before triggering this tool.",
-          webhook_url: transferUrl,
-        },
-      ],
+    const agentConfig = {
+      clinicName: clinicData.name || "Clinic",
+      systemPrompt,
+      voiceId: DEFAULT_VOICE_ID,
+      appUrl,
+      apiKey: ELEVENLABS_API_KEY,
     };
 
     let agentId = avaConfig.agent_id;
+    let toolIds: string[] = avaConfig.toolIds ?? [];
 
     // Create or update agent
     if (!agentId) {
-      // New agent
-      agentId = await createAgent(agentConfig);
+      toolIds = await createAvaTools(appUrl, ELEVENLABS_API_KEY);
+      agentId = await createAvaAgent(agentConfig, toolIds);
     } else {
-      // Update existing agent
-      await updateAgent(agentId, agentConfig);
+      // For updates: reuse existing tool IDs, just update the system prompt
+      await updateAvaAgent(agentId, agentConfig, toolIds.length ? toolIds : undefined);
     }
 
-    // Store agent ID in Firestore
+    // Store agent ID and tool IDs in Firestore
     await db.collection("clinics").doc(clinicId).update({
       "ava.agent_id": agentId,
+      "ava.toolIds": toolIds,
       "ava.provider": "elevenlabs",
       updatedAt: new Date().toISOString(),
     });
