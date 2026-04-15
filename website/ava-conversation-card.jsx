@@ -354,7 +354,22 @@ export default function AvaShowcase() {
       );
       console.log("[Ava] WebSocket object created, readyState=", ws.readyState, "(0=CONNECTING)");
 
+      // Connection timeout failsafe
+      const connectionTimeout = setTimeout(() => {
+        console.error("[Ava] ✗✗✗ CRITICAL: WebSocket timeout! Still readyState=", ws.readyState);
+        console.error("[Ava] The connection to ElevenLabs never completed after 10 seconds.");
+        console.error("[Ava] Possible causes:");
+        console.error("[Ava]   1. CORS policy blocking WebSocket from browser");
+        console.error("[Ava]   2. Invalid agent_id");
+        console.error("[Ava]   3. Network/firewall blocking wss://api.elevenlabs.io");
+        console.error("[Ava]   4. ElevenLabs API is down");
+        alert("[Ava] WebSocket connection timeout after 10s. Check console for details.");
+        ws.close();
+        setPlaying(false);
+      }, 10000);
+
       ws.onopen = () => {
+        clearTimeout(connectionTimeout);
         console.log("[Ava] ✓✓✓ WebSocket CONNECTED! ✓✓✓");
         console.log("[Ava] WebSocket readyState:", ws.readyState, "(1=OPEN)");
         mediaRecorder.start(100); // Send audio chunks every 100ms
@@ -432,15 +447,22 @@ export default function AvaShowcase() {
       };
 
       ws.onerror = (error) => {
-        console.error("[Ava] ✗✗✗ WebSocket ERROR ✗✗✗", error);
-        console.error("[Ava] Error details:", error.type, error.message);
-        alert(`[Ava] Connection error: ${error.message || error.type || 'Unknown error'}. Check console for details.`);
+        clearTimeout(connectionTimeout);
+        console.error("[Ava] ✗✗✗ WebSocket ERROR (readyState=" + ws.readyState + ") ✗✗✗");
+        console.error("[Ava] Error event:", error);
+        console.error("[Ava] Check:");
+        console.error("[Ava]   • Browser console for CORS errors");
+        console.error("[Ava]   • Network tab to see if wss://api.elevenlabs.io connects");
+        console.error("[Ava]   • If 403/401: agent_id might be invalid or auth required");
+        console.error("[Ava]   • If mixed content: ensure page is HTTPS (ElevenLabs requires it)");
+        alert(`[Ava] WebSocket error. See console (Network tab) for details.`);
         setPlaying(false);
         try { mediaRecorder.stop(); } catch (e) { console.error("[Ava] Error stopping mediaRecorder:", e); }
         stream.getTracks().forEach((track) => track.stop());
       };
 
       ws.onclose = () => {
+        clearTimeout(connectionTimeout);
         console.log("[Ava] WebSocket closed (readyState:", ws.readyState, ")");
         setPlaying(false);
         if (mediaRecorderRef.current) {
