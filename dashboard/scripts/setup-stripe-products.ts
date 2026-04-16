@@ -35,23 +35,23 @@ const stripe = new Stripe(SECRET_KEY, { apiVersion: "2026-02-25.clover" });
 const PRICING = {
   intelligence: {
     solo:   { month:  6900, year:  66240 },
-    studio: { month: 10900, year: 104640 },
-    clinic: { month: 17900, year: 171840 },
+    studio: { month:  9900, year:  95040 },
+    clinic: { month: 14900, year: 143040 },
   },
   ava: {
-    solo:   { month: 11900, year: 114240 },
-    studio: { month: 17900, year: 171840 },
-    clinic: { month: 25900, year: 248640 },
-  },
-  pulse: {
-    solo:   { month:  8900, year:  85440 },
-    studio: { month: 12900, year: 123840 },
+    solo:   { month:  9900, year:  95040 },
+    studio: { month: 14900, year: 143040 },
     clinic: { month: 19900, year: 191040 },
   },
+  pulse: {
+    solo:   { month:  7900, year:  75840 },
+    studio: { month:  9900, year:  95040 },
+    clinic: { month: 14900, year: 143040 },
+  },
   fullstack: {
-    solo:   { month: 22900, year: 219840 },
-    studio: { month: 34900, year: 335040 },
-    clinic: { month: 49900, year: 479040 },
+    solo:   { month: 19900, year: 191040 },
+    studio: { month: 29900, year: 287040 },
+    clinic: { month: 39900, year: 383040 },
   },
 } as const;
 
@@ -188,7 +188,7 @@ async function main() {
     "StrydeOS — Ava Setup Fee",
     "One-time onboarding and configuration fee for the Ava AI voice receptionist module."
   );
-  const avaSetupPrice = await getOrCreateOneTimePrice(avaSetupProduct.id, 25000, "Ava setup fee · £250");
+  const avaSetupPrice = await getOrCreateOneTimePrice(avaSetupProduct.id, 19900, "Ava setup fee · £199");
   envLines.push(`STRIPE_PRICE_AVA_SETUP=${avaSetupPrice.id}`);
 
   // ── Extra Clinician Seat (per-seat add-on) ──

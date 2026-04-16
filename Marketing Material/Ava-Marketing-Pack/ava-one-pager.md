@@ -21,18 +21,18 @@ Ava is an AI voice receptionist that picks up every call, books appointments dir
 | Booking | Direct into PMS | Message relay |
 | Cancellation recovery | Automatic rebooking | None |
 | Call data | Full analytics | None |
-| Cost (3 clinics) | ~£550/mo | £1,500/mo |
+| Cost (3 clinics) | ~£397/mo | £1,500/mo |
 | Setup | Same day | 1–2 weeks |
 
 ## Pricing
 
 | Tier | Clinicians | Monthly | Annual (20% off) |
 |------|-----------|---------|-----------------|
-| Solo | 1 | £149 | £1,430.40 |
-| Studio | 2–4 | £199 | £1,910.40 |
-| Clinic | 6+ | £299 | £2,870.40 |
+| Solo | 1 | £99 | £950.40 |
+| Studio | 2–4 | £149 | £1,430.40 |
+| Clinic | 6+ | £199 | £1,910.40 |
 
-One-time setup: £250. No contracts. Cancel anytime.
+One-time setup: £199. No contracts. Cancel anytime.
 
 ## Built by a clinic owner
 StrydeOS is built by Jamal Adu, founder of Spires Physiotherapy. Ava was designed to solve a real problem at a real clinic — not by a tech company guessing what clinics need.

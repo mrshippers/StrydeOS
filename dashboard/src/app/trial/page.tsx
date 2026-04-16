@@ -98,7 +98,7 @@ const MODULES: ModuleDef[] = [
       "Revenue per session tracking",
       "Weekly email digest",
     ],
-    startingAt: "£79",
+    startingAt: "£69",
   },
   {
     id: "ava",
@@ -113,7 +113,7 @@ const MODULES: ModuleDef[] = [
       "Multi-language support",
       "PMS integration (write)",
     ],
-    startingAt: "£149",
+    startingAt: "£99",
   },
   {
     id: "pulse",
@@ -128,7 +128,7 @@ const MODULES: ModuleDef[] = [
       "Patient satisfaction tracking",
       "Configurable timing rules",
     ],
-    startingAt: "£99",
+    startingAt: "£79",
   },
   {
     id: "fullstack",
@@ -143,7 +143,7 @@ const MODULES: ModuleDef[] = [
       "Priority onboarding",
       "Best value — save up to 20%",
     ],
-    startingAt: "£279",
+    startingAt: "£199",
   },
 ];
 

@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StrydeOS — Full Change Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: #FAF9F7;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .fade-in { animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) forwards; opacity:0; }
+  .d1 { animation-delay: 0s; }
+  .d2 { animation-delay: 0.08s; }
+  .d3 { animation-delay: 0.14s; }
+  .d4 { animation-delay: 0.20s; }
+  .d5 { animation-delay: 0.26s; }
+  .d6 { animation-delay: 0.32s; }
+  .d7 { animation-delay: 0.38s; }
+  .d8 { animation-delay: 0.44s; }
+  .d9 { animation-delay: 0.50s; }
+  .d10 { animation-delay: 0.56s; }
+  .d11 { animation-delay: 0.62s; }
+  .d12 { animation-delay: 0.68s; }
+  .d13 { animation-delay: 0.74s; }
+  .d14 { animation-delay: 0.80s; }
+
+  /* Dot grid */
+  .dot-grid {
+    position: absolute; inset: 0; opacity: 0.035; pointer-events: none;
+    background-image: radial-gradient(circle, #111827 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Cards */
+  .metric-card {
+    padding: 28px 24px; border-radius: 16px;
+    border: 1px solid #E2DFDA; background: white;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(11,37,69,0.08);
+  }
+  .metric-label {
+    font-size: 11px; font-weight: 600; color: #6B7280;
+    letter-spacing: 0.04em; margin-bottom: 10px; text-transform: uppercase;
+  }
+  .metric-value {
+    font-family: 'DM Serif Display', serif; font-size: 36px;
+    color: #111827; line-height: 1; margin-bottom: 6px;
+  }
+  .metric-sub { font-size: 12px; color: #6B7280; line-height: 1.5; }
+
+  /* Section heading */
+  .eyebrow {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: #1C54F2; margin-bottom: 8px;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif; font-size: 32px;
+    font-weight: 400; color: #0B2545; line-height: 1.15; margin-bottom: 10px;
+  }
+  .section-sub {
+    font-size: 14px; color: #6B7280; line-height: 1.6; max-width: 560px;
+  }
+
+  /* Checklist items */
+  .checklist-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 13px 0; border-bottom: 1px solid #E2DFDA;
+    cursor: pointer; transition: background 0.15s ease;
+    border-radius: 4px; padding-left: 4px;
+  }
+  .checklist-item:hover { background: #F9F8F6; }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item.done .item-label { text-decoration: line-through; color: #9CA3AF; }
+  .checklist-item.done .item-sub { color: #D1D5DB; }
+
+  .custom-checkbox {
+    width: 18px; height: 18px; border-radius: 5px;
+    border: 1.5px solid #D1D5DB; background: white;
+    flex-shrink: 0; margin-top: 2px; display: flex;
+    align-items: center; justify-content: center;
+    transition: all 0.2s ease;
+  }
+  .custom-checkbox.checked {
+    background: #059669; border-color: #059669;
+  }
+  .custom-checkbox.checked::after {
+    content: '';
+    width: 10px; height: 6px;
+    border-left: 2px solid white; border-bottom: 2px solid white;
+    transform: rotate(-45deg) translateY(-1px);
+    display: block;
+  }
+
+  .item-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 6px;
+  }
+  .item-label { font-size: 14px; font-weight: 600; color: #111827; line-height: 1.4; }
+  .item-sub { font-size: 12px; color: #6B7280; margin-top: 2px; line-height: 1.4; }
+
+  /* Type badge */
+  .type-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 50px; font-size: 10px;
+    font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    flex-shrink: 0; margin-top: 3px;
+  }
+
+  /* Section card */
+  .section-card {
+    background: white; border-radius: 16px;
+    border: 1px solid #E2DFDA; padding: 8px 28px; margin-bottom: 20px;
+  }
+  .section-card-header {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #6B7280;
+    padding: 14px 0; border-bottom: 1px solid #E2DFDA;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  /* Pricing callout */
+  .pricing-callout {
+    background: linear-gradient(135deg, #0B2545, #132D5E);
+    border-radius: 20px; border: 2px solid #1C54F2;
+    padding: 32px; position: relative; overflow: hidden; margin-bottom: 24px;
+  }
+
+  /* Progress bar */
+  .progress-track {
+    background: #E2DFDA; border-radius: 50px; height: 6px;
+    overflow: hidden; margin-bottom: 8px;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 50px;
+    background: linear-gradient(90deg, #1C54F2, #059669);
+    transition: width 0.4s ease;
+  }
+
+  /* Filter buttons */
+  .filter-btn {
+    padding: 8px 18px; border-radius: 50px;
+    border: 1.5px solid #E2DFDA; background: white;
+    cursor: pointer; font-family: 'Outfit', sans-serif;
+    font-size: 12px; font-weight: 600; color: #6B7280;
+    transition: all 0.25s ease;
+  }
+  .filter-btn:hover { border-color: #1C54F2; color: #1C54F2; }
+  .filter-btn.active { background: #0B2545; border-color: #0B2545; color: white; }
+
+  /* Grid layouts */
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  @media (max-width: 700px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  /* Status row (for section hidden sections) */
+  .hidden-section { display: none; }
+</style>
+</head>
+<body>
+
+<div style="max-width:900px;margin:0 auto;padding:48px 24px 80px">
+
+  <!-- HEADER -->
+  <div class="fade-in d1" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:60px;flex-wrap:wrap;gap:20px">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#1C54F2,#132D5E);display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 5-10"/></svg>
+        </div>
+        <span style="font-weight:700;font-size:18px;letter-spacing:-0.02em;color:#0B2545">Stryde<span style="color:#4B8BF5">OS</span></span>
+      </div>
+      <h1 style="font-family:'DM Serif Display',serif;font-size:40px;font-weight:400;color:#0B2545;line-height:1.1;margin-bottom:6px">
+        Full Change Checklist
+      </h1>
+      <p style="font-size:14px;color:#6B7280">Every fix, feature, and improvement — manually verify each one.</p>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:11px;color:#6B7280;margin-bottom:4px">Internal document</div>
+      <div style="font-size:13px;font-weight:600;color:#0B2545;margin-bottom:8px">April 2026</div>
+      <span style="display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:50px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#059669;background:#05966912;border:1px solid #05966930">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#059669;animation:pulse 2s infinite"></span>
+        Repo Clean
+      </span>
+    </div>
+  </div>
+
+  <!-- PRICING CALLOUT -->
+  <div class="fade-in d2" style="margin-bottom:48px">
+    <div class="pricing-callout">
+      <div class="dot-grid"></div>
+      <div style="position:relative;z-index:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:10px;background:#1C54F2;display:flex;align-items:center;justify-content:center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <span style="font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#4B8BF5">Pricing Test — You Asked</span>
+        </div>
+        <h3 style="font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;color:white;line-height:1.2;margin-bottom:10px">
+          5 clinics signing in June at Clinic tier.
+        </h3>
+        <p style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.65;max-width:560px;margin-bottom:20px">
+          Using the revised pricing committed on 10 April. Clinic tier is 6+ clinicians. These numbers are live in billing.ts and the Stripe product catalogue.
+        </p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+          <div style="padding:14px 16px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:3px">Intelligence only</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:white">£745<span style="font-size:13px;color:rgba(255,255,255,0.4)">/mo</span></div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">5 × £149</div>
+          </div>
+          <div style="padding:14px 16px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:3px">Full Stack (anchor)</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#34D399">£1,995<span style="font-size:13px;color:rgba(255,255,255,0.4)">/mo MRR</span></div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">5 × £399</div>
+          </div>
+          <div style="padding:14px 16px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:3px">+ Ava setup (one-time)</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:white">£995</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">5 × £199 (if all take Ava)</div>
+          </div>
+          <div style="padding:14px 16px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:3px">Implied ARR (Full Stack)</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#34D399">£23,940</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">£1,995 × 12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="fade-in d3" style="margin-bottom:48px">
+    <div style="margin-bottom:32px">
+      <div class="eyebrow">Change summary</div>
+      <h2 class="section-title">Everything that shipped.</h2>
+      <p class="section-sub">63 tracked changes across 13 categories. Check each one manually. Tick when verified.</p>
+    </div>
+    <div class="grid-4">
+      <div class="metric-card" style="border-top:3px solid #1C54F2">
+        <div class="metric-label">Total changes</div>
+        <div class="metric-value" style="color:#1C54F2" id="total-count">63</div>
+        <div class="metric-sub">Commits tracked</div>
+      </div>
+      <div class="metric-card" style="border-top:3px solid #059669">
+        <div class="metric-label">Features</div>
+        <div class="metric-value" style="color:#059669">18</div>
+        <div class="metric-sub">New functionality</div>
+      </div>
+      <div class="metric-card" style="border-top:3px solid #F59E0B">
+        <div class="metric-label">Fixes</div>
+        <div class="metric-value" style="color:#F59E0B">38</div>
+        <div class="metric-sub">Bugs patched</div>
+      </div>
+      <div class="metric-card" style="border-top:3px solid #EF4444">
+        <div class="metric-label">Security</div>
+        <div class="metric-value" style="color:#EF4444">7</div>
+        <div class="metric-sub">Hardening commits</div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div style="background:white;border-radius:16px;border:1px solid #E2DFDA;padding:20px 24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:12px;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:0.06em">Verification progress</span>
+        <span style="font-size:13px;font-weight:700;color:#0B2545" id="progress-text">0 / 63 checked</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <div style="font-size:11px;color:#9CA3AF;margin-top:6px">Click any item below to mark it verified</div>
+    </div>
+  </div>
+
+  <!-- FILTER -->
+  <div class="fade-in d4" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px">
+    <button class="filter-btn active" onclick="filterBy('all')">All</button>
+    <button class="filter-btn" onclick="filterBy('feat')">Features</button>
+    <button class="filter-btn" onclick="filterBy('fix')">Fixes</button>
+    <button class="filter-btn" onclick="filterBy('security')">Security</button>
+  </div>
+
+  <!-- ═══════ SECTION: PRICING & BILLING ═══════ -->
+  <div class="fade-in d5" style="margin-bottom:20px" data-section="pricing">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Pricing &amp; Billing</span>
+        <span style="font-size:10px;font-weight:600;color:#1C54F2">Apr 10 · 4 items</span>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Revised pricing rollout — all 3 tiers updated in billing.ts</div>
+          <div class="item-sub">Clinic Full Stack £399, Studio £299, Solo £199 · Intelligence / Ava / Pulse all updated · Committed 53a5da3</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Checkout routing fix — no longer bounces to /onboarding</div>
+          <div class="item-sub">Authenticated user hitting checkout without billing=now → now redirects to /checkout?plan=X&billing=now instead of /onboarding</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Stripe product setup script updated to match new pricing</div>
+          <div class="item-sub">setup-stripe-products.ts prices synced — run this before first paid customer</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Demo mode middleware bypass — safe passthrough for demo sessions</div>
+          <div class="item-sub">demo-clinic has no real Firestore documents, so bypassing HMAC is safe. Allows "Try demo" flow without login</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: INTELLIGENCE ═══════ -->
+  <div class="fade-in d5" style="margin-bottom:20px" data-section="intelligence">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Intelligence Module</span>
+        <span style="font-size:10px;font-weight:600;color:#8B5CF6">Apr 2–10 · 5 items</span>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Revenue-by-condition aggregation wired up</div>
+          <div class="item-sub">Intelligence page now shows revenue broken down by clinical condition · dc27ad0</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Per-clinician Heidi opt-in UI in Clinic Management</div>
+          <div class="item-sub">Settings page now shows per-clinician toggle for Heidi AI notes integration · 0a96075</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Live clinical benchmarks wired to real clinic data</div>
+          <div class="item-sub">Benchmarks no longer use placeholder data. Zero-data state handled gracefully · 94fbd27</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">KPIs now show latest week + data freshness bar added</div>
+          <div class="item-sub">Was showing stale data from an arbitrary week. Freshness indicator shows when data was last synced · e6efbc8</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Intelligence revenue fallback, NaN timestamps, CSP dev mode</div>
+          <div class="item-sub">Revenue showed NaN when no data. CSP blocked inline scripts in dev mode. Both resolved · 0192c26</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: AVA ═══════ -->
+  <div class="fade-in d6" style="margin-bottom:20px" data-section="ava">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Ava Voice Receptionist</span>
+        <span style="font-size:10px;font-weight:600;color:#1C54F2">Apr 3–10 · 12 items</span>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">LangGraph conversation state machine for call routing</div>
+          <div class="item-sub">Replaced flat if/else routing with proper LangGraph state machine for intelligent call flow · ddc28b0</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Call transfer + callback SMS notification</div>
+          <div class="item-sub">transfer_call action added. Patient receives SMS when transferred. Receptionist UI updated · 5db7f30 / 2b4a0fa</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Out-of-hours transfer handling</div>
+          <div class="item-sub">Ava now routes callers to correct after-hours message or emergency number · da476de</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Insurance pre-auth guardrail</div>
+          <div class="item-sub">Ava now checks insurance pre-authorisation requirements before booking. Prevents billing failures · 1c75181 / c145861</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Ava phone provisioning pipeline</div>
+          <div class="item-sub">End-to-end flow: admin buys a Twilio number → it's provisioned to clinic → Ava answers calls on it · 60fd7bb</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">ElevenLabs signature verification extracted to shared module</div>
+          <div class="item-sub">Was duplicated across webhook handlers. Moved to shared module. No more divergence risk · 5b37726</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Idle timeout removed — was blocking all API calls after 30 min</div>
+          <div class="item-sub">A 30-min idle timer was cancelling in-flight API calls. Critical prod bug. Removed entirely · f077e96</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">Three critical Ava bugs — model ID, Twilio sig validation, HMAC comparison</div>
+          <div class="item-sub">Wrong ElevenLabs model ID. Twilio signature validation was failing open. HMAC comparison had off-by-one · 83488eb</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">LangGraph integration tests skipped in CI when no API key</div>
+          <div class="item-sub">CI was failing because ELEVENLABS_API_KEY not set in test env. Tests now skipped gracefully · 5899b39</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Ava model ID, voice ID config, transfer CLI fallback fixed</div>
+          <div class="item-sub">Model ID was using deprecated v1. Voice ID was hardcoded, now pulled from config · aba38f8</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Lazy-import LangGraph in webhook to prevent module-level crash</div>
+          <div class="item-sub">LangGraph was imported at module level — if ElevenLabs key missing, entire webhook crashed on cold start · e0ba338</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Ava graph updates — toggle + rule sync fixes</div>
+          <div class="item-sub">Ava on/off toggle wasn't syncing rules correctly to LangGraph. Fixed rule propagation · 863c3c1 / 60fd7bb</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: SECURITY ═══════ -->
+  <div class="fade-in d7" style="margin-bottom:20px" data-section="security">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Security &amp; Hardening</span>
+        <span style="font-size:10px;font-weight:600;color:#EF4444">Apr 1–9 · 7 items</span>
+      </div>
+      <div class="checklist-item" data-type="security" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">Webhook signature validation + reliability hardening</div>
+          <div class="item-sub">All webhooks (Twilio, ElevenLabs, Stripe) now validate signatures. Fail-closed: reject if key missing · d6a0e7f</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="security" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">Heidi API key encrypted in Firestore</div>
+          <div class="item-sub">Was stored as plaintext. Now encrypted with CREDENTIAL_MASTER_SECRET using AES-256-GCM. Fail-closed TwiML sig validation · 39bfeab</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="security" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">Production hardening — 492 tests, PMS encryption, comms engine</div>
+          <div class="item-sub">Major hardening commit: PMS credentials encrypted at rest, 492 test suite, comms engine integrated · adb4fae</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="security" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">Auth, logging, edge case production sweep</div>
+          <div class="item-sub">Session handling edge cases, logging gaps, unhandled auth states all resolved · a0790a0</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="security" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">5 of 6 security/config issues from production audit resolved</div>
+          <div class="item-sub">External audit raised 6 issues. 5 fixed: CSRF, open redirect, rate limiting, header injection, auth bypass · 7d73c2b</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="security" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">Critical security + data integrity fixes across 7 files (Apr 1)</div>
+          <div class="item-sub">7-file sweep: Firestore rules tightened, API key exposure patched, tenant isolation verified · 4c3b536</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Silent Firestore errors now surfaced</div>
+          <div class="item-sub">Firestore errors were swallowed silently — made bugs invisible. Now all errors propagate to Sentry · 90344e7</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: NOTIFICATIONS ═══════ -->
+  <div class="fade-in d8" style="margin-bottom:20px" data-section="notifications">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Notifications &amp; Comms</span>
+        <span style="font-size:10px;font-weight:600;color:#0891B2">Apr 2–9 · 8 items</span>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Mark-all-read covers both Solo + Studio tiers</div>
+          <div class="item-sub">Was only working for one tier. Both tiers now correctly mark all notifications read · 14cc34b</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Pulse badge gated on feature flag</div>
+          <div class="item-sub">Pulse notification badge was showing even when module not activated. Now gated · 14cc34b</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Notification panel crash — null guard + error boundary</div>
+          <div class="item-sub">Panel crashed when notification had null metadata. Null guard + React error boundary added · 411b244</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Notification bell click not working — two bugs fixed</div>
+          <div class="item-sub">Event propagation was being stopped before reaching the bell. Two separate event handlers were conflicting · 0c799d0</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Notification bell always accessible + demo data warning banner</div>
+          <div class="item-sub">Bell was hidden behind other elements in some viewports. Demo mode now shows clear "demo data" banner · cef20f7</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Click insight to mark read + navigate to Intelligence</div>
+          <div class="item-sub">Clicking a notification insight now marks it read AND navigates to the relevant Intelligence view · c1f01ef</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Twilio/Resend delivery webhooks wired up</div>
+          <div class="item-sub">SMS and email delivery events now tracked. Comms preview syncs with actual delivery status · 1a6453f</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">3-tier right-side slide-out notification panel</div>
+          <div class="item-sub">Replaced old dropdown. Now a full slide-out panel with tiered notification categories · 0b91e01</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: DASHBOARD & SYNC ═══════ -->
+  <div class="fade-in d9" style="margin-bottom:20px" data-section="dashboard">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Dashboard &amp; Data Sync</span>
+        <span style="font-size:10px;font-weight:600;color:#6B7280">Apr 1–10 · 7 items</span>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">window.location.reload() replaced with router.refresh()</div>
+          <div class="item-sub">Hard page reloads on error retry replaced with Next.js router.refresh() — preserves state, avoids flash · latest commit</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Manual sync + staleness alerts on dashboard</div>
+          <div class="item-sub">Dashboard shows when data is stale. Manual sync button added. Wired to clinic PMS settings · a7a9a88</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Sync-patients refreshes name + contact from PMS on every run</div>
+          <div class="item-sub">Patient sync was only checking appointment data. Now pulls fresh name/contact on every sync · 41fb260</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Critical sync bugs across Intelligence, Pulse, webhook pipeline</div>
+          <div class="item-sub">Data from pipeline wasn't reaching Intelligence correctly. Pulse stats showed wrong values. Both fixed · 2b7a19b</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">PMS adapter nil safety, Pulse demo stats, outcome labels, error handling</div>
+          <div class="item-sub">Nil pointer crashes when PMS returns empty data. Pulse demo stats were wrong. Outcome labels mis-mapped · 7c0554b</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">node:crypto build failure, loading skeletons, global error boundary</div>
+          <div class="item-sub">Vercel build failed because node:crypto not available in edge runtime. Moved to Node runtime. Skeleton loaders + error boundary added · 1c71fe6</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Graceful error degradation — dashes instead of broken screens</div>
+          <div class="item-sub">Errors in KPI widgets no longer break the whole dashboard. Shows dashes with retry option · d0242df</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: INFRASTRUCTURE / CI ═══════ -->
+  <div class="fade-in d10" style="margin-bottom:20px" data-section="infra">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Infrastructure &amp; CI</span>
+        <span style="font-size:10px;font-weight:600;color:#6B7280">Apr 9 · 7 items</span>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Sentry deprecation warnings silenced in build logs</div>
+          <div class="item-sub">Two deprecated Sentry APIs replaced. Build logs were noisy with 40+ warnings · 713a067 / 1459aaa</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">ESLint scoped to production source dirs — test files excluded</div>
+          <div class="item-sub">ESLint was linting test files during Vercel build. Test file errors blocked deploys · ddc2bd5 / 029ec06</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">CI lint failures resolved — unused catch vars + ESLint config</div>
+          <div class="item-sub">CI was red on unused catch variable pattern. ESLint config updated to allow _ prefix · 9b7cd78</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Vitest + test files excluded from Next.js TypeScript compilation</div>
+          <div class="item-sub">TS compiler was picking up test files and vitest.config. Added explicit excludes to tsconfig · 400a4a0</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">CI node pinning hardened</div>
+          <div class="item-sub">CI was using node@latest which drifted. Pinned to specific node version to prevent future build drift · 90344e7</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">ESLint warnings ignored during Vercel production builds</div>
+          <div class="item-sub">Warnings were treated as errors in Vercel build env. ignoreDuringBuilds set for warnings only · a71831b</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Twilio webhook + signup test mocks fixed</div>
+          <div class="item-sub">Test suite mock for Twilio signature was wrong. Signup flow mock was hitting real Firebase · 8dc6e57</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: STATUS PAGE ═══════ -->
+  <div class="fade-in d10" style="margin-bottom:20px" data-section="status">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Status Page</span>
+        <span style="font-size:10px;font-weight:600;color:#6B7280">Apr 9 · 3 items</span>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Fake uptime history removed, API URL fixed, unconfigured services handled</div>
+          <div class="item-sub">Status page was showing invented 99.9% uptime history. Removed. API URL was wrong. Unconfigured services now show setup prompt · 271a300</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Status page fallback — lock icon instead of 'Cached' text</div>
+          <div class="item-sub">When status API is unreachable, now shows lock icon with "last known state" message · c4669fb</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Status API URL + cached fallback + changelog rewrite</div>
+          <div class="item-sub">API URL was hitting wrong endpoint. Fallback now uses cached data. Changelog rewritten with real dates + natural language · 521550d</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: AUTH & SETTINGS ═══════ -->
+  <div class="fade-in d11" style="margin-bottom:20px" data-section="auth">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Auth &amp; Settings</span>
+        <span style="font-size:10px;font-weight:600;color:#8B5CF6">Apr 3–7 · 5 items</span>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Superadmin account + AuthGuard fix + Spires data patch</div>
+          <div class="item-sub">Superadmin role created. AuthGuard was bouncing Spires users. Spires clinic data patched with correct values · 5b37784</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Settings data loss, 2FA error handling, Dashboard sync fix</div>
+          <div class="item-sub">Settings form was not persisting on re-load. 2FA error showed wrong message. Dashboard sync button wired to settings · 31aea74</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Remember Me toggle — Firebase persistence control</div>
+          <div class="item-sub">Sign-in now respects "Remember Me". Unchecked = session only. Checked = localStorage persistence · 3d80e00</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">CSP nonce removed — was blocking all inline scripts (blank page)</div>
+          <div class="item-sub">Critical: CSP nonce mismatch caused blank page for all users. Removed nonce approach, replaced with hash-based CSP · 8165b0b</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Next.js portal crash fix — safe portal target + scroll lock</div>
+          <div class="item-sub">Modal portal was crashing when target DOM node didn't exist yet. Deferred portal creation · 452256e</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: ONBOARDING & WEBSITE ═══════ -->
+  <div class="fade-in d12" style="margin-bottom:20px" data-section="onboarding">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Onboarding &amp; Website</span>
+        <span style="font-size:10px;font-weight:600;color:#0891B2">Mar 29 – Apr 10 · 6 items</span>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">PMS integration modes in onboarding wizard</div>
+          <div class="item-sub">Wizard now asks which PMS the clinic uses and configures the right integration mode (Cliniko REST, WriteUpp CSV, TM3) · afb20e7</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">WhatsNew popup now Firestore-backed, shown to all clinic users</div>
+          <div class="item-sub">Was hardcoded per-user. Now stored in Firestore. All users in a clinic see new release notes on login · 1e1bf41</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">WhatsNew v2026-04-03 — security, benchmarks, profile consistency</div>
+          <div class="item-sub">New release notes entry: security hardening, live benchmarks, profile photo sync improvements · 3c03f37</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Splash screen progress bar removed, auto-dismiss delay reduced</div>
+          <div class="item-sub">Progress bar was fake (hardcoded). Removed. Auto-dismiss was 5s, now 2s · 77af093</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Website pricing updated to match actual billing.ts values</div>
+          <div class="item-sub">Website was showing £500/£1,200/£400. Updated to match real pricing: £149/£199/£149/£399 (Clinic tier) · 53a5da3</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Heidi per-clinician opt-in + test-connection endpoint</div>
+          <div class="item-sub">Each clinician can independently opt in/out of Heidi AI notes. Test-connection button validates API key · b8241b9</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: PULSE ═══════ -->
+  <div class="fade-in d12" style="margin-bottom:20px" data-section="pulse">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Pulse Retention Engine</span>
+        <span style="font-size:10px;font-weight:600;color:#0891B2">Apr 5 · 2 items</span>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Honest empty states and setup banner on Pulse page</div>
+          <div class="item-sub">Pulse page was showing zeroed-out demo stats. Now shows honest empty state + setup instructions when not configured · cd7e95b</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Insurance pre-auth campaigns + roadmap updates</div>
+          <div class="item-sub">Campaigns feature scaffolded. Roadmap updated to reflect Pulse buildout priority · 1c75181</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECTION: MISC ═══════ -->
+  <div class="fade-in d13" style="margin-bottom:20px" data-section="misc">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Misc / Docs / Chores</span>
+        <span style="font-size:10px;font-weight:600;color:#6B7280">Various dates · 4 items</span>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#6B7280"></div>
+        <div>
+          <div class="item-label">Upstash Redis + CREDENTIAL_MASTER_SECRET added to .env.example</div>
+          <div class="item-sub">Both required env vars were missing from .env.example — onboarding new devs would have been confusing · 5a5e4ce</div>
+          <span class="type-badge" style="color:#6B7280;background:#6B728012;border:1px solid #6B728030">docs</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#6B7280"></div>
+        <div>
+          <div class="item-label">nemoclaw-runs Firestore read rule added for QA dashboard</div>
+          <div class="item-sub">QA dashboard couldn't read nemoclaw test run results. Added read permission for that collection · a0d704a</div>
+          <span class="type-badge" style="color:#6B7280;background:#6B728012;border:1px solid #6B728030">chore</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#6B7280"></div>
+        <div>
+          <div class="item-label">Twilio phone number clarified in env.example docs</div>
+          <div class="item-sub">Was unclear which Twilio number to use (outbound vs inbound). Docs updated with explanation · f0a08ed</div>
+          <span class="type-badge" style="color:#6B7280;background:#6B728012;border:1px solid #6B728030">docs</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#6B7280"></div>
+        <div>
+          <div class="item-label">Google Reviews setup prompt + login auth fallback</div>
+          <div class="item-sub">Google Reviews widget now shows setup prompt when not configured. Auth fallback handles Firebase token refresh failures · 0192c26 / afb20e7</div>
+          <span class="type-badge" style="color:#6B7280;background:#6B728012;border:1px solid #6B728030">fix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="fade-in d14" style="text-align:center;padding:32px 0 0;border-top:1px solid #E2DFDA">
+    <p style="font-size:11px;color:#6B7280">
+      StrydeOS Full Change Checklist · April 2026 · Internal use only · hello@strydeos.com
+    </p>
+    <p style="font-size:10px;color:#9CA3AF;margin-top:4px">
+      All changes committed and pushed to origin/main · Branch is clean
+    </p>
+  </div>
+
+</div>
+
+<script>
+  const TOTAL = document.querySelectorAll('.checklist-item').length;
+  document.getElementById('total-count').textContent = TOTAL;
+
+  function updateProgress() {
+    const checked = document.querySelectorAll('.checklist-item.done').length;
+    const pct = TOTAL > 0 ? (checked / TOTAL * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = checked + ' / ' + TOTAL + ' checked';
+  }
+
+  function toggle(el) {
+    el.classList.toggle('done');
+    const cb = el.querySelector('.custom-checkbox');
+    cb.classList.toggle('checked');
+    updateProgress();
+    // Persist to localStorage
+    const items = Array.from(document.querySelectorAll('.checklist-item'));
+    const state = items.map(i => i.classList.contains('done'));
+    localStorage.setItem('strydeos-checklist', JSON.stringify(state));
+  }
+
+  function filterBy(type) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.querySelectorAll('.checklist-item').forEach(item => {
+      if (type === 'all') {
+        item.style.display = 'flex';
+      } else if (type === 'security') {
+        item.style.display = item.dataset.type === 'security' ? 'flex' : 'none';
+      } else {
+        item.style.display = item.dataset.type === type ? 'flex' : 'none';
+      }
+    });
+  }
+
+  // Restore state from localStorage
+  (function restoreState() {
+    const saved = localStorage.getItem('strydeos-checklist');
+    if (!saved) return;
+    const state = JSON.parse(saved);
+    const items = document.querySelectorAll('.checklist-item');
+    items.forEach((item, i) => {
+      if (state[i]) {
+        item.classList.add('done');
+        item.querySelector('.custom-checkbox').classList.add('checked');
+      }
+    });
+    updateProgress();
+  })();
+</script>
+</body>
+</html>

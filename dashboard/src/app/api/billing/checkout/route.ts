@@ -8,7 +8,7 @@
  *     modules: Array<"intelligence" | "pulse" | "ava" | "fullstack">
  *     tier: "solo" | "studio" | "clinic"          (default: "studio")
  *     interval: "month" | "year"                  (default: "month")
- *     includeAvaSetup?: boolean                   (adds £250 one-time fee if ava or fullstack selected)
+ *     includeAvaSetup?: boolean                   (adds £199 one-time fee if ava or fullstack selected)
  *     successPath?: string                        (path to redirect after success, default: "/billing?checkout=success")
  *     cancelPath?: string                         (path to redirect after cancel, default: "/billing?checkout=canceled")
  *   }

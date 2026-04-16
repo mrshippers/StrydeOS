@@ -45,7 +45,7 @@ export async function computeValueSummary(
   // Load subscription cost from clinic profile
   const clinicDoc = await db.doc(`clinics/${clinicId}`).get();
   const clinicData = clinicDoc.data();
-  const subscriptionCostPence = clinicData?.billing?.monthlyPricePence || 40000; // Default £400
+  const subscriptionCostPence = clinicData?.billing?.monthlyPricePence || 29900; // Default £299 (Full Stack Studio)
 
   // Build per-module summaries
   const ava = buildModuleSummary("ava", events);

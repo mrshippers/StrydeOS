@@ -573,7 +573,7 @@
       <h3>How payments work</h3>
       <p>StrydeOS uses Stripe for all billing. Clinics choose which modules they want (Intelligence, Pulse, Ava, or Full Stack bundle), pick a tier based on clinic size, and select monthly or annual billing (20% discount for annual).</p>
       <p>When a clinic subscribes, Stripe tells StrydeOS which modules to activate. If a payment fails, the clinic is marked "past due" but access isn't revoked immediately — giving time to update payment details via the billing portal.</p>
-      <p>Ava (voice receptionist) has a one-time £250 setup fee in addition to the recurring subscription.</p>
+      <p>Ava (voice receptionist) has a one-time £199 setup fee in addition to the recurring subscription.</p>
       <div class="biz-who"><strong>Who uses this:</strong> Clinic owners managing their subscription</div>
       <div class="biz-endpoints">
         <span class="biz-endpoint">/api/billing/checkout</span>
@@ -1023,7 +1023,7 @@
             <pre><span class="key">modules</span>:        <span class="type">["intelligence"|"pulse"|"ava"|"fullstack"][]</span> <span class="required">← required</span>
 <span class="key">tier</span>:           <span class="type">"solo"|"studio"|"clinic"</span> <span class="comment">← default "studio"</span>
 <span class="key">interval</span>:       <span class="type">"month"|"year"</span>          <span class="comment">← default "month"</span>
-<span class="key">includeAvaSetup</span>: <span class="type">boolean</span>               <span class="comment">← adds £250 one-time</span></pre>
+<span class="key">includeAvaSetup</span>: <span class="type">boolean</span>               <span class="comment">← adds £199 one-time</span></pre>
           </div>
           <div class="detail-block">
             <h4>Response (200)</h4>

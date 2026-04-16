@@ -2385,9 +2385,9 @@ const ROICalc = ({ darkMode }) => {
 
 /* ─── Pricing ────────────────────────────────────────────────────────────────── */
 const PRICING_DATA_MONTHLY = {
-  solo:   { Intelligence: 69,  Ava: 119, Pulse: 89,  full: 229, fullSetup: "£250" },
-  studio: { Intelligence: 109, Ava: 179, Pulse: 129, full: 349, fullSetup: "£250" },
-  clinic: { Intelligence: 179, Ava: 259, Pulse: 199, full: 499, fullSetup: "£250" },
+  solo:   { Intelligence: 69,  Ava: 99,  Pulse: 79,  full: 199, fullSetup: "£199" },
+  studio: { Intelligence: 99,  Ava: 149, Pulse: 99,  full: 299, fullSetup: "£199" },
+  clinic: { Intelligence: 149, Ava: 199, Pulse: 149, full: 399, fullSetup: "£199" },
 };
 const getPricing = (tier, billing) => {
   const m = PRICING_DATA_MONTHLY[tier];

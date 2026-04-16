@@ -5,7 +5,7 @@
  *   Three tiers:  solo (1 clinician) | studio (2-4) | clinic (5+)
  *   Two intervals: month | year (year = 20% off)
  *   Four products: intelligence | pulse | ava | fullstack (all-three bundle)
- *   One-time fee:  Ava setup £250
+ *   One-time fee:  Ava setup £199
  *
  * Env var naming: STRIPE_PRICE_{PRODUCT}_{TIER}_{INTERVAL}
  *   e.g. STRIPE_PRICE_INTELLIGENCE_STUDIO_MONTH
@@ -49,28 +49,28 @@ export const MODULE_PRICING: Record<
 > = {
   intelligence: {
     solo:   { month:  6900, year:  66240 }, // £69   → £662.40/yr
-    studio: { month: 10900, year: 104640 }, // £109  → £1,046.40/yr
-    clinic: { month: 17900, year: 171840 }, // £179  → £1,718.40/yr
+    studio: { month:  9900, year:  95040 }, // £99   → £950.40/yr
+    clinic: { month: 14900, year: 143040 }, // £149  → £1,430.40/yr
   },
   ava: {
-    solo:   { month: 11900, year: 114240 }, // £119  → £1,142.40/yr
-    studio: { month: 17900, year: 171840 }, // £179  → £1,718.40/yr
-    clinic: { month: 25900, year: 248640 }, // £259  → £2,486.40/yr
-  },
-  pulse: {
-    solo:   { month:  8900, year:  85440 }, // £89   → £854.40/yr
-    studio: { month: 12900, year: 123840 }, // £129  → £1,238.40/yr
+    solo:   { month:  9900, year:  95040 }, // £99   → £950.40/yr
+    studio: { month: 14900, year: 143040 }, // £149  → £1,430.40/yr
     clinic: { month: 19900, year: 191040 }, // £199  → £1,910.40/yr
   },
+  pulse: {
+    solo:   { month:  7900, year:  75840 }, // £79   → £758.40/yr
+    studio: { month:  9900, year:  95040 }, // £99   → £950.40/yr
+    clinic: { month: 14900, year: 143040 }, // £149  → £1,430.40/yr
+  },
   fullstack: {
-    solo:   { month: 22900, year: 219840 }, // £229  → £2,198.40/yr
-    studio: { month: 34900, year: 335040 }, // £349  → £3,350.40/yr
-    clinic: { month: 49900, year: 479040 }, // £499  → £4,790.40/yr
+    solo:   { month: 19900, year: 191040 }, // £199  → £1,910.40/yr
+    studio: { month: 29900, year: 287040 }, // £299  → £2,870.40/yr
+    clinic: { month: 39900, year: 383040 }, // £399  → £3,830.40/yr
   },
 };
 
 /** Ava one-time setup fee (pence). */
-export const AVA_SETUP_FEE_PENCE = 25000; // £250
+export const AVA_SETUP_FEE_PENCE = 19900; // £199
 
 // ─── Extra seat add-on pricing (in pence, GBP) ──────────────────────────────
 
@@ -367,7 +367,7 @@ export const MODULE_DISPLAY: Record<
   },
 };
 
-/** Format pence to a human-readable GBP string. e.g. 12900 → "£129" */
+/** Format pence to a human-readable GBP string. e.g. 9900 → "£99" */
 export function formatGBP(pence: number): string {
   return `£${(pence / 100).toLocaleString("en-GB", { maximumFractionDigits: 0 })}`;
 }

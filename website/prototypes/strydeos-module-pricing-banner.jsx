@@ -12,7 +12,7 @@ const T = {
 const MODULE_META = {
   Ava: {
     color: T.blue, bright: T.blueBright, glow: T.blueGlow,
-    setup: "£250 one-time setup",
+    setup: "£199 one-time setup",
     trialUrl: "https://portal.strydeos.com/trial",
     buyUrlBase: "https://portal.strydeos.com/checkout?plan=ava",
   },
@@ -37,15 +37,15 @@ const TIERS = [
 ];
 
 const PRICING = {
-  solo:   { Ava: "119", Pulse: "89",  Intelligence: "69"  },
-  studio: { Ava: "179", Pulse: "129", Intelligence: "109" },
-  clinic: { Ava: "259", Pulse: "199", Intelligence: "179" },
+  solo:   { Ava: "99",  Pulse: "79", Intelligence: "69"  },
+  studio: { Ava: "149", Pulse: "99", Intelligence: "99"  },
+  clinic: { Ava: "199", Pulse: "149", Intelligence: "149" },
 };
 
 const SETUP = {
-  solo:   { Ava: "£250 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
-  studio: { Ava: "£250 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
-  clinic: { Ava: "£250 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
+  solo:   { Ava: "£199 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
+  studio: { Ava: "£199 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
+  clinic: { Ava: "£199 one-time setup", Pulse: "No setup fee", Intelligence: "No setup fee" },
 };
 
 export default function ModulePricingBanner({ module = "Ava" }) {

@@ -38,42 +38,42 @@ const PRODUCTS = {
     name: "StrydeOS Intelligence",
     description: "Clinical performance dashboard — 8 validated KPIs, revenue analytics, outcome measures.",
     prices: {
-      solo:   { month:  7900, year:  75840 },
-      studio: { month: 12900, year: 123840 },
-      clinic: { month: 19900, year: 191040 },
+      solo:   { month:  6900, year:  66240 },
+      studio: { month:  9900, year:  95040 },
+      clinic: { month: 14900, year: 143040 },
     },
   },
   ava: {
     name: "StrydeOS Ava",
     description: "AI voice receptionist — 24/7 inbound calls, calendar booking, cancellation recovery.",
     prices: {
-      solo:   { month: 14900, year: 143040 },
-      studio: { month: 19900, year: 191040 },
-      clinic: { month: 29900, year: 287040 },
+      solo:   { month:  9900, year:  95040 },
+      studio: { month: 14900, year: 143040 },
+      clinic: { month: 19900, year: 191040 },
     },
   },
   pulse: {
     name: "StrydeOS Pulse",
     description: "Patient retention engine — automated sequences, HEP reminders, churn detection.",
     prices: {
-      solo:   { month:  9900, year:  95040 },
-      studio: { month: 14900, year: 143040 },
-      clinic: { month: 22900, year: 219840 },
+      solo:   { month:  7900, year:  75840 },
+      studio: { month:  9900, year:  95040 },
+      clinic: { month: 14900, year: 143040 },
     },
   },
   fullstack: {
     name: "StrydeOS Full Stack",
     description: "Intelligence + Ava + Pulse — the complete clinical performance platform.",
     prices: {
-      solo:   { month: 27900, year: 267840 },
-      studio: { month: 39900, year: 383040 },
-      clinic: { month: 59900, year: 575040 },
+      solo:   { month: 19900, year: 191040 },
+      studio: { month: 29900, year: 287040 },
+      clinic: { month: 39900, year: 383040 },
     },
   },
 };
 
 const EXTRA_SEAT = { month: 4900, year: 47040 };
-const AVA_SETUP_FEE = 25000; // £250 one-time
+const AVA_SETUP_FEE = 19900; // £199 one-time
 
 // ── Create everything ──────────────────────────────────────────────────────
 const envVars = {};

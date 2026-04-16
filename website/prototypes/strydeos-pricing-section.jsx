@@ -10,7 +10,6 @@ const T = {
   border: "#E2DFDA", muted: "#8A8780", ink: "#2C2A26",
 };
 
-// Glossy radial background for each module when hovered
 const GLOSS = {
   Intelligence: `radial-gradient(ellipse 120% 80% at 30% 20%, ${T.purpleBright}E6, ${T.purple}F2 45%, #6D28D9 100%)`,
   Ava: `radial-gradient(ellipse 120% 80% at 30% 20%, ${T.blueBright}E6, ${T.blue}F2 45%, #1740C4 100%)`,
@@ -25,14 +24,20 @@ const EDGE_GLOW = {
 
 const TIERS = [
   { id: "solo", label: "Solo", sub: "1 clinician" },
-  { id: "studio", label: "Studio", sub: "2–4 clinicians" },
+  { id: "studio", label: "Studio", sub: "2\u20134 clinicians" },
   { id: "clinic", label: "Clinic", sub: "6+ clinicians" },
 ];
 
 const PRICING = {
-  solo:   { Intelligence: "£69",  Ava: "£119", Pulse: "£89",  full: "£229", fullSetup: "£250" },
-  studio: { Intelligence: "£109", Ava: "£179", Pulse: "£129", full: "£349", fullSetup: "£250" },
-  clinic: { Intelligence: "£179", Ava: "£259", Pulse: "£199", full: "£499", fullSetup: "£250" },
+  solo:   { Intelligence: "\u00a369",  Ava: "\u00a399",  Pulse: "\u00a379",  full: "\u00a3199", fullSetup: "\u00a3199" },
+  studio: { Intelligence: "\u00a399",  Ava: "\u00a3149", Pulse: "\u00a399",  full: "\u00a3299", fullSetup: "\u00a3199" },
+  clinic: { Intelligence: "\u00a3149", Ava: "\u00a3199", Pulse: "\u00a3149", full: "\u00a3399", fullSetup: "\u00a3199" },
+};
+
+const SAVINGS = {
+  solo:   { individual: 247, full: 199, save: 48 },
+  studio: { individual: 347, full: 299, save: 48 },
+  clinic: { individual: 497, full: 399, save: 98 },
 };
 
 const MODULES = [
@@ -41,21 +46,33 @@ const MODULES = [
     tagline: "Know your numbers, finally",
     setup: "No setup fee",
     features: ["Per-clinician KPI board", "6-week trend charts", "Metric drift alerts", "WriteUpp & Cliniko integration", "Weekly email digest"],
-    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 5-10"/></svg>,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 5-10"/>
+      </svg>
+    ),
   },
   {
     name: "Ava", color: T.blue, bright: T.blueBright, popular: true,
     tagline: "Never miss another call",
-    setup: "£250 one-time setup",
+    setup: "\u00a3199 one-time setup",
     features: ["24/7 inbound call handling", "Live calendar booking", "No-show recovery", "SMS confirmations", "Emergency routing"],
-    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+      </svg>
+    ),
   },
   {
     name: "Pulse", color: T.teal, bright: T.tealBright,
     tagline: "Clinically adaptive patient retention",
     setup: "No setup fee",
     features: ["Complexity-aware follow-up sequences", "Psychosocial flag detection", "Discharge-aware suppression", "Post-discharge check-ins", "Referral prompt flows"],
-    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/>
+      </svg>
+    ),
   },
 ];
 
@@ -76,7 +93,6 @@ function TierToggle({ tier, setTier }) {
       backgroundColor: T.navy,
       border: "1px solid rgba(255,255,255,0.08)",
       boxShadow: "inset 0 2px 6px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.03)",
-      position: "relative",
     }}>
       {TIERS.map((t) => {
         const active = tier === t.id;
@@ -125,7 +141,6 @@ function PricingCard({ mod, price, tier, delay }) {
   useEffect(() => { setVis(false); const t = setTimeout(() => setVis(true), delay); return () => clearTimeout(t); }, [delay, tier]);
 
   const h = hovered;
-  const c = mod.color;
 
   return (
     <div
@@ -150,7 +165,6 @@ function PricingCard({ mod, price, tier, delay }) {
         willChange: "transform, box-shadow",
       }}
     >
-      {/* Inner glass highlight — top arc (PS5 catch-light) */}
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, height: 120,
         background: h
@@ -161,7 +175,6 @@ function PricingCard({ mod, price, tier, delay }) {
         transition: "all 0.4s ease",
       }} />
 
-      {/* Radial light source — top left */}
       <div style={{
         position: "absolute", top: -60, left: -30,
         width: 200, height: 200, borderRadius: "50%",
@@ -171,7 +184,6 @@ function PricingCard({ mod, price, tier, delay }) {
         pointerEvents: "none", transition: "all 0.5s ease",
       }} />
 
-      {/* Shimmer edge — bottom */}
       <div style={{
         position: "absolute", bottom: 0, left: 0, right: 0, height: 1,
         background: h
@@ -180,108 +192,86 @@ function PricingCard({ mod, price, tier, delay }) {
         transition: "all 0.4s ease",
       }} />
 
-      {/* Popular badge */}
       {mod.popular && (
         <div style={{
-          position: "absolute", top: 18, right: 18,
-          padding: "4px 10px", borderRadius: 50,
-          background: h
-            ? "rgba(255,255,255,0.15)"
-            : `linear-gradient(135deg, ${c}12, ${c}06)`,
-          border: `1px solid ${h ? "rgba(255,255,255,0.25)" : `${c}20`}`,
-          backdropFilter: h ? "blur(8px)" : "none",
-          fontSize: 9, fontWeight: 800, textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          color: h ? "white" : c,
-          transition: "all 0.4s ease",
+          position: "absolute", top: 16, right: 16,
+          padding: "4px 12px", borderRadius: 50,
+          background: h ? "rgba(255,255,255,0.18)" : `rgba(28,84,242,0.08)`,
+          border: h ? "1px solid rgba(255,255,255,0.25)" : `1px solid ${T.blue}20`,
+          fontSize: 9, fontWeight: 700, textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: h ? "white" : T.blue,
+          transition: "all 0.35s ease",
         }}>
           Most popular
         </div>
       )}
 
-      {/* Icon container */}
       <div style={{
-        width: 46, height: 46, borderRadius: 14,
+        width: 44, height: 44, borderRadius: 14,
         display: "flex", alignItems: "center", justifyContent: "center",
+        marginBottom: 18,
         background: h
           ? "rgba(255,255,255,0.15)"
-          : `linear-gradient(135deg, ${c}0A, ${c}05)`,
-        border: `1px solid ${h ? "rgba(255,255,255,0.2)" : `${c}15`}`,
-        boxShadow: h ? "inset 0 1px 0 rgba(255,255,255,0.15)" : "none",
-        color: h ? "white" : c,
-        marginBottom: 20,
-        transition: "all 0.4s ease",
-        position: "relative",
+          : `linear-gradient(135deg, ${mod.color}12, ${mod.bright}08)`,
+        border: h
+          ? "1px solid rgba(255,255,255,0.2)"
+          : `1px solid ${mod.color}15`,
+        color: h ? "white" : mod.color,
+        transition: "all 0.35s ease",
       }}>
         {mod.icon}
       </div>
 
-      {/* Module label */}
       <div style={{
-        fontSize: 10, fontWeight: 800, textTransform: "uppercase",
-        letterSpacing: "0.14em",
-        color: h ? "rgba(255,255,255,0.65)" : c,
-        marginBottom: 5, transition: "color 0.4s ease",
-        position: "relative",
+        fontSize: 20, fontWeight: 700,
+        color: h ? "white" : T.ink,
+        marginBottom: 4, transition: "color 0.3s ease",
       }}>
         {mod.name}
       </div>
-
-      {/* Tagline */}
       <div style={{
-        fontSize: 15, fontWeight: 500, lineHeight: 1.4,
-        color: h ? "rgba(255,255,255,0.9)" : T.ink,
-        marginBottom: 26,
-        transition: "color 0.4s ease",
-        position: "relative",
+        fontSize: 13,
+        color: h ? "rgba(255,255,255,0.65)" : T.muted,
+        marginBottom: 20, transition: "color 0.3s ease",
       }}>
         {mod.tagline}
       </div>
 
-      {/* Price */}
-      <div style={{ marginBottom: 4, position: "relative" }}>
+      <div style={{ marginBottom: 4 }}>
         <span style={{
           fontFamily: "'DM Serif Display', serif",
-          fontSize: 42, lineHeight: 1,
-          color: h ? "white" : T.navy,
-          transition: "color 0.35s ease",
+          fontSize: 36, fontWeight: 400,
+          color: h ? "white" : T.ink,
+          transition: "color 0.3s ease",
         }}>
           {price}
         </span>
         <span style={{
-          fontSize: 16, fontWeight: 400,
-          color: h ? "rgba(255,255,255,0.45)" : T.muted,
-          transition: "color 0.35s ease",
-        }}>/mo</span>
+          fontSize: 15,
+          color: h ? "rgba(255,255,255,0.4)" : T.muted,
+          transition: "color 0.3s ease",
+        }}>
+          /mo
+        </span>
       </div>
       <div style={{
-        fontSize: 12,
+        fontSize: 11,
         color: h ? "rgba(255,255,255,0.4)" : T.muted,
-        marginBottom: 26, transition: "color 0.35s ease",
-        position: "relative",
+        marginBottom: 24,
+        transition: "color 0.3s ease",
       }}>
         {mod.setup}
       </div>
 
-      {/* Divider */}
-      <div style={{
-        height: 1, marginBottom: 22,
-        background: h
-          ? "linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.15), rgba(255,255,255,0.06))"
-          : T.border,
-        transition: "all 0.4s ease",
-        position: "relative",
-      }} />
-
-      {/* Features */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 11, marginBottom: 30, position: "relative" }}>
-        {mod.features.map((f) => (
-          <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-            <Check color={h ? "rgba(255,255,255,0.85)" : c} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+        {mod.features.map((f, i) => (
+          <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <Check color={h ? "rgba(255,255,255,0.8)" : mod.color} />
             <span style={{
-              fontSize: 13, lineHeight: 1.45,
-              color: h ? "rgba(255,255,255,0.88)" : T.ink,
-              transition: "color 0.35s ease",
+              fontSize: 13, lineHeight: 1.4,
+              color: h ? "rgba(255,255,255,0.85)" : T.ink,
+              transition: "color 0.3s ease",
             }}>
               {f}
             </span>
@@ -289,25 +279,23 @@ function PricingCard({ mod, price, tier, delay }) {
         ))}
       </div>
 
-      {/* CTA */}
-      <a
-        href={`https://portal.strydeos.com/checkout?plan=${mod.name.toLowerCase()}-${tier}&billing=now`}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          display: "block", width: "100%", padding: "14px 0", borderRadius: 14,
-          fontSize: 14, fontWeight: 700, fontFamily: "'Outfit', sans-serif",
-          cursor: "pointer", position: "relative",
-          letterSpacing: "0.02em", textAlign: "center", textDecoration: "none",
-          background: h ? "rgba(255,255,255,0.95)" : "transparent",
-          color: h ? c : T.blue,
-          border: h ? "none" : `1.5px solid ${T.blue}30`,
-          boxShadow: h ? `0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8)` : "none",
-          transition: "all 0.35s ease",
-        }}
-      >
+      <button style={{
+        width: "100%", padding: "13px 0",
+        borderRadius: 14, fontSize: 14, fontWeight: 700,
+        fontFamily: "'Outfit', sans-serif",
+        cursor: "pointer",
+        background: h
+          ? "rgba(255,255,255,0.95)"
+          : "transparent",
+        color: h ? mod.color : T.blue,
+        border: h ? "none" : `1.5px solid ${T.blue}30`,
+        boxShadow: h
+          ? `0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8)`
+          : "none",
+        transition: "all 0.35s ease",
+      }}>
         Get started
-      </a>
+      </button>
     </div>
   );
 }
@@ -315,6 +303,8 @@ function PricingCard({ mod, price, tier, delay }) {
 function FullStackBanner({ tier, loaded }) {
   const [h, setH] = useState(false);
   const p = PRICING[tier];
+  const s = SAVINGS[tier];
+
   return (
     <div
       onMouseEnter={() => setH(true)}
@@ -327,6 +317,7 @@ function FullStackBanner({ tier, loaded }) {
           : T.navy,
         border: `1px solid ${h ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.08)"}`,
         display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexWrap: "wrap", gap: 20,
         boxShadow: h
           ? `0 0 0 1px ${T.blueBright}25, 0 0 40px ${T.blue}18, 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)`
           : "0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)",
@@ -336,14 +327,12 @@ function FullStackBanner({ tier, loaded }) {
         opacity: loaded ? 1 : 0,
       }}
     >
-      {/* Module stripe */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, display: "flex" }}>
         <div style={{ flex: 1, background: `linear-gradient(90deg, ${T.purple}, ${T.purpleBright})`, opacity: h ? 0.9 : 0.4, transition: "opacity 0.4s ease" }} />
         <div style={{ flex: 1, background: `linear-gradient(90deg, ${T.blue}, ${T.blueBright})`, opacity: h ? 0.9 : 0.4, transition: "opacity 0.4s ease" }} />
         <div style={{ flex: 1, background: `linear-gradient(90deg, ${T.teal}, ${T.tealBright})`, opacity: h ? 0.9 : 0.4, transition: "opacity 0.4s ease" }} />
       </div>
 
-      {/* Glow */}
       <div style={{
         position: "absolute", top: -80, right: -20, width: 280, height: 280, borderRadius: "50%",
         background: `radial-gradient(circle, rgba(28,84,242,${h ? "0.16" : "0.06"}), transparent 70%)`,
@@ -359,7 +348,7 @@ function FullStackBanner({ tier, loaded }) {
           letterSpacing: "0.1em", color: "rgba(255,255,255,0.55)",
           transition: "all 0.3s ease",
         }}>
-          ★ Best value
+          \u2605 Best value
         </div>
         <div style={{ fontSize: 20, fontWeight: 700, color: "white", marginBottom: 4 }}>
           Stryde<span style={{ color: T.blueGlow }}>OS</span> Full Stack
@@ -373,7 +362,9 @@ function FullStackBanner({ tier, loaded }) {
         </span>
         <span style={{ fontSize: 15, color: "rgba(255,255,255,0.35)" }}>/mo</span>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>{p.fullSetup} one-time setup</div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: T.successBright, marginTop: 4 }}>Save vs individual</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: T.successBright, marginTop: 4 }}>
+          Save \u00a3{s.save}/mo vs individual
+        </div>
       </div>
     </div>
   );
@@ -381,7 +372,6 @@ function FullStackBanner({ tier, loaded }) {
 
 export default function PricingSection() {
   const [tier, setTier] = useState("studio");
-  const [billing, setBilling] = useState("monthly");
   const [loaded, setLoaded] = useState(false);
   useEffect(() => { requestAnimationFrame(() => requestAnimationFrame(() => setLoaded(true))); }, []);
 
@@ -397,7 +387,6 @@ export default function PricingSection() {
       <div className="ps-sec" style={{ fontFamily: "'Outfit', sans-serif", padding: "90px 24px", backgroundColor: T.cloud }}>
         <div style={{ maxWidth: 1060, margin: "0 auto" }}>
 
-          {/* Header */}
           <div style={{
             textAlign: "center", marginBottom: 40,
             opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(12px)",
@@ -421,55 +410,77 @@ export default function PricingSection() {
             </p>
           </div>
 
-          {/* Tier toggle */}
           <div style={{
-            display: "flex", justifyContent: "center", marginBottom: 16,
+            display: "flex", justifyContent: "center", marginBottom: 40,
             opacity: loaded ? 1 : 0, transition: "opacity 0.4s ease 0.15s",
           }}>
             <TierToggle tier={tier} setTier={setTier} />
           </div>
 
-          {/* Billing toggle */}
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            gap: 12, marginBottom: 40,
-            opacity: loaded ? 1 : 0, transition: "opacity 0.4s ease 0.2s",
-          }}>
-            <span style={{ fontSize: 13, fontWeight: billing === "monthly" ? 700 : 500, color: billing === "monthly" ? T.navy : T.muted, transition: "all 0.3s ease" }}>Monthly</span>
-            <div onClick={() => setBilling(b => b === "monthly" ? "annual" : "monthly")} style={{
-              width: 44, height: 24, borderRadius: 12, cursor: "pointer",
-              backgroundColor: billing === "annual" ? T.blue : T.border,
-              position: "relative", transition: "background-color 0.3s ease",
-              boxShadow: billing === "annual" ? `0 0 12px ${T.blue}40` : "none",
-            }}>
-              <div style={{
-                width: 18, height: 18, borderRadius: "50%", backgroundColor: "white",
-                position: "absolute", top: 3,
-                left: billing === "annual" ? 23 : 3,
-                transition: "left 0.3s cubic-bezier(0.16,1,0.3,1)",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
-              }} />
-            </div>
-            <span style={{ fontSize: 13, fontWeight: billing === "annual" ? 700 : 500, color: billing === "annual" ? T.navy : T.muted, transition: "all 0.3s ease" }}>Annual</span>
-            {billing === "annual" && (
-              <span style={{
-                fontSize: 10, fontWeight: 700, color: T.success,
-                padding: "3px 10px", borderRadius: 50,
-                backgroundColor: "rgba(5,150,105,0.08)",
-                border: "1px solid rgba(5,150,105,0.15)",
-              }}>Save 20%</span>
-            )}
-          </div>
-
-          {/* Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 28 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 28 }}>
             {MODULES.map((mod, i) => (
               <PricingCard key={mod.name} mod={mod} price={prices[mod.name]} tier={tier} delay={200 + i * 100} />
             ))}
           </div>
 
-          {/* Full Stack */}
           <FullStackBanner tier={tier} loaded={loaded} />
+
+          <div style={{
+            textAlign: "center", marginTop: 28,
+            fontSize: 12, color: T.muted,
+            opacity: loaded ? 1 : 0,
+            transition: "opacity 0.5s ease 0.5s",
+          }}>
+            No lock-in contracts \u00b7 Cancel anytime \u00b7 GDPR & HIPAA compliant \u00b7 UK-hosted data
+          </div>
+
+          <div style={{
+            marginTop: 48, borderRadius: 20, overflow: "hidden",
+            background: T.navy,
+            border: "1px solid rgba(255,255,255,0.08)",
+            opacity: loaded ? 1 : 0,
+            transition: "opacity 0.5s ease 0.6s",
+          }}>
+            <div style={{ padding: "24px 28px 8px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: T.blueBright, marginBottom: 4 }}>
+                All tiers at a glance
+              </div>
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "'Outfit', sans-serif" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                    {["", "Intelligence", "Ava", "Pulse", "Full Stack"].map(h => (
+                      <th key={h} style={{
+                        padding: "12px 20px", textAlign: h ? "right" : "left",
+                        color: "rgba(255,255,255,0.35)", fontWeight: 600, fontSize: 11,
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {TIERS.map(row => {
+                    const rp = PRICING[row.id];
+                    return (
+                      <tr key={row.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                        <td style={{ padding: "14px 20px" }}>
+                          <div style={{ fontWeight: 700, color: "rgba(255,255,255,0.8)", fontSize: 14 }}>{row.label}</div>
+                          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{row.sub}</div>
+                        </td>
+                        <td style={{ padding: "14px 20px", textAlign: "right", color: T.purpleBright, fontWeight: 600, fontSize: 14 }}>{rp.Intelligence}</td>
+                        <td style={{ padding: "14px 20px", textAlign: "right", color: T.blueBright, fontWeight: 600, fontSize: 14 }}>{rp.Ava}</td>
+                        <td style={{ padding: "14px 20px", textAlign: "right", color: T.tealBright, fontWeight: 600, fontSize: 14 }}>{rp.Pulse}</td>
+                        <td style={{ padding: "14px 20px", textAlign: "right", fontWeight: 800, color: "white", fontSize: 15 }}>{rp.full}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ padding: "12px 20px 20px", fontSize: 11, color: "rgba(255,255,255,0.2)" }}>
+              Ava setup: \u00a3199 one-time (phone provisioning + voice training). All other modules: no setup fee.
+            </div>
+          </div>
         </div>
       </div>
     </>

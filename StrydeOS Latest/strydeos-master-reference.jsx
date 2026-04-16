@@ -1,0 +1,602 @@
+import { useState, useEffect } from "react";
+
+/* ───────────────────────────────────────────────────────────────────────────────
+   StrydeOS — Master Reference · April 2026
+   Single source of truth: product, pricing, architecture, team, roadmap, brand.
+   ─────────────────────────────────────────────────────────────────────────────── */
+
+const T = {
+  navy: "#0B2545", navyMid: "#132D5E", navyLight: "#1A3A6E",
+  blue: "#1C54F2", blueBright: "#2E6BFF", blueGlow: "#4B8BF5",
+  teal: "#0891B2", tealBright: "#06B6D4", tealGlow: "#22D3EE",
+  purple: "#8B5CF6", purpleBright: "#A78BFA", purpleGlow: "#C4B5FD",
+  success: "#059669", successBright: "#34D399",
+  red: "#EF4444", amber: "#F59E0B",
+  ink: "#111827", muted: "#6B7280",
+  cloud: "#F2F1EE", cloudLight: "#F9F8F6",
+  border: "#E2DFDA",
+};
+
+const glass = (o = 0.05) => ({
+  background: `rgba(255,255,255,${o})`,
+  backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+  border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16,
+});
+
+function GlassCard({ children, style = {}, glow, onClick }) {
+  return (
+    <div onClick={onClick} style={{
+      ...glass(0.05), padding: 22,
+      boxShadow: glow ? `0 0 30px ${glow}18, 0 0 0 1px ${glow}25` : "0 2px 16px rgba(0,0,0,0.15)",
+      transition: "all 0.2s ease",
+      ...style,
+    }}>{children}</div>
+  );
+}
+
+function Dot({ color, size = 8 }) {
+  return <div style={{ width: size, height: size, borderRadius: "50%", background: color, flexShrink: 0 }} />;
+}
+
+function Badge({ children, color = T.blueBright }) {
+  return (
+    <span style={{
+      fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase",
+      color, background: `${color}12`, border: `1px solid ${color}20`,
+      padding: "3px 8px", borderRadius: 6,
+    }}>{children}</span>
+  );
+}
+
+function SectionHead({ eyebrow, title }) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      {eyebrow && <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: T.blueBright, marginBottom: 8 }}>{eyebrow}</div>}
+      <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 24, color: "white", fontWeight: 400, lineHeight: 1.25 }}>{title}</h2>
+    </div>
+  );
+}
+
+const SECTIONS = [
+  { id: "product", label: "Product" },
+  { id: "modules", label: "Modules" },
+  { id: "pricing", label: "Pricing" },
+  { id: "stack", label: "Stack" },
+  { id: "team", label: "Team" },
+  { id: "roadmap", label: "Roadmap" },
+  { id: "brand", label: "Brand" },
+];
+
+const PRICING = {
+  solo:   { Intelligence: 69,  Ava: 99,  Pulse: 79,  full: 199, setup: 199 },
+  studio: { Intelligence: 99,  Ava: 149, Pulse: 99,  full: 299, setup: 199 },
+  clinic: { Intelligence: 149, Ava: 199, Pulse: 149, full: 399, setup: 199 },
+};
+
+export default function StrydeOSMasterRef() {
+  const [section, setSection] = useState("product");
+  const [priceTier, setPriceTier] = useState("studio");
+
+  useEffect(() => {
+    const l = document.createElement("link");
+    l.href = "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap";
+    l.rel = "stylesheet";
+    document.head.appendChild(l);
+  }, []);
+
+  return (
+    <div style={{
+      fontFamily: "'Outfit', sans-serif",
+      background: `radial-gradient(ellipse 80% 60% at 25% 15%, ${T.navyMid}, ${T.navy} 65%, #060F1F)`,
+      minHeight: "100vh", color: "white",
+    }}>
+      <div style={{ padding: "32px 24px 0", maxWidth: 860, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: `linear-gradient(135deg, ${T.blue}40, ${T.blueGlow}20)`,
+            border: `1px solid ${T.blue}30`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 14, fontWeight: 800, color: T.blueBright,
+          }}>S</div>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>StrydeOS</div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>Master Reference · April 2026</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: "16px 24px 0", maxWidth: 860, margin: "0 auto" }}>
+        <div style={{
+          display: "flex", gap: 3, ...glass(0.04), padding: 4, borderRadius: 12,
+          overflowX: "auto", flexWrap: "nowrap",
+        }}>
+          {SECTIONS.map(s => (
+            <button key={s.id} onClick={() => setSection(s.id)} style={{
+              background: section === s.id ? "rgba(255,255,255,0.1)" : "transparent",
+              border: "none", borderRadius: 8, padding: "9px 16px",
+              color: section === s.id ? "white" : "rgba(255,255,255,0.35)",
+              fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600,
+              cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap",
+            }}>{s.label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: "28px 24px 48px", maxWidth: 860, margin: "0 auto" }}>
+
+        {section === "product" && (
+          <>
+            <SectionHead eyebrow="What it is" title="Clinical operating system for private physiotherapy." />
+            <GlassCard style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 1.8 }}>
+                StrydeOS is an <strong style={{ color: "white" }}>OS layer</strong> — existing tools (PMS, HEP platforms, payment systems) run on top of it.
+                It doesn't replace Cliniko, WriteUpp, or Physitrack. It connects to them, extracts the data they generate,
+                and turns it into clinician-level KPIs, automated patient retention, and 24/7 AI call handling.
+              </div>
+            </GlassCard>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+              <GlassCard>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.blueBright, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Core philosophy</div>
+                <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 18, color: "white", marginBottom: 8 }}>Stakeholder Triangle</div>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>
+                  Happy physio → Happy patient → Happy owner. You can't manage what you can't measure.
+                  StrydeOS closes the blind spot between clinical delivery and business performance.
+                </div>
+              </GlassCard>
+              <GlassCard>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.purple, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>Strategic template</div>
+                <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 18, color: "white", marginBottom: 8 }}>Dental data wrapper model</div>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>
+                  Modelled on Dental Intelligence and Auxpanel — analytics overlays that sit on top of practice management systems.
+                  Applied to MSK physiotherapy. No direct competitor exists in this vertical.
+                </div>
+              </GlassCard>
+            </div>
+
+            <SectionHead eyebrow="Current state" title="Production-grade. Live. £0 MRR." />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
+              {[
+                { label: "Status", value: "Live on Vercel", sub: "Custom domain, production infra" },
+                { label: "MRR", value: "£0", sub: "Infra ready, outreach not activated" },
+                { label: "ICP", value: "Messy Middle", sub: "Studio tier: 2–4 clinicians" },
+              ].map((s, i) => (
+                <GlassCard key={i} style={{ padding: 16 }}>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{s.label}</div>
+                  <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 20, color: "white" }}>{s.value}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>{s.sub}</div>
+                </GlassCard>
+              ))}
+            </div>
+
+            <GlassCard style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.teal, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>What's shipped</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                {[
+                  "Firebase Auth with multi-tenancy",
+                  "Self-service onboarding wizard",
+                  "Stripe billing integration",
+                  "Intelligence dashboard with live KPIs",
+                  "Ava deployed (ElevenLabs + LangChain + Twilio)",
+                  "Cliniko & WriteUpp CSV import (SHA-256 dedup)",
+                  "Full GDPR / HIPAA / APP / PIPEDA compliance",
+                  "StrydeOS Lens (Bupa read-only analytics)",
+                ].map((item, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "6px 0" }}>
+                    <div style={{ color: T.successBright, fontSize: 13, marginTop: 1 }}>✓</div>
+                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>{item}</div>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+
+            <SectionHead eyebrow="Dogfood clinic" title="Spires Physiotherapy, West Hampstead" />
+            <GlassCard>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.8 }}>
+                StrydeOS is built and validated at Spires. Jamal (MD, 1 day/week clinical + management),
+                Andrew and Max (clinicians), Joe (business partner / MD). Real gaps at Spires = real product requirements.
+                Spires case study is complete.
+              </div>
+            </GlassCard>
+          </>
+        )}
+
+        {section === "modules" && (
+          <>
+            <SectionHead eyebrow="Three modules, locked" title="No fourth module. Ever." />
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 20, lineHeight: 1.6 }}>
+              Intelligence diagnoses. Pulse treats. Ava prevents. The shared contract is a typed <code style={{
+                fontFamily: "'Courier New', monospace", background: "rgba(255,255,255,0.06)", padding: "2px 6px", borderRadius: 4, fontSize: 11
+              }}>InsightEvent</code> Firestore document — Intelligence writes, Pulse consumes patient-actionable events only.
+            </div>
+
+            {[
+              {
+                name: "Intelligence", color: T.purple, bright: T.purpleBright,
+                tagline: "Know your numbers, finally",
+                status: "Shipped",
+                features: [
+                  "Per-clinician KPI dashboard",
+                  "6-week trend charts with metric drift alerts",
+                  "WriteUpp & Cliniko integration (CSV import, API outreach in progress)",
+                  "Weekly email digest",
+                  "Clinic-level and clinician-level views",
+                ],
+              },
+              {
+                name: "Ava", color: T.blue, bright: T.blueBright,
+                tagline: "Never miss another call",
+                status: "Shipped",
+                features: [
+                  "24/7 AI voice receptionist (ElevenLabs Conversational AI)",
+                  "LangChain orchestration + Twilio telephony",
+                  "Live calendar booking",
+                  "No-show recovery + SMS confirmations",
+                  "Emergency routing protocols",
+                ],
+              },
+              {
+                name: "Pulse", color: T.teal, bright: T.tealBright,
+                tagline: "Patients come back, automatically",
+                status: "Architecture defined — not fully shipped",
+                features: [
+                  "Churn prediction engine",
+                  "6-touch re-engagement automation",
+                  "Firebase-native architecture",
+                  "Consumes InsightEvent from Intelligence",
+                  "Blocks Full Stack tier until shipped",
+                ],
+              },
+            ].map(mod => (
+              <GlassCard key={mod.name} glow={mod.color} style={{ marginBottom: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Dot color={mod.color} size={10} />
+                    <div>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: "white" }}>{mod.name}</div>
+                      <div style={{ fontSize: 12, color: mod.bright }}>{mod.tagline}</div>
+                    </div>
+                  </div>
+                  <Badge color={mod.status.includes("not") ? T.amber : T.successBright}>{mod.status}</Badge>
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  {mod.features.map((f, i) => (
+                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                      <div style={{ color: mod.bright, fontSize: 11, marginTop: 2 }}>•</div>
+                      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.5 }}>{f}</div>
+                    </div>
+                  ))}
+                </div>
+              </GlassCard>
+            ))}
+
+            <GlassCard style={{ marginTop: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.blueBright, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>StrydeOS Lens</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>
+                Separate lite product built for Bupa's provider network. Read-only analytics dashboard (Next.js, Tailwind, Recharts, Firebase Auth + 2FA).
+                Deliberately IP-firewalled from the full stack. Every Lens limitation framed as a future upsell.
+                "Used at Bupa" is being cultivated as a commercial proof point.
+              </div>
+            </GlassCard>
+          </>
+        )}
+
+        {section === "pricing" && (
+          <>
+            <SectionHead eyebrow="Revised April 2026" title="Module-first. Sub-£400 Full Stack." />
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 20, lineHeight: 1.6 }}>
+              Module-first architecture beats tier ladders. Customers pick the module that solves their biggest problem.
+              Bundle discount incentivises Full Stack without forcing sequential upgrades. £199 Ava setup fee covers phone provisioning + voice training.
+            </div>
+
+            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+              {[
+                { id: "solo", label: "Solo", sub: "1 clinician" },
+                { id: "studio", label: "Studio", sub: "2–4 clinicians" },
+                { id: "clinic", label: "Clinic", sub: "6+ clinicians" },
+              ].map(t => (
+                <button key={t.id} onClick={() => setPriceTier(t.id)} style={{
+                  ...glass(priceTier === t.id ? 0.12 : 0.04),
+                  border: priceTier === t.id ? `1px solid ${T.blueBright}40` : "1px solid rgba(255,255,255,0.06)",
+                  padding: "12px 20px", cursor: "pointer", flex: 1, transition: "all 0.2s",
+                }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: priceTier === t.id ? "white" : "rgba(255,255,255,0.4)" }}>{t.label}</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>{t.sub}</div>
+                </button>
+              ))}
+            </div>
+
+            <GlassCard style={{ marginBottom: 14 }}>
+              {[
+                { key: "Intelligence", color: T.purpleBright },
+                { key: "Ava", color: T.blueBright },
+                { key: "Pulse", color: T.tealBright },
+              ].map(mod => (
+                <div key={mod.key} style={{
+                  display: "grid", gridTemplateColumns: "1fr 80px",
+                  alignItems: "center", padding: "12px 0",
+                  borderBottom: "1px solid rgba(255,255,255,0.04)",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Dot color={mod.color} />
+                    <span style={{ fontSize: 14, fontWeight: 600, color: mod.color }}>{mod.key}</span>
+                  </div>
+                  <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 20, color: "white", textAlign: "right" }}>
+                    £{PRICING[priceTier][mod.key]}<span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>/mo</span>
+                  </div>
+                </div>
+              ))}
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 14, marginTop: 6 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 80px", alignItems: "center" }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "white" }}>Full Stack</div>
+                  <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 24, color: "white", textAlign: "right" }}>
+                    £{PRICING[priceTier].full}<span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>/mo</span>
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>
+                  À la carte: £{PRICING[priceTier].Intelligence + PRICING[priceTier].Ava + PRICING[priceTier].Pulse}/mo ·
+                  Save £{(PRICING[priceTier].Intelligence + PRICING[priceTier].Ava + PRICING[priceTier].Pulse) - PRICING[priceTier].full}/mo with Full Stack ·
+                  Setup: £199 one-time (Ava only)
+                </div>
+              </div>
+            </GlassCard>
+
+            <GlassCard>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 14 }}>All tiers</div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                      {["", "Intelligence", "Ava", "Pulse", "Full Stack"].map(h => (
+                        <th key={h} style={{ padding: "8px 12px", textAlign: h ? "right" : "left", color: "rgba(255,255,255,0.35)", fontWeight: 600, fontSize: 11 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { tier: "Solo", id: "solo" },
+                      { tier: "Studio", id: "studio" },
+                      { tier: "Clinic", id: "clinic" },
+                    ].map(row => (
+                      <tr key={row.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                        <td style={{ padding: "10px 12px", fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>{row.tier}</td>
+                        <td style={{ padding: "10px 12px", textAlign: "right", color: T.purpleBright }}>£{PRICING[row.id].Intelligence}</td>
+                        <td style={{ padding: "10px 12px", textAlign: "right", color: T.blueBright }}>£{PRICING[row.id].Ava}</td>
+                        <td style={{ padding: "10px 12px", textAlign: "right", color: T.tealBright }}>£{PRICING[row.id].Pulse}</td>
+                        <td style={{ padding: "10px 12px", textAlign: "right", fontWeight: 800, color: "white" }}>£{PRICING[row.id].full}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 10 }}>No lock-in contracts on any tier. Mix and match modules freely.</div>
+            </GlassCard>
+          </>
+        )}
+
+        {section === "stack" && (
+          <>
+            <SectionHead eyebrow="Technical architecture" title="What's running, what it connects to." />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+              {[
+                { label: "Frontend", items: ["React / Next.js", "Tailwind CSS", "Framer Motion"], color: T.blue },
+                { label: "Backend", items: ["Firebase Auth (multi-tenant)", "Cloud Firestore", "Cloud Functions"], color: T.teal },
+                { label: "Infra", items: ["Vercel (deployment)", "Stripe (billing)", "Custom domain"], color: T.purple },
+                { label: "Voice AI (Ava)", items: ["ElevenLabs Conversational AI", "LangChain orchestration", "Twilio telephony"], color: T.blueBright },
+              ].map(col => (
+                <GlassCard key={col.label} style={{ padding: 18 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: col.color, marginBottom: 10 }}>{col.label}</div>
+                  {col.items.map((item, i) => (
+                    <div key={i} style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", padding: "4px 0" }}>{item}</div>
+                  ))}
+                </GlassCard>
+              ))}
+            </div>
+
+            <SectionHead eyebrow="PMS integrations" title="Data pipeline status." />
+            <div style={{ display: "grid", gap: 10 }}>
+              {[
+                { pms: "Cliniko", status: "Active", detail: "Public REST API. CSV import with SHA-256 deduplication. Primary integration target.", color: T.successBright },
+                { pms: "WriteUpp", status: "Active (CSV)", detail: "CSV pipeline active. API partnership outreach underway. Bookmarklet proposed as interim stopgap.", color: T.amber },
+                { pms: "TM3 / Blue Zinc", status: "Not integrated", detail: "Dominant legacy UK PMS. No API coverage. Strategic blind spot — flagged as priority.", color: T.red },
+              ].map(p => (
+                <GlassCard key={p.pms} style={{ padding: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: "white" }}>{p.pms}</span>
+                    <Badge color={p.color}>{p.status}</Badge>
+                  </div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>{p.detail}</div>
+                </GlassCard>
+              ))}
+            </div>
+
+            <GlassCard style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 10 }}>Dev environment</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.8 }}>
+                VS Code + Claude Code (primary IDE). GitHub (private repos). Firebase console.
+                Perplexity for research. Sonnet for day-to-day, Opus for irreversible architectural decisions only.
+                Retell AI parked (back-burner). LemonSqueezy for Shippers. digital products only.
+              </div>
+            </GlassCard>
+          </>
+        )}
+
+        {section === "team" && (
+          <>
+            <SectionHead eyebrow="People" title="Who's doing what." />
+            <div style={{ display: "grid", gap: 10 }}>
+              {[
+                { name: "Jamal", role: "Founder / MD", detail: "Builds the product. Runs Spires (1 day/week clinical + management). Needs to transition from building to selling.", color: T.blue },
+                { name: "Joe", role: "Business partner / MD", detail: "Co-MD at Spires. Business operations.", color: T.blue },
+                { name: "Eve", role: "Outreach / Sales", detail: "Identified, not yet activated. Part of the outreach motion that blocks all revenue.", color: T.amber },
+                { name: "Sean", role: "Outreach / Sales", detail: "Same status as Eve. Activation is the single most critical next move.", color: T.amber },
+                { name: "Yves Dally", role: "Account Manager", detail: "Commission-only. Non-technical — needs AI guidance for sales workflows.", color: T.amber },
+                { name: "Andrew", role: "Clinician @ Spires", detail: "Follow-up rate currently 2.4. Primary metrics subject for Intelligence dogfooding.", color: T.teal },
+                { name: "Max", role: "Clinician @ Spires", detail: "Second clinician tracked in the Intelligence dashboard.", color: T.teal },
+              ].map(p => (
+                <GlassCard key={p.name} style={{ padding: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: "white" }}>{p.name}</span>
+                      <span style={{ fontSize: 11, color: p.color, marginLeft: 10, fontWeight: 600 }}>{p.role}</span>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 6, lineHeight: 1.5 }}>{p.detail}</div>
+                </GlassCard>
+              ))}
+            </div>
+
+            <GlassCard style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>External</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.8 }}>
+                HMDG — marketing agency for Spires. Source of the Private Practice Barometer 2026 data (715 UK clinic owners).
+                Michael Schumacher intro parked until after current build sprint. Potential podcast slot on "No Appointment Necessary".
+              </div>
+            </GlassCard>
+          </>
+        )}
+
+        {section === "roadmap" && (
+          <>
+            <SectionHead eyebrow="What's next" title="Sequenced by revenue impact." />
+            <div style={{ display: "grid", gap: 10 }}>
+              {[
+                {
+                  phase: "Now", color: T.red, items: [
+                    { text: "Activate Eve, Sean, and Yves on outreach", tag: "Blocks all revenue" },
+                    { text: "Fix pricing across all touchpoints to revised numbers", tag: "Before outreach" },
+                  ],
+                },
+                {
+                  phase: "Next", color: T.amber, items: [
+                    { text: "Ship Pulse module (churn prediction, 6-touch re-engagement)", tag: "Unlocks Full Stack tier" },
+                    { text: "WriteUpp API partnership formalised", tag: "Distribution" },
+                    { text: "Outcome measures layer (NPRS, PSFS, QuickDASH, ODI, NDI)", tag: "Category differentiator" },
+                  ],
+                },
+                {
+                  phase: "Later", color: T.teal, items: [
+                    { text: "Cliniko marketplace listing", tag: "H2 compounding lever" },
+                    { text: "TM3 / Blue Zinc integration", tag: "Strategic blind spot" },
+                    { text: "StrydeOS Lens → full StrydeOS upsell pipeline", tag: "Bupa warm leads" },
+                    { text: "HMDG / Michael Schumacher intro + podcast", tag: "Parked" },
+                    { text: "White-label for therapy, medspa, dental", tag: "Post-physio lock-in" },
+                  ],
+                },
+              ].map(phase => (
+                <GlassCard key={phase.phase}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: phase.color, marginBottom: 14 }}>{phase.phase}</div>
+                  {phase.items.map((item, i) => (
+                    <div key={i} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      padding: "8px 0", borderBottom: i < phase.items.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                    }}>
+                      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", flex: 1 }}>{item.text}</div>
+                      <Badge color={phase.color}>{item.tag}</Badge>
+                    </div>
+                  ))}
+                </GlassCard>
+              ))}
+            </div>
+          </>
+        )}
+
+        {section === "brand" && (
+          <>
+            <SectionHead eyebrow="Brand tokens" title="Canonical. Do not deviate." />
+
+            <GlassCard style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 14 }}>Colours</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
+                {[
+                  { name: "Blue", hex: "#1C54F2" },
+                  { name: "BlueBright", hex: "#2E6BFF" },
+                  { name: "BlueGlow", hex: "#4B8BF5" },
+                  { name: "Navy", hex: "#0B2545" },
+                  { name: "Teal", hex: "#0891B2" },
+                  { name: "Purple", hex: "#8B5CF6" },
+                  { name: "Success", hex: "#059669" },
+                  { name: "Cloud", hex: "#F2F1EE" },
+                  { name: "Ink", hex: "#111827" },
+                  { name: "Muted", hex: "#6B7280" },
+                ].map(c => (
+                  <div key={c.name} style={{ textAlign: "center" }}>
+                    <div style={{
+                      width: "100%", aspectRatio: "1", borderRadius: 10,
+                      background: c.hex, border: "1px solid rgba(255,255,255,0.1)",
+                      marginBottom: 6,
+                    }} />
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>{c.name}</div>
+                    <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)", fontFamily: "'Courier New', monospace" }}>{c.hex}</div>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <GlassCard>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 12 }}>Typography</div>
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 24, color: "white", marginBottom: 4 }}>DM Serif Display</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Headings only · Weight 400 only</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 600, color: "white", marginBottom: 4 }}>Outfit</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>All body/UI text · Weights 300–800</div>
+                </div>
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ fontFamily: "'Courier New', monospace", fontSize: 14, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>Courier New</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Code only</div>
+                </div>
+              </GlassCard>
+              <GlassCard>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 12 }}>Logo</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>
+                  Monolith mark: gradient glass container (not solid), ghost pillar, three ascending chevrons clipped inside.
+                  <strong style={{ color: "white" }}> #1C54F2</strong> primary. Canonical files: <code style={{
+                    fontFamily: "'Courier New', monospace", fontSize: 10, background: "rgba(255,255,255,0.06)", padding: "2px 5px", borderRadius: 3,
+                  }}>monolith.svg</code> + <code style={{
+                    fontFamily: "'Courier New', monospace", fontSize: 10, background: "rgba(255,255,255,0.06)", padding: "2px 5px", borderRadius: 3,
+                  }}>MonolithLogo.tsx</code> + <code style={{
+                    fontFamily: "'Courier New', monospace", fontSize: 10, background: "rgba(255,255,255,0.06)", padding: "2px 5px", borderRadius: 3,
+                  }}>brand.ts</code>. Never reinterpret — use verbatim.
+                </div>
+              </GlassCard>
+            </div>
+
+            <GlassCard>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 10 }}>Module colours</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                {[
+                  { name: "Ava", hex: "#1C54F2", label: "Royal Blue" },
+                  { name: "Pulse", hex: "#0891B2", label: "Teal" },
+                  { name: "Intelligence", hex: "#8B5CF6", label: "Purple" },
+                ].map(m => (
+                  <div key={m.name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: m.hex, flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>{m.name}</div>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{m.label} · {m.hex}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+
+            <GlassCard style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Contact</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
+                <code style={{ fontFamily: "'Courier New', monospace", fontSize: 12, color: T.blueBright }}>hello@strydeos.com</code> — single public-facing contact address for all artifacts.
+              </div>
+            </GlassCard>
+          </>
+        )}
+
+        <div style={{ textAlign: "center", marginTop: 40, fontSize: 10, color: "rgba(255,255,255,0.12)" }}>
+          StrydeOS · Master Reference · Updated April 2026 · Internal use only
+        </div>
+      </div>
+    </div>
+  );
+}

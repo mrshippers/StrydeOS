@@ -11,29 +11,29 @@
 
 | Component | Cost |
 |-----------|------|
-| StrydeOS Ava module (Solo) | £149/mo |
+| StrydeOS Ava module (Solo) | £99/mo |
 | Telephony + AI voice infrastructure | ~£25/mo |
 | Automation platform | ~£4/mo |
-| **Per-clinic total** | **~£178/mo** |
-| One-time setup fee | £250 |
+| **Per-clinic total** | **~£124/mo** |
+| One-time setup fee | £199 |
 
 ## Ava: 3 clinics
 
 | | Monthly | Annual |
 |--|---------|--------|
-| 3x Ava Solo | £447 | £5,364 |
+| 3x Ava Solo | £297 | £3,564 |
 | Infrastructure (shared) | ~£100 | ~£1,200 |
-| **Total** | **~£550** | **~£6,600** |
+| **Total** | **~£397** | **~£4,764** |
 
 Or use **Studio tier** (2–4 clinicians per clinic):
-- 3x Ava Studio = £597/mo = £7,164/yr + shared infra = **~£8,400/yr**
+- 3x Ava Studio = £447/mo = £5,364/yr + shared infra = **~£6,564/yr**
 
 ## Savings
 
 | | Moneypenny | Ava (Solo) | Ava (Studio) |
 |--|-----------|------------|--------------|
-| Annual cost | £18,000 | ~£6,600 | ~£8,400 |
-| **Saving** | — | **£11,400 (63%)** | **£9,600 (53%)** |
+| Annual cost | £18,000 | ~£4,764 | ~£6,564 |
+| **Saving** | — | **£13,236 (74%)** | **£11,436 (64%)** |
 
 ## What Ava gives you that Moneypenny doesn't
 
@@ -41,7 +41,7 @@ Or use **Studio tier** (2–4 clinicians per clinic):
 2. **Direct PMS booking** — into WriteUpp/Cliniko, no message relay
 3. **Cancellation recovery** — catches cancellations, offers rebooking
 4. **Every call logged** — feeds Intelligence dashboard
-5. **Scales cheap** — adding a 4th clinic costs ~£178/mo, not £500+
+5. **Scales cheap** — adding a 4th clinic costs ~£124/mo, not £500+
 6. **Sub-3-second answer** — no hold, no queue
 7. **Consistent quality** — no sick days, no training, no turnover
 
@@ -50,4 +50,4 @@ Or use **Studio tier** (2–4 clinicians per clinic):
 > "We're paying £1,500 a month for someone to take messages during office hours. 
 > Ava answers every call 24/7, books directly into the PMS, catches cancellations 
 > before they become lost revenue, and logs everything into the dashboard. 
-> £550 a month instead of £1,500. That's £11k back in the business every year."
+> £397 a month instead of £1,500. That's £13k back in the business every year."

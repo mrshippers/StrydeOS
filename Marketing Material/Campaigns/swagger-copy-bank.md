@@ -80,7 +80,7 @@
 - "No contracts. No migration. Live in 5 days."
 - "Built by a clinic owner. For clinic owners who prefer data to guesswork."
 - "Connects to your PMS. Doesn't replace it."
-- "One-time £250 setup. That's it."
+- "One-time £199 setup. That's it."
 
 ---
 
@@ -109,7 +109,7 @@
 >
 > That's not a feature gap. That's the entire value proposition.
 >
-> StrydeOS replaces both for £599/mo. Six KPIs. One platform. Zero guesswork.
+> StrydeOS replaces both for £399/mo. Six KPIs. One platform. Zero guesswork.
 
 ### Post 4: CAC Delta
 > Clinics that track their customer acquisition cost earn £128K more per year.

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StrydeOS — Business Audit (Updated April 2026)</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const B = {
+  blue: "#1C54F2", blueBright: "#2E6BFF", blueGlow: "#4B8BF5",
+  navy: "#0B2545", navyMid: "#132D5E",
+  teal: "#0891B2", purple: "#8B5CF6",
+  success: "#059669", successBright: "#34D399",
+  red: "#EF4444", amber: "#F59E0B",
+  ink: "#111827", muted: "#6B7280",
+  cloud: "#F2F1EE", cloudLight: "#F9F8F6", cream: "#FAF9F7",
+  border: "#E2DFDA",
+};
+
+/* Revised pricing from Master Reference April 2026 */
+const PRICING = {
+  solo:   { Intelligence: 69, Ava: 99,  Pulse: 79,  full: 199, setup: 199 },
+  studio: { Intelligence: 99, Ava: 149, Pulse: 99,  full: 299, setup: 199 },
+  clinic: { Intelligence: 149, Ava: 199, Pulse: 149, full: 399, setup: 199 },
+};
+
+function runProjection(scenario) {
+  const configs = {
+    conservative: {
+      label: "Conservative",
+      monthlyAdds: [0,1,1,1,1,1,1,2,2,2,2,2],
+      churnRate: 0.06,
+      arpc: 155,
+      setupRate: 0.3,
+      desc: "Jamal selling solo, word-of-mouth only, mostly Intelligence-only at Solo/Studio tier"
+    },
+    realistic: {
+      label: "Realistic",
+      monthlyAdds: [1,1,2,2,3,3,3,4,4,4,5,5],
+      churnRate: 0.04,
+      arpc: 230,
+      setupRate: 0.5,
+      desc: "Outreach activated, healthy module mix, Spires case study converting, nemoclaw enricher qualifying leads"
+    },
+    optimistic: {
+      label: "Optimistic",
+      monthlyAdds: [2,2,3,4,4,5,5,6,6,7,7,8],
+      churnRate: 0.03,
+      arpc: 310,
+      setupRate: 0.65,
+      desc: "Outreach + referrals + HMDG intro + Cliniko listing + nemoclaw swarm all firing"
+    },
+  };
+
+  const c = configs[scenario];
+  let clinics = 0;
+  const months = [];
+  let totalRevenue = 0;
+  let totalSetup = 0;
+
+  for (let i = 0; i < 12; i++) {
+    clinics = Math.max(0, Math.floor(clinics * (1 - c.churnRate)) + c.monthlyAdds[i]);
+    const mrr = clinics * c.arpc;
+    const setupFees = c.monthlyAdds[i] * c.setupRate * 199;
+    totalRevenue += mrr;
+    totalSetup += setupFees;
+    months.push({
+      month: i + 1,
+      label: ["May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr"][i],
+      newClinics: c.monthlyAdds[i],
+      totalClinics: clinics,
+      mrr,
+      setupFees,
+      cumRevenue: totalRevenue + totalSetup,
+    });
+  }
+
+  return {
+    ...c, months,
+    endMRR: months[11].mrr,
+    endARR: months[11].mrr * 12,
+    endClinics: months[11].totalClinics,
+    totalCollected: totalRevenue + totalSetup,
+  };
+}
+
+const DotGrid = () => (
+  <div style={{
+    position: "absolute", inset: 0, opacity: 0.035, pointerEvents: "none",
+    backgroundImage: "radial-gradient(circle, #111827 1px, transparent 1px)",
+    backgroundSize: "24px 24px",
+  }} />
+);
+
+const Badge = ({ children, color = B.blue, filled = false }) => (
+  <span style={{
+    display: "inline-flex", alignItems: "center", gap: 5,
+    padding: "4px 12px", borderRadius: 50, fontSize: 10, fontWeight: 700,
+    letterSpacing: "0.08em", textTransform: "uppercase",
+    color: filled ? "white" : color,
+    background: filled ? color : `${color}12`,
+    border: `1px solid ${filled ? color : `${color}30`}`,
+  }}>{children}</span>
+);
+
+const MetricCard = ({ label, value, sub, color = B.ink, accent }) => (
+  <div style={{
+    padding: "28px 24px", borderRadius: 16,
+    border: `1px solid ${B.border}`, background: "white",
+    position: "relative", overflow: "hidden",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+  }}
+    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 30px rgba(11,37,69,0.08)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+  >
+    {accent && <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:accent }} />}
+    <div style={{ fontSize: 11, fontWeight: 600, color: B.muted, letterSpacing: "0.04em", marginBottom: 10, textTransform: "uppercase" }}>{label}</div>
+    <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 36, color, lineHeight: 1, marginBottom: sub ? 6 : 0 }}>{value}</div>
+    {sub && <div style={{ fontSize: 12, color: B.muted, lineHeight: 1.5 }}>{sub}</div>}
+  </div>
+);
+
+const StatusRow = ({ label, status, detail }) => {
+  const colors = { live: B.success, built: B.blue, partial: B.amber, blocked: B.red, planned: B.muted, fixed: B.success, active: B.success, shipped: B.success };
+  const c = colors[status] || B.muted;
+  return (
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 0", borderBottom:`1px solid ${B.border}` }}>
+      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+        <div style={{ width:8, height:8, borderRadius:"50%", background:c, flexShrink:0 }} />
+        <span style={{ fontSize:14, fontWeight:600, color:B.ink }}>{label}</span>
+      </div>
+      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+        {detail && <span style={{ fontSize:12, color:B.muted }}>{detail}</span>}
+        <span style={{ fontSize:10, fontWeight:700, color:c, textTransform:"uppercase", letterSpacing:"0.06em", padding:"3px 10px", borderRadius:50, background:`${c}12`, border:`1px solid ${c}25` }}>{status}</span>
+      </div>
+    </div>
+  );
+};
+
+const MiniChart = ({ data, color = B.blue, height = 120 }) => {
+  const max = Math.max(...data.map(d => d.mrr));
+  return (
+    <svg viewBox={`0 0 ${data.length * 60} ${height + 16}`} style={{ width:"100%", height: height + 16 }}>
+      {data.map((d, i) => {
+        const h = max > 0 ? (d.mrr / max) * (height - 24) : 0;
+        return (
+          <g key={i}>
+            <rect x={i*60+8} y={height - h - 2} width={44} height={h} rx={4}
+              fill={color} opacity={0.15 + (i/data.length)*0.7} />
+            <text x={i*60+30} y={height - h - 6} textAnchor="middle"
+              style={{ fontSize:9, fontWeight:700, fill:color }}>
+              {d.mrr > 0 ? `£${(d.mrr/1000).toFixed(1)}k` : ""}
+            </text>
+            <text x={i*60+30} y={height + 12} textAnchor="middle"
+              style={{ fontSize:8, fill:B.muted }}>
+              {d.label}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+const SectionHead = ({ eyebrow, title, sub }) => (
+  <div style={{ marginBottom: 32 }}>
+    <div style={{ fontSize:10, fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:B.blue, marginBottom:8 }}>{eyebrow}</div>
+    <h2 style={{ fontFamily:"'DM Serif Display', serif", fontSize:32, fontWeight:400, color:B.navy, lineHeight:1.15, marginBottom: sub ? 10 : 0 }}>{title}</h2>
+    {sub && <p style={{ fontSize:14, color:B.muted, lineHeight:1.6, maxWidth:560 }}>{sub}</p>}
+  </div>
+);
+
+function App() {
+  const [scenario, setScenario] = useState("realistic");
+
+  const proj = {
+    conservative: runProjection("conservative"),
+    realistic: runProjection("realistic"),
+    optimistic: runProjection("optimistic"),
+  };
+  const active = proj[scenario];
+  const scenarioColors = { conservative: B.muted, realistic: B.blue, optimistic: B.success };
+
+  return (
+    <>
+      <style>{`
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        .fade-in { animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) forwards; opacity:0; }
+        .scenario-btn { padding:10px 20px; border-radius:50px; border:1.5px solid ${B.border}; background:white; cursor:pointer; font-family:'Outfit',sans-serif; font-size:12px; font-weight:600; color:${B.muted}; transition:all 0.25s ease; }
+        .scenario-btn:hover { border-color:${B.blue}; color:${B.blue}; }
+        .scenario-btn.active { background:${B.navy}; border-color:${B.navy}; color:white; }
+        body { background:${B.cream}; color:${B.ink}; }
+      `}</style>
+
+      <div style={{ maxWidth:900, margin:"0 auto", padding:"48px 24px 80px" }}>
+
+        {/* HEADER */}
+        <div className="fade-in" style={{ animationDelay:"0s", display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:60 }}>
+          <div>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16 }}>
+              <div style={{ width:36, height:36, borderRadius:10, background:`linear-gradient(135deg, ${B.blue}, ${B.navyMid})`, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 5-10"/></svg>
+              </div>
+              <span style={{ fontWeight:700, fontSize:18, letterSpacing:"-0.02em", color:B.navy }}>Stryde<span style={{ color:B.blueGlow }}>OS</span></span>
+            </div>
+            <h1 style={{ fontFamily:"'DM Serif Display', serif", fontSize:40, fontWeight:400, color:B.navy, lineHeight:1.1, marginBottom:6 }}>
+              Business Audit
+            </h1>
+            <p style={{ fontSize:14, color:B.muted }}>Revenue position, readiness gaps, and 12-month projections</p>
+          </div>
+          <div style={{ textAlign:"right" }}>
+            <div style={{ fontSize:11, color:B.muted, marginBottom:4 }}>Updated 11 April 2026</div>
+            <div style={{ fontSize:13, fontWeight:600, color:B.navy }}>April 2026</div>
+            <Badge color={B.red}>£0 MRR</Badge>
+          </div>
+        </div>
+
+        {/* SECTION 1: CURRENT STATE */}
+        <div className="fade-in" style={{ animationDelay:"0.1s", marginBottom:56 }}>
+          <SectionHead
+            eyebrow="Current state"
+            title="Product is deep. Revenue is zero. Agent layer is new."
+            sub="Two of three modules deployed. Website redesigned and shipped. Marketing swarm scaffolded. Pricing revised down. Sales reps still not activated."
+          />
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:14, marginBottom:28 }}>
+            <MetricCard label="Monthly Recurring Revenue" value="£0" sub="No paying customers" color={B.red} accent={B.red} />
+            <MetricCard label="Paying Clinics" value="0" sub="Spires = dogfood only" color={B.ink} />
+            <MetricCard label="Modules Live" value="2/3" sub="Intelligence + Ava shipped" color={B.blue} accent={B.blue} />
+            <MetricCard label="Infrastructure" value="100%" sub="Auth · Billing · Compliance · Hosting" color={B.success} accent={B.success} />
+          </div>
+
+          {/* What's changed since last audit */}
+          <div style={{ background:"white", borderRadius:16, border:`1px solid ${B.border}`, padding:"20px 28px", marginBottom:20 }}>
+            <div style={{ fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:B.blue, marginBottom:14 }}>What's changed since last audit</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+              {[
+                { text: "Pricing revised — Full Stack now £199/£299/£399 (was £229/£349/£499)", color: B.success },
+                { text: "Ava migrated from Retell AI to ElevenLabs Conversational AI", color: B.success },
+                { text: "Ava MCP integration scaffolded (Cliniko tools, acceptEdits mode)", color: B.blue },
+                { text: "Claude Sentinel shipped — prompt injection monitoring (16 regex rules, Telegram alerts)", color: B.success },
+                { text: "Nemoclaw QA agent scaffolded (Playwright, Claude API, Octokit, GitHub Actions)", color: B.blue },
+                { text: "Marketing swarm extending nemoclaw — 4 agents (Researcher, Closer, Concierge, Long Game)", color: B.blue },
+                { text: "Enricher agent scaffolded — Companies House API + Supabase prospects table", color: B.blue },
+                { text: "Marketing website redesigned + U-Bahn changelog page shipped", color: B.success },
+                { text: "12-week content calendar built (7 operational : 5 StrydeOS ratio)", color: B.success },
+                { text: "HMDG PPB 2026 data integrated into sales narrative (715 clinic owners surveyed)", color: B.success },
+                { text: "Market Intelligence Audit PDF produced — £17K/yr no-show stat, £13.9K/clinician stat, 74% blind stat", color: B.success },
+                { text: "Hardcoded fake patient data (John Doe, Nina Aslam) identified in Pulse — debug prompt generated", color: B.amber },
+              ].map((item, i) => (
+                <div key={i} style={{ display:"flex", gap:8, alignItems:"flex-start", padding:"6px 0" }}>
+                  <div style={{ width:6, height:6, borderRadius:"50%", background:item.color, marginTop:6, flexShrink:0 }} />
+                  <div style={{ fontSize:12, color:B.ink, lineHeight:1.5 }}>{item.text}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 2: READINESS AUDIT */}
+        <div className="fade-in" style={{ animationDelay:"0.15s", marginBottom:56 }}>
+          <SectionHead eyebrow="Readiness audit" title="What's live, what's not, what's blocking revenue." />
+
+          <div style={{ background:"white", borderRadius:16, border:`1px solid ${B.border}`, padding:"8px 28px", marginBottom:20 }}>
+            <div style={{ fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:B.muted, padding:"14px 0", borderBottom:`1px solid ${B.border}` }}>Product</div>
+            <StatusRow label="Intelligence dashboard" status="live" detail="8 KPIs, clinician-level views, 6-week trends" />
+            <StatusRow label="Ava voice receptionist" status="live" detail="ElevenLabs + LangChain + Twilio" />
+            <StatusRow label="Ava MCP / Cliniko integration" status="built" detail="acceptEdits mode, system prompt ready" />
+            <StatusRow label="Claude Sentinel" status="shipped" detail="16 regex rules, Telegram alerts, LangGraph pipeline" />
+            <StatusRow label="Pulse retention engine" status="partial" detail="Architecture defined, fake data bug identified" />
+            <StatusRow label="PMS pipeline — Cliniko" status="live" detail="REST API, CSV import, SHA-256 dedup" />
+            <StatusRow label="PMS pipeline — WriteUpp" status="partial" detail="CSV pipeline live, API access pending" />
+            <StatusRow label="PMS pipeline — TM3" status="planned" detail="Highest strategic value, not started" />
+          </div>
+
+          <div style={{ background:"white", borderRadius:16, border:`1px solid ${B.border}`, padding:"8px 28px", marginBottom:20 }}>
+            <div style={{ fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:B.muted, padding:"14px 0", borderBottom:`1px solid ${B.border}` }}>Infrastructure</div>
+            <StatusRow label="Firebase Auth + multi-tenancy" status="live" detail="Custom claims, tenant isolation" />
+            <StatusRow label="Stripe billing" status="built" detail="Checkout components built, not converting" />
+            <StatusRow label="Self-service onboarding" status="live" detail="Wizard deployed" />
+            <StatusRow label="GDPR / HIPAA / PIPEDA compliance" status="live" detail="Full framework" />
+            <StatusRow label="Vercel + custom domain" status="live" />
+            <StatusRow label="DPA in onboarding flow" status="planned" detail="Required for enterprise" />
+          </div>
+
+          <div style={{ background:"white", borderRadius:16, border:`1px solid ${B.border}`, padding:"8px 28px", marginBottom:20 }}>
+            <div style={{ fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:B.muted, padding:"14px 0", borderBottom:`1px solid ${B.border}` }}>Agents & Automation</div>
+            <StatusRow label="Nemoclaw QA agent" status="built" detail="Playwright + Claude API + Octokit + GitHub Actions" />
+            <StatusRow label="Nemoclaw dashboard" status="live" detail="Glassmorphism UI, deployed to Vercel" />
+            <StatusRow label="Marketing swarm (enricher)" status="partial" detail="Supabase prospects table, Companies House API, Claude enrichment" />
+            <StatusRow label="Marketing swarm (closer)" status="planned" detail="Outreach automation via n8n" />
+            <StatusRow label="Marketing swarm (concierge)" status="planned" detail="Demo prep + follow-up" />
+            <StatusRow label="Marketing swarm (long game)" status="planned" detail="Nurture sequences" />
+          </div>
+
+          <div style={{ background:"white", borderRadius:16, border:`1px solid ${B.border}`, padding:"8px 28px" }}>
+            <div style={{ fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:B.muted, padding:"14px 0", borderBottom:`1px solid ${B.border}` }}>Revenue engine</div>
+            <StatusRow label="Marketing website" status="shipped" detail="Redesigned, changelog live, SEO audit done" />
+            <StatusRow label="12-week content calendar" status="built" detail="Post #1 (The 72% Problem) not yet published" />
+            <StatusRow label="Market Intelligence Audit" status="shipped" detail="PDF + HTML, HMDG PPB 2026 data" />
+            <StatusRow label="Pitch deck" status="built" detail="Owner deck + investor deck" />
+            <StatusRow label="Outreach (Eve, Sean, Yves)" status="blocked" detail="Identified, not activated" />
+            <StatusRow label="HMDG / Schumacher intro" status="planned" detail="Parked" />
+            <StatusRow label="Cliniko Connected Apps listing" status="planned" detail="Self-serve, not submitted" />
+            <StatusRow label="Inbound funnel" status="blocked" detail="No booking → demo → close pipeline" />
+          </div>
+        </div>
+
+        {/* SECTION 3: PRICING (REVISED) */}
+        <div className="fade-in" style={{ animationDelay:"0.2s", marginBottom:56 }}>
+          <SectionHead eyebrow="Pricing — Revised April 2026" title="Module-first. Three tiers. Under review." sub="Pricing revised down from previous flat-rate model. Full Stack now £299 Studio / £399 Clinic (£199 Solo). Under competitor analysis." />
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:14, marginBottom:16 }}>
+            {[
+              { tier: "Solo", sub: "1 clinician", prices: PRICING.solo },
+              { tier: "Studio", sub: "2–4 clinicians", prices: PRICING.studio },
+              { tier: "Clinic", sub: "6+ clinicians", prices: PRICING.clinic },
+            ].map(t => (
+              <div key={t.tier} style={{
+                padding:"24px 20px", borderRadius:14, background:"white",
+                border:`1px solid ${B.border}`, borderTop:`3px solid ${B.blue}`,
+              }}>
+                <div style={{ fontSize:16, fontWeight:700, color:B.navy, marginBottom:2 }}>{t.tier}</div>
+                <div style={{ fontSize:11, color:B.muted, marginBottom:16 }}>{t.sub}</div>
+                {[
+                  { name: "Intelligence", price: t.prices.Intelligence, color: B.purple },
+                  { name: "Ava", price: t.prices.Ava, color: B.blue },
+                  { name: "Pulse", price: t.prices.Pulse, color: B.teal },
+                ].map(m => (
+                  <div key={m.name} style={{ display:"flex", justifyContent:"space-between", padding:"6px 0", borderBottom:`1px solid ${B.border}` }}>
+                    <span style={{ fontSize:13, color:m.color, fontWeight:500 }}>{m.name}</span>
+                    <span style={{ fontSize:13, fontWeight:600, color:B.ink }}>£{m.price}/mo</span>
+                  </div>
+                ))}
+                <div style={{ display:"flex", justifyContent:"space-between", padding:"10px 0 0", marginTop:6 }}>
+                  <span style={{ fontSize:14, fontWeight:800, color:B.navy }}>Full Stack</span>
+                  <span style={{ fontFamily:"'DM Serif Display', serif", fontSize:22, color:B.navy }}>£{t.prices.full}</span>
+                </div>
+                <div style={{ fontSize:10, color:B.muted, marginTop:4 }}>
+                  Save £{(t.prices.Intelligence + t.prices.Ava + t.prices.Pulse) - t.prices.full}/mo vs à la carte
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize:12, color:B.muted, fontStyle:"italic", textAlign:"center" }}>
+            + £199 one-time Ava setup fee (phone provisioning + voice training) · No lock-in contracts
+          </div>
+        </div>
+
+        {/* SECTION 4: REVENUE PROJECTIONS */}
+        <div className="fade-in" style={{ animationDelay:"0.25s", marginBottom:56 }}>
+          <SectionHead
+            eyebrow="12-month revenue projections"
+            title="Three scenarios. Revised pricing."
+            sub="Modelled with revised April 2026 pricing tiers. ARPC adjusted down from previous audit to reflect lower entry points. Setup fees assume Ava adoption rate."
+          />
+
+          <div style={{ display:"flex", gap:10, marginBottom:28 }}>
+            {["conservative","realistic","optimistic"].map(s => (
+              <button key={s} className={`scenario-btn ${scenario === s ? "active" : ""}`}
+                onClick={() => setScenario(s)}
+                style={scenario === s ? { background:scenarioColors[s], borderColor:scenarioColors[s] } : {}}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <div style={{
+            background:"white", borderRadius:20, border:`1px solid ${B.border}`,
+            padding:32, marginBottom:24, position:"relative", overflow:"hidden",
+          }}>
+            <DotGrid />
+            <div style={{ position:"relative", zIndex:1 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:28 }}>
+                <div>
+                  <Badge color={scenarioColors[scenario]} filled>{active.label}</Badge>
+                  <p style={{ fontSize:13, color:B.muted, marginTop:10, maxWidth:420 }}>{active.desc}</p>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", color:B.muted, marginBottom:4 }}>Churn assumption</div>
+                  <div style={{ fontSize:20, fontWeight:700, color:B.ink }}>{(active.churnRate*100).toFixed(0)}%<span style={{ fontSize:12, color:B.muted }}> /mo</span></div>
+                </div>
+              </div>
+
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:14, marginBottom:28 }}>
+                <MetricCard label="Month 12 MRR" value={`£${active.endMRR.toLocaleString()}`} color={scenarioColors[scenario]} accent={scenarioColors[scenario]} />
+                <MetricCard label="Implied ARR" value={`£${(active.endARR/1000).toFixed(0)}k`} color={B.navy} />
+                <MetricCard label="Clinics (M12)" value={active.endClinics} color={B.ink} />
+                <MetricCard label="Y1 Total Collected" value={`£${(active.totalCollected/1000).toFixed(0)}k`} sub="MRR + setup fees" color={B.ink} />
+              </div>
+
+              <div style={{ marginBottom:8 }}>
+                <div style={{ fontSize:11, fontWeight:600, color:B.muted, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.06em" }}>Monthly recurring revenue trajectory</div>
+                <MiniChart data={active.months} color={scenarioColors[scenario]} height={110} />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ background:"white", borderRadius:16, border:`1px solid ${B.border}`, overflow:"hidden" }}>
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+              <thead>
+                <tr style={{ borderBottom:`2px solid ${B.border}` }}>
+                  {["Scenario","M12 Clinics","M12 MRR","Implied ARR","Y1 Collected"].map(h => (
+                    <th key={h} style={{ padding:"14px 20px", textAlign: h === "Scenario" ? "left" : "right", fontSize:11, fontWeight:700, color:B.muted, textTransform:"uppercase", letterSpacing:"0.08em" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {["conservative","realistic","optimistic"].map(s => {
+                  const p = proj[s];
+                  const isActive = s === scenario;
+                  return (
+                    <tr key={s} onClick={() => setScenario(s)} style={{
+                      borderBottom:`1px solid ${B.border}`, cursor:"pointer",
+                      background: isActive ? `${scenarioColors[s]}08` : "transparent",
+                    }}>
+                      <td style={{ padding:"14px 20px", fontWeight: isActive ? 700 : 500 }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                          <div style={{ width:8, height:8, borderRadius:"50%", background:scenarioColors[s] }} />
+                          {p.label}
+                        </div>
+                      </td>
+                      <td style={{ padding:"14px 20px", textAlign:"right", fontWeight:600 }}>{p.endClinics}</td>
+                      <td style={{ padding:"14px 20px", textAlign:"right", fontWeight:600, color:scenarioColors[s] }}>£{p.endMRR.toLocaleString()}</td>
+                      <td style={{ padding:"14px 20px", textAlign:"right", fontWeight:600 }}>£{(p.endARR/1000).toFixed(0)}k</td>
+                      <td style={{ padding:"14px 20px", textAlign:"right", fontWeight:600 }}>£{(p.totalCollected/1000).toFixed(0)}k</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ fontSize:11, color:B.muted, marginTop:12, fontStyle:"italic", lineHeight:1.6 }}>
+            ARPC adjusted for revised pricing tiers (lower entry points than previous audit). Conservative assumes mostly Solo/Studio Intelligence-only. Realistic assumes healthy module mix across tiers. Optimistic assumes high Full Stack uptake at Clinic tier. Setup fees assume {(active.setupRate*100).toFixed(0)}% Ava adoption.
+          </div>
+        </div>
+
+        {/* SECTION 5: CRITICAL GAPS (REVISED) */}
+        <div className="fade-in" style={{ animationDelay:"0.3s", marginBottom:56 }}>
+          <SectionHead eyebrow="Critical gaps — updated" title="What's still blocking first revenue." />
+
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+            {[
+              {
+                n: "1", title: "Outreach still not activated",
+                body: "Eve, Sean, and Yves are identified but none have sent a single message to a clinic owner. This has been the #1 blocker since March. The enricher agent is being built to help, but someone still needs to press send.",
+                impact: "Blocks all revenue",
+                color: B.red,
+              },
+              {
+                n: "2", title: "No inbound funnel",
+                body: "Website is redesigned but still no booking → demo → close pipeline. CTA leads nowhere actionable. Content calendar is built but Post #1 hasn't been published.",
+                impact: "Organic leads lost",
+                color: B.red,
+              },
+              {
+                n: "3", title: "Pulse has fake data",
+                body: "Hardcoded placeholder names (John Doe, Nina Aslam) showing on the Pulse board instead of real patient data. Revenue card incorrect. Notifications not clearing. Cannot demo Pulse in current state.",
+                impact: "Can't demo or sell Full Stack",
+                color: B.red,
+              },
+              {
+                n: "4", title: "Pricing needs finalising",
+                body: "Pricing revised down but competitor analysis still in progress. Marketing site may still show old numbers in places. Need to lock pricing before arming sales reps.",
+                impact: "Credibility risk",
+                color: B.amber,
+              },
+              {
+                n: "5", title: "No case study asset",
+                body: "Spires data exists and the case study copy is written but not packaged into a shareable format. Outreach needs proof — the HMDG stats help but clinic-level proof converts harder.",
+                impact: "Conversion drag",
+                color: B.amber,
+              },
+              {
+                n: "6", title: "Agent layer is scaffolded, not operational",
+                body: "Nemoclaw, enricher, and marketing swarm are architecturally sound but none are running autonomously yet. The QA agent reports issues but doesn't fix them. The enricher has a Supabase table but no populated prospects.",
+                impact: "Automation potential untapped",
+                color: B.amber,
+              },
+            ].map(g => (
+              <div key={g.n} style={{
+                padding:24, borderRadius:16, background:"white",
+                border:`1px solid ${B.border}`, borderLeft:`4px solid ${g.color}`,
+                display:"flex", flexDirection:"column", gap:8,
+              }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{ width:26, height:26, borderRadius:8, background:`${g.color}12`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:g.color }}>{g.n}</div>
+                  <span style={{ fontSize:15, fontWeight:700, color:B.ink }}>{g.title}</span>
+                </div>
+                <p style={{ fontSize:13, color:B.muted, lineHeight:1.55 }}>{g.body}</p>
+                <Badge color={g.color}>{g.impact}</Badge>
+              </div>
+            ))}
+
+            {/* The ONE action */}
+            <div style={{
+              padding:28, borderRadius:16,
+              background:`linear-gradient(135deg, ${B.navy}, ${B.navyMid})`,
+              border:`2px solid ${B.blue}`,
+              gridColumn:"1 / -1",
+              position:"relative", overflow:"hidden",
+            }}>
+              <DotGrid />
+              <div style={{ position:"relative", zIndex:1 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
+                  <div style={{ width:32, height:32, borderRadius:10, background:B.blue, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                  </div>
+                  <span style={{ fontSize:10, fontWeight:800, letterSpacing:"0.14em", textTransform:"uppercase", color:B.blueGlow }}>Task Initiator — Your ONE Next Move</span>
+                </div>
+                <h3 style={{ fontFamily:"'DM Serif Display', serif", fontSize:28, fontWeight:400, color:"white", lineHeight:1.2, marginBottom:10 }}>
+                  Fix Pulse, then activate outreach. In that order.
+                </h3>
+                <p style={{ fontSize:14, color:"rgba(255,255,255,0.55)", lineHeight:1.65, maxWidth:640, marginBottom:16 }}>
+                  The diagnosis is the same as March — outreach is the blocker. But now you can't even demo Full Stack because Pulse shows fake data. Fix the hardcoded data first (the debug prompt is written), then send Eve the owner deck + 10 target clinic names. Two moves, then you're in revenue territory.
+                </p>
+                <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
+                  <div style={{ padding:"10px 16px", borderRadius:10, background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }}>
+                    <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginBottom:3 }}>Move 1</div>
+                    <div style={{ fontSize:13, fontWeight:600, color:"white" }}>Paste the Pulse debug prompt into Claude Code — fix fake data</div>
+                  </div>
+                  <div style={{ padding:"10px 16px", borderRadius:10, background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }}>
+                    <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginBottom:3 }}>Move 2</div>
+                    <div style={{ fontSize:13, fontWeight:600, color:"white" }}>Send Eve the owner deck + 10 clinic names</div>
+                  </div>
+                  <div style={{ padding:"10px 16px", borderRadius:10, background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)" }}>
+                    <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginBottom:3 }}>Time to revenue</div>
+                    <div style={{ fontSize:13, fontWeight:600, color:B.successBright }}>Unblocks everything downstream</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div style={{ textAlign:"center", padding:"32px 0 0", borderTop:`1px solid ${B.border}` }}>
+          <p style={{ fontSize:11, color:B.muted }}>
+            StrydeOS Business Audit · Updated 11 April 2026 · Internal use only · hello@strydeos.com
+          </p>
+          <p style={{ fontSize:10, color:`${B.muted}80`, marginTop:4 }}>
+            Revenue projections use revised April 2026 pricing tiers. All figures are modelled estimates, not forecasts.
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById("root"));
+</script>
+</body>
+</html>
