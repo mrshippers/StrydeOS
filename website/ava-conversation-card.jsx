@@ -308,6 +308,11 @@ export default function AvaShowcase() {
   const audioNodesRef = useRef(null); // { source, processor, micSink }
   const tickRef = useRef(null);
   const keepaliveRef = useRef(null);
+  // Agent-audio playback queue: schedule every incoming PCM chunk back-to-back
+  // against a monotonic playhead. source.start(0) would play every chunk at
+  // "now" and cause overlap (two Avas talking over each other).
+  const playheadRef = useRef(0);
+  const activeSourcesRef = useRef([]);
 
   // Refs for canvas
   const playingRef = useRef(false);
@@ -316,6 +321,13 @@ export default function AvaShowcase() {
 
   useEffect(() => { playingRef.current = playing; }, [playing]);
   useEffect(() => { requestAnimationFrame(() => setLoaded(true)); }, []);
+
+  // Stop and drop every queued agent-audio source. Called on interruption and teardown.
+  const clearAgentAudio = useCallback(() => {
+    activeSourcesRef.current.forEach(src => { try { src.stop(0); } catch (e) {} try { src.disconnect(); } catch (e) {} });
+    activeSourcesRef.current = [];
+    playheadRef.current = 0;
+  }, []);
 
   // Centralised teardown so every end-path cleans up identically
   const tearDown = useCallback(() => {
@@ -327,9 +339,10 @@ export default function AvaShowcase() {
     try { audioNodesRef.current?.source?.disconnect(); } catch (e) {}
     try { audioNodesRef.current?.micSink?.disconnect(); } catch (e) {}
     audioNodesRef.current = null;
+    clearAgentAudio();
     if (keepaliveRef.current) { clearInterval(keepaliveRef.current); keepaliveRef.current = null; }
     setPlaying(false);
-  }, []);
+  }, [clearAgentAudio]);
 
   // Tear down on unmount
   useEffect(() => () => tearDown(), [tearDown]);
@@ -457,18 +470,35 @@ export default function AvaShowcase() {
 
               if (audioContextRef.current) {
                 const ctx = audioContextRef.current;
-                // ElevenLabs sends PCM16 @ 16000 Hz — use 16000 so browser resamples correctly
+                // ElevenLabs sends PCM16 @ 16000 Hz
                 const audioBuffer = ctx.createBuffer(1, float32.length, 16000);
                 audioBuffer.getChannelData(0).set(float32);
                 const source = ctx.createBufferSource();
                 source.buffer = audioBuffer;
                 source.connect(ctx.destination);
-                source.start(0);
-                console.log(`[Ava] ✓ Playing ${float32.length} samples @ 16000 Hz`);
+
+                // Schedule sequentially against a monotonic playhead so chunks never overlap.
+                // If the playhead is in the past (first chunk or after a gap), catch up to now.
+                const now = ctx.currentTime;
+                const startAt = Math.max(playheadRef.current, now);
+                source.start(startAt);
+                playheadRef.current = startAt + audioBuffer.duration;
+
+                // Track so interruption/teardown can stop in-flight audio
+                activeSourcesRef.current.push(source);
+                source.onended = () => {
+                  activeSourcesRef.current = activeSourcesRef.current.filter(s => s !== source);
+                };
               }
             } catch (err) {
               console.error("[Ava] ✗ Audio decode failed:", err.message);
             }
+          }
+
+          // Agent interrupted (user spoke over it) — dump queued audio so the new response
+          // doesn't layer over the tail of the old one. ElevenLabs sends this for ConvAI.
+          if (data.type === "interruption") {
+            clearAgentAudio();
           }
 
           if (data.type === "conversation_initiation_metadata") {
