@@ -136,7 +136,7 @@ describe("AVA engine proxy — enabled", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.result).toBe("Available: Monday 21 Apr at 2:00 PM");
+    expect(data.response).toBe("Available: Monday 21 Apr at 2:00 PM");
     // TypeScript PMS adapter should NOT have been instantiated
     expect(vi.mocked(createPMSAdapter)).not.toHaveBeenCalled();
   });
@@ -184,7 +184,7 @@ describe("AVA engine proxy — enabled", () => {
     // Fell back to TS handler — PMS adapter was used
     expect(vi.mocked(createPMSAdapter)).toHaveBeenCalled();
     // Result should be the TS handler's fallback message
-    expect(typeof data.result).toBe("string");
+    expect(typeof data.response).toBe("string");
   });
 });
 

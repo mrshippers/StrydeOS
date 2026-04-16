@@ -8,7 +8,16 @@ from ava_graph.tools.writeupp import (
     get_writeupp_availability,
     book_writeupp_appointment,
     _compute_free_slots,
+    _availability_cache,
 )
+
+
+@pytest.fixture(autouse=True)
+def _clear_availability_cache():
+    """Cache is module-global; clear before every test to keep them isolated."""
+    _availability_cache.clear()
+    yield
+    _availability_cache.clear()
 
 FAKE_API_KEY = "test_key_abc"
 FAKE_BASE_URL = "https://test.writeupp.example"
@@ -197,3 +206,116 @@ async def test_book_writeupp_appointment_handles_appointmentId_key():
         )
 
     assert booking_id == "wu_99"
+
+
+# ─── Availability cache tests ────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_availability_cache_hits_on_identical_query():
+    """Second call with identical params should not hit the WriteUpp API."""
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json = MagicMock(return_value={"appointments": []})
+
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    with patch("ava_graph.tools.writeupp._make_client", return_value=mock_client):
+        await get_writeupp_availability(
+            clinic_id="clinic_001", start_date="2026-04-21",
+            duration_minutes=60, api_key=FAKE_API_KEY, days_ahead=1,
+        )
+        await get_writeupp_availability(
+            clinic_id="clinic_001", start_date="2026-04-21",
+            duration_minutes=60, api_key=FAKE_API_KEY, days_ahead=1,
+        )
+
+    # WriteUpp API hit exactly once across two calls
+    assert mock_client.get.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_availability_cache_misses_for_different_clinic():
+    """Different clinic_id must not share cache entries (multi-tenancy safety)."""
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json = MagicMock(return_value={"appointments": []})
+
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    with patch("ava_graph.tools.writeupp._make_client", return_value=mock_client):
+        await get_writeupp_availability(
+            clinic_id="clinic_A", start_date="2026-04-21",
+            duration_minutes=60, api_key="key_a", days_ahead=1,
+        )
+        await get_writeupp_availability(
+            clinic_id="clinic_B", start_date="2026-04-21",
+            duration_minutes=60, api_key="key_b", days_ahead=1,
+        )
+
+    # Each clinic must hit the API independently
+    assert mock_client.get.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_availability_cache_does_not_cache_errors():
+    """A failed API call must not pollute the cache; retry should re-hit API."""
+    import httpx
+
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.get = AsyncMock(side_effect=httpx.HTTPError("boom"))
+
+    with patch("ava_graph.tools.writeupp._make_client", return_value=mock_client):
+        with pytest.raises(httpx.HTTPError):
+            await get_writeupp_availability(
+                clinic_id="clinic_001", start_date="2026-04-21",
+                duration_minutes=60, api_key=FAKE_API_KEY, days_ahead=1,
+            )
+        with pytest.raises(httpx.HTTPError):
+            await get_writeupp_availability(
+                clinic_id="clinic_001", start_date="2026-04-21",
+                duration_minutes=60, api_key=FAKE_API_KEY, days_ahead=1,
+            )
+
+    # Both retries hit the API — error not cached
+    assert mock_client.get.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_availability_cache_expires_after_ttl():
+    """Past TTL, cache should miss and the API gets re-queried."""
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json = MagicMock(return_value={"appointments": []})
+
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    fake_now = [1_000_000.0]
+
+    def time_provider():
+        return fake_now[0]
+
+    with patch("ava_graph.tools.writeupp._make_client", return_value=mock_client), \
+         patch("ava_graph.tools.writeupp._monotonic", side_effect=time_provider):
+        await get_writeupp_availability(
+            clinic_id="clinic_001", start_date="2026-04-21",
+            duration_minutes=60, api_key=FAKE_API_KEY, days_ahead=1,
+        )
+        # Jump past the 60s TTL
+        fake_now[0] += 61.0
+        await get_writeupp_availability(
+            clinic_id="clinic_001", start_date="2026-04-21",
+            duration_minutes=60, api_key=FAKE_API_KEY, days_ahead=1,
+        )
+
+    assert mock_client.get.call_count == 2

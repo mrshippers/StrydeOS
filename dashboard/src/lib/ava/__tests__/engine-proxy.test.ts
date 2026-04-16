@@ -151,7 +151,7 @@ describe("proxyToEngine — fallback path", () => {
 });
 
 describe("proxyToEngine — timeout behaviour", () => {
-  it("uses 8000ms default timeout via AbortSignal", async () => {
+  it("uses 3000ms default timeout via AbortSignal (live phone-call budget)", async () => {
     mockFetch.mockResolvedValue(makeOkResponse({ result: "ok", slots: [] }));
 
     vi.stubGlobal("AbortSignal", {
@@ -160,7 +160,7 @@ describe("proxyToEngine — timeout behaviour", () => {
 
     await proxyToEngine(ENGINE_URL, BASE_PAYLOAD);
 
-    expect(AbortSignal.timeout).toHaveBeenCalledWith(8000);
+    expect(AbortSignal.timeout).toHaveBeenCalledWith(3000);
     const [, options] = mockFetch.mock.calls[0];
     expect(options.signal).toBe("mock-signal");
   });

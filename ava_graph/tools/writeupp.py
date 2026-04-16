@@ -7,7 +7,8 @@ standard clinic hours grid (Mon-Fri, 09:00-17:00, slots sized by duration_minute
 
 import logging
 from datetime import datetime, timedelta
-from typing import List
+from time import monotonic as _monotonic
+from typing import Dict, List, Tuple
 
 import httpx
 
@@ -19,6 +20,13 @@ _DEFAULT_BASE_URL = "https://app.writeupp.com/api/v1"
 _CLINIC_START_HOUR = 9    # 09:00
 _CLINIC_END_HOUR = 17     # 17:00 (last slot starts at 16:30 for 30-min, 16:00 for 60-min)
 _CLINIC_DAYS = {0, 1, 2, 3, 4}  # Mon–Fri (weekday() 0-4)
+
+# In-memory availability cache. A live phone call typically calls
+# check_availability multiple times (patient rejects slot, asks for another).
+# 60s is short enough that real bookings don't drift, long enough to cover the
+# whole conversation turn. Keyed by (clinic_id, start_date, duration, days_ahead).
+_AVAILABILITY_TTL_SECONDS = 60.0
+_availability_cache: Dict[Tuple[str, str, int, int], Tuple[float, List[str]]] = {}
 
 
 def _make_client(api_key: str, base_url: str) -> httpx.AsyncClient:
@@ -104,6 +112,13 @@ async def get_writeupp_availability(
     Returns:
         List of free slot ISO datetime strings, soonest first (max 20)
     """
+    cache_key = (clinic_id, start_date, duration_minutes, days_ahead)
+    now = _monotonic()
+    cached = _availability_cache.get(cache_key)
+    if cached is not None and (now - cached[0]) < _AVAILABILITY_TTL_SECONDS:
+        logger.debug("WriteUpp availability cache hit for clinic %s", clinic_id)
+        return cached[1]
+
     from_dt = datetime.fromisoformat(start_date)
     to_dt = from_dt + timedelta(days=days_ahead)
 
@@ -139,6 +154,7 @@ async def get_writeupp_availability(
         len(free_slots),
         clinic_id,
     )
+    _availability_cache[cache_key] = (_monotonic(), free_slots)
     return free_slots
 
 

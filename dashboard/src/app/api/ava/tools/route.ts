@@ -15,6 +15,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
@@ -166,40 +167,6 @@ async function handleBookAppointment(
     return "That time seems to be in the past. Could you give me a future date and time?";
   }
 
-  // Resolve clinician
-  let clinicianExternalId = "";
-  let resolvedClinicianName = "one of our physios";
-
-  if (clinicianName) {
-    const cliniciansSnap = await clinicRef.collection("clinicians").get();
-    const match = cliniciansSnap.docs.find((d) => {
-      const name = d.data().name?.toLowerCase() ?? "";
-      return name.includes(clinicianName.toLowerCase());
-    });
-    if (match) {
-      clinicianExternalId = match.data().pmsExternalId ?? match.id;
-      resolvedClinicianName = match.data().name ?? clinicianName;
-    }
-  }
-
-  // If no clinician specified, get the first active one
-  if (!clinicianExternalId) {
-    const cliniciansSnap = await clinicRef
-      .collection("clinicians")
-      .where("active", "==", true)
-      .limit(1)
-      .get();
-    if (!cliniciansSnap.empty) {
-      const doc = cliniciansSnap.docs[0];
-      clinicianExternalId = doc.data().pmsExternalId ?? doc.id;
-      resolvedClinicianName = doc.data().name ?? "one of our physios";
-    }
-  }
-
-  if (!clinicianExternalId) {
-    return "I'm having trouble finding an available clinician. Let me take your details and have someone call you back to book.";
-  }
-
   // Determine duration
   const durationMinutes = appointmentType === "initial_assessment" ? 60 : 30;
   const endTime = new Date(dt.getTime() + durationMinutes * 60_000).toISOString();
@@ -211,17 +178,61 @@ async function handleBookAppointment(
       ? phone
       : `+${phone}`;
 
-  // ── Resolve patient external ID ──────────────────────────────────────────
-  // Priority: Firestore cache → PMS phone search → PMS patient create
-  let patientExternalId = "";
+  // ── Parallel Firestore reads ──────────────────────────────────────────────
+  // Clinician resolution and patient cache lookup are independent. Run them
+  // concurrently to save one round-trip on the live-call critical path.
+  const clinicianPromise: Promise<{ id: string; name: string }> = (async () => {
+    if (clinicianName) {
+      const snap = await clinicRef.collection("clinicians").get();
+      const match = snap.docs.find((d) => {
+        const name = d.data().name?.toLowerCase() ?? "";
+        return name.includes(clinicianName.toLowerCase());
+      });
+      if (match) {
+        return {
+          id: match.data().pmsExternalId ?? match.id,
+          name: match.data().name ?? clinicianName,
+        };
+      }
+    }
+    // Fallback: first active clinician
+    const snap = await clinicRef
+      .collection("clinicians")
+      .where("active", "==", true)
+      .limit(1)
+      .get();
+    if (!snap.empty) {
+      const doc = snap.docs[0];
+      return {
+        id: doc.data().pmsExternalId ?? doc.id,
+        name: doc.data().name ?? "one of our physios",
+      };
+    }
+    return { id: "", name: "one of our physios" };
+  })();
 
-  // 1. Check Firestore cache (synced patients)
-  let isReturningPatient = false;
-  const patientSnap = await clinicRef
+  const patientCachePromise = clinicRef
     .collection("patients")
     .where("contact.phone", "==", normalizedPhone)
     .limit(1)
     .get();
+
+  const [clinicianResult, patientSnap] = await Promise.all([
+    clinicianPromise,
+    patientCachePromise,
+  ]);
+
+  const clinicianExternalId = clinicianResult.id;
+  const resolvedClinicianName = clinicianResult.name;
+
+  if (!clinicianExternalId) {
+    return "I'm having trouble finding an available clinician. Let me take your details and have someone call you back to book.";
+  }
+
+  // ── Resolve patient external ID ──────────────────────────────────────────
+  // Priority: Firestore cache → PMS phone search → PMS patient create
+  let patientExternalId = "";
+  let isReturningPatient = false;
 
   if (!patientSnap.empty) {
     patientExternalId = patientSnap.docs[0].data().pmsExternalId ?? patientSnap.docs[0].id;
@@ -309,7 +320,7 @@ async function handleBookAppointment(
       });
     }
 
-    // Log tool call
+    // Log tool call — atomic append, no read-modify-write
     if (conversationId) {
       await db
         .collection("clinics")
@@ -318,15 +329,12 @@ async function handleBookAppointment(
         .doc(conversationId)
         .set(
           {
-            toolCalls: [
-              ...(await getExistingToolCalls(db, clinicId, conversationId)),
-              {
-                tool: "book_appointment",
-                input: { firstName, lastName, phone: normalizedPhone, slotDatetime, clinicianName },
-                output: { pmsExternalId: pmsResult.externalId, firestoreDocId },
-                timestamp: now,
-              },
-            ],
+            toolCalls: FieldValue.arrayUnion({
+              tool: "book_appointment",
+              input: { firstName, lastName, phone: normalizedPhone, slotDatetime, clinicianName },
+              output: { pmsExternalId: pmsResult.externalId, firestoreDocId },
+              timestamp: now,
+            }),
           },
           { merge: true },
         );
@@ -360,15 +368,12 @@ async function handleBookAppointment(
         .doc(conversationId)
         .set(
           {
-            toolCalls: [
-              ...(await getExistingToolCalls(db, clinicId, conversationId)),
-              {
-                tool: "book_appointment",
-                input: { firstName, lastName, phone: normalizedPhone, slotDatetime },
-                error: message,
-                timestamp: now,
-              },
-            ],
+            toolCalls: FieldValue.arrayUnion({
+              tool: "book_appointment",
+              input: { firstName, lastName, phone: normalizedPhone, slotDatetime },
+              error: message,
+              timestamp: now,
+            }),
           },
           { merge: true },
         );
@@ -411,24 +416,6 @@ async function handleUpdateBooking(
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-async function getExistingToolCalls(
-  db: ReturnType<typeof getAdminDb>,
-  clinicId: string,
-  conversationId: string,
-): Promise<Array<Record<string, unknown>>> {
-  try {
-    const doc = await db
-      .collection("clinics")
-      .doc(clinicId)
-      .collection("call_log")
-      .doc(conversationId)
-      .get();
-    return (doc.data()?.toolCalls as Array<Record<string, unknown>>) ?? [];
-  } catch {
-    return [];
-  }
-}
 
 /**
  * Parse a natural-language day reference into a future Date.

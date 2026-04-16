@@ -26,6 +26,11 @@ logger = logging.getLogger(__name__)
 # Module-level checkpointer instance for session-based persistence
 _checkpointer = MemorySaver()
 
+# Cached compiled graph — graph topology never changes at runtime, so we build
+# once per process. Live phone calls cannot afford a 100–300ms graph rebuild
+# per webhook.
+_compiled_graph_cache: StateGraph | None = None
+
 
 def build_ava_graph() -> StateGraph:
     """
@@ -42,6 +47,10 @@ def build_ava_graph() -> StateGraph:
     Returns:
         Compiled StateGraph with MemorySaver checkpointer and interrupt checkpoint
     """
+    global _compiled_graph_cache
+    if _compiled_graph_cache is not None:
+        return _compiled_graph_cache
+
     # Create the state graph
     graph = StateGraph(AvaState)
 
@@ -102,6 +111,7 @@ def build_ava_graph() -> StateGraph:
 
     logger.info("Ava graph compiled successfully with interrupt_after=['propose_slot']")
 
+    _compiled_graph_cache = compiled_graph
     return compiled_graph
 
 
