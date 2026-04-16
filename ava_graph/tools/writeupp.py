@@ -30,6 +30,20 @@ _availability_cache: Dict[Tuple[str, str, int, int], Tuple[float, List[str]]] = 
 
 
 def _make_client(api_key: str, base_url: str) -> httpx.AsyncClient:
+    """
+    Build an authenticated WriteUpp HTTP client.
+
+    Raises:
+        ValueError: If api_key is empty or whitespace-only. Sending `Bearer `
+            with no token returns 401 from WriteUpp, which the graph nodes
+            were treating as a generic availability failure — masking a real
+            misconfiguration in the clinic's integrations_config.
+    """
+    if not api_key or not api_key.strip():
+        raise ValueError(
+            "PMS api_key is empty — clinic integrations_config likely missing or unconfigured"
+        )
+
     return httpx.AsyncClient(
         base_url=base_url or _DEFAULT_BASE_URL,
         headers={

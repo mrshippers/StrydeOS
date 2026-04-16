@@ -9,6 +9,7 @@ from ava_graph.tools.writeupp import (
     book_writeupp_appointment,
     _compute_free_slots,
     _availability_cache,
+    _make_client,
 )
 
 
@@ -21,6 +22,26 @@ def _clear_availability_cache():
 
 FAKE_API_KEY = "test_key_abc"
 FAKE_BASE_URL = "https://test.writeupp.example"
+
+
+# ─── _make_client guard tests (Bug 2) ────────────────────────────────────────
+
+def test_make_client_raises_on_empty_api_key():
+    """Empty api_key must fail loudly — not silently produce 'Bearer ' header."""
+    with pytest.raises(ValueError, match="api_key is empty"):
+        _make_client("", "")
+
+
+def test_make_client_raises_on_whitespace_api_key():
+    """Whitespace-only api_key must also raise."""
+    with pytest.raises(ValueError, match="api_key is empty"):
+        _make_client("   ", "")
+
+
+def test_make_client_returns_client_with_valid_key():
+    """A valid api_key must produce an httpx client with Bearer auth."""
+    client = _make_client(FAKE_API_KEY, FAKE_BASE_URL)
+    assert client.headers.get("Authorization") == f"Bearer {FAKE_API_KEY}"
 
 
 # ─── _compute_free_slots unit tests ──────────────────────────────────────────

@@ -1,25 +1,50 @@
-"""Jane App availability and booking tools. Multi-tenant: api_key/base_url passed per-call."""
+"""Jane App availability and booking tools — NOT IMPLEMENTED.
+
+Jane App (https://jane.app) does not offer a public, per-clinic API key.
+
+Their integration model is the Jane Developer Platform (JDP):
+  - Partner-only, application-gated programme (vetting required)
+  - OAuth 2.0 PKCE flow, JWT Bearer tokens (RS256)
+  - Date-versioned REST paths (e.g. /YYYY-MM-DD/...)
+  - Rate-limited to 100 req/min per endpoint per clinic
+  - Clinics CANNOT generate their own API keys — Jane explicitly states
+    "clinics cannot build their own integrations"
+  - StrydeOS is not yet an approved Jane partner
+
+References (verified 2026-04-15):
+  - https://developers.jane.app/
+  - https://developers.jane.app/docs/getting-started
+  - https://jane.app/blog/jane-integrations-our-program-our-partners-and-how-to-work-with-us
+  - https://integrations.janeapp.net/application_forms/jane-integrations-partner-interest-form/partner_applications/new
+
+When Jane partner status is granted:
+  1. Implement OAuth 2.0 PKCE handshake → store practitioner-scoped JWTs
+     (Jane issues access + refresh tokens; refresh before expiry)
+  2. Replace the api_key parameter with a JWT pulled from a per-clinic token store
+  3. Build base_url as `https://api.jane.app/<api_version_date>` and pass JWT in the
+     Authorization header
+  4. Mirror the writeupp.py shape: GET schedule, diff against booked slots, return
+     ISO datetime strings; POST appointment payload, return appointment ID
+  5. Restore the 60s in-memory availability cache (see writeupp.py for the pattern)
+
+Until then both functions raise NotImplementedError so callers fail loudly rather
+than silently calling a fabricated endpoint.
+
+The function signatures are kept stable so call sites in api/routes.py,
+mcp_server.py, graph/nodes/check_availability.py and graph/nodes/confirm_booking.py
+do not have to change when the real integration ships.
+"""
 
 import logging
-from typing import List
-
-import httpx
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_BASE_URL = "https://api.integratedhealthtech.com"
-
-
-def _make_client(api_key: str, base_url: str) -> httpx.AsyncClient:
-    return httpx.AsyncClient(
-        base_url=base_url or _DEFAULT_BASE_URL,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        },
-        timeout=15.0,
-    )
+_NOT_AVAILABLE_MSG = (
+    "Jane App integration is not available. Jane does not offer a public per-clinic "
+    "API key — only an approval-gated partner programme (Jane Developer Platform, "
+    "OAuth 2.0 PKCE). StrydeOS is not yet an approved Jane partner. Apply at "
+    "https://integrations.janeapp.net/application_forms/jane-integrations-partner-interest-form/partner_applications/new"
+)
 
 
 async def get_jane_availability(
@@ -28,39 +53,30 @@ async def get_jane_availability(
     duration_minutes: int,
     api_key: str = "",
     base_url: str = "",
-) -> List[str]:
+):
     """
     Query Jane App for available appointment slots.
+
+    NOT IMPLEMENTED — Jane App does not expose a public per-clinic API.
+    Access requires an approved Jane Developer Platform partnership using
+    OAuth 2.0 PKCE, not a static API key.
 
     Args:
         clinic_id: The clinic identifier in Jane App
         start_date: Start date for availability check (YYYY-MM-DD)
         duration_minutes: Required appointment duration in minutes
-        api_key: Jane API key for this clinic
-        base_url: Optional Jane base URL override
+        api_key: Reserved (Jane uses OAuth JWTs, not API keys)
+        base_url: Reserved (would be https://api.jane.app/<api_version_date>)
 
-    Returns:
-        List of available slots as ISO datetime strings
+    Raises:
+        NotImplementedError: Always, until StrydeOS is an approved Jane partner.
     """
-    async with _make_client(api_key, base_url) as client:
-        try:
-            response = await client.get(
-                "/appointments/availability",
-                params={
-                    "clinic_id": clinic_id,
-                    "start_date": start_date,
-                    "duration_minutes": duration_minutes,
-                },
-            )
-            response.raise_for_status()
-            data = response.json()
-        except httpx.HTTPError as e:
-            logger.error("Jane availability query failed for clinic %s: %s", clinic_id, e)
-            raise
-
-    slots = [item["start_time"] for item in data.get("data", []) if "start_time" in item]
-    logger.info("Jane: found %d available slots for clinic %s", len(slots), clinic_id)
-    return slots
+    logger.error(
+        "get_jane_availability called for clinic %s but Jane integration is "
+        "not available (no public API; partner programme required)",
+        clinic_id,
+    )
+    raise NotImplementedError(_NOT_AVAILABLE_MSG)
 
 
 async def book_jane_appointment(
@@ -71,9 +87,11 @@ async def book_jane_appointment(
     slot: str,
     api_key: str = "",
     base_url: str = "",
-) -> str:
+):
     """
     Create an appointment booking in Jane App.
+
+    NOT IMPLEMENTED — see module docstring and get_jane_availability.
 
     Args:
         clinic_id: The clinic identifier in Jane App
@@ -81,29 +99,16 @@ async def book_jane_appointment(
         patient_phone: Contact phone number
         service_type: Type of service to book
         slot: Appointment slot as ISO datetime string
-        api_key: Jane API key for this clinic
-        base_url: Optional Jane base URL override
+        api_key: Reserved (Jane uses OAuth JWTs, not API keys)
+        base_url: Reserved (would be https://api.jane.app/<api_version_date>)
 
-    Returns:
-        The appointment ID as a string
+    Raises:
+        NotImplementedError: Always, until StrydeOS is an approved Jane partner.
     """
-    payload = {
-        "clinic_id": clinic_id,
-        "patient_name": patient_name,
-        "patient_phone": patient_phone,
-        "service_type": service_type,
-        "start_time": slot,
-    }
-
-    async with _make_client(api_key, base_url) as client:
-        try:
-            response = await client.post("/appointments", json=payload)
-            response.raise_for_status()
-            data = response.json()
-        except httpx.HTTPError as e:
-            logger.error("Jane booking failed for clinic %s: %s", clinic_id, e)
-            raise
-
-    appointment_id = str(data.get("id", ""))
-    logger.info("Jane booking created: %s for patient %s", appointment_id, patient_name)
-    return appointment_id
+    logger.error(
+        "book_jane_appointment called for clinic %s, patient %s but Jane "
+        "integration is not available (no public API; partner programme required)",
+        clinic_id,
+        patient_name,
+    )
+    raise NotImplementedError(_NOT_AVAILABLE_MSG)

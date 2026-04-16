@@ -1,23 +1,63 @@
-"""Cliniko PMS API integration. Multi-tenant: api_key/base_url passed per-call."""
+"""Cliniko PMS API integration. Multi-tenant: api_key/base_url passed per-call.
 
+Cliniko auth: API key used as the username in HTTP Basic auth with an empty
+password (mirrors the dashboard TS adapter at
+dashboard/src/lib/integrations/pms/cliniko/client.ts).
+
+Cliniko is region-sharded: api.au1.cliniko.com, api.uk1.cliniko.com,
+api.us1.cliniko.com, etc. There is NO api.cliniko.com — calls to it 404. The
+default shard here is au1; pass `base_url` to override per clinic (resolved
+during the dashboard connection-test flow).
+"""
+
+import base64
 import logging
 from datetime import datetime, timedelta
-from typing import List
+from time import monotonic as _monotonic
+from typing import Dict, List, Tuple
 
 import httpx
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_BASE_URL = "https://api.cliniko.com/v1"
+_DEFAULT_BASE_URL = "https://api.au1.cliniko.com/v1"
+
+# In-memory availability cache. A live phone call typically calls
+# check_availability multiple times (patient rejects slot, asks for another).
+# 60s is short enough that real bookings don't drift, long enough to cover the
+# whole conversation turn. Keyed by (clinic_id, start_date, duration, days_ahead).
+_AVAILABILITY_TTL_SECONDS = 60.0
+_availability_cache: Dict[Tuple[str, str, int, int], Tuple[float, List[str]]] = {}
 
 
 def _make_client(api_key: str, base_url: str) -> httpx.AsyncClient:
+    """
+    Build an authenticated Cliniko HTTP client.
+
+    Cliniko uses HTTP Basic auth with the API key as the username and an empty
+    password. The combined "{api_key}:" string is base64-encoded into the
+    Authorization header.
+
+    Raises:
+        ValueError: If api_key is empty or whitespace-only. This is loud on
+            purpose — silently sending `Basic Og==` (just ":") returns a 401
+            from Cliniko which the graph nodes were treating as a generic
+            availability failure, masking a real misconfiguration.
+    """
+    if not api_key or not api_key.strip():
+        raise ValueError(
+            "PMS api_key is empty — clinic integrations_config likely missing or unconfigured"
+        )
+
+    encoded = base64.b64encode(f"{api_key}:".encode("utf-8")).decode("ascii")
+
     return httpx.AsyncClient(
         base_url=base_url or _DEFAULT_BASE_URL,
         headers={
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Basic {encoded}",
             "Accept": "application/json",
             "Content-Type": "application/json",
+            "User-Agent": "StrydeOS/1.0",
         },
         timeout=15.0,
     )
@@ -34,17 +74,29 @@ async def get_cliniko_availability(
     """
     Query Cliniko for available appointment slots.
 
+    Results are cached in-process for `_AVAILABILITY_TTL_SECONDS` (60s) keyed
+    by (clinic_id, start_date, duration_minutes, days_ahead). This absorbs the
+    repeated calls Ava issues during a single phone conversation when the
+    patient rejects a slot and asks for an alternative.
+
     Args:
         clinic_id: StrydeOS clinic identifier (maps to Cliniko business ID)
         start_date: ISO date string (YYYY-MM-DD)
         duration_minutes: Appointment duration
         days_ahead: How many days in advance to check
         api_key: Cliniko API key for this clinic
-        base_url: Optional Cliniko base URL override
+        base_url: Optional Cliniko shard base URL override (e.g. uk1)
 
     Returns:
         List of available datetime strings (ISO format)
     """
+    cache_key = (clinic_id, start_date, duration_minutes, days_ahead)
+    now = _monotonic()
+    cached = _availability_cache.get(cache_key)
+    if cached is not None and (now - cached[0]) < _AVAILABILITY_TTL_SECONDS:
+        logger.debug("Cliniko availability cache hit for clinic %s", clinic_id)
+        return cached[1]
+
     end_date = (
         datetime.fromisoformat(start_date) + timedelta(days=days_ahead)
     ).isoformat()
@@ -64,6 +116,7 @@ async def get_cliniko_availability(
     available = data.get("available_appointments", [])
     slots = [slot["start_at"] for slot in available if "start_at" in slot]
     logger.info("Cliniko: found %d available slots for clinic %s", len(slots), clinic_id)
+    _availability_cache[cache_key] = (_monotonic(), slots)
     return slots
 
 

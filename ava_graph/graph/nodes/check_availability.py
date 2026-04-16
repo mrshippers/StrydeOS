@@ -183,6 +183,37 @@ async def check_availability(state: AvaState) -> AvaState:
             "messages": messages,
         }
 
+    except ValueError as e:
+        # ValueError is raised by the PMS tool's _make_client when api_key is
+        # empty/missing. Surface this as a distinct, operator-actionable
+        # message so a misconfigured clinic doesn't masquerade as "no slots".
+        # The phrasing is still safe to speak aloud if it ever leaks to TTS.
+        logger.error(f"check_availability auth error: {str(e)}", exc_info=True)
+        return {
+            **state,
+            "available_slots": [],
+            "response_message": "PMS auth failed — please check clinic integration settings.",
+            "messages": list(state.get("messages", []))
+            + ["SYSTEM: PMS auth failed — check clinic integration settings."],
+        }
+    except NotImplementedError as e:
+        # Raised by tools whose PMS partnership isn't yet in place (Jane, TM3).
+        # Distinct from auth/runtime failures — this clinic can't be served
+        # automatically until the partnership lands.
+        logger.error(
+            "check_availability: PMS %s not supported — %s",
+            state.get("pms_type"), e,
+        )
+        return {
+            **state,
+            "available_slots": [],
+            "response_message": (
+                "I'm sorry, online booking isn't available for this clinic right now. "
+                "Let me take your details and have someone call you back to book."
+            ),
+            "messages": list(state.get("messages", []))
+            + [f"SYSTEM: PMS not supported — {state.get('pms_type')}"],
+        }
     except Exception as e:
         logger.error(f"check_availability error: {str(e)}", exc_info=True)
         return {

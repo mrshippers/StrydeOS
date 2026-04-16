@@ -1,75 +1,57 @@
-"""Tests for TM3 (Blue Zinc) availability and booking tools (multi-tenant API)."""
+"""Tests for TM3 (Blue Zinc IT) availability and booking tools.
+
+TM3 has no public REST API (see ava_graph/tools/tm3.py module docstring).
+Both functions therefore raise NotImplementedError. These tests pin that
+behaviour so the stub is not silently replaced with a fake implementation
+that would 404 mid-call against a real patient.
+
+When Blue Zinc grants partnership access, replace these with real
+behavioural tests mirroring test_tools_writeupp.py.
+"""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from ava_graph.tools.tm3 import get_tm3_availability, book_tm3_appointment
+
+from ava_graph.tools.tm3 import (
+    _NOT_IMPLEMENTED_MESSAGE,
+    book_tm3_appointment,
+    get_tm3_availability,
+)
 
 FAKE_KEY = "tm3_test_key"
 
 
-def _mock_client_ctx(response):
-    mc = AsyncMock()
-    mc.__aenter__ = AsyncMock(return_value=mc)
-    mc.__aexit__ = AsyncMock(return_value=False)
-    mc.get = AsyncMock(return_value=response)
-    mc.post = AsyncMock(return_value=response)
-    return mc
-
-
 @pytest.mark.asyncio
-async def test_get_tm3_availability_returns_only_available_slots():
-    """TM3 should only return slots where available=True."""
-    resp = MagicMock()
-    resp.raise_for_status = MagicMock()
-    resp.json = MagicMock(return_value={
-        "slots": [
-            {"dateTime": "2026-04-21T14:00:00", "available": True},
-            {"dateTime": "2026-04-21T15:00:00", "available": True},
-            {"dateTime": "2026-04-21T16:00:00", "available": False},
-        ]
-    })
-    mc = _mock_client_ctx(resp)
-
-    with patch("ava_graph.tools.tm3._make_client", return_value=mc):
-        slots = await get_tm3_availability(
+async def test_get_tm3_availability_raises_not_implemented():
+    """TM3 has no public API — availability call must raise NotImplementedError."""
+    with pytest.raises(NotImplementedError) as exc_info:
+        await get_tm3_availability(
             clinic_id="clinic_001",
             start_date="2026-04-21",
             duration_minutes=60,
             api_key=FAKE_KEY,
         )
-
-    assert len(slots) == 2
-    assert "2026-04-21T14:00:00" in slots
-    assert "2026-04-21T15:00:00" in slots
-    assert "2026-04-21T16:00:00" not in slots
+    assert "TM3" in str(exc_info.value)
+    assert "info@tm3app.com" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
-async def test_get_tm3_availability_empty():
-    """Empty slots returns empty list."""
-    resp = MagicMock()
-    resp.raise_for_status = MagicMock()
-    resp.json = MagicMock(return_value={"slots": []})
-    mc = _mock_client_ctx(resp)
-
-    with patch("ava_graph.tools.tm3._make_client", return_value=mc):
-        slots = await get_tm3_availability(
-            clinic_id="c1", start_date="2026-04-21", duration_minutes=60, api_key=FAKE_KEY
+async def test_get_tm3_availability_raises_with_base_url_override():
+    """Passing a custom base_url does not bypass the NotImplemented stub."""
+    with pytest.raises(NotImplementedError):
+        await get_tm3_availability(
+            clinic_id="c1",
+            start_date="2026-04-21",
+            duration_minutes=60,
+            api_key=FAKE_KEY,
+            base_url="https://custom.tm3.example.com",
         )
 
-    assert slots == []
-
 
 @pytest.mark.asyncio
-async def test_book_tm3_appointment_returns_booking_id():
-    """Verify TM3 booking creates appointment and returns ID."""
-    resp = MagicMock()
-    resp.raise_for_status = MagicMock()
-    resp.json = MagicMock(return_value={"appointmentId": "tm3_12345"})
-    mc = _mock_client_ctx(resp)
-
-    with patch("ava_graph.tools.tm3._make_client", return_value=mc):
-        booking_id = await book_tm3_appointment(
+async def test_book_tm3_appointment_raises_not_implemented():
+    """TM3 booking must raise NotImplementedError, not silently fail."""
+    with pytest.raises(NotImplementedError) as exc_info:
+        await book_tm3_appointment(
             clinic_id="clinic_001",
             patient_name="John Doe",
             patient_phone="07700000000",
@@ -77,20 +59,15 @@ async def test_book_tm3_appointment_returns_booking_id():
             slot="2026-04-21T14:00:00",
             api_key=FAKE_KEY,
         )
-
-    assert booking_id == "tm3_12345"
+    assert "TM3" in str(exc_info.value)
+    assert "info@tm3app.com" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
-async def test_book_tm3_appointment_with_email():
-    """Verify TM3 booking can include patient email."""
-    resp = MagicMock()
-    resp.raise_for_status = MagicMock()
-    resp.json = MagicMock(return_value={"appointmentId": "tm3_67890"})
-    mc = _mock_client_ctx(resp)
-
-    with patch("ava_graph.tools.tm3._make_client", return_value=mc):
-        booking_id = await book_tm3_appointment(
+async def test_book_tm3_appointment_raises_with_email():
+    """Passing patient_email does not bypass the NotImplemented stub."""
+    with pytest.raises(NotImplementedError):
+        await book_tm3_appointment(
             clinic_id="c1",
             patient_name="Jane Smith",
             patient_phone="07700111111",
@@ -100,4 +77,10 @@ async def test_book_tm3_appointment_with_email():
             patient_email="jane@example.com",
         )
 
-    assert booking_id == "tm3_67890"
+
+def test_not_implemented_message_includes_contact_path():
+    """Error message must surface the partnership contact email so on-call
+    operators know how to escalate when this fires in production logs."""
+    assert "info@tm3app.com" in _NOT_IMPLEMENTED_MESSAGE
+    assert "support@blue-zinc.com" in _NOT_IMPLEMENTED_MESSAGE
+    assert "partnership" in _NOT_IMPLEMENTED_MESSAGE.lower()

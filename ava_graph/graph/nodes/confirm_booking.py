@@ -115,6 +115,39 @@ async def confirm_booking(state: AvaState) -> AvaState:
             "messages": messages,
         }
 
+    except ValueError as e:
+        # ValueError is raised by the PMS tool's _make_client when api_key is
+        # empty/missing. Surface as a distinct message — a misconfigured clinic
+        # is fundamentally different from "PMS API is down" and operators need
+        # to know which one happened. Phrasing is still safe for TTS playback.
+        logger.error(
+            "PMS auth failure during booking for clinic %s: %s",
+            clinic_id, str(e), exc_info=True,
+        )
+        messages.append(f"SYSTEM: PMS auth failed — check clinic integration settings.")
+        return {
+            **state,
+            "booking_id": "",
+            "response_message": "PMS auth failed — please check clinic integration settings.",
+            "messages": messages,
+        }
+    except NotImplementedError as e:
+        # Raised by tools without partnership API access (Jane, TM3). Booking
+        # cannot be completed automatically — patient is told a human will follow up.
+        logger.error(
+            "confirm_booking: PMS %s not supported — %s",
+            pms_type, e,
+        )
+        messages.append(f"SYSTEM: PMS not supported — {pms_type}")
+        return {
+            **state,
+            "booking_id": "",
+            "response_message": (
+                "I'm sorry — I can't complete the booking through our system right now. "
+                "Someone from the clinic will call you back to confirm it."
+            ),
+            "messages": messages,
+        }
     except Exception as e:
         # Handle PMS API errors gracefully
         error_msg = f"Failed to book appointment: {str(e)}"
