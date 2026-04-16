@@ -246,14 +246,16 @@ function MiniWave({ playing }) {
 }
 
 // ——— Pill ————————————————————————————————————————————————————————————————————
-function Pill({ children, variant = "default" }) {
-  const s = {
-    accent:     { bg: "rgba(28,84,242,0.04)", color: B.blue,      border: "rgba(28,84,242,0.07)" },
-    connected:  { bg: "rgba(5,150,105,0.04)", color: B.success,   border: "rgba(5,150,105,0.07)" },
-    connecting: { bg: "rgba(217,119,6,0.05)", color: "#B45309",   border: "rgba(217,119,6,0.10)" },
-    error:      { bg: "rgba(220,38,38,0.05)", color: "#B91C1C",   border: "rgba(220,38,38,0.10)" },
-  }[variant] || { bg: "rgba(0,0,0,0.02)", color: B.mutedSoft, border: B.borderSoft };
+const PILL_VARIANTS = {
+  default:    { bg: "rgba(0,0,0,0.02)",     color: B.mutedSoft, border: B.borderSoft,      dot: B.mutedSoft, pulse: false },
+  accent:     { bg: "rgba(28,84,242,0.04)", color: B.blue,      border: "rgba(28,84,242,0.07)", dot: null,         pulse: false },
+  connected:  { bg: "rgba(5,150,105,0.04)", color: B.success,   border: "rgba(5,150,105,0.07)", dot: B.success,    pulse: "slow" },
+  connecting: { bg: "rgba(217,119,6,0.05)", color: "#B45309",   border: "rgba(217,119,6,0.10)", dot: "#D97706",    pulse: "fast" },
+  error:      { bg: "rgba(220,38,38,0.05)", color: "#B91C1C",   border: "rgba(220,38,38,0.10)", dot: "#DC2626",    pulse: false },
+};
 
+function Pill({ children, variant = "default" }) {
+  const s = PILL_VARIANTS[variant] || PILL_VARIANTS.default;
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 6,
@@ -263,9 +265,29 @@ function Pill({ children, variant = "default" }) {
       border: `1px solid ${s.border}`, lineHeight: 1,
       transition: "background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease",
     }}>
+      {s.dot && (
+        <span style={{
+          width: 7, height: 7, borderRadius: "50%", display: "inline-block",
+          backgroundColor: s.dot,
+          boxShadow: variant === "connected" ? `0 0 5px ${B.success}50, 0 0 10px ${B.success}20` : "none",
+          animation: s.pulse === "slow" ? "connectedPulse 1.6s ease-in-out infinite"
+                  : s.pulse === "fast" ? "connectedPulse 0.9s ease-in-out infinite"
+                  : "none",
+        }} />
+      )}
       {children}
     </span>
   );
+}
+
+// Map connection state → {variant, label}
+function statusPillFor(connectionState, errorMsg) {
+  switch (connectionState) {
+    case "connected":  return { variant: "connected",  label: "Connected" };
+    case "connecting": return { variant: "connecting", label: "Connecting…" };
+    case "error":      return { variant: "error",      label: errorMsg || "Connection error" };
+    default:           return { variant: "default",    label: "Not connected" };
+  }
 }
 
 // ——— Main ————————————————————————————————————————————————————————————————————
@@ -282,10 +304,8 @@ export default function AvaShowcase() {
   const [cardHover, setCardHover] = useState(false);
   const wsRef = useRef(null);
   const audioContextRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
   const audioStreamRef = useRef(null);
-  const audioNodesRef = useRef(null); // { source, processor }
-  const audioChunksRef = useRef([]);
+  const audioNodesRef = useRef(null); // { source, processor, micSink }
   const tickRef = useRef(null);
   const keepaliveRef = useRef(null);
 
@@ -301,12 +321,11 @@ export default function AvaShowcase() {
   const tearDown = useCallback(() => {
     try { wsRef.current?.close(); } catch (e) {}
     wsRef.current = null;
-    try { mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive" && mediaRecorderRef.current.stop(); } catch (e) {}
-    mediaRecorderRef.current = null;
     try { audioStreamRef.current?.getTracks().forEach(t => t.stop()); } catch (e) {}
     audioStreamRef.current = null;
     try { audioNodesRef.current?.processor?.disconnect(); } catch (e) {}
     try { audioNodesRef.current?.source?.disconnect(); } catch (e) {}
+    try { audioNodesRef.current?.micSink?.disconnect(); } catch (e) {}
     audioNodesRef.current = null;
     if (keepaliveRef.current) { clearInterval(keepaliveRef.current); keepaliveRef.current = null; }
     setPlaying(false);
@@ -383,28 +402,7 @@ export default function AvaShowcase() {
         console.log("[Ava] Resumed suspended AudioContext");
       }
 
-      // Setup MediaRecorder — wrap in try so Windows/Edge codec rejection surfaces as UI error, not crash
-      let mediaRecorder;
-      try {
-        const mimeType = typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.("audio/webm")
-          ? "audio/webm"
-          : undefined; // let the browser pick its own default
-        mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-      } catch (err) {
-        console.error("[Ava] MediaRecorder unsupported:", err);
-        setConnectionState("error");
-        setErrorMsg("Audio recording isn't supported in this browser.");
-        tearDown();
-        return;
-      }
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (ev) => {
-        audioChunksRef.current.push(ev.data);
-      };
-
-      // Connect WebSocket
+      // Connect WebSocket — ScriptProcessor below streams user audio; MediaRecorder was redundant and caused double-mic bugs
       const ws = new WebSocket(
         "wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent_6301kp6cxhx4e3vt35a2vbd9m8wq"
       );
@@ -420,7 +418,6 @@ export default function AvaShowcase() {
 
       ws.onopen = () => {
         clearTimeout(connectionTimeout);
-        mediaRecorder.start(100);
 
         keepaliveRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
@@ -509,49 +506,40 @@ export default function AvaShowcase() {
         tearDown();
       };
 
-      // Stream user audio chunks to the WebSocket
-      mediaRecorder.onstop = () => {
-        audioChunksRef.current = [];
-      };
-
-      // Send audio chunks as they are recorded
+      // Stream user audio to ElevenLabs via ScriptProcessor (downsampled to 16kHz PCM16)
       const audioContext_ = audioContextRef.current;
       const source = audioContext_.createMediaStreamSource(stream);
       const processor = audioContext_.createScriptProcessor(4096, 1, 1);
-      audioNodesRef.current = { source, processor };
+      // Silenced sink — connecting to destination routes the user's own mic back to their speakers,
+      // which makes them hear themselves on top of the agent. A muted GainNode keeps onaudioprocess
+      // firing without bleeding mic audio to the output.
+      const micSink = audioContext_.createGain();
+      micSink.gain.value = 0;
+      audioNodesRef.current = { source, processor, micSink };
 
       processor.onaudioprocess = (e) => {
         try {
           const rawFloat = e.inputBuffer.getChannelData(0);
-
-          // Downsample from browser native rate (44100/48000) to 16000 Hz (ElevenLabs requirement)
           const pcm16k = downsample(rawFloat, audioContext_.sampleRate, 16000);
-
-          // Convert float32 → int16 PCM
           const int16 = new Int16Array(pcm16k.length);
           for (let i = 0; i < pcm16k.length; i++) {
             int16[i] = Math.max(-32768, Math.min(32767, pcm16k[i] * 32768));
           }
-
-          // Int16 bytes → base64
           const uint8 = new Uint8Array(int16.buffer, int16.byteOffset, int16.byteLength);
           let bin = "";
           for (let i = 0; i < uint8.length; i++) bin += String.fromCharCode(uint8[i]);
           const b64 = btoa(bin);
-
           if (ws && ws.readyState === WebSocket.OPEN) {
-            // ElevenLabs ConvAI expects user_audio_chunk (not type:"audio")
             ws.send(JSON.stringify({ user_audio_chunk: b64 }));
-          } else {
-            console.warn(`[Ava] WebSocket not ready (readyState=${ws?.readyState})`);
           }
         } catch (err) {
-          console.error("[Ava] Error encoding audio:", err);
+          console.error("[Ava] Error encoding mic audio:", err);
         }
       };
 
       source.connect(processor);
-      processor.connect(audioContext_.destination);
+      processor.connect(micSink);
+      micSink.connect(audioContext_.destination);
     } catch (error) {
       console.error("[Ava] Fatal error in toggle():", error);
       const msg =
@@ -718,54 +706,20 @@ export default function AvaShowcase() {
           </div>
 
           {/* ——— Pills — status reflects real WebSocket state ——— */}
-          <div style={{
-            display: "flex", justifyContent: "center", gap: 5, marginBottom: 18, position: "relative",
-            maxWidth: "70%", margin: "0 auto 18px",
-            maskImage: "linear-gradient(90deg, transparent, black 12%, black 88%, transparent)",
-            WebkitMaskImage: "linear-gradient(90deg, transparent, black 12%, black 88%, transparent)",
-          }}>
-            {connectionState === "connected" ? (
-              <Pill variant="connected">
-                <span style={{
-                  width: 7, height: 7, borderRadius: "50%",
-                  backgroundColor: B.success,
-                  display: "inline-block",
-                  boxShadow: `0 0 5px ${B.success}50, 0 0 10px ${B.success}20`,
-                  animation: "connectedPulse 1.6s ease-in-out infinite",
-                }} />
-                Connected
-              </Pill>
-            ) : connectionState === "connecting" ? (
-              <Pill variant="connecting">
-                <span style={{
-                  width: 7, height: 7, borderRadius: "50%",
-                  backgroundColor: "#D97706",
-                  display: "inline-block",
-                  animation: "connectedPulse 0.9s ease-in-out infinite",
-                }} />
-                Connecting…
-              </Pill>
-            ) : connectionState === "error" ? (
-              <Pill variant="error">
-                <span style={{
-                  width: 7, height: 7, borderRadius: "50%",
-                  backgroundColor: "#DC2626",
-                  display: "inline-block",
-                }} />
-                {errorMsg || "Connection error"}
-              </Pill>
-            ) : (
-              <Pill variant="default">
-                <span style={{
-                  width: 7, height: 7, borderRadius: "50%",
-                  backgroundColor: B.mutedSoft,
-                  display: "inline-block",
-                }} />
-                Not connected
-              </Pill>
-            )}
-            <Pill variant="accent">ElevenLabs</Pill>
-          </div>
+          {(() => {
+            const status = statusPillFor(connectionState, errorMsg);
+            return (
+              <div style={{
+                display: "flex", justifyContent: "center", gap: 5, marginBottom: 18, position: "relative",
+                maxWidth: "70%", margin: "0 auto 18px",
+                maskImage: "linear-gradient(90deg, transparent, black 12%, black 88%, transparent)",
+                WebkitMaskImage: "linear-gradient(90deg, transparent, black 12%, black 88%, transparent)",
+              }}>
+                <Pill variant={status.variant}>{status.label}</Pill>
+                <Pill variant="accent">ElevenLabs</Pill>
+              </div>
+            );
+          })()}
 
           {/* ——— Waveform Bar ——— */}
           <div style={{
