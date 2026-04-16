@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 const B = {
   navy: "#0B2545", navyMid: "#132D5E",
@@ -248,8 +248,10 @@ function MiniWave({ playing }) {
 // ——— Pill ————————————————————————————————————————————————————————————————————
 function Pill({ children, variant = "default" }) {
   const s = {
-    accent: { bg: "rgba(28,84,242,0.04)", color: B.blue, border: "rgba(28,84,242,0.07)" },
-    connected: { bg: "rgba(5,150,105,0.04)", color: B.success, border: "rgba(5,150,105,0.07)" },
+    accent:     { bg: "rgba(28,84,242,0.04)", color: B.blue,      border: "rgba(28,84,242,0.07)" },
+    connected:  { bg: "rgba(5,150,105,0.04)", color: B.success,   border: "rgba(5,150,105,0.07)" },
+    connecting: { bg: "rgba(217,119,6,0.05)", color: "#B45309",   border: "rgba(217,119,6,0.10)" },
+    error:      { bg: "rgba(220,38,38,0.05)", color: "#B91C1C",   border: "rgba(220,38,38,0.10)" },
   }[variant] || { bg: "rgba(0,0,0,0.02)", color: B.mutedSoft, border: B.borderSoft };
 
   return (
@@ -259,6 +261,7 @@ function Pill({ children, variant = "default" }) {
       fontSize: 10, fontWeight: 500, fontFamily: "'Outfit', sans-serif",
       color: s.color, backgroundColor: s.bg,
       border: `1px solid ${s.border}`, lineHeight: 1,
+      transition: "background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease",
     }}>
       {children}
     </span>
@@ -266,15 +269,22 @@ function Pill({ children, variant = "default" }) {
 }
 
 // ——— Main ————————————————————————————————————————————————————————————————————
+const MAX_ACTIVATIONS = 2; // hard cap per page load to prevent API abuse
+
 export default function AvaShowcase() {
   const [loaded, setLoaded] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [connectionState, setConnectionState] = useState("idle"); // "idle" | "connecting" | "connected" | "error"
+  const [errorMsg, setErrorMsg] = useState("");
+  const [activations, setActivations] = useState(0);
   const [glow, setGlow] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [cardHover, setCardHover] = useState(false);
   const wsRef = useRef(null);
   const audioContextRef = useRef(null);
   const mediaRecorderRef = useRef(null);
+  const audioStreamRef = useRef(null);
+  const audioNodesRef = useRef(null); // { source, processor }
   const audioChunksRef = useRef([]);
   const tickRef = useRef(null);
   const keepaliveRef = useRef(null);
@@ -286,6 +296,24 @@ export default function AvaShowcase() {
 
   useEffect(() => { playingRef.current = playing; }, [playing]);
   useEffect(() => { requestAnimationFrame(() => setLoaded(true)); }, []);
+
+  // Centralised teardown so every end-path cleans up identically
+  const tearDown = useCallback(() => {
+    try { wsRef.current?.close(); } catch (e) {}
+    wsRef.current = null;
+    try { mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive" && mediaRecorderRef.current.stop(); } catch (e) {}
+    mediaRecorderRef.current = null;
+    try { audioStreamRef.current?.getTracks().forEach(t => t.stop()); } catch (e) {}
+    audioStreamRef.current = null;
+    try { audioNodesRef.current?.processor?.disconnect(); } catch (e) {}
+    try { audioNodesRef.current?.source?.disconnect(); } catch (e) {}
+    audioNodesRef.current = null;
+    if (keepaliveRef.current) { clearInterval(keepaliveRef.current); keepaliveRef.current = null; }
+    setPlaying(false);
+  }, []);
+
+  // Tear down on unmount
+  useEffect(() => () => tearDown(), [tearDown]);
 
   // Progress animation loop
   useEffect(() => {
@@ -308,35 +336,39 @@ export default function AvaShowcase() {
   }, [playing]);
 
   const toggle = async () => {
-    console.log("[Ava] Toggle called. Current playing state:", playing);
-    
-    if (playing) {
-      console.log("[Ava] Already playing, stopping...");
-      if (wsRef.current) {
-        console.log("[Ava] Closing WebSocket...");
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        console.log("[Ava] Stopping MediaRecorder...");
-        mediaRecorderRef.current.stop();
-      }
-      if (keepaliveRef.current) {
-        console.log("[Ava] Clearing keepalive interval...");
-        clearInterval(keepaliveRef.current);
-      }
-      setPlaying(false);
-      console.log("[Ava] Stopped. State set to playing=false");
+    // Stop path: always end the call cleanly and return to idle
+    if (playing || connectionState === "connecting") {
+      tearDown();
+      setConnectionState("idle");
       return;
     }
 
-    console.log("[Ava] Starting new call...");
+    // Hard activation cap (per page load) — prevents button-mashing bleeding API credits
+    if (activations >= MAX_ACTIVATIONS) {
+      setConnectionState("error");
+      setErrorMsg("Demo limit reached. Refresh to try again.");
+      return;
+    }
+
+    // Feature detection — surface support gaps as inline state instead of dropping into try/catch
+    if (typeof window === "undefined" ||
+        typeof window.WebSocket === "undefined" ||
+        !navigator.mediaDevices?.getUserMedia ||
+        typeof window.MediaRecorder === "undefined" ||
+        !(window.AudioContext || window.webkitAudioContext)) {
+      setConnectionState("error");
+      setErrorMsg("Live demo isn't supported in this browser. Try Chrome, Edge, or Safari.");
+      return;
+    }
+
+    setConnectionState("connecting");
+    setErrorMsg("");
+    setActivations(n => n + 1);
+
     try {
-      console.log("[Ava] User clicked. Requesting microphone access...");
-      
       // Request mic access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log("[Ava] Microphone access granted, got stream:", stream.id);
+      audioStreamRef.current = stream;
       
       // Initialize AudioContext if needed
       if (!audioContextRef.current) {
@@ -351,10 +383,20 @@ export default function AvaShowcase() {
         console.log("[Ava] Resumed suspended AudioContext");
       }
 
-      // Setup MediaRecorder to capture user audio
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm",
-      });
+      // Setup MediaRecorder — wrap in try so Windows/Edge codec rejection surfaces as UI error, not crash
+      let mediaRecorder;
+      try {
+        const mimeType = typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.("audio/webm")
+          ? "audio/webm"
+          : undefined; // let the browser pick its own default
+        mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      } catch (err) {
+        console.error("[Ava] MediaRecorder unsupported:", err);
+        setConnectionState("error");
+        setErrorMsg("Audio recording isn't supported in this browser.");
+        tearDown();
+        return;
+      }
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -363,43 +405,31 @@ export default function AvaShowcase() {
       };
 
       // Connect WebSocket
-      console.log("[Ava] Connecting to ElevenLabs WebSocket...");
       const ws = new WebSocket(
         "wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent_6301kp6cxhx4e3vt35a2vbd9m8wq"
       );
-      console.log("[Ava] WebSocket object created, readyState=", ws.readyState, "(0=CONNECTING)");
+      wsRef.current = ws;
 
-      // Connection timeout failsafe
+      // Connection timeout failsafe — surface as inline error, don't alert()
       const connectionTimeout = setTimeout(() => {
-        console.error("[Ava] ✗✗✗ CRITICAL: WebSocket timeout! Still readyState=", ws.readyState);
-        console.error("[Ava] The connection to ElevenLabs never completed after 10 seconds.");
-        console.error("[Ava] Possible causes:");
-        console.error("[Ava]   1. CORS policy blocking WebSocket from browser");
-        console.error("[Ava]   2. Invalid agent_id");
-        console.error("[Ava]   3. Network/firewall blocking wss://api.elevenlabs.io");
-        console.error("[Ava]   4. ElevenLabs API is down");
-        alert("[Ava] WebSocket connection timeout after 10s. Check console for details.");
-        ws.close();
-        setPlaying(false);
+        console.error("[Ava] WebSocket timeout. readyState=", ws.readyState);
+        setConnectionState("error");
+        setErrorMsg("Couldn't reach the voice service. Check your connection and try again.");
+        tearDown();
       }, 10000);
 
       ws.onopen = () => {
         clearTimeout(connectionTimeout);
-        console.log("[Ava] ✓✓✓ WebSocket CONNECTED! ✓✓✓");
-        console.log("[Ava] WebSocket readyState:", ws.readyState, "(1=OPEN)");
-        mediaRecorder.start(100); // Send audio chunks every 100ms
-        console.log("[Ava] MediaRecorder started");
-        
-        // Setup keepalive ping
+        mediaRecorder.start(100);
+
         keepaliveRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: "ping" }));
-            console.log("[Ava] Keepalive ping sent");
           }
-        }, 30000); // Ping every 30 seconds
+        }, 30000);
 
         setPlaying(true);
-        console.log("[Ava] Set playing=true");
+        setConnectionState("connected");
       };
 
       ws.onmessage = async (event) => {
@@ -464,35 +494,20 @@ export default function AvaShowcase() {
         }
       };
 
-      ws.onerror = (error) => {
+      ws.onerror = (event) => {
         clearTimeout(connectionTimeout);
-        console.error("[Ava] ✗✗✗ WebSocket ERROR (readyState=" + ws.readyState + ") ✗✗✗");
-        console.error("[Ava] Error event:", error);
-        console.error("[Ava] Check:");
-        console.error("[Ava]   • Browser console for CORS errors");
-        console.error("[Ava]   • Network tab to see if wss://api.elevenlabs.io connects");
-        console.error("[Ava]   • If 403/401: agent_id might be invalid or auth required");
-        console.error("[Ava]   • If mixed content: ensure page is HTTPS (ElevenLabs requires it)");
-        alert(`[Ava] WebSocket error. See console (Network tab) for details.`);
-        setPlaying(false);
-        try { mediaRecorder.stop(); } catch (e) { console.error("[Ava] Error stopping mediaRecorder:", e); }
-        stream.getTracks().forEach((track) => track.stop());
+        console.error("[Ava] WebSocket error (readyState=" + ws.readyState + "):", event);
+        // Don't alert — set inline state. onclose will follow and fully tear down.
+        setConnectionState("error");
+        setErrorMsg("Voice service error. Try again in a moment.");
       };
 
       ws.onclose = () => {
         clearTimeout(connectionTimeout);
-        console.log("[Ava] WebSocket closed (readyState:", ws.readyState, ")");
-        setPlaying(false);
-        if (mediaRecorderRef.current) {
-          try { mediaRecorderRef.current.stop(); } catch (e) { console.error("[Ava] Error stopping mediaRecorder:", e); }
-        }
-        stream.getTracks().forEach((track) => track.stop());
-        if (keepaliveRef.current) {
-          clearInterval(keepaliveRef.current);
-        }
+        // If we were in error, keep that state so the user sees the message. Otherwise return to idle.
+        setConnectionState(prev => (prev === "error" ? "error" : "idle"));
+        tearDown();
       };
-
-      wsRef.current = ws;
 
       // Stream user audio chunks to the WebSocket
       mediaRecorder.onstop = () => {
@@ -500,10 +515,10 @@ export default function AvaShowcase() {
       };
 
       // Send audio chunks as they are recorded
-      const audioTrack = stream.getAudioTracks()[0];
       const audioContext_ = audioContextRef.current;
       const source = audioContext_.createMediaStreamSource(stream);
       const processor = audioContext_.createScriptProcessor(4096, 1, 1);
+      audioNodesRef.current = { source, processor };
 
       processor.onaudioprocess = (e) => {
         try {
@@ -538,21 +553,15 @@ export default function AvaShowcase() {
       source.connect(processor);
       processor.connect(audioContext_.destination);
     } catch (error) {
-      console.error("[Ava] ✗ Fatal error in toggle():", error);
-      console.error("[Ava] Error type:", error.name);
-      console.error("[Ava] Error message:", error.message);
-      console.error("[Ava] Full error object:", error);
-      
-      if (error.name === "NotAllowedError") {
-        alert("Microphone access denied. Please allow microphone access and try again.");
-      } else if (error.name === "NotFoundError") {
-        alert("No microphone found. Please check your audio device.");
-      } else if (error.name === "NotSupportedError") {
-        alert("Your browser doesn't support getUserMedia. Try a modern browser (Chrome, Firefox, Edge, Safari).");
-      } else {
-        alert(`Error: ${error.message}`);
-      }
-      setPlaying(false);
+      console.error("[Ava] Fatal error in toggle():", error);
+      const msg =
+        error.name === "NotAllowedError" ? "Microphone access denied." :
+        error.name === "NotFoundError"   ? "No microphone detected." :
+        error.name === "NotSupportedError" ? "Browser not supported. Try Chrome, Edge, or Safari." :
+        error.message || "Something went wrong. Try again.";
+      setConnectionState("error");
+      setErrorMsg(msg);
+      tearDown();
     }
   };
 
@@ -572,6 +581,10 @@ export default function AvaShowcase() {
         @keyframes miniIdle {
           0% { transform: scaleY(0.6); opacity: 0.35; }
           100% { transform: scaleY(1); opacity: 0.65; }
+        }
+        @keyframes connectedPulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.55; transform: scale(0.85); }
         }
       `}</style>
 
@@ -704,23 +717,54 @@ export default function AvaShowcase() {
             </div>
           </div>
 
-          {/* ——— Pills (FIX #6: Connected first) ——— */}
+          {/* ——— Pills — status reflects real WebSocket state ——— */}
           <div style={{
             display: "flex", justifyContent: "center", gap: 5, marginBottom: 18, position: "relative",
             maxWidth: "70%", margin: "0 auto 18px",
             maskImage: "linear-gradient(90deg, transparent, black 12%, black 88%, transparent)",
             WebkitMaskImage: "linear-gradient(90deg, transparent, black 12%, black 88%, transparent)",
           }}>
-            <Pill variant="connected">
-              <span style={{
-                width: 7, height: 7, borderRadius: "50%",
-                backgroundColor: B.success,
-                display: "inline-block",
-                boxShadow: `0 0 5px ${B.success}50, 0 0 10px ${B.success}20`,
-              }} />
-              Connected
-            </Pill>
-            <Pill variant="accent">Ava Lite</Pill>
+            {connectionState === "connected" ? (
+              <Pill variant="connected">
+                <span style={{
+                  width: 7, height: 7, borderRadius: "50%",
+                  backgroundColor: B.success,
+                  display: "inline-block",
+                  boxShadow: `0 0 5px ${B.success}50, 0 0 10px ${B.success}20`,
+                  animation: "connectedPulse 1.6s ease-in-out infinite",
+                }} />
+                Connected
+              </Pill>
+            ) : connectionState === "connecting" ? (
+              <Pill variant="connecting">
+                <span style={{
+                  width: 7, height: 7, borderRadius: "50%",
+                  backgroundColor: "#D97706",
+                  display: "inline-block",
+                  animation: "connectedPulse 0.9s ease-in-out infinite",
+                }} />
+                Connecting…
+              </Pill>
+            ) : connectionState === "error" ? (
+              <Pill variant="error">
+                <span style={{
+                  width: 7, height: 7, borderRadius: "50%",
+                  backgroundColor: "#DC2626",
+                  display: "inline-block",
+                }} />
+                {errorMsg || "Connection error"}
+              </Pill>
+            ) : (
+              <Pill variant="default">
+                <span style={{
+                  width: 7, height: 7, borderRadius: "50%",
+                  backgroundColor: B.mutedSoft,
+                  display: "inline-block",
+                }} />
+                Not connected
+              </Pill>
+            )}
+            <Pill variant="accent">ElevenLabs</Pill>
           </div>
 
           {/* ——— Waveform Bar ——— */}
@@ -778,7 +822,11 @@ export default function AvaShowcase() {
               transition: "opacity 0.4s ease",
               fontStyle: "italic",
             }}>
-              tap the monolith to listen
+              {activations >= MAX_ACTIVATIONS
+                ? "demo limit reached — refresh to retry"
+                : activations === 0
+                  ? "tap the monolith to talk to Ava"
+                  : `${MAX_ACTIVATIONS - activations} demo call${MAX_ACTIVATIONS - activations === 1 ? "" : "s"} left`}
             </span>
           </div>
         </div>
