@@ -21,8 +21,17 @@ export async function POST(req: NextRequest) {
       const sig = req.headers.get("x-twilio-signature") ?? "";
       const params: Record<string, string> = {};
       formData.forEach((value, key) => { params[key] = value.toString(); });
-      const isValid = twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, req.url, params);
+      // Reconstruct public-facing URL from forwarded headers — req.url is the
+      // internal URL behind Vercel's proxy and won't match Twilio's signature.
+      const proto = req.headers.get("x-forwarded-proto") ?? "https";
+      const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
+      const reqUrlObj = new URL(req.url);
+      const canonicalUrl = `${proto}://${host}${reqUrlObj.pathname}${reqUrlObj.search}`;
+      const isValid = twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, canonicalUrl, params);
       if (!isValid) {
+        console.error(
+          `[transfer-twiml/status] Twilio signature validation failed. canonicalUrl=${canonicalUrl}`
+        );
         return new NextResponse("Forbidden", { status: 403 });
       }
     }

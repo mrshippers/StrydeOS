@@ -8,7 +8,7 @@
  * Typography: Outfit (via Google Fonts), system fallbacks for email clients that block web fonts
  */
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.strydeos.com";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.strydeos.com";
 
 // Inline SVG Monolith mark — base64-encoded for email client compatibility.
 // This is the canonical mark from monolith.svg, simplified for email.

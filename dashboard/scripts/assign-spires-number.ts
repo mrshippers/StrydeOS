@@ -23,7 +23,7 @@ loadEnv({ path: path.resolve(__dirname, "..", ".env.local") });
 const CLINIC_ID = "clinic-spires";
 const PHONE_NUMBER = "+442045727044";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.strydeos.com";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://portal.strydeos.com";
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "OnKmvBo8ZskQurHsyps5";
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;

@@ -7,7 +7,7 @@
 
 import { wrapEmailLayout, escHtml, textFooter } from "./layout";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.strydeos.com";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.strydeos.com";
 
 export interface ClinicianDigestData {
   firstName: string;

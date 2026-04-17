@@ -168,7 +168,7 @@ async function handleBookAppointment(
   }
 
   // Determine duration
-  const durationMinutes = appointmentType === "initial_assessment" ? 60 : 30;
+  const durationMinutes = 45;
   const endTime = new Date(dt.getTime() + durationMinutes * 60_000).toISOString();
 
   // Normalise phone to E.164

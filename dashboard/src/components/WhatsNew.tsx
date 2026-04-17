@@ -16,7 +16,7 @@ import PulseMark from "@/components/PulseMark";
  * Show logic: modal appears once per version bump, on next login after
  * the version changes. Once dismissed it stays dismissed until the next bump.
  */
-const CURRENT_VERSION = "2026-04-13-ava";
+const CURRENT_VERSION = "2026-04-17-ava";
 
 const TOTAL_CARDS = 3;
 
@@ -365,6 +365,13 @@ export default function WhatsNew() {
 
                     <div className="px-8 py-5 space-y-4" role="list">
                       {[
+                        {
+                          tag: "Ava",
+                          tagColor: "#1C54F2",
+                          title: "Full call pipeline live at Spires",
+                          description:
+                            "End-to-end booking verified on the live number. Appointments standardised to 45 minutes — initial and follow-up.",
+                        },
                         {
                           tag: "Ava",
                           tagColor: "#1C54F2",

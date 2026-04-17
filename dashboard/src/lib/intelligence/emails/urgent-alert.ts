@@ -7,7 +7,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   positive: "#059669",
 };
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.strydeos.com";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.strydeos.com";
 
 export function buildUrgentAlertEmail(event: InsightEvent, clinicName: string): string {
   const sevColor = SEVERITY_COLORS[event.severity] ?? "#E8913A";
