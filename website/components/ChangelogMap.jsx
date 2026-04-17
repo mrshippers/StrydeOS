@@ -75,6 +75,7 @@ const STATIONS_RAW = [
   { id:'v130a', v:'v1.3.0', date:'1 Apr',  cat:'ava', title:'Rebuilt on LangGraph',   desc:'Proper state machine. Real conversation memory. Structured routing.',                 ring:3, angle:345 },
   { id:'v132',  v:'v1.3.2', date:'5 Apr',  cat:'ava', title:'One-click provisioning', desc:'UK number, SIP trunk, ElevenLabs agent. Sorted in one click.',                        ring:4, angle:335 },
   { id:'v140',  v:'v1.4.0', date:'7 Apr',  cat:'ava', title:'Warm transfers',         desc:'Catches the complaint before it becomes a missed call. Clean handoff via Twilio.',    ring:5, angle:355 },
+  { id:'v145',  v:'v1.4.5', date:'17 Apr', cat:'ava', title:'End-to-end booking live', desc:'Full call pipeline verified at Spires. Ring → Ava → WriteUpp → appointment in the diary.', ring:5, angle:8 },
 
   // ── INTELLIGENCE (50°–130°) ─────────────────────────────────────────
   { id:'v113',  v:'v1.1.3', date:'25 Feb', cat:'intel', title:'Weekly digest',        desc:'Same signal. Less noise. Your Monday is now 30 seconds shorter.',                     ring:2, angle:65  },
@@ -94,6 +95,7 @@ const STATIONS_RAW = [
   { id:'v122',  v:'v1.2.2', date:'19 Mar', cat:'platform', title:'Session security',  desc:'Remember Me toggle. HMAC-signed cookies. 8hr clinical workday TTL.',                  ring:3, angle:145 },
   { id:'v123',  v:'v1.2.3', date:'24 Mar', cat:'platform', title:'In-app changelog',  desc:"What shipped, when, for whom. Every user sees it once. Then it's gone.",              ring:4, angle:175 },
   { id:'v124',  v:'v1.2.4', date:'28 Mar', cat:'platform', title:'Clinician layer',   desc:"Observational notes. Clinicians see what's relevant. Owners see everything.",         ring:4, angle:148 },
+  { id:'v144',  v:'v1.4.4', date:'12 Apr', cat:'platform', title:'Security hardening sweep', desc:'Demo-bypass patch. Webhook fail-safe. Cross-clinic isolation proven. 606 tests green.', ring:5, angle:148 },
 
   // ── PULSE (230°–310°) — existing 4 + 2 new ───────────────────────
   { id:'v112',  v:'v1.1.2', date:'18 Feb', cat:'pulse', title:'Opt-outs honoured',    desc:'Patient communication preferences enforced across every sequence.',                   ring:2, angle:270 },
@@ -120,7 +122,7 @@ const STATION_MAP = Object.fromEntries(STATIONS.map(s => [s.id, s]));
 /* ─── Lines ──────────────────────────────────────────────────────────── */
 const LINES_RAW = [
   // Ava
-  { cat:'ava', ids:['EDGE:340', 'v103', 'v110a', 'v130a', 'v132', 'v140'], delay:0 },
+  { cat:'ava', ids:['EDGE:340', 'v103', 'v110a', 'v130a', 'v132', 'v140', 'v145'], delay:0 },
   { cat:'ava', ids:['EDGE:14',  'v114'], delay:0.12 },
   { cat:'ava', ids:['v140',     'r150a'], delay:0.2, roadmap:true },
 
@@ -130,7 +132,7 @@ const LINES_RAW = [
 
   // Platform — three arms converging on the logo
   { cat:'platform', ids:['v090', 'v091', 'v092', 'EDGE:200'], delay:0.5 },
-  { cat:'platform', ids:['EDGE:168', 'v101', 'v111', 'v122', 'v124'], delay:0.55 },
+  { cat:'platform', ids:['EDGE:168', 'v101', 'v111', 'v122', 'v124', 'v144'], delay:0.55 },
   { cat:'platform', ids:['EDGE:205', 'v102', 'v120', 'v121', 'v123'], delay:0.65 },
   { cat:'platform', ids:['v090',     'r150p'], delay:0.75, roadmap:true },
 

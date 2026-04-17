@@ -497,7 +497,7 @@
 <header class="header">
   <div class="header-inner">
     <h1>Stryde<span>OS</span> API Reference</h1>
-    <p>42 endpoints &middot; Last updated April 2026</p>
+    <p>45 endpoints &middot; Last updated 17 April 2026</p>
 
     <div class="view-toggle">
       <button class="view-btn active" onclick="setView('business')">API Architecture</button>
@@ -1377,6 +1377,37 @@ type, status, notes, price, duration</span></pre>
       </div>
     </div>
 
+    <div class="card" data-search="ava knowledge base sync elevenlabs kb documents upload">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/ava/knowledge</span>
+          </div>
+          <div class="card-desc">Sync clinic knowledge entries to the ElevenLabs agent's knowledge base. Compiles Firestore entries into category chunks, uploads them, and links them to the agent.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Request</h4>
+            <pre><span class="comment">No body — knowledge pulled from
+clinics/{clinicId}.ava.knowledge</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Response (200)</h4>
+            <pre>{ <span class="key">doc_ids</span>: <span class="type">string[]</span>, <span class="key">synced_at</span> }</pre>
+          </div>
+          <div class="detail-block full-width">
+            <h4>Notes</h4>
+            <ul><li>Idempotent — replaces previous KB docs if they exist</li><li>Chunks by category: Services / Team / Location / Pricing / Policies / FAQs</li><li>Falls back to system-prompt injection if KB API fails</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="card" data-search="ava provision number twilio sip trunk phone buy uk">
       <div class="card-header" onclick="toggleCard(this)">
         <div class="card-expand">▶</div>
@@ -1404,6 +1435,70 @@ type, status, notes, price, duration</span></pre>
           <div class="detail-block full-width">
             <h4>Notes</h4>
             <ul><li>Rate-limited: 2 requests / minute (costs money)</li><li>Uses Firestore transaction to prevent double-purchase</li><li>Stores number, agent ID, and trunk SID atomically</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="ava inbound call twilio voice webhook sip elevenlabs twiml">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/ava/inbound-call</span>
+          </div>
+          <div class="card-desc">Twilio voice webhook for the clinic's Ava number. Returns TwiML that SIP-dials the live call into the clinic's ElevenLabs Convai agent.</div>
+          <div class="card-tags"><span class="tag tag-webhook">Twilio Signature</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Query</h4>
+            <pre><span class="key">clinicId</span>: <span class="type">string</span> <span class="comment">← set at provisioning time</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Response (200)</h4>
+            <pre><span class="comment">TwiML: &lt;Dial&gt;&lt;Sip&gt;
+  sip:{agent_id}@sip.rtc.elevenlabs.io
+&lt;/Sip&gt;&lt;/Dial&gt;</span></pre>
+          </div>
+          <div class="detail-block full-width">
+            <h4>Security</h4>
+            <ul><li>Validates <code>X-Twilio-Signature</code> against the reconstructed public URL (handles Vercel proxy)</li><li>Rejects missing/invalid signatures with 403</li><li>Falls back to apology TwiML if the clinic or agent isn't found — never silent</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="ava tools dispatch book appointment check availability update webhook elevenlabs pms">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row">
+            <span class="method-badge method-POST">POST</span>
+            <span class="card-path">/api/ava/tools</span>
+          </div>
+          <div class="card-desc">ElevenLabs tool dispatcher. Routes <code>check_availability</code> / <code>book_appointment</code> / <code>update_booking</code> during a live call to the correct clinic's PMS adapter.</div>
+          <div class="card-tags"><span class="tag tag-webhook">HMAC-SHA256</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h4>Trigger</h4>
+            <pre><span class="comment">Called by ElevenLabs when Ava
+invokes a tool mid-conversation</span></pre>
+          </div>
+          <div class="detail-block">
+            <h4>Response (200)</h4>
+            <pre>{ <span class="key">result</span>: <span class="type">string</span> }
+<span class="comment">// speakable text Ava reads aloud</span></pre>
+          </div>
+          <div class="detail-block full-width">
+            <h4>Flow</h4>
+            <ul><li>Verifies ElevenLabs webhook signature (HMAC-SHA256)</li><li>Resolves clinic + PMS config from the agent_id</li><li>Dispatches to the correct PMS adapter (WriteUpp / Cliniko / Jane / TM3)</li><li>Mirrors bookings to Firestore and logs every tool call to <code>call_log</code></li><li>Optional proxy to the Python execution engine via <code>AVA_ENGINE_URL</code></li></ul>
           </div>
         </div>
       </div>
