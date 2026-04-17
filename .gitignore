@@ -9,6 +9,10 @@ dist/
 out/
 .vercel
 
+# Env backups
+.env.local.backup.*
+.env.backup.*
+
 # Firebase service account keys
 *-firebase-adminsdk-*.json
 serviceAccountKey.json
@@ -44,3 +48,13 @@ ALL CLAUDE PARTY/
 # Logs
 logs/
 *.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Playwright
+test-results/
+playwright-report/
