@@ -268,3 +268,73 @@ async def test_check_availability_handles_error_gracefully():
 
     assert result["available_slots"] == []
     assert "couldn't connect" in result["response_message"].lower()
+
+
+@pytest.mark.asyncio
+async def test_check_availability_surfaces_pms_auth_error_distinctly():
+    """A ValueError from the PMS client (e.g. empty api_key) must yield a
+    distinct, operator-actionable response_message — not the generic one."""
+    state = AvaState(
+        patient_name="John Doe",
+        patient_phone="07700000000",
+        requested_service="Physio",
+        preferred_time="",
+        clinic_id="clinic_001",
+        pms_type="writeupp",
+        api_key="",
+        base_url="",
+        available_slots=[],
+        confirmed_slot="",
+        patient_confirmed=False,
+        response_message="",
+        session_id="session_abc",
+        attempt_count=0,
+        messages=[],
+        booking_id="",
+    )
+
+    with patch("ava_graph.graph.nodes.check_availability.get_writeupp_availability") as mock_wu:
+        mock_wu.side_effect = ValueError(
+            "PMS api_key is empty — clinic integrations_config likely missing or unconfigured"
+        )
+
+        result = await check_availability(state)
+
+    assert result["available_slots"] == []
+    msg = result.get("response_message", "").lower()
+    assert "pms auth" in msg or "integration settings" in msg, (
+        f"Expected an auth-specific message, got: {result.get('response_message')!r}"
+    )
+
+
+@pytest.mark.asyncio
+async def test_check_availability_generic_exception_still_handled():
+    """Non-ValueError exceptions still produce a generic safe message."""
+    state = AvaState(
+        patient_name="John Doe",
+        patient_phone="07700000000",
+        requested_service="Physio",
+        preferred_time="",
+        clinic_id="clinic_001",
+        pms_type="writeupp",
+        api_key="real_key",
+        base_url="",
+        available_slots=[],
+        confirmed_slot="",
+        patient_confirmed=False,
+        response_message="",
+        session_id="session_abc",
+        attempt_count=0,
+        messages=[],
+        booking_id="",
+    )
+
+    with patch("ava_graph.graph.nodes.check_availability.get_writeupp_availability") as mock_wu:
+        mock_wu.side_effect = RuntimeError("network down")
+
+        result = await check_availability(state)
+
+    assert result["available_slots"] == []
+    # Generic message must NOT mention auth, since it isn't an auth error
+    msg = result.get("response_message", "").lower()
+    assert "pms auth" not in msg

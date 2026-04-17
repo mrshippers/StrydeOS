@@ -524,7 +524,7 @@ async function handler(req: NextRequest) {
       });
 
       if (engineResult !== null) {
-        return NextResponse.json({ response: engineResult.result ?? engineResult.response }, { status: 200 });
+        return NextResponse.json({ response: engineResult.result }, { status: 200 });
       }
       // null → fall through to TypeScript PMS handlers below
     }

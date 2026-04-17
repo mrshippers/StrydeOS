@@ -213,3 +213,40 @@ async def test_confirm_booking_handles_booking_api_error():
 
         assert "error" in result["response_message"].lower()
         assert result["booking_id"] == ""
+
+
+@pytest.mark.asyncio
+async def test_confirm_booking_surfaces_pms_auth_error_distinctly():
+    """A ValueError from the PMS client (e.g. empty api_key) must yield a
+    distinct, operator-actionable response_message."""
+    state = AvaState(
+        patient_name="Frank Foster",
+        patient_phone="07707777777",
+        requested_service="Physio",
+        preferred_time="Tuesday",
+        clinic_id="clinic_001",
+        pms_type="writeupp",
+        api_key="",
+        base_url="",
+        available_slots=["2026-03-16T14:00:00"],
+        confirmed_slot="2026-03-16T14:00:00",
+        patient_confirmed=True,
+        response_message="",
+        session_id="session_vwx",
+        attempt_count=1,
+        messages=[],
+        booking_id="",
+    )
+
+    with patch("ava_graph.graph.nodes.confirm_booking.book_writeupp_appointment") as mock_book:
+        mock_book.side_effect = ValueError(
+            "PMS api_key is empty — clinic integrations_config likely missing or unconfigured"
+        )
+
+        result = await confirm_booking(state)
+
+    assert result["booking_id"] == ""
+    msg = result["response_message"].lower()
+    assert "pms auth" in msg or "integration settings" in msg, (
+        f"Expected an auth-specific message, got: {result['response_message']!r}"
+    )

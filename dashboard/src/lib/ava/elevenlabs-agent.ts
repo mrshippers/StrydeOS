@@ -202,6 +202,105 @@ export async function updateAvaAgent(
   }
 }
 
+// ─── Knowledge base ──────────────────────────────────────────────────────────
+
+export interface KnowledgeBaseLocator {
+  type: "file" | "url" | "text" | "folder";
+  name: string;
+  id: string;
+  usage_mode?: "auto" | "prompt";
+}
+
+/**
+ * Upload a single text document to the ElevenLabs Knowledge Base.
+ * Returns the new document's id, which can be attached to one or more agents.
+ */
+export async function uploadKnowledgeBaseText(
+  apiKey: string,
+  name: string,
+  text: string,
+): Promise<string> {
+  const res = await fetch(`${ELEVENLABS_API_URL}/convai/knowledge-base/text`, {
+    method: "POST",
+    headers: { "xi-api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ name, text }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`ElevenLabs KB text upload failed for "${name}" (${res.status}): ${body}`);
+  }
+
+  const data = await res.json();
+  if (!data.id) {
+    throw new Error(`ElevenLabs KB text upload returned no id for "${name}"`);
+  }
+  return data.id as string;
+}
+
+/**
+ * Delete a single Knowledge Base document by id. Failures are swallowed and
+ * surfaced as a boolean, since stale/missing IDs are an expected condition
+ * during cleanup before a re-sync.
+ */
+export async function deleteKnowledgeBaseDoc(apiKey: string, docId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${ELEVENLABS_API_URL}/convai/knowledge-base/${docId}`, {
+      method: "DELETE",
+      headers: { "xi-api-key": apiKey },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Attach an array of KB document IDs to an agent's prompt.knowledge_base.
+ * This REPLACES the existing list (not append) — caller is responsible for
+ * deleting orphaned docs first if doing a re-sync.
+ */
+export async function setAgentKnowledgeBase(
+  apiKey: string,
+  agentId: string,
+  knowledgeBase: KnowledgeBaseLocator[],
+): Promise<void> {
+  const res = await fetch(`${ELEVENLABS_API_URL}/convai/agents/${agentId}`, {
+    method: "PATCH",
+    headers: { "xi-api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      conversation_config: {
+        agent: {
+          prompt: { knowledge_base: knowledgeBase },
+        },
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`ElevenLabs agent knowledge_base update failed (${res.status}): ${body}`);
+  }
+}
+
+/**
+ * Fetch the current agent config — used after a sync to verify the
+ * knowledge_base field is populated as expected.
+ */
+export async function getAgent(apiKey: string, agentId: string): Promise<Record<string, unknown>> {
+  const res = await fetch(`${ELEVENLABS_API_URL}/convai/agents/${agentId}`, {
+    method: "GET",
+    headers: { "xi-api-key": apiKey },
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`ElevenLabs agent fetch failed (${res.status}): ${body}`);
+  }
+
+  return res.json();
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function buildAgentPayload(config: AvaAgentConfig, toolIds: string[]) {
