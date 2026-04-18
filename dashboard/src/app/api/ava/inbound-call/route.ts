@@ -40,13 +40,19 @@ export async function POST(req: NextRequest) {
   const body = await req.text();
   const params: Record<string, string> = {};
   new URLSearchParams(body).forEach((v, k) => { params[k] = v; });
-  // Twilio signs against the public-facing URL. Behind Vercel/proxies, req.url
-  // resolves to the internal URL — reconstruct from forwarded headers so the
-  // HMAC matches what Twilio actually signed.
-  const proto = req.headers.get("x-forwarded-proto") ?? "https";
-  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
+  // Twilio signs against the exact webhook URL configured in the Twilio console.
+  // Use APP_URL as the authoritative base — x-forwarded-host can resolve to the
+  // internal Vercel deployment hostname rather than the public domain, causing
+  // the HMAC to mismatch what Twilio signed.
   const reqUrlObj = new URL(req.url);
-  const canonicalUrl = `${proto}://${host}${reqUrlObj.pathname}${reqUrlObj.search}`;
+  const appUrl = process.env.APP_URL;
+  const canonicalUrl = appUrl
+    ? `${new URL(appUrl).origin}${reqUrlObj.pathname}${reqUrlObj.search}`
+    : (() => {
+        const proto = req.headers.get("x-forwarded-proto") ?? "https";
+        const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
+        return `${proto}://${host}${reqUrlObj.pathname}${reqUrlObj.search}`;
+      })();
   const isValid = twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, canonicalUrl, params);
   if (!isValid) {
     console.error(
