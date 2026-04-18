@@ -18,6 +18,7 @@
 import { config as loadEnv } from "dotenv";
 import path from "path";
 import crypto from "node:crypto";
+import twilio from "twilio";
 
 loadEnv({ path: path.resolve(__dirname, "..", ".env.local") });
 
@@ -52,10 +53,22 @@ const sig = crypto.createHmac("sha1", AUTH_TOKEN).update(Buffer.from(payload, "u
 const body = new URLSearchParams(params).toString();
 
 async function main() {
+  // Self-check: our generated signature MUST validate locally with the same
+  // token. If it doesn't, our signature generation is wrong. If it does but
+  // the server rejects it, the server's TWILIO_AUTH_TOKEN differs from ours.
+  const selfValid = twilio.validateRequest(AUTH_TOKEN!, sig, FULL_URL, params);
+  const tokenFingerprint = crypto
+    .createHash("sha256")
+    .update(AUTH_TOKEN!)
+    .digest("hex")
+    .slice(0, 12);
+
   console.log("=== Probe ===");
-  console.log(`URL:        ${FULL_URL}`);
-  console.log(`Signature:  ${sig}`);
-  console.log(`Body:       ${body.slice(0, 80)}…\n`);
+  console.log(`URL:              ${FULL_URL}`);
+  console.log(`Signature:        ${sig}`);
+  console.log(`Local token sha:  ${tokenFingerprint} (first 12 hex of SHA-256)`);
+  console.log(`Self-validates:   ${selfValid ? "YES ✓" : "NO ✗"}`);
+  console.log(`Body:             ${body.slice(0, 80)}…\n`);
 
   const resp = await fetch(FULL_URL, {
     method: "POST",
