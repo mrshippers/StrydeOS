@@ -38,54 +38,25 @@ export async function POST(req: NextRequest) {
     return new NextResponse("Twilio auth not configured", { status: 500 });
   }
 
-  // Validate Twilio signature.
-  // Twilio signs against the exact URL it POSTs to. Behind Vercel's reverse
-  // proxy, req.url doesn't always match the public-facing URL — so we try a
-  // short list of candidate URLs (reconstructed from forwarded headers,
-  // raw req.url, and the configured NEXT_PUBLIC_APP_URL) and accept the
-  // request if ANY candidate validates. Authenticity is still guaranteed:
-  // a forged signature won't match any real URL under our auth token.
+  // Validate Twilio signature. Behind Vercel's reverse proxy req.url is the
+  // internal URL; Twilio signs against the public-facing URL set as the
+  // voiceUrl, so we reconstruct that from the forwarded headers.
   const sig = req.headers.get("x-twilio-signature") ?? "";
   const body = await req.text();
   const params: Record<string, string> = {};
   new URLSearchParams(body).forEach((v, k) => { params[k] = v; });
 
   const reqUrlObj = new URL(req.url);
-  const fwdProto = req.headers.get("x-forwarded-proto") ?? "https";
-  const fwdHost = req.headers.get("x-forwarded-host");
-  const hostHeader = req.headers.get("host");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL; // e.g. https://portal.strydeos.com
+  const proto = req.headers.get("x-forwarded-proto") ?? "https";
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
+  const canonicalUrl = `${proto}://${host}${reqUrlObj.pathname}${reqUrlObj.search}`;
+  const isValid = twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, canonicalUrl, params);
 
-  const candidates = new Set<string>();
-  if (fwdHost) candidates.add(`${fwdProto}://${fwdHost}${reqUrlObj.pathname}${reqUrlObj.search}`);
-  if (hostHeader) candidates.add(`${fwdProto}://${hostHeader}${reqUrlObj.pathname}${reqUrlObj.search}`);
-  candidates.add(req.url);
-  if (appUrl) candidates.add(`${appUrl.replace(/\/$/, "")}${reqUrlObj.pathname}${reqUrlObj.search}`);
-
-  let matchedUrl: string | null = null;
-  for (const url of candidates) {
-    if (twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, url, params)) {
-      matchedUrl = url;
-      break;
-    }
-  }
-
-  if (!matchedUrl) {
+  if (!isValid) {
     console.error(
-      `[inbound-call] Twilio signature validation failed. tried=${JSON.stringify([...candidates])} sig=${sig ? "present" : "missing"}`
+      `[inbound-call] Twilio signature validation failed. canonicalUrl=${canonicalUrl} sig=${sig ? "present" : "missing"}`
     );
-    // Diagnostic headers — safe to expose, no secrets. Helps confirm which
-    // deployment is serving and what URL shape it's seeing.
-    return new NextResponse("Forbidden", {
-      status: 403,
-      headers: {
-        "x-debug-tried-count": String(candidates.size),
-        "x-debug-fwd-proto": fwdProto,
-        "x-debug-fwd-host": fwdHost ?? "(none)",
-        "x-debug-host-header": hostHeader ?? "(none)",
-        "x-debug-req-url": req.url.slice(0, 256),
-      },
-    });
+    return new NextResponse("Forbidden", { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);

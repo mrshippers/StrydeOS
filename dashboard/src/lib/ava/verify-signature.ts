@@ -6,6 +6,9 @@
  * - /api/ava/transfer (tool webhook)
  */
 
+// Never wrap this value in quotes when setting it on Vercel/envs — it's
+// used as an HMAC-SHA256 key verbatim, so a stray " in the stored value
+// silently breaks every webhook signature check.
 const ELEVENLABS_WEBHOOK_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
 
 export async function verifyElevenLabsSignature(
