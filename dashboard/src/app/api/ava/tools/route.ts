@@ -18,7 +18,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
-import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
+// Tool-call auth uses a static Bearer token (ElevenLabs tool webhooks don't
+// send HMAC signatures — that's only for conversation event webhooks).
+const TOOLS_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
 import { withRequestLog } from "@/lib/request-logger";
 import { proxyToEngine } from "@/lib/ava/engine-proxy";
 import type { PMSIntegrationConfig } from "@/types/pms";
@@ -455,14 +457,13 @@ async function handler(req: NextRequest) {
   try {
     const rawBody = await req.text();
 
-    // Verify ElevenLabs signature
-    if (!isWebhookSecretConfigured()) {
-      return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });
+    // Verify Bearer token — ElevenLabs sends this as Authorization header on tool calls
+    if (!TOOLS_SECRET) {
+      return NextResponse.json({ error: "Tools secret not configured" }, { status: 500 });
     }
-    const sig = req.headers.get("elevenlabs-signature");
-    const valid = await verifyElevenLabsSignature(rawBody, sig);
-    if (!valid) {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    const authHeader = req.headers.get("authorization");
+    if (authHeader !== `Bearer ${TOOLS_SECRET}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body: ToolCallPayload = JSON.parse(rawBody);
