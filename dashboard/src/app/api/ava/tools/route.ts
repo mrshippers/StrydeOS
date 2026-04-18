@@ -86,11 +86,18 @@ async function handleCheckAvailability(
     dateTo = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
   }
 
-  const appointments = await adapter.getAppointments({
-    clinicianExternalId,
-    dateFrom,
-    dateTo,
-  });
+  let appointments: Awaited<ReturnType<typeof adapter.getAppointments>>;
+  try {
+    appointments = await adapter.getAppointments({
+      clinicianExternalId,
+      dateFrom,
+      dateTo,
+    });
+  } catch (err) {
+    console.error(`[ava/tools] check_availability PMS query failed for ${clinicId}:`, err instanceof Error ? err.message : String(err));
+    const whoDesc = clinicianName ? ` with ${clinicianName}` : "";
+    return `I'm having a bit of trouble accessing the diary right now. What day and time were you thinking${whoDesc}? I'll pass the details on and someone from the team will confirm the slot for you.`;
+  }
 
   // Find gaps in the schedule — basic slot detection
   // For now, return existing booked slots so ElevenLabs can infer availability
@@ -557,6 +564,7 @@ async function handler(req: NextRequest) {
 
     return NextResponse.json({ response: result }, { status: 200 });
   } catch (_error) {
+    console.error("[ava/tools] Unhandled error:", _error instanceof Error ? _error.message : String(_error));
     return NextResponse.json(
       { response: "I'm having a bit of trouble right now. Let me take your details and someone will call you back shortly." },
       { status: 200 },
