@@ -21,16 +21,25 @@ export async function POST(req: NextRequest) {
       const sig = req.headers.get("x-twilio-signature") ?? "";
       const params: Record<string, string> = {};
       formData.forEach((value, key) => { params[key] = value.toString(); });
-      // Reconstruct public-facing URL from forwarded headers — req.url is the
-      // internal URL behind Vercel's proxy and won't match Twilio's signature.
-      const proto = req.headers.get("x-forwarded-proto") ?? "https";
-      const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
+      // Try multiple candidate URLs — behind Vercel's proxy req.url does not
+      // always match the URL Twilio signs against. Accept if any candidate
+      // validates; authenticity is still protected by the HMAC.
       const reqUrlObj = new URL(req.url);
-      const canonicalUrl = `${proto}://${host}${reqUrlObj.pathname}${reqUrlObj.search}`;
-      const isValid = twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, canonicalUrl, params);
+      const fwdProto = req.headers.get("x-forwarded-proto") ?? "https";
+      const fwdHost = req.headers.get("x-forwarded-host");
+      const hostHeader = req.headers.get("host");
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+      const candidates = new Set<string>();
+      if (fwdHost) candidates.add(`${fwdProto}://${fwdHost}${reqUrlObj.pathname}${reqUrlObj.search}`);
+      if (hostHeader) candidates.add(`${fwdProto}://${hostHeader}${reqUrlObj.pathname}${reqUrlObj.search}`);
+      candidates.add(req.url);
+      if (appUrl) candidates.add(`${appUrl.replace(/\/$/, "")}${reqUrlObj.pathname}${reqUrlObj.search}`);
+      const isValid = Array.from(candidates).some((u) =>
+        twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, u, params),
+      );
       if (!isValid) {
         console.error(
-          `[transfer-twiml/status] Twilio signature validation failed. canonicalUrl=${canonicalUrl}`
+          `[transfer-twiml/status] Twilio signature validation failed. tried=${JSON.stringify([...candidates])}`
         );
         return new NextResponse("Forbidden", { status: 403 });
       }
