@@ -4,6 +4,9 @@ import twilio from "twilio";
 
 export const runtime = "nodejs";
 
+// Never wrap this value in quotes when setting it on Vercel/envs — the
+// twilio SDK uses it as the HMAC key verbatim, so a stray " in the stored
+// value silently breaks every webhook signature check.
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN ?? "";
 
 /**
