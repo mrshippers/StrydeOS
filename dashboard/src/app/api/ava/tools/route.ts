@@ -10,7 +10,8 @@
  *   - book_appointment: creates booking in PMS + Firestore mirror
  *   - update_booking: cancels or reschedules via PMS
  *
- * Auth: ElevenLabs HMAC signature (same as /api/ava/transfer).
+ * Auth: Bearer token (ELEVENLABS_WEBHOOK_SECRET). ElevenLabs tool-call webhooks
+ *        use Authorization: Bearer — HMAC is only for conversation event webhooks.
  * Returns { response: string } — ElevenLabs speaks this back to the caller.
  */
 
@@ -76,7 +77,6 @@ async function handleCheckAvailability(
   let dateTo: string;
 
   if (preferredDay) {
-    // Try to parse a specific date or day name
     const parsed = parseFutureDate(preferredDay);
     dateFrom = parsed.toISOString();
     dateTo = new Date(parsed.getTime() + 24 * 60 * 60 * 1000).toISOString();
@@ -99,42 +99,25 @@ async function handleCheckAvailability(
     return `I'm having a bit of trouble accessing the diary right now. What day and time were you thinking${whoDesc}? I'll pass the details on and someone from the team will confirm the slot for you.`;
   }
 
-  // Find gaps in the schedule — basic slot detection
-  // For now, return existing booked slots so ElevenLabs can infer availability
-  // (Full gap-detection requires clinic opening hours config)
-  if (appointments.length === 0) {
-    const rangeDesc = preferredDay
-      ? `on ${preferredDay}`
-      : "in the next week";
-    const whoDesc = clinicianName ? ` with ${clinicianName}` : "";
-    return `The diary looks quite open ${rangeDesc}${whoDesc}. What day and time works best for you?`;
+  // WriteUpp has no free-slot endpoint — derive available slots from booked schedule
+  const freeSlots = computeFreeSlots(appointments, new Date(dateFrom), new Date(dateTo));
+  const whoDesc = clinicianName ? ` with ${clinicianName}` : "";
+
+  if (freeSlots.length === 0) {
+    const rangeDesc = preferredDay ? `on ${preferredDay}` : "in the next week";
+    return `I'm afraid we're fully booked ${rangeDesc}${whoDesc}. Would you like me to check another day?`;
   }
 
-  // Group by date and find busy times
-  const busyByDate = new Map<string, string[]>();
-  for (const appt of appointments) {
-    const date = new Date(appt.dateTime).toLocaleDateString("en-GB", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    });
-    const time = new Date(appt.dateTime).toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-    if (!busyByDate.has(date)) busyByDate.set(date, []);
-    busyByDate.get(date)!.push(time);
-  }
+  const slotStrings = freeSlots.slice(0, 3).map((slot) => {
+    const dayStr = slot.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+    const timeStr = slot.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+    return `${dayStr} at ${timeStr}`;
+  });
 
-  // Build a natural summary
-  const parts: string[] = [];
-  for (const [date, times] of busyByDate) {
-    parts.push(`${date} has appointments at ${times.join(", ")}`);
+  if (slotStrings.length === 1) {
+    return `I have ${slotStrings[0]} available${whoDesc}. Does that work for you?`;
   }
-
-  const whoDesc = clinicianName ? `for ${clinicianName} ` : "";
-  return `Here's what the diary looks like ${whoDesc}— ${parts.slice(0, 3).join(". ")}. Which day and time would you prefer? I'll check if that slot is free.`;
+  return `I have a few slots available${whoDesc}: ${slotStrings.join(", or ")}. Which works best?`;
 }
 
 async function handleBookAppointment(
@@ -425,6 +408,55 @@ async function handleUpdateBooking(
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * Compute free 45-minute appointment slots from a list of booked appointments.
+ * Assumes Mon–Fri 09:00–18:00 clinic hours. Returns up to 6 free slots.
+ */
+function computeFreeSlots(
+  appointments: { dateTime: string }[],
+  dateFrom: Date,
+  dateTo: Date,
+): Date[] {
+  const SLOT_MINS = 45;
+  const SLOT_MS = SLOT_MINS * 60_000;
+  const CLINIC_START_HOUR = 9;
+  const CLINIC_END_HOUR = 18;
+
+  const busyIntervals = appointments.map((a) => {
+    const start = new Date(a.dateTime).getTime();
+    return { start, end: start + SLOT_MS };
+  });
+
+  // Snap cursor to next 45-min boundary at or after dateFrom
+  const cursor = new Date(dateFrom);
+  cursor.setSeconds(0, 0);
+  const totalMins = cursor.getHours() * 60 + cursor.getMinutes();
+  const snappedMins = Math.ceil(totalMins / SLOT_MINS) * SLOT_MINS;
+  cursor.setHours(Math.floor(snappedMins / 60), snappedMins % 60, 0, 0);
+
+  const freeSlots: Date[] = [];
+
+  while (cursor < dateTo && freeSlots.length < 6) {
+    const day = cursor.getDay();
+    const hour = cursor.getHours();
+
+    if (day === 0 || day === 6 || hour < CLINIC_START_HOUR || hour >= CLINIC_END_HOUR) {
+      cursor.setDate(cursor.getDate() + 1);
+      cursor.setHours(CLINIC_START_HOUR, 0, 0, 0);
+      continue;
+    }
+
+    const slotStart = cursor.getTime();
+    const slotEnd = slotStart + SLOT_MS;
+    const isBusy = busyIntervals.some(({ start, end }) => slotStart < end && start < slotEnd);
+    if (!isBusy) freeSlots.push(new Date(cursor));
+
+    cursor.setMinutes(cursor.getMinutes() + SLOT_MINS);
+  }
+
+  return freeSlots;
+}
 
 /**
  * Parse a natural-language day reference into a future Date.

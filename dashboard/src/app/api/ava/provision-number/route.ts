@@ -12,10 +12,14 @@ import { createAvaTools, createAvaAgent } from "@/lib/ava/elevenlabs-agent";
  * Provisions a dedicated Twilio phone number for the clinic's Ava instance:
  * 1. Buys a UK number (near clinic locality if possible)
  * 2. Creates ElevenLabs agent if one doesn't exist yet
- * 3. Wires the number's voiceUrl to /api/ava/inbound-call?clinicId=xxx
- *    so inbound calls route directly to the ElevenLabs ConvAI agent via SIP
+ * 3. Wires the number's voiceUrl to ElevenLabs' native Twilio handler
+ *    (https://api.elevenlabs.io/twilio/inbound-call)
  * 4. Stores the number + agent ID in Firestore
  * 5. Returns the provisioned number
+ *
+ * Note: after provisioning, the phone number must also be linked to the agent
+ * in the ElevenLabs dashboard (Phone Numbers → Import from Twilio) so ElevenLabs
+ * knows which agent to route inbound calls to.
  *
  * Requires: owner / admin / superadmin role.
  */
@@ -143,9 +147,8 @@ async function handler(req: NextRequest) {
       );
     }
 
-    // 2. Buy a UK number, wiring its voiceUrl to the inbound-call TwiML endpoint
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    const voiceUrl = `${appUrl}/api/ava/inbound-call?clinicId=${clinicId}`;
+    // 2. Buy a UK number, wiring its voiceUrl to ElevenLabs' native Twilio handler
+    const voiceUrl = `https://api.elevenlabs.io/twilio/inbound-call`;
     const { phoneNumber, phoneSid } = await purchaseUkNumber({ locality, voiceUrl });
 
     // 3. Persist to Firestore

@@ -35,6 +35,9 @@ export async function createAvaTools(appUrl: string, apiKey: string): Promise<st
       api_schema: {
         url: toolsUrl,
         method: "POST" as const,
+        request_headers: {
+          Authorization: `Bearer ${process.env.ELEVENLABS_WEBHOOK_SECRET ?? ""}`,
+        },
         request_body_schema: {
           type: "object",
           required: [],
@@ -57,6 +60,9 @@ export async function createAvaTools(appUrl: string, apiKey: string): Promise<st
       api_schema: {
         url: toolsUrl,
         method: "POST" as const,
+        request_headers: {
+          Authorization: `Bearer ${process.env.ELEVENLABS_WEBHOOK_SECRET ?? ""}`,
+        },
         request_body_schema: {
           type: "object",
           required: ["patient_first_name", "patient_last_name", "patient_phone", "slot_datetime"],
@@ -78,6 +84,9 @@ export async function createAvaTools(appUrl: string, apiKey: string): Promise<st
       api_schema: {
         url: toolsUrl,
         method: "POST" as const,
+        request_headers: {
+          Authorization: `Bearer ${process.env.ELEVENLABS_WEBHOOK_SECRET ?? ""}`,
+        },
         request_body_schema: {
           type: "object",
           required: ["action", "booking_id"],
