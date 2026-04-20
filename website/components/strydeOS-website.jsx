@@ -2221,10 +2221,10 @@ const Results = () => {
       <AnimIn delay={150}>
       <div className="results-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 48 }}>
         {[
-          { stat: "34%→8%", label: "Missed call rate", note: "Modelled · pilot clinic data" },
-          { stat: "74%", label: "Course completion rate", note: "Modelled · vs ~55% typical" },
-          { stat: "£480/mo", label: "Saved on call-handling", note: "Modelled · vs outsourced reception" },
-          { stat: "28 days", label: "Average payback period", note: "Modelled · Intelligence module" },
+          { stat: "28%→8%", label: "Missed call rate", note: "Modelled · UK allied-health 28% baseline (Invoca)" },
+          { stat: "68%", label: "Course completion rate", note: "Modelled · conservative vs PPB 74% rebook avg" },
+          { stat: "£350/mo", label: "Saved on call-handling", note: "Modelled · vs £400–800/mo outsourced reception" },
+          { stat: "6–8 weeks", label: "Average payback period", note: "Modelled · Intelligence module estimate" },
         ].map(({ stat, label, note }) => (
           <div key={label} style={{
             background: "rgba(255,255,255,0.05)", borderRadius: 18, padding: "28px 24px",

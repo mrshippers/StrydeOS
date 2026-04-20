@@ -304,13 +304,20 @@ export interface BenchmarkComparison {
   higherIsBetter: boolean;
 }
 
+// Peer benchmarks sourced from the UK Private Practice Barometer 2026 (HMDG, n=715 UK clinic owners).
+// https://hmdg.co.uk/private-practice-barometer/
+// - Rebook ratio (follow-ups per initial) derived from PPB "sessions per episode": median 5.0 → 4.0 follow-ups, top-25 6.0 → 5.0 follow-ups.
+// - DNA: 11% without automated reminders, 6.3% with (PPB "Technology Impact").
+// - Utilisation: 72.3% industry avg, 70–80% optimal zone (PPB "Operations").
+// - NPS: no UK physio-specific benchmark; broader healthcare NPS median ~37, excellent 50+ (Retently 2026, CustomerGauge).
+// - Rev/session (pence): physio median £63 follow-up / £74 initial per PPB pricing table; blended ~£68 = 6800 pence.
 export function getDemoBenchmarks(): BenchmarkComparison[] {
   const rps = getDemoRevPerSession();
   return [
-    { metric: "Rebook Rate", yourValue: 2.9, peerMedian: 2.2, peerTop25: 3.5, unit: "ratio", higherIsBetter: true },
-    { metric: "DNA Rate", yourValue: 0.05, peerMedian: 0.08, peerTop25: 0.04, unit: "percent", higherIsBetter: false },
-    { metric: "Utilisation", yourValue: 0.83, peerMedian: 0.74, peerTop25: 0.90, unit: "percent", higherIsBetter: true },
-    { metric: "NPS Score", yourValue: 72, peerMedian: 58, peerTop25: 78, unit: "number", higherIsBetter: true },
-    { metric: "Rev / Session", yourValue: rps, peerMedian: 7500, peerTop25: 9000, unit: "pence", higherIsBetter: true },
+    { metric: "Rebook Rate", yourValue: 2.9, peerMedian: 4.0, peerTop25: 5.0, unit: "ratio", higherIsBetter: true },
+    { metric: "DNA Rate", yourValue: 0.063, peerMedian: 0.11, peerTop25: 0.063, unit: "percent", higherIsBetter: false },
+    { metric: "Utilisation", yourValue: 0.76, peerMedian: 0.723, peerTop25: 0.80, unit: "percent", higherIsBetter: true },
+    { metric: "NPS Score", yourValue: 50, peerMedian: 37, peerTop25: 58, unit: "number", higherIsBetter: true },
+    { metric: "Rev / Session", yourValue: rps, peerMedian: 6800, peerTop25: 7400, unit: "pence", higherIsBetter: true },
   ];
 }
