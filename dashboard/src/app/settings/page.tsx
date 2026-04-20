@@ -1151,8 +1151,11 @@ export default function SettingsPage() {
   async function handleDeactivateClinician(id: string, name: string) {
     if (!clinicId || !db) return;
     try {
-      await deleteDoc(doc(db, "clinics", clinicId, "clinicians", id));
-      toast(`${name} removed`, "success");
+      await updateDoc(doc(db, "clinics", clinicId, "clinicians", id), {
+        active: false,
+        deactivatedAt: new Date().toISOString(),
+      });
+      toast(`${name} removed from team`, "success");
     } catch {
       toast("Failed to remove clinician", "error");
     }

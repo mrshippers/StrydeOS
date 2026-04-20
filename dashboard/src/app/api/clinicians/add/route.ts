@@ -125,18 +125,31 @@ async function handler(request: NextRequest) {
 
     if (existingAuthUid) {
       // ── Existing Firebase Auth user — enrol into this clinic ───────
-      // Check they're not already in this clinic's clinicians subcollection
-      const existingClinicianSnap = await db
-        .collection("clinics")
-        .doc(clinicId)
-        .collection("clinicians")
-        .where("authUid", "==", existingAuthUid)
-        .limit(1)
-        .get();
+      // Fetch the user doc and check cross-clinic membership BEFORE writing
+      // anything to Firestore. Previous order created an orphaned clinician doc
+      // when the guard fired after the write.
+      const [existingClinicianSnap, existingUserSnap] = await Promise.all([
+        db
+          .collection("clinics")
+          .doc(clinicId)
+          .collection("clinicians")
+          .where("authUid", "==", existingAuthUid)
+          .limit(1)
+          .get(),
+        db.collection("users").doc(existingAuthUid).get(),
+      ]);
 
       if (!existingClinicianSnap.empty) {
         return NextResponse.json(
           { error: `${name} is already a member of this clinic` },
+          { status: 409 }
+        );
+      }
+
+      const existingUserData = existingUserSnap.data();
+      if (existingUserData?.clinicId && existingUserData.clinicId !== clinicId) {
+        return NextResponse.json(
+          { error: "This user already belongs to another clinic and cannot be re-assigned." },
           { status: 409 }
         );
       }
@@ -161,17 +174,6 @@ async function handler(request: NextRequest) {
         .doc(clinicId)
         .collection("clinicians")
         .add(clinicianData);
-
-      // Guard: reject if this user already belongs to a different clinic.
-      // Silently overwriting clinicId would transfer their account without consent.
-      const existingUserSnap = await db.collection("users").doc(existingAuthUid).get();
-      const existingUserData = existingUserSnap.data();
-      if (existingUserData?.clinicId && existingUserData.clinicId !== clinicId) {
-        return NextResponse.json(
-          { error: "This user already belongs to another clinic and cannot be re-assigned." },
-          { status: 409 }
-        );
-      }
 
       // Update the existing user doc to point at this clinic + link clinicianId
       await db.collection("users").doc(existingAuthUid).update({

@@ -115,6 +115,21 @@ async function handler(request: NextRequest) {
       ...(userData.status === "invited" ? { status: "registered" } : {}),
     });
 
+    // Mark cliniciansConfirmed on the clinic doc so the onboarding widget
+    // reflects that at least one clinician is enrolled. Read the current state
+    // first so we can also flip status → "live" if the other two flags are set.
+    const clinicSnap = await db.collection("clinics").doc(clinicId).get();
+    const clinicData = clinicSnap.data() ?? {};
+    const onboarding = clinicData.onboarding ?? {};
+    if (!onboarding.cliniciansConfirmed) {
+      const allComplete = !!onboarding.pmsConnected && !!onboarding.targetsSet;
+      batch.update(db.collection("clinics").doc(clinicId), {
+        "onboarding.cliniciansConfirmed": true,
+        ...(allComplete ? { status: "live" } : {}),
+        updatedAt: now,
+      });
+    }
+
     await batch.commit();
 
     return NextResponse.json(

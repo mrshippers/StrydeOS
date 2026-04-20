@@ -182,6 +182,42 @@ export default function TeamManagementCard({
         </div>
       )}
 
+      {/* Onboarding setup status — only visible while clinic is in onboarding */}
+      {showOnboarding && (
+        <div
+          className="mt-4 mb-1 px-4 py-3 rounded-xl flex items-center gap-4 flex-wrap"
+          style={{ background: "rgba(28,84,242,0.04)", border: "1px solid rgba(28,84,242,0.12)" }}
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted mr-1">Setup</p>
+          {(
+            [
+              { label: "PMS connected", done: onboarding.pmsConnected },
+              { label: "Team confirmed", done: onboarding.cliniciansConfirmed },
+              { label: "Targets set", done: onboarding.targetsSet },
+            ] as { label: string; done: boolean }[]
+          ).map(({ label, done }) => (
+            <div key={label} className="flex items-center gap-1.5">
+              <span
+                className="w-[14px] h-[14px] rounded-full flex items-center justify-center shrink-0"
+                style={{ background: done ? "rgba(5,150,105,0.12)" : "rgba(107,114,128,0.10)" }}
+              >
+                {done ? (
+                  <Check size={8} style={{ color: brand.success }} />
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: brand.muted }} />
+                )}
+              </span>
+              <span
+                className="text-[11px] font-medium"
+                style={{ color: done ? brand.success : brand.muted }}
+              >
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="space-y-2 mt-4">
         {clinicians.map((c) => {
           const isExpanded = expandedClinicianId === c.id;
