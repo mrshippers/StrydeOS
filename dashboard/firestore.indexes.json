@@ -20,13 +20,6 @@
       "collectionGroup": "appointments",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "dateTime", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "appointments",
-      "queryScope": "COLLECTION",
-      "fields": [
         { "fieldPath": "clinicianId", "order": "ASCENDING" },
         { "fieldPath": "dateTime", "order": "DESCENDING" }
       ]
@@ -37,13 +30,6 @@
       "fields": [
         { "fieldPath": "patientId", "order": "ASCENDING" },
         { "fieldPath": "recordedAt", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "comms_log",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "sentAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -75,28 +61,24 @@
       "collectionGroup": "reviews",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "reviews",
-      "queryScope": "COLLECTION",
-      "fields": [
         { "fieldPath": "clinicianMentioned", "order": "ASCENDING" },
         { "fieldPath": "date", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "calls",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "insight_events",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "resolvedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "insight_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "clinicianId", "order": "ASCENDING" },
+        { "fieldPath": "severity", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
@@ -114,13 +96,6 @@
       "fields": [
         { "fieldPath": "clinicianId", "order": "ASCENDING" },
         { "fieldPath": "lastSessionDate", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "call_log",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "startTimestamp", "order": "DESCENDING" }
       ]
     },
     {
@@ -145,23 +120,6 @@
       "fields": [
         { "fieldPath": "clinicianId", "order": "ASCENDING" },
         { "fieldPath": "discharged", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "insight_events",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "type", "order": "ASCENDING" },
-        { "fieldPath": "resolvedAt", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "insight_events",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "clinicianId", "order": "ASCENDING" },
-        { "fieldPath": "severity", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
   ],

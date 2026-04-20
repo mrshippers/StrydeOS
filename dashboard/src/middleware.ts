@@ -104,6 +104,7 @@ function setSecurityHeaders(response: NextResponse): void {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
+      "worker-src 'self' blob:",
       "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://*.sentry.io https://*.vercel-insights.com https://api.stripe.com https://*.strydeos.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
       "frame-ancestors 'none'",
