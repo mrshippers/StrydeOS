@@ -151,7 +151,8 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   try {
     const formData = await request.formData();
 
-    recipient = (formData.get("recipient") as string) ?? "";
+    // Accept both Mailgun ("recipient") and SendGrid/Twilio ("to") field names.
+    recipient = ((formData.get("recipient") ?? formData.get("to")) as string) ?? "";
     from = ((formData.get("from") as string) ?? "").trim();
 
     clinicId = (formData.get("clinicId") as string) ?? "";
@@ -176,7 +177,8 @@ async function handler(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "Clinic is not active" }, { status: 403 });
     }
 
-    const file = formData.get("file") as File | null;
+    // Accept Mailgun ("file") and SendGrid/Twilio ("attachment1") field names.
+    const file = (formData.get("file") ?? formData.get("attachment1")) as File | null;
     fileName = file?.name ?? null;
 
     // Sender allowlist enforcement — only when the clinic has configured one.
