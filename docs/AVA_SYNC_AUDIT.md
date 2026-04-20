@@ -1,166 +1,196 @@
 # AVA_SYNC_AUDIT.md
 
-Phase 1 read-only audit of the Ava module sync architecture.
-Files examined: `receptionist/page.tsx`, `useAvaConfig.ts`, `useAvaKnowledge.ts`, `useCallLogs.ts`, `KnowledgeBaseEditor.tsx`, `api/ava/agent/route.ts`, `api/ava/knowledge/route.ts`, `ava-core-prompt.ts`.
+Phase 1 audit — read-only. No code changes. Covers every question in the brief.
+
+Files examined: `receptionist/page.tsx`, `useAvaConfig.ts`, `useAvaKnowledge.ts`, `useCallLogs.ts`, `KnowledgeBaseEditor.tsx`, `api/ava/agent/route.ts`, `api/ava/knowledge/route.ts`, `ava-core-prompt.ts`, `lib/firebase/voiceInteractions.ts`.
 
 ---
 
-## 1. Data origins per tab
+## 1. Tab-by-tab data source map
 
-### Tab: Call Dashboard (`activeView === "dashboard"`)
-
-| Field | Origin | Fetch type |
-|---|---|---|
-| Total calls, Booked, Missed/VM, Info Only, Avg Duration, Revenue Captured | Derived from `calls` array (via `useCallLogs`) | `onSnapshot` (real-time) |
-| `avgAppointmentValue` | `user.clinicProfile.sessionPricePence` from `useAuth` — **hardcoded fallback of `85` (£85)** if absent | One-shot (session cookie decode) |
-| 7-day volume chart data | Derived from `calls` (same `onSnapshot` feed) | `onSnapshot` |
-| Today's call log table rows | From `calls` array filtered to today | `onSnapshot` |
-| After-hours digest content | Computed from `todaysCalls` in-memory (voicemail calls from same feed) | Derived, no extra fetch |
-
-`useCallLogs` subscribes via `subscribeTodaysElevenLabsCalls` which uses Firestore `onSnapshot` on `clinics/{clinicId}/call_log`. Cleanup runs on unmount. Call log tab is fully real-time.
+The Ava page (`dashboard/src/app/receptionist/page.tsx`) has two views toggled by `activeView` state: **Dashboard** and **Config**. The Knowledge Base section lives inside the Config view as a rendered component.
 
 ---
 
-### Tab: Configuration (`activeView === "config"`)
+### Dashboard view
 
-#### On/Off switch + phone display
+All call data flows through `useCallLogs` → `subscribeTodaysElevenLabsCalls` → **`onSnapshot`** (real-time).
+Source collection: `clinics/{clinicId}/call_log` (ElevenLabs format).
+Falls back to hardcoded `DEMO_CALLS` array when `isDemo === true` or Firebase is not configured.
 
-| Field | Origin | Fetch type |
+| Field | Source | Mechanism |
 |---|---|---|
-| `config.enabled` | `useAvaConfig` → `getDoc("clinics/{clinicId}")` → `data.ava.enabled` | **One-shot `getDoc`** |
-| `config.phone` | `data.phone` OR `data.ava.config.phone` (fallback chain) | **One-shot `getDoc`** |
-
-#### Call Handling Rules
-
-| Field | Origin | Fetch type |
-|---|---|---|
-| `rules.new_patient_booking` | `data.ava.rules.new_patient_booking` with `?? true` default | **One-shot `getDoc`** |
-| `rules.cancellation_recovery` | `data.ava.rules.cancellation_recovery` with `?? true` default | **One-shot `getDoc`** |
-| `rules.noshow_followup` | `data.ava.rules.noshow_followup` with `?? true` default | **One-shot `getDoc`** |
-| `rules.emergency_routing` | `data.ava.rules.emergency_routing` with `?? true` default — **locked in UI** | **One-shot `getDoc`** |
-| `rules.faq_handling` | `data.ava.rules.faq_handling` with `?? true` default | **One-shot `getDoc`** |
-
-All rules default to `true` if absent — a Firestore doc with no `ava.rules` subtree will show all rules as enabled.
-
-#### Clinic Details
-
-| Field | Origin | Fetch type |
-|---|---|---|
-| `config.address` | `data.address` OR `data.ava.config.address` (fallback) | **One-shot `getDoc`** |
-| `config.ia_price` | Derived from `data.sessionPricePence / 100` OR `data.ava.config.ia_price` (fallback) with DEFAULT `"85"` | **One-shot `getDoc`** |
-| `config.fu_price` | `data.ava.config.fu_price` with DEFAULT `"65"` | **One-shot `getDoc`** |
-| `config.nearest_station` | `data.ava.config.nearest_station` with DEFAULT `""` | **One-shot `getDoc`** |
-| `config.parking_info` | `data.parkingInfo` OR `data.ava.config.parking_info` (fallback) with DEFAULT `""` | **One-shot `getDoc`** |
-
-Fields are read once on mount. No live updates — edits made directly in Firestore console will not appear in the UI without a page refresh.
-
-There is also a `configDraft` local `useState` in the page component that shadows `config`. The page syncs `configDraft` to `config` via a `useEffect([config])`. This means the local draft can diverge from Firestore if a save fails silently.
-
-#### Knowledge Base (rendered as `<KnowledgeBaseEditor>`)
-
-| Field | Origin | Fetch type |
-|---|---|---|
-| `entries` (all KB entries) | `useAvaKnowledge` → `getDoc("clinics/{clinicId}")` → `data.ava.knowledge` | **One-shot `getDoc`** |
-| `lastSyncedAt` | `data.ava.knowledgeLastSyncedAt` on initial load; updated in local state from API response on sync | **One-shot `getDoc`** on load; `useState` thereafter |
-| `hasPendingChanges` | Local `useState` flag — set to `true` on `updateEntry`, reset to `false` after `saveEntries`/`syncToAgent` | Local state only |
-| Auto-populated location entries (address, station, parking) | Passed from `KnowledgeBaseEditor` via a second `useAvaConfig(clinicId)` call — **this is a duplicate instantiation** of the hook, meaning two separate `getDoc` fetches fire on mount | **One-shot `getDoc`** (duplicate call) |
+| Total Calls | `todaysCalls.length` | Derived from `onSnapshot` calls array |
+| Booked | `calls.filter(outcome === "booked").length` | Derived from `onSnapshot` |
+| Missed / VM | `calls.filter(outcome === "voicemail" \|\| inVoicemail).length` | Derived from `onSnapshot` |
+| Info Only / Handled | `calls.filter(outcome === "resolved").length` | Derived from `onSnapshot` |
+| Avg Duration | Sum of `durationSeconds` / count | Derived from `onSnapshot` |
+| Revenue Captured | `booked * avgAppointmentValue` | `onSnapshot` count x `user.clinicProfile.sessionPricePence` (React context via `useAuth`) |
+| 7-day volume chart | `buildVolumeBuckets(calls)` | Derived from `onSnapshot` array |
+| Call filter tabs (All / Needs Callback / Escalated) | Client-side filter on `todaysCalls` | Derived from `onSnapshot` |
+| Today's calls table | `filteredCalls` — `todaysCalls` filtered by `callFilter` state | Derived from `onSnapshot` |
+| Active call banner | `calls.find(callStatus === "ongoing")` | Derived from `onSnapshot` |
 
 ---
 
-## 2. What does the "Sync" button do?
+### Config view
 
-**There is only one "Sync" button — in `KnowledgeBaseEditor`, labelled "Sync to Ava".**
+Config data flows through `useAvaConfig` → **`getDoc`** (one-shot, on mount only).
+Source: `clinics/{clinicId}` document, `ava.*` and top-level fields.
 
-There is **no top-level "Sync" button** for clinic config (address, pricing, rules). Those fields sync to ElevenLabs automatically via a debounced handler in `ReceptionistContent`:
-- On any `handleConfigChange` call, a 500ms debounce fires `save({ config: newDraft })` then `createOrUpdateAgent()`
-- `createOrUpdateAgent()` POSTs to `/api/ava/agent`
+| Field | Firestore path read | Mechanism |
+|---|---|---|
+| Master On/Off toggle | `clinicDoc.ava.enabled` | `getDoc` on mount |
+| Phone number | `clinicDoc.phone` → fallback `clinicDoc.ava.config.phone` | `getDoc` on mount |
+| Initial Assessment Price | `clinicDoc.sessionPricePence / 100` → fallback `clinicDoc.ava.config.ia_price` | `getDoc` on mount |
+| Follow-up Price | `clinicDoc.ava.config.fu_price` | `getDoc` on mount |
+| Address | `clinicDoc.address` → fallback `clinicDoc.ava.config.address` | `getDoc` on mount |
+| Nearest Station | `clinicDoc.ava.config.nearest_station` | `getDoc` on mount |
+| Parking Info | `clinicDoc.parkingInfo` → fallback `clinicDoc.ava.config.parking_info` | `getDoc` on mount |
+| New Patient Booking toggle | `clinicDoc.ava.rules.new_patient_booking` | `getDoc` on mount |
+| Cancellation Recovery toggle | `clinicDoc.ava.rules.cancellation_recovery` | `getDoc` on mount |
+| No-show Follow-up toggle | `clinicDoc.ava.rules.noshow_followup` | `getDoc` on mount |
+| Emergency Routing toggle (locked) | `clinicDoc.ava.rules.emergency_routing` | `getDoc` on mount |
+| FAQ Handling toggle | `clinicDoc.ava.rules.faq_handling` | `getDoc` on mount |
+| Operating Hours (start, end, days) | `clinicDoc.ava.hours.*` | `getDoc` on mount |
+| After-hours mode | `clinicDoc.ava.hours.after_hours_mode` | `getDoc` on mount |
+| Fallback number | `clinicDoc.ava.hours.fallback_number` | `getDoc` on mount |
 
-### "Sync to Ava" button (Knowledge Base only)
+**Defaults that shadow missing live data** (hardcoded in `useAvaConfig.ts:36-66`):
+- `ia_price` defaults to `"85"` (`DEFAULT_CONFIG`)
+- `fu_price` defaults to `"65"` (`DEFAULT_CONFIG`)
+- Hours default to Mon-Fri 09:00-18:00, voicemail after-hours
 
-Call chain: `handleSync()` → `useAvaKnowledge.syncToAgent()` → `POST /api/ava/knowledge`
+---
 
-**What `/api/ava/knowledge` writes:**
+### Knowledge Base (KnowledgeBaseEditor component)
 
-1. Reads `ava.knowledge` entries from Firestore (admin SDK `get()`)
-2. Primary path: uploads each knowledge category as a document to the ElevenLabs KB API (`POST /convai/agents/{agentId}/add-to-knowledge-base`). Deletes old KB doc IDs first.
-3. On KB upload success: writes to Firestore:
-   - `ava.elevenLabsKbDocIds` (new doc IDs)
-   - `ava.knowledgeLastSyncedAt` (ISO string)
-   - `updatedAt`
-4. Fallback (if ElevenLabs KB API fails): appends compiled knowledge to the system prompt and PATCHes the agent. Writes `ava.knowledgeLastSyncedAt` and `updatedAt` to Firestore.
-5. On any unhandled error: returns HTTP error response — `handleApiError` determines status code.
+Data flows through `useAvaKnowledge` → **`getDoc`** (one-shot, on mount only).
+Source: `clinics/{clinicId}.ava.knowledge` and `clinics/{clinicId}.ava.knowledgeLastSyncedAt`.
 
-**Does it `await`?** Yes — all Firestore and ElevenLabs calls are fully `await`ed.
+| Field | Firestore path | Mechanism |
+|---|---|---|
+| Knowledge entries (all categories) | `clinicDoc.ava.knowledge[]` | `getDoc` on mount |
+| Last synced timestamp | `clinicDoc.ava.knowledgeLastSyncedAt` | `getDoc` on mount; updated in local state after sync — not re-read from Firestore |
+| Location auto-entries (address, station, parking) | Derived from `useAvaConfig` config state | Derived from same `getDoc` |
 
-**Does it surface success/failure in the UI?**
-- Success: `syncToAgent()` returns `{ success: true }` → `setSyncSuccess(true)` → shows "Knowledge synced — Ava is updated" for 3 seconds, then reverts.
-- The `lastSyncedAt` local state is updated immediately from `data.syncedAt` in the response — it does NOT re-fetch from Firestore.
-- Failure: `syncToAgent()` returns `{ success: false, error: message }` → `setError(message)` in `useAvaKnowledge` → displayed as an inline error banner above the KB cards.
+---
 
-### `/api/ava/agent` (config sync, triggered automatically)
+## 2. What the Sync button does — full trace
 
-Invoked by: (a) debounced config field change, (b) toggle enabled/disabled, (c) toggle rule.
+**Button location:** `KnowledgeBaseEditor.tsx` footer, rendered inside the Config view.
 
-**What it writes:**
-- Reads full clinic doc from Firestore
-- Builds system prompt via `buildAvaCorePrompt` (injects `clinic_name`, `clinic_email`, `clinic_phone` only)
-- Appends `ava.knowledge` entries to the prompt as inline text
-- Creates or updates ElevenLabs agent
-- On success: writes `ava.agent_id`, `ava.toolIds`, `ava.provider` to Firestore
-- **Does NOT write `lastSyncedAt`, `syncStatus`, or any audit trail**
+**Handler (`KnowledgeBaseEditor.tsx:31-37`):**
+```typescript
+const handleSync = async () => {
+  const result = await syncToAgent();
+  if (result.success) {
+    setSyncSuccess(true);
+    setTimeout(() => setSyncSuccess(false), 3000);
+  }
+};
+```
 
-**Does it surface failure in the UI?**
-- On debounced config change: errors are `console.error`'d and set to `agentError` state → shown as `<ErrorBanner>` above the config section
-- On rule toggle: errors are `console.error`'d only — **silently swallowed**, no UI feedback
+**`syncToAgent` (`useAvaKnowledge.ts:158-203`):**
+1. Flushes any pending debounced saves to Firestore (`updateDoc` on `clinics/{clinicId}.ava.knowledge`)
+2. Gets a Firebase ID token from `auth.currentUser.getIdToken()`
+3. POSTs to `/api/ava/knowledge` with `Authorization: Bearer {token}`
+4. `await`s the full response
+5. On success: sets `lastSyncedAt` from `data.syncedAt` in local state; sets `hasPendingChanges = false`
+6. On failure: sets `error` string in local state; returns `{ success: false, error }`
+
+**`/api/ava/knowledge` route (`dashboard/src/app/api/ava/knowledge/route.ts`):**
+
+Reads from Firestore (Admin SDK): `clinics/{clinicId}` full document.
+
+**Primary path (ElevenLabs Knowledge Base API):**
+- DELETE existing KB docs listed in `ava.elevenLabsKbDocIds[]` via ElevenLabs API
+- POST each compiled knowledge chunk to `convai/agents/{agentId}/add-to-knowledge-base`
+- On success, writes to Firestore (`updateDoc`):
+  - `ava.elevenLabsKbDocIds: string[]` — new KB doc IDs
+  - `ava.knowledgeLastSyncedAt: ISO string`
+  - `updatedAt: ISO string`
+
+**Fallback path (triggered if KB API throws):**
+- Calls `buildAvaCorePrompt()` with `clinic_name`, `clinic_email`, `clinic_phone`
+- Appends compiled knowledge doc to core prompt text
+- PATCH `convai/agents/{agentId}` with `{ system_prompt: fullPrompt }`
+- On success, writes to Firestore (`updateDoc`):
+  - `ava.knowledgeLastSyncedAt: ISO string`
+  - `updatedAt: ISO string`
+  - Does **not** write `elevenLabsKbDocIds`
+
+**Returns to caller:** `{ message, syncMethod, syncedAt, entriesCount }` on success; HTTP error on failure.
+
+**UI feedback:**
+- Button label "Syncing..." + spinner while `syncing === true`; button disabled
+- Success: green "Knowledge synced — Ava is updated" badge for 3 seconds + green flash overlay on footer
+- Error: red `AlertCircle` banner above the category cards
+- The "Last synced Xm ago" label in the footer derives from **local state** (`lastSyncedAt`), not a re-read from Firestore
+
+**Agent route (`/api/ava/agent`) — separate action:**
+Called automatically when config fields are edited (via `handleConfigChange` debounce → `createOrUpdateAgent()`) and when rules are toggled (`toggleRule`). Writes `ava.agent_id`, `ava.toolIds`, `ava.provider`. Does **not** write any `lastSyncedAt`.
 
 ---
 
 ## 3. `onSnapshot` vs one-shot fetches
 
-| Hook / source | Fetch type | Has cleanup? |
+| Hook / File | Mechanism | Cleanup |
 |---|---|---|
-| `useCallLogs` → `subscribeTodaysElevenLabsCalls` | `onSnapshot` | Yes — `return () => unsub()` |
-| `useAvaConfig` | `getDoc` (one-shot) | N/A |
-| `useAvaKnowledge` | `getDoc` (one-shot) | Debounce timer only |
-| `KnowledgeBaseEditor` → second `useAvaConfig(clinicId)` | `getDoc` (one-shot) — **duplicate instantiation** | N/A |
+| `useCallLogs` → `subscribeTodaysElevenLabsCalls` (`voiceInteractions.ts:186`) | **`onSnapshot`** — real-time | Unsubscribed on unmount via `return () => unsub()` |
+| `useAvaConfig` (`useAvaConfig.ts:85`) | **`getDoc`** — one-shot | n/a — fires once at mount |
+| `useAvaKnowledge` (`useAvaKnowledge.ts:40`) | **`getDoc`** — one-shot | n/a — fires once at mount |
 
-**Summary:** The call log tab is fully real-time. The entire configuration tab — including all clinic details, rules, the on/off toggle, and the knowledge base — is **one-shot only**. If Firestore data changes externally (e.g. Firestore console, another browser tab, a webhook write), the config tab will show stale data until the page is refreshed.
+**Conclusion:** Only call log data is live. All Ava configuration and knowledge base data is fetched once at mount. If Firestore is updated externally (Firestore console, another session, server-side write), the Config view will not reflect it until the page is reloaded.
 
 ---
 
-## 4. Does any sync write `lastSyncedAt` / `syncStatus` back to Firestore?
+## 4. Does a successful sync write `lastSyncedAt` / `syncStatus` back to Firestore?
 
-| Sync action | Writes to Firestore | What it writes |
+**Partial — `lastSyncedAt` only. No `syncStatus`, no error field, no diff, no log.**
+
+| Field | Written on sync? | Firestore path | Value |
+|---|---|---|---|
+| `ava.knowledgeLastSyncedAt` | Yes — both KB and fallback paths | `clinics/{clinicId}` | ISO timestamp string |
+| `ava.elevenLabsKbDocIds` | Yes — KB path only | `clinics/{clinicId}` | `string[]` |
+| `updatedAt` | Yes — both paths | `clinics/{clinicId}` | ISO timestamp string |
+| `ava.syncStatus` | **No** | — | Not implemented |
+| `ava.lastError` | **No** | — | Not implemented |
+| `ava.lastSyncDiff` | **No** | — | Not implemented |
+| Sync log / history | **No** | — | Not implemented |
+
+The only durable signal that a sync succeeded is `ava.knowledgeLastSyncedAt`. If the sync fails, nothing is written to Firestore — the previous `knowledgeLastSyncedAt` remains, so a failed sync is indistinguishable from no sync having been attempted.
+
+---
+
+## 5. System prompt — templated or static regeneration?
+
+**Templated, with three runtime variables. Knowledge content is separate.**
+
+**Template:** `AVA_CORE_PROMPT_TEMPLATE` in `dashboard/src/lib/ava/ava-core-prompt.ts:32-48` — a static behavioural-only string covering identity, provenance, voice, safety, and self-awareness. The template text never changes between syncs.
+
+**Variables injected at sync time via `buildAvaCorePrompt(vars)` (`ava-core-prompt.ts:22-27`):**
+- `{{clinic_name}}` → `clinicData.name`
+- `{{clinic_email}}` → `clinicData.email`
+- `{{clinic_phone}}` → `clinicData.receptionPhone || avaConfig.config.phone`
+
+**What is NOT in the template:**
+Services, pricing, clinician names/schedules, location, FAQs, policies. These live in `ava.knowledge[]` and are either uploaded to the ElevenLabs Knowledge Base (primary path) or compiled and appended to the system prompt as a `CLINIC KNOWLEDGE BASE` block (fallback path).
+
+**Rebuild pattern:** `buildAvaCorePrompt()` is called fresh on every `/api/ava/agent` call and on every `/api/ava/knowledge` fallback. The template itself lives in source code only — it is not persisted to Firestore.
+
+**Gap relative to Phase 2 spec:** Current template has three slots (`clinic_name`, `clinic_email`, `clinic_phone`). Phase 2 requires five additional: `{{hours}}`, `{{clinicians}}`, `{{pricing_table}}`, `{{services}}`, `{{pms_name}}`.
+
+---
+
+## Gaps — input to Phase 2
+
+| # | Gap | Impact |
 |---|---|---|
-| Knowledge sync (`/api/ava/knowledge`) | Yes | `ava.knowledgeLastSyncedAt`, `ava.elevenLabsKbDocIds`, `updatedAt` |
-| Agent sync (`/api/ava/agent`) | Partial — writes agent identity only | `ava.agent_id`, `ava.toolIds`, `ava.provider`, `updatedAt` |
-| Agent sync on error | No write at all | — |
-
-**No `syncStatus` field exists anywhere.** There is no `status: 'synced' | 'error'` field in Firestore for agent sync. Error state lives only in React local state and is lost on refresh.
-
----
-
-## 5. Is the ElevenLabs system prompt templated or static?
-
-**Templated with 3 variables, regenerated from scratch each sync.**
-
-`buildAvaCorePrompt(vars)` in `ava-core-prompt.ts`:
-- Takes `{ clinic_name, clinic_email, clinic_phone }`
-- Replaces `{{clinic_name}}`, `{{clinic_email}}`, `{{clinic_phone}}` in `AVA_CORE_PROMPT_TEMPLATE`
-- Returns a complete string — the base template is not cached or diffed
-
-The template is a single static export (`AVA_CORE_PROMPT_TEMPLATE`) in the file. It does not include address, pricing, or scheduling variables — those fields are expected to live in the ElevenLabs knowledge base.
-
-Knowledge is appended by `/api/ava/agent` as inline text concatenated to the core prompt: `corePrompt + "\n\n...\n\nCLINIC KNOWLEDGE BASE\n\n" + knowledgeDoc`. This means the system prompt as sent to ElevenLabs **duplicates** what the knowledge sync also uploads to the ElevenLabs KB — creating potential for content drift between the two sources.
-
----
-
-## Summary of key issues for Phase 2
-
-1. **No `onSnapshot` on config tab** — `useAvaConfig` and `useAvaKnowledge` both use one-shot `getDoc`. External Firestore writes are invisible until page refresh.
-2. **Duplicate `useAvaConfig` instantiation** — `KnowledgeBaseEditor` calls `useAvaConfig(clinicId)` and so does `ReceptionistContent`. Two separate `getDoc` calls fire on mount, and their state can diverge.
-3. **No `syncStatus` / `lastSyncedAt` for agent sync** — `/api/ava/agent` writes `agent_id` but no audit trail. The user cannot tell when config was last pushed to ElevenLabs.
-4. **Rule toggle errors are swallowed** — `toggleRule` calls `createOrUpdateAgent()` but only `console.error`s failures; the UI shows nothing.
-5. **`configDraft` local shadow state** — a save failure leaves `configDraft` ahead of both Firestore and `config`, making the displayed value wrong.
-6. **Knowledge duplicated in two places** — both inline in the system prompt (via `/api/ava/agent`) and as KB documents (via `/api/ava/knowledge`). These sync independently.
-7. **`avgAppointmentValue` hardcoded fallback** — silent `£85` default masks missing `sessionPricePence` data; Revenue Captured stat can be wrong.
+| 1 | No `onSnapshot` on `useAvaConfig` or `useAvaKnowledge` | Config view goes stale if Firestore is updated externally. Editing pricing in Firestore console has no effect until page reload. |
+| 2 | `syncStatus` / `lastError` not written to Firestore | Silent failures — a failed sync leaves `knowledgeLastSyncedAt` pointing to the last success with no error record. |
+| 3 | No diff tracking | "Unsaved changes" indicator is client-side `hasPendingChanges` state only — resets on reload. No record of what changed since last sync. |
+| 4 | No sync log | No history of past attempts, results, or sync methods. |
+| 5 | Agent sync and knowledge sync are separate, uncoordinated | Config/rule changes trigger `/api/ava/agent`; knowledge changes trigger `/api/ava/knowledge`. Different `lastSyncedAt` semantics. No unified "in sync" signal. |
+| 6 | Three prompt variables vs five required by Phase 2 | Template missing `hours`, `clinicians`, `pricing_table`, `services`, `pms_name`. |
+| 7 | No Cloud Function or Firestore trigger | Sync is entirely client-initiated via Next.js API routes. No auto-sync on document writes. |
