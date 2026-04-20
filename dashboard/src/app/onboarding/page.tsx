@@ -20,12 +20,14 @@ import {
   UserPlus,
   Shield,
   Settings2,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { db, getFirebaseAuth } from "@/lib/firebase";
 import type { OnboardingStage, PmsProvider } from "@/types";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
 import type { ModuleKey } from "@/lib/billing";
+import EnrichmentReview from "@/components/onboarding/EnrichmentReview";
 
 // ─── Brand tokens ────────────────────────────────────────────────────────────
 
@@ -40,9 +42,16 @@ const C = {
   cream: "#FAF9F7",
 };
 
+// Shape returned by POST /api/clinic/enrich (subset used by the UI)
+interface EnrichResponse {
+  ok: boolean;
+  entriesCount: number;
+  sources: { places: boolean; companiesHouse: boolean; website: boolean };
+}
+
 // ─── Step definitions ────────────────────────────────────────────────────────
 
-type StepId = "signup" | "verify" | "configure" | "pms" | "golive";
+type StepId = "signup" | "verify" | "enrich" | "configure" | "pms" | "golive";
 
 interface WizardStep {
   id: StepId;
@@ -55,6 +64,7 @@ interface WizardStep {
 const ALL_STEPS: WizardStep[] = [
   { id: "signup", title: "Create your account", subtitle: "Start your 14-day free trial", icon: UserPlus, color: C.blue },
   { id: "verify", title: "Verify your clinic", subtitle: "Business details and data agreements", icon: Shield, color: C.blue },
+  { id: "enrich", title: "Auto-fill your clinic profile", subtitle: "We'll pull your clinic details so Ava knows what you do", icon: Sparkles, color: C.blueGlow },
   { id: "configure", title: "Configure your module", subtitle: "Set up your selected module", icon: Settings2, color: C.purple },
   { id: "pms", title: "Connect your PMS", subtitle: "Sync patient data (optional — you can do this later)", icon: Plug, color: C.blue },
   { id: "golive", title: "Go live", subtitle: "Review your setup and launch StrydeOS", icon: Zap, color: C.success },
@@ -106,6 +116,7 @@ const PULSE_SEQUENCES = [
 const STEP_TO_STAGE: Record<StepId, OnboardingStage> = {
   signup: "signup_complete",
   verify: "onboarding_started",
+  enrich: "onboarding_started",
   configure: "onboarding_started",
   pms: "integration_self_serve",
   golive: "activation_complete",
@@ -146,6 +157,12 @@ export default function OnboardingPage() {
     new Set(PULSE_SEQUENCES.filter((s) => s.defaultOn).map((s) => s.id))
   );
 
+  // Enrich step: Ava KB auto-population from public sources
+  const [enrichRunning, setEnrichRunning] = useState(false);
+  const [enrichAttempted, setEnrichAttempted] = useState(false);
+  const [enrichSources, setEnrichSources] = useState<EnrichResponse["sources"] | null>(null);
+  const [enrichError, setEnrichError] = useState<string | null>(null);
+
   // Step 4: PMS
   const [selectedPms, setSelectedPms] = useState<PmsProvider | null>(null);
   const [pmsApiKey, setPmsApiKey] = useState("");
@@ -181,11 +198,15 @@ export default function OnboardingPage() {
 
   // ── Determine visible steps ────────────────────────────────────────────────
   // Step 3 (configure) shows different content based on module, or is skipped
-  // if Intelligence-only (defaults are sufficient)
+  // if Intelligence-only (defaults are sufficient). The enrich step only runs
+  // for modules that use the Ava knowledge base (ava, fullstack).
   const needsConfigureStep = selectedModule !== "intelligence";
-  const STEPS = needsConfigureStep
-    ? ALL_STEPS
-    : ALL_STEPS.filter((s) => s.id !== "configure");
+  const needsEnrichStep = selectedModule === "ava" || selectedModule === "fullstack";
+  const STEPS = ALL_STEPS.filter((s) => {
+    if (s.id === "configure" && !needsConfigureStep) return false;
+    if (s.id === "enrich" && !needsEnrichStep) return false;
+    return true;
+  });
 
   // If user is already authenticated (returning to onboarding), skip step 1
   useEffect(() => {
@@ -216,6 +237,47 @@ export default function OnboardingPage() {
   }, [clinicId]);
 
   useEffect(() => { hydrateFromFirestore(); }, [hydrateFromFirestore]);
+
+  // ── Enrich step: call /api/clinic/enrich ────────────────────────────────────
+  const runEnrichment = useCallback(async () => {
+    const auth = getFirebaseAuth();
+    const current = auth?.currentUser;
+    if (!current) return;
+
+    setEnrichRunning(true);
+    setEnrichError(null);
+    try {
+      const token = await current.getIdToken();
+      const res = await fetch("/api/clinic/enrich", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `Enrichment failed (${res.status})`);
+      }
+      const data = (await res.json()) as EnrichResponse;
+      setEnrichSources(data.sources);
+    } catch (err) {
+      setEnrichError(err instanceof Error ? err.message : "Enrichment failed");
+    } finally {
+      setEnrichRunning(false);
+      setEnrichAttempted(true);
+    }
+  }, []);
+
+  // Auto-run enrichment the first time the enrich step becomes active.
+  useEffect(() => {
+    if (!hydrated) return;
+    const currentStepId = STEPS[currentStep]?.id;
+    if (currentStepId === "enrich" && !enrichAttempted && !enrichRunning) {
+      runEnrichment();
+    }
+  }, [hydrated, currentStep, STEPS, enrichAttempted, enrichRunning, runEnrichment]);
 
   // ── Step 1: Sign up ────────────────────────────────────────────────────────
   async function handleSignup() {
@@ -362,6 +424,10 @@ export default function OnboardingPage() {
         return fullName.trim().length >= 2 && email.includes("@") && password.length >= 8 && clinicName.trim().length >= 2;
       case "verify":
         return clinicAddress.trim().length >= 5 && dpaAccepted && commsConsent;
+      case "enrich":
+        // Allow continue once we've at least tried enrichment, even if nothing came back.
+        // Users can always edit on the Receptionist page later.
+        return !enrichRunning && enrichAttempted;
       case "configure":
         if (selectedModule === "ava" || selectedModule === "fullstack") return clinicPhone.length >= 10;
         return true;
@@ -586,6 +652,30 @@ export default function OnboardingPage() {
                   </>
                 )}
 
+                {/* ────────────── STEP: ENRICH (Ava KB auto-fill) ────────────── */}
+                {step.id === "enrich" && (
+                  <>
+                    <div className="rounded-xl border border-blue/15 bg-blue/5 p-4">
+                      <p className="text-sm font-semibold text-navy mb-1">
+                        Ava&apos;s clinic knowledge base
+                      </p>
+                      <p className="text-[12px] text-muted leading-relaxed">
+                        We pull what we can from Google, Companies House, and your website
+                        so Ava can answer basic questions on day one. Review anything we got
+                        wrong — edits sync straight through to the Receptionist page.
+                      </p>
+                    </div>
+
+                    <EnrichmentReview
+                      clinicId={clinicId}
+                      sources={enrichSources}
+                      running={enrichRunning}
+                      onRunEnrichment={runEnrichment}
+                      enrichmentError={enrichError}
+                    />
+                  </>
+                )}
+
                 {/* ────────────── STEP 3: CONFIGURE (conditional) ────────────── */}
                 {step.id === "configure" && (
                   <>
@@ -669,7 +759,7 @@ export default function OnboardingPage() {
                     <div className="space-y-3">
                       <p className="text-sm font-semibold text-navy mb-3">Select your PMS</p>
                       {PMS_OPTIONS.map((pms) => (
-                        <button key={pms.id} onClick={() => setSelectedPms(pms.id)}
+                        <button key={pms.id} onClick={() => { if (pms.id === "writeupp") { router.push("/onboarding/writeupp"); return; } setSelectedPms(pms.id); }}
                           className={`w-full flex items-start gap-3 p-4 rounded-xl border text-left transition-all ${
                             selectedPms === pms.id ? "border-blue bg-blue/5" : "border-border hover:border-blue/30"
                           }`}>

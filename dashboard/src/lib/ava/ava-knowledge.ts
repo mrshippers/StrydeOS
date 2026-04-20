@@ -19,12 +19,22 @@ export type KnowledgeCategory =
   | "faqs"       // FAQs
   | "custom";    // Custom Notes
 
+/** Where this entry came from. Defaults to "manual" if absent (backward compat). */
+export type KnowledgeSource = "manual" | "auto";
+
+/** Synth confidence hint, used only for auto-enriched entries. */
+export type KnowledgeConfidence = "high" | "medium" | "low";
+
 export interface KnowledgeEntry {
   id: string;
   category: KnowledgeCategory;
   title: string;
   content: string;
   updatedAt: string;
+  /** Provenance — auto-enrichment marks entries for UI badging and conflict-free re-runs. */
+  source?: KnowledgeSource;
+  /** Synth confidence, only meaningful for source === "auto". */
+  confidence?: KnowledgeConfidence;
 }
 
 export interface KnowledgeChunk {
