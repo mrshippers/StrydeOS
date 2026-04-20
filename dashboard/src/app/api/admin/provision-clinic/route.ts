@@ -33,6 +33,7 @@ import type {
   PmsProvider,
 } from "@/types";
 import { withRequestLog } from "@/lib/request-logger";
+import { buildWelcomeEmail, buildWelcomeText } from "@/lib/intelligence/emails/welcome";
 
 async function handler(request: NextRequest) {
   // Rate limit: 5 requests per IP per 60 seconds (creates Firebase Auth users + Firestore docs)
@@ -147,7 +148,7 @@ async function handler(request: NextRequest) {
       hepRate: 80,
       utilisationRate: 80,
       dnaRate: 5,
-      courseCompletionTarget: 70,
+      treatmentCompletionTarget: 70,
     };
 
     // All flags start false — trial grants temporary access, Stripe webhook
@@ -255,6 +256,38 @@ async function handler(request: NextRequest) {
       // Non-blocking — can be resent manually
     }
 
+    // ── Welcome email ────────────────────────────────────────────────────────────
+    let welcomeEmailSent = false;
+    if (passwordResetLink) {
+      try {
+        const resendKey = process.env.RESEND_API_KEY;
+        if (resendKey) {
+          const firstName = ownerFirstName?.trim() || "there";
+          const res = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${resendKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: "Jamal at StrydeOS <jamal@strydeos.com>",
+              to: [trimmedEmail],
+              subject: `${trimmedName} is live on StrydeOS`,
+              html: buildWelcomeEmail(firstName, trimmedName, passwordResetLink),
+              text: buildWelcomeText(firstName, trimmedName, passwordResetLink),
+            }),
+          });
+          welcomeEmailSent = res.ok;
+          if (!res.ok) {
+            const errBody = await res.text().catch(() => "unknown");
+            console.error("[provision-clinic] Welcome email failed:", res.status, errBody);
+          }
+        }
+      } catch (emailErr) {
+        console.error("[provision-clinic] Welcome email error:", emailErr);
+      }
+    }
+
     // ── Funnel event ─────────────────────────────────────────────────────────────
     try {
       await db.collection("funnel_events").add({
@@ -269,7 +302,7 @@ async function handler(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { uid, clinicId, email: trimmedEmail, passwordResetSent: !!passwordResetLink },
+      { uid, clinicId, email: trimmedEmail, passwordResetSent: !!passwordResetLink, welcomeEmailSent },
       { status: 201 }
     );
   } catch (err) {
