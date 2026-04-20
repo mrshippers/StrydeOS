@@ -15,8 +15,10 @@ import TopProgressBar, { ProgressProvider } from "@/components/TopProgressBar";
 import StagingBanner from "@/components/StagingBanner";
 import TrialBanner from "@/components/TrialBanner";
 import DemoBanner from "@/components/ui/DemoBanner";
+import SampleDataBanner from "@/components/SampleDataBanner";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
 import ClinicPicker from "@/components/ClinicPicker";
+import WriteUppSyncModal from "@/components/WriteUppSyncModal";
 
 const SplashScreen = dynamic(
   () => import("@/components/SplashScreen"),
@@ -93,6 +95,7 @@ function AppLayout({ children, impersonating }: { children: React.ReactNode; imp
           <ClinicPicker />
           <TrialBanner />
           <DemoBanner />
+          <SampleDataBanner />
           <PageTransition>{children}</PageTransition>
         </div>
       </motion.main>
@@ -102,6 +105,7 @@ function AppLayout({ children, impersonating }: { children: React.ReactNode; imp
       <WhatsNew />
       <InsightEngineUnlocked />
       <CommandPalette />
+      <WriteUppSyncModal />
     </>
   );
 }

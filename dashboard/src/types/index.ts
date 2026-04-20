@@ -213,9 +213,26 @@ export interface ClinicProfile {
   pmsType: PmsProvider | null;
   /** Client-visible last PMS sync time (API key stored server-side only in integrations_config). */
   pmsLastSyncAt?: string | null;
+  /**
+   * "sample" when the clinic was populated via a seed script (patients /
+   * appointments / metrics are synthetic or from a stale CSV export).
+   * "live" once real PMS data has replaced the seed.
+   *
+   * Absent = legacy (assume "live"). New seed scripts MUST set "sample".
+   */
+  dataMode?: "sample" | "live";
+  /** ISO timestamp — set by scripts/purge-spires-seed-data.ts. */
+  lastSeedPurgeAt?: string | null;
   hepType?: HepProvider | null;
   /** Client-visible HEP connection status (API key stored server-side only in integrations_config). */
   hepConnectedAt?: string | null;
+  /**
+   * Email addresses allowed to post inbound CSV imports for this clinic
+   * (via /api/pms/import-csv/inbound). Lowercased match against the bare
+   * email address extracted from the Mailgun `from` field. When undefined or
+   * empty, the route falls back to legacy behaviour (allow-all + warning).
+   */
+  allowedInboundSenders?: string[];
   featureFlags: FeatureFlags;
   targets: ClinicTargets;
   brandConfig: BrandConfig;

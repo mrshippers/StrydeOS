@@ -28,7 +28,7 @@ function twimlResponse(body: string, status = 200): NextResponse {
 
 const FALLBACK_TWIML = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice" language="en-GB">Thank you for calling. We are unable to take your call right now. Please try again shortly or leave a message after the tone.</Say>
+  <Say voice="Polly.Amy-Neural" language="en-GB">Thank you for calling. We are unable to take your call right now. Please try again shortly or leave a message after the tone.</Say>
   <Hangup/>
 </Response>`;
 

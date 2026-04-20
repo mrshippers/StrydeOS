@@ -196,6 +196,30 @@ export default function DashboardPage() {
   const latest = stats.length > 0 ? stats[weekIndex] : null;
   const previous = weekIndex > 0 ? stats[weekIndex - 1] : null;
 
+  // How old is the most recent metrics_weekly doc (not the same as pmsLastSyncAt —
+  // the PMS can sync without the metrics pipeline re-computing).
+  const latestDataAgeDays = useMemo(() => {
+    if (!latest?.computedAt) return undefined;
+    const t = new Date(latest.computedAt).getTime();
+    if (isNaN(t)) return undefined;
+    return (Date.now() - t) / 86400000;
+  }, [latest?.computedAt]);
+  const isDataStale = typeof latestDataAgeDays === "number" && latestDataAgeDays > 7;
+  const isDataVeryStale = typeof latestDataAgeDays === "number" && latestDataAgeDays > 30;
+
+  // "Current week" = the browser's current ISO week, not simply `weekOffset === 0`
+  // (which is just the latest available doc — could be months old).
+  const currentIsoWeekStart = useMemo(() => {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
+    d.setDate(diff);
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString().slice(0, 10);
+  }, []);
+  const showingCurrentWeek =
+    weekOffset === 0 && !!latest?.weekStart && latest.weekStart === currentIsoWeekStart;
+
   const greetingData: GreetingData = {
     latest,
     previous,
@@ -203,6 +227,7 @@ export default function DashboardPage() {
     clinicians,
     selectedClinician: effectiveClinician,
     unreadInsightCount: unreadCount,
+    dataAgeDays: latestDataAgeDays,
   };
   const { greeting, subtext } = getGreeting(firstName, isFirstMount, greetingData);
   const isCurrentWeek = weekOffset === 0;
@@ -251,11 +276,17 @@ export default function DashboardPage() {
             <motion.p className="text-[13px] font-medium text-muted-strong mt-1 italic leading-relaxed" style={{ opacity: subtextOpacity }}>{subtext}</motion.p>
           </div>
           <div className="flex items-center gap-2 shrink-0 mt-2 flex-wrap justify-end">
-            {isCurrentWeek && !loading && (
+            {showingCurrentWeek && !loading && !isDataStale && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cloud-light border border-border text-[12px] font-semibold shrink-0"
                 style={{ color: "#059669" }}>
                 <span className="pulse-live" style={{ color: "#059669" }}>●</span>
                 Live
+              </div>
+            )}
+            {!loading && isDataStale && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-semibold shrink-0 bg-amber-50 border-amber-200 text-amber-700">
+                <AlertTriangle size={11} />
+                Stale · {Math.round(latestDataAgeDays!)}d old
               </div>
             )}
             {lastSync && (
@@ -291,6 +322,35 @@ export default function DashboardPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* ── Metrics-pipeline staleness (based on computedAt, not pmsLastSyncAt).
+           PMS can webhook in new appointments while the weekly aggregation
+           pipeline hasn't run — so we warn on the metrics doc age directly. */}
+      {!loading && isDataStale && latest && (
+        <motion.div
+          className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border text-sm ${isDataVeryStale ? "bg-amber-50 border-amber-300" : "bg-amber-50 border-amber-200"}`}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <span className="text-amber-700 flex items-center gap-2 min-w-0">
+            <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+            <span className="truncate">
+              Metrics below are from w/c {latest.weekStart} —
+              <span className="font-semibold"> {Math.round(latestDataAgeDays!)} days old</span>.
+              Every KPI on this page reflects that week, not today.
+            </span>
+          </span>
+          <button
+            onClick={handleManualSync}
+            disabled={syncing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-800 text-xs font-semibold hover:bg-amber-200 transition-colors disabled:opacity-50 shrink-0"
+          >
+            <RefreshCw size={12} className={syncing ? "animate-spin" : ""} />
+            {syncing ? "Syncing…" : "Refresh data"}
+          </button>
+        </motion.div>
+      )}
 
       {/* ── Data staleness nudge (all PMS types) ─────────────────────────── */}
       {isCurrentWeek && !loading && lastSync?.staleness === "very-stale" && user?.clinicProfile?.pmsType && (
@@ -414,9 +474,18 @@ export default function DashboardPage() {
           </button>
           <div className="px-3 py-1.5 rounded-lg border border-border bg-white shadow-[var(--shadow-card)] text-sm font-medium text-navy min-w-[160px] text-center">
             {latest ? (
-              isCurrentWeek ? (
+              showingCurrentWeek ? (
                 <span>
                   <span className="text-blue font-semibold">This week</span>
+                  <span className="text-muted ml-2 text-[12px]">
+                    {formatFullDate(latest.weekStart)}
+                  </span>
+                </span>
+              ) : isCurrentWeek ? (
+                <span>
+                  <span className={isDataStale ? "text-amber-700 font-semibold" : "text-navy font-semibold"}>
+                    Latest week
+                  </span>
                   <span className="text-muted ml-2 text-[12px]">
                     {formatFullDate(latest.weekStart)}
                   </span>

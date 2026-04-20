@@ -15,6 +15,7 @@
     "seed:spires": "node scripts/seed-spires-user.js",
     "seed:production": "npx tsx scripts/seed-spires-production.ts",
     "seed:clinic": "npx tsx scripts/seed-clinic.ts",
+    "purge:seed": "npx tsx scripts/purge-spires-seed-data.ts",
     "promote:superadmin": "npx tsx scripts/promote-superadmin.ts",
     "setup:superadmin": "npx tsx scripts/setup-superadmin.ts",
     "fix:joe": "npx tsx scripts/fix-joe-user.ts",

@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     // Reception didn't answer (busy, no-answer, failed) — apologise and end
     const fallbackTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice" language="en-GB">I'm sorry — the team aren't available to take your call right now. Someone will call you back as soon as possible. Thank you for your patience.</Say>
+  <Say voice="Polly.Amy-Neural" language="en-GB">I'm sorry — the team aren't available to take your call right now. Someone will call you back as soon as possible. Thank you for your patience.</Say>
   <Hangup/>
 </Response>`;
 

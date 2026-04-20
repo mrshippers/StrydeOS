@@ -10,6 +10,8 @@ export interface GreetingData {
   clinicians: Clinician[];
   selectedClinician: string; // "all" or clinicianId
   unreadInsightCount: number;
+  /** Days since the `latest` WeeklyStats doc was computed (NaN/undefined if unknown). */
+  dataAgeDays?: number;
 }
 
 // ─── Prompt rules (priority waterfall — first match wins) ───────────────────
@@ -39,7 +41,23 @@ function churnRevenue(d: GreetingData): number {
     .reduce((sum, p) => sum + Math.max(0, p.courseLength - p.sessionCount) * revPerSession, 0);
 }
 
+function isDataStale(d: GreetingData, days: number): boolean {
+  return typeof d.dataAgeDays === "number" && isFinite(d.dataAgeDays) && d.dataAgeDays > days;
+}
+
 const PROMPT_RULES: PromptRule[] = [
+  // ── Stale data guard — must run first, otherwise every downstream rule
+  //     ends up citing numbers that are weeks out of date.
+  {
+    id: "STALE_DATA",
+    condition: (d) => !!d.latest && isDataStale(d, 7),
+    template: (d) => {
+      const days = Math.round(d.dataAgeDays!);
+      const wk = d.latest!.weekStart;
+      return `Metrics below are from w/c ${wk} — last synced ${days} days ago. Refresh to see current numbers.`;
+    },
+  },
+
   // ── Critical alerts ───────────────────────────────────────────────────────
   {
     id: "HIGH_DNA",
@@ -106,9 +124,11 @@ const PROMPT_RULES: PromptRule[] = [
   },
 
   // ── Insight integration ───────────────────────────────────────────────────
+  // Only surface unread insights when the underlying data is recent. Insights
+  // generated on stale pipeline runs shouldn't be framed as "may need action".
   {
     id: "UNREAD_INSIGHTS",
-    condition: (d) => d.unreadInsightCount >= 2,
+    condition: (d) => d.unreadInsightCount >= 2 && !isDataStale(d, 14),
     template: (d) =>
       `${d.unreadInsightCount} unread insights in Intelligence. The top one may need action.`,
   },

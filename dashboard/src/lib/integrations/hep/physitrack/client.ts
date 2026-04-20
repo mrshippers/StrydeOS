@@ -3,7 +3,7 @@ export interface PhysitrackClientConfig {
   baseUrl?: string;
 }
 
-const DEFAULT_BASE_URL = "https://api.physitrack.com/v2";
+const DEFAULT_BASE_URL = "https://api.physitrack.com/api/v2";
 
 export class PhysitrackClient {
   private apiKey: string;
@@ -20,8 +20,9 @@ export class PhysitrackClient {
       ...options,
       signal: options?.signal ?? AbortSignal.timeout(15_000),
       headers: {
-        Authorization: `Bearer ${this.apiKey}`,
+        "X-Api-Key": this.apiKey,
         "Content-Type": "application/json",
+        Accept: "application/json",
         ...options?.headers,
       },
     });
@@ -34,12 +35,21 @@ export class PhysitrackClient {
     return res.json();
   }
 
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<{ ok: boolean; error?: string }> {
     try {
-      await this.request("/me");
-      return true;
-    } catch {
-      return false;
+      const res = await fetch(`${this.baseUrl}/clients`, {
+        signal: AbortSignal.timeout(15_000),
+        headers: {
+          "X-Api-Key": this.apiKey,
+          Accept: "application/json",
+        },
+      });
+      if (res.ok) return { ok: true };
+      const body = await res.json().catch(() => ({}));
+      const msg = (body?.errors?.[0] ?? body?.error ?? `HTTP ${res.status}`);
+      return { ok: false, error: msg };
+    } catch (err) {
+      return { ok: false, error: String(err) };
     }
   }
 

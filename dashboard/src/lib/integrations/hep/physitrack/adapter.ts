@@ -46,8 +46,8 @@ export function createPhysitrackAdapter(config: HEPIntegrationConfig): HEPAdapte
 
     async testConnection() {
       try {
-        const ok = await client.testConnection();
-        return { ok, error: ok ? undefined : "Could not authenticate with Physitrack" };
+        const result = await client.testConnection();
+        return result;
       } catch (err) {
         return { ok: false, error: String(err) };
       }

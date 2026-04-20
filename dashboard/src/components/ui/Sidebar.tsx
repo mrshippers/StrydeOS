@@ -54,6 +54,7 @@ import { computeAlerts, getInitials } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { useInsightEvents } from "@/hooks/useInsightEvents";
+import { useCommsLog } from "@/hooks/useCommsLog";
 import { useSidebar } from "@/context/SidebarContext";
 import type { AlertFlagProps } from "@/types";
 import type { ModuleKey } from "@/lib/billing";
@@ -141,11 +142,23 @@ function useAlerts() {
 function usePulseBadge(): number {
   const { user } = useAuth();
   const { churnRisk } = usePatients();
-  // Only show the badge when the clinic has Pulse enabled (featureFlag: continuity).
-  // Without it, churnRisk patients are imported from the PMS but Pulse has never
-  // attempted any comms — surfacing a count would be meaningless / alarming.
+  const { commsLog } = useCommsLog();
+  // Only show the badge when (a) Pulse module is enabled AND (b) Pulse has
+  // actually sent at least one comms message in the last 14 days. The badge
+  // visually reads as "unread notifications" — surfacing a churn-risk count
+  // when Pulse hasn't sent anything produces the "4 notifications but I never
+  // sent a text" confusion. Once Pulse is active, the count means "at-risk
+  // patients under your Pulse watch".
   const pulseEnabled = user?.clinicProfile?.featureFlags?.continuity ?? false;
   if (!pulseEnabled) return 0;
+  const cutoff = Date.now() - 14 * 86400_000;
+  const recentRealComms = commsLog.some((entry) => {
+    const t = new Date(entry.sentAt).getTime();
+    if (isNaN(t) || t < cutoff) return false;
+    // Require a provider tracking ID so ghost / seed rows don't count.
+    return !!(entry.twilioSid || entry.resendId || entry.n8nExecutionId);
+  });
+  if (!recentRealComms) return 0;
   return churnRisk.length;
 }
 

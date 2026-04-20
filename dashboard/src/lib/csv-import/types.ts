@@ -54,6 +54,7 @@ export type ValidationErrorType =
   | "missing_required_column"
   | "empty_file"
   | "date_parse_failure_threshold"
+  | "date_format_mismatch"
   | "too_few_rows";
 
 export type ValidationWarningType =

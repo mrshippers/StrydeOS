@@ -146,6 +146,22 @@ export async function createAvaTools(appUrl: string, apiKey: string): Promise<st
   return toolIds;
 }
 
+/**
+ * Delete a tool from ElevenLabs by ID. Best-effort — a 404 (stale ID) is
+ * treated as success since the goal is "this ID should not exist afterwards".
+ */
+export async function deleteAvaTool(apiKey: string, toolId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${ELEVENLABS_API_URL}/convai/tools/${toolId}`, {
+      method: "DELETE",
+      headers: { "xi-api-key": apiKey },
+    });
+    return res.ok || res.status === 404;
+  } catch {
+    return false;
+  }
+}
+
 // ─── Agent creation ──────────────────────────────────────────────────────────
 
 /**

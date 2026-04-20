@@ -73,9 +73,15 @@ export function useLiveActivity(maxItems = 4): { items: ActivityItem[]; loading:
       }
     }
 
-    // Pulse comms events → activity items (only if module enabled)
+    // Pulse comms events → activity items (only if module enabled).
+    // Gate on real delivery: a genuine send populates at least one provider
+    // tracking ID (Twilio / Resend / n8n). Entries without any of these are
+    // seed / test / ghost rows that must never render as "live activity".
     if (flags?.continuity) {
-      for (const l of commsLog.slice(0, 6)) {
+      const realSends = commsLog.filter(
+        (l) => !!(l.twilioSid || l.resendId || l.n8nExecutionId),
+      );
+      for (const l of realSends.slice(0, 6)) {
         const seqLabel =
           l.sequenceType === "hep_reminder" ? "HEP reminder"
           : l.sequenceType === "rebooking_prompt" ? "Rebook prompt"
@@ -100,9 +106,16 @@ export function useLiveActivity(maxItems = 4): { items: ActivityItem[]; loading:
       }
     }
 
+    // Drop anything older than 14 days. The card is branded "Clinic Pulse"
+    // and reads as a live feed — surfacing month-old events as "8m ago"
+    // (which happens when timestamp parsing falls back to `new Date()`) or
+    // as real items makes the card actively misleading.
+    const cutoff = Date.now() - 14 * 86400_000;
+    const fresh = all.filter((item) => item.timestamp.getTime() >= cutoff);
+
     // Sort newest first, take top N
-    all.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    return all.slice(0, maxItems);
+    fresh.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return fresh.slice(0, maxItems);
   }, [insights, calls, commsLog, flags?.receptionist, flags?.continuity, maxItems]);
 
   const loading = insightsLoading || callsLoading || commsLoading;

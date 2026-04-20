@@ -18,6 +18,21 @@ function normaliseKey(key: string): string {
 }
 
 /**
+ * Detect a slash-separated date string that looks like US M/D/YYYY — i.e.
+ * the first segment is a valid month (1-12) and the second segment is a
+ * valid day-of-month (1-31). Used to distinguish "owner picked the wrong
+ * export format" from "file is genuinely malformed".
+ */
+function looksLikeUsDate(raw: string): boolean {
+  const trimmed = raw.trim();
+  const match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/\d{2,4}$/);
+  if (!match) return false;
+  const first = parseInt(match[1], 10);
+  const second = parseInt(match[2], 10);
+  return first >= 1 && first <= 12 && second >= 1 && second <= 31;
+}
+
+/**
  * Check which of the schema's required canonical fields are present in the CSV headers.
  */
 function findMissingRequired(
@@ -117,6 +132,7 @@ export async function validateCSV(
   }
 
   // ── 4. Date parse failures ─────────────────────────────────────────────────
+  const failedDateStrings: string[] = [];
   for (const row of rows) {
     const dateStr = resolveField(row, schema.fieldMap, "date");
     if (!dateStr) {
@@ -125,6 +141,28 @@ export async function validateCSV(
     }
     if (!isDateParseable(dateStr, schema.dateFormat)) {
       dateParseFailures++;
+      failedDateStrings.push(dateStr);
+    }
+  }
+
+  // ── 4a. Date format mismatch (more specific than parse-rate) ───────────────
+  // If the schema expects UK (DD/MM/YYYY) and >50% of failed rows look like
+  // US-format M/D/YYYY (first segment 1-12, second 1-31), surface a typed,
+  // owner-readable hint before the generic date-parse-rate error.
+  if (schema.dateFormat === "uk" && failedDateStrings.length > 0) {
+    const usLike = failedDateStrings.filter(looksLikeUsDate);
+    const usLikeRate = usLike.length / failedDateStrings.length;
+    if (usLikeRate > 0.5) {
+      errors.push({
+        type: "date_format_mismatch",
+        message:
+          "Looks like US-format dates (e.g. '3/14/2026'). WriteUpp exports DD/MM/YYYY (e.g. '14/03/2026'). Check your WriteUpp export settings.",
+        details: {
+          expected: "uk",
+          detected: "us",
+          sampleBadDates: usLike.slice(0, 3),
+        },
+      });
     }
   }
 

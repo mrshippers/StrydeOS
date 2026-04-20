@@ -10,6 +10,7 @@ const WRITEUPP_FIELD_MAP: Record<string, CanonicalField> = {
   "appointment_date": "date",
   "Start Date": "date",
   "Start": "date",
+  "Month": "date",
 
   "Appointment Time": "time",
   "Time": "time",
@@ -61,6 +62,7 @@ const WRITEUPP_FIELD_MAP: Record<string, CanonicalField> = {
   "Staff": "practitioner",
   "Assigned To": "practitioner",
   "Therapist": "practitioner",
+  "With": "practitioner",
 
   "Practitioner ID": "practitionerId",
   "Clinician ID": "practitionerId",
@@ -89,6 +91,7 @@ const WRITEUPP_FIELD_MAP: Record<string, CanonicalField> = {
 
   "Duration": "duration",
   "Duration (mins)": "duration",
+  "Duration (min.)": "duration",
   "duration_minutes": "duration",
 };
 

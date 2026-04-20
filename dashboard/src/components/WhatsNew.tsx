@@ -178,7 +178,7 @@ export default function WhatsNew() {
                     exit={{ opacity: 0, x: -60 }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {/* ── Card 0: Ava improvements ── */}
+                    {/* ── Card 0: Ava fixes ── */}
                     <div
                       className="px-8 pt-7 pb-6 relative"
                       style={{
@@ -195,17 +195,16 @@ export default function WhatsNew() {
                         </div>
                         <div>
                           <h2 id="whats-new-title" className="font-display text-[22px] text-white leading-tight">
-                            Ava is fully live
+                            Ava — what we fixed
                           </h2>
                           <p className="text-[12px] text-white/50 mt-0.5">
-                            AI receptionist — end-to-end
+                            Tested on real calls at Spires
                           </p>
                         </div>
                       </div>
                       <p className="text-[13px] text-white/70 leading-relaxed">
-                        The full call pipeline is now wired up — from first ring
-                        to booking confirmation. Every fix from this sprint is
-                        live at Spires.
+                        A few things weren&rsquo;t working right. We found them,
+                        fixed them, and verified everything on the live number.
                       </p>
                     </div>
 
@@ -214,26 +213,26 @@ export default function WhatsNew() {
                         {
                           icon: Brain,
                           color: "#1C54F2",
-                          label: "LangGraph router live",
-                          detail: "Intent classification and guardrail gates are routing every call correctly — model ID fix applied",
+                          label: "Ava understands why people are calling",
+                          detail: "Calls were occasionally going to the wrong place. Fixed — Ava reads the caller\u2019s intent correctly from the first few seconds",
                         },
                         {
                           icon: Calendar,
                           color: "#1C54F2",
-                          label: "Live booking tools",
-                          detail: "Ava checks availability, books, and updates appointments in real time during the call",
+                          label: "Bookings are actually landing in the diary",
+                          detail: "Ava was confirming calls without writing them to WriteUpp. That\u2019s fixed \u2014 appointments save in real time during the call",
                         },
                         {
                           icon: Shield,
                           color: "#1C54F2",
-                          label: "Insurance pre-auth flow",
-                          detail: "Insured callers are guided through pre-authorisation — with a fallback if they don\u2019t have the reference to hand",
+                          label: "Insured patients get the right questions",
+                          detail: "Pre-authorisation was being skipped for some callers. Ava now walks through it properly, with a fallback if they don\u2019t have the reference number",
                         },
                         {
                           icon: MessageSquare,
                           color: "#1C54F2",
-                          label: "Transfer + SMS confirmation",
-                          detail: "Warm transfers work even with withheld numbers. Booking confirmations SMS\u2019d to patients automatically",
+                          label: "Transfers and confirmation texts are working",
+                          detail: "Transfers were dropping intermittently. Fixed. Patients now get a confirmation text automatically after every booking",
                         },
                       ].map((item) => (
                         <div key={item.label} className="flex items-start gap-3">
@@ -277,17 +276,16 @@ export default function WhatsNew() {
                         <PulseMark size={48} />
                         <div>
                           <h2 className="font-display text-[22px] text-white leading-tight">
-                            Pulse is live
+                            Pulse — what it does
                           </h2>
                           <p className="text-[12px] text-white/50 mt-0.5">
-                            Your patient retention engine
+                            Keeps patients coming back
                           </p>
                         </div>
                       </div>
                       <p className="text-[13px] text-white/70 leading-relaxed">
-                        Pulse automatically reduces drop-off between sessions.
-                        It scores risk, triggers outreach, and tracks every
-                        patient from first appointment to discharge.
+                        Patients drop off between sessions. Pulse spots who&rsquo;s
+                        at risk and follows up automatically — without you doing anything.
                       </p>
                     </div>
 
@@ -296,26 +294,26 @@ export default function WhatsNew() {
                         {
                           icon: Activity,
                           color: "#0891B2",
-                          label: "Risk scoring",
-                          detail: "Composite 0\u2013100 churn risk from attendance, progress, HEP engagement, and sentiment",
+                          label: "Know who\u2019s about to drop off",
+                          detail: "Pulse flags patients who haven\u2019t rebooked and are mid-course \u2014 based on attendance, progress, and how engaged they are with their exercises",
                         },
                         {
                           icon: Users,
                           color: "#0891B2",
-                          label: "Lifecycle tracking",
-                          detail: "Eight-state patient journey \u2014 from onboarding through active, at-risk, and re-engaged",
+                          label: "See where every patient is in their course",
+                          detail: "From first appointment to discharge \u2014 nothing falls through the cracks",
                         },
                         {
                           icon: MessageSquare,
                           color: "#0891B2",
-                          label: "Automated sequences",
-                          detail: "Escalating SMS and email cadences for rebooking, HEP reminders, and reactivation",
+                          label: "Reminders and follow-ups go out automatically",
+                          detail: "Rebooking nudges, HEP check-ins, reactivation messages \u2014 timed and sent without you touching anything",
                         },
                         {
                           icon: TrendingUp,
                           color: "#0891B2",
-                          label: "Revenue attribution",
-                          detail: "Last-touch model ties every retained session back to the sequence that saved it",
+                          label: "See which messages are actually working",
+                          detail: "When a patient rebooks after a message, we track it \u2014 so you can see what\u2019s driving retention",
                         },
                       ].map((item) => (
                         <div key={item.label} className="flex items-start gap-3">
@@ -347,7 +345,7 @@ export default function WhatsNew() {
                     exit={{ opacity: 0, x: -60 }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {/* ── Card 2: Platform updates ── */}
+                    {/* ── Card 2: Other fixes ── */}
                     <div
                       className="px-8 pt-7 pb-5 relative"
                       style={{
@@ -356,10 +354,10 @@ export default function WhatsNew() {
                       }}
                     >
                       <h2 className="font-display text-[20px] text-white leading-tight">
-                        Platform updates
+                        Everything else we fixed
                       </h2>
                       <p className="text-[12px] text-white/40 mt-0.5">
-                        What else shipped this month
+                        Smaller things that were quietly wrong
                       </p>
                     </div>
 
@@ -368,37 +366,37 @@ export default function WhatsNew() {
                         {
                           tag: "Ava",
                           tagColor: "#1C54F2",
-                          title: "Full call pipeline live at Spires",
+                          title: "After-hours calls no longer go nowhere",
                           description:
-                            "End-to-end booking verified on the live number. Appointments standardised to 45 minutes — initial and follow-up.",
+                            "Calls outside clinic hours were hitting a dead end. Fixed \u2014 Ava now handles them properly and sends a callback SMS.",
                         },
                         {
                           tag: "Ava",
                           tagColor: "#1C54F2",
-                          title: "LangGraph call routing + phone provisioning",
+                          title: "Transfers no longer drop",
                           description:
-                            "Context-aware transfers, holds, and voicemail. Phone numbers auto-provision per clinic.",
-                        },
-                        {
-                          tag: "Ava",
-                          tagColor: "#1C54F2",
-                          title: "Insurance pre-auth + out-of-hours",
-                          description:
-                            "Pre-authorisation checks during booking. After-hours calls route with callback SMS.",
+                            "Warm transfers were failing for callers with withheld numbers. That\u2019s resolved.",
                         },
                         {
                           tag: "Intelligence",
                           tagColor: "#8B5CF6",
-                          title: "Live benchmarks + data freshness",
+                          title: "Your dashboard now shows when data was last updated",
                           description:
-                            "KPIs pull from live clinic data with week-by-week breakdowns and freshness indicators.",
+                            "KPIs were showing stale numbers with no indication. You can now see exactly how fresh the data is.",
                         },
                         {
-                          tag: "Security",
-                          tagColor: "#EF4444",
-                          title: "Production hardening — 492 tests",
+                          tag: "Intelligence",
+                          tagColor: "#8B5CF6",
+                          title: "Insights and activity feed are now date-accurate",
                           description:
-                            "Encrypted PMS credentials, superadmin controls, and expanded test coverage.",
+                            "Entries were showing the wrong dates or appearing as \u2018just now\u2019 when they weren\u2019t. Fixed.",
+                        },
+                        {
+                          tag: "Platform",
+                          tagColor: "#64748B",
+                          title: "A number of smaller bugs squashed",
+                          description:
+                            "Notification badges showing wrong counts, pulse activity showing ghost entries, revenue card showing incorrect totals \u2014 all fixed.",
                         },
                       ].map((entry) => (
                         <div key={entry.title} className="flex items-start gap-3" role="listitem">

@@ -21,7 +21,7 @@ const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN ?? "";
  */
 const FALLBACK_TWIML = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice" language="en-GB">I'm sorry, I'm unable to connect you right now. Someone from the clinic will call you back shortly.</Say>
+  <Say voice="Polly.Amy-Neural" language="en-GB">I'm sorry, I'm unable to connect you right now. Someone from the clinic will call you back shortly.</Say>
   <Hangup/>
 </Response>`;
 
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
   // - If no answer, apologise and promise callback
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice" language="en-GB">One moment — I'm connecting you now.</Say>
+  <Say voice="Polly.Amy-Neural" language="en-GB">One moment — I'm connecting you now.</Say>
   <Dial callerId="${escapeXml(callerIdPhone)}" timeout="30" action="/api/ava/transfer-twiml/status?clinicId=${escapeXml(clinicId)}">
     <Number>${escapeXml(to)}</Number>
   </Dial>

@@ -179,9 +179,47 @@
   <div class="fade-in d1" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:60px;flex-wrap:wrap;gap:20px">
     <div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#1C54F2,#132D5E);display:flex;align-items:center;justify-content:center">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 5-10"/></svg>
-        </div>
+        <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="StrydeOS" style="display:block;border-radius:10px">
+          <defs>
+            <linearGradient id="hdr-cont" x1="0.1" y1="0" x2="0.85" y2="1">
+              <stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/>
+              <stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/>
+            </linearGradient>
+            <radialGradient id="hdr-rad" cx="28%" cy="24%" r="60%">
+              <stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/>
+              <stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="hdr-topface" x1="0.05" y1="1" x2="0.35" y2="0">
+              <stop offset="0%" stop-color="white" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="white" stop-opacity="0.97"/>
+            </linearGradient>
+            <linearGradient id="hdr-rim" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="white" stop-opacity="0"/>
+              <stop offset="28%" stop-color="white" stop-opacity="0.60"/>
+              <stop offset="65%" stop-color="white" stop-opacity="0.12"/>
+              <stop offset="100%" stop-color="white" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="hdr-border" x1="0.1" y1="0" x2="0.4" y2="1">
+              <stop offset="0%" stop-color="#7ABBFF" stop-opacity="0.65"/>
+              <stop offset="100%" stop-color="#1C54F2" stop-opacity="0.06"/>
+            </linearGradient>
+            <clipPath id="hdr-pc"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+            <clipPath id="hdr-ac"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+          </defs>
+          <rect width="100" height="100" rx="24" fill="url(#hdr-cont)"/>
+          <rect width="100" height="100" rx="24" fill="url(#hdr-rad)"/>
+          <rect width="100" height="100" rx="24" fill="none" stroke="url(#hdr-border)" stroke-width="1.2"/>
+          <path d="M 17 21 Q 50 12 83 21" stroke="url(#hdr-rim)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+          <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/>
+          <g clip-path="url(#hdr-pc)">
+            <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </g>
+          <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#hdr-topface)" clip-path="url(#hdr-ac)"/>
+          <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+        </svg>
         <span style="font-weight:700;font-size:18px;letter-spacing:-0.02em;color:#0B2545">Stryde<span style="color:#4B8BF5">OS</span></span>
       </div>
       <h1 style="font-family:'DM Serif Display',serif;font-size:40px;font-weight:400;color:#0B2545;line-height:1.1;margin-bottom:6px">
@@ -190,8 +228,8 @@
       <p style="font-size:14px;color:#6B7280">Every fix, feature, and improvement — manually verify each one.</p>
     </div>
     <div style="text-align:right">
-      <div style="font-size:11px;color:#6B7280;margin-bottom:4px">Internal document</div>
-      <div style="font-size:13px;font-weight:600;color:#0B2545;margin-bottom:8px">April 2026</div>
+      <div style="font-size:11px;color:#6B7280;margin-bottom:4px">Internal document · last updated</div>
+      <div style="font-size:13px;font-weight:600;color:#0B2545;margin-bottom:8px">19 April 2026</div>
       <span style="display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:50px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#059669;background:#05966912;border:1px solid #05966930">
         <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#059669;animation:pulse 2s infinite"></span>
         Repo Clean
@@ -247,27 +285,27 @@
     <div style="margin-bottom:32px">
       <div class="eyebrow">Change summary</div>
       <h2 class="section-title">Everything that shipped.</h2>
-      <p class="section-sub">63 tracked changes across 13 categories. Check each one manually. Tick when verified.</p>
+      <p class="section-sub">97 tracked changes across 17 categories, with the Apr 11–19 batch at the bottom. Check each one manually. Tick when verified.</p>
     </div>
     <div class="grid-4">
       <div class="metric-card" style="border-top:3px solid #1C54F2">
         <div class="metric-label">Total changes</div>
-        <div class="metric-value" style="color:#1C54F2" id="total-count">63</div>
+        <div class="metric-value" style="color:#1C54F2" id="total-count">97</div>
         <div class="metric-sub">Commits tracked</div>
       </div>
       <div class="metric-card" style="border-top:3px solid #059669">
         <div class="metric-label">Features</div>
-        <div class="metric-value" style="color:#059669">18</div>
+        <div class="metric-value" style="color:#059669">33</div>
         <div class="metric-sub">New functionality</div>
       </div>
       <div class="metric-card" style="border-top:3px solid #F59E0B">
         <div class="metric-label">Fixes</div>
-        <div class="metric-value" style="color:#F59E0B">38</div>
+        <div class="metric-value" style="color:#F59E0B">53</div>
         <div class="metric-sub">Bugs patched</div>
       </div>
       <div class="metric-card" style="border-top:3px solid #EF4444">
         <div class="metric-label">Security</div>
-        <div class="metric-value" style="color:#EF4444">7</div>
+        <div class="metric-value" style="color:#EF4444">11</div>
         <div class="metric-sub">Hardening commits</div>
       </div>
     </div>
@@ -276,7 +314,7 @@
     <div style="background:white;border-radius:16px;border:1px solid #E2DFDA;padding:20px 24px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <span style="font-size:12px;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:0.06em">Verification progress</span>
-        <span style="font-size:13px;font-weight:700;color:#0B2545" id="progress-text">0 / 63 checked</span>
+        <span style="font-size:13px;font-weight:700;color:#0B2545" id="progress-text">0 / 97 checked</span>
       </div>
       <div class="progress-track">
         <div class="progress-fill" id="progress-fill" style="width:0%"></div>
@@ -399,7 +437,7 @@
     <div class="section-card">
       <div class="section-card-header">
         <span>Ava Voice Receptionist</span>
-        <span style="font-size:10px;font-weight:600;color:#1C54F2">Apr 3–10 · 12 items</span>
+        <span style="font-size:10px;font-weight:600;color:#1C54F2">Apr 3–10 · 9 items</span>
       </div>
       <div class="checklist-item" data-type="feat" onclick="toggle(this)">
         <div class="custom-checkbox"></div>
@@ -450,27 +488,9 @@
         <div class="custom-checkbox"></div>
         <div class="item-dot" style="background:#F59E0B"></div>
         <div>
-          <div class="item-label">ElevenLabs signature verification extracted to shared module</div>
-          <div class="item-sub">Was duplicated across webhook handlers. Moved to shared module. No more divergence risk · 5b37726</div>
-          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
-        </div>
-      </div>
-      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
-        <div class="custom-checkbox"></div>
-        <div class="item-dot" style="background:#F59E0B"></div>
-        <div>
           <div class="item-label">Idle timeout removed — was blocking all API calls after 30 min</div>
           <div class="item-sub">A 30-min idle timer was cancelling in-flight API calls. Critical prod bug. Removed entirely · f077e96</div>
           <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
-        </div>
-      </div>
-      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
-        <div class="custom-checkbox"></div>
-        <div class="item-dot" style="background:#EF4444"></div>
-        <div>
-          <div class="item-label">Three critical Ava bugs — model ID, Twilio sig validation, HMAC comparison</div>
-          <div class="item-sub">Wrong ElevenLabs model ID. Twilio signature validation was failing open. HMAC comparison had off-by-one · 83488eb</div>
-          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
         </div>
       </div>
       <div class="checklist-item" data-type="fix" onclick="toggle(this)">
@@ -479,15 +499,6 @@
         <div>
           <div class="item-label">LangGraph integration tests skipped in CI when no API key</div>
           <div class="item-sub">CI was failing because ELEVENLABS_API_KEY not set in test env. Tests now skipped gracefully · 5899b39</div>
-          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
-        </div>
-      </div>
-      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
-        <div class="custom-checkbox"></div>
-        <div class="item-dot" style="background:#F59E0B"></div>
-        <div>
-          <div class="item-label">Ava model ID, voice ID config, transfer CLI fallback fixed</div>
-          <div class="item-sub">Model ID was using deprecated v1. Voice ID was hardcoded, now pulled from config · aba38f8</div>
           <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
         </div>
       </div>
@@ -1038,6 +1049,335 @@
           <div class="item-label">Google Reviews setup prompt + login auth fallback</div>
           <div class="item-sub">Google Reviews widget now shows setup prompt when not configured. Auth fallback handles Firebase token refresh failures · 0192c26 / afb20e7</div>
           <span class="type-badge" style="color:#6B7280;background:#6B728012;border:1px solid #6B728030">fix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- ═══════ SINCE LAST UPDATE — APR 11–19 ═════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div class="fade-in d13" style="margin:56px 0 20px">
+    <div class="eyebrow" style="color:#8B5CF6">Since last update</div>
+    <h2 class="section-title">New changes · Apr 11–19.</h2>
+    <p class="section-sub">Work that landed after the 10 Apr pricing rollout. Verify each one on top of the previous batch.</p>
+  </div>
+
+  <!-- ═══════ AVA — LIVE VOICE PIPELINE ═══════ -->
+  <div class="fade-in d13" style="margin-bottom:20px" data-section="ava-live">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Ava — Live Voice Pipeline</span>
+        <span style="font-size:10px;font-weight:600;color:#1C54F2">Apr 11–19 · 11 items</span>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">ElevenLabs WebSocket live conversational audio end-to-end</div>
+          <div class="item-sub">Live call pipeline: Twilio ↔ WebSocket ↔ ElevenLabs agent. PCM16 encoding, async invocation, audio playback all wired · 1de6bed / 46ea7db / 57dcc04 / 243d8af / 2c0e830</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Tools endpoint — check_availability, book_appointment, update_booking, transfer</div>
+          <div class="item-sub">Full agent tool config wired. Tool call auth now uses Bearer tokens on provisioned tools (replaces HMAC). Free-slot logic is real, not mocked · 811e122 / 7dc7b0d / d71e616</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Python execution engine + MCP tool registry</div>
+          <div class="item-sub">Python exec engine wired for tool handlers. MCP registry lets new tools be added without code changes · 572064e</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Booking acknowledgement SMS + prompt quality improvements</div>
+          <div class="item-sub">Ava now sends confirmation SMS after a successful booking. Prompt tuning reduced false bookings and off-script responses · 5ebcb8c</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Pre-auth fallback in insured booking flow</div>
+          <div class="item-sub">If insurer pre-auth can't be verified mid-call, Ava now falls back to self-pay booking + flags for admin follow-up · d1cca30</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">Production PMS hardening — graceful fallback + SSRF allowlist + Bearer auth</div>
+          <div class="item-sub">PMS calls fail gracefully instead of crashing the call. SSRF protection via explicit allowlist. Bearer auth replaces HMAC on tool calls. Firestore baseUrl normalisation · c744c6e / a91401b / b7977d3</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">Twilio signature validation hardened + ElevenLabs secret normalised</div>
+          <div class="item-sub">Single-path signature reconstruction (no branching risk). Diagnostic headers for failures. ELEVENLABS secret now unquoted consistently. TWILIO_AUTH_TOKEN quoting warn-comment added · 328cf5b / d379b3f / 1dc0057</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Latency — 500–900ms off critical path + audio playhead scheduling</div>
+          <div class="item-sub">Agent audio now scheduled on a playhead so chunks never overlap. Real fix for the overlap/crackle issue, not a workaround · 24868e2 / 3788d71</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Mic-to-speaker feedback loop killed + dead MP3/prototype files purged</div>
+          <div class="item-sub">Was creating audible echo on calls. Dead prototype MP3 assets removed from build · 5ed8568</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Reactive connection pill, 2-activation cap, graceful WS errors</div>
+          <div class="item-sub">UI connection pill now reflects real WS state. Max 2 activations per session prevents runaway sessions. WS errors no longer crash the dashboard · 2da0c64</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">ElevenLabs API format + Spires wired to +44 20 4572 7044</div>
+          <div class="item-sub">Corrected ElevenLabs payload shape. Spires now receiving calls on +44 20 4572 7044. Ava Lite WebSocket format + tools response fixed · 06a18f6 / 304af76 / d0c401b / cf7071a</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SECURITY — AUDIT REMEDIATION ═══════ -->
+  <div class="fade-in d13" style="margin-bottom:20px" data-section="security-apr19">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Security — Audit Remediation</span>
+        <span style="font-size:10px;font-weight:600;color:#EF4444">Apr 11–19 · 5 items</span>
+      </div>
+      <div class="checklist-item" data-type="security" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">CRIT-2 demo bypass + CRIT-3 webhook fail-open patched</div>
+          <div class="item-sub">Demo mode no longer bypasses auth outside the demo-clinic scope. Webhooks now fail-closed on missing secret. HIGH-1 allowedClinicIds rule + HIGH-2 cross-clinic hijack fixed · cd5e9a5</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="security" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">HIGH-4 set-claims hierarchy + HIGH-5 session versioning + HIGH-7 WriteUpp buffer check</div>
+          <div class="item-sub">Custom claims now respect role hierarchy. Session tokens include version field (v:1 default). WriteUpp response buffer bounds-checked. Session tests updated to match · 7701db2 / 8252de8</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="security" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">HIGH-6 clinicId now derived from verified token, not request body</div>
+          <div class="item-sub">BAA route was reading clinicId from body — spoofable. Now pulled from verified session token only · 38cb0c4</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="security" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">Medium/low hardening sweep — rate limiting, secret hygiene, error sanitisation, observability</div>
+          <div class="item-sub">Rate limits tightened on auth + comms routes. Error messages sanitised before surfacing. Sentry breadcrumbs added for auth events · 2737c05</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="security" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#EF4444"></div>
+        <div>
+          <div class="item-label">Comms trigger sequences + rate-limit updates + middleware hardening</div>
+          <div class="item-sub">Comms engine trigger sequences wired. Additional rate limits on comms send endpoints. Middleware session validation hardened · 887990a</div>
+          <span class="type-badge" style="color:#EF4444;background:#EF444412;border:1px solid #EF444430">security</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ WEBSITE & UI UPDATES ═══════ -->
+  <div class="fade-in d13" style="margin-bottom:20px" data-section="ui-apr19">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Website &amp; UI Updates</span>
+        <span style="font-size:10px;font-weight:600;color:#0891B2">Apr 11–19 · 5 items</span>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Revised £399-cap pricing across all materials</div>
+          <div class="item-sub">Follow-on to the 10 Apr rollout — every surface (website, deck, billing.ts, emails) now reflects the £399 Clinic-tier cap · e36b238</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Continuity + Intelligence + Receptionist pages updated · security card · insight feed</div>
+          <div class="item-sub">Three product pages reworked with new copy + layout. New security card added to the dashboard. Insight feed component wired · d883215</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">U-Bahn transit-map changelog visualisation with roadmap ring</div>
+          <div class="item-sub">New changelog page treats releases as a transit map. Roadmap ring shows what's next · e1c0413</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Neural Routing LangGraph visualisation</div>
+          <div class="item-sub">New visual explainer for the Ava routing graph. Public-facing on the Ava product page · 1d9164d</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">What's New cards — Ava launch, Pulse launch, WriteUpp patient creation</div>
+          <div class="item-sub">Two new What's New cards (Ava launch, Pulse launch) + documentation for WriteUpp patient creation methods · f904b77 / ed830ff</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ EMAILS & COMMS ═══════ -->
+  <div class="fade-in d13" style="margin-bottom:20px" data-section="emails-apr19">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Emails &amp; Comms</span>
+        <span style="font-size:10px;font-weight:600;color:#0891B2">Apr 11–19 · 3 items</span>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Email template library — shared layout system + invite + preview/send scripts</div>
+          <div class="item-sub">Shared email layout component used by all transactional templates. Invite template live. Preview + export + send scripts in /scripts · 266fe58 / f30b322</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">pre_auth_collection race condition in getNextStep</div>
+          <div class="item-sub">Concurrent callbacks could skip the pre-auth collection step. Race condition patched · 777a054</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Resend webhook warn-only when RESEND_WEBHOOK_SECRET unset</div>
+          <div class="item-sub">Missing secret was failing the webhook entirely in dev. Now warns and passes through (production still requires the secret) · 013de20</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ AUTH & INFRA ═══════ -->
+  <div class="fade-in d13" style="margin-bottom:20px" data-section="auth-infra-apr19">
+    <div class="section-card">
+      <div class="section-card-header">
+        <span>Auth &amp; Infra</span>
+        <span style="font-size:10px;font-weight:600;color:#8B5CF6">Apr 11–19 · 6 items</span>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Session await restored + white loading screen + first-visit splash</div>
+          <div class="item-sub">Missing await on session load caused race on first render. Loading screen is now white (not dark flash). First-visit splash added · 6e6b418</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Splash screen removed + Node 22.x alignment</div>
+          <div class="item-sub">Splash was blocking auth loading on some routes. Removed. Node version aligned to 22.x across dashboard + website + CI · d0bb480</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#F59E0B"></div>
+        <div>
+          <div class="item-label">Billing seat-add uses router.refresh() instead of window.location.reload()</div>
+          <div class="item-sub">Adding a seat was hard-reloading the page, blowing away state. Now uses router.refresh() — same fix pattern as dashboard · 21ca64f</div>
+          <span class="type-badge" style="color:#F59E0B;background:#F59E0B12;border:1px solid #F59E0B30">fix</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="feat" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#059669"></div>
+        <div>
+          <div class="item-label">Website build job added to CI workflow</div>
+          <div class="item-sub">Website was only built at deploy time. Now builds on every PR so breakage is caught pre-merge · df8e486</div>
+          <span class="type-badge" style="color:#059669;background:#05966912;border:1px solid #05966930">feat</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#6B7280"></div>
+        <div>
+          <div class="item-label">n8n workflow 06 Twilio credential ID synced with live instance</div>
+          <div class="item-sub">Local workflow file was out of sync with the running n8n instance — changes would have overwritten the working credential ID on next deploy · 830fef5</div>
+          <span class="type-badge" style="color:#6B7280;background:#6B728012;border:1px solid #6B728030">chore</span>
+        </div>
+      </div>
+      <div class="checklist-item" data-type="fix" onclick="toggle(this)">
+        <div class="custom-checkbox"></div>
+        <div class="item-dot" style="background:#6B7280"></div>
+        <div>
+          <div class="item-label">Repo hygiene — SESSION_RATE_PENCE centralised, pycache untracked, stale prototypes removed</div>
+          <div class="item-sub">Session rate constant now lives in one place. Python __pycache__ + Playwright + env-backup now gitignored. Dead WEBSITE FINAL UPDATES + seed scripts + showcase components deleted · f13efd3 / 29abc34 / 3564eec / 81969d2 / fbfd403</div>
+          <span class="type-badge" style="color:#6B7280;background:#6B728012;border:1px solid #6B728030">chore</span>
         </div>
       </div>
     </div>

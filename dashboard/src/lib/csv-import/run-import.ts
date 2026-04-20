@@ -4,6 +4,14 @@ import { BUILTIN_SCHEMAS, getSchemaById } from "./schemas";
 import { detectSchema } from "./detect";
 import { validateCSV } from "./validate";
 import { resolveField, buildDateTimeWithFormat, resolveStatus } from "./resolve";
+import type { ClinicianMatchAlternative } from "./clinician-match";
+import {
+  loadClinicianCandidates,
+  decideRow,
+  newAggregator,
+  recordDecision,
+  flattenAggregator,
+} from "./resolve-clinicians";
 import type { CSVSchema, CSVFileType, ValidationWarning } from "./types";
 
 function parseCSV(text: string): Record<string, string>[] {
@@ -117,6 +125,43 @@ interface SuccessResult {
   schemaUsed: string;
   warnings: ValidationWarning[];
   message: string;
+  /**
+   * True when the file's SHA256 hash matches a previously imported file and
+   * the import was a no-op. Allows callers (e.g. inbound webhook) to surface
+   * idempotent retries gracefully instead of treating them as failures.
+   */
+  duplicate?: boolean;
+  /** SHA256 of the raw file contents when duplicate detection ran. */
+  fileHash?: string;
+  /**
+   * Practitioner names from the CSV that did NOT match any known clinician
+   * (no exact, first-name, fuzzy, or pmsExternalId hit ≥ threshold). These
+   * rows were SKIPPED rather than written with an orphaned clinicianId.
+   * Surface in the UI so the owner can either rename the clinician or map
+   * the CSV name manually.
+   */
+  unmatchedClinicians: Array<{ name: string; rowCount: number }>;
+  /**
+   * CSV practitioner names that matched MULTIPLE clinicians (ambiguous —
+   * e.g. CSV says "John" and the clinic has "John Smith" + "John Pemberton").
+   * Rows were SKIPPED. UI should prompt the owner to disambiguate.
+   */
+  ambiguousClinicians: Array<{
+    name: string;
+    rowCount: number;
+    alternatives: ClinicianMatchAlternative[];
+  }>;
+  /**
+   * CSV practitioner names that matched fuzzily (≥ 0.85 confidence) — the
+   * row WAS written, but the UI should surface this so the owner can confirm
+   * the mapping or correct it (e.g. "Andy Henry" → "Andrew Henry").
+   */
+  fuzzyMatchedClinicians: Array<{
+    csvName: string;
+    matchedTo: { id: string; name: string };
+    confidence: number;
+    rowCount: number;
+  }>;
 }
 
 interface ErrorResult {
@@ -183,8 +228,12 @@ export async function runCSVImport(
   let skipped = 0;
   const errors: string[] = [];
 
+  // Track per-row matcher outcomes so the UI can surface gaps.
+  const matchAgg = newAggregator();
+
   if (fileType === "appointments") {
     const apptColl = clinicRef.collection("appointments");
+    const clinicianCandidates = await loadClinicianCandidates(db, clinicId);
     const batch = db.batch();
     let batchCount = 0;
 
@@ -192,11 +241,24 @@ export async function runCSVImport(
       const dateStr = resolveField(row, fieldMap, "date");
       const timeStr = resolveField(row, fieldMap, "time");
       const practitioner = resolveField(row, fieldMap, "practitioner");
+      const practitionerId = resolveField(row, fieldMap, "practitionerId");
       const patientIdRaw = resolveField(row, fieldMap, "patientId");
       const statusRaw = resolveField(row, fieldMap, "status");
       const apptType = resolveField(row, fieldMap, "type");
 
       if (!dateStr && !practitioner) { skipped++; continue; }
+
+      // Resolve the practitioner string to a real Clinician doc ID.
+      // Skip the row outright if we can't make a confident decision —
+      // metrics relies on clinicianId matching a real Clinician doc ID,
+      // so writing an orphaned row would silently corrupt the dashboard.
+      const { decision } = decideRow(practitioner, practitionerId, clinicianCandidates);
+      recordDecision(matchAgg, practitioner, decision);
+
+      if (decision.kind === "skip" || decision.kind === "ambiguous") {
+        skipped++;
+        continue;
+      }
 
       const dateTime = buildDateTimeWithFormat(dateStr, timeStr, dateFormat);
       const endDateStr = resolveField(row, fieldMap, "endDate") || dateStr;
@@ -210,6 +272,9 @@ export async function runCSVImport(
       batch.set(apptColl.doc(docId), {
         externalId: docId,
         patientExternalId: patientId,
+        // clinicianId: resolved doc ID — what the metrics pipeline keys off.
+        // clinicianExternalId: raw CSV string — preserved for audit trail.
+        clinicianId: decision.clinicianId,
         clinicianExternalId: practitioner,
         clinicianName: practitioner,
         dateTime,
@@ -346,6 +411,9 @@ export async function runCSVImport(
     errors.push("Failed to write import history record");
   }
 
+  const { unmatchedClinicians, ambiguousClinicians, fuzzyMatchedClinicians } =
+    flattenAggregator(matchAgg);
+
   return {
     ok: true,
     written,
@@ -355,5 +423,8 @@ export async function runCSVImport(
     schemaUsed: schema.id,
     warnings: validation.warnings,
     message: `Imported ${written} ${fileType} records${metricsWritten ? `, recomputed ${metricsWritten} metric weeks` : ""}`,
+    unmatchedClinicians,
+    ambiguousClinicians,
+    fuzzyMatchedClinicians,
   };
 }

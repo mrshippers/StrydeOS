@@ -136,7 +136,7 @@ const ONBOARDING_PMS_OPTIONS = [
 const INGEST_EMAIL_DOMAIN = "ingest.strydeos.com";
 
 const PMS_PROVIDERS: PmsProviderOption[] = [
-  { id: "writeupp", label: "WriteUpp", icon: "📋", logo: "/integrations/writeupp.svg", comingSoon: false, hasApi: false },
+  { id: "writeupp", label: "WriteUpp", icon: "📋", logo: "/integrations/writeupp.svg", comingSoon: false, hasApi: false, csvBridge: true },
   { id: "cliniko", label: "Cliniko", icon: "🗂️", logo: "/integrations/cliniko-dark.svg", logoDark: "/integrations/cliniko-light.svg", comingSoon: false, hasApi: true },
   { id: "tm3", label: "TM3", icon: "⚕️", logo: "/integrations/tm3.svg", comingSoon: false, csvBridge: true, hasApi: false },
   { id: "jane", label: "Jane App", icon: "🌿", logo: "/integrations/jane.png", comingSoon: true, hasApi: false },
@@ -1434,21 +1434,8 @@ export default function SettingsPage() {
 
       {/* PMS Connection */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <h3 className="font-display text-lg text-navy">PMS Connection</h3>
-          {!pmsConnected && (
-            <button
-              onClick={() => setImportPanelOpen((v) => !v)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                importPanelOpen
-                  ? "text-white bg-blue"
-                  : "text-blue border border-blue/20 hover:bg-blue/5"
-              }`}
-            >
-              <Upload size={12} />
-              Import
-            </button>
-          )}
         </div>
 
         {pmsConnected ? (
@@ -1654,56 +1641,60 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* TM3 CSV Bridge — active connection card */}
+            {/* CSV Bridge — active connection card (WriteUpp, TM3, and any csvBridge provider) */}
             {pmsProvider && PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.csvBridge && (
               <div className="p-4 rounded-xl border border-navy/15 bg-navy/5">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ background: (() => {
-                      const lastImport = importHistory.find((r) => r.provider === "TM3");
-                      if (!lastImport) return "#9CA3AF";
-                      const hours = (Date.now() - new Date(lastImport.importedAt).getTime()) / 3600000;
-                      return hours < 24 ? "#059669" : hours < 168 ? "#D97706" : "#DC2626";
-                    })() }} />
-                    <p className="text-sm font-semibold text-navy">TM3 CSV Bridge</p>
-                  </div>
-                  <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-navy/10 text-navy uppercase">Active</span>
-                </div>
                 {(() => {
-                  const lastImport = importHistory.find((r) => r.provider === "TM3");
-                  if (lastImport) {
-                    const d = new Date(lastImport.importedAt);
-                    return (
-                      <p className="text-[12px] text-muted mb-3">
-                        Last import: <strong className="text-navy">{d.toLocaleDateString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong> &middot; {lastImport.rowsWritten} appointments
-                      </p>
-                    );
-                  }
-                  return <p className="text-[12px] text-muted mb-3">No data imported yet. Upload your first TM3 CSV or set up auto-import below.</p>;
+                  const providerLabel = PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.label ?? pmsProvider;
+                  const lastImport = importHistory.find((r) => r.provider === providerLabel);
+                  return (
+                    <>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ background: (() => {
+                            if (!lastImport) return "#9CA3AF";
+                            const hours = (Date.now() - new Date(lastImport.importedAt).getTime()) / 3600000;
+                            return hours < 24 ? "#059669" : hours < 168 ? "#D97706" : "#DC2626";
+                          })() }} />
+                          <p className="text-sm font-semibold text-navy">{providerLabel} CSV Bridge</p>
+                        </div>
+                        <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-navy/10 text-navy uppercase">Active</span>
+                      </div>
+                      {lastImport ? (
+                        <p className="text-[12px] text-muted mb-3">
+                          Last import: <strong className="text-navy">{new Date(lastImport.importedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</strong> &middot; {lastImport.rowsWritten} appointments
+                        </p>
+                      ) : (
+                        <p className="text-[12px] text-muted mb-3">No data imported yet. Upload your first {providerLabel} CSV or set up email auto-import below.</p>
+                      )}
+                      {clinicId && (
+                        <div className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-white">
+                          <Mail size={12} className="text-blue shrink-0" />
+                          <code className="text-[11px] text-navy flex-1 break-all">import-{clinicId}@{INGEST_EMAIL_DOMAIN}</code>
+                          <button type="button" onClick={copyIngestEmail} className="shrink-0 text-blue hover:text-blue-bright transition-colors">
+                            {ingestCopied ? <Check size={12} /> : <Copy size={12} />}
+                          </button>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 mt-3">
+                        <button
+                          type="button"
+                          onClick={() => setImportPanelOpen(true)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
+                        >
+                          <Upload size={11} /> Upload CSV
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setImportPanelOpen(true); setWizardOpen(true); setWizardPms(pmsProvider); setWizardStep(4); }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-navy/70 hover:text-navy transition-colors"
+                        >
+                          Set up auto-import &rarr;
+                        </button>
+                      </div>
+                    </>
+                  );
                 })()}
-                {clinicId && (
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-white">
-                    <Mail size={12} className="text-blue shrink-0" />
-                    <code className="text-[11px] text-navy flex-1 break-all">import-{clinicId}@{INGEST_EMAIL_DOMAIN}</code>
-                    <button onClick={copyIngestEmail} className="shrink-0 text-blue hover:text-blue-bright transition-colors">
-                      {ingestCopied ? <Check size={12} /> : <Copy size={12} />}
-                    </button>
-                  </div>
-                )}
-                <div className="flex items-center gap-2 mt-3">
-                  <button
-                    onClick={() => setImportPanelOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
-                  >
-                    <Upload size={11} /> Upload CSV
-                  </button>
-                  <button
-                    onClick={() => { setImportPanelOpen(true); setWizardOpen(true); setWizardPms("tm3"); setWizardStep(4); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-navy/70 hover:text-navy transition-colors"
-                  >
-                    Set up auto-import &rarr;
-                  </button>
-                </div>
               </div>
             )}
           </div>
