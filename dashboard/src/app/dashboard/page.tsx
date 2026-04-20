@@ -512,62 +512,247 @@ export default function DashboardPage() {
             onClick={() => setPreviewOpen(false)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.93, y: 12 }}
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              exit={{ opacity: 0, scale: 0.97, y: 8 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-3xl rounded-2xl bg-white shadow-[var(--shadow-elevated)] overflow-hidden my-auto"
+              className="w-full max-w-6xl rounded-2xl bg-white shadow-[var(--shadow-elevated)] overflow-hidden my-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between p-5 border-b border-border">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                 <div>
-                  <h3 className="font-display text-base text-navy">Dashboard Preview</h3>
-                  <p className="text-[11px] text-muted mt-0.5">This is what your dashboard will look like once data flows in</p>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-display text-[18px] text-navy leading-none">Dashboard Preview</h3>
+                    <span
+                      className="text-[9px] font-semibold uppercase tracking-[0.08em] px-1.5 py-0.5 rounded-full"
+                      style={{ background: "rgba(28,84,242,0.08)", color: brand.blue }}
+                    >
+                      Sample
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted mt-1">This is what your dashboard will look like once data flows in</p>
                 </div>
-                <button onClick={() => setPreviewOpen(false)} className="text-muted hover:text-navy transition-colors">
+                <button onClick={() => setPreviewOpen(false)} className="text-muted hover:text-navy transition-colors" aria-label="Close preview">
                   <X size={18} />
                 </button>
               </div>
-              <div className="p-6 opacity-50 pointer-events-none select-none">
-                {/* Row 1: 3 hero cards */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4">
-                    <p className="text-[10px] font-semibold text-muted uppercase tracking-wide mb-1">Appointments</p>
-                    <p className="text-2xl font-semibold text-navy">73</p>
-                    <p className="text-[10px] text-muted mt-0.5">this week</p>
-                    <div className="border-t border-border mt-2 pt-2 flex justify-between text-[10px] text-navy font-medium">
-                      <span>11 new</span><span>62 follow-ups</span>
+
+              {/* Body — mirrors the real dashboard canvas */}
+              <div className="p-6" style={{ background: brand.cream }}>
+                {/* Subheader strip */}
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <p className="font-display text-[22px] text-navy leading-none">Weekly overview</p>
+                    <p className="text-[11px] text-muted mt-1.5 tabular-nums">Week of 14–20 Apr · Spires Physiotherapy</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: brand.success, boxShadow: `0 0 6px ${brand.success}` }} />
+                    <span className="text-[11px] text-muted">Synced 12m ago</span>
+                  </div>
+                </div>
+
+                {/* Row 1 — 3 hero cards */}
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  {/* Appointments */}
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-5 shadow-[var(--shadow-card)]">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Appointments</span>
+                      <span className="w-[7px] h-[7px] rounded-full" style={{ background: brand.success }} />
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-[36px] font-bold text-navy leading-none tabular-nums">73</span>
+                      <span className="text-[11px] font-semibold" style={{ color: brand.success }}>↑ 8%</span>
+                    </div>
+                    <p className="text-[11px] text-muted mt-1.5">this week</p>
+                    <div className="border-t border-border mt-4 pt-3 flex justify-between text-[11px]">
+                      <span className="text-muted"><span className="text-navy font-semibold tabular-nums">11</span> new</span>
+                      <span className="text-muted"><span className="text-navy font-semibold tabular-nums">62</span> follow-ups</span>
                     </div>
                   </div>
-                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4">
-                    <p className="text-[10px] font-semibold text-muted uppercase tracking-wide mb-1">Performance</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div><p className="text-xl font-semibold text-navy">3.8</p><p className="text-[9px] text-muted">follow-up</p></div>
-                      <div><p className="text-xl font-semibold text-navy">82%</p><p className="text-[9px] text-muted">utilisation</p></div>
+
+                  {/* Performance */}
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-5 shadow-[var(--shadow-card)]">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Performance</span>
+                      <span className="w-[7px] h-[7px] rounded-full" style={{ background: brand.warning }} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-[28px] font-bold text-navy leading-none tabular-nums">3.8</span>
+                          <span className="text-[10px] font-semibold" style={{ color: brand.success }}>↑ 0.4</span>
+                        </div>
+                        <p className="text-[10px] text-muted mt-1.5">follow-up rate</p>
+                      </div>
+                      <div>
+                        <div className="flex items-baseline gap-0.5">
+                          <span className="text-[28px] font-bold text-navy leading-none tabular-nums">82</span>
+                          <span className="text-[16px] font-semibold text-muted">%</span>
+                        </div>
+                        <p className="text-[10px] text-muted mt-1.5">utilisation</p>
+                      </div>
+                    </div>
+                    <div className="flex items-end gap-[3px] mt-4 h-7">
+                      {[42, 58, 48, 64, 56, 72, 78].map((h, i) => (
+                        <div
+                          key={i}
+                          className="flex-1 rounded-t-sm"
+                          style={{
+                            height: `${h}%`,
+                            background: i === 6 ? brand.blue : "rgba(28,84,242,0.22)",
+                          }}
+                        />
+                      ))}
                     </div>
                   </div>
-                  <div className="rounded-[var(--radius-card)] p-4" style={{ background: brand.navy }}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>Clinic Pulse</p>
-                    <div className="space-y-1.5">
-                      {["Ava booked new patient", "HEP reminder responded", "DNA spike detected"].map((t) => (
-                        <div key={t} className="text-[9px] px-2 py-1 rounded" style={{ color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.04)" }}>{t}</div>
+
+                  {/* Clinic Pulse — navy live feed */}
+                  <div
+                    className="rounded-[var(--radius-card)] p-5 relative overflow-hidden"
+                    style={{ background: `linear-gradient(135deg, ${brand.navy} 0%, ${brand.navyMid} 100%)` }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: "rgba(255,255,255,0.45)" }}>
+                        Clinic Pulse
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-[6px] h-[6px] rounded-full" style={{ background: brand.blueGlow, boxShadow: `0 0 8px ${brand.blueGlow}` }} />
+                        <span className="text-[9px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>live</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {[
+                        { t: "Ava booked Sarah M.", m: "2m" },
+                        { t: "HEP completed · J. Tate", m: "11m" },
+                        { t: "DNA — follow-up lost", m: "38m" },
+                        { t: "5★ review · Eva R.", m: "1h" },
+                      ].map(({ t, m }) => (
+                        <div key={t} className="flex items-center justify-between text-[11px] py-1 border-b last:border-b-0" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+                          <span style={{ color: "rgba(255,255,255,0.82)" }}>{t}</span>
+                          <span className="tabular-nums" style={{ color: "rgba(255,255,255,0.38)" }}>{m}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
                 </div>
-                {/* Row 2: 4 grouped cards */}
-                <div className="grid grid-cols-4 gap-3 mb-4">
-                  {["Patient Flow", "Revenue", "Compliance", "Trend"].map((l) => (
-                    <div key={l} className="rounded-[var(--radius-card)] border border-border bg-white p-3">
-                      <p className="text-[9px] font-semibold text-muted uppercase tracking-wide">{l}</p>
-                      <div className="h-8 mt-2 bg-cloud-light rounded" />
+
+                {/* Row 2 — 4 KPI cards */}
+                <div className="grid grid-cols-4 gap-3 mb-3">
+                  {/* HEP Compliance */}
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4 shadow-[var(--shadow-card)]">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">HEP Compliance</span>
+                    <div className="flex items-baseline gap-1.5 mt-2">
+                      <span className="text-[22px] font-bold text-navy leading-none tabular-nums">68</span>
+                      <span className="text-[13px] font-semibold text-muted">%</span>
+                      <span className="text-[10px] font-semibold ml-auto" style={{ color: brand.success }}>↑ 4</span>
                     </div>
-                  ))}
+                    <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ background: brand.border }}>
+                      <div className="h-full rounded-full" style={{ width: "68%", background: brand.teal }} />
+                    </div>
+                    <p className="text-[10px] text-muted mt-2">target 75%</p>
+                  </div>
+
+                  {/* Revenue */}
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4 shadow-[var(--shadow-card)]">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Revenue / week</span>
+                    <div className="flex items-baseline gap-1.5 mt-2">
+                      <span className="text-[22px] font-bold text-navy leading-none tabular-nums">£18.4</span>
+                      <span className="text-[13px] font-semibold text-muted">k</span>
+                      <span className="text-[10px] font-semibold ml-auto" style={{ color: brand.success }}>↑ 12%</span>
+                    </div>
+                    <svg viewBox="0 0 100 28" className="w-full mt-3 h-7" preserveAspectRatio="none">
+                      <polyline
+                        points="0,20 14,16 28,18 42,11 57,13 71,7 85,5 100,3"
+                        stroke={brand.blue}
+                        strokeWidth="1.5"
+                        fill="none"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <polyline
+                        points="0,20 14,16 28,18 42,11 57,13 71,7 85,5 100,3 100,28 0,28"
+                        fill="rgba(28,84,242,0.10)"
+                        stroke="none"
+                      />
+                    </svg>
+                  </div>
+
+                  {/* DNA Rate */}
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4 shadow-[var(--shadow-card)]">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">DNA Rate</span>
+                    <div className="flex items-baseline gap-1.5 mt-2">
+                      <span className="text-[22px] font-bold text-navy leading-none tabular-nums">4.2</span>
+                      <span className="text-[13px] font-semibold text-muted">%</span>
+                      <span className="text-[10px] font-semibold ml-auto" style={{ color: brand.success }}>↓ 1.1</span>
+                    </div>
+                    <div className="mt-3 grid grid-cols-7 gap-[3px] h-7">
+                      {[0.2, 0.35, 0.3, 0.55, 0.4, 0.25, 0.2].map((v, i) => (
+                        <div
+                          key={i}
+                          className="rounded-sm"
+                          style={{ background: `rgba(239,68,68,${v})` }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* NPS */}
+                  <div className="rounded-[var(--radius-card)] border border-border bg-white p-4 shadow-[var(--shadow-card)]">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">NPS</span>
+                    <div className="flex items-baseline gap-1.5 mt-2">
+                      <span className="text-[22px] font-bold text-navy leading-none tabular-nums">+72</span>
+                      <span className="text-[10px] font-semibold ml-auto" style={{ color: brand.success }}>↑ 6</span>
+                    </div>
+                    <div className="flex items-center gap-[3px] mt-3 h-1.5">
+                      <div className="rounded-full" style={{ flex: 86, background: brand.success }} />
+                      <div className="rounded-full" style={{ flex: 9, background: "rgba(5,150,105,0.3)" }} />
+                      <div className="rounded-full" style={{ flex: 5, background: "rgba(239,68,68,0.35)" }} />
+                    </div>
+                    <div className="flex justify-between text-[9px] text-muted mt-1.5 tabular-nums">
+                      <span>86% promoters</span>
+                      <span>5% detractors</span>
+                    </div>
+                  </div>
                 </div>
-                {/* Clinician table placeholder */}
-                <div className="rounded-[var(--radius-card)] border border-border bg-white p-3">
-                  <p className="text-[10px] font-semibold text-muted uppercase tracking-wide mb-2">Clinician Summary</p>
-                  <div className="h-12 bg-cloud-light rounded" />
+
+                {/* Clinician Summary table */}
+                <div className="rounded-[var(--radius-card)] border border-border bg-white overflow-hidden shadow-[var(--shadow-card)]">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Clinician Summary</span>
+                    <span className="text-[10px] text-muted tabular-nums">3 clinicians · this week</span>
+                  </div>
+                  <div className="grid grid-cols-12 px-4 py-2 gap-2 border-b border-border bg-cream/60 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">
+                    <div className="col-span-4">Clinician</div>
+                    <div className="col-span-2 text-right">Sessions</div>
+                    <div className="col-span-2 text-right">Follow-up</div>
+                    <div className="col-span-2 text-right">HEP</div>
+                    <div className="col-span-1 text-right">Util.</div>
+                    <div className="col-span-1 text-right">Status</div>
+                  </div>
+                  <div>
+                    {[
+                      { name: "Andrew Grant", role: "Senior Physio", sessions: "42", followup: "2.4", hep: "38%", util: "88%", status: brand.warning },
+                      { name: "Max Patel", role: "Physio", sessions: "31", followup: "3.6", hep: "54%", util: "79%", status: brand.success },
+                      { name: "Jamal Osei", role: "MD · 1 day/wk", sessions: "8", followup: "4.1", hep: "72%", util: "62%", status: brand.success },
+                    ].map((c, i, arr) => (
+                      <div
+                        key={c.name}
+                        className={`grid grid-cols-12 items-center px-4 py-3 gap-2 ${i < arr.length - 1 ? "border-b border-border" : ""}`}
+                      >
+                        <div className="col-span-4">
+                          <p className="text-[13px] font-medium text-navy leading-tight">{c.name}</p>
+                          <p className="text-[10px] text-muted mt-0.5">{c.role}</p>
+                        </div>
+                        <div className="col-span-2 text-right text-[13px] text-navy tabular-nums">{c.sessions}</div>
+                        <div className="col-span-2 text-right text-[13px] text-navy tabular-nums">{c.followup}</div>
+                        <div className="col-span-2 text-right text-[13px] text-navy tabular-nums">{c.hep}</div>
+                        <div className="col-span-1 text-right text-[13px] text-navy tabular-nums">{c.util}</div>
+                        <div className="col-span-1 flex justify-end">
+                          <span className="w-[7px] h-[7px] rounded-full" style={{ background: c.status, boxShadow: `0 0 6px ${c.status}` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </motion.div>
