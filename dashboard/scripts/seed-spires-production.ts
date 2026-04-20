@@ -709,6 +709,10 @@ async function main() {
       ownerEmail: "jamal@spiresphysiotherapy.com",
       status: "onboarding",
       pmsType: null,
+      // Every new doc produced by this script is synthetic or derived from a
+      // stale CSV — NOT a live PMS. dataMode=sample raises the SampleDataBanner
+      // everywhere until scripts/purge-spires-seed-data.ts flips it to "live".
+      dataMode: "sample",
       featureFlags: { intelligence: true, continuity: true, receptionist: false },
       targets: {
         followUpRate: 2.9,
@@ -727,9 +731,10 @@ async function main() {
     await clinicRef.update({
       name: CLINIC_NAME,
       status: "onboarding",
+      dataMode: "sample",
       updatedAt: now,
     });
-    console.log("\nUpdated clinic:", CLINIC_ID, "-> onboarding");
+    console.log("\nUpdated clinic:", CLINIC_ID, "-> onboarding, dataMode=sample");
   }
 
   // ── 2. Seed clinicians ────────────────────────────────────────────────────
