@@ -29,6 +29,7 @@ import {
   X,
   Smartphone,
   SlidersHorizontal,
+  Search,
 } from "lucide-react";
 import { resolveTemplate, DEFAULT_SEQUENCE_DEFINITIONS } from "@/types/comms";
 import type { CommsChannel } from "@/types";
@@ -77,7 +78,17 @@ function ContinuityPage() {
   const { commsLog, commsStats, statsBySequence, totalAttributedRevenuePence, isDemo: commsIsDemo, error: commsError } = useCommsLog();
   const { preferences, updatePreferences } = useUserPreferences();
   const [customiseOpen, setCustomiseOpen] = useState(false);
+  const [patientSearch, setPatientSearch] = useState("");
   const patientMap = Object.fromEntries(patients.map((p) => [p.id, p]));
+
+  const patientSearchQ = patientSearch.trim().toLowerCase();
+  const filteredSessionAlerts = patientSearchQ
+    ? sessionAlerts.filter(
+        (p) =>
+          p.name.toLowerCase().includes(patientSearchQ) ||
+          (p.contact?.phone ?? "").includes(patientSearchQ),
+      )
+    : sessionAlerts;
 
   async function sendComms(patientId: string, sequenceType: string, messageBody: string) {
     const patient = patients.find((p) => p.id === patientId);
@@ -132,7 +143,7 @@ function ContinuityPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Pulse"
-        subtitle="Track patient journeys, manage comms sequences, and reduce drop-off"
+        subtitle="Catch drifting patients early, nudge them back into the diary."
         clinicians={clinicians}
         selectedClinician={selectedClinician}
         onClinicianChange={setSelectedClinician}
@@ -222,9 +233,30 @@ function ContinuityPage() {
       {/* Patient Board */}
       {activeView === "patients" && (
         <div className="animate-fade-in space-y-4">
-          {!loading && sessionAlerts.length > 0 && preferences && (
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+            <input
+              type="text"
+              value={patientSearch}
+              onChange={(e) => setPatientSearch(e.target.value)}
+              placeholder="Search patients by name or phone..."
+              className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-border bg-white text-sm text-navy placeholder:text-muted focus:outline-none focus:border-teal/60 focus:ring-1 focus:ring-teal/20 transition-colors shadow-[var(--shadow-card)]"
+            />
+            {patientSearch && (
+              <button
+                type="button"
+                onClick={() => setPatientSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-navy transition-colors"
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {!loading && filteredSessionAlerts.length > 0 && preferences && (
             <SessionThresholdStrip
-              patients={sessionAlerts}
+              patients={filteredSessionAlerts}
               clinicianMap={clinicianMap}
               onSendEarlyIntervention={handleSendEarlyIntervention}
             />
@@ -253,6 +285,7 @@ function ContinuityPage() {
                 visibleSegments={preferences.visibleSegments}
                 visibleMetrics={preferences.visibleMetrics}
                 onSendReminder={handleSendReminder}
+                searchQuery={patientSearch}
               />
             )
           )}

@@ -27,6 +27,7 @@ interface Props {
   visibleSegments: LifecycleState[];
   visibleMetrics: string[];
   onSendReminder: (patientId: string) => void;
+  searchQuery?: string;
 }
 
 const SEGMENT_ORDER: LifecycleState[] = [
@@ -40,6 +41,7 @@ export const PatientBoard: FC<Props> = ({
   visibleSegments,
   visibleMetrics,
   onSendReminder,
+  searchQuery,
 }) => {
   const [collapsed, setCollapsed] = useState<Set<LifecycleState>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -89,20 +91,30 @@ export const PatientBoard: FC<Props> = ({
     return map;
   }, [activeEvents]);
 
+  const q = (searchQuery ?? "").trim().toLowerCase();
+  const filteredPatients = q
+    ? patients.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.contact?.phone ?? "").includes(q),
+      )
+    : patients;
+
   const grouped = SEGMENT_ORDER
     .filter((s) => visibleSegments.includes(s))
     .map((state) => ({
       state,
-      patients: patients.filter((p) => (p.lifecycleState ?? "ACTIVE") === state),
+      patients: filteredPatients.filter((p) => (p.lifecycleState ?? "ACTIVE") === state),
     }))
     .filter((g) => g.patients.length > 0);
 
   if (grouped.length === 0) {
+    const isSearch = q.length > 0;
     return (
       <EmptyState
         module="pulse"
-        heading="No patients match your filters"
-        subtext="Adjust your segment filters in Customise View."
+        heading={isSearch ? `No patients match "${searchQuery}"` : "No patients match your filters"}
+        subtext={isSearch ? "Try a different name or phone number." : "Adjust your segment filters in Customise View."}
       />
     );
   }
