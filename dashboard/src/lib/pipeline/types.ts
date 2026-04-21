@@ -15,6 +15,12 @@ export interface StageResult {
   count: number;
   errors: string[];
   durationMs: number;
+  /**
+   * Optional stage-specific snapshot. Populated by the trigger-comms stage
+   * with the pulseState summary (runId, queuedCount, failedCount, lastError).
+   * Other stages leave this unset.
+   */
+  pulseState?: unknown | null;
 }
 
 export interface PipelineResult {

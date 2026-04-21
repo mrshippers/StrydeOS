@@ -35,8 +35,12 @@ export function useCommsLog(): UseCommsLogResult {
     setLoading(true);
     setError(null);
 
+    // Demo mode — set demo data via state so the render return is always
+    // derived from a single source (commsLog state). Previously the render
+    // body branched on isDemo and returned getDemoCommsLog() directly while
+    // the effect set state to [], which created a fragile dual path.
     if (isDemo) {
-      setCommsLog([]);
+      setCommsLog(getDemoCommsLog());
       setLoading(false);
       return () => {};
     }
@@ -57,25 +61,17 @@ export function useCommsLog(): UseCommsLogResult {
     return unsub;
   }, [clinicId, isDemo, scopedClinicianId]);
 
-  if (isDemo) {
-    const demoLog = getDemoCommsLog();
-    return {
-      commsLog:                    demoLog,
-      commsStats:                  getDemoCommsStats(),
-      ...deriveSequenceStats(demoLog),
-      loading,
-      isDemo:                      true,
-      error:                       null,
-    };
-  }
+  // Stats: demo mode uses the hardcoded demo stats (stable numbers for the
+  // sales demo); live mode computes from the current commsLog state.
+  const commsStats = isDemo ? getDemoCommsStats() : deriveStats(commsLog);
 
   return {
     commsLog,
-    commsStats: deriveStats(commsLog),
+    commsStats,
     ...deriveSequenceStats(commsLog),
     loading,
-    isDemo:     false,
-    error,
+    isDemo,
+    error: isDemo ? null : error,
   };
 }
 

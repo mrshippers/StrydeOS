@@ -30,6 +30,51 @@ export interface TriggerResult {
   fired:   number;
   skipped: number;
   errors:  string[];
+  /** Snapshot of the pulseState doc written at end of this run. */
+  pulseState?: PulseStateSnapshot;
+}
+
+/**
+ * Singleton per-clinic status document at `/clinics/{clinicId}/pulseState`.
+ * Written at the start of each run (status='running') and at the end
+ * (status='ok'|'partial'|'error'). Never accumulates history — that's
+ * `integration_health`'s job.
+ */
+export interface PulseStateSnapshot {
+  lastRunAt: string;
+  runId: string;
+  status: "running" | "ok" | "partial" | "error";
+  queuedCount: number | null;
+  failedCount: number | null;
+  lastError: string | null;
+}
+
+const PULSE_STATE_DOC_ID = "pulseState";
+
+function makeRunId(): string {
+  // Simple collision-resistant id — no crypto module needed.
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
+ * Write the pulseState singleton. Fire-and-forget — never throw from here;
+ * a pulseState write failure must not mask the underlying run outcome.
+ */
+async function writePulseState(
+  db: Firestore,
+  clinicId: string,
+  snapshot: PulseStateSnapshot
+): Promise<void> {
+  try {
+    await db
+      .collection("clinics")
+      .doc(clinicId)
+      .collection("pulseState")
+      .doc(PULSE_STATE_DOC_ID)
+      .set(snapshot, { merge: true });
+  } catch {
+    // Intentional: pulseState write failure is observability loss, not functional loss.
+  }
 }
 
 // ─── Main export ─────────────────────────────────────────────────────────────
@@ -40,9 +85,36 @@ export async function triggerCommsSequences(
 ): Promise<TriggerResult> {
   const N8N_BASE = getN8nBase();
   const N8N_SECRET = getN8nSecret();
+  const runId = makeRunId();
+  const runStartedAt = new Date().toISOString();
+
   if (!N8N_BASE?.trim()) {
-    return { fired: 0, skipped: 0, errors: ["N8N_WEBHOOK_BASE_URL not set — comms skipped"] };
+    const endState: PulseStateSnapshot = {
+      lastRunAt: runStartedAt,
+      runId,
+      status: "error",
+      queuedCount: 0,
+      failedCount: 1,
+      lastError: "N8N_WEBHOOK_BASE_URL not set — comms skipped",
+    };
+    await writePulseState(db, clinicId, endState);
+    return {
+      fired: 0,
+      skipped: 0,
+      errors: ["N8N_WEBHOOK_BASE_URL not set — comms skipped"],
+      pulseState: endState,
+    };
   }
+
+  // Mark run start
+  await writePulseState(db, clinicId, {
+    lastRunAt: runStartedAt,
+    runId,
+    status: "running",
+    queuedCount: null,
+    failedCount: null,
+    lastError: null,
+  });
 
   const now       = new Date();
   const clinicRef = db.collection("clinics").doc(clinicId);
@@ -268,14 +340,18 @@ export async function triggerCommsSequences(
         }
 
         // ── Write comms_log ───────────────────────────────────────────
+        // outcome: 'pending' is the initial lifecycle state — provider webhooks
+        // (Twilio/Resend) transition it to 'delivered' or 'send_failed'; the
+        // n8n callback transitions it to 'booked' / 'unsubscribed' / 'no_action'.
         await logRef.set({
           patientId,
           sequenceType:               def.sequenceType,
           channel:                    nextStep.channel,
           sentAt:                     now.toISOString(),
-          outcome:                    "no_action",
+          outcome:                    "pending",
           n8nExecutionId:             null,
           stepNumber:                 nextStep.stepNumber,
+          templateKey:                nextStep.templateKey,
           attributionWindowDays:      def.attributionWindowDays,
           patientLifecycleStateAtSend: patient.lifecycleState ?? null,
           createdAt:                  now.toISOString(),
@@ -290,7 +366,7 @@ export async function triggerCommsSequences(
 
         // Add to local index so same-run dedup works
         const entries = logsByKey.get(key) ?? [];
-        entries.push({ stepNumber: nextStep.stepNumber, sentAt: now.toISOString(), outcome: "no_action" });
+        entries.push({ stepNumber: nextStep.stepNumber, sentAt: now.toISOString(), outcome: "pending" });
         logsByKey.set(key, entries);
 
         fired++;
@@ -302,7 +378,18 @@ export async function triggerCommsSequences(
     }
   }
 
-  return { fired, skipped, errors };
+  // ── Write terminal pulseState ──────────────────────────────────────────
+  const endState: PulseStateSnapshot = {
+    lastRunAt: new Date().toISOString(),
+    runId,
+    status: errors.length === 0 ? "ok" : fired > 0 ? "partial" : "error",
+    queuedCount: fired,
+    failedCount: errors.length,
+    lastError: errors.length > 0 ? errors[errors.length - 1] : null,
+  };
+  await writePulseState(db, clinicId, endState);
+
+  return { fired, skipped, errors, pulseState: endState };
 }
 
 // ─── Seed / load sequence definitions ────────────────────────────────────────

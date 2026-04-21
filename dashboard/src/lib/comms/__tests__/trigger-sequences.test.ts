@@ -253,11 +253,13 @@ describe("triggerCommsSequences — environment guard", () => {
     const mockDb = {} as Firestore;
     const result = await triggerCommsSequences(mockDb, "clinic-test");
 
-    expect(result).toEqual({
-      fired: 0,
-      skipped: 0,
-      errors: ["N8N_WEBHOOK_BASE_URL not set — comms skipped"],
-    });
+    expect(result.fired).toBe(0);
+    expect(result.skipped).toBe(0);
+    expect(result.errors).toEqual(["N8N_WEBHOOK_BASE_URL not set — comms skipped"]);
+    // pulseState is written with status='error' on short-circuit (additive,
+    // backward compatible — callers that don't destructure it are unaffected).
+    expect(result.pulseState).toBeDefined();
+    expect(result.pulseState!.status).toBe("error");
   });
 
   it("should return early with error message when N8N_WEBHOOK_BASE_URL is empty string", async () => {
@@ -266,11 +268,13 @@ describe("triggerCommsSequences — environment guard", () => {
     const mockDb = {} as Firestore;
     const result = await triggerCommsSequences(mockDb, "clinic-test");
 
-    expect(result).toEqual({
-      fired: 0,
-      skipped: 0,
-      errors: ["N8N_WEBHOOK_BASE_URL not set — comms skipped"],
-    });
+    expect(result.fired).toBe(0);
+    expect(result.skipped).toBe(0);
+    expect(result.errors).toEqual(["N8N_WEBHOOK_BASE_URL not set — comms skipped"]);
+    // pulseState is written with status='error' on short-circuit (additive,
+    // backward compatible — callers that don't destructure it are unaffected).
+    expect(result.pulseState).toBeDefined();
+    expect(result.pulseState!.status).toBe("error");
   });
 
   it("should return early with error message when N8N_WEBHOOK_BASE_URL is whitespace only", async () => {
@@ -279,11 +283,13 @@ describe("triggerCommsSequences — environment guard", () => {
     const mockDb = {} as Firestore;
     const result = await triggerCommsSequences(mockDb, "clinic-test");
 
-    expect(result).toEqual({
-      fired: 0,
-      skipped: 0,
-      errors: ["N8N_WEBHOOK_BASE_URL not set — comms skipped"],
-    });
+    expect(result.fired).toBe(0);
+    expect(result.skipped).toBe(0);
+    expect(result.errors).toEqual(["N8N_WEBHOOK_BASE_URL not set — comms skipped"]);
+    // pulseState is written with status='error' on short-circuit (additive,
+    // backward compatible — callers that don't destructure it are unaffected).
+    expect(result.pulseState).toBeDefined();
+    expect(result.pulseState!.status).toBe("error");
   });
 });
 
@@ -682,9 +688,72 @@ describe("triggerCommsSequences — integration (requires Firestore mock)", () =
     expect(logData).toHaveProperty("sequenceType");
     expect(logData).toHaveProperty("channel");
     expect(logData).toHaveProperty("sentAt");
-    expect(logData).toHaveProperty("outcome", "no_action");
+    // New lifecycle: initial state is 'pending' (was 'no_action').
+    // Provider webhooks transition to 'delivered' / 'send_failed'.
+    expect(logData).toHaveProperty("outcome", "pending");
     expect(logData).toHaveProperty("stepNumber");
+    // Explicit templateKey for future template-migration compatibility.
+    expect(logData).toHaveProperty("templateKey");
+    expect(typeof logData.templateKey).toBe("string");
     expect(logData).toHaveProperty("createdBy", "trigger-sequences");
+  });
+
+  it("should write pulseState singleton at run start and run end", async () => {
+    const { db, writes } = createMockFirestore({
+      patients: [{
+        id: "pat-1",
+        data: mockPatient({
+          sessionCount: 1,
+          sessionThresholdAlert: true,
+          lastSessionDate: daysAgo(2),
+          nextSessionDate: undefined,
+          discharged: false,
+        }),
+      }],
+    });
+
+    const result = await triggerCommsSequences(db, "clinic-1");
+
+    // pulseState is written at /clinics/{id}/pulseState/pulseState (singleton)
+    const pulseStateWrites = writes.filter((w) =>
+      w.path.includes("pulseState/pulseState"),
+    );
+    // Two writes: one at run start (status='running'), one at run end.
+    expect(pulseStateWrites.length).toBeGreaterThanOrEqual(2);
+
+    const startState = pulseStateWrites[0].data as Record<string, unknown>;
+    expect(startState).toHaveProperty("status", "running");
+    expect(startState).toHaveProperty("runId");
+    expect(startState).toHaveProperty("queuedCount", null);
+
+    const endState = pulseStateWrites[pulseStateWrites.length - 1].data as Record<string, unknown>;
+    expect(endState).toHaveProperty("status");
+    expect(["ok", "partial", "error"]).toContain(endState.status);
+    expect(endState).toHaveProperty("runId", startState.runId);
+    expect(typeof endState.queuedCount).toBe("number");
+
+    // TriggerResult now includes a pulseState snapshot
+    expect(result.pulseState).toBeDefined();
+    expect(result.pulseState!.runId).toBe(startState.runId);
+  });
+
+  it("should write pulseState with status='error' when N8N env var missing", async () => {
+    delete process.env.N8N_WEBHOOK_BASE_URL;
+
+    const { db, writes } = createMockFirestore();
+    const result = await triggerCommsSequences(db, "clinic-1");
+
+    expect(result.fired).toBe(0);
+    expect(result.pulseState).toBeDefined();
+    expect(result.pulseState!.status).toBe("error");
+    expect(result.pulseState!.lastError).toContain("N8N_WEBHOOK_BASE_URL");
+
+    // Pulse state was still written even on short-circuit
+    const pulseStateWrites = writes.filter((w) => w.path.includes("pulseState"));
+    expect(pulseStateWrites.length).toBeGreaterThanOrEqual(1);
+
+    // Restore for other tests
+    process.env.N8N_WEBHOOK_BASE_URL = "https://n8n.test.com/webhook";
   });
 
   it("should update patient.lastSequenceSentAt when sequence fired", async () => {
@@ -1082,7 +1151,11 @@ describe("edge cases and error handling", () => {
 
     const result = await triggerCommsSequences(db, "clinic-1");
 
-    expect(result).toEqual({ fired: 0, skipped: 0, errors: [] });
+    expect(result.fired).toBe(0);
+    expect(result.skipped).toBe(0);
+    expect(result.errors).toEqual([]);
+    // pulseState now always present as additive metadata.
+    expect(result.pulseState?.status).toBe("ok");
   });
 
   it("should return empty result when all patients excluded by eligibility", async () => {

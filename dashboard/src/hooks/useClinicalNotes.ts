@@ -9,13 +9,16 @@ import {
   where,
   orderBy,
   limit,
-  getDocs,
+  onSnapshot,
 } from "firebase/firestore";
 import type { ClinicalNote } from "@/types";
 
 /**
- * Fetches clinical notes for a specific patient from Firestore.
- * Loads on-demand (not real-time) — notes don't change while you're looking at them.
+ * Subscribes to clinical notes for a specific patient from Firestore.
+ *
+ * Uses `onSnapshot` so notes synced mid-session (e.g. a fresh Heidi ingest)
+ * surface immediately in the UI. The listener is cleaned up on unmount or
+ * when `patientId` changes.
  */
 export function useClinicalNotes(patientId: string | null) {
   const { user } = useAuth();
@@ -23,9 +26,12 @@ export function useClinicalNotes(patientId: string | null) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!patientId || !user?.clinicId || !db) return;
+    if (!patientId || !user?.clinicId || !db) {
+      setNotes([]);
+      setLoading(false);
+      return;
+    }
 
-    let cancelled = false;
     setLoading(true);
 
     const notesRef = collection(db, "clinics", user.clinicId, "clinical_notes");
@@ -36,23 +42,21 @@ export function useClinicalNotes(patientId: string | null) {
       limit(10),
     );
 
-    getDocs(q)
-      .then((snap) => {
-        if (cancelled) return;
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
         setNotes(
           snap.docs.map((d) => ({ id: d.id, ...d.data() }) as ClinicalNote),
         );
-      })
-      .catch(() => {
-        if (!cancelled) setNotes([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+        setLoading(false);
+      },
+      () => {
+        setNotes([]);
+        setLoading(false);
+      },
+    );
 
-    return () => {
-      cancelled = true;
-    };
+    return () => unsub();
   }, [patientId, user?.clinicId]);
 
   return { notes, loading };

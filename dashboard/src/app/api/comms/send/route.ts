@@ -136,7 +136,13 @@ async function handler(request: NextRequest) {
         sequenceType,
         channel,
         sentAt: now,
-        outcome: success ? "no_action" : "send_failed", // no_action = awaiting callback; send_failed = delivery error
+        // pending = provider accepted, awaiting delivery webhook (Twilio/Resend).
+        // send_failed = immediate dispatch failure (caught above).
+        outcome: success ? "pending" : "send_failed",
+        // Explicit template tracking for future template-migration compatibility.
+        // For direct /api/comms/send calls the "template" is the caller-provided body;
+        // we tag it with the sequenceType so provenance is preserved.
+        templateKey: `${sequenceType}_direct`,
         ...(twilioSid ? { twilioSid } : {}),
         ...(resendId ? { resendId } : {}),
       };

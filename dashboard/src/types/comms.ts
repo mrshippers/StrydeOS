@@ -101,6 +101,14 @@ export interface SequenceDefinition {
   cooldownDays: number;   // min days before same sequence re-fires to same patient
   active: boolean;
   priority: number;       // lower = higher priority; early_intervention = 1
+  /**
+   * When set, this sequence is eligible to be triggered by an Intelligence
+   * event of this type via insight-event-consumer. Schedule-driven triggers
+   * continue to work independently. Absent = sequence is schedule-only.
+   *
+   * Takes precedence over the legacy EVENT_TO_SEQUENCE map when both match.
+   */
+  triggerEventType?: string;
 }
 
 // Seed data — used to populate Firestore on first pipeline run

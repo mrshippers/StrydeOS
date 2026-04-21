@@ -165,6 +165,9 @@ export async function runPipeline(
       count: commsResult.fired,
       errors: commsResult.errors,
       durationMs: Date.now() - commsStart,
+      // Pulse run-state snapshot for observability — mirrors what was
+      // written to /clinics/{clinicId}/pulseState by trigger-sequences.
+      pulseState: commsResult.pulseState ?? null,
     });
   } catch (err) {
     stages.push({

@@ -81,6 +81,13 @@ export interface InsightEvent {
   clinicianNarrative?: string | null; // LLM-generated clinically-framed narrative for clinicians
   narrativeGeneratedAt?: string | null;
 
+  /**
+   * Consumers that have processed this event. Written atomically via
+   * arrayUnion for idempotency against re-runs and concurrent consumers.
+   * Example: `['pulse']`. Absent = not yet consumed.
+   */
+  consumedBy?: string[];
+
   // ─── Observational patterns (Tier 1 — facts, not causal claims) ───
   /** Factual observation from clinician's own data, e.g. "Your Thursday DNA rate is 18% vs 4% Tuesday" */
   observationalNote?: string | null;

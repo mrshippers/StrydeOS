@@ -106,6 +106,9 @@ async function handleOutboundCallback(body: Record<string, unknown>) {
   const now = new Date().toISOString();
   const clinicRef    = db.collection("clinics").doc(clinicId);
   const commsLogColl = clinicRef.collection("comms_log");
+  // Callback transitions: pending (initial) → booked / unsubscribed / no_action
+  // based on n8n's explicit outcome. Provider delivery webhooks (Twilio/Resend)
+  // independently transition pending → delivered / send_failed.
   const resolvedOutcome = mapOutcome(outcome);
 
   if (logId) {
