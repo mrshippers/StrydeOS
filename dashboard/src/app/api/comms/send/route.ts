@@ -47,6 +47,32 @@ function resolveTemplate(template: string, vars: Record<string, string>): string
   );
 }
 
+/**
+ * Find any unresolved `[Variable]` tokens remaining in a template after
+ * substitution. Used to short-circuit sends that would leak literal
+ * placeholder strings to patients.
+ */
+function findUnresolvedTokens(template: string): string[] {
+  const matches = template.match(/\[([A-Za-z][A-Za-z0-9_]*)\]/g) ?? [];
+  return [...new Set(matches.map((m) => m.slice(1, -1)))];
+}
+
+/**
+ * Normalise a UK phone number to E.164. Accepts:
+ *   - already-E.164 (starts with "+")
+ *   - UK domestic "07xxxxxxxxx" (11 digits starting 0)
+ * Returns { ok: true, normalised } or { ok: false } if the number is not
+ * a supported format.
+ */
+function normaliseSmsNumber(raw: string): { ok: true; normalised: string } | { ok: false } {
+  const trimmed = raw.trim().replace(/\s+/g, "");
+  if (trimmed.startsWith("+")) return { ok: true, normalised: trimmed };
+  if (/^0[0-9]{10}$/.test(trimmed)) {
+    return { ok: true, normalised: `+44${trimmed.slice(1)}` };
+  }
+  return { ok: false };
+}
+
 async function handler(request: NextRequest) {
   // Rate limit: 20 requests per IP per 60 seconds
   const { limited, remaining } = await checkRateLimitAsync(request, { limit: 20, windowMs: 60_000 });
@@ -75,27 +101,118 @@ async function handler(request: NextRequest) {
 
     requireClinic(user, clinicId);
 
-    const templateVars = { Name: patientName, ...(body.templateVars ?? {}) };
+    const db = getAdminDb();
+
+    // ── Opt-out gate ────────────────────────────────────────────────────
+    // Ad-hoc sends must respect prior unsubscribes. The sequence runner
+    // already honours this (trigger-sequences.ts line ~207); replicate the
+    // check here so manual "Re-engage" or UI sends cannot bypass STOP.
+    try {
+      const unsubSnap = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("comms_log")
+        .where("patientId", "==", patientId)
+        .where("outcome", "==", "unsubscribed")
+        .limit(1)
+        .get();
+      if (!unsubSnap.empty) {
+        return NextResponse.json(
+          { error: "Patient has opted out of communications", outcome: "unsubscribed" },
+          { status: 409 }
+        );
+      }
+    } catch (err) {
+      // Firestore failure here is fatal — we can't confirm opt-out status
+      // and must not risk messaging an unsubscribed patient.
+      Sentry.captureException(err, { tags: { context: "comms_opt_out_check" } });
+      return NextResponse.json(
+        { error: "Unable to verify patient opt-out status" },
+        { status: 500 }
+      );
+    }
+
+    // ── Resolve authoritative template vars from Firestore ──────────────
+    // ClinicName / BookingUrl / ReviewLink come from the clinic doc, not
+    // the caller, so patient-facing messages always use the canonical
+    // clinic metadata. Caller-provided templateVars still override (e.g.
+    // per-patient tokens like appointment times).
+    let clinicName = "";
+    let bookingUrl = "";
+    let reviewLink = "";
+    try {
+      const clinicDoc = await db.collection("clinics").doc(clinicId).get();
+      const clinicData = clinicDoc.exists ? (clinicDoc.data() ?? {}) : {};
+      clinicName = (clinicData.name as string) ?? "";
+      bookingUrl = (clinicData.bookingUrl as string) ?? "";
+      reviewLink = (clinicData.googleReviewUrl as string) ?? "";
+    } catch (err) {
+      Sentry.captureException(err, { tags: { context: "comms_clinic_meta_read" } });
+      // Non-fatal — fall through with empty strings; unresolved-token
+      // check below will catch any templates that actually need them.
+    }
+
+    // Only include vars with non-empty values so that missing clinic metadata
+    // (e.g. no bookingUrl configured) leaves the `[BookingUrl]` token intact
+    // — the leak guard below then refuses to dispatch instead of sending an
+    // empty-string substitution to a patient.
+    const candidateVars: Record<string, string> = {
+      Name: patientName,
+      ClinicName: clinicName,
+      BookingUrl: bookingUrl,
+      ReviewLink: reviewLink,
+      ...(body.templateVars ?? {}),
+    };
+    const templateVars: Record<string, string> = Object.fromEntries(
+      Object.entries(candidateVars).filter(([, v]) => typeof v === "string" && v.length > 0),
+    );
     const resolvedBody = resolveTemplate(body.body, templateVars);
+    const resolvedSubject = subject ? resolveTemplate(subject, templateVars) : undefined;
+
+    // ── Leak guard: refuse to send if any [Variable] token survives ─────
+    const unresolvedInBody = findUnresolvedTokens(resolvedBody);
+    const unresolvedInSubject = resolvedSubject ? findUnresolvedTokens(resolvedSubject) : [];
+    const unresolved = [...new Set([...unresolvedInBody, ...unresolvedInSubject])];
+    if (unresolved.length > 0) {
+      Sentry.captureMessage(
+        `[comms/send] Unresolved template variables — send blocked: ${unresolved.join(", ")}`,
+        { level: "warning", tags: { sequenceType, channel, clinicId } }
+      );
+      return NextResponse.json(
+        { error: "Template has unresolved variables", unresolved },
+        { status: 422 }
+      );
+    }
 
     const now = new Date().toISOString();
     let success = false;
     let errorDetail: string | null = null;
     let twilioSid: string | undefined;
     let resendId: string | undefined;
+    // Mutable recipient — may be normalised from a UK 07... number to +44...
+    // before Twilio dispatch.
+    let recipient = to;
 
     try {
       if (channel === "sms") {
+        const normalised = normaliseSmsNumber(to);
+        if (!normalised.ok) {
+          return NextResponse.json(
+            { error: "Invalid SMS recipient — must be E.164 or UK format (07...)" },
+            { status: 400 }
+          );
+        }
+        recipient = normalised.normalised;
         const twilio = getTwilio();
         const msg = await twilio.messages.create({
           body: resolvedBody,
           from: getTwilioPhone(),
-          to,
+          to: recipient,
         });
         twilioSid = msg.sid;
         success = true;
       } else if (channel === "email") {
-        if (!subject) {
+        if (!subject || !resolvedSubject) {
           return NextResponse.json({ error: "subject required for email channel" }, { status: 400 });
         }
         const fromEmail = process.env.RESEND_FROM_EMAIL ?? "noreply@strydeos.com";
@@ -103,7 +220,7 @@ async function handler(request: NextRequest) {
         const { data, error } = await resend.emails.send({
           from: `StrydeOS Pulse <${fromEmail}>`,
           to,
-          subject: resolveTemplate(subject, templateVars),
+          subject: resolvedSubject,
           text: resolvedBody,
         });
         if (error) throw new Error(error.message);
@@ -119,8 +236,6 @@ async function handler(request: NextRequest) {
 
     // Log the attempt to Firestore regardless of success/failure
     try {
-      const db = getAdminDb();
-
       // Denormalise clinicianId from patient record for query scoping
       let clinicianId: string | undefined;
       try {
