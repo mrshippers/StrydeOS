@@ -119,7 +119,7 @@ function buildProductUpdateEmail(): string {
 
     <!-- CTA -->
     <div style="text-align:center;padding-top:8px;">
-      <a href="https://app.strydeos.com/dashboard" style="display:inline-block;padding:12px 28px;border-radius:50px;background:#1C54F2;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;font-family:'Outfit',Helvetica,Arial,sans-serif;">Open your dashboard \u2192</a>
+      <a href="https://portal.strydeos.com/dashboard" style="display:inline-block;padding:12px 28px;border-radius:50px;background:#1C54F2;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;font-family:'Outfit',Helvetica,Arial,sans-serif;">Open your dashboard \u2192</a>
     </div>`;
 
   return wrapEmailLayout(body, {
@@ -127,7 +127,7 @@ function buildProductUpdateEmail(): string {
     accentColor: "#1C54F2",
     footerNote: "StrydeOS Product Updates",
     footerLinks: [
-      { label: "Manage preferences", href: "https://app.strydeos.com/settings" },
+      { label: "Manage preferences", href: "https://portal.strydeos.com/settings" },
     ],
   });
 }
@@ -137,8 +137,8 @@ function buildProductUpdateEmail(): string {
 const emails = [
   {
     subject: "Your StrydeOS invite \u2014 set your password to get started",
-    html: buildInviteEmail("https://app.strydeos.com/login?token=demo_test_may27"),
-    text: buildInviteText("https://app.strydeos.com/login?token=demo_test_may27"),
+    html: buildInviteEmail("https://portal.strydeos.com/login?token=demo_test_may27"),
+    text: buildInviteText("https://portal.strydeos.com/login?token=demo_test_may27"),
   },
   {
     subject: "\u26A0\uFE0F HEP assignment dropped below 70% \u2014 Spires Physiotherapy",
@@ -188,7 +188,7 @@ const emails = [
   {
     subject: "What shipped in May \u2014 StrydeOS Product Update",
     html: buildProductUpdateEmail(),
-    text: "StrydeOS Product Update — May 2027\n\nHi Jamal,\n\nHere's what shipped in May.\n\n1. Intelligence: Clinician coaching notes — personalised observations in weekly digests.\n2. Pulse: Smart rebooking reminders — SMS nudges for patients who haven't rebooked within 72hrs.\n3. Ava: Multi-clinic call routing — per-clinic numbers with independent availability.\n\nComing in June: Outcome measures (NPRS, PSFS, QuickDASH), TM3 integration beta, Google Reviews auto-request.\n\nOpen your dashboard: https://app.strydeos.com/dashboard",
+    text: "StrydeOS Product Update — May 2027\n\nHi Jamal,\n\nHere's what shipped in May.\n\n1. Intelligence: Clinician coaching notes — personalised observations in weekly digests.\n2. Pulse: Smart rebooking reminders — SMS nudges for patients who haven't rebooked within 72hrs.\n3. Ava: Multi-clinic call routing — per-clinic numbers with independent availability.\n\nComing in June: Outcome measures (NPRS, PSFS, QuickDASH), TM3 integration beta, Google Reviews auto-request.\n\nOpen your dashboard: https://portal.strydeos.com/dashboard",
   },
 ];
 

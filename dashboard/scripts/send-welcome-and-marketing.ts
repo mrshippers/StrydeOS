@@ -17,7 +17,7 @@ const resend = new Resend(RESEND_API_KEY);
 // ── 1. Welcome Email ───────────────────────────────────────────
 
 function buildWelcomeEmail(clinicName: string, ownerName: string): string {
-  const APP = "https://app.strydeos.com";
+  const APP = "https://portal.strydeos.com";
 
   const body = `
     <h1 style="margin:0 0 6px;font-size:24px;font-weight:700;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">Welcome to StrydeOS</h1>
@@ -157,7 +157,7 @@ function buildMarketingEmail(): string {
 
   <!-- CTA -->
   <div style="padding:40px 32px 48px;text-align:center;background:linear-gradient(180deg,#0B2545 0%,#132D5E 100%);">
-    <a href="https://app.strydeos.com/dashboard" style="display:inline-block;padding:14px 36px;border-radius:50px;background:#1C54F2;color:#FFFFFF;font-size:15px;font-weight:600;text-decoration:none;font-family:'Outfit',Helvetica,Arial,sans-serif;">
+    <a href="https://portal.strydeos.com/dashboard" style="display:inline-block;padding:14px 36px;border-radius:50px;background:#1C54F2;color:#FFFFFF;font-size:15px;font-weight:600;text-decoration:none;font-family:'Outfit',Helvetica,Arial,sans-serif;">
       Open your dashboard \u2192
     </a>
   </div>
@@ -166,9 +166,9 @@ function buildMarketingEmail(): string {
   <div style="padding:24px 32px 32px;text-align:center;background:#0B2545;border-top:1px solid rgba(255,255,255,0.04);">
     <p style="margin:0 0 6px;font-size:11px;color:rgba(255,255,255,0.25);font-family:'Outfit',Helvetica,Arial,sans-serif;">StrydeOS \u00B7 The Clinic OS for private practice</p>
     <p style="margin:0;">
-      <a href="https://app.strydeos.com/settings" style="font-size:11px;color:#4B8BF5;text-decoration:none;">Manage preferences</a>
+      <a href="https://portal.strydeos.com/settings" style="font-size:11px;color:#4B8BF5;text-decoration:none;">Manage preferences</a>
       <span style="color:rgba(255,255,255,0.15);margin:0 6px;">\u00B7</span>
-      <a href="https://app.strydeos.com/settings?unsubscribe=updates" style="font-size:11px;color:rgba(255,255,255,0.25);text-decoration:none;">Unsubscribe</a>
+      <a href="https://portal.strydeos.com/settings?unsubscribe=updates" style="font-size:11px;color:rgba(255,255,255,0.25);text-decoration:none;">Unsubscribe</a>
     </p>
   </div>
 
@@ -200,7 +200,7 @@ async function main() {
     to: TO,
     subject: "[TEST] What shipped in May \u2014 StrydeOS",
     html: buildMarketingEmail(),
-    text: "StrydeOS \u2014 May 2027 Update\n\nYour clinic just got sharper.\n\nIntelligence: Coaching notes, not spreadsheets. Weekly digests now surface personalised observations.\n\nPulse: Patients who don't rebook get a nudge. Automatically. 64% rebook within 24hrs.\n\nAva: Multi-clinic call routing is live. Per-clinic numbers, independent availability.\n\nComing in June: Outcome measures \u00B7 TM3 integration \u00B7 Google Reviews auto-request\n\nOpen your dashboard: https://app.strydeos.com/dashboard",
+    text: "StrydeOS \u2014 May 2027 Update\n\nYour clinic just got sharper.\n\nIntelligence: Coaching notes, not spreadsheets. Weekly digests now surface personalised observations.\n\nPulse: Patients who don't rebook get a nudge. Automatically. 64% rebook within 24hrs.\n\nAva: Multi-clinic call routing is live. Per-clinic numbers, independent availability.\n\nComing in June: Outcome measures \u00B7 TM3 integration \u00B7 Google Reviews auto-request\n\nOpen your dashboard: https://portal.strydeos.com/dashboard",
   });
   console.log(e2 ? `  2. FAILED: ${e2.message}` : `  2. SENT: Marketing email (${d2?.id})`);
 

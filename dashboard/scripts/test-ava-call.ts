@@ -6,7 +6,7 @@
  *
  * Usage:
  *   ELEVENLABS_WEBHOOK_SECRET=<secret> npx tsx scripts/test-ava-call.ts
- *   ELEVENLABS_WEBHOOK_SECRET=<secret> APP_URL=https://app.strydeos.com npx tsx scripts/test-ava-call.ts
+ *   ELEVENLABS_WEBHOOK_SECRET=<secret> APP_URL=https://portal.strydeos.com npx tsx scripts/test-ava-call.ts
  *
  * Without ELEVENLABS_WEBHOOK_SECRET the test still runs but will get 500 from
  * every endpoint (misconfigured production) — that itself is a useful signal.

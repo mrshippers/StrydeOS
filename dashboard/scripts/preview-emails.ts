@@ -47,7 +47,7 @@ const mockWarning: InsightEvent = {
 const templates = [
   {
     name: "Clinician Invite",
-    html: buildInviteEmail("https://app.strydeos.com/login?token=abc123"),
+    html: buildInviteEmail("https://portal.strydeos.com/login?token=abc123"),
   },
   {
     name: "Urgent Alert",
