@@ -26,7 +26,9 @@ function getArg(flag: string, fallback: string): string {
 const TO = getArg("--to", "jamal@spiresphysiotherapy.com");
 const CLINIC_ID = getArg("--clinic", "clinic-spires");
 const FIRST_NAME = getArg("--firstname", "Jamal");
-const FROM = "StrydeOS <noreply@strydeos.com>";
+const FROM = getArg("--from", "StrydeOS <noreply@strydeos.com>");
+const REPLY_TO = getArg("--reply-to", "");
+const SUBJECT = getArg("--subject", "Pulling your first CSV out of WriteUpp");
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.strydeos.com";
 const UPLOAD_URL = `${APP_URL}/settings#csv-import-section`;
@@ -169,9 +171,10 @@ async function main() {
   const res = await resend.emails.send({
     from: FROM,
     to: [TO],
-    subject: "Pulling your first CSV out of WriteUpp",
+    subject: SUBJECT,
     html,
     text,
+    ...(REPLY_TO ? { replyTo: REPLY_TO } : {}),
   });
 
   if (res.error) {
