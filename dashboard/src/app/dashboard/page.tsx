@@ -613,7 +613,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-5">
                   <div>
                     <p className="font-display text-[22px] text-navy leading-none">Weekly overview</p>
-                    <p className="text-[11px] text-muted mt-1.5 tabular-nums">Week of 14–20 Apr · Spires Physiotherapy</p>
+                    <p className="text-[11px] text-muted mt-1.5 tabular-nums">Week of 14–20 Apr · Thornfield Physiotherapy</p>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full" style={{ background: brand.success, boxShadow: `0 0 6px ${brand.success}` }} />
@@ -630,13 +630,13 @@ export default function DashboardPage() {
                       <span className="w-[7px] h-[7px] rounded-full" style={{ background: brand.success }} />
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-[36px] font-bold text-navy leading-none tabular-nums">73</span>
+                      <span className="text-[36px] font-bold text-navy leading-none tabular-nums">92</span>
                       <span className="text-[11px] font-semibold" style={{ color: brand.success }}>↑ 8%</span>
                     </div>
                     <p className="text-[11px] text-muted mt-1.5">this week</p>
                     <div className="border-t border-border mt-4 pt-3 flex justify-between text-[11px]">
-                      <span className="text-muted"><span className="text-navy font-semibold tabular-nums">11</span> new</span>
-                      <span className="text-muted"><span className="text-navy font-semibold tabular-nums">62</span> follow-ups</span>
+                      <span className="text-muted"><span className="text-navy font-semibold tabular-nums">18</span> new</span>
+                      <span className="text-muted"><span className="text-navy font-semibold tabular-nums">74</span> follow-ups</span>
                     </div>
                   </div>
 
@@ -726,9 +726,9 @@ export default function DashboardPage() {
                   <div className="rounded-[var(--radius-card)] border border-border bg-white p-4 shadow-[var(--shadow-card)]">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Revenue / week</span>
                     <div className="flex items-baseline gap-1.5 mt-2">
-                      <span className="text-[22px] font-bold text-navy leading-none tabular-nums">£18.4</span>
+                      <span className="text-[22px] font-bold text-navy leading-none tabular-nums">£7.4</span>
                       <span className="text-[13px] font-semibold text-muted">k</span>
-                      <span className="text-[10px] font-semibold ml-auto" style={{ color: brand.success }}>↑ 12%</span>
+                      <span className="text-[10px] font-semibold ml-auto" style={{ color: brand.success }}>↑ 9%</span>
                     </div>
                     <svg viewBox="0 0 100 28" className="w-full mt-3 h-7" preserveAspectRatio="none">
                       <polyline
@@ -800,9 +800,9 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     {[
-                      { name: "Andrew Grant", role: "Senior Physio", sessions: "42", followup: "2.4", hep: "38%", util: "88%", status: brand.warning },
-                      { name: "Max Patel", role: "Physio", sessions: "31", followup: "3.6", hep: "54%", util: "79%", status: brand.success },
-                      { name: "Jamal Osei", role: "MD · 1 day/wk", sessions: "8", followup: "4.1", hep: "72%", util: "62%", status: brand.success },
+                      { name: "Nina Bennett", role: "Senior Physio", sessions: "36", followup: "3.4", hep: "58%", util: "88%", status: brand.warning },
+                      { name: "David Lin", role: "Physio", sessions: "34", followup: "4.1", hep: "72%", util: "82%", status: brand.success },
+                      { name: "Priya Shah", role: "Associate Physio", sessions: "22", followup: "4.0", hep: "78%", util: "70%", status: brand.success },
                     ].map((c, i, arr) => (
                       <div
                         key={c.name}
