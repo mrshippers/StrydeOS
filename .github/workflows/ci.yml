@@ -28,6 +28,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Module boundary check
+        run: npm run check:boundaries
+
       - name: Type check
         run: npx tsc --noEmit
 

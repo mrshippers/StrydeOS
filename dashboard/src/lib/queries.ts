@@ -402,6 +402,54 @@ export function subscribeInsightEvents(
   );
 }
 
+// ─── Events Actioned by Pulse (coupling tile — 7d window) ───────────────────
+
+/**
+ * Subscribe to `/clinics/{clinicId}/events` filtered to events that Pulse has
+ * consumed (`consumedBy` contains `'pulse'`) within the last 7 days. Used by
+ * the Intelligence dashboard tile to show cross-module activity. Read-only.
+ *
+ * Note: reads the NEW events collection written by `computeKPIs()` — not the
+ * older `insight_events` collection. Event shape: `{ type, kpiId, severity,
+ * createdAt, consumedBy[], ... }` with `createdAt` as ISO string.
+ */
+export function subscribeEventsActionedByPulse(
+  clinicId: string | null,
+  callback: (events: Array<{ id: string; createdAt: string; consumedBy: string[] }>) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  if (!db || !clinicId) {
+    callback([]);
+    return noopUnsubscribe();
+  }
+
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const q = query(
+    clinicCollection(clinicId, "events"),
+    where("consumedBy", "array-contains", "pulse"),
+    where("createdAt", ">=", sevenDaysAgo),
+    orderBy("createdAt", "desc"),
+    limit(500)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const data = snapshot.docs.map((d) => {
+        const raw = d.data() as { createdAt?: string; consumedBy?: string[] };
+        return {
+          id: d.id,
+          createdAt: raw.createdAt ?? "",
+          consumedBy: raw.consumedBy ?? [],
+        };
+      });
+      callback(data);
+    },
+    onError
+  );
+}
+
 // ─── Call Logs (subcollection) ───────────────────────────────────────────────
 
 export function subscribeCalls(

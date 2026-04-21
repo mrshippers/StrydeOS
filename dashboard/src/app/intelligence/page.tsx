@@ -31,6 +31,7 @@ import type { OutcomeMeasureType, Patient } from "@/types";
 import { formatPence, formatPercent, formatWeekDate } from "@/lib/utils";
 import InsightFeed from "@/components/intelligence/InsightFeed";
 import KpiProjectionStrip from "@/components/intelligence/KpiProjectionStrip";
+import EventsActionedByPulseTile from "@/components/intelligence/EventsActionedByPulseTile";
 import {
   PoundSterling,
   TrendingUp,
@@ -768,6 +769,11 @@ export default function IntelligencePage() {
       {/* KPI projection strip — reads from /clinics/{clinicId}/kpis/*.
           Renders nothing until the pipeline has populated the projection. */}
       <KpiProjectionStrip />
+
+      {/* Cross-module coupling tile — reads /clinics/{clinicId}/events filtered
+          by consumedBy='pulse' (7d window). Read-only handshake between
+          Intelligence (event emitter) and Pulse (event consumer). */}
+      <EventsActionedByPulseTile />
 
       {/* Summary stat cards */}
       <div className="relative grid grid-cols-2 lg:grid-cols-5 gap-4">
