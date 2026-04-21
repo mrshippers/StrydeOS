@@ -105,6 +105,32 @@ export const CATEGORY_ORDER: KnowledgeCategory[] = [
   "custom",
 ];
 
+// ─── Sync state types ─────────────────────────────────────────────────────────
+
+export interface SyncLogEntry {
+  timestamp: string;
+  status: "success" | "error";
+  method?: "knowledge_base" | "system_prompt_fallback";
+  error?: string;
+}
+
+export interface SyncDiff {
+  changedCategories: string[];
+  entriesAdded: number;
+  entriesModified: number;
+  entriesRemoved: number;
+}
+
+export interface AvaSyncState {
+  status: "synced" | "error" | "pending" | null;
+  lastSyncedAt: string | null;
+  lastAttemptedAt: string | null;
+  avaAgentId: string | null;
+  lastError: string | null;
+  lastSyncDiff: SyncDiff | null;
+  syncLog: SyncLogEntry[];
+}
+
 // ─── Compilation ─────────────────────────────────────────────────────────────
 
 /**

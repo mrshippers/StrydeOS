@@ -1,6 +1,7 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getAuth, type Auth } from "firebase/auth";
+import { getFunctions, type Functions } from "firebase/functions";
 
 const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -15,6 +16,7 @@ export const isFirebaseConfigured = !isPlaceholder;
 let app: FirebaseApp | null = null;
 let _db: Firestore | null = null;
 let _auth: Auth | null = null;
+let _functions: Functions | null = null;
 
 if (isFirebaseConfigured) {
   const config = {
@@ -37,4 +39,12 @@ export function getFirebaseAuth(): Auth | null {
     _auth = getAuth(app);
   }
   return _auth;
+}
+
+export function getFirebaseFunctions(): Functions | null {
+  if (!isFirebaseConfigured || !app) return null;
+  if (!_functions) {
+    _functions = getFunctions(app, "europe-west2");
+  }
+  return _functions;
 }

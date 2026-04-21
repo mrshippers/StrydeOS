@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useState, useRef } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { db } from "@/lib/firebase";
-import type { KnowledgeEntry, KnowledgeCategory } from "@/lib/ava/ava-knowledge";
+import { useCallback, useEffect, useState, useRef, useMemo } from "react";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
+import { db, getFirebaseFunctions } from "@/lib/firebase";
+import type {
+  KnowledgeEntry,
+  KnowledgeCategory,
+  AvaSyncState,
+  SyncLogEntry,
+} from "@/lib/ava/ava-knowledge";
 
 interface UseAvaKnowledgeResult {
   entries: KnowledgeEntry[];
@@ -11,6 +16,8 @@ interface UseAvaKnowledgeResult {
   syncing: boolean;
   lastSyncedAt: string | null;
   hasPendingChanges: boolean;
+  syncState: AvaSyncState | null;
+  syncLog: SyncLogEntry[];
   error: string | null;
   addEntry: (category: KnowledgeCategory, title: string, content: string) => Promise<void>;
   updateEntry: (id: string, updates: Partial<Pick<KnowledgeEntry, "title" | "content">>) => void;
@@ -19,49 +26,91 @@ interface UseAvaKnowledgeResult {
   syncToAgent: () => Promise<{ success: boolean; error?: string }>;
 }
 
+function toISOString(value: unknown): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  if (typeof (value as { toDate?: () => Date }).toDate === "function") {
+    return (value as { toDate: () => Date }).toDate().toISOString();
+  }
+  return null;
+}
+
 export function useAvaKnowledge(clinicId: string | undefined): UseAvaKnowledgeResult {
   const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
-  const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  const [syncState, setSyncState] = useState<AvaSyncState | null>(null);
+  const [syncLog, setSyncLog] = useState<SyncLogEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Suppress snapshot entry updates while a debounced local edit is pending
+  const isEditingRef = useRef(false);
 
-  // Load knowledge entries from Firestore
-  const load = useCallback(async () => {
+  // Real-time Firestore listener
+  useEffect(() => {
     if (!db || !clinicId) {
       setLoading(false);
       return;
     }
 
-    try {
-      const clinicDoc = await getDoc(doc(db, "clinics", clinicId));
-      if (!clinicDoc.exists()) {
+    const unsub = onSnapshot(
+      doc(db, "clinics", clinicId),
+      (snap) => {
+        if (!snap.exists()) {
+          setLoading(false);
+          return;
+        }
+
+        const data = snap.data();
+        const avaData = data.ava || {};
+
+        // Don't overwrite entries while the user is actively editing
+        if (!isEditingRef.current) {
+          setEntries(avaData.knowledge || []);
+        }
+
+        const state = avaData.syncState || {};
+        const rawLastSynced = state.lastSyncedAt;
+        const lastSynced =
+          toISOString(rawLastSynced) ?? avaData.knowledgeLastSyncedAt ?? null;
+
+        setLastSyncedAt(lastSynced);
+        setSyncLog(state.syncLog || []);
+        setSyncState({
+          status: state.status ?? null,
+          lastSyncedAt: lastSynced,
+          lastAttemptedAt: toISOString(state.lastAttemptedAt),
+          avaAgentId: state.avaAgentId ?? null,
+          lastError: state.lastError ?? null,
+          lastSyncDiff: state.lastSyncDiff ?? null,
+          syncLog: state.syncLog || [],
+        });
+
         setLoading(false);
-        return;
+      },
+      (err) => {
+        console.error("[Ava knowledge listener error]", err);
+        setError("Failed to load knowledge base");
+        setLoading(false);
       }
+    );
 
-      const data = clinicDoc.data();
-      const avaData = data.ava || {};
-
-      setEntries(avaData.knowledge || []);
-      setLastSyncedAt(avaData.knowledgeLastSyncedAt || null);
-      setHasPendingChanges(false);
-    } catch (err) {
-      console.error("[Ava knowledge load error]", err);
-      setError("Failed to load knowledge base");
-    } finally {
-      setLoading(false);
-    }
+    return () => {
+      unsub();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [clinicId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // hasPendingChanges — derived from entry timestamps vs lastSyncedAt
+  const hasPendingChanges = useMemo(() => {
+    if (entries.length === 0) return false;
+    if (!lastSyncedAt) return true;
+    const syncMs = new Date(lastSyncedAt).getTime();
+    return entries.some((e) => new Date(e.updatedAt).getTime() > syncMs);
+  }, [entries, lastSyncedAt]);
 
-  // Persist entries to Firestore
   const persistToFirestore = useCallback(
     async (updatedEntries: KnowledgeEntry[]) => {
       if (!db || !clinicId) return;
@@ -73,39 +122,33 @@ export function useAvaKnowledge(clinicId: string | undefined): UseAvaKnowledgeRe
           "ava.knowledge": updatedEntries,
           updatedAt: new Date().toISOString(),
         });
-        setHasPendingChanges(true);
       } catch (err) {
         console.error("[Ava knowledge save error]", err);
         setError("Failed to save knowledge base");
         throw err;
       } finally {
         setSaving(false);
+        isEditingRef.current = false;
       }
     },
-    [clinicId],
+    [clinicId]
   );
 
-  // Ref always points to latest persistToFirestore to avoid stale closure in debounce
   const persistRef = useRef(persistToFirestore);
   useEffect(() => { persistRef.current = persistToFirestore; }, [persistToFirestore]);
 
-  // Clear debounce on clinicId change to prevent cross-clinic writes
   useEffect(() => {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [clinicId]);
 
-  // Debounced save — triggers 800ms after last change
-  const debouncedSave = useCallback(
-    (updatedEntries: KnowledgeEntry[]) => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        persistRef.current(updatedEntries);
-      }, 800);
-    },
-    [],
-  );
+  const debouncedSave = useCallback((updatedEntries: KnowledgeEntry[]) => {
+    isEditingRef.current = true;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      persistRef.current(updatedEntries);
+    }, 800);
+  }, []);
 
-  // Add a new knowledge entry
   const addEntry = useCallback(
     async (category: KnowledgeCategory, title: string, content: string) => {
       const newEntry: KnowledgeEntry = {
@@ -115,98 +158,75 @@ export function useAvaKnowledge(clinicId: string | undefined): UseAvaKnowledgeRe
         content,
         updatedAt: new Date().toISOString(),
       };
-
       const updated = [...entries, newEntry];
       setEntries(updated);
       await persistToFirestore(updated);
     },
-    [entries, persistToFirestore],
+    [entries, persistToFirestore]
   );
 
-  // Update an existing entry (debounced save)
   const updateEntry = useCallback(
     (id: string, updates: Partial<Pick<KnowledgeEntry, "title" | "content">>) => {
       const updated = entries.map((e) =>
-        e.id === id
-          ? { ...e, ...updates, updatedAt: new Date().toISOString() }
-          : e,
+        e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } : e
       );
       setEntries(updated);
-      setHasPendingChanges(true);
       debouncedSave(updated);
     },
-    [entries, debouncedSave],
+    [entries, debouncedSave]
   );
 
-  // Remove an entry
   const removeEntry = useCallback(
     async (id: string) => {
       const updated = entries.filter((e) => e.id !== id);
       setEntries(updated);
       await persistToFirestore(updated);
     },
-    [entries, persistToFirestore],
+    [entries, persistToFirestore]
   );
 
-  // Manual save (flush debounce)
   const saveEntries = useCallback(async () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     await persistToFirestore(entries);
   }, [entries, persistToFirestore]);
 
-  // Sync knowledge base to ElevenLabs agent
   const syncToAgent = useCallback(async () => {
+    if (!clinicId) return { success: false, error: "No clinic ID" };
+
     setSyncing(true);
     setError(null);
 
     try {
-      // Flush any pending saves first
+      // Flush any pending local edits to Firestore before syncing
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
         await persistToFirestore(entries);
       }
 
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
+      const fns = getFirebaseFunctions();
+      if (!fns) throw new Error("Firebase Functions not configured");
 
-      const token = await user.getIdToken();
-      const response = await fetch("/api/ava/knowledge", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to sync knowledge base");
-      }
-
-      const data = await response.json();
-      setLastSyncedAt(data.syncedAt);
-      setHasPendingChanges(false);
+      const callSync = httpsCallable<{ clinicId: string }, { success: boolean }>(
+        fns,
+        "syncClinicToAva"
+      );
+      await callSync({ clinicId });
+      // lastSyncedAt, syncState, and syncLog all update via onSnapshot
+      // when the Cloud Function writes syncState back to Firestore
 
       return { success: true };
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to sync knowledge base";
+      const message = err instanceof Error ? err.message : "Failed to sync to Ava";
       console.error("[Ava knowledge sync error]", err);
       setError(message);
       return { success: false, error: message };
     } finally {
       setSyncing(false);
     }
-  }, [entries, persistToFirestore]);
+  }, [clinicId, entries, persistToFirestore]);
 
-  // Cleanup debounce on unmount
   useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, []);
 
   return {
@@ -216,6 +236,8 @@ export function useAvaKnowledge(clinicId: string | undefined): UseAvaKnowledgeRe
     syncing,
     lastSyncedAt,
     hasPendingChanges,
+    syncState,
+    syncLog,
     error,
     addEntry,
     updateEntry,

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "@/lib/firebase";
 
@@ -74,66 +74,65 @@ export function useAvaConfig(clinicId: string | undefined) {
   const [provisioning, setProvisioning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load settings from Firestore
-  const load = useCallback(async () => {
+  // Real-time Firestore listener — replaces one-shot getDoc
+  useEffect(() => {
     if (!db || !clinicId) {
       setLoading(false);
       return;
     }
 
-    try {
-      const clinicDoc = await getDoc(doc(db, "clinics", clinicId));
-      if (!clinicDoc.exists()) {
+    const unsub = onSnapshot(
+      doc(db, "clinics", clinicId),
+      (snap) => {
+        if (!snap.exists()) {
+          setLoading(false);
+          return;
+        }
+
+        const data = snap.data();
+        const avaData = data.ava || {};
+
+        const pricePence = data.sessionPricePence as number | undefined;
+        const iaFromTopLevel = pricePence != null ? String(pricePence / 100) : "";
+
+        setConfig({
+          enabled: avaData.enabled ?? DEFAULT_CONFIG.enabled,
+          phone: data.phone || avaData.config?.phone || DEFAULT_CONFIG.phone,
+          ia_price: iaFromTopLevel || avaData.config?.ia_price || DEFAULT_CONFIG.ia_price,
+          fu_price: avaData.config?.fu_price || DEFAULT_CONFIG.fu_price,
+          address: data.address || avaData.config?.address || DEFAULT_CONFIG.address,
+          nearest_station: avaData.config?.nearest_station || DEFAULT_CONFIG.nearest_station,
+          parking_info: data.parkingInfo || avaData.config?.parking_info || DEFAULT_CONFIG.parking_info,
+        });
+
+        setRules({
+          new_patient_booking: avaData.rules?.new_patient_booking ?? true,
+          cancellation_recovery: avaData.rules?.cancellation_recovery ?? true,
+          noshow_followup: avaData.rules?.noshow_followup ?? true,
+          emergency_routing: avaData.rules?.emergency_routing ?? true,
+          faq_handling: avaData.rules?.faq_handling ?? true,
+        });
+
+        setHours({
+          start: avaData.hours?.start ?? DEFAULT_HOURS.start,
+          end: avaData.hours?.end ?? DEFAULT_HOURS.end,
+          days: avaData.hours?.days ?? DEFAULT_HOURS.days,
+          after_hours_mode: avaData.hours?.after_hours_mode ?? DEFAULT_HOURS.after_hours_mode,
+          fallback_number: avaData.hours?.fallback_number ?? null,
+        });
+
         setLoading(false);
-        return;
+      },
+      (err) => {
+        console.error("[Ava config listener error]", err);
+        setError("Failed to load Ava configuration");
+        setLoading(false);
       }
+    );
 
-      const data = clinicDoc.data();
-      const avaData = data.ava || {};
-
-      // Read clinic details from top-level clinic doc (canonical source, shared
-      // with settings page) with fallback to ava.config.* for backwards compat.
-      const pricePence = data.sessionPricePence;
-      const iaFromTopLevel = pricePence != null ? String(pricePence / 100) : "";
-
-      setConfig({
-        enabled: avaData.enabled ?? DEFAULT_CONFIG.enabled,
-        phone: data.phone || avaData.config?.phone || DEFAULT_CONFIG.phone,
-        ia_price: iaFromTopLevel || avaData.config?.ia_price || DEFAULT_CONFIG.ia_price,
-        fu_price: avaData.config?.fu_price || DEFAULT_CONFIG.fu_price,
-        address: data.address || avaData.config?.address || DEFAULT_CONFIG.address,
-        nearest_station: avaData.config?.nearest_station || DEFAULT_CONFIG.nearest_station,
-        parking_info: data.parkingInfo || avaData.config?.parking_info || DEFAULT_CONFIG.parking_info,
-      });
-
-      setRules({
-        new_patient_booking: avaData.rules?.new_patient_booking ?? true,
-        cancellation_recovery: avaData.rules?.cancellation_recovery ?? true,
-        noshow_followup: avaData.rules?.noshow_followup ?? true,
-        emergency_routing: avaData.rules?.emergency_routing ?? true,
-        faq_handling: avaData.rules?.faq_handling ?? true,
-      });
-
-      setHours({
-        start: avaData.hours?.start ?? DEFAULT_HOURS.start,
-        end: avaData.hours?.end ?? DEFAULT_HOURS.end,
-        days: avaData.hours?.days ?? DEFAULT_HOURS.days,
-        after_hours_mode: avaData.hours?.after_hours_mode ?? DEFAULT_HOURS.after_hours_mode,
-        fallback_number: avaData.hours?.fallback_number ?? null,
-      });
-    } catch (err) {
-      console.error("[Ava config load error]", err);
-      setError("Failed to load Ava configuration");
-    } finally {
-      setLoading(false);
-    }
+    return unsub;
   }, [clinicId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  // Generic save handler for any field
   const save = useCallback(
     async (updates: Partial<AvaSettings>) => {
       if (!db || !clinicId) return;
@@ -142,17 +141,13 @@ export function useAvaConfig(clinicId: string | undefined) {
 
       try {
         const now = new Date().toISOString();
-        const docUpdates: Record<string, unknown> = {
-          updatedAt: now,
-        };
+        const docUpdates: Record<string, unknown> = { updatedAt: now };
 
         if (updates.config) {
           Object.entries(updates.config).forEach(([key, value]) => {
             docUpdates[`ava.config.${key}`] = value;
           });
 
-          // Mirror shared clinic detail fields to top-level doc fields so the
-          // settings page (and any other consumer of clinicProfile) stays in sync.
           const cfg = updates.config;
           if (cfg.phone !== undefined) docUpdates.phone = cfg.phone || null;
           if (cfg.address !== undefined) docUpdates.address = cfg.address || null;
@@ -192,7 +187,6 @@ export function useAvaConfig(clinicId: string | undefined) {
     [clinicId]
   );
 
-  // Helper to get a fresh Firebase ID token
   const getToken = useCallback(async () => {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -200,7 +194,6 @@ export function useAvaConfig(clinicId: string | undefined) {
     return user.getIdToken();
   }, []);
 
-  // Create or update ElevenLabs agent via API route
   const createOrUpdateAgent = useCallback(async () => {
     try {
       const token = await getToken();
@@ -225,42 +218,33 @@ export function useAvaConfig(clinicId: string | undefined) {
     }
   }, [getToken]);
 
-  // Toggle Ava on/off — validates phone number exists before enabling
   const toggleEnabled = useCallback(async () => {
     const newEnabled = !config.enabled;
-
-    // Don't allow enabling without a provisioned phone number
     if (newEnabled && !config.phone) {
       setError("Provision a phone number before enabling Ava");
       throw new Error("No phone number provisioned");
     }
-
     await save({ config: { ...config, enabled: newEnabled } });
   }, [config, save]);
 
-  // Toggle individual rule — also triggers agent update so ElevenLabs prompt stays in sync
   const toggleRule = useCallback(
     async (rule: keyof AvaRules) => {
       const newRules = { ...rules, [rule]: !rules[rule] };
       await save({ rules: newRules });
-      // Rules affect system prompt behaviour — sync to ElevenLabs
       await createOrUpdateAgent();
     },
     [rules, save, createOrUpdateAgent]
   );
 
-  // Update config field with debounce
   const updateConfigField = useCallback(
     (field: keyof AvaConfig, value: string) => {
       const newConfig = { ...config, [field]: value };
       setConfig(newConfig);
-      // Debounced save happens at component level
       return newConfig;
     },
     [config]
   );
 
-  // Provision a new Twilio number for this clinic
   const provisionNumber = useCallback(
     async (locality?: string) => {
       if (!clinicId) throw new Error("No clinic ID");
@@ -284,10 +268,7 @@ export function useAvaConfig(clinicId: string | undefined) {
         }
 
         const data = await response.json();
-
-        // Update local state with the provisioned number
         setConfig((prev) => ({ ...prev, phone: data.phone }));
-
         return data;
       } catch (err) {
         console.error("[Number provisioning error]", err);
@@ -314,7 +295,6 @@ export function useAvaConfig(clinicId: string | undefined) {
     toggleRule,
     updateConfigField,
     save,
-    reload: load,
     createOrUpdateAgent,
     provisionNumber,
   };
