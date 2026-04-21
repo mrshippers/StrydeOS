@@ -16,9 +16,9 @@ import PulseMark from "@/components/PulseMark";
  * Show logic: modal appears once per version bump, on next login after
  * the version changes. Once dismissed it stays dismissed until the next bump.
  */
-const CURRENT_VERSION = "2026-04-17-ava";
+const CURRENT_VERSION = "2026-04-21-sync";
 
-const TOTAL_CARDS = 3;
+const TOTAL_CARDS = 4;
 
 export default function WhatsNew() {
   const { user } = useAuth();
@@ -422,6 +422,94 @@ export default function WhatsNew() {
                             </p>
                             <p className="text-[12px] text-muted leading-relaxed mt-0.5">
                               {entry.description}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {card === 3 && (
+                  <motion.div
+                    key="sync"
+                    initial={{ opacity: 0, x: 60 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -60 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {/* ── Card 3: Intelligence + Pulse sync refactor ── */}
+                    <div
+                      className="px-8 pt-7 pb-6 relative"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #0B2545 0%, #2D1E5E 50%, #8B5CF6 100%)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3.5 mb-3">
+                        <div
+                          className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(255,255,255,0.10)" }}
+                        >
+                          <Activity size={22} className="text-white" />
+                        </div>
+                        <div>
+                          <h2 className="font-display text-[22px] text-white leading-tight">
+                            Live numbers, not snapshots
+                          </h2>
+                          <p className="text-[12px] text-white/50 mt-0.5">
+                            Intelligence and Pulse now move in real time
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-[13px] text-white/70 leading-relaxed">
+                        Your dashboard used to show yesterday&rsquo;s picture.
+                        Now every number updates as soon as the data behind it
+                        does, and tells you if something&rsquo;s wrong instead
+                        of hiding it.
+                      </p>
+                    </div>
+
+                    <div className="px-8 py-5 space-y-3.5">
+                      {[
+                        {
+                          icon: Activity,
+                          color: "#8B5CF6",
+                          label: "Every KPI shows when it was last refreshed",
+                          detail: "If the pipeline fails, the dashboard tells you. No more silently showing last week’s numbers as if they were today’s",
+                        },
+                        {
+                          icon: MessageSquare,
+                          color: "#0891B2",
+                          label: "Your message log now tracks send to reply",
+                          detail: "Before, ‘no action’ meant either sent and ignored, or still waiting on the carrier. You can now tell them apart at a glance",
+                        },
+                        {
+                          icon: TrendingUp,
+                          color: "#8B5CF6",
+                          label: "Revenue numbers are no longer faked",
+                          detail: "If you haven’t set your session price, revenue shows ‘set your session price’ instead of guessing. What you see is what you earned",
+                        },
+                        {
+                          icon: Brain,
+                          color: "#8B5CF6",
+                          label: "Outcomes and reputation show real data only",
+                          detail: "Empty clinics get a clean empty state. Enter outcome scores or collect reviews, and the trends appear — no placeholders pretending to be yours",
+                        },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-start gap-3">
+                          <div
+                            className="mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ background: `${item.color}14` }}
+                          >
+                            <item.icon size={14} style={{ color: item.color }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-navy leading-snug">
+                              {item.label}
+                            </p>
+                            <p className="text-[12px] text-muted leading-relaxed mt-0.5">
+                              {item.detail}
                             </p>
                           </div>
                         </div>
