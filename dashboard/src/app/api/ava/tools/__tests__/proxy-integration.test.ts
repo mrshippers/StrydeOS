@@ -16,11 +16,6 @@ vi.mock("@/lib/request-logger", () => ({
   withRequestLog: (fn: unknown) => fn,
 }));
 
-vi.mock("@/lib/ava/verify-signature", () => ({
-  isWebhookSecretConfigured: vi.fn().mockReturnValue(true),
-  verifyElevenLabsSignature: vi.fn().mockResolvedValue(true),
-}));
-
 vi.mock("@/lib/firebase-admin", () => ({
   getAdminDb: vi.fn(),
 }));
@@ -37,6 +32,7 @@ vi.mock("@/lib/ava/engine-proxy", () => ({
 
 const AGENT_ID = "agent_spires_001";
 const CLINIC_ID = "clinic_001";
+const TOOLS_SECRET = "test_tools_secret";
 
 /** Build a minimal Firestore mock that resolves the clinic and PMS config. */
 function makeDb(pmsConfig = { provider: "writeupp", apiKey: "wukey" }) {
@@ -101,7 +97,7 @@ function makeRequest(toolName = "check_availability", toolInput: Record<string, 
     body,
     headers: {
       "Content-Type": "application/json",
-      "elevenlabs-signature": "v0=abc",
+      authorization: `Bearer ${TOOLS_SECRET}`,
     },
   });
 }
@@ -112,10 +108,12 @@ describe("AVA engine proxy — enabled", () => {
   beforeEach(() => {
     vi.resetModules();
     process.env.AVA_ENGINE_URL = "http://localhost:8000";
+    process.env.ELEVENLABS_WEBHOOK_SECRET = TOOLS_SECRET;
   });
 
   afterEach(() => {
     delete process.env.AVA_ENGINE_URL;
+    delete process.env.ELEVENLABS_WEBHOOK_SECRET;
     vi.clearAllMocks();
   });
 
@@ -192,9 +190,11 @@ describe("AVA engine proxy — disabled", () => {
   beforeEach(() => {
     vi.resetModules();
     delete process.env.AVA_ENGINE_URL;
+    process.env.ELEVENLABS_WEBHOOK_SECRET = TOOLS_SECRET;
   });
 
   afterEach(() => {
+    delete process.env.ELEVENLABS_WEBHOOK_SECRET;
     vi.clearAllMocks();
   });
 
