@@ -130,7 +130,13 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Inbound import not configured" }, { status: 503 });
   }
 
-  const secret = request.headers.get("x-inbound-secret")?.trim() ?? "";
+  // Accept secret via header (Mailgun/n8n) OR query param (SendGrid Inbound
+  // Parse, which cannot set custom headers).
+  const secret = (
+    request.headers.get("x-inbound-secret") ??
+    request.nextUrl.searchParams.get("secret") ??
+    ""
+  ).trim();
   if (
     !secret ||
     secret.length !== INBOUND_SECRET.length ||
