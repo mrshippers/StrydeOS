@@ -80,7 +80,7 @@ describe("sendUrgentAlerts", () => {
 
   it("skips when no urgent events", async () => {
     const db = makeMockDb();
-    const events = [makeEvent({ type: "COURSE_COMPLETION_WIN", severity: "positive" })];
+    const events = [makeEvent({ type: "TREATMENT_COMPLETION_WIN", severity: "positive" })];
     const result = await sendUrgentAlerts(db as any, "clinic-1", events);
     expect(result.sent).toBe(0);
     expect(result.errors).toHaveLength(0);

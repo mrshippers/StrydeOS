@@ -1060,10 +1060,10 @@ export default function DashboardPage() {
             {/* Compliance (HEP + course completion as progress bars) */}
             {(() => {
               const hepVal = Math.round((latest.hepRate ?? 0) * 100);
-              const courseVal = Math.round((latest.courseCompletionRate ?? 0) * 100);
+              const treatmentVal = Math.round((latest.treatmentCompletionRate ?? 0) * 100);
               const hepStatus = getHepStatus(latest.hepRate);
-              const courseStatus = getGenericStatus(latest.courseCompletionRate, 0.80);
-              const composite = worstStatus(hepStatus, courseStatus);
+              const treatmentStatus = getGenericStatus(latest.treatmentCompletionRate, 0.80);
+              const composite = worstStatus(hepStatus, treatmentStatus);
               const dotColor =
                 composite === "ok" ? "#059669"
                 : composite === "warn" ? "#F59E0B"
@@ -1072,8 +1072,8 @@ export default function DashboardPage() {
               const barGrad = "linear-gradient(90deg, #0891B2, #4B8BF5)";
               const barWarn = "linear-gradient(90deg, #F59E0B, #F59E0B)";
               const hepPct = computeTrendPercent(latest.hepRate, previous?.hepRate);
-              const coursePct = computeTrendPercent(latest.courseCompletionRate, previous?.courseCompletionRate);
-              const avgChange = ((hepPct ?? 0) + (coursePct ?? 0)) / 2;
+              const treatmentPct = computeTrendPercent(latest.treatmentCompletionRate, previous?.treatmentCompletionRate);
+              const avgChange = ((hepPct ?? 0) + (treatmentPct ?? 0)) / 2;
 
               return (
                 <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5 transition-all duration-300">
@@ -1094,16 +1094,16 @@ export default function DashboardPage() {
                       />
                     </div>
                   </div>
-                  {/* Course completion bar */}
+                  {/* Treatment completion bar */}
                   <div className="mb-3">
                     <div className="flex justify-between items-baseline mb-1">
-                      <span className="text-[11px] font-medium text-navy">Course completion</span>
-                      <span className="text-[11px] font-bold text-navy tabular-nums">{courseVal}%</span>
+                      <span className="text-[11px] font-medium text-navy">Treatment completion</span>
+                      <span className="text-[11px] font-bold text-navy tabular-nums">{treatmentVal}%</span>
                     </div>
                     <div className="h-[4px] bg-cloud-dark rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(courseVal, 100)}%`, background: courseStatus === "ok" ? barGrad : barWarn }}
+                        style={{ width: `${Math.min(treatmentVal, 100)}%`, background: treatmentStatus === "ok" ? barGrad : barWarn }}
                       />
                     </div>
                   </div>
@@ -1161,7 +1161,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div className="flex justify-between items-baseline mb-1">
-                  <span className="text-[11px] font-medium text-navy">Course completion</span>
+                  <span className="text-[11px] font-medium text-navy">Treatment completion</span>
                   <span className="text-[11px] font-bold text-navy/20">——</span>
                 </div>
                 <div className="h-[4px] bg-cloud-dark rounded-full" />

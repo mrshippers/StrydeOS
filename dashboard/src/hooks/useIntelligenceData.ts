@@ -184,7 +184,7 @@ function deriveReferrals(patients: Patient[], avgRevPerSession: number): Referra
     patientsReferred: number;
     convertedToBooking: number;
     totalRevenuePence: number;
-    totalCourseLength: number;
+    totalTreatmentLength: number;
   }>();
 
   for (const p of patients) {
@@ -197,7 +197,7 @@ function deriveReferrals(patients: Patient[], avgRevPerSession: number): Referra
       existing.patientsReferred += 1;
       if (p.sessionCount > 0) existing.convertedToBooking += 1;
       existing.totalRevenuePence += revenue;
-      existing.totalCourseLength += p.courseLength ?? 0;
+      existing.totalTreatmentLength += p.treatmentLength ?? 0;
     } else {
       map.set(key, {
         source: ref.name,
@@ -205,7 +205,7 @@ function deriveReferrals(patients: Patient[], avgRevPerSession: number): Referra
         patientsReferred: 1,
         convertedToBooking: p.sessionCount > 0 ? 1 : 0,
         totalRevenuePence: revenue,
-        totalCourseLength: p.courseLength ?? 0,
+        totalTreatmentLength: p.treatmentLength ?? 0,
       });
     }
   }
@@ -217,8 +217,8 @@ function deriveReferrals(patients: Patient[], avgRevPerSession: number): Referra
       patientsReferred: v.patientsReferred,
       convertedToBooking: v.convertedToBooking,
       totalRevenuePence: v.totalRevenuePence,
-      avgCourseLength: v.patientsReferred > 0
-        ? Math.round((v.totalCourseLength / v.patientsReferred) * 10) / 10
+      avgTreatmentLength: v.patientsReferred > 0
+        ? Math.round((v.totalTreatmentLength / v.patientsReferred) * 10) / 10
         : 0,
     }))
     .sort((a, b) => b.totalRevenuePence - a.totalRevenuePence);
@@ -387,7 +387,7 @@ function deriveClinicianKpis(allStats: WeeklyStats[], patients: Patient[]): Clin
       .filter((p) => !p.discharged && !p.churnRisk)
       .map((p) => ({
         name: p.name,
-        sessions: `${p.sessionCount}/${p.courseLength}`,
+        sessions: `${p.sessionCount}/${p.treatmentLength}`,
         lastSeen: p.lastSessionDate
           ? `${Math.round((Date.now() - new Date(p.lastSessionDate).getTime()) / 86400000)}d`
           : "—",

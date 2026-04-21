@@ -32,7 +32,7 @@ function mockPatient(overrides: Record<string, unknown> = {}) {
     id: "patient-1",
     clinicianId: "clinician-1",
     sessionCount: 3,
-    courseLength: 6,
+    treatmentLength: 6,
     discharged: false,
     insuranceFlag: false,
     ...overrides,
@@ -350,12 +350,12 @@ describe("aggregateWeek", () => {
     expect(result.dnaByTimeSlot!["afternoon"]).toBe(1);
   });
 
-  it("should calculate courseCompletionRate for discharged patients", () => {
-    // Given: 2 discharged patients, 1 completed course (sessionCount >= courseLength), 1 incomplete
+  it("should calculate treatmentCompletionRate for discharged patients", () => {
+    // Given: 2 discharged patients, 1 completed treatment (sessionCount >= treatmentLength), 1 incomplete
     const appointments = [mockAppointment()];
     const patients = [
-      mockPatient({ id: "patient-1", discharged: true, sessionCount: 6, courseLength: 6 }),
-      mockPatient({ id: "patient-2", discharged: true, sessionCount: 4, courseLength: 6 }),
+      mockPatient({ id: "patient-1", discharged: true, sessionCount: 6, treatmentLength: 6 }),
+      mockPatient({ id: "patient-2", discharged: true, sessionCount: 4, treatmentLength: 6 }),
     ];
     const reviews = [];
     const targets = { followUpRate: 4.0, hepRate: 0.95 };
@@ -363,8 +363,8 @@ describe("aggregateWeek", () => {
     // When aggregating for "clinician-1"
     const result = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, reviews);
 
-    // Then courseCompletionRate = 1/2 = 0.5
-    expect(result.courseCompletionRate).toBe(0.5);
+    // Then treatmentCompletionRate = 1/2 = 0.5
+    expect(result.treatmentCompletionRate).toBe(0.5);
   });
 
   it("should calculate review metrics: count, avgRating, velocity", () => {

@@ -57,17 +57,11 @@ export function buildWelcomeEmail(
     </div>
   </div>
 
-  <p style="margin:0 0 24px;font-size:13px;color:#5C6370;line-height:1.6;font-family:'Outfit',Helvetica,Arial,sans-serif;">Any questions &mdash; reply to this email. It comes to me directly.</p>
-
-  <div style="border-top:2px solid #1C54F2;padding-top:16px;">
-    <p style="margin:0;font-size:14px;font-weight:600;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">Jamal</p>
-    <p style="margin:2px 0 0;font-size:12px;color:#6B7280;font-family:'Outfit',Helvetica,Arial,sans-serif;">Founder &middot; StrydeOS</p>
-    <p style="margin:2px 0 0;font-size:12px;color:#6B7280;font-family:'Outfit',Helvetica,Arial,sans-serif;">Spires Physiotherapy &middot; London</p>
-  </div>`;
+  <p style="margin:0 0 24px;font-size:13px;color:#5C6370;line-height:1.6;font-family:'Outfit',Helvetica,Arial,sans-serif;">Any questions &mdash; reply to this email and we&rsquo;ll get back to you.</p>`;
 
   return wrapEmailLayout(body, {
     subtitle: `${clinicName} is live`,
-    signature: false,
+    signature: "system",
     footerLinks: [{ label: "Open your dashboard", href: APP_URL }],
     footerNote: "StrydeOS",
   });
@@ -94,11 +88,7 @@ export function buildWelcomeText(
     "3. See your first metrics by Friday",
     "   Once your PMS syncs, Intelligence builds your baseline.",
     "",
-    "Any questions — reply to this email. It comes to me directly.",
-    "",
-    "Jamal",
-    "Founder · StrydeOS",
-    "Spires Physiotherapy · London",
+    "Any questions — reply to this email and we'll get back to you.",
     "",
     textFooter({ footerNote: "StrydeOS" }),
   ].join("\n");

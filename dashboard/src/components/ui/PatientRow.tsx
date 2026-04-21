@@ -15,7 +15,7 @@ export default function PatientRow({
   clinician,
   onSendReminder,
 }: PatientRowProps) {
-  const progress = Math.round((patient.sessionCount / patient.courseLength) * 100);
+  const progress = Math.round((patient.sessionCount / patient.treatmentLength) * 100);
   const daysSinceLast = patient.lastSessionDate ? daysSince(patient.lastSessionDate) : 0;
 
   return (
@@ -45,7 +45,7 @@ export default function PatientRow({
       <div className="mb-3">
         <div className="flex justify-between items-center mb-1">
           <span className="text-[11px] text-muted">
-            {patient.sessionCount} of {patient.courseLength} sessions
+            {patient.sessionCount} of {patient.treatmentLength} sessions
           </span>
           <span className="text-[11px] font-semibold text-navy">{progress}%</span>
         </div>

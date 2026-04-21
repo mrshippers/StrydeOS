@@ -18,7 +18,7 @@ function baseInput(overrides: Partial<RiskScoreInput> = {}): RiskScoreInput {
 describe("computeRiskScore", () => {
   // ── Lifecycle state precedence ──────────────────────────────────────────
 
-  it("returns ACTIVE for a healthy mid-course patient", () => {
+  it("returns ACTIVE for a healthy mid-treatment patient", () => {
     const result = computeRiskScore(baseInput());
     expect(result.lifecycleState).toBe("ACTIVE");
     expect(result.riskScore).toBeLessThan(60);

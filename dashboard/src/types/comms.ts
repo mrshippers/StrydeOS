@@ -303,14 +303,14 @@ export const SMS_TEMPLATES: Record<string, string> = {
   reactivation_step2_supportive:
     "Hi [Name], we hope you're keeping well. It's been a few months since your last session at [ClinicName]. If you'd like to come in for a check-up, we're always happy to see you: [BookingUrl]",
   reactivation_step2_clinical:
-    "Hi [Name], a periodic review is recommended following your course of treatment at [ClinicName]. Please consider booking a review appointment: [BookingUrl]",
+    "Hi [Name], a periodic review is recommended following your treatment at [ClinicName]. Please consider booking a review appointment: [BookingUrl]",
 
   reactivation_step3_standard:
     "Hi [Name], just a reminder from [ClinicName] — if you've noticed any changes since finishing your treatment, we're here to help. Book a session: [BookingUrl]",
   reactivation_step3_supportive:
     "Hi [Name], it's [ClinicName] again. No pressure at all — we just wanted to make sure you know we're here if you need us: [BookingUrl]",
   reactivation_step3_clinical:
-    "Hi [Name], patients who return for a review after their initial course at [ClinicName] tend to have better long-term outcomes. We'd recommend a brief follow-up: [BookingUrl]",
+    "Hi [Name], patients who return for a review after their initial treatment at [ClinicName] tend to have better long-term outcomes. We'd recommend a brief follow-up: [BookingUrl]",
 
   reactivation_step4_standard:
     "Hi [Name], one last reminder from [ClinicName]. If you'd like a check-in or have new symptoms, book anytime: [BookingUrl]",

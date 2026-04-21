@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>StrydeOS — Product Video 60s</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #0B2545; font-family: 'Outfit', sans-serif; }
+  * { box-sizing: border-box; }
+
+  [data-composition-id="stryde-product-60s"] {
+    position: relative;
+    width: 1920px;
+    height: 1080px;
+    background: #0B2545;
+    overflow: hidden;
+    font-family: 'Outfit', sans-serif;
+    color: #ffffff;
+  }
+
+  /* --- Scene framework --- */
+  .scene {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    opacity: 0;
+    overflow: hidden;
+  }
+  .black-cover {
+    position: absolute;
+    inset: 0;
+    background: #000000;
+    z-index: 9999;
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  /* --- Apple Silicon display frame (unified for every product screenshot) --- */
+  .device {
+    position: relative;
+    display: block;
+    padding: 10px;
+    background: linear-gradient(180deg, #232327 0%, #131316 100%);
+    border-radius: 14px;
+    box-shadow:
+      0 40px 100px rgba(0,0,0,0.55),
+      0 0 0 1px rgba(255,255,255,0.05),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      inset 0 -1px 0 rgba(0,0,0,0.35);
+  }
+  .device-screen {
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #000;
+    line-height: 0;
+  }
+  .device-screen img { width: 100%; height: auto; display: block; }
+
+  /* --- Scene 1: Hero --- */
+  #scene1 { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 160px; gap: 40px; }
+  #s1-modal-wrap { width: 70%; max-width: 1344px; }
+  #s1-modal-wrap .device {
+    box-shadow:
+      0 0 120px 20px rgba(28, 84, 242, 0.28),
+      0 40px 100px rgba(0,0,0,0.55),
+      0 0 0 1px rgba(255,255,255,0.05),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  #s1-caption {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    letter-spacing: 0.01em;
+    color: rgba(255,255,255,0.65);
+    text-align: center;
+  }
+
+  /* --- Scene 2: Positioning --- */
+  #scene2 { display: flex; align-items: center; padding: 0 120px; gap: 80px; }
+  #s2-left { width: 46%; display: flex; flex-direction: column; gap: 28px; }
+  #s2-head {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 72px;
+    line-height: 1.06;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+  }
+  #s2-head em { font-style: italic; color: #4B8BF5; }
+  #s2-sub {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.62);
+    font-weight: 400;
+    max-width: 520px;
+  }
+  #s2-right { width: 54%; display: flex; justify-content: center; align-items: center; }
+  #s2-right .device { width: 780px; }
+
+  /* --- Scene 3: Knowledge Base --- */
+  #scene3 {
+    background: radial-gradient(ellipse 70% 60% at 50% -30%, rgba(46,107,255,0.18) 0%, rgba(11,37,69,0) 70%), #0B2545;
+    padding: 64px 120px 80px;
+  }
+  #s3-header { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  #s3-eyebrow {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    color: #4B8BF5;
+    text-transform: uppercase;
+  }
+  #s3-head {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 56px;
+    line-height: 1.1;
+    color: #ffffff;
+    max-width: 1100px;
+    letter-spacing: -0.005em;
+  }
+  #s3-stack {
+    position: absolute;
+    top: 320px;
+    left: 410px;
+    width: 1100px;
+    height: 600px;
+  }
+  .s3-card {
+    position: absolute;
+    top: 0;
+    width: 935px;
+  }
+  #s3-card-1 { left: -97px;  z-index: 1; }
+  #s3-card-2 { left:  82px;  z-index: 2; }
+  #s3-card-3 { left:  262px; z-index: 3; }
+
+  #s3-reveal {
+    position: absolute;
+    top: 280px;
+    left: 490px;
+    width: 940px;
+    opacity: 0;
+    z-index: 10;
+  }
+  #s3-reveal .device {
+    box-shadow:
+      0 40px 100px rgba(0,0,0,0.6),
+      0 0 80px rgba(75,139,245,0.22),
+      0 0 0 1px rgba(255,255,255,0.05),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  #s3-spotlight {
+    position: absolute;
+    /* Centred on the "Sync to Ava" pill (bottom-right of the form) */
+    top: 91%;
+    left: 80%;
+    width: 200px;
+    height: 200px;
+    margin-top: -100px;
+    margin-left: -100px;
+    opacity: 0;
+    background: radial-gradient(circle, rgba(75,139,245,0) 38%, rgba(75,139,245,0.65) 52%, rgba(75,139,245,0) 70%);
+    pointer-events: none;
+    z-index: 11;
+    filter: blur(2px);
+  }
+  #s3-caption {
+    position: absolute;
+    bottom: 80px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 18px;
+    color: #4B8BF5;
+    letter-spacing: 0.02em;
+    opacity: 0;
+    z-index: 12;
+  }
+
+  /* --- Scene 4: Platform updates --- */
+  #scene4 { padding: 88px 160px 0; display: flex; flex-direction: column; align-items: center; gap: 28px; }
+  #s4-title {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 44px;
+    color: #ffffff;
+    letter-spacing: -0.005em;
+    text-align: center;
+  }
+  #s4-sub {
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    color: rgba(255,255,255,0.55);
+    text-align: center;
+    margin-top: -14px;
+  }
+  #s4-modal-wrap { width: 65%; max-width: 1248px; }
+  #s4-modal-wrap .device {
+    box-shadow:
+      0 40px 100px rgba(0,0,0,0.6),
+      0 0 80px rgba(28,84,242,0.15),
+      0 0 0 1px rgba(255,255,255,0.05),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  /* --- Scene 5: Changelog --- */
+  #scene5 {
+    background: radial-gradient(ellipse 80% 60% at 70% 50%, rgba(46,107,255,0.14) 0%, rgba(11,37,69,0) 70%), #0B2545;
+    display: flex;
+    align-items: center;
+    padding: 0 100px;
+    gap: 80px;
+  }
+  #s5-left { width: 36%; display: flex; flex-direction: column; gap: 26px; opacity: 0; }
+  #s5-head {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 64px;
+    line-height: 1.04;
+    color: #ffffff;
+    letter-spacing: -0.005em;
+  }
+  #s5-sub {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.62);
+    max-width: 460px;
+  }
+  #s5-modules {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 18px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+  #s5-modules .sep { color: rgba(255,255,255,0.2); }
+  .mod-ava  { color: #4B8BF5; }
+  .mod-int  { color: #B794F6; }
+  .mod-pul  { color: #22D3EE; }
+  .mod-plat { color: #F59E0B; }
+  #s5-link {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    color: #4B8BF5;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
+    margin-top: 10px;
+  }
+  #s5-right { width: 64%; display: flex; justify-content: center; align-items: center; }
+  #s5-device-wrap { width: 1080px; }
+
+  /* --- Scene 6: Close --- */
+  #scene6 {
+    background: #0B2545;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 36px;
+    padding: 80px;
+  }
+  #s6-wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 26px;
+  }
+  .mono-mark { flex-shrink: 0; }
+  .s6-type {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 76px;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    line-height: 1;
+  }
+  .s6-type span { color: #4B8BF5; }
+  #s6-tag {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 32px;
+    color: rgba(255,255,255,0.88);
+    letter-spacing: 0.005em;
+    text-align: center;
+  }
+  #s6-url {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 18px;
+    color: #4B8BF5;
+    letter-spacing: 0.04em;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div data-composition-id="stryde-product-60s" data-start="0" data-duration="60" data-width="1920" data-height="1080">
+
+  <!-- SCENE 1 — Hero (0–6s) -->
+  <div class="scene" id="scene1">
+    <div id="s1-modal-wrap">
+      <div class="device">
+        <div class="device-screen">
+          <img src="Screenshot_2026-04-19_at_15_51_45.png" alt="Ava is fully live — AI receptionist end-to-end">
+        </div>
+      </div>
+    </div>
+    <div id="s1-caption">The full call pipeline. First ring to booking confirmation.</div>
+  </div>
+
+  <!-- SCENE 2 — Positioning (6–14s) -->
+  <div class="scene" id="scene2">
+    <div id="s2-left">
+      <div id="s2-head">Our pitch isn't<br><em>switch to StrydeOS.</em></div>
+      <div id="s2-sub">Your PMS stays. Your number stays. We sit above it.</div>
+    </div>
+    <div id="s2-right">
+      <div class="device">
+        <div class="device-screen">
+          <img src="Screenshot_2026-04-19_at_15_57_51.png" alt="StrydeOS architecture — Nothing changes. Everything improves.">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 3 — Knowledge Base (14–26s) -->
+  <div class="scene" id="scene3">
+    <div id="s3-header">
+      <div id="s3-eyebrow">Ava Knowledge Base</div>
+      <div id="s3-head">One thing to fill in.<br>Everything else is automatic.</div>
+    </div>
+    <div id="s3-stack">
+      <div class="s3-card" id="s3-card-1">
+        <div class="device"><div class="device-screen"><img src="Screenshot_2026-04-19_at_15_58_43.png" alt="Services & Clinic Details"></div></div>
+      </div>
+      <div class="s3-card" id="s3-card-2">
+        <div class="device"><div class="device-screen"><img src="Screenshot_2026-04-19_at_15_58_49.png" alt="Team & Clinicians"></div></div>
+      </div>
+      <div class="s3-card" id="s3-card-3">
+        <div class="device"><div class="device-screen"><img src="Screenshot_2026-04-19_at_15_58_56.png" alt="Pricing & Policies"></div></div>
+      </div>
+    </div>
+    <div id="s3-reveal">
+      <div class="device">
+        <div class="device-screen">
+          <img src="Screenshot_2026-04-19_at_15_59_11.png" alt="FAQs + Sync to Ava">
+          <div id="s3-spotlight"></div>
+        </div>
+      </div>
+    </div>
+    <div id="s3-caption">One button. Ava learns your clinic.</div>
+  </div>
+
+  <!-- SCENE 4 — Platform updates (26–38s) -->
+  <div class="scene" id="scene4">
+    <div id="s4-title">Platform updates</div>
+    <div id="s4-sub">What else shipped this month.</div>
+    <div id="s4-modal-wrap">
+      <div class="device">
+        <div class="device-screen">
+          <img src="Screenshot_2026-04-19_at_15_52_07.png" alt="Platform updates — Ava, Intelligence, Security">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 5 — Changelog (38–52s) -->
+  <div class="scene" id="scene5">
+    <div id="s5-left">
+      <div id="s5-head">Every version.<br>Every line.</div>
+      <div id="s5-sub">Where Stryde currently is, and where we're going. Public changelog, shipped in the open.</div>
+      <div id="s5-modules">
+        <span class="mod-ava">AVA</span><span class="sep">·</span>
+        <span class="mod-int">INTELLIGENCE</span><span class="sep">·</span>
+        <span class="mod-pul">PULSE</span><span class="sep">·</span>
+        <span class="mod-plat">PLATFORM</span>
+      </div>
+      <div id="s5-link">See the full changelog →</div>
+    </div>
+    <div id="s5-right">
+      <div id="s5-device-wrap">
+        <div class="device">
+          <div class="device-screen">
+            <img src="Changelog_2026-04-19.png" alt="StrydeOS Changelog — transit map of every shipped version">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 6 — Close (52–60s) -->
+  <div class="scene" id="scene6">
+    <div id="s6-wordmark">
+      <svg class="mono-mark" width="104" height="104" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="StrydeOS">
+        <defs>
+          <linearGradient id="mono-cont" x1="0.1" y1="0" x2="0.85" y2="1">
+            <stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/>
+            <stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/>
+          </linearGradient>
+          <radialGradient id="mono-rad" cx="28%" cy="24%" r="60%">
+            <stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/>
+            <stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="mono-topface" x1="0.05" y1="1" x2="0.35" y2="0">
+            <stop offset="0%" stop-color="white" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0.97"/>
+          </linearGradient>
+          <linearGradient id="mono-rim" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="white" stop-opacity="0"/>
+            <stop offset="28%" stop-color="white" stop-opacity="0.60"/>
+            <stop offset="65%" stop-color="white" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="mono-border" x1="0.1" y1="0" x2="0.4" y2="1">
+            <stop offset="0%" stop-color="#7ABBFF" stop-opacity="0.65"/>
+            <stop offset="100%" stop-color="#1C54F2" stop-opacity="0.06"/>
+          </linearGradient>
+          <clipPath id="mono-pc"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+          <clipPath id="mono-ac"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+        </defs>
+        <rect width="100" height="100" rx="24" fill="url(#mono-cont)"/>
+        <rect width="100" height="100" rx="24" fill="url(#mono-rad)"/>
+        <rect width="100" height="100" rx="24" fill="none" stroke="url(#mono-border)" stroke-width="1.2"/>
+        <path d="M 17 21 Q 50 12 83 21" stroke="url(#mono-rim)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+        <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/>
+        <g clip-path="url(#mono-pc)">
+          <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </g>
+        <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#mono-topface)" clip-path="url(#mono-ac)"/>
+        <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+      </svg>
+      <span class="s6-type">Stryde<span>OS</span></span>
+    </div>
+    <div id="s6-tag">Built for clinics that mean business.</div>
+    <div id="s6-url">strydeos.com</div>
+  </div>
+
+  <!-- Black cover (fade in from black at start, fade to black at end) -->
+  <div class="black-cover" id="black-cover"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script>
+  window.__timelines = window.__timelines || {};
+  const tl = gsap.timeline({ paused: true });
+
+  // ---------- SCENE 1 (0–6s) ----------
+  tl.set("#scene1", { opacity: 1 }, 0);
+  tl.to("#black-cover", { opacity: 0, duration: 0.8, ease: "power2.out" }, 0);
+  tl.from("#s1-modal-wrap", { opacity: 0, y: 30, duration: 0.8, ease: "power3.out" }, 0.1);
+  tl.from("#s1-caption",    { opacity: 0, y: 12, duration: 0.5, ease: "power2.out" }, 1.0);
+
+  // Scene 1 → 2 crossfade
+  tl.to("#scene1", { opacity: 0, duration: 0.4, ease: "power2.inOut" }, 5.6);
+  tl.to("#scene2", { opacity: 1, duration: 0.4, ease: "power2.inOut" }, 5.6);
+  tl.set("#scene1", { visibility: "hidden" }, 6.0);
+
+  // ---------- SCENE 2 (6–14s) ----------
+  tl.from("#s2-head",  { opacity: 0, x: -40, duration: 0.7, ease: "power3.out" }, 6.1);
+  tl.from("#s2-sub",   { opacity: 0, x: -30, duration: 0.6, ease: "power2.out" }, 6.3);
+  tl.from("#s2-right", { opacity: 0, x:  40, duration: 0.8, ease: "expo.out"   }, 6.3);
+
+  tl.to("#scene2", { opacity: 0, duration: 0.4, ease: "power2.inOut" }, 13.6);
+  tl.to("#scene3", { opacity: 1, duration: 0.4, ease: "power2.inOut" }, 13.6);
+  tl.set("#scene2", { visibility: "hidden" }, 14.0);
+
+  // ---------- SCENE 3 (14–26s) ----------
+  tl.from("#s3-eyebrow", { opacity: 0, y: -10, duration: 0.5, ease: "power2.out" }, 14.2);
+  tl.from("#s3-head",    { opacity: 0, y: 24,  duration: 0.7, ease: "power3.out" }, 14.35);
+
+  // 3 stacked cards — fromTo so GSAP owns full transform (rotation + x together)
+  tl.fromTo("#s3-card-1",
+    { opacity: 0, x: 120, rotation: -4 },
+    { opacity: 1, x: 0,   rotation: -4, duration: 0.7, ease: "power3.out" }, 15.1);
+  tl.fromTo("#s3-card-2",
+    { opacity: 0, x: 120, rotation: 0 },
+    { opacity: 1, x: 0,   rotation: 0,  duration: 0.7, ease: "power3.out" }, 15.4);
+  tl.fromTo("#s3-card-3",
+    { opacity: 0, x: 120, rotation: 4 },
+    { opacity: 1, x: 0,   rotation: 4,  duration: 0.7, ease: "power3.out" }, 15.7);
+
+  // Unlock moment at 22s
+  tl.to("#s3-card-1", { opacity: 0.3, duration: 0.5, ease: "power2.inOut" }, 22.0);
+  tl.to("#s3-card-2", { opacity: 0.3, duration: 0.5, ease: "power2.inOut" }, 22.0);
+  tl.to("#s3-card-3", { opacity: 0.3, duration: 0.5, ease: "power2.inOut" }, 22.0);
+
+  tl.fromTo("#s3-reveal",
+    { opacity: 0, scale: 0.9 },
+    { opacity: 1, scale: 1.05, duration: 0.6, ease: "back.out(1.4)" }, 22.05);
+
+  tl.fromTo("#s3-spotlight",
+    { opacity: 0, scale: 0.6 },
+    { opacity: 1, scale: 1.0, duration: 0.45, ease: "power2.out" }, 22.7);
+  tl.to("#s3-spotlight", { scale: 1.12, opacity: 0.75, duration: 1.0, ease: "sine.inOut", yoyo: true, repeat: 1 }, 23.2);
+
+  tl.from("#s3-caption", { opacity: 0, y: 8, duration: 0.5, ease: "power2.out" }, 22.95);
+
+  tl.to("#scene3", { opacity: 0, duration: 0.4, ease: "power2.inOut" }, 25.6);
+  tl.to("#scene4", { opacity: 1, duration: 0.4, ease: "power2.inOut" }, 25.6);
+  tl.set("#scene3", { visibility: "hidden" }, 26.0);
+
+  // ---------- SCENE 4 (26–38s) ----------
+  tl.from("#s4-title",      { opacity: 0, y: 24, duration: 0.6, ease: "power3.out" }, 26.15);
+  tl.from("#s4-sub",        { opacity: 0, y: 16, duration: 0.5, ease: "power2.out" }, 26.35);
+  tl.from("#s4-modal-wrap", { opacity: 0, y: 60, duration: 0.7, ease: "expo.out"   }, 26.5);
+
+  // Breathing scale on the wrap (not the device itself, to avoid transform conflicts)
+  tl.to("#s4-modal-wrap", { scale: 1.012, duration: 2, ease: "sine.inOut", yoyo: true, repeat: 3, transformOrigin: "50% 50%" }, 28.5);
+
+  tl.to("#scene4", { opacity: 0, duration: 0.4, ease: "power2.inOut" }, 37.6);
+  tl.to("#scene5", { opacity: 1, duration: 0.4, ease: "power2.inOut" }, 37.6);
+  tl.set("#scene4", { visibility: "hidden" }, 38.0);
+
+  // ---------- SCENE 5 (38–52s) ----------
+  // Text block fades in at 40s
+  tl.fromTo("#s5-left", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.9, ease: "power2.out" }, 40.0);
+
+  // Device subtly drifts upward over 12s for parallax feel
+  tl.fromTo("#s5-device-wrap", { y: 10 }, { y: -20, duration: 12, ease: "none" }, 38.0);
+
+  tl.to("#scene5", { opacity: 0, duration: 0.4, ease: "power2.inOut" }, 51.6);
+  tl.to("#scene6", { opacity: 1, duration: 0.4, ease: "power2.inOut" }, 51.6);
+  tl.set("#scene5", { visibility: "hidden" }, 52.0);
+
+  // ---------- SCENE 6 (52–60s) ----------
+  tl.from("#s6-wordmark", { opacity: 0, y: 20, duration: 0.7, ease: "power3.out" }, 52.25);
+  tl.from(".mono-mark",   { opacity: 0, scale: 0.6, duration: 0.7, ease: "back.out(1.8)", transformOrigin: "50% 50%" }, 52.45);
+  tl.from("#s6-tag",      { opacity: 0, y: 14, duration: 0.6, ease: "power2.out" }, 52.85);
+  tl.from("#s6-url",      { opacity: 0, y: 10, duration: 0.5, ease: "power2.out" }, 53.15);
+
+  // Fade to black over last 2s
+  tl.to("#black-cover", { opacity: 1, duration: 2.0, ease: "power2.in" }, 58.0);
+
+  window.__timelines["stryde-product-60s"] = tl;
+</script>
+
+</body>
+</html>

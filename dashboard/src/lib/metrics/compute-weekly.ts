@@ -56,7 +56,7 @@ interface PatientLike {
   id: string;
   clinicianId: string;
   sessionCount: number;
-  courseLength: number;
+  treatmentLength: number;
   discharged: boolean;
   insuranceFlag?: boolean;
 }
@@ -137,14 +137,14 @@ export function aggregateWeek(
   const relevantPatients = patients.filter((p) =>
     clinicianId === "all" ? true : p.clinicianId === clinicianId
   );
-  const completedCourses = relevantPatients.filter(
-    (p) => p.discharged && p.sessionCount >= p.courseLength
+  const completedTreatments = relevantPatients.filter(
+    (p) => p.discharged && p.sessionCount >= p.treatmentLength
   ).length;
-  const totalWithCourse = relevantPatients.filter(
+  const totalWithTreatment = relevantPatients.filter(
     (p) => p.discharged
   ).length;
-  const courseCompletionRate =
-    totalWithCourse > 0 ? completedCourses / totalWithCourse : 0;
+  const treatmentCompletionRate =
+    totalWithTreatment > 0 ? completedTreatments / totalWithTreatment : 0;
 
   // DNA breakdown by day of week and time slot
   const dnaByDayOfWeek: Record<string, number> = {};
@@ -222,7 +222,7 @@ export function aggregateWeek(
     hepTarget: targets.hepRate,
     utilisationRate,
     dnaRate,
-    courseCompletionRate,
+    treatmentCompletionRate,
     revenuePerSessionPence,
     revenueByAppointmentType,
     insuranceRevenuePence,
@@ -278,7 +278,7 @@ export async function computeWeeklyMetricsForClinic(
       id: d.id,
       clinicianId: data.clinicianId ?? "",
       sessionCount: data.sessionCount ?? 0,
-      courseLength: data.courseLength ?? 6,
+      treatmentLength: data.treatmentLength ?? data.courseLength ?? 6,
       discharged: data.discharged ?? false,
       insuranceFlag: data.insuranceFlag ?? false,
     };

@@ -95,7 +95,7 @@ function parseClinicProfile(id: string, raw: Record<string, unknown>): ClinicPro
       hepRate: (targetsRaw?.hepRate as number) ?? (targetsRaw?.physitrackRate as number) ?? 95,
       utilisationRate: (targetsRaw?.utilisationRate as number) ?? 75,
       dnaRate: (targetsRaw?.dnaRate as number) ?? 6,
-      courseCompletionTarget: (targetsRaw?.courseCompletionTarget as number) ?? 80,
+      treatmentCompletionTarget: (targetsRaw?.treatmentCompletionTarget as number) ?? 80,
     },
     brandConfig: (raw.brandConfig as Record<string, unknown>) ?? {},
     onboarding: {
@@ -140,7 +140,7 @@ const DEMO_USER: AuthUser = {
       hepRate: 95,
       utilisationRate: 75,
       dnaRate: 6,
-      courseCompletionTarget: 80,
+      treatmentCompletionTarget: 80,
     },
     brandConfig: {},
     onboarding: {

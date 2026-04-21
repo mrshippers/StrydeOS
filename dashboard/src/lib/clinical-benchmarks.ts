@@ -32,9 +32,9 @@ export const BENCHMARKS: Record<string, MetricBenchmark> = {
     key: "followUpRate",
     label: "Follow-Up Rate",
     definition:
-      "Mean number of follow-up appointments booked per initial assessment. Measures patient retention through a treatment course.",
+      "Mean number of follow-up appointments booked per initial assessment. Measures patient retention through a treatment.",
     ownerExplainer:
-      "How many follow-up sessions each new patient books on average. Higher = patients are staying for the full treatment course.",
+      "How many follow-up sessions each new patient books on average. Higher = patients are staying for their full treatment.",
     ukBenchmarkRange: "4.0–5.5 (UK median 5.0 sessions per episode; top quartile 6+)",
     thresholds: {
       green: "≥ 4.0",
@@ -42,7 +42,7 @@ export const BENCHMARKS: Record<string, MetricBenchmark> = {
       red: "< 3.0",
     },
     clinicalSignificance:
-      "Low FU rate indicates patients dropping off before reaching recovery milestones. HCPC Standard 6 requires practitioners to practise safely and effectively, which includes adequate treatment completion. Incomplete courses raise risk of re-injury, chronic pain development, and poor long-term outcomes.",
+      "Low FU rate indicates patients dropping off before reaching recovery milestones. HCPC Standard 6 requires practitioners to practise safely and effectively, which includes adequate treatment completion. Incomplete treatments raise risk of re-injury, chronic pain development, and poor long-term outcomes.",
     financialSignificance:
       "Each missed FU = £65 lost. At target 4.0 FU/IA, revenue per patient journey = £65 (IA) + 4.0 × £65 = £325. A clinician at 3.0 yields £260 — a gap of £65/patient. With ~8 IAs/week, that's ~£520/week or ~£27,040/year unrealised revenue.",
     sources: ["UK Private Practice Barometer 2026", "HCPC Standard 6", "CSP MSK Pathway Guidance"],
@@ -88,8 +88,8 @@ export const BENCHMARKS: Record<string, MetricBenchmark> = {
     sources: ["HCPC Standards of Conduct", "Healthcare NPS benchmarking studies"],
   },
 
-  courseCompletion: {
-    key: "courseCompletion",
+  treatmentCompletion: {
+    key: "treatmentCompletion",
     label: "HEP Compliance",
     definition:
       "Percentage of patients who are assigned a home exercise programme (HEP) relative to patients seen. Measures whether clinicians are consistently prescribing structured self-management via their connected HEP provider.",
@@ -169,7 +169,7 @@ export function getNpsBenchmarkStatus(score: number): MetricStatus {
   return "danger";
 }
 
-export function getCourseCompletionBenchmarkStatus(rate: number): MetricStatus {
+export function getTreatmentCompletionBenchmarkStatus(rate: number): MetricStatus {
   if (rate >= 0.80) return "ok";
   if (rate >= 0.65) return "warn";
   return "danger";

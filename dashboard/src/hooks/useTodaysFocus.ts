@@ -132,7 +132,7 @@ export function useTodaysFocus(): {
       result.push({
         type: "dna_follow_up",
         title: `${dnaNoRebook.length} patient${dnaNoRebook.length === 1 ? "" : "s"} may need a follow-up after missed session`,
-        description: "Reaching out after a missed appointment can recover the treatment course",
+        description: "Reaching out after a missed appointment can recover the treatment",
         patientIds: dnaNoRebook.map((p) => p.id),
         actionHref: "/continuity",
         actionLabel: "Review",

@@ -51,7 +51,7 @@ function getUtilisationRAG(rate: number): MetricStatus {
   return "danger";
 }
 
-function getCourseCompletionRAG(rate: number): MetricStatus {
+function getTreatmentCompletionRAG(rate: number): MetricStatus {
   if (rate > 0.75) return "ok";
   if (rate >= 0.60) return "warn";
   return "danger";
@@ -176,7 +176,7 @@ function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
         cmp = a.stats.followUpRate - b.stats.followUpRate;
         break;
       case "completion":
-        cmp = a.stats.courseCompletionRate - b.stats.courseCompletionRate;
+        cmp = a.stats.treatmentCompletionRate - b.stats.treatmentCompletionRate;
         break;
       case "utilisation":
         cmp = a.stats.utilisationRate - b.stats.utilisationRate;
@@ -235,7 +235,7 @@ function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
               const fuStatus = getFollowUpRAG(row.stats.followUpRate);
               const dnaStatus = getDnaRAG(row.stats.dnaRate);
               const utilStatus = getUtilisationRAG(row.stats.utilisationRate);
-              const ccStatus = getCourseCompletionRAG(row.stats.courseCompletionRate);
+              const ccStatus = getTreatmentCompletionRAG(row.stats.treatmentCompletionRate);
               const worstStatus = [fuStatus, dnaStatus, utilStatus, ccStatus].includes("danger")
                 ? "danger"
                 : [fuStatus, dnaStatus, utilStatus, ccStatus].includes("warn")
@@ -275,7 +275,7 @@ function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
                     <RagBadge value={formatRate(row.stats.followUpRate)} status={fuStatus} />
                   </td>
                   <td className="px-5 py-2">
-                    <RagBadge value={formatPercent(row.stats.courseCompletionRate)} status={ccStatus} />
+                    <RagBadge value={formatPercent(row.stats.treatmentCompletionRate)} status={ccStatus} />
                   </td>
                   <td className="px-5 py-2">
                     <RagBadge value={formatPercent(row.stats.utilisationRate)} status={utilStatus} />

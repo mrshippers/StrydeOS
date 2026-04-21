@@ -321,7 +321,7 @@ interface PatientDoc {
   lastSessionDate: string;
   nextSessionDate?: string;
   sessionCount: number;
-  courseLength: number;
+  treatmentLength: number;
   discharged: boolean;
   churnRisk: boolean;
   createdAt: string;
@@ -384,7 +384,7 @@ function extractPatients(appointments: AppointmentDoc[]): PatientDoc[] {
       pmsExternalId: wuid,
       lastSessionDate: toISODate(lastDate),
       sessionCount,
-      courseLength: 6,
+      treatmentLength: 6,
       discharged,
       churnRisk,
       createdAt: appts[0].createdAt,
@@ -408,7 +408,7 @@ interface MetricDoc {
   hepTarget: number;
   utilisationRate: number;
   dnaRate: number;
-  courseCompletionRate: number;
+  treatmentCompletionRate: number;
   revenuePerSessionPence: number;
   appointmentsTotal: number;
   initialAssessments: number;
@@ -496,8 +496,8 @@ function computeMetrics(appointments: AppointmentDoc[]): MetricDoc[] {
       const hepRate = Math.min(1, hepRate + 0.05);
 
       // HEP compliance: simulate improvement over time
-      const baseCourseCompletion = cid === "c-joe" ? 1.0 : 0.65;
-      const courseCompletionRate = Math.min(1, baseCourseCompletion + wi * 0.015);
+      const baseTreatmentCompletion = cid === "c-joe" ? 1.0 : 0.65;
+      const treatmentCompletionRate = Math.min(1, baseTreatmentCompletion + wi * 0.015);
 
       const isLowVolume = completed.length < 3;
 
@@ -512,7 +512,7 @@ function computeMetrics(appointments: AppointmentDoc[]): MetricDoc[] {
         hepTarget: 0.95,
         utilisationRate,
         dnaRate,
-        courseCompletionRate: Math.round(courseCompletionRate * 100) / 100,
+        treatmentCompletionRate: Math.round(treatmentCompletionRate * 100) / 100,
         revenuePerSessionPence: revenuePerSession,
         appointmentsTotal: completed.length,
         initialAssessments,
@@ -550,7 +550,7 @@ function computeAllMetric(weekMetrics: MetricDoc[], weekStart: string, now: stri
     sumPT += m.hepRate;
     sumUtil += m.utilisationRate;
     sumDNA += m.dnaRate;
-    sumCC += m.courseCompletionRate;
+    sumCC += m.treatmentCompletionRate;
     sumRevenue += m.revenuePerSessionPence;
     sumHEP += m.hepComplianceRate;
     count++;
@@ -567,7 +567,7 @@ function computeAllMetric(weekMetrics: MetricDoc[], weekStart: string, now: stri
     hepTarget: 0.95,
     utilisationRate: count > 0 ? Math.round((sumUtil / count) * 100) / 100 : 0,
     dnaRate: count > 0 ? Math.round((sumDNA / count) * 100) / 100 : 0,
-    courseCompletionRate: count > 0 ? Math.round((sumCC / count) * 100) / 100 : 0,
+    treatmentCompletionRate: count > 0 ? Math.round((sumCC / count) * 100) / 100 : 0,
     revenuePerSessionPence: count > 0 ? Math.round(sumRevenue / count) : 0,
     appointmentsTotal: totalAppts,
     initialAssessments: totalIAs,
@@ -719,7 +719,7 @@ async function main() {
         hepRate: 95,
         utilisationRate: 85,
         dnaRate: 5,
-        courseCompletionTarget: 80,
+        treatmentCompletionTarget: 80,
       },
       brandConfig: {},
       onboarding: { pmsConnected: false, cliniciansConfirmed: false, targetsSet: false },

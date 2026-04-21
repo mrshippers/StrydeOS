@@ -188,17 +188,17 @@ export async function detectInsightEvents(
       }
     }
 
-    // 4. COURSE_COMPLETION_WIN (positive)
-    const curCompletion = Number(current.courseCompletionRate ?? 0);
-    if (curCompletion >= config.courseCompletionCelebrate) {
+    // 4. TREATMENT_COMPLETION_WIN (positive)
+    const curCompletion = Number(current.treatmentCompletionRate ?? current.courseCompletionRate ?? 0);
+    if (curCompletion >= config.treatmentCompletionCelebrate) {
       newEvents.push({
-        type: "COURSE_COMPLETION_WIN",
+        type: "TREATMENT_COMPLETION_WIN",
         clinicId,
         clinicianId: clinician.id,
         clinicianName: clinician.name,
         severity: "positive",
-        title: `${clinician.name} hit ${Math.round(curCompletion * 100)}% course completion this week`,
-        description: `Course completion above ${Math.round(config.courseCompletionCelebrate * 100)}% means patients are completing their treatment plans. Great clinical outcomes and revenue retention.`,
+        title: `${clinician.name} hit ${Math.round(curCompletion * 100)}% treatment completion this week`,
+        description: `Treatment completion above ${Math.round(config.treatmentCompletionCelebrate * 100)}% means patients are completing their treatment plans. Great clinical outcomes and revenue retention.`,
         suggestedAction: `Acknowledge ${clinician.name}'s performance. Consider what's working well in their approach that could be shared across the team.`,
         actionTarget: "owner",
         createdAt: new Date().toISOString(),
@@ -318,14 +318,14 @@ export async function detectInsightEvents(
       patientName: (patient.name as string) ?? undefined,
       severity: daysSince > 14 ? "critical" : "warning",
       title: `${patient.name} hasn't rebooked in ${daysSince} days (${clinicianName}'s patient)`,
-      description: `Mid-programme patient with ${sessionCount} of ${patient.courseLength ?? config.maxProgrammeLength} sessions completed. No future appointment booked.`,
+      description: `Mid-programme patient with ${sessionCount} of ${patient.treatmentLength ?? patient.courseLength ?? config.maxProgrammeLength} sessions completed. No future appointment booked.`,
       suggestedAction: `Send a rebooking nudge via Pulse or contact the patient directly.`,
       actionTarget: "patient",
       createdAt: new Date().toISOString(),
       metadata: {
         daysSinceLastSession: daysSince,
         sessionCount,
-        courseLength: patient.courseLength ?? config.maxProgrammeLength,
+        treatmentLength: patient.treatmentLength ?? patient.courseLength ?? config.maxProgrammeLength,
       },
     });
   }

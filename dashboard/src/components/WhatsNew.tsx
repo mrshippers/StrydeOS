@@ -295,12 +295,12 @@ export default function WhatsNew() {
                           icon: Activity,
                           color: "#0891B2",
                           label: "Know who\u2019s about to drop off",
-                          detail: "Pulse flags patients who haven\u2019t rebooked and are mid-course \u2014 based on attendance, progress, and how engaged they are with their exercises",
+                          detail: "Pulse flags patients who haven\u2019t rebooked and are mid-treatment \u2014 based on attendance, progress, and how engaged they are with their exercises",
                         },
                         {
                           icon: Users,
                           color: "#0891B2",
-                          label: "See where every patient is in their course",
+                          label: "See where every patient is in their treatment",
                           detail: "From first appointment to discharge \u2014 nothing falls through the cracks",
                         },
                         {

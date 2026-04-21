@@ -70,8 +70,8 @@ export function buildStateOfClinicEmail(data: DigestData): string {
   const prevDna = previousStats?.dnaRate as number | undefined;
   const curUtil = currentStats?.utilisationRate as number | undefined;
   const prevUtil = previousStats?.utilisationRate as number | undefined;
-  const curCompletion = currentStats?.courseCompletionRate as number | undefined;
-  const prevCompletion = previousStats?.courseCompletionRate as number | undefined;
+  const curCompletion = (currentStats?.treatmentCompletionRate ?? currentStats?.courseCompletionRate) as number | undefined;
+  const prevCompletion = (previousStats?.treatmentCompletionRate ?? previousStats?.courseCompletionRate) as number | undefined;
 
   const body = `
     <!-- Headline -->
@@ -123,7 +123,7 @@ export function buildStateOfClinicEmail(data: DigestData): string {
     moduleLabel: "Intelligence",
     unsubscribeType: "digest",
     footerNote: "Powered by StrydeOS Intelligence",
-    signature: "founder",
+    signature: false,
   });
 }
 
@@ -156,12 +156,12 @@ export function buildStateOfClinicText(data: DigestData): string {
   const curFollowUp = currentStats?.followUpRate as number | undefined;
   const curDna = currentStats?.dnaRate as number | undefined;
   const curUtil = currentStats?.utilisationRate as number | undefined;
-  const curCompletion = currentStats?.courseCompletionRate as number | undefined;
+  const curCompletion = (currentStats?.treatmentCompletionRate ?? currentStats?.courseCompletionRate) as number | undefined;
 
   lines.push(`Follow-up Rate: ${fmtRate(curFollowUp)}`);
   lines.push(`DNA Rate: ${fmtPct(curDna)}`);
   lines.push(`Utilisation: ${fmtPct(curUtil)}`);
-  lines.push(`Course Completion: ${fmtPct(curCompletion)}`);
+  lines.push(`Treatment Completion: ${fmtPct(curCompletion)}`);
   lines.push("");
   lines.push(`View dashboard: ${APP_URL}/dashboard`);
   lines.push("");

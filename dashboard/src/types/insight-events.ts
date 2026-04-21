@@ -11,7 +11,7 @@ export type InsightEventType =
   | "HEP_COMPLIANCE_LOW"        // Clinic-wide HEP compliance below 50%
   | "UTILISATION_BELOW_TARGET"  // Clinician utilisation <75% for 2+ consecutive weeks
   | "REVENUE_LEAK_DETECTED"     // Calculated £ lost from mid-programme dropouts
-  | "COURSE_COMPLETION_WIN"     // Positive: clinician hit >90% completion
+  | "TREATMENT_COMPLETION_WIN"     // Positive: clinician hit >90% completion
 
   // Patient-actionable (Intelligence detects, Pulse acts)
   | "PATIENT_DROPOUT_RISK"      // Mid-programme patient, no rebooking >X days
@@ -34,7 +34,7 @@ export const OWNER_EVENTS: InsightEventType[] = [
   "HEP_COMPLIANCE_LOW",
   "UTILISATION_BELOW_TARGET",
   "REVENUE_LEAK_DETECTED",
-  "COURSE_COMPLETION_WIN",
+  "TREATMENT_COMPLETION_WIN",
   "DATA_STALENESS_ALERT",
 ];
 
@@ -100,7 +100,7 @@ export interface InsightConfig {
   dnaStreakThreshold: number;         // default: 3
   hepComplianceFloor: number;        // default: 0.50
   utilisationFloor: number;          // default: 0.75
-  courseCompletionCelebrate: number;  // default: 0.90
+  treatmentCompletionCelebrate: number;  // default: 0.90
   revenuePerSession: number;         // default: 65 (£) — clinic configurable
   maxProgrammeLength: number;        // default: 6 (cap for revenue calc)
   enabled: boolean;                  // default: true
@@ -127,7 +127,7 @@ export const DEFAULT_INSIGHT_CONFIG: InsightConfig = {
   dnaStreakThreshold: 3,
   hepComplianceFloor: 0.50,
   utilisationFloor: 0.75,
-  courseCompletionCelebrate: 0.90,
+  treatmentCompletionCelebrate: 0.90,
   revenuePerSession: 65,
   maxProgrammeLength: 6,
   enabled: true,

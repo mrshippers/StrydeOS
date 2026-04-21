@@ -173,7 +173,7 @@ async function main() {
         hepRate: 95,
         utilisationRate: 85,
         dnaRate: 5,
-        courseCompletionTarget: 80,
+        treatmentCompletionTarget: 80,
       },
       brandConfig: {},
       onboarding: { pmsConnected: false, cliniciansConfirmed: false, targetsSet: false },

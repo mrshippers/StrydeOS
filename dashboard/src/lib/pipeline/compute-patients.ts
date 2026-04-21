@@ -1,6 +1,6 @@
 import type { Firestore, WriteBatch } from "firebase-admin/firestore";
 import type { StageResult } from "./types";
-import { INTEGRATIONS_CONFIG, PIPELINE_DOC_ID, DEFAULT_COURSE_LENGTH } from "./types";
+import { INTEGRATIONS_CONFIG, PIPELINE_DOC_ID, DEFAULT_TREATMENT_LENGTH } from "./types";
 import { computeRiskScore } from "./compute-risk-score";
 import type { LifecycleState } from "@/types";
 
@@ -16,7 +16,7 @@ const DISCHARGE_INACTIVE_DAYS = 30;
  * - nextSessionDate: earliest future scheduled appointment dateTime
  * - discharged: no sessions in 30 days AND no future appointment
  * - churnRisk: last session > 14 days ago AND no future appointment AND not discharged
- * - courseLength: from pipeline config default (typically 6)
+ * - treatmentLength: from pipeline config default (typically 6)
  */
 export async function computePatientFields(
   db: Firestore,
@@ -27,16 +27,17 @@ export async function computePatientFields(
   let count = 0;
 
   try {
-    // Load course length from pipeline config
+    // Load treatment length from pipeline config
     const pipelineSnap = await db
       .collection("clinics")
       .doc(clinicId)
       .collection(INTEGRATIONS_CONFIG)
       .doc(PIPELINE_DOC_ID)
       .get();
-    const courseLength =
+    const treatmentLength =
+      (pipelineSnap.data()?.defaultTreatmentLength as number) ??
       (pipelineSnap.data()?.defaultCourseLength as number) ??
-      DEFAULT_COURSE_LENGTH;
+      DEFAULT_TREATMENT_LENGTH;
 
     const patientsRef = db
       .collection("clinics")
@@ -138,7 +139,7 @@ export async function computePatientFields(
 
       const riskResult = computeRiskScore({
         sessionCount,
-        courseLength,
+        courseLength: treatmentLength,
         lastSessionDate,
         nextSessionDate,
         discharged,
@@ -163,7 +164,7 @@ export async function computePatientFields(
         nextSessionDate: nextSessionDate ?? null,
         discharged,
         churnRisk,
-        courseLength,
+        treatmentLength,       // was courseLength — renamed 2026-04
         // New retention fields (additive)
         lifecycleState: riskResult.lifecycleState,
         riskScore: riskResult.riskScore,

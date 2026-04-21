@@ -157,7 +157,7 @@ function computeDeepMetrics(
   // ── Discharge Quality ──
   const discharged = patients.filter((p) => p.discharged);
   const properDischarges = discharged.filter(
-    (p) => p.sessionCount >= p.courseLength && p.courseLength > 0
+    (p) => p.sessionCount >= p.treatmentLength && p.treatmentLength > 0
   ).length;
   const ghostDischarges = ghostPatients; // Ghost patients are effectively unmanaged discharges
   const dischargeQualityRate =
@@ -435,7 +435,7 @@ type PatientLike = Pick<
   | "id"
   | "clinicianId"
   | "sessionCount"
-  | "courseLength"
+  | "treatmentLength"
   | "discharged"
   | "lastSessionDate"
   | "nextSessionDate"

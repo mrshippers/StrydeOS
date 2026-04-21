@@ -48,7 +48,17 @@ export function usePatients(clinicianId?: string) {
       clinicId,
       effectiveClinicianId,
       (data) => {
-        setPatients(data);
+        // Backward-compat: Firestore docs written before the courseLength→treatmentLength
+        // rename may still have courseLength. Normalise on read so all consumers see
+        // treatmentLength regardless of which field exists in the document.
+        const normalised = data.map((p) => {
+          const raw = p as Patient & { courseLength?: number };
+          return {
+            ...raw,
+            treatmentLength: (raw.treatmentLength ?? raw.courseLength ?? 6) as number,
+          };
+        });
+        setPatients(normalised);
         setLoading(false);
       },
       (err) => {
@@ -68,7 +78,7 @@ export function usePatients(clinicianId?: string) {
         (p) =>
           !p.discharged &&
           !p.churnRisk &&
-          p.sessionCount < p.courseLength &&
+          p.sessionCount < p.treatmentLength &&
           p.nextSessionDate
       ),
     [patients]

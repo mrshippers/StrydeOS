@@ -20,7 +20,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     category: "metrics",
     question: "What is Follow-up Rate?",
     answer:
-      "Follow-up rate measures how many patients who come in for an initial assessment go on to book a follow-up appointment. A low rate is typically the single biggest revenue leak in a private practice — it means patients are discharging themselves after one session rather than completing a course of treatment.",
+      "Follow-up rate measures how many patients who come in for an initial assessment go on to book a follow-up appointment. A low rate is typically the single biggest revenue leak in a private practice — it means patients are discharging themselves after one session rather than completing treatment.",
     formula: "Follow-ups booked ÷ Initial assessments (weekly or rolling 90-day window)",
     clinicNote:
       "Relevant to all practice types. The UK median is 5.0 sessions per episode of care. A follow-up rate below 3.0 is in the bottom quartile nationally.",
@@ -42,14 +42,14 @@ export const HELP_ENTRIES: HelpEntry[] = [
     category: "metrics",
     question: "What is Programme Assignment Rate?",
     answer:
-      "This measures how often a clinician assigns a home exercise programme at the patient's first contact — i.e. the initial assessment itself. Assigning at first contact sets expectations early and improves adherence throughout the course. It's a leading indicator: if it's low, HEP compliance and follow-up rate tend to follow.",
+      "This measures how often a clinician assigns a home exercise programme at the patient's first contact — i.e. the initial assessment itself. Assigning at first contact sets expectations early and improves adherence throughout treatment. It's a leading indicator: if it's low, HEP compliance and follow-up rate tend to follow.",
     formula: "Patients assigned a programme at first contact ÷ Total initial assessments (expressed as %)",
     clinicNote:
       "Only meaningful if your practice actively uses HEP software. If programmes are routinely given verbally or on paper without software tracking, this metric will under-report.",
     tags: ["programme", "assignment", "first contact", "hep", "initial"],
   },
   {
-    id: "course-completion-rate",
+    id: "treatment-completion-rate",
     category: "metrics",
     question: "What is HEP Compliance?",
     answer:
@@ -224,7 +224,7 @@ export const HELP_ENTRIES: HelpEntry[] = [
     category: "setup",
     question: "How do I configure my KPI targets?",
     answer:
-      "Go to Settings → KPI Targets. StrydeOS ships with evidence-based defaults aligned to UK private practice benchmarks:\n\n• Follow-up Rate: 4.0+ FU per IA (UK median: 5.0 sessions per episode)\n• HEP Compliance: 80%+\n• Utilisation: 75%+ (UK average: 72%)\n• DNA Rate: <6% (UK average with automation: 6.3%)\n• Course Completion: 70%+\n\nAdjust these to match your clinic's current baseline and growth ambitions. Targets drive the performance indicators on the Intelligence dashboard — red/amber/green thresholds are calculated relative to what you set here.\n\nRecommendation: Start with the defaults for your first 4 weeks. Once you have a baseline reading of your actual performance, adjust targets to be challenging but achievable.",
+      "Go to Settings → KPI Targets. StrydeOS ships with evidence-based defaults aligned to UK private practice benchmarks:\n\n• Follow-up Rate: 4.0+ FU per IA (UK median: 5.0 sessions per episode)\n• HEP Compliance: 80%+\n• Utilisation: 75%+ (UK average: 72%)\n• DNA Rate: <6% (UK average with automation: 6.3%)\n• Treatment Completion: 70%+\n\nAdjust these to match your clinic's current baseline and growth ambitions. Targets drive the performance indicators on the Intelligence dashboard — red/amber/green thresholds are calculated relative to what you set here.\n\nRecommendation: Start with the defaults for your first 4 weeks. Once you have a baseline reading of your actual performance, adjust targets to be challenging but achievable.",
     clinicNote:
       "If you're onboarding from a position of strong existing performance, set targets higher from the start. The defaults are designed for clinics that are establishing a measurement baseline for the first time.",
     tags: ["targets", "kpi", "settings", "thresholds", "follow-up", "hep", "utilisation"],

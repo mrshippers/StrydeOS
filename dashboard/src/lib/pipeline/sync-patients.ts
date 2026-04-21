@@ -163,7 +163,7 @@ export async function syncPatients(
             preAuthStatus: insuranceFlag ? "pending" : "not_required",
             pmsExternalId: extId,
             sessionCount: 0,
-            courseLength: 6,
+            treatmentLength: 6,
             discharged: false,
             churnRisk: false,
             createdAt: now,

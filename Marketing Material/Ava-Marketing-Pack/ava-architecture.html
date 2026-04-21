@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1400" />
+<title>Ava — Voice Architecture | StrydeOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --navy: #0B2545;
+    --navy-deep: #081b36;
+    --blue: #1C54F2;
+    --blue-bright: #2E6BFF;
+    --blue-glow: #4B8BF5;
+    --teal: #0891B2;
+    --purple: #8B5CF6;
+    --cream: #F5F1E8;
+    --muted: rgba(245, 241, 232, 0.6);
+    --faint: rgba(245, 241, 232, 0.35);
+    --hairline: rgba(76, 139, 245, 0.18);
+    --hairline-strong: rgba(76, 139, 245, 0.32);
+    --card-top: rgba(76, 139, 245, 0.08);
+    --card-bottom: rgba(11, 37, 69, 0.0);
+    --grid: rgba(255, 255, 255, 0.03);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--navy);
+    color: var(--cream);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ---------- Background layers ---------- */
+  .bg-layers {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 85%);
+  }
+  .bg-radial {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(1200px 800px at 20% 10%, rgba(28, 84, 242, 0.08), transparent 60%),
+      radial-gradient(900px 700px at 85% 85%, rgba(75, 139, 245, 0.06), transparent 60%);
+  }
+  .bg-noise {
+    position: absolute;
+    inset: 0;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+  }
+
+  /* ---------- Layout ---------- */
+  .shell {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 48px 64px;
+  }
+
+  /* ---------- Header ---------- */
+  header.top {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 24px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--hairline);
+    margin-bottom: 32px;
+  }
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .chev-mark {
+    display: inline-flex;
+    gap: 2px;
+    color: var(--blue-glow);
+  }
+  .chev-mark svg { display: block; }
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 52px;
+    line-height: 1.02;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    color: var(--cream);
+  }
+  h1 .accent {
+    color: var(--blue-glow);
+    font-style: italic;
+  }
+  .subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 620px;
+    line-height: 1.5;
+  }
+  .version-card {
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 14px 18px;
+    min-width: 220px;
+    background: linear-gradient(180deg, var(--card-top), var(--card-bottom));
+  }
+  .version-card .k { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .version-card .v { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--cream); margin-top: 4px; }
+  .version-row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .version-row + .version-row { border-top: 1px dashed var(--hairline); margin-top: 4px; padding-top: 8px; }
+
+  /* ---------- Section headings ---------- */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 40px 0 20px;
+  }
+  .section-head .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--blue-glow);
+    letter-spacing: 0.18em;
+  }
+  .section-head h2 {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 24px;
+    margin: 0;
+    color: var(--cream);
+  }
+  .section-head .rule {
+    flex: 1;
+    height: 1px;
+    background: var(--hairline);
+  }
+  .section-head .hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Flow canvas ---------- */
+  .flow {
+    position: relative;
+    width: 100%;
+  }
+  .flow-canvas {
+    display: grid;
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  /* Inbound: 4 columns */
+  .flow-inbound {
+    grid-template-columns: 1fr 1fr 1.25fr 1fr;
+  }
+
+  /* Tool call: cascading steps */
+  .flow-tool {
+    grid-template-columns: repeat(5, 1fr);
+    margin-top: 8px;
+  }
+
+  /* Data stores */
+  .flow-stores {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Provisioning: 6 steps */
+  .flow-provision {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+  }
+
+  /* ---------- Cards ---------- */
+  .card {
+    position: relative;
+    border: 1px solid var(--hairline);
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    background:
+      linear-gradient(180deg, var(--card-top) 0%, transparent 60%),
+      var(--navy-deep);
+    min-height: 168px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(75,139,245,0.4), transparent);
+    opacity: 0.6;
+  }
+  .card.primary {
+    border-color: rgba(28, 84, 242, 0.5);
+    box-shadow: 0 0 0 1px rgba(28, 84, 242, 0.12) inset, 0 0 60px -20px rgba(28, 84, 242, 0.4);
+  }
+  .card.primary::before {
+    background: linear-gradient(90deg, transparent, var(--blue-bright), transparent);
+    opacity: 1;
+  }
+  .card.compact {
+    min-height: 120px;
+    padding: 14px 16px;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--hairline-strong);
+    background: rgba(28, 84, 242, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .card-icon svg { display: block; }
+  .card-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 19px;
+    line-height: 1.15;
+    color: var(--cream);
+    margin: 0;
+  }
+  .card-title .sub {
+    display: block;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-weight: 300;
+  }
+  .card-body {
+    font-size: 13px;
+    color: rgba(245, 241, 232, 0.78);
+    line-height: 1.5;
+  }
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--blue-glow);
+    word-break: break-all;
+  }
+  .mono.dim { color: var(--muted); }
+  .mono.bright { color: var(--cream); }
+
+  .kv {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  .kv .k { color: var(--muted); text-transform: lowercase; }
+  .kv .v { color: var(--cream); }
+  .kv .v.blue { color: var(--blue-glow); }
+
+  .card-footer {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px dashed var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--hairline);
+    color: var(--muted);
+  }
+  .tag.blue {
+    color: var(--blue-glow);
+    border-color: rgba(75, 139, 245, 0.4);
+    background: rgba(28, 84, 242, 0.08);
+  }
+  .tag.teal {
+    color: var(--teal);
+    border-color: rgba(8, 145, 178, 0.4);
+    background: rgba(8, 145, 178, 0.06);
+  }
+  .tag.purple {
+    color: var(--purple);
+    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.06);
+  }
+
+  .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--blue-glow);
+    letter-spacing: 0.14em;
+  }
+
+  /* ---------- Tool chip group (attached to ElevenLabs card) ---------- */
+  .tools-group {
+    border: 1px dashed var(--hairline-strong);
+    border-radius: 12px;
+    padding: 10px;
+    background: rgba(28, 84, 242, 0.04);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .tool-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--cream);
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(11, 37, 69, 0.6);
+    border: 1px solid var(--hairline);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tool-chip .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--blue-bright);
+    box-shadow: 0 0 8px var(--blue-bright);
+    flex-shrink: 0;
+  }
+  .tool-chip.alt .dot { background: var(--purple); box-shadow: 0 0 8px var(--purple); }
+  .tools-label {
+    grid-column: span 2;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 2px 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tools-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--hairline);
+  }
+
+  /* ---------- Flow connector SVG overlay ---------- */
+  .connector-row {
+    position: relative;
+  }
+  .connector-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .flow-line {
+    fill: none;
+    stroke: var(--blue-glow);
+    stroke-width: 1.2;
+    opacity: 0.75;
+  }
+  .flow-line.solid { stroke-dasharray: 0; }
+  .flow-line.dashed {
+    stroke-dasharray: 6 5;
+    animation: dashflow 2.8s linear infinite;
+  }
+  .flow-line.dashed.reverse {
+    animation: dashflow-rev 3.2s linear infinite;
+  }
+  @keyframes dashflow {
+    to { stroke-dashoffset: -110; }
+  }
+  @keyframes dashflow-rev {
+    to { stroke-dashoffset: 110; }
+  }
+
+  /* Inline connector arrows between cards */
+  .arrow-row {
+    display: grid;
+    align-items: center;
+    gap: 0;
+    margin: -6px 0;
+    padding: 0 0;
+    position: relative;
+    height: 36px;
+  }
+  .arrow-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .arrow-row.cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .arrow-row.cols-6 { grid-template-columns: repeat(6, 1fr); }
+  .arrow-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+
+  .arrow-cell {
+    position: relative;
+    height: 100%;
+  }
+  .arrow-cell .label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--navy);
+    padding: 2px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--hairline);
+    border-radius: 50px;
+    white-space: nowrap;
+    z-index: 3;
+  }
+
+  /* ---------- Data stores row ---------- */
+  .store-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    margin-top: 4px;
+  }
+  .store-list .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 50px;
+    background: rgba(11, 37, 69, 0.5);
+    border: 1px solid var(--hairline);
+    color: var(--cream);
+  }
+
+  /* ---------- Legend ---------- */
+  .legend {
+    margin-top: 48px;
+    padding: 18px 22px;
+    border: 1px solid var(--hairline);
+    border-radius: 16px;
+    background:
+      linear-gradient(180deg, var(--card-top) 0%, transparent 70%),
+      var(--navy-deep);
+    display: grid;
+    grid-template-columns: auto repeat(4, 1fr);
+    gap: 20px 28px;
+    align-items: center;
+  }
+  .legend-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12.5px;
+    color: rgba(245, 241, 232, 0.8);
+  }
+  .legend-item .swatch {
+    width: 44px;
+    height: 2px;
+    background: var(--blue-glow);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .legend-item .swatch.dashed {
+    background: none;
+    border-top: 2px dashed var(--blue-glow);
+    height: 0;
+    align-self: center;
+  }
+  .legend-item .swatch.chev {
+    width: auto;
+    height: auto;
+    background: none;
+    color: var(--blue-glow);
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+  .legend-item .swatch.mono {
+    width: auto;
+    height: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--blue-glow);
+    background: rgba(28, 84, 242, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--hairline);
+  }
+
+  /* ---------- Footer ---------- */
+  footer.bot {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  footer.bot .chev {
+    color: var(--blue-glow);
+  }
+
+  /* ---------- Small utilities ---------- */
+  .flex { display: flex; }
+  .col { flex-direction: column; }
+  .gap-4 { gap: 4px; }
+  .gap-6 { gap: 6px; }
+  .gap-8 { gap: 8px; }
+  .gap-10 { gap: 10px; }
+  .between { justify-content: space-between; }
+  .center { align-items: center; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1280px) {
+    .shell { padding: 32px 28px; }
+    .flow-inbound,
+    .flow-tool,
+    .flow-stores,
+    .flow-provision { grid-template-columns: 1fr 1fr; }
+    .arrow-row { display: none; }
+    .legend { grid-template-columns: 1fr 1fr; }
+    h1 { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Background grain (SVG fractal noise) -->
+<div class="bg-layers" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="bg-radial"></div>
+  <svg class="bg-noise" xmlns="http://www.w3.org/2000/svg">
+    <filter id="n">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 0.96  0 0 0 0 0.95  0 0 0 0 0.91  0 0 0 0.5 0"/>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#n)"/>
+  </svg>
+</div>
+
+<div class="shell">
+
+  <!-- ================= HEADER ================= -->
+  <header class="top">
+    <div>
+      <div class="eyebrow">
+        <span class="chev-mark" aria-hidden="true">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 1 L7 5 L2 9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 1 L7 5 L2 9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 1 L7 5 L2 9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        StrydeOS · Ava Module · Voice Architecture
+      </div>
+      <h1>Ava &mdash; <span class="accent">Voice Architecture</span></h1>
+      <div class="subtitle">StrydeOS voice receptionist &mdash; call flow and data topology. Inbound telephony, tool-call orchestration, PMS adapters and provisioning.</div>
+    </div>
+    <div class="version-card">
+      <div class="version-row"><span class="k">document</span><span class="v">ava-arch</span></div>
+      <div class="version-row"><span class="k">revision</span><span class="v">v1 &middot; 2026</span></div>
+      <div class="version-row"><span class="k">region</span><span class="v">europe-west2</span></div>
+      <div class="version-row"><span class="k">status</span><span class="v" style="color: var(--blue-glow);">live</span></div>
+    </div>
+  </header>
+
+  <!-- ================= SECTION 1 ================= -->
+  <div class="section-head">
+    <span class="num">01 /</span>
+    <h2>Inbound call flow</h2>
+    <span class="rule"></span>
+    <span class="hint">patient &rarr; ava</span>
+  </div>
+
+  <div class="flow flow-canvas flow-inbound">
+
+    <!-- 1. Patient -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">
+          <!-- handset -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,232,0.7)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v3a2 2 0 0 1-2 2A15 15 0 0 1 3 5a2 2 0 0 1 2-1z"/>
+          </svg>
+        </div>
+        <span class="card-label">Step 01</span>
+      </div>
+      <h3 class="card-title">Patient<span class="sub">Inbound caller</span></h3>
+      <div class="card-body">Dials the clinic&rsquo;s published UK number from mobile or landline.</div>
+      <div class="card-footer">
+        <span class="tag">PSTN</span>
+        <span class="mono dim">+44 xxx</span>
+      </div>
+    </div>
+
+    <!-- 2. Twilio -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">
+          <!-- rounded rect with signal -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,232,0.7)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="3"/>
+            <path d="M8 12a4 4 0 0 1 8 0"/>
+            <path d="M10 12a2 2 0 0 1 4 0"/>
+            <circle cx="12" cy="12" r="0.8" fill="rgba(245,241,232,0.7)" stroke="none"/>
+          </svg>
+        </div>
+        <span class="card-label">Step 02</span>
+      </div>
+      <h3 class="card-title">Twilio<span class="sub">Telephony &middot; SIP routing</span></h3>
+      <div class="kv">
+        <span class="k">voiceUrl</span><span class="v blue">api.elevenlabs.io</span>
+        <span class="k">path</span><span class="v">/twilio/inbound-call</span>
+        <span class="k">method</span><span class="v">POST</span>
+      </div>
+      <div class="card-footer">
+        <span class="tag">Number pool</span>
+        <span class="mono dim">GB · mobile+geo</span>
+      </div>
+    </div>
+
+    <!-- 3. ElevenLabs -->
+    <div class="card primary">
+      <div class="card-head">
+        <div class="card-icon">
+          <!-- waveform -->
+          <svg width="22" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,232,0.9)" stroke-width="1.4" stroke-linecap="round">
+            <line x1="3" y1="12" x2="3" y2="12"/>
+            <line x1="6" y1="9" x2="6" y2="15"/>
+            <line x1="9" y1="6" x2="9" y2="18"/>
+            <line x1="12" y1="4" x2="12" y2="20"/>
+            <line x1="15" y1="7" x2="15" y2="17"/>
+            <line x1="18" y1="10" x2="18" y2="14"/>
+            <line x1="21" y1="12" x2="21" y2="12"/>
+          </svg>
+        </div>
+        <span class="card-label" style="color: var(--blue-glow);">Ava agent</span>
+      </div>
+      <h3 class="card-title">ElevenLabs Conversational AI<span class="sub">LLM + TTS + ASR runtime</span></h3>
+      <div class="kv">
+        <span class="k">llm</span><span class="v blue">gemini-2.5-flash-lite</span>
+        <span class="k">voice_id</span><span class="v">OnKmvBo8ZskQurHsyps5</span>
+        <span class="k">prompt</span><span class="v">ava-core-prompt.ts</span>
+        <span class="k">kb</span><span class="v">clinic-specific docs</span>
+      </div>
+
+      <!-- Attached tool group -->
+      <div class="tools-group" style="margin-top: 10px;">
+        <div class="tools-label">
+          <span>Registered tools</span>
+          <span class="mono" style="color: var(--muted); font-size: 9.5px;">/api/ava/tools</span>
+        </div>
+        <div class="tool-chip"><span class="dot"></span>check_availability</div>
+        <div class="tool-chip"><span class="dot"></span>book_appointment</div>
+        <div class="tool-chip"><span class="dot"></span>update_booking</div>
+        <div class="tool-chip alt"><span class="dot"></span>transfer_to_reception</div>
+      </div>
+    </div>
+
+    <!-- 4. Ava speaks -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">
+          <!-- outbound waveform with arrow -->
+          <svg width="22" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,232,0.7)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12h4l3-6 3 12 3-8 2 4h3"/>
+          </svg>
+        </div>
+        <span class="card-label">Step 04</span>
+      </div>
+      <h3 class="card-title">Ava speaks<span class="sub">Return audio to caller</span></h3>
+      <div class="card-body">Synthesised speech streams back over the live Twilio leg. Sub-second first-token latency via streaming TTS.</div>
+      <div class="card-footer">
+        <span class="tag blue">Audio out</span>
+        <span class="mono dim">PCM &middot; streaming</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Arrow row inbound -->
+  <div class="arrow-row cols-4" aria-hidden="true">
+    <div class="arrow-cell"></div>
+    <div class="arrow-cell"><span class="label">SIP &middot; media</span></div>
+    <div class="arrow-cell"><span class="label">webhook</span></div>
+    <div class="arrow-cell"><span class="label">tts stream</span></div>
+  </div>
+  <svg class="connector-svg" style="position: relative; height: 0; margin-top: -40px;" viewBox="0 0 1400 40" preserveAspectRatio="none" aria-hidden="true">
+    <line class="flow-line dashed" x1="175"  y1="20" x2="525"  y2="20"/>
+    <line class="flow-line dashed" x1="525"  y1="20" x2="875"  y2="20"/>
+    <line class="flow-line dashed reverse" x1="875"  y1="20" x2="1225" y2="20"/>
+  </svg>
+
+  <!-- ================= SECTION 2 ================= -->
+  <div class="section-head">
+    <span class="num">02 /</span>
+    <h2>Tool call flow</h2>
+    <span class="rule"></span>
+    <span class="hint">mid-conversation side-effects</span>
+  </div>
+
+  <div class="flow flow-canvas flow-tool">
+
+    <!-- 1. ElevenLabs POST -->
+    <div class="card compact">
+      <div class="card-head">
+        <span class="step-num">01 /</span>
+        <span class="card-label">Trigger</span>
+      </div>
+      <h3 class="card-title">Tool call<span class="sub">From Ava &rarr; Vercel</span></h3>
+      <div class="kv">
+        <span class="k">POST</span><span class="v blue">/api/ava/tools</span>
+        <span class="k">auth</span><span class="v">Bearer &lt;secret&gt;</span>
+      </div>
+      <div class="card-footer">
+        <span class="tag blue">HTTPS</span>
+        <span class="mono dim">ELEVENLABS_WEBHOOK_SECRET</span>
+      </div>
+    </div>
+
+    <!-- 2. Route handler -->
+    <div class="card compact">
+      <div class="card-head">
+        <div class="card-icon" style="width: 30px; height: 30px;">
+          <!-- Next.js N triangle -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,232,0.7)" stroke-width="1.3" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M8 7v10M8 7l8 10"/>
+          </svg>
+        </div>
+        <span class="step-num">02 /</span>
+      </div>
+      <h3 class="card-title">Route handler<span class="sub">Next.js on Vercel</span></h3>
+      <div class="kv">
+        <span class="k">lookup</span><span class="v">ava.agent_id</span>
+        <span class="k">loads</span><span class="v blue">integrations_config/pms</span>
+      </div>
+      <div class="card-footer">
+        <span class="tag">Edge / Node</span>
+        <span class="mono dim">clinicId resolved</span>
+      </div>
+    </div>
+
+    <!-- 3. Python Engine -->
+    <div class="card compact">
+      <div class="card-head">
+        <div class="card-icon" style="width: 30px; height: 30px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,232,0.7)" stroke-width="1.3" stroke-linejoin="round">
+            <rect x="4" y="4" width="16" height="16" rx="3"/>
+            <text x="12" y="15" text-anchor="middle" fill="rgba(245,241,232,0.7)" font-family="JetBrains Mono, monospace" font-size="8" stroke="none">py</text>
+          </svg>
+        </div>
+        <span class="step-num">03 /</span>
+      </div>
+      <h3 class="card-title">Execution engine<span class="sub">Python proxy &middot; optional</span></h3>
+      <div class="kv">
+        <span class="k">env</span><span class="v">AVA_ENGINE_URL</span>
+        <span class="k">timeout</span><span class="v blue">3000ms</span>
+        <span class="k">fallback</span><span class="v">TS adapters</span>
+      </div>
+      <div class="card-footer">
+        <span class="tag">Soft-dep</span>
+        <span class="mono dim">graceful degrade</span>
+      </div>
+    </div>
+
+    <!-- 4. PMS Adapter -->
+    <div class="card compact">
+      <div class="card-head">
+        <div class="card-icon" style="width: 30px; height: 30px;">
+          <!-- document -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,232,0.7)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 3h7l4 4v14H7z"/>
+            <path d="M14 3v4h4"/>
+            <line x1="9" y1="12" x2="16" y2="12"/>
+            <line x1="9" y1="15" x2="16" y2="15"/>
+            <line x1="9" y1="18" x2="13" y2="18"/>
+          </svg>
+        </div>
+        <span class="step-num">04 /</span>
+      </div>
+      <h3 class="card-title">PMS adapter<span class="sub">TypeScript, per-provider</span></h3>
+      <div class="store-list">
+        <span class="pill">WriteUpp</span>
+        <span class="pill">Cliniko</span>
+        <span class="pill">Halaxy</span>
+        <span class="pill">Zanda</span>
+      </div>
+      <div class="card-footer">
+        <span class="tag blue">SSRF allowlist</span>
+        <span class="mono dim">baseUrl whitelist</span>
+      </div>
+    </div>
+
+    <!-- 5. Result + Firestore mirror -->
+    <div class="card compact">
+      <div class="card-head">
+        <div class="card-icon" style="width: 30px; height: 30px;">
+          <!-- Firestore cylinder -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,232,0.7)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="6" rx="7" ry="2.5"/>
+            <path d="M5 6v5c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6"/>
+            <path d="M5 11v5c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-5"/>
+          </svg>
+        </div>
+        <span class="step-num">05 /</span>
+      </div>
+      <h3 class="card-title">Result &amp; mirror<span class="sub">Speak &middot; persist</span></h3>
+      <div class="card-body" style="font-size: 12.5px;">Adapter returns a speakable string to ElevenLabs. Successful bookings are mirrored to Firestore.</div>
+      <div class="card-footer">
+        <span class="tag">Write</span>
+        <span class="mono" style="color: var(--blue-glow); font-size: 10.5px;">clinics/{id}/appointments</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Arrow row tool flow -->
+  <div class="arrow-row cols-5" aria-hidden="true">
+    <div class="arrow-cell"></div>
+    <div class="arrow-cell"><span class="label">resolve clinic</span></div>
+    <div class="arrow-cell"><span class="label">proxy · 3s</span></div>
+    <div class="arrow-cell"><span class="label">adapter call</span></div>
+    <div class="arrow-cell"><span class="label">return · mirror</span></div>
+  </div>
+  <svg class="connector-svg" style="position: relative; height: 0; margin-top: -40px;" viewBox="0 0 1400 40" preserveAspectRatio="none" aria-hidden="true">
+    <line class="flow-line solid" x1="140" y1="20" x2="420" y2="20"/>
+    <line class="flow-line solid" x1="420" y1="20" x2="700" y2="20"/>
+    <line class="flow-line solid" x1="700" y1="20" x2="980" y2="20"/>
+    <line class="flow-line solid" x1="980" y1="20" x2="1260" y2="20"/>
+  </svg>
+
+  <!-- ================= SECTION 3 ================= -->
+  <div class="section-head">
+    <span class="num">03 /</span>
+    <h2>Data stores</h2>
+    <span class="rule"></span>
+    <span class="hint">persistence topology</span>
+  </div>
+
+  <div class="flow flow-canvas flow-stores">
+
+    <!-- Firestore -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,232,0.7)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="5" rx="8" ry="2.5"/>
+            <path d="M4 5v5c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5V5"/>
+            <path d="M4 10v5c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-5"/>
+            <path d="M4 15v4c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-4"/>
+          </svg>
+        </div>
+        <span class="card-label">Database</span>
+      </div>
+      <h3 class="card-title">Firestore<span class="sub">europe-west2 &middot; London</span></h3>
+      <div class="store-list">
+        <span class="pill">clinics</span>
+        <span class="pill">appointments</span>
+        <span class="pill">patients</span>
+        <span class="pill">call_log</span>
+        <span class="pill">integrations_config</span>
+      </div>
+      <div class="card-footer">
+        <span class="tag">Multi-tenant</span>
+        <span class="mono dim">clinicId partitioned</span>
+      </div>
+    </div>
+
+    <!-- ElevenLabs -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,232,0.7)" stroke-width="1.3" stroke-linecap="round">
+            <line x1="4" y1="12" x2="4" y2="12"/>
+            <line x1="8" y1="8" x2="8" y2="16"/>
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="16" y1="8" x2="16" y2="16"/>
+            <line x1="20" y1="12" x2="20" y2="12"/>
+          </svg>
+        </div>
+        <span class="card-label">Agent runtime</span>
+      </div>
+      <h3 class="card-title">ElevenLabs<span class="sub">Agent config &middot; KB &middot; voice</span></h3>
+      <div class="store-list">
+        <span class="pill">agent_id</span>
+        <span class="pill">knowledge_base</span>
+        <span class="pill">voice model</span>
+        <span class="pill">tool registry</span>
+      </div>
+      <div class="card-footer">
+        <span class="tag blue">Per-clinic</span>
+        <span class="mono dim">provisioned 1:1</span>
+      </div>
+    </div>
+
+    <!-- Twilio -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(245,241,232,0.7)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="3"/>
+            <path d="M7 12h2M15 12h2M11 12h2"/>
+          </svg>
+        </div>
+        <span class="card-label">Telephony</span>
+      </div>
+      <h3 class="card-title">Twilio<span class="sub">Number pool &middot; SIP</span></h3>
+      <div class="store-list">
+        <span class="pill">+44 DIDs</span>
+        <span class="pill">voiceUrl</span>
+        <span class="pill">call records</span>
+        <span class="pill">billing</span>
+      </div>
+      <div class="card-footer">
+        <span class="tag">GB scope</span>
+        <span class="mono dim">mobile + geo</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= SECTION 4 ================= -->
+  <div class="section-head">
+    <span class="num">04 /</span>
+    <h2>Provisioning flow</h2>
+    <span class="rule"></span>
+    <span class="hint">one-time per clinic</span>
+  </div>
+
+  <div class="flow flow-canvas flow-provision">
+
+    <div class="card compact" style="min-height: 108px;">
+      <span class="step-num">01</span>
+      <h3 class="card-title" style="font-size: 16px;">Admin<span class="sub">Operator action</span></h3>
+      <div class="mono dim">clinic onboarding</div>
+    </div>
+
+    <div class="card compact" style="min-height: 108px;">
+      <span class="step-num">02</span>
+      <h3 class="card-title" style="font-size: 16px;">POST<span class="sub">API entry point</span></h3>
+      <div class="mono">/api/ava/<br/>provision-number</div>
+    </div>
+
+    <div class="card compact" style="min-height: 108px;">
+      <span class="step-num">03</span>
+      <h3 class="card-title" style="font-size: 16px;">createAvaTools()<span class="sub">Register tool schema</span></h3>
+      <div class="mono dim">ElevenLabs API</div>
+    </div>
+
+    <div class="card compact" style="min-height: 108px;">
+      <span class="step-num">04</span>
+      <h3 class="card-title" style="font-size: 16px;">createAvaAgent()<span class="sub">Attach voice + prompt</span></h3>
+      <div class="mono dim">agent_id &rarr; Firestore</div>
+    </div>
+
+    <div class="card compact" style="min-height: 108px;">
+      <span class="step-num">05</span>
+      <h3 class="card-title" style="font-size: 16px;">purchaseUkNumber()<span class="sub">Twilio DID</span></h3>
+      <div class="mono dim">GB · available pool</div>
+    </div>
+
+    <div class="card compact" style="min-height: 108px;">
+      <span class="step-num">06</span>
+      <h3 class="card-title" style="font-size: 16px;">Wire &amp; persist<span class="sub">voiceUrl + write</span></h3>
+      <div class="mono" style="color: var(--blue-glow);">clinics/{id}.ava</div>
+    </div>
+
+  </div>
+
+  <div class="arrow-row cols-6" aria-hidden="true">
+    <div class="arrow-cell"></div>
+    <div class="arrow-cell"><span class="label">&rarr;</span></div>
+    <div class="arrow-cell"><span class="label">&rarr;</span></div>
+    <div class="arrow-cell"><span class="label">&rarr;</span></div>
+    <div class="arrow-cell"><span class="label">&rarr;</span></div>
+    <div class="arrow-cell"><span class="label">&rarr;</span></div>
+  </div>
+  <svg class="connector-svg" style="position: relative; height: 0; margin-top: -40px;" viewBox="0 0 1400 40" preserveAspectRatio="none" aria-hidden="true">
+    <line class="flow-line solid" x1="120"  y1="20" x2="350"  y2="20"/>
+    <line class="flow-line solid" x1="350"  y1="20" x2="580"  y2="20"/>
+    <line class="flow-line solid" x1="580"  y1="20" x2="810"  y2="20"/>
+    <line class="flow-line solid" x1="810"  y1="20" x2="1040" y2="20"/>
+    <line class="flow-line solid" x1="1040" y1="20" x2="1270" y2="20"/>
+  </svg>
+
+  <!-- ================= LEGEND ================= -->
+  <div class="legend">
+    <div class="legend-title">Legend</div>
+    <div class="legend-item">
+      <span class="swatch"></span>
+      <span>HTTP / API call</span>
+    </div>
+    <div class="legend-item">
+      <span class="swatch dashed"></span>
+      <span>Live call audio / voice data</span>
+    </div>
+    <div class="legend-item">
+      <span class="swatch chev">&rsaquo;&rsaquo;&rsaquo;</span>
+      <span>StrydeOS / Ava branded element</span>
+    </div>
+    <div class="legend-item">
+      <span class="swatch mono">agent_id</span>
+      <span>System identifier</span>
+    </div>
+  </div>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="bot">
+    <div>
+      <span class="chev">&rsaquo;&rsaquo;&rsaquo;</span>
+      &nbsp;&nbsp;StrydeOS &middot; Ava module &middot; #1C54F2
+    </div>
+    <div>Internal architecture &middot; not for distribution</div>
+    <div>
+      dashboard/src/app/api/ava/tools/route.ts
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>

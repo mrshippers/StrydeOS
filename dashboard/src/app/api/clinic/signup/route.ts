@@ -157,7 +157,7 @@ async function handler(request: NextRequest) {
       hepRate: 80,
       utilisationRate: 80,
       dnaRate: 5,
-      courseCompletionTarget: 70,
+      treatmentCompletionTarget: 70,
     };
 
     // All flags start false — trial grants temporary access, Stripe webhook

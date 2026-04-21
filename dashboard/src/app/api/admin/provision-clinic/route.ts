@@ -270,7 +270,7 @@ async function handler(request: NextRequest) {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: "Jamal at StrydeOS <jamal@strydeos.com>",
+              from: "StrydeOS <noreply@strydeos.com>",
               to: [trimmedEmail],
               subject: `${trimmedName} is live on StrydeOS`,
               html: buildWelcomeEmail(firstName, trimmedName, passwordResetLink),

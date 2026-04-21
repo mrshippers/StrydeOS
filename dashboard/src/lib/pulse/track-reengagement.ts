@@ -109,9 +109,9 @@ export async function trackReengagement(
               // Conservative: recovered = revenuePerSession × remaining sessions from metadata
               const meta = ev.metadata as Record<string, unknown> | undefined;
               const sessionCount = (meta?.sessionCount as number) ?? 0;
-              const courseLength = (meta?.courseLength as number) ?? 6;
+              const treatmentLength = (meta?.treatmentLength as number) ?? (meta?.courseLength as number) ?? 6;
               const revenuePerSession = 65; // default, matches InsightConfig default
-              revenueRecovered += Math.max(0, courseLength - sessionCount) * revenuePerSession;
+              revenueRecovered += Math.max(0, treatmentLength - sessionCount) * revenuePerSession;
               if (!triggeringEventId) triggeringEventId = doc.id;
               if (!clinicianName && ev.clinicianName) {
                 clinicianName = ev.clinicianName as string;

@@ -1222,7 +1222,7 @@ export default function IntelligencePage() {
                         <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Booked</th>
                         <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Conv. %</th>
                         <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Revenue</th>
-                        <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Avg Course</th>
+                        <th className="text-right py-3 px-3 text-xs font-semibold text-muted uppercase tracking-wide">Avg treatment length</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1244,7 +1244,7 @@ export default function IntelligencePage() {
                               </span>
                             </td>
                             <td className="py-3 px-3 text-right font-bold text-navy">{formatPence(r.totalRevenuePence)}</td>
-                            <td className="py-3 px-3 text-right text-muted">{r.avgCourseLength.toFixed(1)} sessions</td>
+                            <td className="py-3 px-3 text-right text-muted">{r.avgTreatmentLength.toFixed(1)} sessions</td>
                           </tr>
                         ))}
                     </tbody>
@@ -1277,10 +1277,10 @@ export default function IntelligencePage() {
                 </div>
                 <p className="text-xs text-muted leading-relaxed">
                   {referrals.length > 0 ? (() => {
-                    const longest = [...referrals].sort((a, b) => b.avgCourseLength - a.avgCourseLength)[0];
+                    const longest = [...referrals].sort((a, b) => b.avgTreatmentLength - a.avgTreatmentLength)[0];
                     return (
                       <>
-                        <span className="font-semibold text-navy">{longest.source}</span> referrals have the longest avg course ({longest.avgCourseLength.toFixed(1)} sessions) and {formatPercent(longest.convertedToBooking / longest.patientsReferred)} conversion.
+                        <span className="font-semibold text-navy">{longest.source}</span> referrals have the longest avg treatment ({longest.avgTreatmentLength.toFixed(1)} sessions) and {formatPercent(longest.convertedToBooking / longest.patientsReferred)} conversion.
                       </>
                     );
                   })() : (
@@ -1317,7 +1317,7 @@ export default function IntelligencePage() {
                 <div>
                   <h4 className="text-sm font-semibold text-navy mb-1">Clinical outcomes correlate with revenue</h4>
                   <p className="text-xs text-muted leading-relaxed">
-                    Patients who improve <span className="font-semibold text-navy">≥3 points on NPRS</span> are <span className="font-semibold text-success">2.4×</span> more likely to complete their full course and <span className="font-semibold text-success">1.8×</span> more likely to leave a Google review.
+                    Patients who improve <span className="font-semibold text-navy">≥3 points on NPRS</span> are <span className="font-semibold text-success">2.4×</span> more likely to complete their full treatment and <span className="font-semibold text-success">1.8×</span> more likely to leave a Google review.
                     Tracking outcomes turns clinical quality into a measurable revenue signal.
                   </p>
                 </div>
@@ -1327,7 +1327,7 @@ export default function IntelligencePage() {
             {/* Per-clinician outcome aggregation */}
             <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
               <h3 className="font-display text-lg text-navy mb-1">Average Improvement by Clinician</h3>
-              <p className="text-xs text-muted mb-4">NPRS change (lower = better) and PSFS change (higher = better) averaged across completed courses</p>
+              <p className="text-xs text-muted mb-4">NPRS change (lower = better) and PSFS change (higher = better) averaged across completed treatments</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {(clinicianKpis.length > 0 ? clinicianKpis.slice(0, 3).map((k, i) => ({
                   name: k.clinicianName,
@@ -1345,7 +1345,7 @@ export default function IntelligencePage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-navy">{c.name}</p>
-                        <p className="text-[11px] text-muted">{c.courses} completed courses</p>
+                        <p className="text-[11px] text-muted">{c.courses} completed treatments</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">

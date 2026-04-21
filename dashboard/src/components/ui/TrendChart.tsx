@@ -70,7 +70,7 @@ export default function TrendChart({
       l.key === "hepRate" ||
       l.key === "utilisationRate" ||
       l.key === "dnaRate" ||
-      l.key === "courseCompletionRate"
+      l.key === "treatmentCompletionRate"
   );
   const hasRateLines = lines.some((l) => l.key === "followUpRate");
 
@@ -156,7 +156,7 @@ export default function TrendChart({
               line.key === "hepRate" ||
               line.key === "utilisationRate" ||
               line.key === "dnaRate" ||
-              line.key === "courseCompletionRate";
+              line.key === "treatmentCompletionRate";
             return (
               <Line
                 key={line.key}

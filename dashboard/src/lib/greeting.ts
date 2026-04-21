@@ -38,7 +38,7 @@ function churnRevenue(d: GreetingData): number {
   const revPerSession = d.latest?.revenuePerSessionPence ?? 0;
   return pts
     .filter((p) => !p.discharged && p.churnRisk)
-    .reduce((sum, p) => sum + Math.max(0, p.courseLength - p.sessionCount) * revPerSession, 0);
+    .reduce((sum, p) => sum + Math.max(0, p.treatmentLength - p.sessionCount) * revPerSession, 0);
 }
 
 function isDataStale(d: GreetingData, days: number): boolean {
@@ -78,7 +78,7 @@ const PROMPT_RULES: PromptRule[] = [
     id: "CHURN_CLUSTER",
     condition: (d) => !!d.latest && churnCount(d) >= 5,
     template: (d) =>
-      `${churnCount(d)} patients at churn risk \u2014 roughly ${formatPence(churnRevenue(d))} in open course value.`,
+      `${churnCount(d)} patients at churn risk \u2014 roughly ${formatPence(churnRevenue(d))} in open treatment value.`,
   },
 
   // ── Week-on-week trend signals ────────────────────────────────────────────

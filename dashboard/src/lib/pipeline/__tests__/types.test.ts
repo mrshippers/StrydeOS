@@ -6,7 +6,7 @@ import {
   HEP_DOC_ID,
   PIPELINE_DOC_ID,
   REVIEWS_DOC_ID,
-  DEFAULT_COURSE_LENGTH,
+  DEFAULT_TREATMENT_LENGTH,
   BACKFILL_WEEKS,
   INCREMENTAL_WEEKS,
 } from "../types";
@@ -29,8 +29,8 @@ describe("pipeline types and constants", () => {
     expect(REVIEWS_DOC_ID).toBe("google_reviews");
   });
 
-  it("has sensible defaults for course length and sync windows", () => {
-    expect(DEFAULT_COURSE_LENGTH).toBe(6);
+  it("has sensible defaults for treatment length and sync windows", () => {
+    expect(DEFAULT_TREATMENT_LENGTH).toBe(6);
     expect(BACKFILL_WEEKS).toBe(26);
     expect(INCREMENTAL_WEEKS).toBe(4);
     expect(BACKFILL_WEEKS).toBeGreaterThan(INCREMENTAL_WEEKS);

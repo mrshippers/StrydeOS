@@ -344,11 +344,11 @@ async function detectPulseEvents(
           confidence: "high",
           valuePence: conservativeValue,
           valueCalculation: patient
-            ? `1 confirmed rebooked session × £${(sessionRate / 100).toFixed(0)} = £${(conservativeValue / 100).toFixed(0)} (session ${patient.sessionCount}/${patient.courseLength})`
+            ? `1 confirmed rebooked session × £${(sessionRate / 100).toFixed(0)} = £${(conservativeValue / 100).toFixed(0)} (session ${patient.sessionCount}/${patient.treatmentLength})`
             : `1 session × £${(sessionRate / 100).toFixed(0)} = £${(conservativeValue / 100).toFixed(0)} (conservative)`,
           title: `Pulse re-engaged ${patient?.name || "a patient"}`,
           description: patient
-            ? `Patient was ${entry.patientLifecycleStateAtSend || "at risk"} (session ${patient.sessionCount}/${patient.courseLength}). Pulse nudged → patient rebooked.`
+            ? `Patient was ${entry.patientLifecycleStateAtSend || "at risk"} (session ${patient.sessionCount}/${patient.treatmentLength}). Pulse nudged → patient rebooked.`
             : "At-risk patient nudged by Pulse and rebooked.",
           patientId: entry.patientId,
           patientName: patient?.name,
@@ -399,13 +399,13 @@ async function detectPulseEvents(
       });
     }
 
-    // Course completion nudge — conservative: attribute 1 session, not remaining course
+    // Treatment completion nudge — conservative: attribute 1 session, not remaining treatment
     if (
       entry.sequenceType === "early_intervention" &&
       entry.outcome === "booked" &&
       patient &&
       patient.sessionCount > 0 &&
-      patient.sessionCount < patient.courseLength &&
+      patient.sessionCount < patient.treatmentLength &&
       !attributedCommsEntries.has(entry.id)
     ) {
       attributedCommsEntries.add(entry.id);
@@ -413,12 +413,12 @@ async function detectPulseEvents(
       events.push({
         clinicId,
         module: "pulse",
-        type: "PULSE_COURSE_COMPLETION",
+        type: "PULSE_TREATMENT_COMPLETION",
         confidence: "medium",
         valuePence: sessionRate, // Conservative: 1 session confirmed, not full remaining
-        valueCalculation: `1 rebooked session × £${(sessionRate / 100).toFixed(0)} = £${(sessionRate / 100).toFixed(0)} (${patient.courseLength - patient.sessionCount} sessions remaining in course)`,
-        title: `Pulse nudged ${patient.name} to continue their course`,
-        description: `Patient at session ${patient.sessionCount}/${patient.courseLength}. Pulse sent early intervention → patient rebooked.`,
+        valueCalculation: `1 rebooked session × £${(sessionRate / 100).toFixed(0)} = £${(sessionRate / 100).toFixed(0)} (${patient.treatmentLength - patient.sessionCount} sessions remaining in treatment)`,
+        title: `Pulse nudged ${patient.name} to continue their treatment`,
+        description: `Patient at session ${patient.sessionCount}/${patient.treatmentLength}. Pulse sent early intervention → patient rebooked.`,
         patientId: entry.patientId,
         patientName: patient.name,
         clinicianId: patient.clinicianId,
@@ -428,7 +428,7 @@ async function detectPulseEvents(
         createdAt: now,
         metadata: {
           sessionCount: patient.sessionCount,
-          courseLength: patient.courseLength,
+          treatmentLength: patient.treatmentLength,
         },
       });
     }
@@ -519,9 +519,9 @@ async function detectIntelligenceEvents(
       type: "INTEL_GHOST_REACTIVATED",
       confidence: "medium",
       valuePence: sessionRate,
-      valueCalculation: `1 reactivated session × £${(sessionRate / 100).toFixed(0)} = £${(sessionRate / 100).toFixed(0)} (session ${patient.sessionCount + 1}/${patient.courseLength})`,
+      valueCalculation: `1 reactivated session × £${(sessionRate / 100).toFixed(0)} = £${(sessionRate / 100).toFixed(0)} (session ${patient.sessionCount + 1}/${patient.treatmentLength})`,
       title: `Ghost patient ${patient.name} reactivated`,
-      description: `Patient was lapsed (${patient.sessionCount}/${patient.courseLength} sessions). Intelligence flagged → clinic contacted → patient returned.`,
+      description: `Patient was lapsed (${patient.sessionCount}/${patient.treatmentLength} sessions). Intelligence flagged → clinic contacted → patient returned.`,
       patientId: patient.id,
       patientName: patient.name,
       clinicianId: patient.clinicianId,
@@ -530,7 +530,7 @@ async function detectIntelligenceEvents(
       createdAt: now,
       metadata: {
         sessionCount: patient.sessionCount,
-        courseLength: patient.courseLength,
+        treatmentLength: patient.treatmentLength,
       },
     });
   }

@@ -78,8 +78,8 @@ export function computeRiskScore(input: RiskScoreInput): RiskScoreResult {
   attendance = Math.max(0, Math.min(100, attendance));
 
   // ── Factor: treatmentProgress (25%) ────────────────────────────────────
-  const courseLen = Math.max(1, input.courseLength);
-  let treatmentProgress = (input.sessionCount / courseLen) * 100;
+  const treatmentLen = Math.max(1, input.courseLength);
+  let treatmentProgress = (input.sessionCount / treatmentLen) * 100;
   if (input.followUpBookedAtLastSession) treatmentProgress += 15;
   if (input.sessionCount < 3 && !input.nextSessionDate) treatmentProgress -= 25;
   treatmentProgress = Math.max(0, Math.min(100, treatmentProgress));

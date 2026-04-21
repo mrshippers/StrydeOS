@@ -182,7 +182,7 @@ export const PatientBoard: FC<Props> = ({
                                   {p.name}
                                 </button>
                                 <p className="text-[11px] text-gray-400">
-                                  {visibleMetrics.includes("sessions") && `${p.sessionCount}/${p.courseLength} sessions`}
+                                  {visibleMetrics.includes("sessions") && `${p.sessionCount}/${p.treatmentLength} sessions`}
                                   {visibleMetrics.includes("clinician") && clinician ? ` · ${clinician.name}` : ""}
                                   {visibleMetrics.includes("lastVisit") && lastSeen !== null ? ` · Last ${lastSeen}d ago` : ""}
                                 </p>

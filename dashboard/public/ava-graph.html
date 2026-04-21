@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ava — Conversation Graph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0B2545;
+      --blue: #1C54F2;
+      --blue-bright: #2E6BFF;
+      --blue-glow: #4B8BF5;
+      --teal: #0891B2;
+      --purple: #8B5CF6;
+      --cream: #FAF8F5;
+      --red: #EF4444;
+      --slate: #64748B;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--navy);
+      width: 100vw;
+      height: 100vh;
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.055) 1px, transparent 0);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .ambient {
+      position: fixed;
+      width: 700px;
+      height: 700px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(28,84,242,0.07) 0%, rgba(8,145,178,0.04) 40%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      animation: ambient-pulse 6s ease-in-out infinite;
+    }
+
+    @keyframes ambient-pulse {
+      0%, 100% { opacity: 0.7; transform: translate(-50%,-50%) scale(1); }
+      50%       { opacity: 1;   transform: translate(-50%,-50%) scale(1.07); }
+    }
+
+    header {
+      position: fixed;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      z-index: 10;
+    }
+
+    header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--cream);
+      letter-spacing: -0.2px;
+      font-weight: 400;
+    }
+
+    header p {
+      font-size: 11px;
+      color: rgba(250,248,245,0.38);
+      margin-top: 5px;
+      letter-spacing: 0.3px;
+    }
+
+    .graph-container {
+      position: relative;
+      width: 1100px;
+      height: 720px;
+      z-index: 1;
+    }
+
+    .connections-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .node {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+
+    .node:hover { z-index: 10; }
+
+    .orb {
+      border-radius: 50%;
+      position: relative;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+      will-change: transform;
+    }
+
+    .node:hover .orb { transform: scale(1.18) !important; }
+
+    .orb::before {
+      content: '';
+      position: absolute;
+      top: 11%;
+      left: 16%;
+      width: 36%;
+      height: 28%;
+      background: radial-gradient(ellipse at center, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0) 100%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .orb-inner {
+      position: absolute;
+      bottom: 10%;
+      right: 12%;
+      width: 22%;
+      height: 16%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.18) 0%, transparent 100%);
+      border-radius: 50%;
+    }
+
+    .pulse-ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 1px solid currentColor;
+      opacity: 0;
+      animation: pulse-ring 3.5s ease-out infinite;
+      pointer-events: none;
+    }
+
+    .pulse-ring-2 { inset: -10px; animation-delay: 1.2s; }
+
+    @keyframes pulse-ring {
+      0%   { transform: scale(1);   opacity: 0.5; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    @keyframes float-a {
+      0%,100% { transform: translate(-50%,-50%) translateY(0px) rotate3d(1,0,0,0deg); }
+      50%      { transform: translate(-50%,-50%) translateY(-11px) rotate3d(1,0,0,4deg); }
+    }
+    @keyframes float-b {
+      0%,100% { transform: translate(-50%,-50%) translateY(-5px) rotate3d(0,1,0,-2deg); }
+      50%      { transform: translate(-50%,-50%) translateY(7px) rotate3d(0,1,0,3deg); }
+    }
+    @keyframes float-c {
+      0%,100% { transform: translate(-50%,-50%) translateY(7px) rotate3d(1,1,0,2deg); }
+      50%      { transform: translate(-50%,-50%) translateY(-7px) rotate3d(1,1,0,-2deg); }
+    }
+    @keyframes float-d {
+      0%,100% { transform: translate(-50%,-50%) translateY(-9px) rotate3d(0,1,0,3deg); }
+      50%      { transform: translate(-50%,-50%) translateY(5px) rotate3d(0,1,0,-3deg); }
+    }
+    @keyframes float-e {
+      0%,100% { transform: translate(-50%,-50%) translateY(4px) rotate3d(1,0,0,-2deg); }
+      50%      { transform: translate(-50%,-50%) translateY(-9px) rotate3d(1,0,0,3deg); }
+    }
+
+    .node-label { margin-top: 10px; text-align: center; pointer-events: none; }
+
+    .node-name {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: rgba(250,248,245,0.88);
+      letter-spacing: 0.15px;
+      line-height: 1.35;
+      white-space: pre-line;
+    }
+
+    .node-desc {
+      font-size: 9px;
+      color: rgba(250,248,245,0.38);
+      margin-top: 3px;
+      line-height: 1.3;
+    }
+
+    .entry-badge {
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(28,84,242,0.18);
+      border: 1px solid rgba(75,139,245,0.5);
+      color: #4B8BF5;
+      font-size: 7.5px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 2px 9px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .tooltip {
+      position: fixed;
+      background: rgba(11,37,69,0.97);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 11px;
+      color: rgba(250,248,245,0.8);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 100;
+      max-width: 230px;
+      line-height: 1.5;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+    }
+
+    .tooltip.visible { opacity: 1; }
+
+    .tt-title {
+      font-weight: 600;
+      color: var(--cream);
+      margin-bottom: 5px;
+      font-size: 12px;
+    }
+
+    .tt-tools {
+      margin-top: 7px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .tt-tool {
+      background: rgba(28,84,242,0.2);
+      border: 1px solid rgba(28,84,242,0.4);
+      color: #4B8BF5;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .tt-no-tools {
+      color: rgba(250,248,245,0.28);
+      font-size: 9px;
+    }
+
+    .legend {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 22px;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 10px;
+      color: rgba(250,248,245,0.38);
+    }
+
+    .legend-orb {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .legend-line {
+      width: 20px;
+      height: 1px;
+      background: rgba(75,139,245,0.45);
+    }
+
+    .legend-line-dashed {
+      background: transparent;
+      border-top: 1.5px dashed rgba(255,255,255,0.25);
+    }
+  </style>
+</head>
+<body>
+
+<div class="ambient"></div>
+
+<header>
+  <h1>Ava — Conversation Graph</h1>
+  <p>10 nodes &nbsp;·&nbsp; LangGraph routing &nbsp;·&nbsp; Live at Spires Physiotherapy</p>
+</header>
+
+<div class="graph-container" id="graph">
+  <svg class="connections-svg" id="svg-connections" xmlns="http://www.w3.org/2000/svg"></svg>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-orb" style="background:#1C54F2;box-shadow:0 0 6px #1C54F255"></div>Entry</div>
+  <div class="legend-item"><div class="legend-orb" style="background:#0891B2;box-shadow:0 0 6px #0891B255"></div>Booking</div>
+  <div class="legend-item"><div class="legend-orb" style="background:#8B5CF6;box-shadow:0 0 6px #8B5CF655"></div>Support</div>
+  <div class="legend-item"><div class="legend-orb" style="background:#EF4444;box-shadow:0 0 6px #EF444455"></div>Emergency</div>
+  <div class="legend-item"><div class="legend-orb" style="background:#64748B"></div>Human handoff</div>
+  <div class="legend-item"><div class="legend-line"></div>Primary route</div>
+  <div class="legend-item"><div class="legend-line legend-line-dashed"></div>Secondary flow</div>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tt-title" id="tt-title"></div>
+  <div id="tt-desc"></div>
+  <div class="tt-tools" id="tt-tools"></div>
+</div>
+
+<script>
+  var NODES = [
+    { id:'Greeting_Triage',   name:'Greeting &\nTriage',       desc:'Entry · identifies intent · routes',  color:'#1C54F2', size:90, x:550,y:330, entry:true, float:'float-a', delay:'0s',    tools:['lookup_patient_by_phone'],                             longDesc:'Entry node. Identifies intent and routes. Looks up caller by phone in the PMS.' },
+    { id:'NewPatient_Enquiry', name:'New Patient\nEnquiry',     desc:'Price · availability · services',     color:'#0891B2', size:62, x:550,y:90,  entry:false, float:'float-b', delay:'0.3s',  tools:['check_availability'],                                  longDesc:'Answers pricing, availability, and service questions. Guides naturally toward booking.' },
+    { id:'NewPatient_Book',    name:'New Patient\nBook',        desc:'Collect details · confirm · book',    color:'#0891B2', size:62, x:706,y:148, entry:false, float:'float-c', delay:'0.6s',  tools:['check_availability','book_appointment'],                longDesc:'Collects all four required patient details. Full read-back before booking. First-appointment prep included.' },
+    { id:'Returning_Book',     name:'Returning\nBook',          desc:'History injection · follow-up',       color:'#2E6BFF', size:62, x:790,y:292, entry:false, float:'float-d', delay:'0.9s',  tools:['check_availability','book_appointment'],                longDesc:'Injects last visit context from PMS. Offers clinician continuity. Handles end-of-treatment rebooking.' },
+    { id:'Returning_Cancel',   name:'Cancel /\nReschedule',     desc:'Finds booking · cancels or moves',    color:'#4B8BF5', size:60, x:760,y:454, entry:false, float:'float-e', delay:'1.2s',  tools:['update_booking','check_availability','book_appointment'],longDesc:'No friction, no interrogation. Finds existing booking. Cancels or reschedules. Pivots to rebooking naturally.' },
+    { id:'Insurance_Payment',  name:'Insurance &\nPayment',     desc:'Coverage queries · no validation',    color:'#4B8BF5', size:57, x:634,y:558, entry:false, float:'float-a', delay:'1.5s',  tools:[],                                                      longDesc:'Answers insurer questions from clinic config. Never validates coverage or excess. Routes financials to back office.' },
+    { id:'Clinician_Message',  name:'Clinician\nMessage',       desc:'Takes message · flags callback',      color:'#8B5CF6', size:57, x:466,y:558, entry:false, float:'float-b', delay:'1.8s',  tools:[],                                                      longDesc:'Takes name, number, brief reason. Confirms back. Flags for clinician callback via Firestore or n8n.' },
+    { id:'Clinic_Info',        name:'Clinic Info',              desc:'Hours · parking · location',          color:'#8B5CF6', size:57, x:340,y:454, entry:false, float:'float-c', delay:'2.1s',  tools:[],                                                      longDesc:'Answers from ElevenLabs knowledge base. Hours, transport, parking, accessibility. Pivots to booking.' },
+    { id:'Emergency',          name:'Emergency\nEscalation',    desc:'999 · red flags · on-call routing',   color:'#EF4444', size:68, x:310,y:292, entry:false, float:'float-d', delay:'2.4s',  tools:['transfer_to_reception'],                               longDesc:'Cauda equina, stroke, chest pain, severe headache → 999/A&E immediately. No assessment — just route.' },
+    { id:'OutOfScope',         name:'Human\nHandoff',           desc:'Live transfer · complaints · edge cases', color:'#64748B', size:57, x:394,y:148, entry:false, float:'float-e', delay:'2.7s', tools:['transfer_to_reception'],                          longDesc:'Anything Ava cannot handle: complaints, solicitors, edge cases. Live transfer. No dead ends.' },
+  ];
+
+  var PRIMARY_EDGES   = NODES.slice(1).map(function(n){ return { from:'Greeting_Triage', to:n.id, type:'primary' }; });
+  var SECONDARY_EDGES = [
+    { from:'NewPatient_Enquiry', to:'NewPatient_Book',   type:'flow'   },
+    { from:'NewPatient_Book',    to:'Emergency',          type:'danger' },
+    { from:'Returning_Book',     to:'Returning_Cancel',   type:'flow'   },
+    { from:'Emergency',          to:'OutOfScope',          type:'danger' },
+  ];
+
+  var nodeMap = {};
+  NODES.forEach(function(n){ nodeMap[n.id] = n; });
+
+  function orbEdge(from, to, r) {
+    var dx = to.x - from.x, dy = to.y - from.y;
+    var d = Math.sqrt(dx*dx + dy*dy);
+    if (d === 0) return { x: from.x, y: from.y };
+    return { x: from.x + (dx/d)*r, y: from.y + (dy/d)*r };
+  }
+
+  var svgNS = 'http://www.w3.org/2000/svg';
+  var svg   = document.getElementById('svg-connections');
+  var defs  = document.createElementNS(svgNS, 'defs');
+
+  function makeMarker(id, color, op) {
+    var m = document.createElementNS(svgNS, 'marker');
+    m.setAttribute('id', id);
+    m.setAttribute('markerWidth', '7'); m.setAttribute('markerHeight', '7');
+    m.setAttribute('refX', '6'); m.setAttribute('refY', '3.5');
+    m.setAttribute('orient', 'auto');
+    var p = document.createElementNS(svgNS, 'path');
+    p.setAttribute('d', 'M0,0.5 L6,3.5 L0,6.5 L1.8,3.5 Z');
+    p.setAttribute('fill', color); p.setAttribute('opacity', op);
+    m.appendChild(p); defs.appendChild(m);
+  }
+
+  makeMarker('arr-primary', '#4B8BF5', '0.55');
+  makeMarker('arr-flow',    'rgba(255,255,255,0.5)', '1');
+  makeMarker('arr-danger',  '#EF4444', '0.6');
+
+  NODES.slice(1).forEach(function(n) {
+    var g = document.createElementNS(svgNS, 'linearGradient');
+    g.setAttribute('id', 'grad-' + n.id);
+    g.setAttribute('gradientUnits', 'userSpaceOnUse');
+    g.setAttribute('x1', '550'); g.setAttribute('y1', '330');
+    g.setAttribute('x2', String(n.x)); g.setAttribute('y2', String(n.y));
+    var s1 = document.createElementNS(svgNS, 'stop');
+    s1.setAttribute('offset', '0%'); s1.setAttribute('stop-color', '#1C54F2'); s1.setAttribute('stop-opacity', '0.35');
+    var s2 = document.createElementNS(svgNS, 'stop');
+    s2.setAttribute('offset', '100%'); s2.setAttribute('stop-color', n.color); s2.setAttribute('stop-opacity', '0.22');
+    g.appendChild(s1); g.appendChild(s2); defs.appendChild(g);
+  });
+
+  svg.appendChild(defs);
+
+  PRIMARY_EDGES.forEach(function(edge) {
+    var f = nodeMap[edge.from], t = nodeMap[edge.to];
+    var s = orbEdge(f, t, f.size/2+5), e = orbEdge(t, f, t.size/2+10);
+    var line = document.createElementNS(svgNS, 'line');
+    line.setAttribute('x1', s.x); line.setAttribute('y1', s.y);
+    line.setAttribute('x2', e.x); line.setAttribute('y2', e.y);
+    line.setAttribute('stroke', 'url(#grad-' + t.id + ')');
+    line.setAttribute('stroke-width', '1');
+    line.setAttribute('marker-end', 'url(#arr-primary)');
+    svg.appendChild(line);
+  });
+
+  SECONDARY_EDGES.forEach(function(edge) {
+    var f = nodeMap[edge.from], t = nodeMap[edge.to];
+    var s = orbEdge(f, t, f.size/2+5), e = orbEdge(t, f, t.size/2+10);
+    var line = document.createElementNS(svgNS, 'line');
+    line.setAttribute('x1', s.x); line.setAttribute('y1', s.y);
+    line.setAttribute('x2', e.x); line.setAttribute('y2', e.y);
+    line.setAttribute('stroke', edge.type==='danger' ? 'rgba(239,68,68,0.45)' : 'rgba(255,255,255,0.22)');
+    line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('stroke-dasharray', '5,4');
+    line.setAttribute('marker-end', edge.type==='danger' ? 'url(#arr-danger)' : 'url(#arr-flow)');
+    svg.appendChild(line);
+  });
+
+  // ─── Render nodes ───────────────────────────────────────────────────────────
+  var graph   = document.getElementById('graph');
+  var tooltip = document.getElementById('tooltip');
+  var ttTitle = document.getElementById('tt-title');
+  var ttDesc  = document.getElementById('tt-desc');
+  var ttTools = document.getElementById('tt-tools');
+
+  NODES.forEach(function(node) {
+    var el = document.createElement('div');
+    el.className = 'node';
+    el.style.left = node.x + 'px';
+    el.style.top  = node.y + 'px';
+    el.style.animation = node.float + ' ' + (3.8 + Math.random()*1.2).toFixed(2) + 's ease-in-out ' + node.delay + ' infinite';
+
+    if (node.entry) {
+      var badge = document.createElement('div');
+      badge.className = 'entry-badge';
+      badge.textContent = 'ENTRY';
+      el.appendChild(badge);
+    }
+
+    var orb = document.createElement('div');
+    orb.className = 'orb';
+    var glow = node.size * 0.55;
+    var glowOuter = node.size * 1.1;
+    orb.style.width  = node.size + 'px';
+    orb.style.height = node.size + 'px';
+    orb.style.background = 'radial-gradient(circle at 36% 30%, ' + node.color + 'f0 0%, ' + node.color + 'b0 35%, ' + node.color + '60 65%, ' + node.color + '28 100%)';
+    orb.style.boxShadow  = '0 0 ' + glow + 'px ' + node.color + '55, 0 0 ' + glowOuter + 'px ' + node.color + '20, 0 12px 28px rgba(0,0,0,0.45), inset 0 -5px 14px rgba(0,0,0,0.25)';
+    orb.style.color = node.color;
+
+    var inner = document.createElement('div');
+    inner.className = 'orb-inner';
+    orb.appendChild(inner);
+
+    var r1 = document.createElement('div');
+    r1.className = 'pulse-ring';
+    r1.style.animationDelay = node.delay;
+    orb.appendChild(r1);
+
+    if (node.entry) {
+      var r2 = document.createElement('div');
+      r2.className = 'pulse-ring pulse-ring-2';
+      orb.appendChild(r2);
+    }
+
+    el.appendChild(orb);
+
+    var label = document.createElement('div');
+    label.className = 'node-label';
+
+    var nameEl = document.createElement('div');
+    nameEl.className = 'node-name';
+    nameEl.textContent = node.name;
+    label.appendChild(nameEl);
+
+    var descEl = document.createElement('div');
+    descEl.className = 'node-desc';
+    descEl.textContent = node.desc;
+    label.appendChild(descEl);
+
+    el.appendChild(label);
+
+    // Tooltip events
+    el.addEventListener('mouseenter', function(e) {
+      ttTitle.textContent = node.id.replace(/_/g, ' ');
+      ttDesc.textContent  = node.longDesc;
+
+      while (ttTools.firstChild) ttTools.removeChild(ttTools.firstChild);
+
+      if (node.tools.length > 0) {
+        node.tools.forEach(function(t) {
+          var span = document.createElement('span');
+          span.className = 'tt-tool';
+          span.textContent = t;
+          ttTools.appendChild(span);
+        });
+      } else {
+        var none = document.createElement('span');
+        none.className = 'tt-no-tools';
+        none.textContent = 'no tools bound';
+        ttTools.appendChild(none);
+      }
+
+      tooltip.classList.add('visible');
+      moveTooltip(e);
+    });
+
+    el.addEventListener('mousemove', moveTooltip);
+    el.addEventListener('mouseleave', function() { tooltip.classList.remove('visible'); });
+
+    graph.appendChild(el);
+  });
+
+  function moveTooltip(e) {
+    var x = e.clientX + 14, y = e.clientY - 10;
+    var tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+    tooltip.style.left = (x + tw > window.innerWidth  - 12 ? x - tw - 28 : x) + 'px';
+    tooltip.style.top  = (y + th > window.innerHeight - 12 ? y - th      : y) + 'px';
+  }
+</script>
+</body>
+</html>

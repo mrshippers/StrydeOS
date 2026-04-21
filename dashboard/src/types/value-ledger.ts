@@ -20,7 +20,7 @@ export type ValueEventType =
   // Pulse — Revenue Recovered
   | "PULSE_DROPOUT_REENGAGED"      // At-risk patient nudged → rebooked within attribution window
   | "PULSE_DNA_RECOVERED"          // Patient DNA'd → Pulse rebooking prompt → rebooked
-  | "PULSE_COURSE_COMPLETION"      // Patient nudged to complete course → completed remaining sessions
+  | "PULSE_TREATMENT_COMPLETION"      // Patient nudged to complete treatment → completed remaining sessions
   | "PULSE_REVIEW_GENERATED"       // Review prompt → patient posted Google/Trustpilot review
 
   // Intelligence — Revenue Gained

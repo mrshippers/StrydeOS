@@ -93,7 +93,7 @@ function buildTimeline(patientId: string): TimelineEvent[] {
     type: "session",
     date: "2026-02-03",
     title: "Initial assessment",
-    detail: "Low back pain. NPRS 5/10. 6-session course planned.",
+    detail: "Low back pain. NPRS 5/10. 6-session treatment planned.",
     icon: Calendar,
     color: "#1C54F2",
   });
@@ -124,7 +124,7 @@ export default function PatientDetailPage({
     );
   }
 
-  const progress = Math.round((patient.sessionCount / patient.courseLength) * 100);
+  const progress = Math.round((patient.sessionCount / patient.treatmentLength) * 100);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -176,9 +176,9 @@ export default function PatientDetailPage({
       {/* Key stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
-          label="Course Progress"
+          label="Treatment Progress"
           value={formatPercent(progress / 100)}
-          unit={`${patient.sessionCount}/${patient.courseLength}`}
+          unit={`${patient.sessionCount}/${patient.treatmentLength}`}
           status={progress >= 80 ? "ok" : progress >= 50 ? "warn" : "neutral"}
         />
         <StatCard
@@ -209,7 +209,7 @@ export default function PatientDetailPage({
       {/* Course progress bar */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-navy">Course Progress</h3>
+          <h3 className="text-sm font-semibold text-navy">Treatment Progress</h3>
           <span className="text-sm font-bold text-navy">{progress}%</span>
         </div>
         <div className="h-3 bg-cloud-dark rounded-full overflow-hidden">
@@ -222,7 +222,7 @@ export default function PatientDetailPage({
           />
         </div>
         <div className="flex justify-between mt-2">
-          {Array.from({ length: patient.courseLength }, (_, i) => (
+          {Array.from({ length: patient.treatmentLength }, (_, i) => (
             <div
               key={i}
               className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${

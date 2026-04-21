@@ -41,7 +41,7 @@ export const SessionThresholdStrip: FC<Props> = ({
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-navy truncate">{p.name}</p>
                   <p className="text-[11px] text-muted">
-                    Session {p.sessionCount} of {p.courseLength}
+                    Session {p.sessionCount} of {p.treatmentLength}
                     {clinician ? ` · ${clinician.name}` : ""}
                     {lastSeen !== null ? ` · Last seen ${lastSeen}d ago` : ""}
                   </p>

@@ -23,7 +23,7 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
   const [email, setEmail] = useState(patient.contact.email ?? "");
   const [phone, setPhone] = useState(patient.contact.phone ?? "");
   const [sessionCount, setSessionCount] = useState(patient.sessionCount);
-  const [courseLength, setCourseLength] = useState(patient.courseLength);
+  const [treatmentLength, setTreatmentLength] = useState(patient.treatmentLength);
   const [clinicianId, setClinicianId] = useState(patient.clinicianId);
   const [lastSessionDate, setLastSessionDate] = useState(patient.lastSessionDate ?? "");
   const [nextSessionDate, setNextSessionDate] = useState(patient.nextSessionDate ?? "");
@@ -38,7 +38,7 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
           phone: phone || undefined,
         },
         sessionCount,
-        courseLength,
+        treatmentLength,
         clinicianId,
         lastSessionDate: lastSessionDate || undefined,
         nextSessionDate: nextSessionDate || undefined,
@@ -139,12 +139,12 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
                 />
               </div>
               <div>
-                <label className={labelClass}>Course Length</label>
+                <label className={labelClass}>Treatment length</label>
                 <input
                   type="number"
                   min={1}
-                  value={courseLength}
-                  onChange={(e) => setCourseLength(Math.max(1, parseInt(e.target.value) || 1))}
+                  value={treatmentLength}
+                  onChange={(e) => setTreatmentLength(Math.max(1, parseInt(e.target.value) || 1))}
                   className={inputClass}
                 />
               </div>

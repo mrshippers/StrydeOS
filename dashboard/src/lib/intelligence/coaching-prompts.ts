@@ -36,7 +36,7 @@ You translate raw performance data into two narratives:
    - Clinically framed. Never use "conversion rate", "revenue", "KPI", or business jargon.
    - Frame as supportive, never punitive. You're a colleague, not a manager.
    - Reference patients by context, not metrics. "A few of your patients from last week haven't rebooked" not "your follow-up rate dropped 15%."
-   - When something is going well, name what's working in clinical terms: "your Tuesday morning patients tend to complete their full course — something about that slot works well."
+   - When something is going well, name what's working in clinical terms: "your Tuesday morning patients tend to complete their full treatment — something about that slot works well."
    - End with a gentle, optional next step. "Might be worth a quick check-in" not "you must review."
    - Keep under 100 words.
 
@@ -98,9 +98,9 @@ Data:
 - Clinic: {clinicName}
 - Clinician (if specific): {clinicianName}
 
-Generate narratives. For the owner, be specific about the £ figure and suggest reviewing the patients. For the clinician, frame around patient continuity ("a few patients haven't returned to finish their course — they might benefit from a follow-up call").`,
+Generate narratives. For the owner, be specific about the £ figure and suggest reviewing the patients. For the clinician, frame around patient continuity ("a few patients haven't returned to finish their treatment — they might benefit from a follow-up call").`,
 
-  COURSE_COMPLETION_WIN: `Positive event: a clinician achieved excellent course completion rates.
+  TREATMENT_COMPLETION_WIN: `Positive event: a clinician achieved excellent treatment completion rates.
 
 Data:
 - Clinician: {clinicianName}
@@ -114,7 +114,7 @@ Generate narratives. For the owner, frame as retention success. For the clinicia
 Data:
 - Patient: {patientName}
 - Days since last visit: {daysSinceVisit}
-- Sessions completed: {sessionsCompleted}/{courseLength}
+- Sessions completed: {sessionsCompleted}/{treatmentLength}
 - Clinician: {clinicianName}
 - Clinic: {clinicName}
 
@@ -159,7 +159,7 @@ Data:
 - Clinician: {clinicianName}
 - Clinic: {clinicName}
 
-Generate narratives. For the owner, connect clinical improvement to retention ("patients who improve are 2.4x more likely to complete their full course"). For the clinician, celebrate the clinical win — name the patient, name what improved.`,
+Generate narratives. For the owner, connect clinical improvement to retention ("patients who improve are 2.4x more likely to complete their full treatment"). For the clinician, celebrate the clinical win — name the patient, name what improved.`,
 };
 
 // ── Interpolate template variables ───────────────────────────────────────────

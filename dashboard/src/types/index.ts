@@ -94,7 +94,7 @@ export interface ClinicTargets {
   hepRate: number;
   utilisationRate: number;
   dnaRate: number;
-  courseCompletionTarget: number;
+  treatmentCompletionTarget: number;
   /** Available appointment slots per clinician per week (default: 40 = 8/day × 5 days). */
   weeklyCapacitySlots?: number;
 }
@@ -343,7 +343,7 @@ export interface Patient {
   lastSessionDate?: string;
   nextSessionDate?: string;
   sessionCount: number;
-  courseLength: number;
+  treatmentLength: number;
   discharged: boolean;
   churnRisk: boolean;
   hepProgramId?: string;
@@ -427,7 +427,7 @@ export interface WeeklyStats {
   hepTarget: number;
   utilisationRate: number;
   dnaRate: number;
-  courseCompletionRate: number;
+  treatmentCompletionRate: number;
   revenuePerSessionPence: number;
   appointmentsTotal: number;
   initialAssessments: number;
