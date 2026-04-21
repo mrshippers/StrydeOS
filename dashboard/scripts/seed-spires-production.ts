@@ -34,7 +34,7 @@ const CLINICIAN_MAP: Record<string, string> = {
 const CLINICIAN_NAME_BY_ID: Record<string, string> = {
   "c-max": "Max Hubbard",
   "c-andrew": "Andrew Henry",
-  "c-jamal": "Jamal",
+  "c-jamal": "Jamal Ofori-Adu",
   "c-joe": "Joe Korge",
 };
 
@@ -58,17 +58,17 @@ function getDefaultPassword(): string {
 }
 
 const USERS: UserSeed[] = [
-  { email: "jamal@spiresphysiotherapy.com", firstName: "Jamal", lastName: "", role: "owner", clinicianId: "c-jamal" },
+  { email: "jamal@spiresphysiotherapy.com", firstName: "Jamal", lastName: "Ofori-Adu", role: "owner", clinicianId: "c-jamal" },
   { email: "andrew@spiresphysiotherapy.com", firstName: "Andrew", lastName: "Henry", role: "clinician", clinicianId: "c-andrew" },
   { email: "max@spiresphysiotherapy.com", firstName: "Max", lastName: "Hubbard", role: "clinician", clinicianId: "c-max" },
-  { email: "joe@spiresphysiotherapy.com", firstName: "Joe", lastName: "Korge", role: "admin", clinicianId: "c-joe" },
+  { email: "joe@spiresphysiotherapy.com", firstName: "Joe", lastName: "Korge", role: "owner", clinicianId: "c-joe" },
 ];
 
 const CLINICIANS = [
-  { id: "c-jamal", name: "Jamal", role: "Owner / Lead Physio", pmsExternalId: "jamal-1" },
+  { id: "c-jamal", name: "Jamal Ofori-Adu", role: "Owner / Lead Physio", pmsExternalId: "jamal-1" },
   { id: "c-andrew", name: "Andrew Henry", role: "Physiotherapist", pmsExternalId: "andrew-1" },
   { id: "c-max", name: "Max Hubbard", role: "Physiotherapist", pmsExternalId: "max-1" },
-  { id: "c-joe", name: "Joe Korge", role: "Admin", pmsExternalId: "joe-1" },
+  { id: "c-joe", name: "Joe Korge", role: "Owner / MD", pmsExternalId: "joe-1" },
 ];
 
 // ─── CSV Parsing ─────────────────────────────────────────────────────────────

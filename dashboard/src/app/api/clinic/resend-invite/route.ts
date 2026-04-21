@@ -59,10 +59,51 @@ async function handler(req: NextRequest) {
       );
     }
 
-    // Generate a password reset link (acts as an invite link for new users)
-    const link = await adminAuth.generatePasswordResetLink(email, {
-      url: `${process.env.APP_URL ?? "https://portal.strydeos.com"}/login`,
-    });
+    // Generate a password reset link (acts as an invite link for new users).
+    // Isolated try/catch so we can surface Firebase's specific auth/* error
+    // codes rather than falling through to a generic 500.
+    const continueUrl = `${process.env.APP_URL?.replace(/\/$/, "") ?? "https://portal.strydeos.com"}/login`;
+    let link: string;
+    try {
+      link = await adminAuth.generatePasswordResetLink(email, { url: continueUrl });
+    } catch (err: unknown) {
+      const e = err as { code?: string; message?: string };
+      console.error("[resend-invite] generatePasswordResetLink failed:", {
+        code: e.code,
+        message: e.message,
+        email,
+        continueUrl,
+      });
+
+      switch (e.code) {
+        case "auth/email-not-found":
+        case "auth/user-not-found":
+          return NextResponse.json(
+            { error: "No Firebase Auth account exists for this email. Re-add the clinician from the Add Clinician button." },
+            { status: 404 },
+          );
+        case "auth/invalid-continue-uri":
+        case "auth/unauthorized-continue-uri":
+        case "auth/missing-continue-uri":
+          return NextResponse.json(
+            { error: `Invite link can't be generated: ${continueUrl} is not authorized in Firebase → Auth → Settings → Authorized domains. Add the domain and retry.` },
+            { status: 500 },
+          );
+        case "auth/user-disabled":
+          return NextResponse.json(
+            { error: "This account is disabled. Re-enable it in Firebase Auth before resending the invite." },
+            { status: 400 },
+          );
+        default:
+          return NextResponse.json(
+            {
+              error: "Couldn't generate the invite link. The error has been logged — try again, or contact support if it keeps happening.",
+              code: "INVITE_LINK_UNKNOWN",
+            },
+            { status: 500 },
+          );
+      }
+    }
 
     // If RESEND_API_KEY is configured, send the email
     const resendKey = process.env.RESEND_API_KEY;
@@ -86,26 +127,31 @@ async function handler(req: NextRequest) {
         if (!res.ok) {
           const errBody = await res.text().catch(() => "unknown");
           console.error("[resend-invite] Resend API returned error:", res.status, errBody);
-          return NextResponse.json({ sent: false, note: "Email provider returned an error." });
+          return NextResponse.json(
+            {
+              error: "Email provider rejected the request — try again in a moment.",
+              code: "EMAIL_PROVIDER_REJECTED",
+            },
+            { status: 502 },
+          );
         }
 
         return NextResponse.json({ sent: true });
       } catch (emailErr) {
         console.error("[resend-invite] Email send failed:", emailErr);
-        // Fall through — return sent: false
+        return NextResponse.json(
+          {
+            error: "Email provider rejected the request — try again in a moment.",
+            code: "EMAIL_PROVIDER_REJECTED",
+          },
+          { status: 502 },
+        );
       }
     }
 
     // No email provider configured — do not return the link in the response body
     return NextResponse.json({ sent: false, note: "Configure RESEND_API_KEY to send invite emails automatically." });
   } catch (err: unknown) {
-    const e = err as { code?: string; message?: string };
-    if (e.code === "auth/user-not-found") {
-      return NextResponse.json(
-        { error: `No account found for this email. Ask admin to create their account first.` },
-        { status: 404 }
-      );
-    }
     console.error("[resend-invite] Error:", err);
     return handleApiError(err);
   }

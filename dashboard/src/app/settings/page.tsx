@@ -63,6 +63,11 @@ import SecurityCard from "./_components/SecurityCard";
 import ClinicDetailsCard from "./_components/ClinicDetailsCard";
 import TargetsCard from "./_components/TargetsCard";
 import TeamManagementCard from "./_components/TeamManagementCard";
+import GoogleReviewsCard from "./_components/GoogleReviewsCard";
+import SeatLimitModal, {
+  type SeatLimitInfo,
+  type SeatLimitPending,
+} from "./_components/SeatLimitModal";
 
 interface PmsProviderOption {
   id: PmsProvider;
@@ -628,6 +633,11 @@ export default function SettingsPage() {
   const [newClinicianRole, setNewClinicianRole] = useState("Physiotherapist");
   const [newClinicianAuthRole, setNewClinicianAuthRole] = useState<"clinician" | "admin">("clinician");
 
+  // Seat-limit upgrade modal (shown when /api/clinicians/add returns 403 for seat cap)
+  const [seatModalOpen, setSeatModalOpen] = useState(false);
+  const [seatLimitInfo, setSeatLimitInfo] = useState<SeatLimitInfo | null>(null);
+  const [seatLimitPending, setSeatLimitPending] = useState<SeatLimitPending | null>(null);
+
   // Clinician row expand/edit/delete state
   const [expandedClinicianId, setExpandedClinicianId] = useState<string | null>(null);
   const [editingEmail, setEditingEmail] = useState<Record<string, string>>({});
@@ -1092,6 +1102,50 @@ export default function SettingsPage() {
     }
   }
 
+  async function submitAddClinician(): Promise<{
+    ok: boolean;
+    seatLimitReached?: boolean;
+    seatInfo?: SeatLimitInfo;
+    error?: string;
+    emailSent?: boolean;
+  }> {
+    if (!clinicId || !db || !firebaseUser) {
+      return { ok: false, error: "Not signed in" };
+    }
+    const token = await firebaseUser.getIdToken();
+    const res = await fetch("/api/clinicians/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        name: newClinicianName.trim(),
+        email: newClinicianEmail.trim(),
+        role: newClinicianRole,
+        authRole: newClinicianAuthRole,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (res.status === 403 && data?.seatLimitReached) {
+      return {
+        ok: false,
+        seatLimitReached: true,
+        seatInfo: {
+          currentCount: data.currentCount,
+          limit: data.limit,
+          tierLimit: data.tierLimit,
+          extraSeats: data.extraSeats,
+          canPurchaseSeat: data.canPurchaseSeat,
+          tier: data.tier,
+        },
+        error: data.error,
+      };
+    }
+    if (!res.ok) {
+      return { ok: false, error: data?.error ?? "Failed to add clinician" };
+    }
+    return { ok: true, emailSent: !!data.emailSent };
+  }
+
   async function handleAddClinician() {
     if (!newClinicianName.trim() || !newClinicianEmail.trim() || submittingClinician) return;
     if (!clinicId || !db || !firebaseUser) {
@@ -1103,26 +1157,25 @@ export default function SettingsPage() {
     }
     setSubmittingClinician(true);
     try {
-      const token = await firebaseUser.getIdToken();
-      const res = await fetch("/api/clinicians/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          name: newClinicianName.trim(),
-          email: newClinicianEmail.trim(),
-          role: newClinicianRole,
-          authRole: newClinicianAuthRole,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        const msg = res.status === 403 && data.currentCount != null
-          ? `${data.error} (${data.currentCount}/${data.limit} seats used)`
-          : data.error ?? "Failed to add clinician";
-        toast(msg, "error");
+      const result = await submitAddClinician();
+      if (!result.ok) {
+        if (result.seatLimitReached && result.seatInfo) {
+          // Surface the upgrade modal instead of a toast
+          setSeatLimitInfo(result.seatInfo);
+          setSeatLimitPending({
+            name: newClinicianName.trim(),
+            email: newClinicianEmail.trim(),
+            role: newClinicianRole,
+            authRole: newClinicianAuthRole,
+          });
+          setSeatModalOpen(true);
+          return;
+        }
+        toast(result.error ?? "Failed to add clinician", "error");
         return;
       }
-      const inviteNote = data.emailSent
+
+      const inviteNote = result.emailSent
         ? ` — invite sent to ${newClinicianEmail.trim()}`
         : " — invite link generated (configure RESEND_API_KEY to send emails)";
       toast(`${newClinicianName.trim()} added${inviteNote}`, "success");
@@ -1145,6 +1198,41 @@ export default function SettingsPage() {
       toast("Failed to add clinician", "error");
     } finally {
       setSubmittingClinician(false);
+    }
+  }
+
+  async function handlePurchaseExtraSeat(): Promise<{ ok: boolean; error?: string }> {
+    if (!firebaseUser) return { ok: false, error: "Not signed in" };
+    try {
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch("/api/billing/seats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ quantity: 1 }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { ok: false, error: data?.error ?? "Couldn't purchase extra seat" };
+      }
+
+      // Seat purchased — now retry the add-clinician request
+      const retry = await submitAddClinician();
+      if (!retry.ok) {
+        return { ok: false, error: retry.error ?? "Seat purchased, but adding clinician failed. Try again from Settings." };
+      }
+
+      const inviteNote = retry.emailSent
+        ? ` — invite sent to ${newClinicianEmail.trim()}`
+        : " — invite link generated";
+      toast(`Seat added. ${newClinicianName.trim()} added${inviteNote}`, "success");
+      setAddingClinician(false);
+      setNewClinicianName("");
+      setNewClinicianEmail("");
+      setNewClinicianAuthRole("clinician");
+      return { ok: true };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Network error";
+      return { ok: false, error: msg };
     }
   }
 
@@ -2316,9 +2404,12 @@ export default function SettingsPage() {
         <p className="text-xs text-muted mb-5">
           These tools enrich StrydeOS Intelligence with clinical data. They are not PMS integrations — they layer additional signals into your analytics.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div id="reviews" className="grid grid-cols-1 sm:grid-cols-2 gap-4 scroll-mt-24">
           {/* Heidi */}
           <HeidiConnectionCard />
+
+          {/* Google Reviews — Place ID + optional per-clinic API key */}
+          <GoogleReviewsCard />
 
           {/* TM3 — elevated from PMS list */}
           <div className="rounded-xl border border-warn/30 bg-warn/5 p-4">
@@ -2380,6 +2471,18 @@ export default function SettingsPage() {
         handleDeactivateClinician={handleDeactivateClinician}
         handleConfirmTeam={handleConfirmTeam}
         handleSendInvite={handleSendInvite}
+      />
+
+      <SeatLimitModal
+        open={seatModalOpen}
+        seatInfo={seatLimitInfo}
+        pending={seatLimitPending}
+        canBuy={
+          !!seatLimitInfo?.canPurchaseSeat &&
+          (user?.role === "owner" || user?.role === "admin" || user?.role === "superadmin")
+        }
+        onPurchaseSeat={handlePurchaseExtraSeat}
+        onClose={() => setSeatModalOpen(false)}
       />
 
       </>)}

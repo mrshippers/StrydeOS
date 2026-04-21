@@ -85,7 +85,9 @@ async function handler(request: NextRequest) {
     const adminAuth = getAdminAuth();
 
     // ── Seat enforcement ──────────────────────────────────────────────
-    if (user.role !== "superadmin" && user.role !== "owner") {
+    // Owners are subject to seat limits (they need to see the upgrade modal).
+    // Only superadmin bypasses — internal support/ops use.
+    if (user.role !== "superadmin") {
       const seatCheck = await canAddClinician(clinicId, db);
       if (!seatCheck.allowed) {
         return NextResponse.json(
@@ -96,6 +98,8 @@ async function handler(request: NextRequest) {
             tierLimit: seatCheck.tierLimit,
             extraSeats: seatCheck.extraSeats,
             canPurchaseSeat: seatCheck.canPurchaseSeat,
+            seatLimitReached: true,
+            tier: seatCheck.tier,
           },
           { status: 403 }
         );

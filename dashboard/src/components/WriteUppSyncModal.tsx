@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Mail, ArrowRight, Upload, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useModalFocusTrap } from "@/hooks/useModalFocusTrap";
 
 const DISMISS_KEY = "strydeos_writeupp_sync_remind_at";
 const REMIND_MS = 7 * 24 * 60 * 60 * 1000;
@@ -30,7 +31,6 @@ export default function WriteUppSyncModal() {
   const router = useRouter();
   const [visible, setVisible] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!user?.clinicProfile) return;
@@ -70,38 +70,8 @@ export default function WriteUppSyncModal() {
     router.push("/settings#csv-import-section");
   }, [router]);
 
-  // Focus trap
-  useEffect(() => {
-    if (!visible) return;
-    previousFocusRef.current = document.activeElement as HTMLElement;
-
-    const timer = setTimeout(() => {
-      dialogRef.current?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
-    }, 100);
-
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { dismiss(); return; }
-      if (e.key !== "Tab") return;
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], [tabindex]:not([tabindex="-1"])'
-      );
-      if (!focusable || focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault(); last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault(); first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("keydown", handleKey);
-      previousFocusRef.current?.focus();
-    };
-  }, [visible, dismiss]);
+  // Focus trap + Esc handling
+  useModalFocusTrap(dialogRef, { open: visible, onEscape: dismiss });
 
   // Derive status copy from profile
   const profile = user?.clinicProfile;

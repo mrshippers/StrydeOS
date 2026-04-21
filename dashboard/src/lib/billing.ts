@@ -276,10 +276,11 @@ export async function canAddClinician(
   tierLimit: number;
   extraSeats: number;
   canPurchaseSeat?: boolean;
+  tier: TierKey;
 }> {
   const clinicSnap = await db.collection("clinics").doc(clinicId).get();
   if (!clinicSnap.exists) {
-    return { allowed: false, reason: "Clinic not found", currentCount: 0, limit: 0, tierLimit: 0, extraSeats: 0 };
+    return { allowed: false, reason: "Clinic not found", currentCount: 0, limit: 0, tierLimit: 0, extraSeats: 0, tier: "solo" };
   }
 
   const clinic = clinicSnap.data()!;
@@ -296,7 +297,7 @@ export async function canAddClinician(
   } else if (subStatus === "active" || subStatus === "trialing") {
     effectiveTier = "studio"; // fallback if tier not yet persisted
   } else {
-    return { allowed: false, reason: "No active subscription or trial", currentCount: 0, limit: 0, tierLimit: 0, extraSeats: 0 };
+    return { allowed: false, reason: "No active subscription or trial", currentCount: 0, limit: 0, tierLimit: 0, extraSeats: 0, tier: "solo" };
   }
 
   const tierLimit = TIER_SEAT_LIMITS[effectiveTier];
@@ -326,10 +327,11 @@ export async function canAddClinician(
       tierLimit,
       extraSeats,
       canPurchaseSeat: hasSubscription,
+      tier: effectiveTier,
     };
   }
 
-  return { allowed: true, currentCount, limit, tierLimit, extraSeats };
+  return { allowed: true, currentCount, limit, tierLimit, extraSeats, tier: effectiveTier };
 }
 
 // ─── Display metadata ────────────────────────────────────────────────────────

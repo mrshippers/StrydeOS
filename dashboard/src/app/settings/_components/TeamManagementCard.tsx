@@ -1,10 +1,13 @@
 "use client";
 
-import { Plus, Check, X, Loader2, CheckCircle2, ArrowRight, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Plus, Check, X, Loader2, CheckCircle2, ArrowRight, Trash2, ArrowUpDown } from "lucide-react";
 import { brand } from "@/lib/brand";
 import { getInitials } from "@/lib/utils";
 import type { Clinician, ClinicProfile, OnboardingState } from "@/types";
 import ClinicianHeidiToggle from "./ClinicianHeidiToggle";
+
+type SortOrder = "asc" | "desc";
 
 interface TeamManagementCardProps {
   clinicProfile: ClinicProfile | null;
@@ -72,6 +75,17 @@ export default function TeamManagementCard({
   handleConfirmTeam,
   handleSendInvite,
 }: TeamManagementCardProps) {
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+
+  const sortedClinicians = useMemo(() => {
+    const list = [...clinicians];
+    list.sort((a, b) => {
+      const cmp = a.name.localeCompare(b.name, "en", { sensitivity: "base" });
+      return sortOrder === "asc" ? cmp : -cmp;
+    });
+    return list;
+  }, [clinicians, sortOrder]);
+
   return (
     <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
       <div className="flex items-center justify-between mb-1">
@@ -82,8 +96,21 @@ export default function TeamManagementCard({
           )}
         </div>
         <div className="flex items-center gap-2">
+          {clinicians.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
+              aria-label={`Sort by name ${sortOrder === "asc" ? "Z to A" : "A to Z"}`}
+              title={`Sort by name: ${sortOrder === "asc" ? "A → Z" : "Z → A"}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-muted border border-border hover:text-navy hover:bg-cloud-light/60 transition-colors"
+            >
+              <ArrowUpDown size={12} />
+              Name {sortOrder === "asc" ? "A→Z" : "Z→A"}
+            </button>
+          )}
           {showOnboarding && clinicians.length > 0 && !onboarding.cliniciansConfirmed && (
             <button
+              type="button"
               onClick={handleConfirmTeam}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90"
               style={{ background: brand.success }}
@@ -94,6 +121,7 @@ export default function TeamManagementCard({
           )}
           {canManageTeam && (
             <button
+              type="button"
               onClick={() => setAddingClinician(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
             >
@@ -219,7 +247,7 @@ export default function TeamManagementCard({
       )}
 
       <div className="space-y-2 mt-4">
-        {clinicians.map((c) => {
+        {sortedClinicians.map((c) => {
           const isExpanded = expandedClinicianId === c.id;
           const isConfirmingDelete = confirmDeleteId === c.id;
 
