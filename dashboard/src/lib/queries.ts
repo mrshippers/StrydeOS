@@ -23,6 +23,7 @@ import type {
   OutcomeScore,
 } from "@/types";
 import type { ValueEvent, ValueSummary, DeepMetrics } from "@/types/value-ledger";
+import type { KpiDoc, KpiId, ComputeStateDoc } from "@/types/kpi";
 
 function noopUnsubscribe(): Unsubscribe {
   return () => {};
@@ -523,3 +524,64 @@ export function subscribeDeepMetrics(
     onError
   );
 }
+
+// ─── KPI Projections (new — layer on top of metrics_weekly) ───────────────
+
+/**
+ * Subscribe to the `kpis/*` projection collection written by `computeKPIs()`
+ * on every pipeline run. This is a read-optimised view — the canonical
+ * numbers still live in `metrics_weekly`.
+ */
+export function subscribeKPIs(
+  clinicId: string | null,
+  callback: (kpis: Record<string, KpiDoc>) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  if (!db || !clinicId) {
+    callback({});
+    return noopUnsubscribe();
+  }
+
+  return onSnapshot(
+    clinicCollection(clinicId, "kpis"),
+    (snapshot) => {
+      const map: Record<string, KpiDoc> = {};
+      for (const d of snapshot.docs) {
+        map[d.id] = d.data() as KpiDoc;
+      }
+      callback(map);
+    },
+    onError
+  );
+}
+
+/**
+ * Subscribe to the pipeline's `computeState` document for operator visibility
+ * into the last run, data-quality issues, and any captured errors.
+ */
+export function subscribeComputeState(
+  clinicId: string | null,
+  callback: (state: ComputeStateDoc | null) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  if (!db || !clinicId) {
+    callback(null);
+    return noopUnsubscribe();
+  }
+
+  const ref = doc(db, "clinics", clinicId, "computeState", "current");
+  return onSnapshot(
+    ref,
+    (snapshot) => {
+      if (!snapshot.exists()) {
+        callback(null);
+        return;
+      }
+      callback(snapshot.data() as ComputeStateDoc);
+    },
+    onError
+  );
+}
+
+// Re-export KpiId so consumers don't need a separate import path.
+export type { KpiId };

@@ -28,7 +28,8 @@ import type {
   WeeklyStats,
 } from "@/types";
 import type { InsightEvent } from "@/types/insight-events";
-import { SESSION_RATE_PENCE } from "@/lib/constants";
+import { loadSessionRate } from "./load-session-rate";
+import { appendDataQualityIssues } from "./compute-state";
 
 // ─── Result ──────────────────────────────────────────────────────────────────
 
@@ -60,7 +61,22 @@ export async function detectValueEvents(
     // Load configs
     const avaConfig = await loadAvaConfig(db, clinicId);
     const pulseConfig = await loadPulseConfig(db, clinicId);
-    const sessionRate = await loadSessionRate(db, clinicId);
+    const sessionRateLookup = await loadSessionRate(db, clinicId);
+
+    // INTELLIGENCE_AUDIT.md issue 2: skip value attribution when the clinic
+    // has not configured a session price. Silent fallback to £65 corrupted
+    // revenue attribution; now we record a data-quality flag and return.
+    if (sessionRateLookup.rate === null) {
+      await appendDataQualityIssues(db, clinicId, [
+        {
+          code: "SESSION_RATE_MISSING",
+          message:
+            "Skipped detectValueEvents — clinics/{clinicId}.sessionPricePence is not configured",
+        },
+      ]);
+      return result;
+    }
+    const sessionRate = sessionRateLookup.rate;
 
     // Load existing value events for dedup
     const dedupCutoff = new Date();
@@ -710,12 +726,6 @@ function formatTime(isoString: string): string {
 function avg(nums: number[]): number {
   if (nums.length === 0) return 0;
   return nums.reduce((sum, n) => sum + n, 0) / nums.length;
-}
-
-async function loadSessionRate(db: Firestore, clinicId: string): Promise<number> {
-  const clinicDoc = await db.doc(`clinics/${clinicId}`).get();
-  const data = clinicDoc.data();
-  return data?.sessionPricePence || SESSION_RATE_PENCE;
 }
 
 async function loadAvaConfig(

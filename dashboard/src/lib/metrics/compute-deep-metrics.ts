@@ -16,7 +16,8 @@
 import type { Firestore } from "firebase-admin/firestore";
 import type { Appointment, Patient } from "@/types";
 import type { DeepMetrics, RetentionStep } from "@/types/value-ledger";
-import { SESSION_RATE_PENCE } from "@/lib/constants";
+import { loadSessionRate as loadSessionRateCanonical } from "@/lib/intelligence/load-session-rate";
+import { appendDataQualityIssues } from "@/lib/intelligence/compute-state";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const ESTIMATED_SLOTS_PER_CLINICIAN_PER_WEEK = 40; // 8/day × 5 days
@@ -38,7 +39,21 @@ export async function computeDeepMetricsForClinic(
     loadActiveClinicians(db, clinicId),
   ]);
 
-  const sessionRate = await loadSessionRate(db, clinicId);
+  const sessionRateLookup = await loadSessionRateCanonical(db, clinicId);
+
+  // INTELLIGENCE_AUDIT.md issue 2: skip deep metrics when session price is
+  // not configured — silent £65 fallback corrupted LTV / empty-chair numbers.
+  if (sessionRateLookup.rate === null) {
+    await appendDataQualityIssues(db, clinicId, [
+      {
+        code: "SESSION_RATE_MISSING",
+        message:
+          "Skipped computeDeepMetricsForClinic — clinics/{clinicId}.sessionPricePence is not configured",
+      },
+    ]);
+    return { written: 0 };
+  }
+  const sessionRate = sessionRateLookup.rate;
 
   // Compute clinic-wide ("all") + per-clinician
   const clinicianIds = ["all", ...clinicians.map((c) => c.id)];
@@ -477,11 +492,3 @@ async function loadActiveClinicians(
   return snap.docs.map((d) => ({ id: d.id }));
 }
 
-async function loadSessionRate(
-  db: Firestore,
-  clinicId: string
-): Promise<number> {
-  const doc = await db.doc(`clinics/${clinicId}`).get();
-  const data = doc.data();
-  return data?.sessionPricePence || SESSION_RATE_PENCE;
-}

@@ -13,6 +13,8 @@ import { computeWeeklyMetricsForClinic } from "@/lib/metrics/compute-weekly";
 import { syncReviews } from "./sync-reviews";
 import { triggerCommsSequences } from "@/lib/comms/trigger-sequences";
 import { computeAttribution } from "./compute-attribution";
+import { computeKPIs } from "@/lib/intelligence/compute-kpis";
+import { writeComputeState, appendDataQualityIssues } from "@/lib/intelligence/compute-state";
 import type {
   PipelineResult,
   StageResult,
@@ -250,6 +252,40 @@ export async function runPipeline(
     });
   }
 
+  // ── Stage 8: KPI Projection (layer on top of metrics_weekly) ─────────────
+  const kpiStart = Date.now();
+  let kpiComputed: Awaited<ReturnType<typeof computeKPIs>> | null = null;
+  try {
+    kpiComputed = await computeKPIs(db, clinicId);
+    stages.push({
+      stage: "compute-kpis",
+      ok: true,
+      count: kpiComputed.written,
+      errors: [],
+      durationMs: Date.now() - kpiStart,
+    });
+    if (kpiComputed.dataQualityIssues.length > 0) {
+      await appendDataQualityIssues(db, clinicId, kpiComputed.dataQualityIssues);
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    stages.push({
+      stage: "compute-kpis",
+      ok: false,
+      count: 0,
+      errors: [message],
+      durationMs: Date.now() - kpiStart,
+    });
+    // Never throw — capture to computeState so operators see the failure.
+    await writeComputeState(db, clinicId, {
+      status: "failed",
+      lastError: message,
+      completedAt: new Date().toISOString(),
+      durationMs: Date.now() - kpiStart,
+      source: "pipeline",
+    });
+  }
+
   // ── Update pipeline config ───────────────────────────────────────────────
   const completedAt = new Date().toISOString();
   const allOk = stages.every((s) => s.ok);
@@ -275,6 +311,24 @@ export async function runPipeline(
   );
 
   await cleanOldHealthLogs(db, clinicId);
+
+  // Write final computeState record for operator visibility (replaces silent
+  // pipeline failures — see INTELLIGENCE_AUDIT.md issue 1).
+  try {
+    const kpiStage = stages.find((s) => s.stage === "compute-kpis");
+    await writeComputeState(db, clinicId, {
+      status: allOk ? "ok" : "degraded",
+      completedAt,
+      lastError: allOk
+        ? null
+        : stages.flatMap((s) => s.errors).filter(Boolean).join("; ") || null,
+      lastComputedKpis: kpiComputed?.lastComputedKpis ?? [],
+      durationMs: kpiStage?.durationMs,
+      source: "pipeline",
+    });
+  } catch {
+    // computeState is non-critical — don't fail the pipeline if it fails to write.
+  }
 
   // Auto-promote: api_connected → first_value_reached on first successful sync
   if (allOk) {

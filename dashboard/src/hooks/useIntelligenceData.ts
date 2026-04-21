@@ -698,7 +698,9 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     const clinicianKpis = deriveClinicianKpis(flatPerClinicianStats, patients);
     const benchmarks = deriveBenchmarks(allStats, clinicianKpis, nps, avgRevPerSession);
 
-    // Fall back to demo data when real data is empty for specific sections
+    // INTELLIGENCE_AUDIT.md issue 5: expose empty-state flags for the page to
+    // render its own empty state. Do NOT substitute demo data for real clinics
+    // with no outcome_scores or reviews yet.
     const outcomesDemoFallback = outcomeTrends.length === 0;
     const reputationDemoFallback = reviews.length === 0;
 
@@ -708,7 +710,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
       dnaByDay,
       dnaBySlot,
       referrals,
-      outcomeTrends: outcomesDemoFallback ? getDemoOutcomeTrends() : outcomeTrends,
+      outcomeTrends, // empty array for real clinics with no outcome_scores — no demo substitute
       nps,
       reviewVelocity,
       clinicianKpis,

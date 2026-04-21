@@ -30,6 +30,7 @@ import { brand } from "@/lib/brand";
 import type { OutcomeMeasureType, Patient } from "@/types";
 import { formatPence, formatPercent, formatWeekDate } from "@/lib/utils";
 import InsightFeed from "@/components/intelligence/InsightFeed";
+import KpiProjectionStrip from "@/components/intelligence/KpiProjectionStrip";
 import {
   PoundSterling,
   TrendingUp,
@@ -763,6 +764,11 @@ export default function IntelligencePage() {
           onRetry={() => router.refresh()}
         />
       )}
+
+      {/* KPI projection strip — reads from /clinics/{clinicId}/kpis/*.
+          Renders nothing until the pipeline has populated the projection. */}
+      <KpiProjectionStrip />
+
       {/* Summary stat cards */}
       <div className="relative grid grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Ambient radial glow — purple wash behind Intelligence stats */}

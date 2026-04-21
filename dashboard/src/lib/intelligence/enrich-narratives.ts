@@ -4,6 +4,7 @@ import {
   generateCoachingNarrative,
   type CoachingContext,
 } from "./coaching-prompts";
+import { appendDataQualityIssues, writeComputeState } from "./compute-state";
 
 /**
  * Enrich newly detected insight events with AI-generated coaching narratives.
@@ -31,8 +32,27 @@ export async function enrichEventsWithNarratives(
 
   const clinicData = clinicDoc.data()!;
   const clinicName = (clinicData.name as string) ?? "Your Clinic";
-  const revenuePerSession =
-    (clinicData.settings?.insightConfig?.revenuePerSession as number) ?? 65;
+
+  // INTELLIGENCE_AUDIT.md issue 4: canonical session price lives on the clinic
+  // root document. Using settings.insightConfig.revenuePerSession produced
+  // narratives that disagreed with insight detection. No hardcoded £65 fallback —
+  // skip enrichment if unconfigured.
+  const sessionPricePence = clinicData.sessionPricePence as number | undefined;
+  if (
+    typeof sessionPricePence !== "number" ||
+    !Number.isFinite(sessionPricePence) ||
+    sessionPricePence <= 0
+  ) {
+    await appendDataQualityIssues(db, clinicId, [
+      {
+        code: "NARRATIVE_SKIPPED",
+        message:
+          "Skipped coaching narrative enrichment — clinics/{clinicId}.sessionPricePence is not configured",
+      },
+    ]);
+    return { enriched: 0, skipped: events.length, errors: [] };
+  }
+  const revenuePerSession = Math.round(sessionPricePence / 100);
 
   for (const event of events) {
     // Skip events that already have narratives (idempotent)
@@ -72,20 +92,25 @@ export async function enrichEventsWithNarratives(
         skipped++;
       }
     } catch (err) {
-      // Never block the pipeline — log and continue
+      // Never block the pipeline — capture the error into computeState so
+      // operators can see it from the dashboard (INTELLIGENCE_AUDIT.md issue 9).
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn(
-        `[enrich-narratives] Failed for event ${event.id} (${event.type}): ${msg}`
-      );
       errors.push(`${event.type}: ${msg}`);
       skipped++;
     }
   }
 
-  if (enriched > 0) {
-    console.warn(
-      `[enrich-narratives] Clinic ${clinicId}: ${enriched} enriched, ${skipped} skipped, ${errors.length} errors`
-    );
+  // Persist the last enrichment error (if any) to computeState so it surfaces
+  // to operators instead of disappearing into the server logs.
+  if (errors.length > 0) {
+    try {
+      await writeComputeState(db, clinicId, {
+        status: "degraded",
+        lastError: `enrich-narratives: ${errors[errors.length - 1]}`,
+      });
+    } catch {
+      // computeState is best-effort — don't fail enrichment on write failures.
+    }
   }
 
   return { enriched, skipped, errors };
