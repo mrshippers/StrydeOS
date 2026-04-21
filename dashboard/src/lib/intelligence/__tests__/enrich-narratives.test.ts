@@ -31,9 +31,10 @@ function makeMockDb(clinicExists: boolean = true) {
     doc: vi.fn(() => ({
       get: vi.fn(async () => ({
         exists: clinicExists,
-        data: () => ({ name: "Spires", settings: { insightConfig: { revenuePerSession: 75 } } }),
+        data: () => ({ name: "Spires", sessionPricePence: 7500 }),
       })),
       update: vi.fn(async () => {}),
+      set: vi.fn(async () => {}),
     })),
   };
 }
