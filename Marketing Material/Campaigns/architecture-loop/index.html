@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>StrydeOS · Architecture Loop (3s)</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B2545;
+    --navy-deep: #081A36;
+    --navy-card: #0E2A52;
+    --navy-card-2: #122F58;
+    --blue: #1C54F2;
+    --blue-bright: #2E6BFF;
+    --blue-glow: #4B8BF5;
+    --purple: #8B5CF6;
+    --purple-soft: #A78BFA;
+    --teal: #0891B2;
+    --teal-soft: #22D3EE;
+    --green: #34D399;
+    --white: #FFFFFF;
+    --w-80: rgba(255,255,255,0.80);
+    --w-55: rgba(255,255,255,0.55);
+    --w-40: rgba(255,255,255,0.40);
+    --w-28: rgba(255,255,255,0.28);
+    --w-12: rgba(255,255,255,0.12);
+    --w-06: rgba(255,255,255,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: var(--navy);
+  }
+
+  [data-composition-id="architecture-loop"] {
+    width: 1920px;
+    height: 1080px;
+    position: relative;
+    overflow: hidden;
+    background: var(--navy);
+    font-family: 'Outfit', -apple-system, sans-serif;
+    color: var(--white);
+    -webkit-font-smoothing: antialiased;
+    display: grid;
+    grid-template-columns: 820px 1px 1fr;
+  }
+
+  /* Ambient background */
+  .bg-glow-left {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 55% 45% at 15% 40%, rgba(139, 92, 246, 0.10) 0%, transparent 65%);
+    z-index: 0;
+    pointer-events: none;
+  }
+  .bg-glow-right {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 50% 55% at 78% 50%, rgba(28, 84, 242, 0.10) 0%, transparent 70%);
+    z-index: 0;
+    pointer-events: none;
+  }
+  .bg-dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.028) 1.2px, transparent 1.2px);
+    background-size: 28px 28px;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Vertical divider */
+  .divider {
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent 100%);
+  }
+
+  /* ============== LEFT COLUMN ============== */
+  .left {
+    position: relative;
+    z-index: 2;
+    padding: 96px 72px 96px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .eyebrow {
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--w-55);
+  }
+
+  .headline {
+    margin-top: 44px;
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 72px;
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+    color: var(--white);
+  }
+  .headline > span,
+  .headline {
+    white-space: nowrap;
+  }
+  .headline .accent {
+    display: block;
+    font-style: italic;
+    color: var(--purple-soft);
+    background: linear-gradient(92deg, #A78BFA 0%, #8B5CF6 70%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .body-copy {
+    margin-top: 36px;
+    max-width: 540px;
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--w-55);
+  }
+
+  /* Stats row */
+  .stats-divider {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 100%);
+    margin-bottom: 36px;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, max-content);
+    gap: 88px;
+    align-items: flex-end;
+  }
+  .stat-value {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 72px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .stat-label {
+    margin-top: 14px;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--w-55);
+    letter-spacing: 0;
+  }
+  .stat-0 .stat-value { color: var(--green); }
+  .stat-auto .stat-value { color: var(--teal-soft); }
+  .stat-live .stat-value { color: var(--purple-soft); }
+
+  /* ============== RIGHT COLUMN ============== */
+  .right {
+    position: relative;
+    z-index: 2;
+    padding: 72px 96px 72px 96px;
+  }
+
+  .right-label {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--w-55);
+    margin-bottom: 40px;
+    padding-left: 4px;
+  }
+
+  .diagram {
+    position: relative;
+    display: grid;
+    grid-template-rows: 76px 80px 140px 80px 140px;
+    row-gap: 0;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 38px;
+    align-items: center;
+  }
+
+  /* Tool cards (top row, understated) */
+  .tool-card {
+    height: 76px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(18,47,88,0.55) 0%, rgba(11,37,69,0.55) 100%);
+    border: 1px solid rgba(255,255,255,0.10);
+    display: flex;
+    align-items: center;
+    padding: 0 26px;
+    gap: 18px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset;
+  }
+  .tool-card .icon {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    color: var(--w-55);
+  }
+  .tool-card .label {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--white);
+    letter-spacing: -0.005em;
+  }
+
+  /* Connector rails */
+  .rail {
+    position: relative;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 38px;
+  }
+  .rail-col {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  /* Dotted line: five dots stacked */
+  .dot-line {
+    position: relative;
+    width: 4px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+  }
+  .dot-line::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+  .dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+  }
+  /* The flowing accent dot (animated) */
+  .dot-flow {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 10px 2px currentColor;
+  }
+  .rail-col.purple .dot-flow { color: var(--purple-soft); background: var(--purple-soft); }
+  .rail-col.teal   .dot-flow { color: var(--teal-soft);   background: var(--teal-soft); }
+  .rail-col.blue   .dot-flow { color: var(--blue-glow);   background: var(--blue-glow); }
+
+  /* Central monolith circle (sits over the middle rail) */
+  .monolith-wrap {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(75, 139, 245, 0.30) 0%, rgba(28, 84, 242, 0.10) 55%, rgba(11, 37, 69, 0.6) 100%);
+    border: 1px solid rgba(75, 139, 245, 0.50);
+    display: grid;
+    place-items: center;
+    box-shadow:
+      0 0 32px rgba(75, 139, 245, 0.25),
+      inset 0 0 18px rgba(46, 107, 255, 0.18);
+    z-index: 3;
+  }
+  .monolith-glow {
+    position: absolute;
+    inset: -30px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(75, 139, 245, 0.18) 0%, transparent 65%);
+    z-index: -1;
+    pointer-events: none;
+  }
+  .monolith-wrap svg { width: 44px; height: 44px; display: block; }
+
+  /* Module cards (middle row) */
+  .module {
+    height: 140px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(18,47,88,0.70) 0%, rgba(11,37,69,0.70) 100%);
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    text-align: center;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 12px 28px -20px rgba(0,0,0,0.55);
+  }
+  .module.ava {
+    border-color: rgba(139, 92, 246, 0.35);
+    background: linear-gradient(180deg, rgba(55, 36, 96, 0.55) 0%, rgba(20, 28, 62, 0.70) 100%);
+  }
+  .module.pulse {
+    border-color: rgba(34, 211, 238, 0.20);
+    background: linear-gradient(180deg, rgba(18, 50, 80, 0.65) 0%, rgba(11, 37, 69, 0.70) 100%);
+  }
+  .module.intelligence {
+    border-color: rgba(139, 92, 246, 0.35);
+    background: linear-gradient(180deg, rgba(50, 34, 96, 0.55) 0%, rgba(20, 28, 62, 0.70) 100%);
+  }
+  .module .m-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .module .m-title {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .module.ava .m-title { color: var(--purple-soft); }
+  .module.pulse .m-title { color: var(--teal-soft); }
+  .module.intelligence .m-title { color: var(--purple-soft); }
+  .module .m-sub {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--w-55);
+  }
+
+  /* Outcome cards (bottom row) */
+  .outcome {
+    height: 140px;
+    border-radius: 18px;
+    background: rgba(11, 37, 69, 0.55);
+    border: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+    padding: 0 18px;
+  }
+  .outcome .o-icon {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+  }
+  .outcome.green .o-icon { color: var(--green); }
+  .outcome.infinity .o-icon { color: var(--w-55); }
+  .outcome.bars .o-icon { color: var(--blue-glow); }
+  .outcome .o-title {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--white);
+    letter-spacing: -0.005em;
+  }
+  .outcome .o-sub {
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--w-55);
+    letter-spacing: 0;
+  }
+
+  /* Small icon styling */
+  .icn { display: block; }
+
+</style>
+</head>
+<body>
+
+<div data-composition-id="architecture-loop"
+     data-width="1920" data-height="1080"
+     data-start="0" data-duration="3">
+
+  <div class="bg-glow-left"></div>
+  <div class="bg-glow-right"></div>
+  <div class="bg-dots"></div>
+
+  <!-- ========= LEFT COLUMN ========= -->
+  <div class="left">
+    <div>
+      <div class="eyebrow">ARCHITECTURE</div>
+      <h1 class="headline">
+        Nothing changes.
+        <span class="accent">Everything improves.</span>
+      </h1>
+      <p class="body-copy">
+        Your PMS stays. Your HEP platform stays. Your phone number stays. StrydeOS connects to all of it and adds the layer your practice is missing.
+      </p>
+    </div>
+
+    <div>
+      <div class="stats-divider"></div>
+      <div class="stats">
+        <div class="stat stat-0">
+          <div class="stat-value">0</div>
+          <div class="stat-label">missed calls</div>
+        </div>
+        <div class="stat stat-auto">
+          <div class="stat-value">Auto</div>
+          <div class="stat-label">rebooking</div>
+        </div>
+        <div class="stat stat-live">
+          <div class="stat-value">Live</div>
+          <div class="stat-label">KPIs</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- divider -->
+  <div class="divider"></div>
+
+  <!-- ========= RIGHT COLUMN ========= -->
+  <div class="right">
+    <div class="right-label">YOUR EXISTING TOOLS</div>
+
+    <div class="diagram">
+
+      <!-- Row 1 · tools -->
+      <div class="row">
+        <div class="tool-card">
+          <div class="icon">
+            <svg class="icn" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16v12H4z"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>
+          </div>
+          <div class="label">Your PMS</div>
+        </div>
+        <div class="tool-card">
+          <div class="icon">
+            <svg class="icn" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M8 22l2-6h4l2 6"/><path d="M6 10l6-2 6 2"/><path d="M12 8v8"/></svg>
+          </div>
+          <div class="label">HEP Platform</div>
+        </div>
+        <div class="tool-card">
+          <div class="icon">
+            <svg class="icn" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h3l2 5-2.5 1.5a12 12 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>
+          </div>
+          <div class="label">Phone Service</div>
+        </div>
+      </div>
+
+      <!-- Row 2 · rail (tools -> modules) -->
+      <div class="rail">
+        <div class="rail-col purple">
+          <div class="dot-line">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <div class="dot-flow" id="flow-top-1"></div>
+        </div>
+        <div class="rail-col teal">
+          <div class="dot-line">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <div class="dot-flow" id="flow-top-2"></div>
+        </div>
+        <div class="rail-col purple">
+          <div class="dot-line">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <div class="dot-flow" id="flow-top-3"></div>
+        </div>
+
+        <!-- Monolith sits over the center rail -->
+        <div class="monolith-wrap" id="monolith">
+          <div class="monolith-glow" id="monolith-glow"></div>
+          <!-- Monolith SVG (scaled) -->
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="ml-cont" x1="0.1" y1="0" x2="0.85" y2="1">
+                <stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/>
+                <stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/>
+              </linearGradient>
+              <radialGradient id="ml-rad" cx="28%" cy="24%" r="60%">
+                <stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/>
+                <stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="ml-topface" x1="0.05" y1="1" x2="0.35" y2="0">
+                <stop offset="0%" stop-color="white" stop-opacity="0.55"/>
+                <stop offset="100%" stop-color="white" stop-opacity="0.97"/>
+              </linearGradient>
+              <linearGradient id="ml-rim" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="white" stop-opacity="0"/>
+                <stop offset="28%" stop-color="white" stop-opacity="0.60"/>
+                <stop offset="65%" stop-color="white" stop-opacity="0.12"/>
+                <stop offset="100%" stop-color="white" stop-opacity="0"/>
+              </linearGradient>
+              <clipPath id="ml-pc"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+              <clipPath id="ml-ac"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+            </defs>
+            <rect width="100" height="100" rx="24" fill="url(#ml-cont)"/>
+            <rect width="100" height="100" rx="24" fill="url(#ml-rad)"/>
+            <rect width="100" height="100" rx="24" fill="none" stroke="#4B8BF5" stroke-opacity="0.4" stroke-width="1.2"/>
+            <path d="M 17 21 Q 50 12 83 21" stroke="url(#ml-rim)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+            <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/>
+            <g clip-path="url(#ml-pc)">
+              <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </g>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#ml-topface)" clip-path="url(#ml-ac)"/>
+            <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Row 3 · modules -->
+      <div class="row">
+        <div class="module ava">
+          <div class="m-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V8a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5z"/><path d="M8 11h.01"/><path d="M12 11h.01"/><path d="M16 11h.01"/></svg>
+          </div>
+          <div class="m-title">Ava</div>
+          <div class="m-sub">Calls &rarr; bookings</div>
+        </div>
+        <div class="module pulse">
+          <div class="m-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>
+          </div>
+          <div class="m-title">Pulse</div>
+          <div class="m-sub">Risk &rarr; re-engage</div>
+        </div>
+        <div class="module intelligence">
+          <div class="m-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div class="m-title">Intelligence</div>
+          <div class="m-sub">Data &rarr; KPIs</div>
+        </div>
+      </div>
+
+      <!-- Row 4 · rail (modules -> outcomes) -->
+      <div class="rail">
+        <div class="rail-col purple">
+          <div class="dot-line">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <div class="dot-flow" id="flow-bot-1"></div>
+        </div>
+        <div class="rail-col teal">
+          <div class="dot-line">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <div class="dot-flow" id="flow-bot-2"></div>
+        </div>
+        <div class="rail-col purple">
+          <div class="dot-line">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <div class="dot-flow" id="flow-bot-3"></div>
+        </div>
+      </div>
+
+      <!-- Row 5 · outcomes -->
+      <div class="row">
+        <div class="outcome green">
+          <div class="o-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h3l2 5-2.5 1.5a12 12 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/><path d="M17 3c2.5 0 4 1.5 4 4"/><path d="M17 7c0.8 0 1.5 0.5 1.5 1.5"/></svg>
+          </div>
+          <div class="o-title">zero missed calls</div>
+          <div class="o-sub">24/7 availability</div>
+        </div>
+        <div class="outcome infinity">
+          <div class="o-icon">
+            <svg width="34" height="22" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10c0-3 2.5-6 6-6s6 3 6 6 2.5 6 6 6 6-3 6-6-2.5-6-6-6-6 3-6 6-2.5 6-6 6-6-3-6-6z"/></svg>
+          </div>
+          <div class="o-title">retention cycles</div>
+          <div class="o-sub">automated re-engagement</div>
+        </div>
+        <div class="outcome bars">
+          <div class="o-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20v-4"/><path d="M12 20v-8"/><path d="M18 20v-12"/><path d="M6 20h14"/></svg>
+          </div>
+          <div class="o-title">live dashboards</div>
+          <div class="o-sub">per clinician, per metric</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script>
+  window.__timelines = window.__timelines || {};
+
+  const DURATION = 3;
+  const tl = gsap.timeline({ paused: true });
+
+  /* ---- 1. Background glow breathe (one full cycle to loop cleanly) ---- */
+  tl.fromTo(".bg-glow-left",
+    { opacity: 0.85 },
+    { opacity: 1.0, duration: DURATION / 2, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0);
+  tl.fromTo(".bg-glow-right",
+    { opacity: 0.90 },
+    { opacity: 1.0, duration: DURATION / 2, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0);
+
+  /* ---- 2. Monolith breathe (scale + glow) one cycle over 3s ---- */
+  tl.fromTo("#monolith",
+    { scale: 1 },
+    { scale: 1.035, duration: DURATION / 2, ease: "sine.inOut", yoyo: true, repeat: 1, transformOrigin: "50% 50%" }, 0);
+  tl.fromTo("#monolith-glow",
+    { opacity: 0.85, scale: 0.96 },
+    { opacity: 1, scale: 1.06, duration: DURATION / 2, ease: "sine.inOut", yoyo: true, repeat: 1, transformOrigin: "50% 50%" }, 0);
+
+  /* ---- 3. Flowing dots along each connector rail ---- *
+   *  Each rail is roughly 80px tall (row 2 & row 4 grid-template-rows).
+   *  Dot travels from top (0%) to bottom (100%) with opacity ramp so the
+   *  transition point at loop boundary is invisible.
+   *  We run 2 full passes per rail across 3s (1.5s per pass) with a stagger
+   *  so they don't all fire simultaneously.
+   */
+  const TOP_RAIL_H = 80;    // row 2 height
+  const BOT_RAIL_H = 80;    // row 4 height
+  const CYCLES = 2;         // passes per 3s
+  const CYCLE_DUR = DURATION / CYCLES;
+
+  function addFlow(selector, railHeight, startOffset) {
+    // Each flow element animates y from -4px to railHeight+4px
+    // repeated CYCLES-1 times after the first (total CYCLES passes)
+    tl.fromTo(selector,
+      { y: -6, opacity: 0 },
+      {
+        y: railHeight + 6,
+        opacity: 1,
+        duration: CYCLE_DUR * 0.85,
+        ease: "none",
+        repeat: CYCLES - 1,
+        repeatRefresh: false,
+        keyframes: [
+          { opacity: 0, y: -6, duration: 0 },
+          { opacity: 1, duration: 0.15 },
+          { opacity: 1, duration: 0.55 },
+          { opacity: 0, y: railHeight + 6, duration: 0.15 }
+        ]
+      },
+      startOffset);
+    // Reset at each cycle boundary for next pass
+  }
+
+  // Simpler: use repeat with fromTo and a cycle-length of CYCLE_DUR
+  // The previous fromTo already handles the repeat correctly.
+
+  // Top rail: three columns, staggered start
+  addFlow("#flow-top-1", TOP_RAIL_H, 0.00);
+  addFlow("#flow-top-2", TOP_RAIL_H, 0.15);
+  addFlow("#flow-top-3", TOP_RAIL_H, 0.30);
+
+  // Bottom rail: offset so flow feels continuous (dots pass through monolith)
+  addFlow("#flow-bot-1", BOT_RAIL_H, 0.45);
+  addFlow("#flow-bot-2", BOT_RAIL_H, 0.60);
+  addFlow("#flow-bot-3", BOT_RAIL_H, 0.75);
+
+  /* ---- 4. Subtle pulse on the modules so the loop has a heartbeat ---- */
+  tl.fromTo(".module.ava",
+    { filter: "brightness(0.96)" },
+    { filter: "brightness(1.04)", duration: DURATION / 2, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0.2);
+  tl.fromTo(".module.intelligence",
+    { filter: "brightness(0.96)" },
+    { filter: "brightness(1.04)", duration: DURATION / 2, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0.7);
+
+  window.__timelines["architecture-loop"] = tl;
+</script>
+</body>
+</html>

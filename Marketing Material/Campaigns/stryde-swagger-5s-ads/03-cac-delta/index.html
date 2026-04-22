@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stryde Ad 03 · CAC Delta</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B2545;
+    --navy-deep: #060F1E;
+    --blue-glow: #4B8BF5;
+    --green: #059669;
+    --green-soft: #34D399;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1080px;
+    height: 1920px;
+    overflow: hidden;
+    background: var(--navy-deep);
+  }
+
+  [data-composition-id="ad03-cac-delta"] {
+    width: 1080px;
+    height: 1920px;
+    position: relative;
+    overflow: hidden;
+    background: var(--navy-deep);
+    font-family: 'Outfit', -apple-system, sans-serif;
+    color: white;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Background stack */
+  .bg-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .glow-green {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 55% 40% at 55% 60%, rgba(52, 211, 153, 0.13) 0%, transparent 70%);
+  }
+
+  .glow-blue {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 40% 30% at 20% 15%, rgba(75, 139, 245, 0.08) 0%, transparent 65%);
+  }
+
+  .dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1.4px, transparent 1.4px);
+    background-size: 32px 32px;
+    opacity: 0.85;
+  }
+
+  /* Content */
+  .scene-content {
+    width: 100%;
+    height: 100%;
+    padding: 150px 80px 120px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .eyebrow {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--green-soft);
+    margin-bottom: 80px;
+  }
+
+  .stat-row {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 128px;
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .stat-white {
+    color: white;
+  }
+
+  .arrow-down {
+    width: 6px;
+    height: 60px;
+    margin: 10px 0 18px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(52, 211, 153, 0.5));
+    border-radius: 3px;
+    position: relative;
+  }
+
+  .arrow-down::after {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 18px solid var(--green-soft);
+  }
+
+  .stat-green {
+    background: linear-gradient(135deg, var(--green-soft), var(--green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .punchline {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 104px;
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    text-align: center;
+    margin-top: 64px;
+    background: linear-gradient(135deg, var(--green-soft), var(--green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .small-print {
+    font-size: 28px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.55);
+    text-align: center;
+    line-height: 1.45;
+    margin-top: 56px;
+    max-width: 780px;
+    letter-spacing: -0.005em;
+  }
+
+  .small-print strong {
+    color: rgba(255,255,255,0.85);
+    font-weight: 600;
+  }
+
+  .endcard {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .monolith { width: 140px; height: 140px; }
+
+  .endcard-url {
+    font-size: 30px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.01em;
+  }
+
+  .endcard-tag {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--green-soft);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div
+  id="ad03"
+  data-composition-id="ad03-cac-delta"
+  data-start="0"
+  data-duration="5"
+  data-track-index="0"
+  data-width="1080"
+  data-height="1920">
+
+  <div class="bg-layer">
+    <div class="glow-green" id="a3-glow1"></div>
+    <div class="glow-blue" id="a3-glow2"></div>
+    <div class="dots"></div>
+  </div>
+
+  <div class="scene-content">
+
+    <div class="eyebrow" id="a3-eyebrow">CAC Delta &middot; PPB 2026</div>
+
+    <div class="stat-row stat-white" id="a3-stat-top">&pound;200K clinic.</div>
+
+    <div class="arrow-down" id="a3-arrow"></div>
+
+    <div class="stat-row stat-green" id="a3-stat-bottom">&pound;328K clinic.</div>
+
+    <div class="punchline" id="a3-punchline">Same postcode.</div>
+
+    <div class="small-print" id="a3-smallprint">
+      <strong>&pound;128K delta.</strong> Only 25.8% of owners track their CAC.<br>
+      The ones who do sit on the other side of the gap.
+    </div>
+
+    <div class="endcard" id="a3-endcard">
+      <div class="monolith">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="140" height="140">
+          <defs>
+            <linearGradient id="a3-cont" x1="0.1" y1="0" x2="0.85" y2="1">
+              <stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/>
+              <stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/>
+            </linearGradient>
+            <radialGradient id="a3-rad" cx="28%" cy="24%" r="60%">
+              <stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/>
+              <stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="a3-topface" x1="0.05" y1="1" x2="0.35" y2="0">
+              <stop offset="0%" stop-color="white" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="white" stop-opacity="0.97"/>
+            </linearGradient>
+            <linearGradient id="a3-rim" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="white" stop-opacity="0"/>
+              <stop offset="28%" stop-color="white" stop-opacity="0.60"/>
+              <stop offset="65%" stop-color="white" stop-opacity="0.12"/>
+              <stop offset="100%" stop-color="white" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="a3-border" x1="0.1" y1="0" x2="0.4" y2="1">
+              <stop offset="0%" stop-color="#7ABBFF" stop-opacity="0.65"/>
+              <stop offset="100%" stop-color="#1C54F2" stop-opacity="0.06"/>
+            </linearGradient>
+            <clipPath id="a3-pc"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+            <clipPath id="a3-ac"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+          </defs>
+          <rect width="100" height="100" rx="24" fill="url(#a3-cont)"/>
+          <rect width="100" height="100" rx="24" fill="url(#a3-rad)"/>
+          <rect width="100" height="100" rx="24" fill="none" stroke="url(#a3-border)" stroke-width="1.2"/>
+          <path d="M 17 21 Q 50 12 83 21" stroke="url(#a3-rim)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+          <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/>
+          <g clip-path="url(#a3-pc)">
+            <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </g>
+          <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#a3-topface)" clip-path="url(#a3-ac)"/>
+          <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="endcard-url">strydeos.com</div>
+      <div class="endcard-tag">Acquisition analytics, standard</div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script>
+  window.__timelines = window.__timelines || {};
+  const tl = gsap.timeline({ paused: true });
+
+  // Ambient glow pulses
+  tl.fromTo("#a3-glow1",
+    { scale: 1.0 },
+    { scale: 1.05, duration: 2.5, yoyo: true, repeat: 1, ease: "sine.inOut", transformOrigin: "55% 60%" },
+    0
+  );
+  tl.fromTo("#a3-glow2",
+    { scale: 1.0 },
+    { scale: 1.06, duration: 2.5, yoyo: true, repeat: 1, ease: "sine.inOut", transformOrigin: "20% 15%" },
+    0.2
+  );
+
+  // Beat 0.15-0.55s - eyebrow
+  tl.from("#a3-eyebrow", { opacity: 0, y: 12, duration: 0.4, ease: "power2.out" }, 0.15);
+
+  // Beat 1 · 0.35-1.05s - "£200K clinic."
+  tl.from("#a3-stat-top",
+    { opacity: 0, y: 30, duration: 0.55, ease: "power3.out" },
+    0.35
+  );
+
+  // Beat 1b · 0.85s - arrow grows from top
+  tl.from("#a3-arrow",
+    { scaleY: 0, opacity: 0, duration: 0.45, ease: "power2.out", transformOrigin: "50% 0%" },
+    0.85
+  );
+
+  // Beat 2 · 1.15-1.80s - "£328K clinic." with green gradient
+  tl.from("#a3-stat-bottom",
+    { opacity: 0, y: 30, duration: 0.60, ease: "power3.out" },
+    1.15
+  );
+
+  // Beat 3 · 2.15-2.90s - "Same postcode." slam
+  tl.from("#a3-punchline",
+    { opacity: 0, y: 44, scale: 0.95, duration: 0.70, ease: "expo.out" },
+    2.15
+  );
+
+  // Beat 4 · 3.20-3.85s - small print reveal
+  tl.from("#a3-smallprint",
+    { opacity: 0, y: 18, duration: 0.60, ease: "power2.out" },
+    3.20
+  );
+
+  // Beat 5 · 4.20s - end-card
+  tl.from("#a3-endcard",
+    { opacity: 0, y: 22, duration: 0.65, ease: "power2.out" },
+    4.20
+  );
+
+  window.__timelines["ad03-cac-delta"] = tl;
+</script>
+
+</body>
+</html>

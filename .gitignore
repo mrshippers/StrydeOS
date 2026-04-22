@@ -39,6 +39,9 @@ ALL CLAUDE PARTY/
 .claude/
 .cursor/
 
+# Personal working files (per CLAUDE.md: no working files in root)
+To do/
+
 # Screenshots and one-off images at repo root
 *.png
 *.jpg

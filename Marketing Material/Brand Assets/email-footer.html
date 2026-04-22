@@ -18,10 +18,19 @@
   .section-title { font-size: 28px; font-weight: 700; color: white; margin-bottom: 6px; }
   .section-desc { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 32px; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .card-cream { background: var(--cream); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+  .sig-card { background: #FFFFFF; border-radius: 16px; padding: 32px; box-shadow: 0 1px 0 rgba(255,255,255,0.04); }
   .option-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  .sig-marker { font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #C7C2BA; margin-top: 20px; padding-top: 12px; border-top: 1px dashed #E5E1DA; }
   .version-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 50px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; text-transform: uppercase; }
-  .copy-hint { margin-top: 28px; padding: 14px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; font-size: 12px; color: rgba(255,255,255,0.35); line-height: 1.6; }
+  .copy-hint { margin-top: 28px; padding: 14px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.7; }
+  .copy-hint strong { color: rgba(255,255,255,0.9); font-weight: 600; }
+  .copy-hint code { background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; font-family: 'SF Mono', Menlo, monospace; font-size: 11px; color: var(--blue-glow); }
+  .install-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 20px; }
+  .install-card { padding: 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; }
+  .install-card h4 { font-size: 12px; font-weight: 600; color: white; margin-bottom: 10px; letter-spacing: -0.01em; }
+  .install-card ol { font-size: 11.5px; color: rgba(255,255,255,0.6); line-height: 1.7; padding-left: 16px; }
+  .install-card ol li { margin-bottom: 4px; }
+  .install-card code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-family: 'SF Mono', Menlo, monospace; font-size: 10.5px; color: var(--blue-glow); }
 </style>
 </head>
 <body>
@@ -55,89 +64,181 @@
       </svg>
       <span style="font-weight:700;font-size:17px;letter-spacing:-0.02em">Stryde<span style="color:var(--blue-glow)">OS</span></span>
     </div>
-    <span class="version-badge">Email Signatures · v1.0</span>
+    <span class="version-badge">Email Signatures · v1.1</span>
   </div>
 
   <div class="section-label">04 — Email Signatures</div>
   <div class="section-title">Email Footer</div>
-  <div class="section-desc">Founder signature (personal) and system signature (automated comms).</div>
+  <div class="section-desc">White-background, table-based signatures. Select the block inside the dashed marker, copy, paste into iCloud Mail.</div>
 
   <div class="grid-2">
 
     <!-- OPTION A: FOUNDER -->
-    <div class="card-cream">
-      <div class="option-label">Option A · Founder</div>
-      <div style="border-top:3px solid var(--blue);padding-top:16px;display:flex;gap:14px;align-items:flex-start">
-        <svg width="44" height="44" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
-          <defs>
-            <linearGradient id="fa-c" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient>
-            <radialGradient id="fa-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
-            <linearGradient id="fa-t" x1="0.05" y1="1" x2="0.35" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0.55"/><stop offset="100%" stop-color="white" stop-opacity="0.97"/></linearGradient>
-            <clipPath id="fa-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
-            <clipPath id="fa-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
-          </defs>
-          <rect width="100" height="100" rx="24" fill="url(#fa-c)"/>
-          <rect width="100" height="100" rx="24" fill="url(#fa-r)"/>
-          <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
-          <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/>
-          <g clip-path="url(#fa-p)">
-            <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-          </g>
-          <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#fa-t)" clip-path="url(#fa-a)"/>
-          <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
-        </svg>
-        <div style="border-left:2px solid var(--blue);padding-left:12px">
-          <div style="font-weight:600;font-size:14px;color:var(--ink)">Jamal</div>
-          <div style="font-size:12px;color:var(--muted)">Founder · StrydeOS</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">Spires Physiotherapy · London</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;font-style:italic">Built for clinical precision.</div>
-          <div style="font-size:12px;margin-top:6px"><a href="https://strydeos.com" style="color:var(--blue);text-decoration:none">strydeos.com</a></div>
-        </div>
-      </div>
+    <div class="sig-card">
+      <div class="option-label">Option A · Founder · jamal@strydeos.com</div>
+
+      <!-- =========== SIGNATURE BLOCK START · Option A =========== -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:#FFFFFF;font-family:'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+        <tr>
+          <td style="padding-top:16px;border-top:3px solid #1C54F2;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+              <tr>
+                <td valign="top" style="vertical-align:top;padding-right:14px;width:44px;">
+                  <svg width="44" height="44" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+                    <defs>
+                      <linearGradient id="fa-c" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient>
+                      <radialGradient id="fa-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+                      <linearGradient id="fa-t" x1="0.05" y1="1" x2="0.35" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0.55"/><stop offset="100%" stop-color="white" stop-opacity="0.97"/></linearGradient>
+                      <clipPath id="fa-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+                      <clipPath id="fa-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+                    </defs>
+                    <rect width="100" height="100" rx="24" fill="url(#fa-c)"/>
+                    <rect width="100" height="100" rx="24" fill="url(#fa-r)"/>
+                    <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+                    <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/>
+                    <g clip-path="url(#fa-p)">
+                      <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                    <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#fa-t)" clip-path="url(#fa-a)"/>
+                    <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+                  </svg>
+                </td>
+                <td valign="top" style="vertical-align:top;border-left:2px solid #1C54F2;padding-left:12px;">
+                  <div style="font-weight:600;font-size:14px;color:#111827;line-height:1.35;margin:0;">Jamal</div>
+                  <div style="font-size:12px;color:#6B7280;line-height:1.5;margin:0;">Founder &middot; StrydeOS</div>
+                  <div style="font-size:12px;color:#6B7280;line-height:1.5;margin-top:2px;">Spires Physiotherapy &middot; London</div>
+                  <div style="font-size:11px;color:#6B7280;line-height:1.5;margin-top:4px;font-style:italic;">Built for clinical precision.</div>
+                  <div style="font-size:12px;line-height:1.5;margin-top:6px;">
+                    <a href="mailto:jamal@strydeos.com" style="color:#1C54F2;text-decoration:none;">jamal@strydeos.com</a>
+                    <span style="color:#C7C2BA;padding:0 6px;">&middot;</span>
+                    <a href="https://strydeos.com" style="color:#1C54F2;text-decoration:none;">strydeos.com</a>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+      <!-- ============ SIGNATURE BLOCK END · Option A ============ -->
+
+      <div class="sig-marker">Select above &middot; Copy &middot; Paste into iCloud</div>
     </div>
 
     <!-- OPTION B: SYSTEM -->
-    <div class="card-cream">
-      <div class="option-label">Option B · System</div>
-      <div style="border-top:3px solid var(--blue);padding-top:16px;text-align:center">
-        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px">
-          <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="sb-c" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient>
-              <radialGradient id="sb-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
-              <clipPath id="sb-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
-              <clipPath id="sb-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
-            </defs>
-            <rect width="100" height="100" rx="24" fill="url(#sb-c)"/>
-            <rect width="100" height="100" rx="24" fill="url(#sb-r)"/>
-            <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
-            <g clip-path="url(#sb-p)">
-              <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-              <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-            <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.85" clip-path="url(#sb-a)"/>
-            <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
-          </svg>
-          <span style="font-weight:700;font-size:14px;color:var(--navy);letter-spacing:-0.02em">Stryde<span style="color:var(--blue)">OS</span></span>
-        </div>
-        <div style="font-size:11px;color:var(--muted)">The Clinic OS for private practice</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:3px;font-style:italic">Built for clinical precision.</div>
-        <div style="font-size:11px;margin-top:6px"><a href="https://strydeos.com" style="color:var(--blue);text-decoration:none">strydeos.com</a></div>
-      </div>
+    <div class="sig-card">
+      <div class="option-label">Option B · System · hello@strydeos.com</div>
+
+      <!-- =========== SIGNATURE BLOCK START · Option B =========== -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background:#FFFFFF;font-family:'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+        <tr>
+          <td align="center" style="text-align:center;padding-top:16px;border-top:3px solid #1C54F2;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="border-collapse:collapse;margin:0 auto 6px auto;">
+              <tr>
+                <td valign="middle" style="vertical-align:middle;padding-right:8px;">
+                  <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+                    <defs>
+                      <linearGradient id="sb-c" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient>
+                      <radialGradient id="sb-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+                      <clipPath id="sb-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+                      <clipPath id="sb-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+                    </defs>
+                    <rect width="100" height="100" rx="24" fill="url(#sb-c)"/>
+                    <rect width="100" height="100" rx="24" fill="url(#sb-r)"/>
+                    <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+                    <g clip-path="url(#sb-p)">
+                      <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                      <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                    <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.85" clip-path="url(#sb-a)"/>
+                    <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+                  </svg>
+                </td>
+                <td valign="middle" style="vertical-align:middle;">
+                  <span style="font-weight:700;font-size:14px;color:#0B2545;letter-spacing:-0.02em;">Stryde<span style="color:#1C54F2;">OS</span></span>
+                </td>
+              </tr>
+            </table>
+            <div style="font-size:11px;color:#6B7280;line-height:1.5;">The Clinic OS for private practice</div>
+            <div style="font-size:11px;color:#6B7280;margin-top:3px;font-style:italic;line-height:1.5;">Built for clinical precision.</div>
+            <div style="font-size:11px;line-height:1.5;margin-top:6px;">
+              <a href="mailto:hello@strydeos.com" style="color:#1C54F2;text-decoration:none;">hello@strydeos.com</a>
+              <span style="color:#C7C2BA;padding:0 6px;">&middot;</span>
+              <a href="https://strydeos.com" style="color:#1C54F2;text-decoration:none;">strydeos.com</a>
+            </div>
+          </td>
+        </tr>
+      </table>
+      <!-- ============ SIGNATURE BLOCK END · Option B ============ -->
+
+      <div class="sig-marker">Select above &middot; Copy &middot; Paste into iCloud</div>
     </div>
 
   </div>
 
   <div class="copy-hint">
-    <strong style="color:rgba(255,255,255,0.6)">Usage:</strong> Copy the signature block and paste into Gmail → Settings → Signature. Both options use the canonical Monolith mark — Option A for personal outbound, Option B for system/automated emails.
+    <strong>Why white, not cream:</strong> iCloud Mail, Gmail, and Outlook all render on a white canvas. The cream card previously leaked a visible off-white rectangle when the rest of the email was white. These signatures now sit on <code>#FFFFFF</code> with no container background, so they read as native message content on every client.
+  </div>
+
+  <div class="section-label" style="margin-top:48px;">05 — Installation</div>
+  <div class="section-title">How to install in iCloud Mail</div>
+  <div class="section-desc">Three paths. Pick the one that matches how you send mail day-to-day.</div>
+
+  <div class="install-grid">
+
+    <div class="install-card">
+      <h4>A &middot; iCloud Mail (web)</h4>
+      <ol>
+        <li>Open this file in <strong>Safari</strong> (Chrome mangles the SVG gradients on paste).</li>
+        <li>Click just before the blue top-bar of the signature you want, then shift-click just after <code>strydeos.com</code> to select the whole block.</li>
+        <li><code>Cmd + C</code> to copy.</li>
+        <li>In iCloud Mail, hit the <strong>gear icon</strong> (top left) &rarr; <strong>Preferences</strong> &rarr; <strong>Composing</strong>.</li>
+        <li>Tick <strong>Add a signature</strong>.</li>
+        <li>Click the signature box and <code>Cmd + V</code> to paste.</li>
+        <li><strong>Done</strong>. Send yourself a test from <code>iCloud Mail</code> &rarr; check it renders in iOS Mail too.</li>
+      </ol>
+    </div>
+
+    <div class="install-card">
+      <h4>B &middot; Apple Mail (Mac)</h4>
+      <ol>
+        <li>Mail &rarr; <strong>Settings</strong> &rarr; <strong>Signatures</strong>.</li>
+        <li>Pick the <code>@icloud.com</code> account on the left.</li>
+        <li>Click <strong>+</strong>, name it <code>StrydeOS</code>, type any placeholder.</li>
+        <li>Uncheck <strong>Always match my default message font</strong>.</li>
+        <li>Open this file in Safari, select and copy the signature block, return to Mail, paste over the placeholder.</li>
+        <li>At the bottom, set <strong>Choose Signature</strong> &rarr; <code>StrydeOS</code> for that account.</li>
+        <li>If the logo shows blank: close Mail, lock the file at <code>~/Library/Mail/V10/MailData/Signatures/*.mailsignature</code>, reopen Mail.</li>
+      </ol>
+    </div>
+
+    <div class="install-card">
+      <h4>C &middot; iOS Mail (iPhone)</h4>
+      <ol>
+        <li>Setting a signature per-account happens on the phone itself.</li>
+        <li>On Mac, after setup A or B, sign in to iCloud Mail on iPhone via <strong>Safari</strong>.</li>
+        <li>Long-press the rendered signature in a sent email, <strong>Select All</strong>, <strong>Copy</strong>.</li>
+        <li><strong>Settings</strong> &rarr; <strong>Mail</strong> &rarr; <strong>Signature</strong> &rarr; <strong>Per Account</strong>.</li>
+        <li>Paste into the iCloud field. Shake to undo if it strips styling, then try again via the iOS Mail signature field directly.</li>
+        <li>Plain-text fallback for iOS if styling keeps breaking: <code>Jamal &middot; Founder, StrydeOS &middot; strydeos.com</code>.</li>
+      </ol>
+    </div>
+
+  </div>
+
+  <div class="copy-hint" style="margin-top:20px;">
+    <strong>Two addresses, two signatures:</strong> Use <code>jamal@strydeos.com</code> with <strong>Option A</strong> for anything personal / outbound sales / founder replies. Use <code>hello@strydeos.com</code> with <strong>Option B</strong> for support, system, and general inbound. In iCloud Mail, set a different signature per address under <strong>Composing</strong> &rarr; <strong>Signature</strong> &rarr; pick the address from the dropdown above the text field.
+  </div>
+
+  <div class="copy-hint" style="margin-top:14px;">
+    <strong>Outlook caveat:</strong> If you ever expect recipients on Outlook desktop (Windows), swap the inline SVG logo for a hosted PNG <code>&lt;img&gt;</code> tag &mdash; Outlook's Word-based renderer ignores SVG. Not a problem for iCloud-to-iCloud, Gmail, Apple Mail, or any modern webmail.
   </div>
 
   <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:20px;margin-top:48px;display:flex;justify-content:space-between">
-    <div style="font-size:11px;color:rgba(255,255,255,0.2)">© 2026 StrydeOS Ltd. All rights reserved.</div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.2)">Email Signatures v1.0 · Confidential</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.2)">&copy; 2026 StrydeOS Ltd. All rights reserved.</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.2)">Email Signatures v1.1 &middot; Confidential</div>
   </div>
 
 </div>
