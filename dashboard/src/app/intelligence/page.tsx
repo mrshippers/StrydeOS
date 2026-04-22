@@ -651,7 +651,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
 
 export default function IntelligencePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("insights");
   const [selectedClinician, setSelectedClinician] = useState("all");
   const [expandedClinician, setExpandedClinician] = useState<string | null>(null);
@@ -667,20 +667,41 @@ export default function IntelligencePage() {
     setRefreshing(true);
     setRefreshResult(null);
     try {
-      const res = await fetch("/api/pipeline/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Unknown error" }));
-        setRefreshResult(`Sync failed: ${err.error ?? res.statusText}`);
-      } else {
-        setRefreshResult("Data synced — reloading…");
-        setTimeout(() => router.refresh(), 1500);
+      if (!firebaseUser) {
+        setRefreshResult("Sync failed: sign in required");
+        return;
       }
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch("/api/pipeline/run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const message = (data && typeof data === "object" && "error" in data ? (data as { error?: string }).error : null) ?? res.statusText ?? "Unknown error";
+        setRefreshResult(`Sync failed: ${message}`);
+        return;
+      }
+      // Pipeline returns ok=true but may still surface stage errors (PMS misconfigured, etc)
+      const stages = (data && typeof data === "object" && "stages" in data ? (data as { stages?: Array<{ ok?: boolean; errors?: string[] }> }).stages : undefined) ?? [];
+      const stageErrors = stages.flatMap((s) => (s.ok ? [] : (s.errors ?? []))).filter(Boolean);
+      if (stageErrors.length > 0) {
+        setRefreshResult(`Sync finished with warnings: ${stageErrors[0]}`);
+        setTimeout(() => router.refresh(), 2500);
+        return;
+      }
+      setRefreshResult("Data synced — reloading…");
+      setTimeout(() => router.refresh(), 1500);
     } catch (e) {
       setRefreshResult(`Sync failed: ${e instanceof Error ? e.message : "Network error"}`);
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [firebaseUser, router]);
 
   const {
     revByClinician,
@@ -811,7 +832,7 @@ export default function IntelligencePage() {
           unit={reputationDemoFallback && !usedDemo ? "" : `${reviews.avgRating} avg`}
           status={reputationDemoFallback && !usedDemo ? "neutral" : "ok"}
           insight={reputationDemoFallback && !usedDemo ? "Connect your Google Business Profile" : `${reviews.monthlyVelocity.length > 0 ? reviews.monthlyVelocity[reviews.monthlyVelocity.length - 1].count : 0} this month`}
-          action={reputationDemoFallback && !usedDemo ? { label: "Set up in Reputation tab", onClick: () => setActiveTab("reputation") } : undefined}
+          action={reputationDemoFallback && !usedDemo ? { label: "Connect in Settings", onClick: () => router.push("/settings#reviews") } : undefined}
         />
         <StatCard
           label="Referral Conv."
@@ -1490,17 +1511,37 @@ export default function IntelligencePage() {
                     <div>
                       <p className="text-sm font-medium text-navy">Google Reviews — needs your Place ID</p>
                       <p className="text-xs text-muted">
-                        To pull in your Google Business reviews, add your Google Place ID in Settings.
-                        Find it at{" "}
-                        <a href="https://developers.google.com/maps/documentation/places/web-service/place-id-finder" target="_blank" rel="noopener noreferrer" className="text-blue hover:underline">
-                          Google's Place ID Finder
+                        To pull in your Google Business reviews, paste your Google Place ID into{" "}
+                        <button
+                          type="button"
+                          onClick={() => router.push("/settings#reviews")}
+                          className="text-blue hover:underline font-medium"
+                        >
+                          Settings
+                        </button>
+                        . Look yours up at{" "}
+                        <a
+                          href="https://developers.google.com/maps/documentation/places/web-service/place-id"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue hover:underline"
+                        >
+                          Google&apos;s Place ID Finder
                         </a>
-                        {" "}— search your clinic name and copy the ID.
+                        {" "}— search your clinic name and copy the ID (starts with <span className="font-mono">ChIJ</span>).
                       </p>
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-muted">
+                <button
+                  type="button"
+                  onClick={() => router.push("/settings#reviews")}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white bg-purple hover:opacity-90 transition-opacity"
+                >
+                  <Star size={12} />
+                  Connect in Settings
+                </button>
+                <p className="text-xs text-muted mt-3">
                   NPS data appears once your first patients respond — usually within a week of going live.
                 </p>
               </div>

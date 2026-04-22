@@ -20,9 +20,17 @@ export interface GoogleReview {
 }
 
 interface PlaceDetailsResponse {
+  displayName?: { text: string; languageCode?: string };
   reviews?: GoogleReview[];
   rating?: number;
   userRatingCount?: number;
+}
+
+export interface PlaceSummary {
+  displayName: string;
+  rating: number | null;
+  userRatingCount: number | null;
+  reviews: GoogleReview[];
 }
 
 export class GooglePlacesClient {
@@ -32,8 +40,14 @@ export class GooglePlacesClient {
     this.apiKey = apiKey;
   }
 
-  async getPlaceReviews(placeId: string): Promise<GoogleReview[]> {
-    const url = `${PLACES_BASE}/places/${encodeURIComponent(placeId)}?fields=reviews,rating,userRatingCount&key=${this.apiKey}`;
+  /**
+   * Fetches the place summary: aggregate rating, total review count, display
+   * name, and the (up to 5) most recent reviews Google exposes on its API.
+   * The Places API (New) caps reviews per response at 5; the aggregate count
+   * is how we surface the "real" 147 total.
+   */
+  async getPlaceSummary(placeId: string): Promise<PlaceSummary> {
+    const url = `${PLACES_BASE}/places/${encodeURIComponent(placeId)}?fields=displayName,reviews,rating,userRatingCount&key=${this.apiKey}`;
 
     const res = await fetch(url, {
       headers: { "Content-Type": "application/json" },
@@ -46,7 +60,18 @@ export class GooglePlacesClient {
     }
 
     const data: PlaceDetailsResponse = await res.json();
-    return data.reviews ?? [];
+    return {
+      displayName: data.displayName?.text ?? "",
+      rating: typeof data.rating === "number" ? data.rating : null,
+      userRatingCount: typeof data.userRatingCount === "number" ? data.userRatingCount : null,
+      reviews: data.reviews ?? [],
+    };
+  }
+
+  /** @deprecated Prefer getPlaceSummary, which returns aggregate stats too. */
+  async getPlaceReviews(placeId: string): Promise<GoogleReview[]> {
+    const summary = await this.getPlaceSummary(placeId);
+    return summary.reviews;
   }
 
   async testConnection(placeId: string): Promise<{ ok: boolean; error?: string }> {

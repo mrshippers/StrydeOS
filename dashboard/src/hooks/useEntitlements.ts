@@ -2,13 +2,15 @@
  * useEntitlements — client-side module access check.
  *
  * Access order:
- *   0. Superadmin → all modules open (no billing gate)
- *   1. Trial active → all modules open
- *   2. featureFlags from Stripe subscription → per-module
- *   3. Neither → locked (ModuleGuard shows LockedModulePage)
+ *   0. Demo user (uid "demo") → all modules open (synthetic data, no real billing)
+ *   1. Superadmin → all modules open (no billing gate)
+ *   2. Trial active → per-module based on trialModule
+ *   3. featureFlags from Stripe subscription → per-module
+ *   4. None of the above → locked (ModuleGuard shows LockedModulePage)
  *
- * The source of truth for featureFlags is set by the Stripe webhook.
- * The source of truth for trialStartedAt is the Firestore clinic doc.
+ * Demo is not a trial and not a subscription — it's a preview mode. Treat it
+ * as first-class so every downstream UI (billing, banners, guards) can branch
+ * on `isDemo` instead of pretending the clinic has an active subscription.
  */
 
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +27,7 @@ export interface Entitlements {
   loading: boolean;
   trialActive: boolean;
   trialDaysRemaining: number | null;
+  isDemo: boolean;
   hasModule: (module: ModuleKey) => boolean;
 }
 
@@ -34,9 +37,11 @@ export function useEntitlements(): Entitlements {
   const trialStartedAt = user?.clinicProfile?.trialStartedAt ?? null;
   const trialModule: string | null = user?.clinicProfile?.trialModule ?? null;
   const isSuperadmin = user?.role === "superadmin";
+  const isDemo = user?.uid === "demo";
 
-  const trialActive = isTrialActive(trialStartedAt);
-  const daysLeft = computeDaysRemaining(trialStartedAt);
+  // Demo mode is a preview of the full product — never treat as a trial.
+  const trialActive = !isDemo && isTrialActive(trialStartedAt);
+  const daysLeft = isDemo ? null : computeDaysRemaining(trialStartedAt);
 
   // Trial grants access to selected module only (fullstack = all three)
   function trialGrantsModule(module: ModuleKey): boolean {
@@ -45,12 +50,13 @@ export function useEntitlements(): Entitlements {
     return trialModule === module;
   }
 
-  // Superadmin bypasses all billing; owners are subject to trial + Stripe flags
-  const hasIntelligence = isSuperadmin || trialGrantsModule("intelligence") || (flags?.intelligence ?? false);
-  const hasPulse        = isSuperadmin || trialGrantsModule("pulse")        || (flags?.continuity ?? false);
-  const hasAva          = isSuperadmin || trialGrantsModule("ava")          || (flags?.receptionist ?? false);
+  // Demo + superadmin bypass all billing gating.
+  const hasIntelligence = isDemo || isSuperadmin || trialGrantsModule("intelligence") || (flags?.intelligence ?? false);
+  const hasPulse        = isDemo || isSuperadmin || trialGrantsModule("pulse")        || (flags?.continuity ?? false);
+  const hasAva          = isDemo || isSuperadmin || trialGrantsModule("ava")          || (flags?.receptionist ?? false);
 
   function hasModule(module: ModuleKey): boolean {
+    if (isDemo) return true;
     if (isSuperadmin) return true;
     if (trialGrantsModule(module)) return true;
     switch (module) {
@@ -67,6 +73,7 @@ export function useEntitlements(): Entitlements {
     loading,
     trialActive,
     trialDaysRemaining: daysLeft,
+    isDemo,
     hasModule,
   };
 }

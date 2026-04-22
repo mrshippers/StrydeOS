@@ -12,6 +12,8 @@ import {
   Zap,
   Users,
   Plus,
+  Eye,
+  ArrowRight,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
@@ -116,18 +118,33 @@ interface ModuleCardProps {
   tier: TierKey;
   interval: BillingInterval;
   canManage: boolean;
+  isDemo: boolean;
   onActivate: (module: ModuleKey) => void;
 }
 
-function ModuleCard({ moduleKey, isActive, isLoading, tier, interval, canManage, onActivate }: ModuleCardProps) {
+function ModuleCard({ moduleKey, isActive, isLoading, tier, interval, canManage, isDemo, onActivate }: ModuleCardProps) {
   const { name, description, color } = MODULE_DISPLAY[moduleKey];
   const price = MODULE_PRICING[moduleKey][tier][interval];
   const hasSetupFee = moduleKey === "ava";
 
+  const badge = isDemo ? (
+    <span className="ml-auto flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: `${color}20`, color }}>
+      <Eye size={10} strokeWidth={2.5} /> Preview
+    </span>
+  ) : isActive ? (
+    <span className="ml-auto flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: `${color}20`, color }}>
+      <Check size={10} strokeWidth={2.5} /> Active
+    </span>
+  ) : (
+    <span className="ml-auto flex items-center gap-1 text-[10px] font-medium text-muted uppercase tracking-wider">
+      <Lock size={10} /> Locked
+    </span>
+  );
+
   return (
     <div
-      className={`relative rounded-2xl p-6 flex flex-col gap-4 transition-all duration-200 bg-white border ${isActive ? "" : "border-border"}`}
-      style={isActive ? { borderColor: `${color}40` } : undefined}
+      className={`relative rounded-2xl p-6 flex flex-col gap-4 transition-all duration-200 bg-white border ${isActive || isDemo ? "" : "border-border"}`}
+      style={isActive || isDemo ? { borderColor: `${color}40` } : undefined}
     >
       {/* Top accent bar */}
       <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${color}, ${color}50)` }} />
@@ -136,15 +153,7 @@ function ModuleCard({ moduleKey, isActive, isLoading, tier, interval, canManage,
       <div className="flex items-center gap-3 mt-1">
         <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color, boxShadow: `0 0 8px ${color}80` }} />
         <h3 className="text-[15px] font-semibold text-navy font-display">{name}</h3>
-        {isActive ? (
-          <span className="ml-auto flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: `${color}20`, color }}>
-            <Check size={10} strokeWidth={2.5} /> Active
-          </span>
-        ) : (
-          <span className="ml-auto flex items-center gap-1 text-[10px] font-medium text-muted uppercase tracking-wider">
-            <Lock size={10} /> Locked
-          </span>
-        )}
+        {badge}
       </div>
 
       {/* Price */}
@@ -169,7 +178,15 @@ function ModuleCard({ moduleKey, isActive, isLoading, tier, interval, canManage,
       <p className="text-[13px] text-muted leading-relaxed">{description}</p>
 
       {/* CTA */}
-      {!isActive && canManage && (
+      {isDemo ? (
+        <a
+          href="/login"
+          className={`btn-primary w-full mt-auto justify-center ${color === "#0891B2" ? "btn-primary-teal" : color === "#8B5CF6" ? "btn-primary-purple" : ""}`}
+          style={{ padding: "10px 0", fontSize: 13 }}
+        >
+          Sign up to subscribe
+        </a>
+      ) : !isActive && canManage ? (
         <button
           onClick={() => onActivate(moduleKey)}
           disabled={isLoading}
@@ -178,12 +195,11 @@ function ModuleCard({ moduleKey, isActive, isLoading, tier, interval, canManage,
         >
           {isLoading ? <Loader2 size={14} className="animate-spin" /> : <>Add {name}</>}
         </button>
-      )}
-      {!isActive && !canManage && (
+      ) : !isActive && !canManage ? (
         <div className="mt-auto text-[11px] text-muted">
           Billing controlled by clinic owner. Ask them to enable {name}.
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -195,10 +211,11 @@ interface FullStackCardProps {
   interval: BillingInterval;
   allActive: boolean;
   isLoading: boolean;
+  isDemo: boolean;
   onActivate: () => void;
 }
 
-function FullStackCard({ tier, interval, allActive, isLoading, onActivate }: FullStackCardProps) {
+function FullStackCard({ tier, interval, allActive, isLoading, isDemo, onActivate }: FullStackCardProps) {
   const price = MODULE_PRICING.fullstack[tier][interval];
   const individualTotal = (["intelligence", "pulse", "ava"] as ModuleKey[])
     .reduce((sum, m) => sum + MODULE_PRICING[m][tier][interval], 0);
@@ -242,7 +259,14 @@ function FullStackCard({ tier, interval, allActive, isLoading, onActivate }: Ful
         </div>
       </div>
 
-      {!allActive && (
+      {isDemo ? (
+        <a
+          href="/login"
+          className="btn-primary btn-primary-purple mt-5 w-full justify-center"
+        >
+          Sign up to subscribe
+        </a>
+      ) : !allActive ? (
         <button
           onClick={onActivate}
           disabled={isLoading}
@@ -250,8 +274,7 @@ function FullStackCard({ tier, interval, allActive, isLoading, onActivate }: Ful
         >
           {isLoading ? <Loader2 size={14} className="animate-spin" /> : <>Get Full Stack</>}
         </button>
-      )}
-      {allActive && (
+      ) : (
         <div className="mt-5 flex items-center justify-center gap-2 py-2.5 text-[13px] font-semibold text-success">
           <Check size={16} strokeWidth={2.5} /> All modules active
         </div>
@@ -264,7 +287,7 @@ function FullStackCard({ tier, interval, allActive, isLoading, onActivate }: Ful
 
 export default function BillingPage() {
   const { user, firebaseUser } = useAuth();
-  const { hasModule, loading: entitlementLoading, trialActive, trialDaysRemaining } = useEntitlements();
+  const { hasModule, loading: entitlementLoading, trialActive, trialDaysRemaining, isDemo } = useEntitlements();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -388,12 +411,42 @@ export default function BillingPage() {
       {/* Header */}
       <div className="mb-10">
         <h1 className="text-[28px] text-navy font-display font-normal mb-2">
-          Billing &amp; Modules
+          {isDemo ? "Pricing" : "Billing & Modules"}
         </h1>
         <p className="text-[14px] text-muted">
-          Buy what you need. Bundle for value. No contracts — cancel anytime.
+          {isDemo
+            ? "This is what you'd pay to run StrydeOS on your own clinic. Buy what you need, bundle for value, cancel anytime."
+            : "Buy what you need. Bundle for value. No contracts — cancel anytime."}
         </p>
       </div>
+
+      {/* Demo mode banner */}
+      {isDemo && (
+        <div
+          className="mb-8 flex items-center gap-4 px-5 py-4 rounded-2xl border"
+          style={{ background: "rgba(28,84,242,0.04)", borderColor: "rgba(28,84,242,0.18)" }}
+        >
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: "rgba(28,84,242,0.10)" }}
+          >
+            <Eye size={16} className="text-blue" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold text-navy">You&apos;re viewing the demo</p>
+            <p className="text-[12px] text-muted mt-0.5">
+              Every module is unlocked with sample data so you can explore. Sign up to connect your own clinic.
+            </p>
+          </div>
+          <a
+            href="/login"
+            className="btn-primary shrink-0 flex items-center gap-1.5"
+            style={{ padding: "8px 16px", fontSize: 12 }}
+          >
+            Sign up <ArrowRight size={12} />
+          </a>
+        </div>
+      )}
 
       {/* Checkout banners */}
       {checkoutSuccess && (
@@ -438,26 +491,28 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Subscription status row */}
-      <div className="mb-8 flex items-center justify-between px-5 py-4 rounded-2xl bg-cloud-dark border border-border">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-strong mb-1">Subscription</p>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full shrink-0" style={{ background: statusDisplay.color }} />
-            <span className="text-[14px] font-semibold text-navy">{statusDisplay.label}</span>
-            {billing?.currentPeriodEnd && (
-              <span className="text-[12px] text-muted">
-                · renews {new Date(billing.currentPeriodEnd).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-              </span>
-            )}
+      {/* Subscription status row — hidden in demo (no real subscription) */}
+      {!isDemo && (
+        <div className="mb-8 flex items-center justify-between px-5 py-4 rounded-2xl bg-cloud-dark border border-border">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-strong mb-1">Subscription</p>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full shrink-0" style={{ background: statusDisplay.color }} />
+              <span className="text-[14px] font-semibold text-navy">{statusDisplay.label}</span>
+              {billing?.currentPeriodEnd && (
+                <span className="text-[12px] text-muted">
+                  · renews {new Date(billing.currentPeriodEnd).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              )}
+            </div>
           </div>
+          {hasActiveSubscription && canManageBilling && (
+            <button onClick={handleManageBilling} disabled={portalLoading} className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-muted hover:text-navy transition-colors disabled:opacity-50 bg-white border border-border">
+              {portalLoading ? <Loader2 size={13} className="animate-spin" /> : <><CreditCard size={13} /> Manage billing <ExternalLink size={11} className="opacity-60" /></>}
+            </button>
+          )}
         </div>
-        {hasActiveSubscription && canManageBilling && (
-          <button onClick={handleManageBilling} disabled={portalLoading} className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-muted hover:text-navy transition-colors disabled:opacity-50 bg-white border border-border">
-            {portalLoading ? <Loader2 size={13} className="animate-spin" /> : <><CreditCard size={13} /> Manage billing <ExternalLink size={11} className="opacity-60" /></>}
-          </button>
-        )}
-      </div>
+      )}
 
       {/* Tier + interval selectors */}
       <TierSelector value={tier} onChange={canManageBilling ? setTier : () => {}} />
@@ -474,6 +529,7 @@ export default function BillingPage() {
             tier={tier}
             interval={interval}
             canManage={canManageBilling}
+            isDemo={isDemo}
             onActivate={handleActivate}
           />
         ))}
@@ -485,11 +541,12 @@ export default function BillingPage() {
         interval={interval}
         allActive={allActive}
         isLoading={loadingModule === "fullstack"}
+        isDemo={isDemo}
         onActivate={() => handleActivate("fullstack")}
       />
 
-      {/* Clinician seats */}
-      {hasActiveSubscription && canManageBilling && (() => {
+      {/* Clinician seats — only for real, paying clinics (not demo) */}
+      {!isDemo && hasActiveSubscription && canManageBilling && (() => {
         const currentTier = billing?.tier as TierKey | undefined;
         const effectiveTier = currentTier ?? "studio";
         const tierLimit = TIER_SEAT_LIMITS[effectiveTier];

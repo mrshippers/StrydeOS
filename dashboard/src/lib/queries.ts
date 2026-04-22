@@ -631,5 +631,46 @@ export function subscribeComputeState(
   );
 }
 
+// ─── Google Reviews summary (integrations_config/google_reviews) ───────────
+
+export interface GoogleReviewsSummary {
+  totalReviews: number;
+  avgRating: number;
+  displayName?: string;
+  lastSyncedAt?: string;
+}
+
+/**
+ * Subscribes to the Google Reviews aggregate summary persisted by the
+ * sync-reviews pipeline stage. Exposes the authoritative userRatingCount +
+ * rating for the clinic's Google Business Profile — the Places API only ever
+ * returns 5 review bodies per request, so this summary is how we surface the
+ * "real" total (e.g. Spires = 147) in the Intelligence UI.
+ */
+export function subscribeGoogleReviewsSummary(
+  clinicId: string | null,
+  callback: (summary: GoogleReviewsSummary | null) => void,
+  onError: (err: Error) => void
+): Unsubscribe {
+  if (!db || !clinicId) {
+    callback(null);
+    return noopUnsubscribe();
+  }
+
+  const ref = doc(db, "clinics", clinicId, "integrations_config", "google_reviews");
+  return onSnapshot(
+    ref,
+    (snapshot) => {
+      if (!snapshot.exists()) {
+        callback(null);
+        return;
+      }
+      const data = snapshot.data() as { summary?: GoogleReviewsSummary };
+      callback(data.summary ?? null);
+    },
+    onError
+  );
+}
+
 // Re-export KpiId so consumers don't need a separate import path.
 export type { KpiId };

@@ -151,10 +151,10 @@ const DEMO_USER: AuthUser = {
     billing: {
       stripeCustomerId: null,
       subscriptionId: null,
-      subscriptionStatus: "active",
+      subscriptionStatus: null,
       currentPeriodEnd: null,
     },
-    trialStartedAt: "2099-01-01T00:00:00.000Z",
+    trialStartedAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },

@@ -1,12 +1,18 @@
 import type { Firestore } from "firebase-admin/firestore";
-import { GooglePlacesClient, type GoogleReview } from "@/lib/integrations/reviews/google/client";
+import { GooglePlacesClient } from "@/lib/integrations/reviews/google/client";
 import type { StageResult } from "./types";
+import { INTEGRATIONS_CONFIG, REVIEWS_DOC_ID } from "./types";
 
 /**
  * Stage 7: Sync Google Business Profile reviews into Firestore.
  *
  * Fetches reviews from the Google Places API, deduplicates by publishTime,
  * and attempts to match clinician mentions by name keyword search.
+ *
+ * Also persists the aggregate summary (totalReviews, avgRating) onto the
+ * integrations config doc. Google's Places API caps per-response reviews at 5,
+ * so the aggregate count is the authoritative signal for "how many reviews
+ * does this clinic have on Google" — we can't enumerate all 147 via the API.
  */
 export async function syncReviews(
   db: Firestore,
@@ -21,7 +27,27 @@ export async function syncReviews(
 
   try {
     const client = new GooglePlacesClient(apiKey);
-    const reviews = await client.getPlaceReviews(placeId);
+    const summary = await client.getPlaceSummary(placeId);
+    const reviews = summary.reviews;
+
+    // Persist the aggregate summary so the UI can show the real review count
+    // even though the API only returns 5 review bodies per request.
+    await db
+      .collection("clinics")
+      .doc(clinicId)
+      .collection(INTEGRATIONS_CONFIG)
+      .doc(REVIEWS_DOC_ID)
+      .set(
+        {
+          summary: {
+            totalReviews: summary.userRatingCount ?? 0,
+            avgRating: summary.rating ?? 0,
+            displayName: summary.displayName,
+            lastSyncedAt: new Date().toISOString(),
+          },
+        },
+        { merge: true }
+      );
 
     // Load clinician names for mention matching
     const cliniciansSnap = await db

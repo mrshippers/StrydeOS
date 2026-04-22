@@ -9,6 +9,8 @@ import {
   subscribeReviews,
   subscribeOutcomeScoresAll,
   subscribeAppointments,
+  subscribeGoogleReviewsSummary,
+  type GoogleReviewsSummary,
 } from "@/lib/queries";
 import type { WeeklyStats, Patient, Review, OutcomeScore, OutcomeMeasureType, Appointment } from "@/types";
 import {
@@ -508,6 +510,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
   const [allStats, setAllStats] = useState<WeeklyStats[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [googleSummary, setGoogleSummary] = useState<GoogleReviewsSummary | null>(null);
   const [outcomeScores, setOutcomeScores] = useState<OutcomeScore[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
@@ -555,6 +558,12 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
       () => { setFirestoreError("Failed to load reviews. Check your connection and try again."); setReviewsReady(true); }
     );
 
+    const unsubGoogleSummary = subscribeGoogleReviewsSummary(
+      clinicId,
+      (data) => { setGoogleSummary(data); },
+      () => { /* non-fatal — falls back to cached review bodies */ }
+    );
+
     const unsubOutcomes = subscribeOutcomeScoresAll(
       clinicId,
       (data) => { setOutcomeScores(data); setOutcomesReady(true); },
@@ -577,6 +586,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
       unsubStats();
       unsubPatients();
       unsubReviews();
+      unsubGoogleSummary();
       unsubOutcomes();
       unsubAppointments();
     };
@@ -694,15 +704,29 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     const referrals = deriveReferrals(patients, avgRevPerSession);
     const outcomeTrends = deriveOutcomeTrends(outcomeScores);
     const nps = deriveNps(reviews, allStats);
-    const reviewVelocity = deriveReviewVelocity(reviews);
+    const reviewVelocityRaw = deriveReviewVelocity(reviews);
+    // Google Places API only returns up to 5 review bodies per request, so the
+    // cached review count massively understates reality. When we have the
+    // aggregate summary from the pipeline, it wins for totals and avg rating.
+    const reviewVelocity = googleSummary
+      ? {
+          ...reviewVelocityRaw,
+          totalReviews: googleSummary.totalReviews || reviewVelocityRaw.totalReviews,
+          avgRating: googleSummary.avgRating
+            ? Math.round(googleSummary.avgRating * 10) / 10
+            : reviewVelocityRaw.avgRating,
+        }
+      : reviewVelocityRaw;
     const clinicianKpis = deriveClinicianKpis(flatPerClinicianStats, patients);
     const benchmarks = deriveBenchmarks(allStats, clinicianKpis, nps, avgRevPerSession);
 
     // INTELLIGENCE_AUDIT.md issue 5: expose empty-state flags for the page to
     // render its own empty state. Do NOT substitute demo data for real clinics
-    // with no outcome_scores or reviews yet.
+    // with no outcome_scores or reviews yet. A connected Google Business
+    // Profile with userRatingCount > 0 also lifts the reputation empty state.
     const outcomesDemoFallback = outcomeTrends.length === 0;
-    const reputationDemoFallback = reviews.length === 0;
+    const hasGoogleSummary = (googleSummary?.totalReviews ?? 0) > 0;
+    const reputationDemoFallback = reviews.length === 0 && !hasGoogleSummary;
 
     return {
       revByClinician,
@@ -721,7 +745,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
       outcomesDemoFallback,
       reputationDemoFallback,
     };
-  }, [allStats, flatPerClinicianStats, patients, reviews, outcomeScores, appointments, loading, isDemo, selectedClinician, firestoreError, DEMO_RESULT]);
+  }, [allStats, flatPerClinicianStats, patients, reviews, googleSummary, outcomeScores, appointments, loading, isDemo, selectedClinician, firestoreError, DEMO_RESULT]);
 
   return { ...derived, loading };
 }
