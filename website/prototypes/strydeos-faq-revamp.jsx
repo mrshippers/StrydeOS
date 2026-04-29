@@ -47,7 +47,7 @@ const FAQ_CATEGORIES = [
       },
       {
         q: "What's the onboarding process like?",
-        a: "We start with a free Clinical Performance Audit — a 30-minute call where we review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks using your existing PMS data. If there's a fit, onboarding takes less than a day. Most clinics are live within hours of connecting their PMS.",
+        a: "We start with a free Clinical Performance Audit — a 20-minute call where we review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks using your existing PMS data. If there's a fit, onboarding takes less than a day. Most clinics are live within hours of connecting their PMS.",
       },
       {
         q: "Is there a contract or lock-in?",

@@ -381,10 +381,10 @@ export default function CaseStudiesPage() {
             See what your clinic is missing.
           </h2>
           <p style={{ fontSize: 15, color: muted, lineHeight: 1.7, marginBottom: 32 }}>
-            Book a free 30-minute Clinical Performance Audit. We'll review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks.
+            Book a free 20-minute Clinical Performance Audit. We'll review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks.
           </p>
           <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
-            <a href="https://calendly.com/hello-strydeos/30min" target="_blank" rel="noopener"
+            <a href="https://calendly.com/hello-strydeos/20min" target="_blank" rel="noopener"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
                 padding: "14px 32px", background: C.blue, color: "white",

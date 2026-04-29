@@ -119,7 +119,7 @@ const FaqNav = () => {
       { name: "About", href: "/#about" },
     ]},
     { label: "Access", items: [
-      { name: "Book a call", href: "https://calendly.com/hello-strydeos/30min", external: true },
+      { name: "Book a call", href: "https://calendly.com/hello-strydeos/20min", external: true },
       { name: "Log in", href: "https://portal.strydeos.com/login" },
     ]},
   ];
@@ -270,7 +270,7 @@ const FAQ_CATEGORIES = [
       },
       {
         q: "What\u2019s the onboarding process like?",
-        a: "We start with a free Clinical Performance Audit \u2014 a 30-minute call where we review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks using your existing PMS data. If there\u2019s a fit, onboarding takes less than a day. Most clinics are live within hours of connecting their PMS.",
+        a: "We start with a free Clinical Performance Audit \u2014 a 20-minute call where we review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks using your existing PMS data. If there\u2019s a fit, onboarding takes less than a day. Most clinics are live within hours of connecting their PMS.",
       },
       {
         q: "Is there a contract or lock-in?",

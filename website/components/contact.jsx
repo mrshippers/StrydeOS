@@ -224,7 +224,7 @@ export default function ContactPage() {
             }}>Get in touch</div>
 
             <h2 className="serif" style={{ fontSize: 36, color: head, fontWeight: 400, lineHeight: 1.15, marginBottom: 20 }}>
-              30 minutes. No obligation.{" "}
+              20 minutes. No obligation.{" "}
               <span style={{ fontStyle: "italic", color: darkMode ? C.blueGlow : C.blue }}>Real numbers.</span>
             </h2>
 
@@ -238,8 +238,8 @@ export default function ContactPage() {
                 {
                   icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.blue} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
                   label: "Book a demo",
-                  detail: "30-minute call via Calendly",
-                  href: "https://calendly.com/hello-strydeos/30min",
+                  detail: "20-minute call via Calendly",
+                  href: "https://calendly.com/hello-strydeos/20min",
                   external: true,
                 },
                 {
@@ -331,7 +331,7 @@ export default function ContactPage() {
                   </h3>
                   <p style={{ fontSize: 13, color: muted }}>
                     Or book directly via{" "}
-                    <a href="https://calendly.com/hello-strydeos/30min" target="_blank" rel="noopener noreferrer" style={{ color: C.blue, textDecoration: "none", fontWeight: 500 }}>
+                    <a href="https://calendly.com/hello-strydeos/20min" target="_blank" rel="noopener noreferrer" style={{ color: C.blue, textDecoration: "none", fontWeight: 500 }}>
                       Calendly
                     </a>
                   </p>

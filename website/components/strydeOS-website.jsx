@@ -404,7 +404,7 @@ const Nav = ({ darkMode, setDarkMode }) => {
       { name: "About", href: "#about" },
     ]},
     { label: "Access", items: [
-      { name: "Book a call", href: "https://calendly.com/hello-strydeos/30min", external: true },
+      { name: "Book a call", href: "https://calendly.com/hello-strydeos/20min", external: true },
       { name: "Log in", href: "https://portal.strydeos.com/login" },
     ]},
   ];
@@ -589,7 +589,7 @@ const Nav = ({ darkMode, setDarkMode }) => {
             }}>{label}</a>
           ))}
           <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-            <a href="https://calendly.com/hello-strydeos/30min" target="_blank" rel="noopener noreferrer"
+            <a href="https://calendly.com/hello-strydeos/20min" target="_blank" rel="noopener noreferrer"
               className="btn-ghost" style={{ flex: 1, justifyContent: "center", padding: "10px 0", fontSize: 13 }}>Book a call</a>
             <a href="https://portal.strydeos.com/login"
               className="btn-primary" style={{ flex: 1, justifyContent: "center", padding: "10px 0", fontSize: 13 }}>Log in</a>
@@ -3130,7 +3130,7 @@ const CtaSection = () => (
       </h2>
 
       <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 16, lineHeight: 1.7, marginBottom: 18 }}>
-        Book a free 30-minute Clinical Performance Audit. We'll review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks — using your existing systems.
+        Book a free 20-minute Clinical Performance Audit. We'll review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks — using your existing systems.
       </p>
       <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, lineHeight: 1.65, marginBottom: 40, fontStyle: "italic" }}>
         No switching required. StrydeOS connects to your existing PMS stack via API or bespoke integration. Pick the product that solves your biggest problem right now — and build from there.
@@ -3141,11 +3141,11 @@ const CtaSection = () => (
           Start free trial →
         </a>
         <div style={{ display: "flex", gap: 24 }}>
-          <a href="https://calendly.com/hello-strydeos/30min" target="_blank" rel="noopener" className="btn-ghost" style={{ padding: "10px 20px", fontSize: 13 }}>Book a Demo</a>
+          <a href="https://calendly.com/hello-strydeos/20min" target="_blank" rel="noopener" className="btn-ghost" style={{ padding: "10px 20px", fontSize: 13 }}>Book a Demo</a>
           <a href="#pricing" className="btn-ghost" style={{ padding: "10px 20px", fontSize: 13 }}>See Pricing</a>
         </div>
         <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, marginTop: 4 }}>
-          30 minutes · No obligation · UK private practice · MSK · Allied health
+          20 minutes · No obligation · UK private practice · MSK · Allied health
         </div>
       </div>
 
