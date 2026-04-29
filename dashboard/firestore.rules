@@ -166,9 +166,12 @@ service cloud.firestore {
         allow write: if false;
       }
 
-      // Integration Config — server-side only, never exposed to client
+      // Integration Config — readable by owners/admins for Settings UI and Intelligence hooks.
+      // Encrypted API keys are safe to expose (they are opaque blobs without the server key).
+      // Write is always server-only (Admin SDK via API routes).
       match /integrations_config/{configId} {
-        allow read, write: if false;
+        allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow write: if false;
       }
 
       // Integration Health — pipeline logs; server-side only, dashboard reads via API
