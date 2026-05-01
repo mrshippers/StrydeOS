@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="description" content="StrydeOS partnership brief">
+<title>StrydeOS · Partnership brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #f5f4ef;
+    --ink-90: rgba(245, 244, 239, 0.90);
+    --ink-75: rgba(245, 244, 239, 0.75);
+    --ink-55: rgba(245, 244, 239, 0.55);
+    --ink-40: rgba(245, 244, 239, 0.40);
+    --ink-20: rgba(245, 244, 239, 0.20);
+    --ink-10: rgba(245, 244, 239, 0.10);
+
+    --accent-blue:   #4B8BF5;
+    --accent-blue-bright: #2E6BFF;
+    --accent-teal:   #6ad3b3;
+    --accent-coral:  #f0997b;
+    --accent-pms:    #b8c4d6;
+    --gold:          #c8a96e;
+
+    --base: #0a0a10;
+
+    --radius-xl: 28px;
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+
+    --font-display: 'DM Serif Display', 'Cormorant Garamond', Georgia, serif;
+    --font-sans:    'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono:    'JetBrains Mono', 'SF Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--base);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    line-height: 1.5;
+    font-weight: 400;
+    overflow-x: hidden;
+  }
+
+  .page {
+    position: relative;
+    min-height: 100vh;
+    padding: 56px 72px 44px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    page-break-after: always;
+    break-after: page;
+  }
+  .page::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+  .page-1::before {
+    background:
+      radial-gradient(1200px 700px at -10% -20%, rgba(75, 139, 245, 0.18), transparent 60%),
+      radial-gradient(900px 500px at 110% 110%, rgba(106, 211, 179, 0.20), transparent 55%),
+      radial-gradient(600px 400px at 50% 130%, rgba(240, 153, 123, 0.06), transparent 60%);
+  }
+  .page-2::before {
+    background:
+      radial-gradient(900px 600px at 110% -15%, rgba(106, 211, 179, 0.20), transparent 60%),
+      radial-gradient(800px 500px at -10% 100%, rgba(75, 139, 245, 0.16), transparent 55%);
+  }
+  .page-3::before {
+    background:
+      radial-gradient(1100px 700px at 50% -20%, rgba(75, 139, 245, 0.18), transparent 60%),
+      radial-gradient(700px 500px at 105% 105%, rgba(106, 211, 179, 0.18), transparent 55%),
+      radial-gradient(600px 400px at -5% 90%, rgba(200, 169, 110, 0.08), transparent 60%);
+  }
+  .page::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.04 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    opacity: 0.5; mix-blend-mode: overlay;
+  }
+  .page > * { position: relative; z-index: 1; }
+
+  .top-strip { display: flex; justify-content: space-between; align-items: center; margin-bottom: 44px; }
+  .brand { display: flex; align-items: baseline; gap: 12px; }
+  .brand-mark { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--ink); letter-spacing: -0.01em; }
+  .brand-mark em { font-style: italic; color: var(--accent-blue); font-weight: 400; }
+  .brand-tag { font-size: 11px; color: var(--ink-55); text-transform: lowercase; letter-spacing: 0.06em; }
+  .brand-tag .x { color: var(--ink-40); margin: 0 4px; }
+  .brand-tag .partner { color: var(--accent-teal); }
+
+  .page-meta { display: flex; align-items: center; gap: 14px; font-size: 11px; color: var(--ink-55); text-transform: lowercase; letter-spacing: 0.05em; }
+  .page-meta .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent-teal); box-shadow: 0 0 8px rgba(106, 211, 179, 0.6); animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }
+
+  .eyebrow { font-size: 11px; color: var(--ink-55); text-transform: lowercase; letter-spacing: 0.18em; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .eyebrow::before { content: ""; width: 32px; height: 1px; background: linear-gradient(90deg, var(--accent-teal), transparent); }
+
+  .hero-headline {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 5vw, 68px);
+    font-weight: 400; line-height: 1.04;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    max-width: 28ch;
+    margin-bottom: 20px;
+  }
+  .hero-headline em { font-style: italic; color: var(--accent-teal); }
+  .hero-headline em.purple { font-style: italic; color: var(--accent-blue); }
+
+  .hero-sub { font-size: 15px; line-height: 1.6; color: var(--ink-75); max-width: 64ch; font-weight: 300; margin-bottom: 26px; }
+
+  /* ============ PAGE 1 ARCHITECTURE ============ */
+  .arch-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; flex: 1; }
+  .arch-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; position: relative; margin-top: 12px; }
+  .arch-pair::before {
+    content: "two systems of record"; position: absolute;
+    top: -14px; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-mono); font-size: 9px; color: var(--ink-40);
+    text-transform: lowercase; letter-spacing: 0.18em;
+    background: var(--base); padding: 0 12px;
+  }
+
+  .record-card {
+    position: relative; padding: 18px 22px;
+    border-radius: var(--radius-lg);
+    background: rgba(245, 244, 239, 0.04);
+    border: 0.5px solid rgba(245, 244, 239, 0.10);
+    backdrop-filter: blur(18px) saturate(120%);
+    -webkit-backdrop-filter: blur(18px) saturate(120%);
+    overflow: hidden;
+    display: grid; grid-template-columns: 1fr 32px; gap: 14px; align-items: start;
+  }
+  .record-card::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), transparent 45%); pointer-events: none; }
+  .record-card.is-pms { border-color: rgba(184, 196, 214, 0.25); background: linear-gradient(135deg, rgba(184, 196, 214, 0.05), transparent 60%), rgba(245, 244, 239, 0.04); }
+  .record-card.is-physi { border-color: rgba(106, 211, 179, 0.32); background: linear-gradient(135deg, rgba(106, 211, 179, 0.10), rgba(106, 211, 179, 0.03)), rgba(245, 244, 239, 0.04); }
+
+  .record-meta { display: block; font-size: 10px; color: var(--ink-55); text-transform: lowercase; letter-spacing: 0.12em; margin-bottom: 5px; }
+  .record-card.is-pms .record-meta { color: var(--accent-pms); }
+  .record-card.is-physi .record-meta { color: var(--accent-teal); }
+  .record-title { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--ink); line-height: 1.05; letter-spacing: -0.01em; margin-bottom: 8px; }
+  .record-card.is-physi .record-title em { font-style: italic; color: var(--accent-teal); }
+  .record-detail { font-size: 12px; color: var(--ink-75); line-height: 1.55; margin-bottom: 10px; }
+  .record-detail strong { color: var(--ink); font-weight: 500; }
+  .record-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .record-tag { font-size: 10px; text-transform: lowercase; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 999px; background: rgba(245, 244, 239, 0.05); border: 0.5px solid rgba(245, 244, 239, 0.12); color: var(--ink-75); }
+  .record-card.is-physi .record-tag { background: rgba(106, 211, 179, 0.10); border-color: rgba(106, 211, 179, 0.25); color: rgba(255, 255, 255, 0.88); }
+
+  .record-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; background: rgba(245, 244, 239, 0.04); border: 0.5px solid rgba(245, 244, 239, 0.12); }
+  .record-icon svg { width: 16px; height: 16px; opacity: 0.75; }
+
+  .arch-connector { text-align: center; font-size: 9px; color: var(--ink-40); text-transform: lowercase; letter-spacing: 0.18em; font-family: var(--font-mono); display: flex; align-items: center; justify-content: center; gap: 14px; padding: 2px 0; }
+  .arch-connector::before, .arch-connector::after { content: ""; flex: 0 0 90px; height: 0.5px; background: linear-gradient(90deg, transparent, var(--ink-20), transparent); }
+
+  .arch-band-us {
+    position: relative; padding: 18px 24px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(75, 139, 245, 0.14), rgba(106, 211, 179, 0.08)), rgba(245, 244, 239, 0.04);
+    border: 0.5px solid rgba(75, 139, 245, 0.40);
+    backdrop-filter: blur(18px) saturate(130%);
+    display: grid; grid-template-columns: 200px 1fr 32px; gap: 24px; align-items: center; overflow: hidden;
+  }
+  .arch-band-us::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), transparent 45%); pointer-events: none; }
+
+  .us-label-meta { display: block; font-size: 10px; color: var(--accent-blue); text-transform: lowercase; letter-spacing: 0.12em; margin-bottom: 5px; }
+  .us-label { font-family: var(--font-display); font-size: 24px; font-style: italic; font-weight: 400; color: var(--accent-blue); line-height: 1.05; }
+  .us-detail { font-size: 12px; color: var(--ink-75); line-height: 1.55; }
+  .us-detail strong { color: var(--ink); font-weight: 500; }
+  .us-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .us-tag { font-size: 10px; text-transform: lowercase; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 999px; background: rgba(75, 139, 245, 0.18); border: 0.5px solid rgba(75, 139, 245, 0.42); color: rgba(255, 255, 255, 0.92); }
+
+  .arch-utility {
+    position: relative; padding: 11px 24px;
+    border-radius: var(--radius-md);
+    background: rgba(245, 244, 239, 0.025);
+    border: 0.5px dashed rgba(245, 244, 239, 0.14);
+    display: grid; grid-template-columns: 200px 1fr; gap: 24px; align-items: center;
+  }
+  .util-meta { font-size: 10px; color: var(--ink-40); text-transform: lowercase; letter-spacing: 0.12em; }
+  .util-meta strong { display: block; font-family: var(--font-display); font-size: 15px; color: var(--ink-75); font-weight: 400; font-style: italic; text-transform: none; letter-spacing: -0.01em; margin-top: 2px; }
+  .util-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .util-tag { font-size: 10px; color: var(--ink-55); text-transform: lowercase; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 999px; background: rgba(245, 244, 239, 0.04); border: 0.5px solid rgba(245, 244, 239, 0.10); }
+
+  .anchor-line { margin-top: 18px; padding: 16px 22px; border-left: 2px solid var(--accent-teal); border-radius: 0 var(--radius-md) var(--radius-md) 0; background: linear-gradient(90deg, rgba(106, 211, 179, 0.08), transparent); font-family: var(--font-display); font-size: 17px; font-style: italic; color: var(--ink-90); line-height: 1.4; max-width: 88ch; }
+
+  .status-row { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(245, 244, 239, 0.04); border: 0.5px solid rgba(245, 244, 239, 0.12); backdrop-filter: blur(12px); font-size: 11px; color: var(--ink-90); text-transform: lowercase; letter-spacing: 0.04em; }
+  .status-pill.is-live { background: rgba(106, 211, 179, 0.08); border-color: rgba(106, 211, 179, 0.32); }
+  .status-pill.is-live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-teal); box-shadow: 0 0 6px var(--accent-teal); }
+
+  /* ============ SECTION TITLES ============ */
+  .section-title { font-family: var(--font-display); font-size: clamp(40px, 5vw, 64px); font-weight: 400; line-height: 1; letter-spacing: -0.025em; color: var(--ink); max-width: 28ch; margin-bottom: 16px; }
+  .section-title em { font-style: italic; color: var(--accent-teal); }
+  .section-title em.purple { color: var(--accent-blue); }
+  .section-sub { font-size: 14.5px; line-height: 1.6; color: var(--ink-75); max-width: 64ch; margin-bottom: 32px; font-weight: 300; }
+
+  /* ============ PAGE 2 LAYOUT ============ */
+  .p2-grid {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 16px;
+    flex: 1;
+  }
+
+  .visual-card {
+    position: relative;
+    padding: 28px 30px;
+    border-radius: var(--radius-lg);
+    background: rgba(245, 244, 239, 0.04);
+    border: 0.5px solid rgba(245, 244, 239, 0.10);
+    backdrop-filter: blur(20px) saturate(120%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .visual-card::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), transparent 50%); pointer-events: none; }
+
+  .visual-label {
+    font-size: 10px;
+    color: var(--ink-55);
+    text-transform: lowercase;
+    letter-spacing: 0.18em;
+    margin-bottom: 8px;
+  }
+
+  .visual-headline {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 1.05;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+    margin-bottom: 20px;
+  }
+  .visual-headline em { font-style: italic; color: var(--accent-coral); }
+
+  .workflow-svg {
+    width: 100%;
+    height: auto;
+    margin: 12px 0 16px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .visual-caption {
+    font-size: 12.5px;
+    color: var(--ink-75);
+    line-height: 1.55;
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 0.5px solid var(--ink-10);
+  }
+  .visual-caption strong { color: var(--ink); font-weight: 500; }
+
+  .p2-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .mini-card {
+    position: relative;
+    padding: 22px 24px;
+    border-radius: var(--radius-lg);
+    background: rgba(245, 244, 239, 0.04);
+    border: 0.5px solid rgba(245, 244, 239, 0.10);
+    backdrop-filter: blur(20px) saturate(120%);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mini-card::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), transparent 50%); pointer-events: none; }
+  .mini-card.is-feature {
+    border: 0.5px solid rgba(106, 211, 179, 0.32);
+    background: linear-gradient(135deg, rgba(106, 211, 179, 0.08), transparent 60%), rgba(245, 244, 239, 0.04);
+  }
+
+  .mini-num {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-style: italic;
+    color: var(--accent-teal);
+    margin-bottom: 6px;
+  }
+  .mini-title {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .mini-title em { font-style: italic; color: var(--accent-teal); }
+  .mini-body {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ink-75);
+  }
+  .mini-body strong { color: var(--ink); font-weight: 500; }
+  .mini-body .quote {
+    display: block;
+    margin: 8px 0;
+    padding: 8px 12px;
+    border-left: 2px solid rgba(106, 211, 179, 0.4);
+    background: rgba(106, 211, 179, 0.04);
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 12.5px;
+    color: var(--ink-90);
+    line-height: 1.45;
+  }
+
+  .closing-line {
+    margin-top: 18px;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-style: italic;
+    color: var(--ink-90);
+    line-height: 1.4;
+    text-align: right;
+  }
+  .closing-line span { color: var(--accent-teal); }
+  .closing-line span.coral { color: var(--accent-coral); }
+
+  /* ============ PAGE 3 LAYOUT ============ */
+  .p3-stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .integration-diagram {
+    position: relative;
+    padding: 36px 36px 28px;
+    border-radius: var(--radius-lg);
+    background: rgba(245, 244, 239, 0.04);
+    border: 0.5px solid rgba(245, 244, 239, 0.10);
+    backdrop-filter: blur(20px) saturate(120%);
+    flex: 1;
+    overflow: hidden;
+  }
+  .integration-diagram::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), transparent 50%); pointer-events: none; }
+
+  .diagram-svg {
+    width: 100%;
+    height: auto;
+    max-height: 360px;
+    display: block;
+  }
+
+  .ask-row {
+    padding: 18px 26px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(106, 211, 179, 0.10), rgba(75, 139, 245, 0.04)), rgba(245, 244, 239, 0.03);
+    border: 0.5px solid rgba(106, 211, 179, 0.28);
+    backdrop-filter: blur(18px);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 28px;
+    align-items: center;
+  }
+  .ask-headline {
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-style: italic;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .ask-headline span { color: var(--accent-teal); }
+  .ask-body {
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: var(--ink-75);
+    line-height: 1.55;
+  }
+  .ask-body strong { color: var(--ink); font-weight: 500; }
+  .ask-cta {
+    text-align: right;
+    font-size: 12px;
+    color: var(--ink-90);
+    line-height: 1.6;
+  }
+  .ask-cta a {
+    color: var(--accent-teal);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+  .ask-cta strong {
+    display: block;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 17px;
+    color: var(--ink);
+    font-weight: 400;
+    margin-bottom: 4px;
+  }
+
+  .page-footer { margin-top: auto; padding-top: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--ink-40); text-transform: lowercase; letter-spacing: 0.1em; font-family: var(--font-mono); }
+
+  @media (max-width: 960px) {
+    .page { padding: 36px 26px; }
+    .arch-pair { grid-template-columns: 1fr; }
+    .record-card, .arch-band-us, .arch-utility { grid-template-columns: 1fr; gap: 12px; }
+    .record-icon { display: none; }
+    .p2-grid { grid-template-columns: 1fr; }
+    .ask-row { grid-template-columns: 1fr; gap: 14px; }
+    .ask-cta { text-align: left; }
+  }
+
+  @media print {
+    @page { size: A4 landscape; margin: 0; }
+    html, body { background: var(--base) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { color-adjust: exact; }
+    .page { min-height: 100vh; height: 100vh; padding: 32px 44px; page-break-after: always; }
+    .page::after { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== PAGE 1 · TWO SYSTEMS OF RECORD ========== -->
+<section class="page page-1">
+
+  <header class="top-strip">
+    <div class="brand">
+      <span class="brand-mark">Stryde<em>OS</em></span>
+      <span class="brand-tag">
+        partnership brief <span class="x">×</span>
+        <span class="partner">physitrack</span>
+      </span>
+    </div>
+  </header>
+
+  <div class="eyebrow">01 · two systems of record</div>
+
+  <h1 class="hero-headline">
+    the PMS sees the room<br>
+    <em>Physitrack</em> sees everything else
+  </h1>
+
+  <p class="hero-sub">
+    StrydeOS is the layer between the two
+  </p>
+
+  <div class="status-row">
+    <span class="status-pill is-live">live in production</span>
+  </div>
+
+  <div class="arch-stack">
+
+    <div class="arch-pair">
+
+      <article class="record-card is-pms">
+        <div>
+          <span class="record-meta">clinic-side state</span>
+          <h3 class="record-title">the PMS</h3>
+          <p class="record-detail">
+            <strong>Cliniko, WriteUpp, Heidi, TM3, Power Diary.</strong> Appointments, notes, billing.
+          </p>
+          <div class="record-tags">
+            <span class="record-tag">appointments</span>
+            <span class="record-tag">clinical notes</span>
+            <span class="record-tag">billing</span>
+          </div>
+        </div>
+        <div class="record-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+        </div>
+      </article>
+
+      <article class="record-card is-physi">
+        <div>
+          <span class="record-meta">patient-side state · recovery record</span>
+          <h3 class="record-title"><em>Physitrack</em></h3>
+          <p class="record-detail">
+            <strong>Programme, adherence, engagement.</strong> Where the recovery actually happens.
+          </p>
+          <div class="record-tags">
+            <span class="record-tag">programmes</span>
+            <span class="record-tag">adherence</span>
+            <span class="record-tag">engagement</span>
+            <span class="record-tag">outcomes</span>
+          </div>
+        </div>
+        <div class="record-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+      </article>
+
+    </div>
+
+    <div class="arch-connector">events · context · outcomes flow both ways</div>
+
+    <div class="arch-band-us">
+      <div>
+        <span class="us-label-meta">layer 02 · the wiring</span>
+        <span class="us-label">StrydeOS</span>
+      </div>
+      <div class="us-detail">
+        <strong>Reads PMS events. Synthesises clinical context. Assigns programmes. Pulls adherence
+        back. Surfaces the unified view.</strong>
+        <div class="us-tags">
+          <span class="us-tag">event router</span>
+          <span class="us-tag">context engine</span>
+          <span class="us-tag">clinical dashboard</span>
+          <span class="us-tag">ava · voice</span>
+        </div>
+      </div>
+      <div class="record-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+      </div>
+    </div>
+
+    <div class="arch-utility">
+      <div class="util-meta">
+        layer 03 · operational utilities
+        <strong>the plumbing</strong>
+      </div>
+      <div class="util-tags">
+        <span class="util-tag">twilio · voice</span>
+        <span class="util-tag">stripe · billing</span>
+        <span class="util-tag">notifications</span>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="anchor-line">
+    today the bridge is a clinic admin, copy-pasting by hand
+  </p>
+
+  <footer class="page-footer">
+    <span>strydeos.com</span>
+    <span>page 01 / 03</span>
+  </footer>
+
+</section>
+
+
+<!-- ========== PAGE 2 · YOU ALREADY LIVE HERE ========== -->
+<section class="page page-2">
+
+  <header class="top-strip">
+    <div class="brand">
+      <span class="brand-mark">Stryde<em>OS</em></span>
+      <span class="brand-tag">
+        partnership brief <span class="x">×</span>
+        <span class="partner">physitrack</span>
+      </span>
+    </div>
+  </header>
+
+  <div class="eyebrow">02 · what's already running</div>
+
+  <h2 class="section-title">
+    we already run you, manually
+  </h2>
+
+  <p class="section-sub">
+    StrydeOS runs alongside Physitrack today, with a clinic admin in the middle, copy-pasting
+  </p>
+
+  <div class="p2-grid">
+
+    <!-- VISUAL CARD : the loop today -->
+    <article class="visual-card">
+      <div class="visual-label">the loop today</div>
+      <h3 class="visual-headline">a person in the middle, data dropped at every step</h3>
+
+      <div class="workflow-svg">
+        <svg viewBox="0 0 600 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+          <defs>
+            <linearGradient id="brokenArrow" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(240,153,123,0.6)"/>
+              <stop offset="100%" stop-color="rgba(240,153,123,0.1)"/>
+            </linearGradient>
+            <linearGradient id="forwardArrow" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(245,244,239,0.45)"/>
+              <stop offset="100%" stop-color="rgba(245,244,239,0.20)"/>
+            </linearGradient>
+            <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="rgba(245,244,239,0.45)"/>
+            </marker>
+            <marker id="arrowheadCoral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="rgba(240,153,123,0.55)"/>
+            </marker>
+          </defs>
+
+          <!-- forward chain : PMS event > admin > Physitrack -->
+          <!-- node 1 : PMS event -->
+          <g transform="translate(50, 70)">
+            <rect x="0" y="0" width="120" height="56" rx="10" fill="rgba(184,196,214,0.10)" stroke="rgba(184,196,214,0.35)" stroke-width="0.8"/>
+            <text x="60" y="22" text-anchor="middle" font-family="Outfit" font-size="9" fill="rgba(184,196,214,0.85)" letter-spacing="0.8" style="text-transform:lowercase">clinical event</text>
+            <text x="60" y="40" text-anchor="middle" font-family="DM Serif Display" font-size="13" fill="#f5f4ef" font-style="italic">PMS note</text>
+          </g>
+
+          <!-- arrow 1 -->
+          <line x1="172" y1="98" x2="218" y2="98" stroke="url(#forwardArrow)" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+          <!-- node 2 : admin (the bottleneck) -->
+          <g transform="translate(220, 70)">
+            <rect x="0" y="0" width="160" height="56" rx="10" fill="rgba(240,153,123,0.10)" stroke="rgba(240,153,123,0.50)" stroke-width="0.8" stroke-dasharray="3 3"/>
+            <text x="80" y="22" text-anchor="middle" font-family="Outfit" font-size="9" fill="rgba(240,153,123,0.85)" letter-spacing="0.8" style="text-transform:lowercase">manual handoff</text>
+            <text x="80" y="40" text-anchor="middle" font-family="DM Serif Display" font-size="13" fill="#f5f4ef" font-style="italic">admin copy &amp; paste</text>
+          </g>
+
+          <!-- arrow 2 -->
+          <line x1="382" y1="98" x2="428" y2="98" stroke="url(#forwardArrow)" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+          <!-- node 3 : physitrack -->
+          <g transform="translate(430, 70)">
+            <rect x="0" y="0" width="120" height="56" rx="10" fill="rgba(106,211,179,0.12)" stroke="rgba(106,211,179,0.50)" stroke-width="0.8"/>
+            <text x="60" y="22" text-anchor="middle" font-family="Outfit" font-size="9" fill="rgba(106,211,179,0.90)" letter-spacing="0.8" style="text-transform:lowercase">programme</text>
+            <text x="60" y="40" text-anchor="middle" font-family="DM Serif Display" font-size="13" fill="#f5f4ef" font-style="italic">Physitrack</text>
+          </g>
+
+          <!-- broken return loop -->
+          <path d="M 490 130 Q 490 200, 110 200 Q 110 130, 110 130" fill="none" stroke="url(#brokenArrow)" stroke-width="1.2" stroke-dasharray="4 5" marker-end="url(#arrowheadCoral)"/>
+
+          <!-- annotation on broken loop -->
+          <text x="300" y="225" text-anchor="middle" font-family="DM Serif Display" font-size="13" fill="rgba(240,153,123,0.85)" font-style="italic">
+            adherence data never returns to the clinical record
+          </text>
+          <text x="300" y="244" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="rgba(245,244,239,0.40)" letter-spacing="2" style="text-transform:lowercase">
+            broken feedback loop
+          </text>
+
+          <!-- step numbers above each node -->
+          <text x="110" y="58" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="rgba(245,244,239,0.30)" letter-spacing="1">01</text>
+          <text x="300" y="58" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="rgba(240,153,123,0.55)" letter-spacing="1">02 · the gap</text>
+          <text x="490" y="58" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="rgba(245,244,239,0.30)" letter-spacing="1">03</text>
+        </svg>
+      </div>
+
+      <p class="visual-caption">
+        <strong>Manual and lossy.</strong> Every clinic running both tools does this by hand.
+        The loop never closes back to the clinical record.
+      </p>
+    </article>
+
+    <!-- RIGHT STACK : two mini cards -->
+    <div class="p2-stack">
+
+      <article class="mini-card is-feature">
+        <div class="mini-num">i. the data you own</div>
+        <h3 class="mini-title">the <em>between-visit</em> record</h3>
+        <p class="mini-body">
+          The PMS captures 30 minute snapshots, fortnightly. Physitrack covers the 13 days
+          in between. <strong>With API access, both land on the same screen.</strong>
+        </p>
+      </article>
+
+      <article class="mini-card">
+        <div class="mini-num">ii. the half-page report</div>
+        <h3 class="mini-title">adherence with PMS context</h3>
+        <p class="mini-body">
+          Adherence in isolation is a number. Read alongside the clinical record, it's a signal:
+          <span class="quote">"60% completion in the two weeks following a discharge note flagging mild flare-up."</span>
+          <strong>Same data. Different page.</strong>
+        </p>
+      </article>
+
+    </div>
+
+  </div>
+
+  <footer class="page-footer">
+    <span>strydeos.com</span>
+    <span>page 02 / 03</span>
+  </footer>
+
+</section>
+
+
+<!-- ========== PAGE 3 · THE ASK ========== -->
+<section class="page page-3">
+
+  <header class="top-strip">
+    <div class="brand">
+      <span class="brand-mark">Stryde<em>OS</em></span>
+      <span class="brand-tag">
+        partnership brief <span class="x">×</span>
+        <span class="partner">physitrack</span>
+      </span>
+    </div>
+  </header>
+
+  <div class="eyebrow">03 · the ask</div>
+
+  <h2 class="section-title">
+    two endpoints between us
+  </h2>
+
+  <p class="section-sub">
+    both already exist in your docs, sanctioned access lets us route StrydeOS clinics through
+    your platform on a per-clinic OAuth basis
+  </p>
+
+  <div class="p3-stage">
+
+    <article class="integration-diagram">
+
+      <svg class="diagram-svg" viewBox="0 0 1100 340" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="strydeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="rgba(75,139,245,0.18)"/>
+            <stop offset="100%" stop-color="rgba(106,211,179,0.10)"/>
+          </linearGradient>
+          <linearGradient id="physiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="rgba(106,211,179,0.16)"/>
+            <stop offset="100%" stop-color="rgba(106,211,179,0.06)"/>
+          </linearGradient>
+          <marker id="arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(106,211,179,0.85)"/>
+          </marker>
+          <marker id="arrowPurple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(75,139,245,0.85)"/>
+          </marker>
+        </defs>
+
+        <!-- LEFT : StrydeOS layer (event router + dashboard) -->
+        <g transform="translate(60, 50)">
+          <rect x="0" y="0" width="280" height="240" rx="14" fill="url(#strydeGrad)" stroke="rgba(75,139,245,0.40)" stroke-width="0.8"/>
+          <text x="20" y="28" font-family="JetBrains Mono" font-size="9" fill="rgba(75,139,245,0.85)" letter-spacing="2" style="text-transform:lowercase">strydeos</text>
+          <text x="20" y="52" font-family="DM Serif Display" font-size="22" fill="#f5f4ef" font-style="italic">the wiring</text>
+
+          <!-- internal blocks -->
+          <rect x="20" y="76" width="240" height="50" rx="8" fill="rgba(245,244,239,0.05)" stroke="rgba(75,139,245,0.30)" stroke-width="0.5"/>
+          <text x="36" y="98" font-family="Outfit" font-size="11" font-weight="500" fill="#f5f4ef">event router</text>
+          <text x="36" y="115" font-family="Outfit" font-size="10" fill="rgba(245,244,239,0.65)">subscribes to PMS clinical events</text>
+
+          <rect x="20" y="138" width="240" height="50" rx="8" fill="rgba(245,244,239,0.05)" stroke="rgba(75,139,245,0.30)" stroke-width="0.5"/>
+          <text x="36" y="160" font-family="Outfit" font-size="11" font-weight="500" fill="#f5f4ef">context engine</text>
+          <text x="36" y="177" font-family="Outfit" font-size="10" fill="rgba(245,244,239,0.65)">condition · session count · notes</text>
+
+          <rect x="20" y="200" width="240" height="30" rx="8" fill="rgba(106,211,179,0.10)" stroke="rgba(106,211,179,0.35)" stroke-width="0.5"/>
+          <text x="36" y="219" font-family="Outfit" font-size="10.5" fill="rgba(106,211,179,0.95)" font-weight="500">clinical dashboard ← reads adherence</text>
+        </g>
+
+        <!-- RIGHT : Physitrack endpoints -->
+        <g transform="translate(760, 50)">
+          <rect x="0" y="0" width="280" height="240" rx="14" fill="url(#physiGrad)" stroke="rgba(106,211,179,0.50)" stroke-width="0.8"/>
+          <text x="20" y="28" font-family="JetBrains Mono" font-size="9" fill="rgba(106,211,179,0.95)" letter-spacing="2" style="text-transform:lowercase">physitrack api</text>
+          <text x="20" y="52" font-family="DM Serif Display" font-size="22" fill="#f5f4ef" font-style="italic">two endpoints</text>
+
+          <!-- endpoint 1 : programmes (write) -->
+          <rect x="20" y="76" width="240" height="68" rx="8" fill="rgba(245,244,239,0.05)" stroke="rgba(106,211,179,0.30)" stroke-width="0.5"/>
+          <text x="36" y="98" font-family="JetBrains Mono" font-size="10" fill="rgba(106,211,179,0.95)" letter-spacing="0.5">programme write</text>
+          <text x="36" y="116" font-family="Outfit" font-size="10.5" fill="#f5f4ef" font-weight="500">programme assignment</text>
+          <text x="36" y="133" font-family="Outfit" font-size="10" fill="rgba(245,244,239,0.65)">on clinical event · oauth per clinic</text>
+
+          <!-- endpoint 2 : reporting (read) -->
+          <rect x="20" y="156" width="240" height="68" rx="8" fill="rgba(245,244,239,0.05)" stroke="rgba(106,211,179,0.30)" stroke-width="0.5"/>
+          <text x="36" y="178" font-family="JetBrains Mono" font-size="10" fill="rgba(106,211,179,0.95)" letter-spacing="0.5">adherence read</text>
+          <text x="36" y="196" font-family="Outfit" font-size="10.5" fill="#f5f4ef" font-weight="500">adherence intelligence</text>
+          <text x="36" y="213" font-family="Outfit" font-size="10" fill="rgba(245,244,239,0.65)">scheduled pulls · written into dashboard</text>
+        </g>
+
+        <!-- CONNECTING ARROWS between StrydeOS and Physitrack -->
+        <!-- arrow 1 : event > programme write (top, blue) -->
+        <path d="M 340 130 Q 550 130, 760 110" fill="none" stroke="rgba(75,139,245,0.55)" stroke-width="1.3" marker-end="url(#arrowPurple)"/>
+        <text x="550" y="115" text-anchor="middle" font-family="DM Serif Display" font-size="13" fill="rgba(75,139,245,0.95)" font-style="italic">assign on event</text>
+        <text x="550" y="132" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="rgba(245,244,239,0.45)" letter-spacing="1.5" style="text-transform:lowercase">module 01</text>
+
+        <!-- arrow 2 : adherence read > dashboard (bottom, teal) -->
+        <path d="M 760 200 Q 550 240, 340 215" fill="none" stroke="rgba(106,211,179,0.65)" stroke-width="1.3" marker-end="url(#arrowTeal)"/>
+        <text x="550" y="232" text-anchor="middle" font-family="DM Serif Display" font-size="13" fill="rgba(106,211,179,0.95)" font-style="italic">pull adherence back</text>
+        <text x="550" y="250" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="rgba(245,244,239,0.45)" letter-spacing="1.5" style="text-transform:lowercase">module 02</text>
+
+        <!-- footer caption -->
+        <text x="550" y="310" text-anchor="middle" font-family="Outfit" font-size="11" fill="rgba(245,244,239,0.55)" letter-spacing="0.4" style="text-transform:lowercase">existing endpoints · oauth per clinic · zero new surface area required from physitrack</text>
+      </svg>
+
+    </article>
+
+    <div class="ask-row">
+      <div>
+        <div class="ask-headline">
+          <span>we carry</span> the build, you carry the access
+        </div>
+        <p class="ask-body">
+          <strong>engineering, hosting, maintenance, API usage: us.</strong>
+          from you: a sanctioned per-clinic OAuth client and the green light
+        </p>
+      </div>
+      <div class="ask-cta">
+        <a href="mailto:jamal@strydeos.com">jamal@strydeos.com</a><br>
+        <a href="https://strydeos.com">strydeos.com</a>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="page-footer">
+    <span>strydeos.com</span>
+    <span>page 03 / 03</span>
+  </footer>
+
+</section>
+
+</body>
+</html>
