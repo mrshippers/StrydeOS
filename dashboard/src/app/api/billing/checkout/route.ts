@@ -196,6 +196,9 @@ async function handler(request: NextRequest) {
       success_url: successUrl,
       cancel_url: cancelUrl,
       allow_promotion_codes: true,
+      // Skip card capture when total is £0 (e.g. 100% off promo, full trial).
+      // Customer can add a card via the Customer Portal before charges resume.
+      payment_method_collection: "if_required",
       metadata: { clinicId, tier, interval },
       subscription_data: {
         metadata: { clinicId, tier, interval },
