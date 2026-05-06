@@ -55,7 +55,7 @@ const MODULES = [
   {
     name: "Ava", color: T.blue, bright: T.blueBright, popular: true,
     tagline: "Never miss another call",
-    setup: "\u00a3199 one-time setup",
+    setup: "\u00a3195 one-time setup",
     features: ["24/7 inbound call handling", "Live calendar booking", "No-show recovery", "SMS confirmations", "Emergency routing"],
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -478,7 +478,7 @@ export default function PricingSection() {
               </table>
             </div>
             <div style={{ padding: "12px 20px 20px", fontSize: 11, color: "rgba(255,255,255,0.2)" }}>
-              Ava setup: \u00a3199 one-time (phone provisioning + voice training). All other modules: no setup fee.
+              Ava setup: \u00a3195 one-time (phone provisioning + voice training). Same \u00a3195 applies on Full Stack. All other modules: no setup fee.
             </div>
           </div>
         </div>

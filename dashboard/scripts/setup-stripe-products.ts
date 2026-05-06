@@ -55,7 +55,7 @@ const PRICING = {
   },
 } as const;
 
-const TIER_LABELS = { solo: "Solo (1 clinician)", studio: "Studio (2–4 clinicians)", clinic: "Clinic (6+ clinicians)" };
+const TIER_LABELS = { solo: "Solo (1 clinician)", studio: "Studio (2–5 clinicians)", clinic: "Clinic (6+ clinicians)" };
 const TIERS = ["solo", "studio", "clinic"] as const;
 const INTERVALS = ["month", "year"] as const;
 
@@ -188,7 +188,7 @@ async function main() {
     "StrydeOS — Ava Setup Fee",
     "One-time onboarding and configuration fee for the Ava AI voice receptionist module."
   );
-  const avaSetupPrice = await getOrCreateOneTimePrice(avaSetupProduct.id, 19900, "Ava setup fee · £199");
+  const avaSetupPrice = await getOrCreateOneTimePrice(avaSetupProduct.id, 19500, "Ava setup fee · £195");
   envLines.push(`STRIPE_PRICE_AVA_SETUP=${avaSetupPrice.id}`);
 
   // ── Extra Clinician Seat (per-seat add-on) ──

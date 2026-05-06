@@ -2,10 +2,10 @@
  * Billing helpers — module/price mapping and Stripe↔Firestore entitlement sync.
  *
  * Pricing model (from pricing breakdown model.html):
- *   Three tiers:  solo (1 clinician) | studio (2-4) | clinic (5+)
+ *   Three tiers:  solo (1 clinician) | studio (2-5) | clinic (6+)
  *   Two intervals: month | year (year = 20% off)
  *   Four products: intelligence | pulse | ava | fullstack (all-three bundle)
- *   One-time fee:  Ava setup £199
+ *   One-time fee:  Ava setup £195 (also charged on Full Stack)
  *
  * Env var naming: STRIPE_PRICE_{PRODUCT}_{TIER}_{INTERVAL}
  *   e.g. STRIPE_PRICE_INTELLIGENCE_STUDIO_MONTH
@@ -69,8 +69,8 @@ export const MODULE_PRICING: Record<
   },
 };
 
-/** Ava one-time setup fee (pence). */
-export const AVA_SETUP_FEE_PENCE = 19900; // £199
+/** Ava one-time setup fee (pence). Also charged on Full Stack purchase. */
+export const AVA_SETUP_FEE_PENCE = 19500; // £195
 
 // ─── Extra seat add-on pricing (in pence, GBP) ──────────────────────────────
 
@@ -241,7 +241,7 @@ export function trialDaysRemaining(trialStartedAt: string | null): number | null
 /** Hard seat caps per billing tier. Extra seats available at £49/mo each. */
 export const TIER_SEAT_LIMITS: Record<TierKey, number> = {
   solo: 1,
-  studio: 4,
+  studio: 5,
   clinic: 6,
 };
 
@@ -338,7 +338,7 @@ export async function canAddClinician(
 
 export const TIER_LABELS: Record<TierKey, { label: string; detail: string }> = {
   solo:   { label: "Solo",   detail: "1 clinician" },
-  studio: { label: "Studio", detail: "2–4 clinicians" },
+  studio: { label: "Studio", detail: "2–5 clinicians" },
   clinic: { label: "Clinic", detail: "6+ clinicians" },
 };
 

@@ -8,7 +8,7 @@
  *     modules: Array<"intelligence" | "pulse" | "ava" | "fullstack">
  *     tier: "solo" | "studio" | "clinic"          (default: "studio")
  *     interval: "month" | "year"                  (default: "month")
- *     includeAvaSetup?: boolean                   (adds £199 one-time fee if ava or fullstack selected)
+ *     includeAvaSetup?: boolean                   (adds £195 one-time fee if ava or fullstack selected)
  *     successPath?: string                        (path to redirect after success, default: "/billing?checkout=success")
  *     cancelPath?: string                         (path to redirect after cancel, default: "/billing?checkout=canceled")
  *   }
@@ -174,7 +174,7 @@ async function handler(request: NextRequest) {
           customer: stripeCustomerId,
           amount: AVA_SETUP_FEE_PENCE,
           currency: "gbp",
-          description: "Ava one-time setup fee",
+          description: "Ava one-time setup fee (£195)",
         });
       }
 

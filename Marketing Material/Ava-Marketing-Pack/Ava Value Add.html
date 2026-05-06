@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrydeOS Ava — vs Answering Services</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B2545;
+    --navy-mid: #132D5E;
+    --blue: #1C54F2;
+    --blue-bright: #2E6BFF;
+    --blue-glow: #4B8BF5;
+    --teal: #0891B2;
+    --purple: #8B5CF6;
+    --cloud: #F2F1EE;
+    --ink: #111827;
+    --green: #059669;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Outfit', -apple-system, sans-serif;
+    background: var(--navy);
+    color: white;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ─── Slide base ──────────────────────────────────────────────── */
+  .slide {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(28,84,242,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(139,92,246,0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .slide-alt::before {
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 100%, rgba(28,84,242,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 20%, rgba(8,145,178,0.06) 0%, transparent 60%);
+  }
+
+  /* ─── Tag pill ─────────────────────────────────────────────────── */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .tag-blue { background: rgba(28,84,242,0.12); color: var(--blue-glow); border: 1px solid rgba(28,84,242,0.2); }
+
+  .tag-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+
+  /* ─── Headline ─────────────────────────────────────────────────── */
+  .headline {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(42px, 5vw, 72px);
+    font-weight: 400;
+    line-height: 1.1;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
+
+  .headline .accent {
+    background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ─── Subhead ──────────────────────────────────────────────────── */
+  .subhead {
+    font-size: clamp(16px, 1.8vw, 22px);
+    font-weight: 400;
+    color: rgba(255,255,255,0.65);
+    text-align: center;
+    max-width: 640px;
+    line-height: 1.6;
+    margin-bottom: 60px;
+  }
+
+  /* ─── Comparison table (Slide 1) ───────────────────────────────── */
+  .comparison-wrapper {
+    width: min(900px, 90vw);
+  }
+
+  .comparison-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .comparison-table thead th {
+    padding: 20px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .comparison-table thead th:first-child {
+    text-align: left;
+    color: rgba(255,255,255,0.4);
+    width: 34%;
+  }
+
+  .comparison-table thead th:nth-child(2) {
+    text-align: center;
+    color: var(--blue-glow);
+    width: 33%;
+  }
+
+  .comparison-table thead th:nth-child(3) {
+    text-align: center;
+    color: rgba(255,255,255,0.3);
+    width: 33%;
+  }
+
+  .comparison-table tbody td {
+    padding: 16px 24px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .comparison-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .comparison-table tbody td:first-child {
+    color: rgba(255,255,255,0.6);
+    font-weight: 500;
+  }
+
+  .comparison-table tbody td:nth-child(2) {
+    text-align: center;
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  .comparison-table tbody td:nth-child(3) {
+    text-align: center;
+    color: rgba(255,255,255,0.25);
+    font-weight: 400;
+  }
+
+  /* ─── Cost cards (Slide 2) ─────────────────────────────────────── */
+  .cost-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    width: min(900px, 90vw);
+    margin-bottom: 32px;
+  }
+
+  .cost-card {
+    padding: 40px 36px;
+    border-radius: 16px;
+    position: relative;
+  }
+
+  .cost-card-muted {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .cost-card-active {
+    background: rgba(28,84,242,0.06);
+    border: 1px solid rgba(28,84,242,0.2);
+  }
+
+  .cost-card-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 20px;
+  }
+
+  .cost-card-muted .cost-card-label { color: rgba(255,255,255,0.3); }
+  .cost-card-active .cost-card-label { color: var(--blue-glow); }
+
+  .cost-card-price {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(36px, 4vw, 52px);
+    font-weight: 400;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+
+  .cost-card-muted .cost-card-price {
+    color: rgba(255,255,255,0.2);
+    text-decoration: line-through;
+    text-decoration-color: rgba(255,255,255,0.12);
+  }
+
+  .cost-card-active .cost-card-price {
+    background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .cost-card-per {
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+
+  .cost-card-muted .cost-card-per { color: rgba(255,255,255,0.2); }
+  .cost-card-active .cost-card-per { color: rgba(255,255,255,0.5); }
+
+  .cost-card-detail {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .cost-card-muted .cost-card-detail { color: rgba(255,255,255,0.2); }
+  .cost-card-active .cost-card-detail { color: rgba(255,255,255,0.5); }
+
+  .savings-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border-radius: 50px;
+    background: rgba(5,150,105,0.12);
+    border: 1px solid rgba(5,150,105,0.2);
+    color: var(--green);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  /* ─── Capability grid (Slide 3) ────────────────────────────────── */
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    width: min(1000px, 90vw);
+  }
+
+  .cap-card {
+    padding: 28px 24px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: border-color 0.2s;
+  }
+
+  .cap-card:hover { border-color: rgba(28,84,242,0.2); }
+
+  .cap-card-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+    background: rgba(28,84,242,0.12);
+    border: 1px solid rgba(28,84,242,0.15);
+  }
+
+  .cap-card h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.92);
+    margin-bottom: 8px;
+  }
+
+  .cap-card p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.55;
+  }
+
+  /* ─── Stats row (Slide 4) ──────────────────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    width: min(1000px, 90vw);
+  }
+
+  .stat-card {
+    text-align: center;
+    padding: 36px 24px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .stat-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(36px, 4vw, 56px);
+    font-weight: 400;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.5;
+  }
+
+  .stat-green .stat-number { color: var(--green); }
+  .stat-blue .stat-number {
+    background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-teal .stat-number { color: var(--teal); }
+  .stat-purple .stat-number { color: var(--purple); }
+
+  /* ─── CTA buttons (Slide 5) ────────────────────────────────────── */
+  .cta-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 36px;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-solid {
+    background: linear-gradient(135deg, var(--blue), var(--blue-bright));
+    color: white;
+    border: none;
+    box-shadow: 0 4px 24px rgba(28,84,242,0.3), 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .btn-solid:hover {
+    box-shadow: 0 6px 32px rgba(28,84,242,0.4), 0 2px 6px rgba(0,0,0,0.3);
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .btn-ghost:hover {
+    border-color: rgba(255,255,255,0.3);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  /* ─── Footer ───────────────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    padding: 60px 40px;
+    color: rgba(255,255,255,0.3);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .footer strong { color: rgba(255,255,255,0.6); }
+
+  /* ─── Responsive ───────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .slide { padding: 60px 24px; }
+    .cost-grid { grid-template-columns: 1fr; gap: 20px; }
+    .cap-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .comparison-table thead th,
+    .comparison-table tbody td { padding: 12px 16px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 1 — Hero: Let Sue enjoy her coffee.
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="tag tag-blue">
+    <span class="tag-dot" style="background: var(--blue-glow)"></span>
+    Ava &middot; AI Receptionist
+  </div>
+  <h1 class="headline">
+    Your team handles the clinic.<br>
+    <span class="accent">Ava handles the phones.</span>
+  </h1>
+  <p class="subhead">
+    Ava picks up every call &mdash; 24/7, direct into your PMS, cancellations recovered, every interaction logged. Your front desk does what needs them. Ava handles the volume.
+  </p>
+
+  <div class="comparison-wrapper">
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+            Ava
+          </th>
+          <th>Answering service</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Availability</td>
+          <td>24/7/365</td>
+          <td>Office hours</td>
+        </tr>
+        <tr>
+          <td>Booking</td>
+          <td>Direct into PMS</td>
+          <td>Message relay</td>
+        </tr>
+        <tr>
+          <td>Cancellation recovery</td>
+          <td>Automatic</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td>Call data</td>
+          <td>Every call logged</td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td>Multi-clinic scaling</td>
+          <td>Marginal cost</td>
+          <td>&pound;500+/clinic</td>
+        </tr>
+        <tr>
+          <td>Answer time</td>
+          <td>&lt;3 seconds</td>
+          <td>Variable</td>
+        </tr>
+        <tr>
+          <td>Setup</td>
+          <td>Same day</td>
+          <td>1&ndash;2 weeks</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 2 — Cost: Three clinics. 63% less.
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt">
+  <div class="tag tag-blue">
+    <span class="tag-dot" style="background: var(--blue-glow)"></span>
+    The Numbers
+  </div>
+  <h1 class="headline">
+    Three clinics.<br>
+    <span class="accent">63% less.</span>
+  </h1>
+  <p class="subhead">
+    Real numbers from a real practice. Not a projection &mdash; a replacement.
+  </p>
+
+  <div class="cost-grid">
+    <!-- Moneypenny — muted / crossed out -->
+    <div class="cost-card cost-card-muted">
+      <div class="cost-card-label">Moneypenny</div>
+      <div class="cost-card-price">&pound;18,000<span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:400;">/yr</span></div>
+      <div class="cost-card-per">3 clinics &middot; &pound;1,500/mo</div>
+      <div class="cost-card-detail">
+        Office hours. Message relay. No booking. No analytics. No cancellation handling.
+      </div>
+    </div>
+
+    <!-- Ava — active / blue accent -->
+    <div class="cost-card cost-card-active">
+      <div class="cost-card-label">Ava</div>
+      <div class="cost-card-price">&pound;6,600<span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:400;-webkit-text-fill-color:rgba(255,255,255,0.5);background:none;">/yr</span></div>
+      <div class="cost-card-per">3 clinics &middot; ~&pound;550/mo</div>
+      <div class="cost-card-detail">
+        24/7. Direct PMS booking. Every call logged. Cancellations recovered.
+      </div>
+    </div>
+  </div>
+
+  <div class="savings-badge">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+    Save &pound;11,400/yr
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 3 — Capabilities: Not an answering service. Infrastructure.
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="tag tag-blue">
+    <span class="tag-dot" style="background: var(--blue-glow)"></span>
+    What Ava Does
+  </div>
+  <h1 class="headline">
+    Not an answering service.<br>
+    <span class="accent">Infrastructure.</span>
+  </h1>
+  <p class="subhead">
+    Ava doesn't take messages. She handles the call end-to-end and feeds your dashboard.
+  </p>
+
+  <div class="cap-grid">
+    <!-- 1 — Inbound call handling -->
+    <div class="cap-card">
+      <div class="cap-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+      </div>
+      <h4>Inbound call handling</h4>
+      <p>Every call answered. No hold, no voicemail, no missed revenue.</p>
+    </div>
+
+    <!-- 2 — Direct PMS booking -->
+    <div class="cap-card">
+      <div class="cap-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M10 16l2 2 4-4"/></svg>
+      </div>
+      <h4>Direct PMS booking</h4>
+      <p>WriteUpp, Cliniko, or your PMS. No relay, no callback, no human in the loop.</p>
+    </div>
+
+    <!-- 3 — Cancellation recovery -->
+    <div class="cap-card">
+      <div class="cap-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+      </div>
+      <h4>Cancellation recovery</h4>
+      <p>Patient cancels, Ava offers alternative slots. Revenue that would walk out the door stays.</p>
+    </div>
+
+    <!-- 4 — 24/7/365 -->
+    <div class="cap-card">
+      <div class="cap-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <h4>24/7/365</h4>
+      <p>Weekends. Bank holidays. 2am. Patients call when it suits them.</p>
+    </div>
+
+    <!-- 5 — Call analytics -->
+    <div class="cap-card">
+      <div class="cap-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      </div>
+      <h4>Call analytics</h4>
+      <p>Duration, outcome, booking status. Feeds directly into Intelligence.</p>
+    </div>
+
+    <!-- 6 — Multi-clinic -->
+    <div class="cap-card">
+      <div class="cap-card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <h4>Multi-clinic</h4>
+      <p>Add a clinic, add a number. No per-clinic answering contracts.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 4 — Impact: What changes when Ava picks up.
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt">
+  <div class="tag tag-blue">
+    <span class="tag-dot" style="background: var(--blue-glow)"></span>
+    Projected Impact
+  </div>
+  <h1 class="headline">
+    What changes<br>
+    <span class="accent">when Ava picks up.</span>
+  </h1>
+  <p class="subhead">
+    Based on a 3-clinic private physio practice replacing Moneypenny.
+  </p>
+
+  <div class="stats-row">
+    <div class="stat-card stat-green">
+      <div class="stat-number">&pound;11.4k</div>
+      <div class="stat-label">Annual saving vs<br>answering service</div>
+    </div>
+    <div class="stat-card stat-blue">
+      <div class="stat-number">0</div>
+      <div class="stat-label">Missed calls<br>after hours</div>
+    </div>
+    <div class="stat-card stat-teal">
+      <div class="stat-number">&lt;3s</div>
+      <div class="stat-label">Average<br>answer time</div>
+    </div>
+    <div class="stat-card stat-purple">
+      <div class="stat-number">100%</div>
+      <div class="stat-label">Calls logged<br>to dashboard</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 5 — CTA: Your receptionist. Never calls in sick.
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="tag tag-blue">
+    <span class="tag-dot" style="background: var(--blue-glow)"></span>
+    Get Started
+  </div>
+  <h1 class="headline">
+    Every call.<br>
+    <span class="accent">Ava&rsquo;s got it.</span>
+  </h1>
+  <p class="subhead">
+    Ava is included in the Full Stack plan, or standalone from &pound;149/mo. One-time &pound;195 setup. No contracts.
+  </p>
+
+  <div class="cta-row">
+    <a href="#" class="btn btn-solid">Book a demo</a>
+    <a href="#" class="btn btn-ghost">See pricing</a>
+  </div>
+</section>
+
+<div class="footer">
+  <strong>StrydeOS</strong> &mdash; Intelligence &middot; Ava &middot; Pulse<br>
+  Built by a clinic owner, for clinic owners.
+</div>
+
+</body>
+</html>

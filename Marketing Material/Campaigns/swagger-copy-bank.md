@@ -80,7 +80,7 @@
 - "No contracts. No migration. Live in 5 days."
 - "Built by a clinic owner. For clinic owners who prefer data to guesswork."
 - "Connects to your PMS. Doesn't replace it."
-- "One-time £199 setup. That's it."
+- "One-time £195 setup. That's it."
 
 ---
 

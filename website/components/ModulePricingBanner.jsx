@@ -34,9 +34,9 @@ const PRICING = {
 };
 
 const SETUP = {
-  solo:   { ava: null,                    pulse: null, intelligence: null },
-  studio: { ava: "\u00A3250 one-time setup", pulse: null, intelligence: null },
-  clinic: { ava: "\u00A3250 one-time setup", pulse: null, intelligence: null },
+  solo:   { ava: "\u00A3195 one-time setup", pulse: null, intelligence: null },
+  studio: { ava: "\u00A3195 one-time setup", pulse: null, intelligence: null },
+  clinic: { ava: "\u00A3195 one-time setup", pulse: null, intelligence: null },
 };
 
 export default function ModulePricingBanner({ module = "ava", onCompare }) {

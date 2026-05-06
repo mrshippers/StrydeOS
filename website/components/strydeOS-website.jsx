@@ -2385,9 +2385,9 @@ const ROICalc = ({ darkMode }) => {
 
 /* ─── Pricing ────────────────────────────────────────────────────────────────── */
 const PRICING_DATA_MONTHLY = {
-  solo:   { Intelligence: 69,  Ava: 99,  Pulse: 79,  full: 199, fullSetup: "£199" },
-  studio: { Intelligence: 99,  Ava: 149, Pulse: 99,  full: 299, fullSetup: "£199" },
-  clinic: { Intelligence: 149, Ava: 199, Pulse: 149, full: 399, fullSetup: "£199" },
+  solo:   { Intelligence: 69,  Ava: 99,  Pulse: 79,  full: 199, fullSetup: "£195" },
+  studio: { Intelligence: 99,  Ava: 149, Pulse: 99,  full: 299, fullSetup: "£195" },
+  clinic: { Intelligence: 149, Ava: 199, Pulse: 149, full: 399, fullSetup: "£195" },
 };
 const getPricing = (tier, billing) => {
   const m = PRICING_DATA_MONTHLY[tier];
@@ -2416,7 +2416,7 @@ const PRICING_MODULES = [
   {
     name: "Ava", color: C.blue, bright: C.blueBright, popular: true,
     tagline: "Never miss another call",
-    setup: "\u00A3250 one-time setup",
+    setup: "\u00A3195 one-time setup",
     features: ["24/7 inbound call handling", "Live calendar booking", "No-show recovery", "SMS confirmations", "Emergency routing"],
     icon: <ArchAvaIcon color={C.blue} size={22} />,
   },

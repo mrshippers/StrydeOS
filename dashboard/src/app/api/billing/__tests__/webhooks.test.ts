@@ -98,7 +98,7 @@ describe("TIER_SEAT_LIMITS", () => {
     const { TIER_SEAT_LIMITS } = await import("@/lib/billing");
 
     expect(TIER_SEAT_LIMITS.solo).toBe(1);
-    expect(TIER_SEAT_LIMITS.studio).toBe(4);
+    expect(TIER_SEAT_LIMITS.studio).toBe(5);
     expect(TIER_SEAT_LIMITS.clinic).toBe(6);
   });
 });

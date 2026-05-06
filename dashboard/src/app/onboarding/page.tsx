@@ -84,8 +84,8 @@ const MODULE_META: Record<TrialModule, { name: string; color: string }> = {
 
 const TIER_OPTIONS: { id: TrialTier; label: string; detail: string }[] = [
   { id: "solo", label: "Solo", detail: "1 clinician" },
-  { id: "studio", label: "Studio", detail: "2–4 clinicians" },
-  { id: "clinic", label: "Clinic", detail: "5+ clinicians" },
+  { id: "studio", label: "Studio", detail: "2–5 clinicians" },
+  { id: "clinic", label: "Clinic", detail: "6+ clinicians" },
 ];
 
 // ─── PMS + Pulse options (carried from original) ─────────────────────────────
@@ -156,6 +156,8 @@ export default function OnboardingPage() {
   const [enabledSequences, setEnabledSequences] = useState<Set<string>>(
     new Set(PULSE_SEQUENCES.filter((s) => s.defaultOn).map((s) => s.id))
   );
+  const [bookingUrl, setBookingUrl] = useState("");
+  const [sessionPriceField, setSessionPriceField] = useState("");
 
   // Enrich step: Ava KB auto-population from public sources
   const [enrichRunning, setEnrichRunning] = useState(false);
@@ -200,7 +202,7 @@ export default function OnboardingPage() {
   // Step 3 (configure) shows different content based on module, or is skipped
   // if Intelligence-only (defaults are sufficient). The enrich step only runs
   // for modules that use the Ava knowledge base (ava, fullstack).
-  const needsConfigureStep = selectedModule !== "intelligence";
+  const needsConfigureStep = true;
   const needsEnrichStep = selectedModule === "ava" || selectedModule === "fullstack";
   const STEPS = ALL_STEPS.filter((s) => {
     if (s.id === "configure" && !needsConfigureStep) return false;
@@ -359,6 +361,12 @@ export default function OnboardingPage() {
         }
         if (fuPrice.trim()) updates["ava.config.fu_price"] = fuPrice.trim();
         updates.enabledSequences = Array.from(enabledSequences);
+        if ((selectedModule === "intelligence" || selectedModule === "pulse") && sessionPriceField.trim()) {
+          updates.sessionPricePence = Math.round(parseFloat(sessionPriceField) * 100);
+        }
+        if ((selectedModule === "pulse" || selectedModule === "fullstack") && bookingUrl.trim()) {
+          updates.bookingUrl = bookingUrl.trim();
+        }
       }
       if (stepId === "pms" && selectedPms) {
         updates.pmsType = selectedPms;
@@ -679,6 +687,29 @@ export default function OnboardingPage() {
                 {/* ────────────── STEP 3: CONFIGURE (conditional) ────────────── */}
                 {step.id === "configure" && (
                   <>
+                    {/* Intelligence / Pulse: session price */}
+                    {(selectedModule === "intelligence" || selectedModule === "pulse") && (
+                      <div className="space-y-4">
+                        <div className="rounded-xl border border-purple/20 bg-purple/5 p-4">
+                          <p className="text-sm font-semibold text-navy mb-0.5">Intelligence — clinical performance</p>
+                          <p className="text-[12px] text-muted leading-relaxed">
+                            Used to calculate revenue impact in coaching insights and KPI dashboards.
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">Standard session price</label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted">£</span>
+                            <input type="number" value={sessionPriceField} onChange={(e) => setSessionPriceField(e.target.value)} placeholder="75"
+                              className="w-full px-3 py-2.5 rounded-lg border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Spacer between Intelligence price and Ava when fullstack */}
+                    {selectedModule === "fullstack" && <hr className="border-border" />}
+
                     {/* Ava config — shown for ava or fullstack */}
                     {(selectedModule === "ava" || selectedModule === "fullstack") && (
                       <div className="space-y-4">
@@ -748,6 +779,13 @@ export default function OnboardingPage() {
                         <p className="text-[11px] text-muted">
                           {enabledSequences.size} of {PULSE_SEQUENCES.length} sequences enabled. You can change these anytime.
                         </p>
+                        <div>
+                          <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">Patient booking link</label>
+                          <input type="url" value={bookingUrl} onChange={(e) => setBookingUrl(e.target.value)}
+                            placeholder="https://www.yourclinic.com/book"
+                            className="w-full px-3 py-2.5 rounded-lg border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30" />
+                          <p className="text-[10px] text-muted mt-1">Used in rebooking SMS/email as the booking link. You can set this later in Settings.</p>
+                        </div>
                       </div>
                     )}
                   </>
@@ -852,8 +890,13 @@ export default function OnboardingPage() {
                         { title: `Module: ${MODULE_META[selectedModule].name}`, status: "ready" as const, color: MODULE_META[selectedModule].color },
                         { title: `Tier: ${TIER_OPTIONS.find((t) => t.id === selectedTier)?.label ?? selectedTier}`, status: "ready" as const, color: C.blue },
                         { title: `PMS: ${selectedPms ? PMS_OPTIONS.find((p) => p.id === selectedPms)?.label ?? selectedPms : "Not connected yet"}`, status: selectedPms ? "ready" as const : "skipped" as const, color: C.blue },
+                        ...(() => {
+                          const price = iaPrice.trim() || sessionPriceField.trim();
+                          return [{ title: `Session price: ${price ? `£${price}` : "Not set"}`, status: (price ? "ready" : "skipped") as "ready" | "skipped", color: C.purple }];
+                        })(),
                         ...(selectedModule === "ava" || selectedModule === "fullstack" ? [{ title: `Ava: ${clinicPhone || "Phone not set"}`, status: (clinicPhone ? "ready" : "skipped") as "ready" | "skipped", color: C.blue }] : []),
                         ...(selectedModule === "pulse" || selectedModule === "fullstack" ? [{ title: `Pulse: ${enabledSequences.size} sequences enabled`, status: "ready" as const, color: C.teal }] : []),
+                        ...(selectedModule === "pulse" || selectedModule === "fullstack" ? [{ title: `Booking link: ${bookingUrl ? "Set" : "Not set"}`, status: (bookingUrl ? "ready" : "skipped") as "ready" | "skipped", color: C.teal }] : []),
                       ].map((item) => (
                         <div key={item.title} className={`flex items-center gap-3 p-4 rounded-xl border ${
                           item.status === "ready" ? "border-success/20 bg-success/5" : "border-warn/20 bg-warn/5"

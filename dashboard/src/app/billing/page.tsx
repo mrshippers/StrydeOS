@@ -165,7 +165,7 @@ function ModuleCard({ moduleKey, isActive, isLoading, tier, interval, canManage,
           <span className="text-[12px] text-muted">/{interval === "month" ? "mo" : "yr"}</span>
         </div>
         {hasSetupFee && !isActive && (
-          <p className="text-[11px] text-muted mt-0.5">+ £199 one-time setup</p>
+          <p className="text-[11px] text-muted mt-0.5">+ £195 one-time setup</p>
         )}
         {interval === "year" && (
           <p className="text-[11px] mt-0.5 text-success">
@@ -252,7 +252,7 @@ function FullStackCard({ tier, interval, allActive, isLoading, isDemo, onActivat
             </span>
             <span className="text-[12px] text-muted">/{interval === "month" ? "mo" : "yr"}</span>
           </div>
-          <p className="text-[11px] text-muted mt-0.5">+ £199 one-time setup</p>
+          <p className="text-[11px] text-muted mt-0.5">+ £195 one-time setup</p>
           <div className="inline-block mt-2 px-2.5 py-1 rounded text-[11px] font-semibold bg-success/15 text-success">
             Save {formatGBP(saving)}/{interval === "month" ? "mo" : "yr"} vs individual
           </div>

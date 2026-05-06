@@ -73,7 +73,7 @@ const PRODUCTS = {
 };
 
 const EXTRA_SEAT = { month: 4900, year: 47040 };
-const AVA_SETUP_FEE = 19900; // £199 one-time
+const AVA_SETUP_FEE = 19500; // £195 one-time (Ava standalone + Full Stack)
 
 // ── Create everything ──────────────────────────────────────────────────────
 const envVars = {};
