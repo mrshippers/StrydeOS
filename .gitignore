@@ -42,6 +42,9 @@ ALL CLAUDE PARTY/
 # Personal working files (per CLAUDE.md: no working files in root)
 To do/
 
+# Side projects scaffolded inside this repo for convenience but tracked elsewhere
+StrydeLens/
+
 # Screenshots and one-off images at repo root
 *.png
 *.jpg
