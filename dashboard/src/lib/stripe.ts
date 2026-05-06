@@ -16,9 +16,9 @@ export function getStripe(): Stripe {
   if (!_stripe) {
     const key = process.env.STRIPE_SECRET_KEY?.trim();
     if (!key) throw new Error("STRIPE_SECRET_KEY is not configured");
-    _stripe = new Stripe(key, {
-      apiVersion: "2026-02-25.clover",
-    });
+    // Pinned to the SDK's bundled API version. Pinning a future version
+    // here previously caused requests to fail; let the SDK choose.
+    _stripe = new Stripe(key);
   }
   return _stripe;
 }

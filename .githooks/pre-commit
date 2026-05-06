@@ -37,7 +37,7 @@ FOUND=0
 
 for pattern in "${PATTERNS[@]}"; do
   # Search staged file contents (not just diff) for secrets
-  MATCHES=$(echo "$STAGED" | xargs grep -lE "$pattern" 2>/dev/null || true)
+  MATCHES=$(echo "$STAGED" | xargs grep -lE -e "$pattern" 2>/dev/null || true)
   if [ -n "$MATCHES" ]; then
     if [ "$FOUND" -eq 0 ]; then
       echo ""

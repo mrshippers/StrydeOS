@@ -10,7 +10,9 @@ import { StrydeOSLogo } from "@/components/MonolithLogo";
  * /checkout/success
  *
  * Stripe redirects here after a successful payment.
- * Shows a brief success animation then forwards to /onboarding.
+ * Shows a brief success animation then forwards to /onboarding —
+ * the onboarding page itself redirects established clinics to /dashboard,
+ * so this lands new clinics in the wizard and existing customers in-app.
  */
 export default function CheckoutSuccessPage() {
   const router = useRouter();
@@ -23,7 +25,7 @@ export default function CheckoutSuccessPage() {
   }, []);
 
   useEffect(() => {
-    if (ready) router.replace("/dashboard");
+    if (ready) router.replace("/onboarding");
   }, [ready, router]);
 
   return (

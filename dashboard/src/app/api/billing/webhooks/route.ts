@@ -9,6 +9,7 @@
  *   customer.subscription.updated  → update modules (add/remove)
  *   customer.subscription.deleted  → deactivate all modules
  *   invoice.payment_failed         → mark billing status (does NOT revoke access)
+ *   invoice.payment_succeeded      → record lastPaymentAt, clear past_due state
  *
  * Required env vars:
  *   STRIPE_WEBHOOK_SECRET  — whsec_... from Stripe Dashboard or CLI
@@ -72,6 +73,10 @@ async function handler(request: NextRequest) {
 
       case "invoice.payment_failed":
         await handlePaymentFailed(event.data.object as Stripe.Invoice);
+        break;
+
+      case "invoice.payment_succeeded":
+        await handlePaymentSucceeded(event.data.object as Stripe.Invoice);
         break;
 
       default:
@@ -300,6 +305,25 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
     });
 
   console.warn(`[Billing webhook] Clinic ${clinic.id} — payment failed, marked past_due`);
+}
+
+async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
+  const customerId =
+    typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+  if (!customerId) return;
+
+  const clinic = await findClinicByCustomerId(customerId);
+  if (!clinic) return;
+
+  const now = new Date().toISOString();
+  await getAdminDb()
+    .collection("clinics")
+    .doc(clinic.id)
+    .update({
+      "billing.lastPaymentAt": now,
+      "billing.paymentFailedAt": FieldValue.delete(),
+      updatedAt: now,
+    });
 }
 
 export const POST = withRequestLog(handler);
