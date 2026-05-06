@@ -40,10 +40,36 @@ async function handler(req: NextRequest) {
       return NextResponse.json({ error: "Clinic not found" }, { status: 404 });
     }
 
-    const clinicData = clinicSnap.data() as { status?: string };
+    const clinicData = clinicSnap.data() as Record<string, unknown>;
+
     if (clinicData.status === "live") {
-      // Already live — no-op
       return NextResponse.json({ promoted: false, alreadyLive: true });
+    }
+
+    // Determine which module this clinic signed up for
+    const trialModule = (clinicData["onboardingV2.trialModule"] ?? clinicData.trialModule ?? "intelligence") as string;
+    const missing: string[] = [];
+
+    // sessionPricePence required for all modules (Intelligence narratives + KPI revenue)
+    const sessionPricePence = clinicData.sessionPricePence as number | undefined;
+    if (!sessionPricePence || sessionPricePence <= 0) {
+      missing.push("sessionPricePence");
+    }
+
+    // bookingUrl required for Pulse and fullstack
+    if (trialModule === "pulse" || trialModule === "fullstack") {
+      if (!clinicData.bookingUrl) missing.push("bookingUrl");
+    }
+
+    // Ava phone required for ava and fullstack
+    if (trialModule === "ava" || trialModule === "fullstack") {
+      const avaPhone = (clinicData.ava as Record<string, unknown> | undefined)?.config;
+      const phone = (avaPhone as Record<string, unknown> | undefined)?.phone;
+      if (!phone) missing.push("ava.config.phone");
+    }
+
+    if (missing.length > 0) {
+      return NextResponse.json({ promoted: false, reason: "missing_config", missing });
     }
 
     // Query all owner/admin users for this clinic
@@ -76,7 +102,6 @@ async function handler(req: NextRequest) {
 
     return NextResponse.json({ promoted: true });
   } catch (err) {
-    console.error("[check-go-live] Error:", err);
     return handleApiError(err);
   }
 }

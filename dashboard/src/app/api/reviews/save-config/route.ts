@@ -61,6 +61,11 @@ async function handler(request: NextRequest) {
       .doc(REVIEWS_DOC_ID)
       .set(update, { merge: true });
 
+    await db.collection("clinics").doc(clinicId).update({
+      googleReviewUrl: `https://search.google.com/local/writereview?placeid=${placeId}`,
+      updatedAt: new Date().toISOString(),
+    });
+
     await writeAuditLog(db, clinicId, {
       userId: user.uid,
       userEmail: user.email,
