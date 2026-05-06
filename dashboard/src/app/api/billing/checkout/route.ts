@@ -26,6 +26,7 @@ import { getStripe } from "@/lib/stripe";
 import {
   getPriceId,
   getAvaSetupFeePriceId,
+  AVA_SETUP_FEE_PENCE,
   MODULE_KEYS,
   TIER_KEYS,
   INTERVAL_KEYS,
@@ -136,6 +137,55 @@ async function handler(request: NextRequest) {
       }
     }
 
+    // Hot-add path: clinic already has an active subscription → append items
+    // instead of creating a second parallel subscription via Checkout.
+    const existingSubId: string | null = clinicData.billing?.subscriptionId ?? null;
+    const existingSubStatus = clinicData.billing?.subscriptionStatus;
+    const hasActiveSubscription =
+      !!existingSubId && (existingSubStatus === "active" || existingSubStatus === "trialing");
+
+    if (hasActiveSubscription) {
+      const existingSub = await stripe.subscriptions.retrieve(existingSubId!, {
+        expand: ["items.data.price"],
+      });
+      const existingPriceIds = new Set(
+        existingSub.items.data.map((i) => (typeof i.price === "string" ? i.price : i.price.id))
+      );
+
+      const recurringPriceIds = modules.map((module) => getPriceId(module, tier, interval));
+
+      const added: string[] = [];
+      for (const priceId of recurringPriceIds) {
+        if (existingPriceIds.has(priceId)) continue;
+        await stripe.subscriptionItems.create({
+          subscription: existingSubId!,
+          price: priceId,
+          quantity: 1,
+          proration_behavior: "create_prorations",
+        });
+        added.push(priceId);
+      }
+
+      // Setup fee is one-time → attach as pending invoice item; swept onto next invoice.
+      if (needsAvaSetup && added.length > 0) {
+        // Reference the setup fee price to keep validation consistent (throws if env missing)
+        getAvaSetupFeePriceId();
+        await stripe.invoiceItems.create({
+          customer: stripeCustomerId,
+          amount: AVA_SETUP_FEE_PENCE,
+          currency: "gbp",
+          description: "Ava one-time setup fee",
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        added,
+        message: added.length === 0 ? "Modules already active" : "Modules added to existing subscription",
+      });
+    }
+
+    // No active subscription → create new Checkout Session
     const successUrl = resolveRedirectUrl(body.successPath, "/billing?checkout=success");
     const cancelUrl = resolveRedirectUrl(body.cancelPath, "/billing?checkout=canceled");
 

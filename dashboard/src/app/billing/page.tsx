@@ -347,14 +347,19 @@ export default function BillingPage() {
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Checkout failed");
-        if (data.url) window.location.href = data.url;
+        if (data.url) {
+          window.location.href = data.url;
+        } else if (data.success) {
+          // Hot-add to existing subscription — webhook updates featureFlags shortly
+          router.refresh();
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong");
       } finally {
         setLoadingModule(null);
       }
     },
-    [firebaseUser, tier, interval]
+    [firebaseUser, tier, interval, router]
   );
 
   const handleAddSeat = useCallback(async () => {
