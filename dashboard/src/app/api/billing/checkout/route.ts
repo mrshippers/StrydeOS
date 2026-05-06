@@ -195,6 +195,7 @@ async function handler(request: NextRequest) {
       line_items: lineItems,
       success_url: successUrl,
       cancel_url: cancelUrl,
+      allow_promotion_codes: true,
       metadata: { clinicId, tier, interval },
       subscription_data: {
         metadata: { clinicId, tier, interval },
