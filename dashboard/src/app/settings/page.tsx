@@ -7,24 +7,13 @@ import {
   updateDoc,
   collection,
   addDoc,
-  deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import { useClinicians } from "@/hooks/useClinicians";
-import dynamic from "next/dynamic";
 import PageHeader from "@/components/ui/PageHeader";
 import CSVFailurePreview from "@/components/settings/CSVFailurePreview";
 import type { FailureSnapshot } from "@/lib/csv-import/failure-snapshot";
-
-const MfaEnrollment = dynamic(
-  () => import("@/components/MfaEnrollment").then((mod) => mod.MfaEnrollment),
-  {
-    loading: () => <div className="animate-pulse bg-navy/10 rounded-xl h-64" />,
-    ssr: false,
-  }
-);
-import { getInitials } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import Tooltip from "@/components/ui/Tooltip";
@@ -32,8 +21,6 @@ import { normalizeApiError } from "@/lib/api-errors";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Save,
-  Plus,
-  Trash2,
   Check,
   X,
   Loader2,
@@ -46,24 +33,24 @@ import {
   Sparkles,
   RefreshCw,
   XCircle,
-  Lock,
   Copy,
   FileText,
   Mail,
   ChevronRight,
   ChevronLeft,
   Upload,
-  Shield,
   Info,
 } from "lucide-react";
-import type { ClinicProfile, PmsProvider, HepProvider } from "@/types";
+import type { ClinicProfile, PmsProvider } from "@/types";
 import type { CanonicalField } from "@/lib/csv-import/types";
 import { brand } from "@/lib/brand";
 import SecurityCard from "./_components/SecurityCard";
+import ProfileCard from "./_components/ProfileCard";
 import ClinicDetailsCard from "./_components/ClinicDetailsCard";
 import TargetsCard from "./_components/TargetsCard";
 import TeamManagementCard from "./_components/TeamManagementCard";
 import GoogleReviewsCard from "./_components/GoogleReviewsCard";
+import HepIntegrationCard from "./_components/HepIntegrationCard";
 import SeatLimitModal, {
   type SeatLimitInfo,
   type SeatLimitPending,
@@ -149,21 +136,6 @@ const PMS_PROVIDERS: PmsProviderOption[] = [
   { id: "pabau", label: "Pabau", icon: "🏥", logo: "/integrations/pabau.svg", comingSoon: true, hasApi: false },
   { id: "halaxy", label: "Halaxy", icon: "💙", logo: "/integrations/halaxy.svg", comingSoon: false, recentlyAdded: true, hasApi: true },
   { id: "pps", label: "PPS (Rushcliff)", icon: "🩺", logo: "/integrations/pps.svg", comingSoon: true, hasApi: false },
-];
-
-interface HepProviderOption {
-  id: string;
-  label: string;
-  icon: string;
-  logo?: string;
-  comingSoon: boolean;
-  recentlyAdded?: boolean;
-}
-
-const HEP_PROVIDERS: HepProviderOption[] = [
-  { id: "physitrack", label: "Physitrack", icon: "🏃", logo: "/integrations/physitrack.svg", comingSoon: false },
-  { id: "rehab_my_patient", label: "Rehab My Patient", icon: "💪", logo: "/integrations/rehab_my_patient.svg", comingSoon: false },
-  { id: "wibbi", label: "Wibbi", icon: "🎯", logo: "/integrations/wibbi.svg", comingSoon: false },
 ];
 
 /** Renders a provider logo with optional dark-mode variant */
@@ -499,13 +471,8 @@ export default function SettingsPage() {
   const { clinicians } = useClinicians();
   const { toast } = useToast();
 
-  const router = useRouter();
-
   const cp = user?.clinicProfile ?? null;
 
-  const [profileFirstName, setProfileFirstName] = useState("");
-  const [profileLastName, setProfileLastName] = useState("");
-  const [savingProfile, setSavingProfile] = useState(false);
 
   // Clinic-level Heidi integration status — gates the per-clinician opt-in
   // toggle in Clinic Management. Subscribes separately so it stays live when
@@ -539,6 +506,7 @@ export default function SettingsPage() {
   const [sessionPrice, setSessionPrice] = useState("");
   const [parkingInfo, setParkingInfo] = useState("");
   const [clinicWebsite, setClinicWebsite] = useState("");
+  const [bookingUrl, setBookingUrl] = useState("");
   const [timezone, setTimezone] = useState("Europe/London");
   const [followUpTarget, setFollowUpTarget] = useState("4.0");
   const [hepTarget, setHepTarget] = useState("80");
@@ -556,6 +524,7 @@ export default function SettingsPage() {
       sessionPrice: cp.sessionPricePence ? String(cp.sessionPricePence / 100) : "",
       parkingInfo: cp.parkingInfo ?? "",
       clinicWebsite: cp.website ?? "",
+      bookingUrl: cp.bookingUrl ?? "",
       timezone: cp.timezone ?? "Europe/London",
       followUpTarget: String(t.followUpRate),
       hepTarget: String(t.hepRate),
@@ -573,12 +542,13 @@ export default function SettingsPage() {
       sessionPrice !== savedValues.sessionPrice ||
       parkingInfo !== savedValues.parkingInfo ||
       clinicWebsite !== savedValues.clinicWebsite ||
+      bookingUrl !== savedValues.bookingUrl ||
       timezone !== savedValues.timezone ||
       followUpTarget !== savedValues.followUpTarget ||
       hepTarget !== savedValues.hepTarget ||
       utilisationTarget !== savedValues.utilisationTarget
     );
-  }, [clinicName, clinicAddress, clinicPhone, receptionPhone, sessionPrice, parkingInfo, clinicWebsite, timezone, followUpTarget, hepTarget, utilisationTarget, savedValues]);
+  }, [clinicName, clinicAddress, clinicPhone, receptionPhone, sessionPrice, parkingInfo, clinicWebsite, bookingUrl, timezone, followUpTarget, hepTarget, utilisationTarget, savedValues]);
 
   const { showDialog, confirmLeave, cancelLeave } = useUnsavedChanges({ isDirty });
 
@@ -654,6 +624,7 @@ export default function SettingsPage() {
     setSessionPrice(cp.sessionPricePence ? String(cp.sessionPricePence / 100) : "");
     setParkingInfo(cp.parkingInfo ?? "");
     setClinicWebsite(cp.website ?? "");
+    setBookingUrl(cp.bookingUrl ?? "");
     setTimezone(cp.timezone ?? "Europe/London");
     const t = fallbackTargets(cp);
     setFollowUpTarget(String(t.followUpRate));
@@ -677,37 +648,7 @@ export default function SettingsPage() {
     // API keys are never read from server (stored in integrations_config only)
   }, [cp]);
 
-  useEffect(() => {
-    if (!user) return;
-    setProfileFirstName(user.firstName ?? "");
-    setProfileLastName(user.lastName ?? "");
-  }, [user]);
-
   const clinicId = user?.clinicId;
-
-  async function handleSaveUserProfile() {
-    if (!firebaseUser?.uid || !db) return;
-    const trimFirst = profileFirstName.trim();
-    const trimLast = profileLastName.trim();
-    if (!trimFirst || !trimLast) {
-      toast("Please enter both your first and last name", "error");
-      return;
-    }
-    setSavingProfile(true);
-    try {
-      await updateDoc(doc(db, "users", firebaseUser.uid), {
-        firstName: trimFirst,
-        lastName: trimLast,
-        updatedAt: new Date().toISOString(),
-      });
-      await refreshClinicProfile();
-      toast("Profile updated", "success");
-    } catch {
-      toast("Failed to update profile", "error");
-    } finally {
-      setSavingProfile(false);
-    }
-  }
 
   const handleSaveProfile = useCallback(async () => {
     if (!clinicId || !db) {
@@ -724,6 +665,7 @@ export default function SettingsPage() {
         sessionPricePence: sessionPrice ? Math.round(parseFloat(sessionPrice) * 100) : null,
         parkingInfo: parkingInfo || null,
         website: clinicWebsite || null,
+        bookingUrl: bookingUrl || null,
         timezone,
         // Dot-notation so updateDoc merges into targets (preserves weeklyCapacitySlots etc.)
         "targets.followUpRate": parseFloat(followUpTarget),
@@ -744,7 +686,7 @@ export default function SettingsPage() {
     } finally {
       setSaving(false);
     }
-  }, [clinicId, clinicName, clinicAddress, clinicPhone, receptionPhone, sessionPrice, parkingInfo, clinicWebsite, timezone, followUpTarget, hepTarget, utilisationTarget, refreshClinicProfile, toast]);
+  }, [clinicId, clinicName, clinicAddress, clinicPhone, receptionPhone, sessionPrice, parkingInfo, clinicWebsite, bookingUrl, timezone, followUpTarget, hepTarget, utilisationTarget, refreshClinicProfile, toast]);
 
   async function handleTestPms() {
     if (!pmsProvider || !pmsApiKey.trim()) {
@@ -1056,52 +998,6 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleTestHep() {
-    if (!hepProvider || !hepApiKey.trim()) {
-      toast("Select a provider and enter your API key", "error");
-      return;
-    }
-    if (!clinicId || !firebaseUser) {
-      toast("HEP connected (demo mode)", "success");
-      setHepConnected(true);
-      return;
-    }
-    setHepTesting(true);
-    try {
-      const token = await firebaseUser.getIdToken();
-      
-      const testRes = await fetch(`/api/hep/test-connection`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ provider: hepProvider, apiKey: hepApiKey.trim() }),
-      });
-      const testData = await testRes.json().catch(() => ({}));
-      if (!testRes.ok || !testData.ok) {
-        toast(normalizeApiError(testRes.status, testData.error, "Connection failed. Check your API key."), "error");
-        setHepTesting(false);
-        return;
-      }
-      const saveRes = await fetch(`/api/hep/save-config`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ provider: hepProvider, apiKey: hepApiKey.trim() }),
-      });
-      if (!saveRes.ok) {
-        toast("Connection verified but save failed. Try again.", "error");
-        setHepTesting(false);
-        return;
-      }
-      setHepConnected(true);
-      setHepApiKey(""); // Clear from memory — key stored server-side only
-      await refreshClinicProfile();
-      toast("HEP platform connected — API key saved securely", "success");
-    } catch {
-      toast("Connection failed. Check your API key and try again.", "error");
-    } finally {
-      setHepTesting(false);
-    }
-  }
-
   async function submitAddClinician(): Promise<{
     ok: boolean;
     seatLimitReached?: boolean;
@@ -1348,45 +1244,7 @@ export default function SettingsPage() {
         <RetriggerTourButton />
       </div>
 
-      {/* Your Profile */}
-      <div id="profile-section" className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-        <h3 className="font-display text-lg text-navy mb-1">Your Profile</h3>
-        <p className="text-xs text-muted mb-4">How your name appears across StrydeOS</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-[10px] font-semibold text-navy/60 uppercase tracking-wider mb-1.5">First name</label>
-            <input
-              type="text"
-              value={profileFirstName}
-              onChange={(e) => setProfileFirstName(e.target.value)}
-              placeholder="First name"
-              className="w-full px-3 py-2 rounded-xl border border-border text-sm text-navy focus:border-blue focus:ring-1 focus:ring-blue/20 outline-none transition-colors"
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] font-semibold text-navy/60 uppercase tracking-wider mb-1.5">Last name</label>
-            <input
-              type="text"
-              value={profileLastName}
-              onChange={(e) => setProfileLastName(e.target.value)}
-              placeholder="Last name"
-              className="w-full px-3 py-2 rounded-xl border border-border text-sm text-navy focus:border-blue focus:ring-1 focus:ring-blue/20 outline-none transition-colors"
-            />
-          </div>
-        </div>
-        {(profileFirstName !== (user?.firstName ?? "") || profileLastName !== (user?.lastName ?? "")) && (
-          <div className="flex justify-end mt-4">
-            <button
-              onClick={handleSaveUserProfile}
-              disabled={savingProfile}
-              className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }}
-            >
-              {savingProfile ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-              Save profile
-            </button>
-          </div>
-        )}
-      </div>
+      <ProfileCard />
 
       {/* Security: Password + MFA */}
       <SecurityCard />
@@ -1497,6 +1355,7 @@ export default function SettingsPage() {
           receptionPhone={receptionPhone} setReceptionPhone={setReceptionPhone}
           sessionPrice={sessionPrice} setSessionPrice={setSessionPrice}
           clinicWebsite={clinicWebsite} setClinicWebsite={setClinicWebsite}
+          bookingUrl={bookingUrl} setBookingUrl={setBookingUrl}
           parkingInfo={parkingInfo} setParkingInfo={setParkingInfo}
           timezone={timezone} setTimezone={setTimezone}
         />
@@ -2254,149 +2113,16 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* HEP Integration */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display text-lg text-navy">HEP Integration</h3>
-          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-teal/10 text-teal">
-            Programme Assignment
-          </span>
-        </div>
-        <p className="text-[12px] text-muted mb-5">
-          Connect your home exercise platform to track programme assignment rates. Most providers track &quot;was a programme assigned&quot; — full compliance tracking varies by platform.
-        </p>
-
-        {hepConnected ? (
-          <div className="flex items-center gap-4 p-4 rounded-xl border border-success/20 bg-success/5">
-            <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
-              <Link2 size={18} className="text-success" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-navy">
-                {HEP_PROVIDERS.find((p) => p.id === hepProvider)?.label ?? "HEP Platform"} — Connected
-              </p>
-              <p className="text-[11px] text-muted">
-                Programme assignment data syncs automatically with the pipeline
-              </p>
-            </div>
-            <button
-              onClick={async () => {
-                if (!clinicId || !firebaseUser) return;
-                try {
-                  const token = await firebaseUser.getIdToken();
-                  
-                  const res = await fetch(`/api/hep/disconnect`, {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${token}` },
-                  });
-                  const data = await res.json().catch(() => ({}));
-                  if (!res.ok) {
-                    toast(normalizeApiError(res.status, data?.error, "Failed to disconnect"), "error");
-                    return;
-                  }
-                  setHepConnected(false);
-                  setHepProvider("");
-                  setHepApiKey("");
-                  await refreshClinicProfile();
-                  toast("HEP platform disconnected", "success");
-                } catch {
-                  toast("Failed to disconnect", "error");
-                }
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-danger border border-danger/20 hover:bg-danger/5 transition-colors"
-            >
-              <Unplug size={12} />
-              Disconnect
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                HEP Provider
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                {HEP_PROVIDERS.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => !p.comingSoon && setHepProvider(p.id)}
-                    className={`relative flex flex-col items-center justify-center gap-1 px-3 py-3 rounded-xl border text-sm font-medium transition-all ${
-                      hepProvider === p.id
-                        ? "border-teal bg-teal/5 text-teal"
-                        : p.comingSoon
-                          ? "border-border/50 text-muted/70 cursor-default"
-                          : "border-border hover:border-teal/30 text-navy"
-                    }`}
-                    title={p.comingSoon ? "Coming soon — integration in development" : undefined}
-                  >
-                    {p.logo ? (
-                      <ProviderLogo logo={p.logo} alt={p.label} className="h-7 w-auto max-w-[68px] object-contain" />
-                    ) : (
-                      <span className="text-lg leading-none">{p.icon}</span>
-                    )}
-                    <span className="text-[12px] font-semibold leading-tight text-center">{p.label}</span>
-                    {hepProvider === p.id && !p.comingSoon && (
-                      <Check size={11} className="absolute top-1.5 right-1.5 text-teal" />
-                    )}
-                    {p.recentlyAdded && !p.comingSoon && (
-                      <span className="text-[9px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-success/10 text-success absolute top-1.5 left-1.5">
-                        New
-                      </span>
-                    )}
-                    {p.comingSoon && (
-                      <span className="text-[9px] font-semibold text-muted/60 uppercase tracking-wide">
-                        Soon
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {hepProvider && !HEP_PROVIDERS.find((p) => p.id === hepProvider)?.comingSoon && (
-              <div>
-                <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
-                  API Key
-                </label>
-                <input
-                  type="password"
-                  value={hepApiKey}
-                  onChange={(e) => setHepApiKey(e.target.value)}
-                  placeholder={`Enter your ${HEP_PROVIDERS.find((p) => p.id === hepProvider)?.label ?? hepProvider} API key`}
-                  className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                />
-                <button
-                  onClick={handleTestHep}
-                  disabled={!hepApiKey.trim() || hepTesting}
-                  className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ background: (!hepApiKey.trim() && !hepTesting) ? "#9CA3AF" : brand.success }}
-                >
-                  {hepTesting ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Link2 size={14} />
-                  )}
-                  {hepTesting ? "Testing..." : "Test Connection"}
-                </button>
-                {!hepApiKey.trim() && !hepTesting && (
-                  <p className="text-[11px] text-muted mt-1.5">Enter your API key above to test the connection</p>
-                )}
-              </div>
-            )}
-
-            {hepProvider && HEP_PROVIDERS.find((p) => p.id === hepProvider)?.comingSoon && (
-              <div className="p-4 rounded-xl border border-warn/20 bg-warn/5">
-                <p className="text-sm font-medium text-navy">
-                  {HEP_PROVIDERS.find((p) => p.id === hepProvider)?.label} integration is coming soon
-                </p>
-                <p className="text-[12px] text-muted mt-1">
-                  We're building the API adapter for this provider. You'll be notified when it's ready.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <HepIntegrationCard
+        hepProvider={hepProvider}
+        setHepProvider={setHepProvider}
+        hepApiKey={hepApiKey}
+        setHepApiKey={setHepApiKey}
+        hepConnected={hepConnected}
+        setHepConnected={setHepConnected}
+        hepTesting={hepTesting}
+        setHepTesting={setHepTesting}
+      />
 
       {/* Compatible Data Sources */}
       <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">

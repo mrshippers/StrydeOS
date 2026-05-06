@@ -1,4 +1,4 @@
-import type { LifecycleState, SequenceType, CommsChannel } from "./index";
+import type { SequenceType, CommsChannel } from "./index";
 
 export interface CommsSequenceConfig {
   type: SequenceType;

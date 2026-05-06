@@ -13,6 +13,8 @@ interface ClinicDetailsCardProps {
   setSessionPrice: (v: string) => void;
   clinicWebsite: string;
   setClinicWebsite: (v: string) => void;
+  bookingUrl: string;
+  setBookingUrl: (v: string) => void;
   parkingInfo: string;
   setParkingInfo: (v: string) => void;
   timezone: string;
@@ -32,6 +34,8 @@ export default function ClinicDetailsCard({
   setSessionPrice,
   clinicWebsite,
   setClinicWebsite,
+  bookingUrl,
+  setBookingUrl,
   parkingInfo,
   setParkingInfo,
   timezone,
@@ -117,6 +121,19 @@ export default function ClinicDetailsCard({
             placeholder="https://www.yourclinic.com"
             className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
           />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+            Patient Booking Link
+          </label>
+          <input
+            type="url"
+            value={bookingUrl}
+            onChange={(e) => setBookingUrl(e.target.value)}
+            placeholder="https://www.yourclinic.com/book"
+            className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy placeholder:text-muted/50 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
+          />
+          <p className="text-[10px] text-muted mt-1">Used in Pulse SMS/email templates as the rebooking link</p>
         </div>
         <div>
           <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
