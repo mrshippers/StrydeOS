@@ -338,27 +338,40 @@ export interface PulseStateSnapshot {
 // ─── §5 Provider delivery webhooks ───────────────────────────────────────────
 
 /**
+ * Twilio MessageStatus values from the delivery callback.
+ * `sent`, `queued`, `sending` are in-flight; the rest are terminal.
+ */
+export type TwilioMessageStatus =
+  | "delivered"
+  | "undelivered"
+  | "failed"
+  | "sent"
+  | "queued"
+  | "sending";
+
+/**
+ * Subset of `CommsOutcome` that a Twilio status callback resolves to.
+ * Other Twilio statuses are in-flight (`null` mapping) and don't update
+ * `comms_log`.
+ */
+export type TwilioResolvedOutcome = "delivered" | "send_failed";
+
+/**
  * Twilio MessageStatus callback. Body is x-www-form-urlencoded; only the
  * fields we consume are listed. Signature verified via
  * `twilio.validateRequest`.
  */
 export interface TwilioStatusCallback {
   MessageSid: string;
-  MessageStatus:
-    | "delivered"
-    | "undelivered"
-    | "failed"
-    | "sent"
-    | "queued"
-    | "sending";
+  MessageStatus: TwilioMessageStatus;
   /** Forward-compat: Twilio sends ~30 fields; we ignore the rest. */
   [otherField: string]: string | undefined;
 }
 
 /**
- * Resend webhook event. Outer wrapper plus typed `data` payload for the
- * subset of events Pulse subscribes to. Signature verified via
- * Resend webhook secret in `/api/webhooks/resend`.
+ * Resend webhook event. Discriminated by `type` so each variant carries the
+ * fields actually populated by the corresponding Resend event. Signature
+ * verified via Resend webhook secret in `/api/webhooks/resend`.
  */
 export type ResendEventType =
   | "email.sent"
@@ -368,15 +381,20 @@ export type ResendEventType =
   | "email.opened"
   | "email.clicked";
 
-export interface ResendDeliveryEvent {
-  type: ResendEventType;
+interface ResendEventBase {
   created_at: string;
-  data: {
-    /** Resend email_id; matched against `comms_log.resendId`. */
-    email_id: string;
-    [k: string]: unknown;
-  };
 }
+interface ResendEmailIdData {
+  /** Resend email_id; matched against `comms_log.resendId`. */
+  email_id: string;
+}
+export type ResendDeliveryEvent =
+  | (ResendEventBase & { type: "email.sent";       data: ResendEmailIdData })
+  | (ResendEventBase & { type: "email.delivered";  data: ResendEmailIdData })
+  | (ResendEventBase & { type: "email.bounced";    data: ResendEmailIdData & { bounce_type?: string } })
+  | (ResendEventBase & { type: "email.complained"; data: ResendEmailIdData })
+  | (ResendEventBase & { type: "email.opened";     data: ResendEmailIdData & { opened_at?: string } })
+  | (ResendEventBase & { type: "email.clicked";    data: ResendEmailIdData & { clicked_at?: string; link?: string } });
 
 // ─── §6 Ava engine bridge (Dashboard ⇄ ava_graph FastAPI) ────────────────────
 //

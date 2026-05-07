@@ -65,26 +65,34 @@ async function handler(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { type, data } = event;
-  const eventType = type as ResendEventType;
-
-  // Determine what update to apply
+  // Determine what update to apply. Discriminate on `event.type` so the
+  // typed payload variant narrows `event.data` to the matching shape.
   let update: Record<string, string> | null = null;
+  let emailId: string | undefined;
 
-  if (eventType === "email.opened") {
-    update = { openedAt: data.opened_at ?? new Date().toISOString() };
-  } else if (eventType === "email.clicked") {
-    update = { clickedAt: data.clicked_at ?? new Date().toISOString() };
-  } else if (eventType === "email.delivered") {
-    update = { outcome: "delivered" };
-  } else if (eventType === "email.bounced" || eventType === "email.complained") {
-    update = { outcome: "send_failed" };
-  } else {
-    // Unknown event type — acknowledge silently
-    return new NextResponse(null, { status: 200 });
+  switch (event.type) {
+    case "email.opened":
+      update = { openedAt: event.data.opened_at ?? new Date().toISOString() };
+      emailId = event.data.email_id;
+      break;
+    case "email.clicked":
+      update = { clickedAt: event.data.clicked_at ?? new Date().toISOString() };
+      emailId = event.data.email_id;
+      break;
+    case "email.delivered":
+      update = { outcome: "delivered" };
+      emailId = event.data.email_id;
+      break;
+    case "email.bounced":
+    case "email.complained":
+      update = { outcome: "send_failed" };
+      emailId = event.data.email_id;
+      break;
+    default:
+      // Unknown / unhandled event type — acknowledge silently
+      return new NextResponse(null, { status: 200 });
   }
 
-  const emailId = data?.email_id;
   if (!emailId || !update) {
     return new NextResponse(null, { status: 200 });
   }
