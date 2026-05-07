@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StrydeOS — Industry Standards Milestone, May 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#1C54F2;
+    --blueBright:#2E6BFF;
+    --blueGlow:#4B8BF5;
+    --navy:#0B2545;
+    --navy-2:#0F2D55;
+    --teal:#0891B2;
+    --purple:#8B5CF6;
+    --cream:#F8F4EC;
+    --line:rgba(255,255,255,0.10);
+    --line-strong:rgba(255,255,255,0.18);
+    --muted:rgba(248,244,236,0.62);
+    --ok:#34D399;
+    --warn:#F59E0B;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Outfit',system-ui,sans-serif;
+    background:radial-gradient(1200px 700px at 80% -10%,rgba(75,139,245,0.18),transparent 60%),
+               radial-gradient(900px 600px at -10% 110%,rgba(139,92,246,0.14),transparent 60%),
+               var(--navy);
+    color:var(--cream);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{
+    max-width:1180px;
+    margin:0 auto;
+    padding:48px 56px 72px;
+  }
+  header.head{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:24px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:24px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .mark{
+    width:44px;height:44px;border-radius:12px;
+    background:linear-gradient(135deg,var(--blueBright),var(--purple));
+    display:grid;place-items:center;
+    box-shadow:0 0 0 1px var(--line-strong),0 8px 30px rgba(46,107,255,0.35);
+  }
+  .mark::after{
+    content:"";
+    width:14px;height:24px;border-radius:3px;
+    background:linear-gradient(180deg,rgba(255,255,255,0.85),rgba(255,255,255,0.25));
+  }
+  .brand h1{
+    font-family:'DM Serif Display',serif;
+    font-weight:400;
+    font-size:28px;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  .brand small{
+    display:block;font-size:12px;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase;
+  }
+  .stamp{
+    text-align:right;
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+  }
+  .stamp strong{color:var(--cream);font-weight:600}
+
+  .hero{
+    margin:36px 0 28px;
+  }
+  .eyebrow{
+    display:inline-block;
+    font-size:11px;letter-spacing:0.22em;text-transform:uppercase;
+    color:var(--blueGlow);
+    padding:6px 12px;border:1px solid var(--line-strong);border-radius:50px;
+    background:rgba(75,139,245,0.08);
+    margin-bottom:18px;
+  }
+  .hero h2{
+    font-family:'DM Serif Display',serif;font-weight:400;
+    font-size:44px;line-height:1.1;margin:0 0 14px;
+    max-width:880px;
+  }
+  .hero p{
+    font-size:17px;line-height:1.55;color:var(--muted);
+    max-width:760px;margin:0;
+  }
+
+  /* ──────────── columns ──────────── */
+  .grid{
+    display:grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap:24px;
+    margin-top:36px;
+  }
+  .card{
+    background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015));
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:28px 28px 24px;
+  }
+  .card h3{
+    font-family:'DM Serif Display',serif;font-weight:400;
+    font-size:22px;margin:0 0 4px;
+  }
+  .card .sub{
+    font-size:12px;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase;
+    margin-bottom:18px;
+  }
+  .ship{display:flex;flex-direction:column;gap:14px}
+  .ship-item{
+    display:grid;grid-template-columns:36px 1fr;gap:14px;
+    padding:14px;border:1px solid var(--line);border-radius:14px;
+    background:rgba(11,37,69,0.55);
+  }
+  .ship-item .dot{
+    width:10px;height:10px;border-radius:50%;margin-top:7px;
+    background:var(--ok);box-shadow:0 0 0 4px rgba(52,211,153,0.18);
+  }
+  .ship-item h4{
+    margin:0 0 4px;font-size:15px;font-weight:600;
+  }
+  .ship-item p{
+    margin:0;font-size:13px;line-height:1.5;color:var(--muted);
+  }
+  .ship-item code{
+    font-family:'JetBrains Mono','SF Mono',ui-monospace,monospace;
+    font-size:11.5px;color:var(--blueGlow);
+    background:rgba(75,139,245,0.10);
+    padding:1px 6px;border-radius:4px;
+  }
+
+  /* standards table */
+  .std{display:flex;flex-direction:column;gap:10px}
+  .std-row{
+    display:grid;grid-template-columns:1fr auto;
+    align-items:center;gap:14px;
+    padding:14px 16px;
+    border:1px solid var(--line);border-radius:14px;
+    background:rgba(11,37,69,0.55);
+  }
+  .std-row .name{font-size:14px;font-weight:600;letter-spacing:0.01em}
+  .std-row .name small{
+    display:block;font-size:11.5px;font-weight:400;color:var(--muted);
+    margin-top:3px;letter-spacing:0.02em;
+  }
+  .pill{
+    font-size:11px;letter-spacing:0.14em;text-transform:uppercase;
+    padding:5px 10px;border-radius:50px;
+    border:1px solid var(--line-strong);
+    white-space:nowrap;
+  }
+  .pill.scaffolded{color:var(--blueGlow);background:rgba(75,139,245,0.10);border-color:rgba(75,139,245,0.35)}
+  .pill.in-progress{color:var(--warn);background:rgba(245,158,11,0.10);border-color:rgba(245,158,11,0.35)}
+  .pill.aligned{color:var(--ok);background:rgba(52,211,153,0.10);border-color:rgba(52,211,153,0.35)}
+
+  /* before / after strip */
+  .ladder{
+    margin-top:36px;
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:28px;
+    background:linear-gradient(180deg,rgba(28,84,242,0.08),rgba(139,92,246,0.05));
+  }
+  .ladder h3{
+    font-family:'DM Serif Display',serif;font-weight:400;
+    font-size:22px;margin:0 0 18px;
+  }
+  .ladder-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+  }
+  .step{
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 16px 14px;
+    background:rgba(11,37,69,0.55);
+    position:relative;
+  }
+  .step .ix{
+    font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);
+    margin-bottom:6px;
+  }
+  .step h4{
+    font-size:14px;margin:0 0 6px;font-weight:600;
+  }
+  .step p{
+    font-size:12.5px;line-height:1.45;margin:0;color:var(--muted);
+  }
+  .step.now{
+    border-color:rgba(75,139,245,0.55);
+    box-shadow:0 0 0 1px rgba(75,139,245,0.45),0 12px 40px rgba(28,84,242,0.18);
+    background:rgba(28,84,242,0.10);
+  }
+  .step.now .ix{color:var(--blueGlow)}
+
+  /* footer line */
+  .foot{
+    margin-top:36px;
+    display:flex;justify-content:space-between;align-items:center;
+    border-top:1px solid var(--line);padding-top:20px;
+    font-size:12px;color:var(--muted);letter-spacing:0.06em;
+  }
+  .foot strong{color:var(--cream);font-weight:600}
+
+  @media(max-width:900px){
+    .page{padding:28px 22px 56px}
+    .grid{grid-template-columns:1fr}
+    .ladder-grid{grid-template-columns:1fr 1fr}
+    .hero h2{font-size:34px}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="head">
+    <div class="brand">
+      <div class="mark"></div>
+      <div>
+        <small>StrydeOS · Governance Milestone</small>
+        <h1>Closing the gap to industry-standard verification</h1>
+      </div>
+    </div>
+    <div class="stamp">
+      <div><strong>May 2026</strong></div>
+      <div>Spires pilot · UK private practice</div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <span class="eyebrow">What just shipped</span>
+    <h2>StrydeOS now has a clinical safety case, an adverse-event SOP, and PHI region locks at every boundary.</h2>
+    <p>Until this week, StrydeOS was a working SaaS with strong product-market fit. It is now a working SaaS with the same governance scaffolding the NHS expects from a clinical software supplier — written down, version-controlled, and enforced in code.</p>
+  </section>
+
+  <div class="grid">
+
+    <!-- LEFT: what shipped -->
+    <div class="card">
+      <h3>The governance bundle</h3>
+      <div class="sub">Commit 6f97222 · main</div>
+
+      <div class="ship">
+
+        <div class="ship-item">
+          <span class="dot"></span>
+          <div>
+            <h4>Clinical safety case (DCB0129/0160-style)</h4>
+            <p>Hazard log <code>H1–H6</code>: missed call, wrong-clinic data leak, stale KPI, automation misfire, PHI leak via SDK telemetry, audit-trail loss. Each with mitigation cross-refs and a quarterly review cadence. <code>docs/CLINICAL_SAFETY_CASE.md</code></p>
+          </div>
+        </div>
+
+        <div class="ship-item">
+          <span class="dot"></span>
+          <div>
+            <h4>Adverse-event SOP</h4>
+            <p>4-quadrant triage matrix with named SLAs, notification chain, Firestore record shape, post-incident review template, 7-year retention. <code>docs/ADVERSE_EVENTS.md</code> + typed contracts in <code>types/adverse-events.ts</code>.</p>
+          </div>
+        </div>
+
+        <div class="ship-item">
+          <span class="dot"></span>
+          <div>
+            <h4>UK data-residency lock — at the runtime layer</h4>
+            <p>All Vercel serverless + cron handlers pinned to <code>lhr1</code> (London). No accidental US execution path for PHI. Documented in <code>RUNBOOK.md</code>.</p>
+          </div>
+        </div>
+
+        <div class="ship-item">
+          <span class="dot"></span>
+          <div>
+            <h4>Sentry region enforcement — at the SDK layer</h4>
+            <p>Both server and edge configs parse the DSN host at init and refuse anything that isn't <code>ingest.de.sentry.io</code> or <code>ingest.eu.sentry.io</code>. Misconfig = Sentry off, app stays up, <code>[CRITICAL]</code> log surfaces in Vercel.</p>
+          </div>
+        </div>
+
+        <div class="ship-item">
+          <span class="dot"></span>
+          <div>
+            <h4>Sub-processor register, kept honest</h4>
+            <p>Heidi flagged with a hard <code>2026-06-01</code> deadline blocking new-clinic enablement. Anthropic added as <strong>action required</strong> (DPA + zero-retention + input-field lock). Real deadlines, not vibes.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: standards mapping -->
+    <div class="card">
+      <h3>What this maps to</h3>
+      <div class="sub">External standards · evidence trail</div>
+
+      <div class="std">
+
+        <div class="std-row">
+          <div class="name">DCB0129 — Manufacturer clinical safety
+            <small>Hazard log, mitigations, quarterly review</small>
+          </div>
+          <span class="pill scaffolded">Scaffolded</span>
+        </div>
+
+        <div class="std-row">
+          <div class="name">DCB0160 — Deploying-org clinical safety
+            <small>Adverse-event SOP + post-incident reviews</small>
+          </div>
+          <span class="pill scaffolded">Scaffolded</span>
+        </div>
+
+        <div class="std-row">
+          <div class="name">UK GDPR / DPA 2018
+            <small>London-only execution, EU-only telemetry</small>
+          </div>
+          <span class="pill aligned">Aligned</span>
+        </div>
+
+        <div class="std-row">
+          <div class="name">ICO sub-processor disclosure
+            <small>Versioned register w/ named risks &amp; deadlines</small>
+          </div>
+          <span class="pill aligned">Aligned</span>
+        </div>
+
+        <div class="std-row">
+          <div class="name">NHS DSPT (Toolkit)
+            <small>PHI scrub in logs/Sentry, trace IDs, RBAC, 7-yr retention</small>
+          </div>
+          <span class="pill in-progress">Evidence growing</span>
+        </div>
+
+        <div class="std-row">
+          <div class="name">ISO 27001-style controls
+            <small>Region pin, key rotation, hazard register, RBAC matrix</small>
+          </div>
+          <span class="pill in-progress">Pre-audit posture</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- maturity ladder -->
+  <section class="ladder">
+    <h3>Where StrydeOS sits on the credibility ladder</h3>
+    <div class="ladder-grid">
+      <div class="step">
+        <div class="ix">Step 01</div>
+        <h4>Working SaaS</h4>
+        <p>Live at Spires. Real KPIs from Physitrack + WriteUpp. The product works.</p>
+      </div>
+      <div class="step">
+        <div class="ix">Step 02</div>
+        <h4>Hardened SaaS</h4>
+        <p>RBAC, PHI scrub in logs/Sentry, trace IDs, DLQ on consumer failures, ModuleHealth surface.</p>
+      </div>
+      <div class="step now">
+        <div class="ix">You are here</div>
+        <h4>Governable SaaS</h4>
+        <p>Clinical safety case + adverse-event SOP + region locks + sub-processor register. Defensible in a buyer's procurement review.</p>
+      </div>
+      <div class="step">
+        <div class="ix">Step 04</div>
+        <h4>Externally verified</h4>
+        <p>DSPT submission, DCB0129 sign-off by named clinical safety officer, ISO 27001 audit. Months, not years, from here.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <div><strong>StrydeOS</strong> · Spires Physiotherapy pilot · West Hampstead, London</div>
+    <div>Generated 2026-05-07 · commit <strong>6f97222</strong></div>
+  </div>
+
+</div>
+</body>
+</html>
