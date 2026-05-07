@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, ArrowRight, ArrowLeft, ChevronRight, Activity, Users, TrendingUp, MessageSquare, PhoneCall, Brain, Calendar, Shield } from "lucide-react";
+import { X, ArrowRight, ArrowLeft, ChevronRight, Activity, Users, TrendingUp, MessageSquare, PhoneCall, Brain, Calendar, Shield, Network, Lock } from "lucide-react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,9 +16,9 @@ import PulseMark from "@/components/PulseMark";
  * Show logic: modal appears once per version bump, on next login after
  * the version changes. Once dismissed it stays dismissed until the next bump.
  */
-const CURRENT_VERSION = "2026-04-21-sync";
+const CURRENT_VERSION = "2026-05-07-contracts";
 
-const TOTAL_CARDS = 4;
+const TOTAL_CARDS = 5;
 
 export default function WhatsNew() {
   const { user } = useAuth();
@@ -495,6 +495,95 @@ export default function WhatsNew() {
                           color: "#8B5CF6",
                           label: "Outcomes and reputation show real data only",
                           detail: "Empty clinics get a clean empty state. Enter outcome scores or collect reviews, and the trends appear — no placeholders pretending to be yours",
+                        },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-start gap-3">
+                          <div
+                            className="mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ background: `${item.color}14` }}
+                          >
+                            <item.icon size={14} style={{ color: item.color }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-navy leading-snug">
+                              {item.label}
+                            </p>
+                            <p className="text-[12px] text-muted leading-relaxed mt-0.5">
+                              {item.detail}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {card === 4 && (
+                  <motion.div
+                    key="contracts"
+                    initial={{ opacity: 0, x: 60 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -60 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {/* ── Card 4: Modules now move together (cross-module contracts) ── */}
+                    <div
+                      className="px-8 pt-7 pb-6 relative"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #1C54F2 0%, #0891B2 50%, #8B5CF6 100%)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3.5 mb-3">
+                        <div
+                          className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(255,255,255,0.10)" }}
+                        >
+                          <Network size={22} className="text-white" />
+                        </div>
+                        <div>
+                          <h2 className="font-display text-[22px] text-white leading-tight">
+                            Modules now move together
+                          </h2>
+                          <p className="text-[12px] text-white/55 mt-0.5">
+                            Ava, Pulse and Intelligence share one nervous system
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-[13px] text-white/75 leading-relaxed">
+                        Until now, each module spoke its own language. Calls
+                        ended in one place, retention nudges happened in
+                        another, and your dashboard was blind to most of it.
+                        That&rsquo;s changed — handoffs between modules are
+                        now structured, traced, and tested.
+                      </p>
+                    </div>
+
+                    <div className="px-8 py-5 space-y-3.5">
+                      {[
+                        {
+                          icon: PhoneCall,
+                          color: "#1C54F2",
+                          label: "Missed calls don’t get missed twice",
+                          detail: "When Ava flags a call for human callback, it now triggers Pulse’s continuity sequence automatically — no one has to remember to chase",
+                        },
+                        {
+                          icon: TrendingUp,
+                          color: "#8B5CF6",
+                          label: "Voice activity feeds your KPIs",
+                          detail: "Intelligence can now report on Ava — booking conversion rate, after-hours capture, calls handled without a human",
+                        },
+                        {
+                          icon: Network,
+                          color: "#0891B2",
+                          label: "Broken handoffs caught before they ship",
+                          detail: "If a change in Ava would break Pulse, the build now fails. No more silent drift between modules",
+                        },
+                        {
+                          icon: Lock,
+                          color: "#0B2545",
+                          label: "Patient data marked private by design",
+                          detail: "Call transcripts, phone numbers and clinical notes are now tagged so logs and analytics scrub them automatically",
                         },
                       ].map((item) => (
                         <div key={item.label} className="flex items-start gap-3">

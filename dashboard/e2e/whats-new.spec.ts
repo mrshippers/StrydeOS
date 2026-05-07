@@ -103,7 +103,7 @@ test.describe("What's New Modal (no auth)", () => {
     await page.goto("/login", { waitUntil: "load", timeout: 60_000 }).catch(() => {});
 
     const stored = await page.evaluate(() => localStorage.getItem("strydeos_whats_new_seen"));
-    expect(stored).toBe("2026-04-09-v2");
+    expect(stored).toBe("2026-05-07-contracts");
 
     await page.waitForTimeout(2_000);
     await expect(page.getByRole("button", { name: "Got it" })).not.toBeVisible();
@@ -193,7 +193,7 @@ test.describe.serial("What's New Modal (authenticated)", () => {
     await expect(gotItBtn).not.toBeVisible({ timeout: 5_000 });
 
     const stored = await page.evaluate(() => localStorage.getItem("strydeos_whats_new_seen"));
-    expect(stored).toBe("2026-04-09-v2");
+    expect(stored).toBe("2026-05-07-contracts");
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForTimeout(3_000);
@@ -223,6 +223,6 @@ test.describe.serial("What's New Modal (authenticated)", () => {
     await expect(gotItBtn).not.toBeVisible({ timeout: 5_000 });
 
     const stored = await page.evaluate(() => localStorage.getItem("strydeos_whats_new_seen"));
-    expect(stored).toBe("2026-04-09-v2");
+    expect(stored).toBe("2026-05-07-contracts");
   });
 });
