@@ -128,6 +128,51 @@ Mirrors the gate in `dashboard/scripts/check-module-boundaries.sh`.
 
 ---
 
+## 3.b Architectural improvements (benchmark-SaaS gap fixes)
+
+A second pass benchmarked the contracts against Stripe / Segment / Twilio
+event-system patterns and added the following — none of these break
+existing types; all are additive and opt-in:
+
+| Pattern | Where in `contracts/index.ts` | Why |
+|---|---|---|
+| **Schema versioning** | `§0 CONTRACTS_SCHEMA_VERSION` + compatibility rules in header | Producers stamp `schemaVersion` on every `StrydeEvent` so consumers can refuse incompatible writes without runtime guessing |
+| **Branded ID types** | `§1b ClinicId / PatientId / ClinicianId / ConversationId / EventId / CommsLogId / TraceId / IdempotencyKey` | Prevents accidentally swapping `clinicianId` and `patientId` at compile time. Old `string` code stays compatible via opt-in `as*` constructors |
+| **Generic event envelope** | `§2b StrydeEvent<P>` | Separates "where it lives" (envelope) from "what happened" (payload). Existing `InsightEvent` keeps its shape; new event types use the envelope |
+| **Distributed trace context** | `§2b TraceContext`, `makeRootTrace()` | A single `traceId` lets a call → insight_event → comms_log chain be reconstructed in one Firestore query — currently impossible. W3C Trace Context-compatible |
+| **Time semantics** | `§2b EventTimestamps` (`occurredAt` vs `detectedAt` vs `processedAt`) | Conflating these breaks KPIs (detection lag pollutes "real" event time) |
+| **Actor / audit trail** | `§2b Actor` discriminated union | Every cross-module event names who/what triggered it: system / user / patient / external |
+| **Ava → Intelligence fact stream** | `§8b AvaCallFactPayload`, `AvaCallFactEvent` | Currently Intelligence is blind to Ava activity. Defines the contract for KPIs like voice-channel booking conversion, after-hours capture rate, first-call-resolution rate |
+| **PII / PHI classification** | `§10 PIIClass`, `PII_FIELD_MAP` | UK clinical data — log scrubbers, error reporters, analytics exports MUST know which fields are PHI/PII. Tagged at type-definition time |
+| **Module health surface** | `§11 ModuleHealth`, `HealthStatus` | Replaces ad-hoc per-module shapes (`PulseStateSnapshot` etc.) with a single shape for `/healthz` + admin integration-health |
+| **Failed event / DLQ contract** | `§11 FailedEvent<P>`, `RetryPolicy`, `DEFAULT_RETRY_POLICY` | Events that exhaust retries get a typed record at `/clinics/{id}/_failed_events` for replay tooling |
+| **Idempotency key helper** | `§12 makeIdempotencyKey()` | Deterministic at-least-once dedupe at the Firestore write layer |
+
+### Why these specifically
+
+I rejected several patterns that mature SaaS uses but would be premature
+here:
+
+- **Outbox table** — Firestore eventual consistency is sufficient for the
+  StrydeOS volume; an outbox would add complexity for no real win until
+  there's a separate streaming consumer.
+- **Schema registry / runtime validation** — Zod at every boundary is
+  overkill at this stage. TypeScript types + `isStrydeEvent` smoke check is
+  the right tradeoff.
+- **Event sourcing** — out of scope; we still want the current
+  read-optimised Firestore docs.
+
+### Compatibility rules (codified in header)
+
+- Optional fields MAY be added freely.
+- Field renames require a `CONTRACTS_SCHEMA_VERSION` major bump.
+- Enum / string-union members MAY be added; removal needs a major bump.
+- Adding a required field needs a major bump.
+- Behavioural changes to existing fields need a major bump and a migration
+  note in this doc.
+
+---
+
 ## 4. Cross-language sync requirement
 
 `contracts §6` and `§7` define types that have a Python mirror in
@@ -196,6 +241,18 @@ boundary script and ownership map stay authoritative.
    single-shot SMS in `notify-callback.ts`.
 6. Per-PMS webhook envelope types (`WriteUppWebhookEvent`,
    `ClinikoWebhookEvent`, etc.) in their respective adapter folders.
+7. **Adopt branded IDs** in cross-module function signatures (start with
+   `consumeInsightEvents`, `triggerCommsSequences`, the n8n callback
+   handlers). New code only — no codemod required.
+8. **Wire `TraceContext` through `withRequestLog`** so every cross-module
+   write picks up the trace id from the inbound webhook automatically.
+9. **Implement the Ava call-fact stream** (§8b) — write `AvaCallFactEvent`
+   rows from the ElevenLabs webhook handler so Intelligence can compute
+   voice-channel KPIs (booking conversion, after-hours capture, FCR).
+10. **CI gate for `PII_FIELD_MAP` completeness** — any new field on the
+    referenced interfaces without a `PII_FIELD_MAP` entry fails CI.
+11. **Migrate `PulseStateSnapshot` consumers to `ModuleHealth`** and add
+    `IntelligenceHealth` + `AvaHealth` writers so `/healthz` is unified.
 
 Each is a small, independent change. None is required for the contracts
 file itself to be useful — they are progressive cleanups that adopt the
