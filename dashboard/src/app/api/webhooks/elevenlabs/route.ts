@@ -1,14 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { withRequestLog } from "@/lib/request-logger";
+import { getTrace, withRequestLog } from "@/lib/request-logger";
 import type { AvaAction } from "@/lib/ava/graph";
 import { sendCallbackNotification, sendBookingAcknowledgement } from "@/lib/ava/notify-callback";
 import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
-import type {
-  AvaCallLogEntry,
-  AvaInsightEventMetadata,
-  AvaInsightEventType,
-  ElevenLabsWebhookPayload,
+import {
+  CONTRACTS_SCHEMA_VERSION,
+  asClinicId,
+  asConversationId,
+  asEventId,
+  makeIdempotencyKey,
+  makeRootTrace,
+  type AvaCallFactEvent,
+  type AvaCallFactPayload,
+  type AvaCallLogEntry,
+  type AvaCallOutcome,
+  type AvaInsightEventMetadata,
+  type AvaInsightEventType,
+  type AvaPmsType,
+  type ElevenLabsWebhookPayload,
 } from "@/lib/contracts";
 import type { InsightEvent, InsightSeverity } from "@/types/insight-events";
 
@@ -260,6 +270,74 @@ async function handler(req: NextRequest) {
       } catch (err) {
         console.error(
           "[ElevenLabs webhook] insight_events write failed:",
+          err instanceof Error ? err.message : String(err),
+        );
+      }
+
+      // ─── Ava → Intelligence fact stream (call_facts) ─────────────────────
+      // Captures atomic call facts for Intelligence to compute voice-channel
+      // KPIs (booking conversion, after-hours capture, FCR, transfer rate).
+      // Idempotent: deterministic id + Firestore set/merge collapses retries.
+      // Wrapped in try/catch — fact-stream failure must never 500 the webhook.
+      try {
+        const clinicData = clinicSnap.docs[0].data() as Record<string, unknown>;
+        const pmsType: AvaPmsType =
+          ((clinicData.pmsProvider as AvaPmsType | undefined) ?? "writeupp");
+
+        const startedAt = payload.timestamp
+          ? new Date(payload.timestamp * 1000).toISOString()
+          : new Date(
+              Date.now() - (payload.call_duration ?? 0) * 1000
+            ).toISOString();
+        const endedAt = new Date().toISOString();
+
+        const factPayload: AvaCallFactPayload = {
+          conversationId: asConversationId(conversationId),
+          callerPhone: payload.caller_phone ?? null,
+          startedAt,
+          endedAt,
+          durationSeconds: payload.call_duration ?? 0,
+          outcome: outcome as AvaCallOutcome,
+          booked: outcome === "booked",
+          ...(graphMetadata.bookingId
+            ? { appointmentExternalId: String(graphMetadata.bookingId) }
+            : {}),
+          pmsType,
+          transferred: outcome === "transferred",
+          escalated: outcome === "escalated",
+          // patientMatched / outOfHours / proposalCount are intentionally
+          // omitted: producer doesn't have reliable signal yet. Intelligence
+          // skips dependent KPIs when the field is undefined.
+        };
+
+        const factEventId = `ava-fact-${conversationId}`;
+        const trace = getTrace() ?? makeRootTrace("ava", startedAt);
+        const factEvent: AvaCallFactEvent = {
+          id: asEventId(factEventId),
+          type: "AVA_CALL_ENDED",
+          schemaVersion: CONTRACTS_SCHEMA_VERSION,
+          clinicId: asClinicId(clinicId),
+          source: "ava",
+          actor: { kind: "external", provider: "elevenlabs" },
+          trace,
+          idempotencyKey: makeIdempotencyKey("ava", `call-fact:${conversationId}`),
+          times: {
+            occurredAt: endedAt,
+            detectedAt: endedAt,
+            createdAt: endedAt,
+          },
+          payload: factPayload,
+        };
+
+        await db
+          .collection("clinics")
+          .doc(clinicId)
+          .collection("call_facts")
+          .doc(factEventId)
+          .set(factEvent, { merge: true });
+      } catch (err) {
+        console.error(
+          "[ElevenLabs webhook] call_facts write failed:",
           err instanceof Error ? err.message : String(err),
         );
       }

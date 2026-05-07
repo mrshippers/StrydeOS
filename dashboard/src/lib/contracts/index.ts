@@ -128,6 +128,10 @@ export const COLLECTION_OWNERSHIP = {
 
   // Ava-owned writes
   call_log:             { writers: ["ava"],           readers: ["ava", "ui"] },
+  call_facts:           { writers: ["ava"],           readers: ["intelligence", "ui"] },
+
+  // Failed-event DLQ (any module may write a FailedEvent for a row it owns)
+  _failed_events:       { writers: ["pulse", "intelligence", "ava"], readers: ["intelligence", "ui"] },
 
   // Shared / pipeline-written
   appointments:         { writers: ["pipeline"],      readers: ["intelligence", "pulse", "ava", "ui"] },
@@ -603,8 +607,12 @@ export interface AvaCallFactPayload {
   booked: boolean;
   /** Set when booked; references the PMS appointment id. */
   appointmentExternalId?: string;
-  /** Whether the caller was matched to an existing patient record. */
-  patientMatched: boolean;
+  /**
+   * Whether the caller was matched to an existing patient record.
+   * Optional: producers that don't run a phone-lookup leave this absent
+   * and Intelligence skips the corresponding KPI.
+   */
+  patientMatched?: boolean;
   /** Set when patientMatched. */
   patientId?: PatientId;
   /** PMS the call routed to. */
@@ -612,13 +620,14 @@ export interface AvaCallFactPayload {
   /**
    * Whether the call was outside the clinic's configured business hours
    * (Intelligence uses this for the "after-hours capture rate" KPI).
+   * Optional — requires clinic businessHours to be configured.
    */
-  outOfHours: boolean;
+  outOfHours?: boolean;
   /**
    * Number of slot proposals before resolution / abandonment. Proxy for
-   * caller friction — Intelligence flags repeated high-friction calls.
+   * caller friction. Optional — requires LangGraph state hand-off.
    */
-  proposalCount: number;
+  proposalCount?: number;
   /** Whether the call was transferred to a human. */
   transferred: boolean;
   /** Triage flag (urgent / safeguarding / 999). */
