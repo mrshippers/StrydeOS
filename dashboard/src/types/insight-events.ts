@@ -24,7 +24,12 @@ export type InsightEventType =
   | "OUTCOME_IMPROVEMENT"       // Patient crossed MCID threshold — clinically meaningful improvement
 
   // System health
-  | "DATA_STALENESS_ALERT";     // No CSV import received in 7+ days (CSV-bridge clinics)
+  | "DATA_STALENESS_ALERT"      // No CSV import received in 7+ days (CSV-bridge clinics)
+
+  // Ava (voice receptionist) — emitted on conversation.ended classification
+  | "AVA_CALLBACK_REQUESTED"    // Caller asked for a callback — Pulse runs continuity nudge
+  | "AVA_CALL_BOOKED"           // Booking captured — owner-facing positive signal
+  | "AVA_CALL_ESCALATED";       // Caller flagged for urgent escalation — owner-facing critical
 
 // ── Which module acts on which event ──────────────────────
 
@@ -36,11 +41,14 @@ export const OWNER_EVENTS: InsightEventType[] = [
   "REVENUE_LEAK_DETECTED",
   "TREATMENT_COMPLETION_WIN",
   "DATA_STALENESS_ALERT",
+  "AVA_CALL_BOOKED",
+  "AVA_CALL_ESCALATED",
 ];
 
 export const PATIENT_ACTION_EVENTS: InsightEventType[] = [
   "PATIENT_DROPOUT_RISK",
   "NPS_DETRACTOR_ALERT",
+  "AVA_CALLBACK_REQUESTED",
 ];
 
 // ── Pulse sequence mapping ────────────────────────────────
@@ -48,6 +56,15 @@ export const PATIENT_ACTION_EVENTS: InsightEventType[] = [
 export const EVENT_TO_SEQUENCE: Partial<Record<InsightEventType, string>> = {
   PATIENT_DROPOUT_RISK: "rebooking_prompt",
   NPS_DETRACTOR_ALERT: "discharge_review",
+  /**
+   * Ava callbacks land on Pulse's `early_intervention` cadence rather than
+   * `rebooking_prompt`: at the point the caller dials in there is no booking
+   * yet (rebooking implies an existing patient relationship), and the clinical
+   * priority is to make first human contact promptly so the lead does not go
+   * cold. `early_intervention` is the right cadence for a brand-new inbound
+   * signal; rebooking remains correct for mid-programme dropout signals.
+   */
+  AVA_CALLBACK_REQUESTED: "early_intervention",
 };
 
 // ── Event severity ────────────────────────────────────────

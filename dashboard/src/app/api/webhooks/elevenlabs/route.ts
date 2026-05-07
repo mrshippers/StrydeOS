@@ -4,23 +4,15 @@ import { withRequestLog } from "@/lib/request-logger";
 import type { AvaAction } from "@/lib/ava/graph";
 import { sendCallbackNotification, sendBookingAcknowledgement } from "@/lib/ava/notify-callback";
 import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
+import type {
+  AvaCallLogEntry,
+  AvaInsightEventMetadata,
+  AvaInsightEventType,
+  ElevenLabsWebhookPayload,
+} from "@/lib/contracts";
+import type { InsightEvent, InsightSeverity } from "@/types/insight-events";
 
 export const runtime = "nodejs";
-
-interface ElevenLabsWebhookPayload {
-  event: string;
-  conversation_id: string;
-  agent_id?: string;
-  user_id?: string;
-  status?: string;
-  call_duration?: number;
-  transcript?: string;
-  summary?: string;
-  reason_for_call?: string;
-  caller_phone?: string;
-  timestamp?: number;
-  custom_metadata?: Record<string, unknown>;
-}
 
 async function handler(req: NextRequest) {
   const db = getAdminDb();
@@ -77,7 +69,7 @@ async function handler(req: NextRequest) {
       .collection("call_log")
       .doc(conversationId);
 
-    const callData = {
+    const callData: AvaCallLogEntry = {
       agentId,
       conversationId,
       event: payload.event,
@@ -185,6 +177,91 @@ async function handler(req: NextRequest) {
             null,
           conversationId,
         }).catch((err) => { console.error("[sendCallbackNotification] Failed:", err instanceof Error ? err.message : String(err)); });
+      }
+
+      // ─── Cross-module bus: emit InsightEvent for Pulse / Intelligence ───────
+      // The SMS path above is best-effort human notification; this write is the
+      // structured handoff so Pulse's insight-event-consumer can run continuity
+      // cadences and Intelligence's insight UI can surface owner-facing signals.
+      // Idempotent: deterministic id collapses ElevenLabs retries to one write.
+      // Wrapped in try/catch — never let an insight_events failure surface 500
+      // to ElevenLabs (would trigger a retry of the whole webhook).
+      try {
+        let avaEventType: AvaInsightEventType | null = null;
+        let severity: InsightSeverity = "warning";
+        let actionTarget: "owner" | "patient" = "owner";
+        let title = "";
+        let suggestedAction = "";
+
+        if (outcome === "follow_up_required") {
+          avaEventType = "AVA_CALLBACK_REQUESTED";
+          severity = "warning";
+          actionTarget = "patient";
+          title = "Ava: callback requested";
+          suggestedAction = "Follow up with the caller — Ava flagged this call for human callback.";
+        } else if (outcome === "escalated") {
+          avaEventType = "AVA_CALL_ESCALATED";
+          severity = "critical";
+          actionTarget = "owner";
+          title = "Ava: call escalated";
+          suggestedAction = "Urgent: Ava escalated this call. Review immediately.";
+        } else if (outcome === "booked") {
+          avaEventType = "AVA_CALL_BOOKED";
+          severity = "positive";
+          actionTarget = "owner";
+          title = "Ava: booking captured";
+          suggestedAction = "New booking captured by Ava — no action required.";
+        }
+
+        if (avaEventType) {
+          const callerPhone = payload.caller_phone ?? null;
+          const callbackType = (graphMetadata.callbackType as string | undefined) ?? null;
+          const reason =
+            (graphMetadata.reason as string | undefined) ??
+            payload.reason_for_call ??
+            null;
+          const callDurationSeconds =
+            typeof payload.call_duration === "number" ? payload.call_duration : null;
+
+          const description = callerPhone
+            ? `${title} (caller ${callerPhone})`
+            : title;
+
+          const metadata: AvaInsightEventMetadata = {
+            conversationId,
+            callerPhone,
+            callbackType,
+            reason,
+            callDurationSeconds,
+          };
+
+          const deterministicId = `ava-${conversationId}-${avaEventType}`;
+          const insightDoc: InsightEvent = {
+            id: deterministicId,
+            type: avaEventType,
+            clinicId,
+            severity,
+            title,
+            description,
+            suggestedAction,
+            actionTarget,
+            createdAt: new Date().toISOString(),
+            consumedBy: [],
+            metadata: metadata as unknown as Record<string, unknown>,
+          };
+
+          await db
+            .collection("clinics")
+            .doc(clinicId)
+            .collection("insight_events")
+            .doc(deterministicId)
+            .set(insightDoc, { merge: true });
+        }
+      } catch (err) {
+        console.error(
+          "[ElevenLabs webhook] insight_events write failed:",
+          err instanceof Error ? err.message : String(err),
+        );
       }
     }
 

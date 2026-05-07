@@ -542,9 +542,12 @@ export type AvaInsightEventType =
 export interface AvaInsightEventMetadata {
   conversationId: string;
   callerPhone: string | null;
-  callbackType?: string;
-  reason?: string | null;
-  callDurationSeconds?: number | null;
+  /** LangGraph-classified callback bucket; null when unspecified. */
+  callbackType: string | null;
+  /** Free-text reason from graphMetadata or payload.reason_for_call. */
+  reason: string | null;
+  /** Call duration in seconds from ElevenLabs; null when not reported. */
+  callDurationSeconds: number | null;
 }
 
 // ─── §8b Ava → Intelligence fact stream ──────────────────────────────────────
