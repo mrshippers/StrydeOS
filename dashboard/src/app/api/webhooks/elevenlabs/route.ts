@@ -31,10 +31,20 @@ async function handler(req: NextRequest) {
   try {
     const rawBody = await req.text();
 
-    // Verify webhook signature — fail closed if secret not configured
+    // Verify webhook signature.
+    //
+    // If the secret isn't configured on OUR side that's a deploy bug, not a
+    // transient failure. Returning 5xx makes ElevenLabs retry-storm us for
+    // hours. Return 200 with structured `config_missing` and log loudly so
+    // the on-call sees it — retries won't fix a missing env var.
     if (!isWebhookSecretConfigured()) {
-      console.error("[ElevenLabs webhook] ELEVENLABS_WEBHOOK_SECRET is not configured");
-      return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });
+      console.error(
+        "[CRITICAL] [ElevenLabs webhook] ELEVENLABS_WEBHOOK_SECRET not configured — refusing to process. Returning 200 to suppress retries; fix the deploy.",
+      );
+      return NextResponse.json(
+        { error: "config_missing", reason: "ELEVENLABS_WEBHOOK_SECRET not configured" },
+        { status: 200 },
+      );
     }
 
     const sig = req.headers.get("elevenlabs-signature");

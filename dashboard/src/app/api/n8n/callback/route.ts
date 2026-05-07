@@ -27,12 +27,26 @@ const N8N_SECRET = process.env.N8N_COMMS_WEBHOOK_SECRET;
  */
 async function handler(request: NextRequest) {
   try {
+    // Two failure modes, two policies (matches Twilio / ElevenLabs / Resend):
+    //   - SECRET NOT CONFIGURED on our side  → 200 + structured `config_missing`
+    //     so n8n doesn't retry-storm us for a deploy bug. Logged loudly.
+    //   - SECRET MISMATCH on inbound request → 401 so the caller knows their
+    //     credentials are wrong (exfil attempt or stale rotation).
+    if (!N8N_SECRET) {
+      console.error(
+        "[CRITICAL] [n8n callback] N8N_COMMS_WEBHOOK_SECRET not configured — refusing to process. Returning 200 to suppress retries; fix the deploy.",
+      );
+      return NextResponse.json(
+        { error: "config_missing", reason: "N8N_COMMS_WEBHOOK_SECRET not configured" },
+        { status: 200 },
+      );
+    }
+
     const secret =
       request.headers.get("x-webhook-secret") ??
       request.headers.get("authorization")?.replace("Bearer ", "");
 
     if (
-      !N8N_SECRET ||
       !secret ||
       secret.length !== N8N_SECRET.length ||
       !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(N8N_SECRET))

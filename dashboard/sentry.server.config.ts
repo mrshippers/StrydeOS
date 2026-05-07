@@ -1,5 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 
+import { scrubSentryEvent } from "@/lib/sentry-scrub";
+
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NEXT_PUBLIC_ENV ?? process.env.NODE_ENV,
@@ -11,8 +13,11 @@ Sentry.init({
     Sentry.captureConsoleIntegration({ levels: ["error"] }),
   ],
 
-  beforeSend(event) {
+  beforeSend(event, hint) {
+    // Drop dev events entirely — never ship local stack traces to Sentry.
     if (process.env.NODE_ENV === "development") return null;
-    return event;
+    // Production: walk the event payload and mask PHI/PII fields by key name
+    // before forwarding to Sentry. See lib/sentry-scrub.ts.
+    return scrubSentryEvent(event, hint);
   },
 });

@@ -34,6 +34,7 @@ import type {
 } from "@/types";
 import { withRequestLog } from "@/lib/request-logger";
 import { buildWelcomeEmail, buildWelcomeText } from "@/lib/intelligence/emails/welcome";
+import { runMigrations, MIGRATIONS } from "@/lib/migrations";
 
 async function handler(request: NextRequest) {
   // Rate limit: 5 requests per IP per 60 seconds (creates Firebase Auth users + Firestore docs)
@@ -245,6 +246,26 @@ async function handler(request: NextRequest) {
     });
 
     await batch.commit();
+
+    // ── Schema migrations ────────────────────────────────────────────────────────
+    // Apply any pending schema migrations to the freshly-provisioned clinic so
+    // it lands at CONTRACTS_SCHEMA_VERSION from minute one. With zero entries
+    // in MIGRATIONS today this is a no-op; when a v2+ migration is appended,
+    // every new clinic provisioned after the deploy is automatically current.
+    // Non-blocking: provisioning succeeded; if a future migration fails the
+    // admin /run-migrations route can rerun it idempotently.
+    try {
+      const migrationResult = await runMigrations(db, clinicId, MIGRATIONS);
+      if (migrationResult.errors.length > 0) {
+        console.error(
+          "[provision-clinic] Migration errors for new clinic:",
+          clinicId,
+          migrationResult.errors
+        );
+      }
+    } catch (migErr) {
+      console.error("[provision-clinic] Migration runner failed:", migErr);
+    }
 
     // ── Password reset link ──────────────────────────────────────────────────────
     let passwordResetLink: string | null = null;

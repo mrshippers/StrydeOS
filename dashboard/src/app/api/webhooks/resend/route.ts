@@ -28,27 +28,34 @@ import type { ResendDeliveryEvent, ResendEventType } from "@/lib/contracts";
 export const runtime = "nodejs";
 
 async function handler(request: NextRequest) {
-  // Shared-secret verification — warn-only if env var not set (existing deployments
-  // predate the secret and we don't want to break them on rollout).
+  // Shared-secret verification. Two failure modes, two policies:
+  //   - SECRET NOT CONFIGURED on our side  → 200 + structured `config_missing`
+  //     so Resend doesn't retry-storm us for a deploy bug. Logged loudly.
+  //   - SECRET MISMATCH on inbound request → 401 so the caller knows their
+  //     signature is wrong (exfil attempt or stale rotation).
   // Read env at call time so tests and env reloads see the current value.
   const expectedSecret = process.env.RESEND_WEBHOOK_SECRET;
 
-  if (expectedSecret) {
-    const incomingSecret =
-      request.headers.get("x-resend-signature") ??
-      request.headers.get("authorization")?.replace("Bearer ", "");
-
-    if (
-      !incomingSecret ||
-      incomingSecret.length !== expectedSecret.length ||
-      !crypto.timingSafeEqual(Buffer.from(incomingSecret), Buffer.from(expectedSecret))
-    ) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-  } else {
-    console.warn(
-      "[resend-webhook] RESEND_WEBHOOK_SECRET not set — accepting all requests. Configure the secret to enable verification.",
+  if (!expectedSecret) {
+    console.error(
+      "[CRITICAL] [resend-webhook] RESEND_WEBHOOK_SECRET not configured — refusing to process. Returning 200 to suppress retries; fix the deploy.",
     );
+    return NextResponse.json(
+      { error: "config_missing", reason: "RESEND_WEBHOOK_SECRET not configured" },
+      { status: 200 },
+    );
+  }
+
+  const incomingSecret =
+    request.headers.get("x-resend-signature") ??
+    request.headers.get("authorization")?.replace("Bearer ", "");
+
+  if (
+    !incomingSecret ||
+    incomingSecret.length !== expectedSecret.length ||
+    !crypto.timingSafeEqual(Buffer.from(incomingSecret), Buffer.from(expectedSecret))
+  ) {
+    return new NextResponse("Unauthorized", { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);

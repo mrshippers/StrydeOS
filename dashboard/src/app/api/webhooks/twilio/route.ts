@@ -41,9 +41,20 @@ const STATUS_TO_OUTCOME: Record<TwilioMessageStatus, TwilioResolvedOutcome | nul
 };
 
 async function handler(request: NextRequest) {
-  // Validate Twilio signature — fail closed if auth not configured
+  // Validate Twilio signature.
+  //
+  // If the auth token isn't configured on OUR side that's a deploy bug, not
+  // a transient failure. Returning 5xx makes Twilio retry-storm us. Return
+  // 200 with structured `config_missing` and log loudly so on-call sees it
+  // — retries will not fix a missing env var.
   if (!TWILIO_AUTH_TOKEN) {
-    return new NextResponse("Twilio auth not configured", { status: 500 });
+    console.error(
+      "[CRITICAL] [Twilio webhook] TWILIO_AUTH_TOKEN not configured — refusing to process. Returning 200 to suppress retries; fix the deploy.",
+    );
+    return NextResponse.json(
+      { error: "config_missing", reason: "TWILIO_AUTH_TOKEN not configured" },
+      { status: 200 },
+    );
   }
 
   const sig = request.headers.get("x-twilio-signature") ?? "";

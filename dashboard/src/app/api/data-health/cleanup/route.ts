@@ -78,7 +78,18 @@ async function cleanDedupCollection(
   return totalDeleted;
 }
 
-/** GDPR hard-delete: cascade-remove patients past their 30-day grace period. */
+/**
+ * GDPR hard-delete: cascade-remove patients past their 30-day grace period.
+ *
+ * Each entry below names a per-clinic subcollection that stores rows keyed
+ * by `patientId`. On hard-delete we sweep all of these so no PII/PHI tied
+ * to the patient survives. Adding a new patient-scoped collection? Add it
+ * here too — otherwise SAR/erasure leaves orphaned re-identification risk.
+ *
+ * `insight_events` and `reviews` were added because both carry patient
+ * names + free-text narratives / NPS replies and the original list missed
+ * them — they survived hard-delete and reidentified deleted patients.
+ */
 const PATIENT_SUBCOLLECTIONS = [
   "appointments",
   "comms_log",
@@ -86,7 +97,64 @@ const PATIENT_SUBCOLLECTIONS = [
   "outcome_scores",
   "call_log",
   "voiceInteractions",
+  "insight_events",
+  "reviews",
 ] as const;
+
+/**
+ * Sweep `_failed_events` DLQ rows tied to a deleted patient. See the call
+ * site in `executeGdprHardDeletions` for the rationale and known limitation.
+ */
+async function deleteFailedEventsForPatient(
+  db: FirebaseFirestore.Firestore,
+  clinicId: string,
+  patientId: string,
+  originalEventIds: string[]
+): Promise<void> {
+  const failedRef = db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("_failed_events");
+
+  // Prong 1: top-level originalPayload.patientId equality (cheap, indexed
+  // if a composite index exists; otherwise a small collection scan).
+  let hasMore = true;
+  while (hasMore) {
+    const snap = await failedRef
+      .where("originalPayload.patientId", "==", patientId)
+      .limit(BATCH_LIMIT)
+      .get();
+
+    if (snap.empty) {
+      hasMore = false;
+      break;
+    }
+
+    const batch = db.batch();
+    for (const doc of snap.docs) batch.delete(doc.ref);
+    await batch.commit();
+
+    if (snap.size < BATCH_LIMIT) hasMore = false;
+  }
+
+  // Prong 2: derived from a deleted insight_event. `in` queries cap at 30
+  // values so chunk the id list.
+  const CHUNK = 30;
+  for (let i = 0; i < originalEventIds.length; i += CHUNK) {
+    const chunk = originalEventIds.slice(i, i + CHUNK);
+    if (chunk.length === 0) continue;
+
+    const snap = await failedRef
+      .where("originalEventId", "in", chunk)
+      .get();
+
+    if (snap.empty) continue;
+
+    const batch = db.batch();
+    for (const doc of snap.docs) batch.delete(doc.ref);
+    await batch.commit();
+  }
+}
 
 async function executeGdprHardDeletions(
   db: FirebaseFirestore.Firestore
@@ -114,6 +182,10 @@ async function executeGdprHardDeletions(
 
       for (const patientDoc of patientsSnap.docs) {
         const patientId = patientDoc.id;
+        // Track insight_events ids so we can cascade matching _failed_events
+        // rows whose originalPayload references them (where patientId is
+        // buried inside an opaque payload and not on a top-level field).
+        const deletedInsightEventIds: string[] = [];
 
         try {
           // Cascade-delete across subcollections referencing this patient
@@ -133,6 +205,10 @@ async function executeGdprHardDeletions(
                 break;
               }
 
+              if (subcollection === "insight_events") {
+                for (const d of subSnap.docs) deletedInsightEventIds.push(d.id);
+              }
+
               const batch = db.batch();
               for (const doc of subSnap.docs) batch.delete(doc.ref);
               await batch.commit();
@@ -140,6 +216,27 @@ async function executeGdprHardDeletions(
               if (subSnap.size < BATCH_LIMIT) hasMore = false;
             }
           }
+
+          // _failed_events DLQ rows preserve originalPayload verbatim, which
+          // can include patient identifiers nested inside the payload. We
+          // can't query nested fields cheaply, so we use a two-pronged sweep:
+          //   1. originalPayload.patientId equality (covers events whose
+          //      payload exposes patientId at the documented top level).
+          //   2. originalEventId IN deletedInsightEventIds (covers payloads
+          //      where patientId is buried — anything that DLQ'd from the
+          //      insight_events we just deleted is by definition this
+          //      patient's data and must go).
+          // Limitation: a failed event for this patient that does NOT carry
+          // patientId on its payload AND was not derived from one of the
+          // deleted insight_events will survive. Acceptable trade-off — those
+          // payloads already lack stable identifiers, so reidentification
+          // requires the original raw text alone.
+          await deleteFailedEventsForPatient(
+            db,
+            clinicId,
+            patientId,
+            deletedInsightEventIds
+          );
 
           // Delete the patient document itself
           await patientDoc.ref.delete();
