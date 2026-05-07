@@ -1,7 +1,13 @@
 import * as crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import type { CommsOutcome, SequenceType, CommsChannel, NpsCategory } from "@/types";
+import type { CommsOutcome, NpsCategory } from "@/types";
+import {
+  isN8nInboundReply,
+  type N8nCallbackPayload,
+  type N8nInboundReply,
+  type N8nOutboundCallback,
+} from "@/lib/contracts";
 import { withRequestLog } from "@/lib/request-logger";
 
 const N8N_SECRET = process.env.N8N_COMMS_WEBHOOK_SECRET;
@@ -34,9 +40,9 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json().catch(() => ({}));
+    const body = (await request.json().catch(() => ({}))) as N8nCallbackPayload;
 
-    if (body.type === "inbound_reply") {
+    if (isN8nInboundReply(body)) {
       return handleInboundReply(body);
     }
 
@@ -48,7 +54,7 @@ async function handler(request: NextRequest) {
 
 // ─── Outbound callback ────────────────────────────────────────────────────────
 
-async function handleOutboundCallback(body: Record<string, unknown>) {
+async function handleOutboundCallback(body: N8nOutboundCallback) {
   const {
     clinicId,
     patientId,
@@ -59,17 +65,7 @@ async function handleOutboundCallback(body: Record<string, unknown>) {
     outcome,
     openedAt,
     clickedAt,
-  } = body as {
-    clinicId:     string;
-    patientId:    string;
-    sequenceType: SequenceType;
-    channel:      CommsChannel;
-    logId:        string;
-    executionId:  string;
-    outcome:      string;
-    openedAt?:    string;
-    clickedAt?:   string;
-  };
+  } = body;
 
   if (!clinicId || !patientId || !sequenceType) {
     return NextResponse.json(
@@ -142,13 +138,8 @@ async function handleOutboundCallback(body: Record<string, unknown>) {
 
 // ─── Inbound reply ────────────────────────────────────────────────────────────
 
-async function handleInboundReply(body: Record<string, unknown>) {
-  const { clinicId, fromPhone, replyText, receivedAt } = body as {
-    clinicId:   string;
-    fromPhone:  string;
-    replyText:  string;
-    receivedAt: string;
-  };
+async function handleInboundReply(body: N8nInboundReply) {
+  const { clinicId, fromPhone, replyText, receivedAt } = body;
 
   if (!clinicId || !fromPhone) {
     return NextResponse.json({ ok: true }); // gracefully ignore malformed

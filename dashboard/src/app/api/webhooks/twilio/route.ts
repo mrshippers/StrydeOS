@@ -20,15 +20,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { withRequestLog } from "@/lib/request-logger";
+import type {
+  TwilioMessageStatus,
+  TwilioResolvedOutcome,
+  TwilioStatusCallback,
+} from "@/lib/contracts";
 import twilio from "twilio";
 
 export const runtime = "nodejs";
 
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN ?? "";
 
-type CommsOutcome = "delivered" | "send_failed";
-
-const STATUS_TO_OUTCOME: Record<string, CommsOutcome | null> = {
+const STATUS_TO_OUTCOME: Record<TwilioMessageStatus, TwilioResolvedOutcome | null> = {
   delivered: "delivered",
   undelivered: "send_failed",
   failed: "send_failed",
@@ -52,7 +55,9 @@ async function handler(request: NextRequest) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  const formData = new URLSearchParams(body);
+  // Narrow the parsed form to the cross-module contract shape so the
+  // STATUS_TO_OUTCOME map below typechecks against the producer surface.
+  const callback = params as TwilioStatusCallback;
 
   const { searchParams } = new URL(request.url);
   const clinicId = searchParams.get("clinicId");
@@ -61,8 +66,8 @@ async function handler(request: NextRequest) {
     return NextResponse.json({ error: "clinicId query param required" }, { status: 400 });
   }
 
-  const messageSid = formData.get("MessageSid");
-  const messageStatus = formData.get("MessageStatus");
+  const messageSid = callback.MessageSid;
+  const messageStatus = callback.MessageStatus;
 
   if (!messageSid) {
     return NextResponse.json({ error: "MessageSid required" }, { status: 400 });

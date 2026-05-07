@@ -23,19 +23,9 @@ import * as crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { withRequestLog } from "@/lib/request-logger";
+import type { ResendDeliveryEvent, ResendEventType } from "@/lib/contracts";
 
 export const runtime = "nodejs";
-
-interface ResendEventData {
-  email_id: string;
-  opened_at?: string;
-  clicked_at?: string;
-}
-
-interface ResendEvent {
-  type: string;
-  data: ResendEventData;
-}
 
 async function handler(request: NextRequest) {
   // Shared-secret verification — warn-only if env var not set (existing deployments
@@ -68,25 +58,26 @@ async function handler(request: NextRequest) {
     return NextResponse.json({ error: "clinicId query param required" }, { status: 400 });
   }
 
-  let event: ResendEvent;
+  let event: ResendDeliveryEvent;
   try {
-    event = await request.json();
+    event = (await request.json()) as ResendDeliveryEvent;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   const { type, data } = event;
+  const eventType = type as ResendEventType;
 
   // Determine what update to apply
   let update: Record<string, string> | null = null;
 
-  if (type === "email.opened") {
+  if (eventType === "email.opened") {
     update = { openedAt: data.opened_at ?? new Date().toISOString() };
-  } else if (type === "email.clicked") {
+  } else if (eventType === "email.clicked") {
     update = { clickedAt: data.clicked_at ?? new Date().toISOString() };
-  } else if (type === "email.delivered") {
+  } else if (eventType === "email.delivered") {
     update = { outcome: "delivered" };
-  } else if (type === "email.bounced" || type === "email.complained") {
+  } else if (eventType === "email.bounced" || eventType === "email.complained") {
     update = { outcome: "send_failed" };
   } else {
     // Unknown event type — acknowledge silently
