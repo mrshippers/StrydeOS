@@ -6,12 +6,14 @@
 import type { Firestore } from "firebase-admin/firestore";
 import type { Appointment, WeeklyStats } from "@/types";
 import type { Clinician } from "@/types";
+import type { AvaCallFactEvent } from "@/lib/contracts";
 
 const COLLECTION_APPOINTMENTS = "appointments";
 const COLLECTION_CLINICIANS = "clinicians";
 const COLLECTION_PATIENTS = "patients";
 const COLLECTION_REVIEWS = "reviews";
 const COLLECTION_METRICS_WEEKLY = "metrics_weekly";
+const COLLECTION_CALL_FACTS = "call_facts";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -67,6 +69,56 @@ interface ReviewLike {
   platform?: string;
 }
 
+/**
+ * Subset of `AvaCallFactPayload` consumed by the voice-channel KPIs. Kept
+ * structural rather than typed against `AvaCallFactEvent` so callers can pass
+ * loose Firestore docs without forcing brand-cast gymnastics in tests.
+ */
+export interface CallFactLike {
+  type?: string;
+  payload: {
+    booked?: boolean;
+    transferred?: boolean;
+    endedAt?: string;
+  };
+}
+
+/**
+ * Compute the three voice-channel KPIs for a rolling week from a pre-filtered
+ * array of `AVA_CALL_ENDED` facts. Pure function — no Firestore access — so
+ * the unit test can exercise it directly with fixtures.
+ *
+ * Returns `null` for every KPI when there are zero facts: absence of Ava
+ * activity is meaningfully different from a zero rate.
+ */
+export function computeVoiceKpis(facts: CallFactLike[]): {
+  voiceBookingConversionRate: number | null;
+  voiceCallVolume: number | null;
+  voiceTransferRate: number | null;
+} {
+  // Defensive type filter — only AVA_CALL_ENDED facts feed the rates. The
+  // call_facts collection could grow other event types (AVA_BOOKING_ATTEMPTED,
+  // AVA_CALL_ABANDONED) and those would distort the ratios.
+  const ended = facts.filter(
+    (f) => !f.type || f.type === "AVA_CALL_ENDED"
+  );
+  const total = ended.length;
+  if (total === 0) {
+    return {
+      voiceBookingConversionRate: null,
+      voiceCallVolume: null,
+      voiceTransferRate: null,
+    };
+  }
+  const booked = ended.filter((f) => f.payload.booked === true).length;
+  const transferred = ended.filter((f) => f.payload.transferred === true).length;
+  return {
+    voiceBookingConversionRate: booked / total,
+    voiceCallVolume: total,
+    voiceTransferRate: transferred / total,
+  };
+}
+
 export function aggregateWeek(
   appointments: AppointmentLike[],
   weekStart: string,
@@ -77,6 +129,7 @@ export function aggregateWeek(
   reviews: ReviewLike[],
   sessionPricePence: number = 0,
   weeklyCapacitySlots: number = 40,
+  callFacts: CallFactLike[] = [],
 ): Omit<WeeklyStats, "id"> {
   const completed = appointments.filter((a) => a.status === "completed");
   const total = completed.length;
@@ -211,6 +264,13 @@ export function aggregateWeek(
     ? Math.min(1, bookedSlots / estimatedCapacity)
     : 0;
 
+  // Voice-channel KPIs from /clinics/{id}/call_facts. Voice activity is
+  // clinic-wide (Ava doesn't route per clinician) so the same three values
+  // get stamped onto every per-clinician WeeklyStats doc as well as the
+  // "all" rollup. Owners viewing a single clinician's row still see the
+  // shared denominator — intentional, until per-clinician routing exists.
+  const voiceKpis = computeVoiceKpis(callFacts);
+
   return {
     clinicianId,
     clinicianName,
@@ -236,6 +296,9 @@ export function aggregateWeek(
     reviewVelocity: reviewCount - priorWeekReviewCount,
     dnaByDayOfWeek,
     dnaByTimeSlot,
+    voiceBookingConversionRate: voiceKpis.voiceBookingConversionRate,
+    voiceCallVolume: voiceKpis.voiceCallVolume,
+    voiceTransferRate: voiceKpis.voiceTransferRate,
     computedAt: new Date().toISOString(),
     statisticallyRepresentative: total >= 5,
     caveatNote: total < 5 ? `Low volume week (${total} appointments)` : undefined,
@@ -262,10 +325,13 @@ export async function computeWeeklyMetricsForClinic(
 
   const clinicBase = db.collection("clinics").doc(clinicId);
 
-  const [cliniciansSnap, patientsSnap, reviewsSnap] = await Promise.all([
+  const [cliniciansSnap, patientsSnap, reviewsSnap, callFactsSnap] = await Promise.all([
     clinicBase.collection(COLLECTION_CLINICIANS).get(),
     clinicBase.collection(COLLECTION_PATIENTS).get(),
     clinicBase.collection(COLLECTION_REVIEWS).get(),
+    // call_facts is Ava-written, Intelligence-readable per COLLECTION_OWNERSHIP.
+    // Failure is non-fatal — voice KPIs degrade to null, the rest still compute.
+    clinicBase.collection(COLLECTION_CALL_FACTS).get().catch(() => null),
   ]);
 
   const clinicians: { id: string; name: string }[] = cliniciansSnap.docs.map(
@@ -292,6 +358,24 @@ export async function computeWeeklyMetricsForClinic(
       platform: (data.platform as string) ?? undefined,
     };
   });
+
+  // Hydrate call_facts into structural CallFactLike for in-memory week-bucketing.
+  // We read the whole collection up front and filter per week (matches the
+  // existing pattern for appointments/reviews above). For high-volume tenants
+  // this should later move to a `where("payload.endedAt", ">=", fromDate)` query.
+  const callFactsAll: CallFactLike[] = callFactsSnap
+    ? callFactsSnap.docs.map((d) => {
+        const data = d.data() as Partial<AvaCallFactEvent>;
+        return {
+          type: data.type,
+          payload: {
+            booked: data.payload?.booked,
+            transferred: data.payload?.transferred,
+            endedAt: data.payload?.endedAt,
+          },
+        };
+      })
+    : [];
 
   const weekStarts = getWeeksToCompute(weeksBack);
   const fromDate = weekStarts[weekStarts.length - 1];
@@ -322,6 +406,16 @@ export async function computeWeeklyMetricsForClinic(
       (a) => a.dateTime >= weekStart && a.dateTime < weekEndStr
     );
 
+    // Voice facts bucketed by payload.endedAt — that's the canonical "when did
+    // the call complete" timestamp on AvaCallFactPayload. Facts without an
+    // endedAt are dropped (Intelligence cannot place them in a week).
+    const weekCallFacts = callFactsAll.filter((f) => {
+      const ended = f.payload.endedAt;
+      if (!ended) return false;
+      const dayKey = ended.slice(0, 10);
+      return dayKey >= weekStart && dayKey < weekEndStr;
+    });
+
     const clinicianIds = new Set(weekAppointments.map((a) => a.clinicianId));
     const allIds = new Set(clinicianIds);
     clinicians.forEach((c) => allIds.add(c.id));
@@ -343,6 +437,7 @@ export async function computeWeeklyMetricsForClinic(
         reviews,
         sessionPricePence,
         weeklyCapacitySlots,
+        weekCallFacts,
       );
       const docId = `${weekStart}_${cid}`;
       await metricsRef.doc(docId).set(stats);

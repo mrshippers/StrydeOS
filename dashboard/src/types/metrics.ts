@@ -30,4 +30,8 @@ export interface WeeklyStats {
   insuranceRevenuePence?: number;
   /** Revenue from self-pay patients in pence */
   selfPayRevenuePence?: number;
+  /** Voice channel KPIs computed from /clinics/{id}/call_facts. null = no Ava data this week. */
+  voiceBookingConversionRate?: number | null;
+  voiceCallVolume?: number | null;
+  voiceTransferRate?: number | null;
 }
