@@ -234,20 +234,20 @@
     <div class="brand">
       <div class="mark"></div>
       <div>
-        <small>StrydeOS · Governance Milestone</small>
-        <h1>Closing the gap to industry-standard verification</h1>
+        <small>StrydeOS · Compliance Milestone</small>
+        <h1>UK GDPR controls, in code — not in a slide deck</h1>
       </div>
     </div>
     <div class="stamp">
       <div><strong>May 2026</strong></div>
-      <div>Spires pilot · UK private practice</div>
+      <div>Private-practice B2B · UK</div>
     </div>
   </header>
 
   <section class="hero">
     <span class="eyebrow">What just shipped</span>
-    <h2>StrydeOS now has a clinical safety case, an adverse-event SOP, and PHI region locks at every boundary.</h2>
-    <p>Until this week, StrydeOS was a working SaaS with strong product-market fit. It is now a working SaaS with the same governance scaffolding the NHS expects from a clinical software supplier — written down, version-controlled, and enforced in code.</p>
+    <h2>StrydeOS now enforces the UK GDPR articles that actually apply to private-practice software — at the runtime layer, not on paper.</h2>
+    <p>Scope check: StrydeOS is B2B software for UK private clinics. It does not sell to NHS. It does not author clinical notes (Heidi does that; we read it back). The yardstick is UK GDPR + ICO guidance + standard B2B procurement controls. Not NHS DSPT, not DCB0129. The work below maps to the regimes that actually apply.</p>
   </section>
 
   <div class="grid">
@@ -262,16 +262,16 @@
         <div class="ship-item">
           <span class="dot"></span>
           <div>
-            <h4>Clinical safety case (DCB0129/0160-style)</h4>
-            <p>Hazard log <code>H1–H6</code>: missed call, wrong-clinic data leak, stale KPI, automation misfire, PHI leak via SDK telemetry, audit-trail loss. Each with mitigation cross-refs and a quarterly review cadence. <code>docs/CLINICAL_SAFETY_CASE.md</code></p>
+            <h4>Product hazard log (Ava AI risk register)</h4>
+            <p>Hazard log <code>H1–H6</code>: missed call, wrong-clinic data leak, stale KPI, automation misfire, PHI leak via SDK telemetry, audit-trail loss. Each with mitigations and a quarterly review cadence. Engineering rigor for an AI that routes patient calls — not an NHS submission. <code>docs/CLINICAL_SAFETY_CASE.md</code></p>
           </div>
         </div>
 
         <div class="ship-item">
           <span class="dot"></span>
           <div>
-            <h4>Adverse-event SOP</h4>
-            <p>4-quadrant triage matrix with named SLAs, notification chain, Firestore record shape, post-incident review template, 7-year retention. <code>docs/ADVERSE_EVENTS.md</code> + typed contracts in <code>types/adverse-events.ts</code>.</p>
+            <h4>Adverse-event SOP — built around the 72hr ICO clock</h4>
+            <p>4-quadrant triage matrix with named SLAs, notification chain, Firestore record shape, post-incident review template, retention. Wires directly into UK GDPR Art. 33–34 breach reporting. <code>docs/ADVERSE_EVENTS.md</code> + typed contracts in <code>types/adverse-events.ts</code>.</p>
           </div>
         </div>
 
@@ -279,7 +279,7 @@
           <span class="dot"></span>
           <div>
             <h4>UK data-residency lock — at the runtime layer</h4>
-            <p>All Vercel serverless + cron handlers pinned to <code>lhr1</code> (London). No accidental US execution path for PHI. Documented in <code>RUNBOOK.md</code>.</p>
+            <p>All Vercel serverless + cron handlers pinned to <code>lhr1</code> (London). Closes the international-transfer question (UK GDPR Art. 44–49) at the deploy boundary. Documented in <code>RUNBOOK.md</code>.</p>
           </div>
         </div>
 
@@ -294,8 +294,8 @@
         <div class="ship-item">
           <span class="dot"></span>
           <div>
-            <h4>Sub-processor register, kept honest</h4>
-            <p>Heidi flagged with a hard <code>2026-06-01</code> deadline blocking new-clinic enablement. Anthropic added as <strong>action required</strong> (DPA + zero-retention + input-field lock). Real deadlines, not vibes.</p>
+            <h4>Sub-processor register (Art. 28 evidence)</h4>
+            <p>Heidi flagged with a hard <code>2026-06-01</code> deadline blocking new-clinic enablement. Anthropic added as <strong>action required</strong> (DPA + zero-retention + input-field lock). Real deadlines, not vibes — and the exact artefact a procurement team will ask to see.</p>
           </div>
         </div>
 
@@ -305,59 +305,92 @@
     <!-- RIGHT: standards mapping -->
     <div class="card">
       <h3>What this maps to</h3>
-      <div class="sub">External standards · evidence trail</div>
+      <div class="sub">UK regimes that actually apply to private-practice SaaS</div>
 
       <div class="std">
 
         <div class="std-row">
-          <div class="name">DCB0129 — Manufacturer clinical safety
-            <small>Hazard log, mitigations, quarterly review</small>
+          <div class="name">UK GDPR Art. 9 — Special-category (health) data
+            <small>Lawful-basis &amp; safeguards for processing patient data</small>
           </div>
-          <span class="pill scaffolded">Scaffolded</span>
+          <span class="pill in-progress">DPIA outstanding</span>
         </div>
 
         <div class="std-row">
-          <div class="name">DCB0160 — Deploying-org clinical safety
-            <small>Adverse-event SOP + post-incident reviews</small>
-          </div>
-          <span class="pill scaffolded">Scaffolded</span>
-        </div>
-
-        <div class="std-row">
-          <div class="name">UK GDPR / DPA 2018
-            <small>London-only execution, EU-only telemetry</small>
-          </div>
-          <span class="pill aligned">Aligned</span>
-        </div>
-
-        <div class="std-row">
-          <div class="name">ICO sub-processor disclosure
+          <div class="name">UK GDPR Art. 28 — Sub-processor obligations
             <small>Versioned register w/ named risks &amp; deadlines</small>
           </div>
           <span class="pill aligned">Aligned</span>
         </div>
 
         <div class="std-row">
-          <div class="name">NHS DSPT (Toolkit)
-            <small>PHI scrub in logs/Sentry, trace IDs, RBAC, 7-yr retention</small>
+          <div class="name">UK GDPR Art. 32 — Security of processing
+            <small>RBAC, PHI scrub, 7-yr retention, multi-tenant partition</small>
           </div>
-          <span class="pill in-progress">Evidence growing</span>
+          <span class="pill aligned">Aligned</span>
         </div>
 
         <div class="std-row">
-          <div class="name">ISO 27001-style controls
-            <small>Region pin, key rotation, hazard register, RBAC matrix</small>
+          <div class="name">UK GDPR Art. 33–34 — 72hr breach notification
+            <small>Adverse-event SOP gives the chain &amp; SLAs</small>
           </div>
-          <span class="pill in-progress">Pre-audit posture</span>
+          <span class="pill aligned">Aligned</span>
+        </div>
+
+        <div class="std-row">
+          <div class="name">UK GDPR Art. 44–49 — International transfers
+            <small>lhr1 region pin + EU-only Sentry, enforced in code</small>
+          </div>
+          <span class="pill aligned">Aligned</span>
+        </div>
+
+        <div class="std-row">
+          <div class="name">PCI DSS SAQ-A — card-data scope
+            <small>Stripe Checkout = card data never touches our servers</small>
+          </div>
+          <span class="pill aligned">Structurally compliant</span>
+        </div>
+
+        <div class="std-row">
+          <div class="name">Cyber Essentials (UK NCSC)
+            <small>The badge B2B procurement actually asks for</small>
+          </div>
+          <span class="pill in-progress">Posture ready · not certified</span>
         </div>
 
       </div>
     </div>
   </div>
 
+  <!-- explicitly NOT this -->
+  <section class="card" style="margin-top:24px;">
+    <h3>Not the yardstick — and we're not pretending it is</h3>
+    <div class="sub">Frameworks that don't apply to StrydeOS</div>
+    <div class="std">
+      <div class="std-row">
+        <div class="name">DCB0129 / DCB0160 — NHS clinical-software safety standards
+          <small>Apply to NHS-deployed clinical software. StrydeOS is private-practice only.</small>
+        </div>
+        <span class="pill" style="color:var(--muted)">Not applicable</span>
+      </div>
+      <div class="std-row">
+        <div class="name">NHS DSP Toolkit (DSPT)
+          <small>Required for organisations sitting on NHS data flows. We don't.</small>
+        </div>
+        <span class="pill" style="color:var(--muted)">Not applicable</span>
+      </div>
+      <div class="std-row">
+        <div class="name">ISO 27001 certification
+          <small>Useful at growth stage. Premature for current ARR; revisit when enterprise buyers ask.</small>
+        </div>
+        <span class="pill" style="color:var(--muted)">Deferred</span>
+      </div>
+    </div>
+  </section>
+
   <!-- maturity ladder -->
   <section class="ladder">
-    <h3>Where StrydeOS sits on the credibility ladder</h3>
+    <h3>Where StrydeOS sits — on the ladder that matters for private-practice SaaS</h3>
     <div class="ladder-grid">
       <div class="step">
         <div class="ix">Step 01</div>
@@ -371,13 +404,13 @@
       </div>
       <div class="step now">
         <div class="ix">You are here</div>
-        <h4>Governable SaaS</h4>
-        <p>Clinical safety case + adverse-event SOP + region locks + sub-processor register. Defensible in a buyer's procurement review.</p>
+        <h4>UK GDPR-aligned</h4>
+        <p>Hazard log + 72hr breach SOP + region locks + sub-processor register. The exact paper-trail an ICO query or B2B procurement form asks for.</p>
       </div>
       <div class="step">
         <div class="ix">Step 04</div>
-        <h4>Externally verified</h4>
-        <p>DSPT submission, DCB0129 sign-off by named clinical safety officer, ISO 27001 audit. Months, not years, from here.</p>
+        <h4>Procurement-ready</h4>
+        <p>DPIA on file + signed DPAs across the stack + Cyber Essentials. Removes friction from the next 5–10 clinic sign-ups.</p>
       </div>
     </div>
   </section>
