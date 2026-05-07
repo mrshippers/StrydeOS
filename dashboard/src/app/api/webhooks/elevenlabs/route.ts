@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { getTrace, withRequestLog } from "@/lib/request-logger";
+import { writeModuleHealth } from "@/lib/module-health";
 import type { AvaAction } from "@/lib/ava/graph";
 import { sendCallbackNotification, sendBookingAcknowledgement } from "@/lib/ava/notify-callback";
 import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
@@ -342,6 +343,15 @@ async function handler(req: NextRequest) {
         );
       }
     }
+
+    // Heartbeat into the unified module-health surface — Ava reports OK
+    // for every successfully-handled webhook. Fire-and-forget.
+    await writeModuleHealth(db, clinicId, {
+      module: "ava",
+      status: "ok",
+      counts: { processed: 1, succeeded: 1, failed: 0, skipped: 0 },
+      diagnostics: { lastEvent: payload.event, conversationId },
+    });
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error) {

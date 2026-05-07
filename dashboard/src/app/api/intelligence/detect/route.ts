@@ -14,6 +14,7 @@ import { enrichEventsWithNarratives } from "@/lib/intelligence/enrich-narratives
 import { consumeInsightEvents } from "@/lib/pulse/insight-event-consumer";
 import { trackReengagement } from "@/lib/pulse/track-reengagement";
 import { withRequestLog } from "@/lib/request-logger";
+import { writeModuleHealth } from "@/lib/module-health";
 import type { InsightEvent } from "@/types/insight-events";
 
 /**
@@ -97,6 +98,38 @@ async function handler(request: NextRequest) {
       const urgentEmails = await sendUrgentAlerts(db, clinicId, newEvents);
 
       results.push({ clinicId, detection, pulse, reengagement, urgentEmails });
+
+      // Heartbeat into the unified module-health surface read by /api/health.
+      // Fire-and-forget, never blocks.
+      const detectionErrors = detection.errors.length;
+      const pulseErrors = pulse.errors.length;
+      const totalErrors = detectionErrors + pulseErrors;
+      const totalSucceeded = detection.eventsCreated + pulse.actioned;
+      const totalSkipped = detection.eventsSkipped + pulse.skipped;
+      await writeModuleHealth(db, clinicId, {
+        module: "intelligence",
+        status:
+          totalErrors === 0
+            ? "ok"
+            : totalSucceeded > 0
+              ? "degraded"
+              : "error",
+        counts: {
+          processed: totalSucceeded + totalErrors + totalSkipped,
+          succeeded: totalSucceeded,
+          failed: totalErrors,
+          skipped: totalSkipped,
+        },
+        lastError:
+          totalErrors === 0
+            ? null
+            : detection.errors[0] ?? pulse.errors[0] ?? null,
+        diagnostics: {
+          eventsCreated: detection.eventsCreated,
+          pulseActioned: pulse.actioned,
+          urgentEmailsSent: urgentEmails.sent,
+        },
+      });
     }
 
     if (targetClinicId && !isSuperadmin && userId !== "cron") {

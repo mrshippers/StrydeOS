@@ -19,6 +19,7 @@ import type { Firestore, Query, QueryDocumentSnapshot } from "firebase-admin/fir
 import type { SequenceType } from "@/types";
 import type { SequenceDefinition, N8nSequencePayload } from "@/types/comms";
 import { DEFAULT_SEQUENCE_DEFINITIONS, resolveTemplate } from "@/types/comms";
+import { writeModuleHealth } from "@/lib/module-health";
 
 // Read at call time so tests can set env vars after import
 const getN8nBase   = () => process.env.N8N_WEBHOOK_BASE_URL;
@@ -388,6 +389,27 @@ export async function triggerCommsSequences(
     lastError: errors.length > 0 ? errors[errors.length - 1] : null,
   };
   await writePulseState(db, clinicId, endState);
+
+  // Mirror to the unified module-health surface read by /api/health.
+  // Fire-and-forget — never blocks the run.
+  await writeModuleHealth(db, clinicId, {
+    module: "pulse",
+    status:
+      endState.status === "ok"
+        ? "ok"
+        : endState.status === "partial"
+          ? "degraded"
+          : "error",
+    lastRunAt: endState.lastRunAt,
+    counts: {
+      processed: fired + skipped,
+      succeeded: fired,
+      failed: errors.length,
+      skipped,
+    },
+    lastError: endState.lastError,
+    diagnostics: { runId },
+  });
 
   return { fired, skipped, errors, pulseState: endState };
 }
