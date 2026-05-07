@@ -2,6 +2,13 @@ import { FieldValue, type Firestore } from "firebase-admin/firestore";
 import type { InsightEvent } from "@/types/insight-events";
 import { PATIENT_ACTION_EVENTS, EVENT_TO_SEQUENCE } from "@/types/insight-events";
 import type { SequenceDefinition } from "@/types/comms";
+import {
+  asClinicId,
+  asEventId,
+  makeRootTrace,
+  type FailedEvent,
+} from "@/lib/contracts";
+import { getTrace } from "@/lib/request-logger";
 
 interface ConsumeResult {
   actioned: number;
@@ -206,9 +213,41 @@ export async function consumeInsightEvents(
 
       result.actioned++;
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
       result.errors.push(
-        `Failed to action ${event.type} for patient ${event.patientId}: ${err instanceof Error ? err.message : String(err)}`
+        `Failed to action ${event.type} for patient ${event.patientId}: ${errorMsg}`
       );
+
+      // ── DLQ write ──────────────────────────────────────────────────────
+      // Consumer is single-pass; the first exception is the terminal
+      // failure. Persist a FailedEvent so the original payload + trace
+      // survive for replay tooling. Wrapped — DLQ failure must not
+      // re-throw or the loop aborts.
+      try {
+        if (event.id) {
+          const now = new Date().toISOString();
+          const trace = getTrace() ?? makeRootTrace("pulse", now);
+          const failedDocId = `pulse-${event.id}`;
+          const failedDoc: FailedEvent<InsightEvent> = {
+            id: asEventId(failedDocId),
+            originalEventId: asEventId(event.id),
+            clinicId: asClinicId(clinicId),
+            failedIn: CONSUMER_NAME,
+            attempts: 1,
+            firstError: errorMsg,
+            lastError: errorMsg,
+            firstFailedAt: now,
+            lastFailedAt: now,
+            originalPayload: event,
+            trace,
+          };
+          await db
+            .doc(`clinics/${clinicId}/_failed_events/${failedDocId}`)
+            .set(failedDoc, { merge: true });
+        }
+      } catch {
+        // DLQ failure is observability loss only.
+      }
     }
   }
 
