@@ -1,4 +1,9 @@
-"""FastAPI routes for Ava webhook endpoint."""
+"""FastAPI routes for Ava webhook endpoint.
+
+These webhook + tool models mirror `dashboard/src/lib/contracts/index.ts` §6 and §7.
+Any change here MUST be mirrored there in the same commit. Drift is detected by
+`tests/test_contract_sync.py`.
+"""
 
 import asyncio
 import logging
@@ -16,7 +21,10 @@ router = APIRouter()
 
 
 class CallStartedWebhook(BaseModel):
-    """Request model for call_started webhook."""
+    """Request model for call_started webhook.
+
+    Mirrors TS `AvaCallStartedRequest` in dashboard/src/lib/contracts/index.ts §7.
+    """
 
     call_id: str = Field(..., description="ElevenLabs call ID, used as session_id")
     patient_name: str = Field(..., description="Patient name")
@@ -30,10 +38,31 @@ class CallStartedWebhook(BaseModel):
 
 
 class PatientConfirmedWebhook(BaseModel):
-    """Request model for patient_confirmed webhook."""
+    """Request model for patient_confirmed webhook.
+
+    Mirrors TS `AvaPatientConfirmedRequest` in dashboard/src/lib/contracts/index.ts §7.
+    """
 
     session_id: str = Field(..., description="Session ID to resume from checkpoint")
     confirmed: bool = Field(..., description="Whether patient confirmed the booking")
+
+
+class AvaWebhookResponse(BaseModel):
+    """Standard envelope returned by every Ava webhook.
+
+    Mirrors TS `AvaWebhookResponse` in dashboard/src/lib/contracts/index.ts §7.
+    Defined for contract parity; handlers currently return plain dicts with the
+    same shape and are unchanged.
+    """
+
+    response: str = Field(..., description="ElevenLabs-spoken response")
+    end_conversation: bool = Field(..., description="Whether to end the conversation")
+    session_id: str = Field(..., description="Session ID")
+    status: str = Field(..., description="awaiting_confirmation | confirmed | other")
+    response_message: str = Field(..., description="Same string as `response`")
+    booking_id: Optional[str] = Field(
+        default=None, description="Present only on terminal `confirmed` responses"
+    )
 
 
 def normalize_phone_to_e164(phone: str) -> str:
@@ -320,18 +349,24 @@ async def handle_patient_confirmed(
 # ─── Tool Execution Endpoint ──────────────────────────────────────────────────
 
 class ToolExecuteRequest(BaseModel):
-    """Request model for direct PMS tool execution (bypasses graph for live calls)."""
+    """Request model for direct PMS tool execution (bypasses graph for live calls).
+
+    Mirrors TS `AvaEngineRequest` in dashboard/src/lib/contracts/index.ts §6.
+    """
 
     tool_name: str = Field(..., description="Tool to call: check_availability | book_appointment")
     tool_input: Dict[str, Any] = Field(..., description="Tool-specific parameters")
     clinic_id: str = Field(..., description="Clinic ID for multi-tenancy")
     pms_type: str = Field(..., description="PMS: writeupp | cliniko | jane | tm3")
-    api_key: str = Field(default="", description="Per-clinic PMS API key")
+    api_key: str = Field(..., description="Per-clinic PMS API key")
     base_url: str = Field(default="", description="PMS base URL override (empty = use default)")
 
 
 class ToolExecuteResponse(BaseModel):
-    """Response model for tool execution."""
+    """Response model for tool execution.
+
+    Mirrors TS `AvaEngineResponse` in dashboard/src/lib/contracts/index.ts §6.
+    """
 
     result: str = Field(..., description="Human-readable result string for ElevenLabs to speak")
     booking_id: Optional[str] = Field(default=None, description="PMS booking ID (book_appointment only)")
