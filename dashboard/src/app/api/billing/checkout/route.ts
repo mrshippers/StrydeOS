@@ -8,7 +8,7 @@
  *     modules: Array<"intelligence" | "pulse" | "ava" | "fullstack">
  *     tier: "solo" | "studio" | "clinic"          (default: "studio")
  *     interval: "month" | "year"                  (default: "month")
- *     includeAvaSetup?: boolean                   (adds £195 one-time fee if ava or fullstack selected)
+ *     includeAvaSetup?: boolean                   (adds £195 one-time fee if ava selected)
  *     successPath?: string                        (path to redirect after success, default: "/billing?checkout=success")
  *     cancelPath?: string                         (path to redirect after cancel, default: "/billing?checkout=canceled")
  *   }
@@ -127,8 +127,9 @@ async function handler(request: NextRequest) {
       }
     });
 
-    // Add Ava one-time setup fee when Ava or Full Stack is selected
-    const needsAvaSetup = includeAvaSetup && modules.some((m) => m === "ava" || m === "fullstack");
+    // Add Ava one-time setup fee only when Ava module is selected. Full Stack
+    // does NOT trigger the setup fee — Ava is the only module with a setup fee.
+    const needsAvaSetup = includeAvaSetup && modules.some((m) => m === "ava");
     if (needsAvaSetup) {
       try {
         lineItems.push({ price: getAvaSetupFeePriceId(), quantity: 1 });

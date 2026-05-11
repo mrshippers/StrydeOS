@@ -30,7 +30,7 @@ Ava is an AI voice receptionist that picks up every call, books appointments dir
 |------|-----------|---------|-----------------|
 | Solo | 1 | £99 | £950.40 |
 | Studio | 2–5 | £149 | £1,430.40 |
-| Clinic | 6+ | £199 | £1,910.40 |
+| Clinic | 6+ | £159 | £1,526.40 |
 
 One-time setup: £195. No contracts. Cancel anytime.
 

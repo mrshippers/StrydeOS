@@ -36,17 +36,17 @@ const PRICING = {
   intelligence: {
     solo:   { month:  6900, year:  66240 },
     studio: { month:  9900, year:  95040 },
-    clinic: { month: 14900, year: 143040 },
+    clinic: { month: 19900, year: 191040 },
   },
   ava: {
     solo:   { month:  9900, year:  95040 },
     studio: { month: 14900, year: 143040 },
-    clinic: { month: 19900, year: 191040 },
+    clinic: { month: 15900, year: 152640 },
   },
   pulse: {
     solo:   { month:  7900, year:  75840 },
     studio: { month:  9900, year:  95040 },
-    clinic: { month: 14900, year: 143040 },
+    clinic: { month: 11900, year: 114240 },
   },
   fullstack: {
     solo:   { month: 19900, year: 191040 },

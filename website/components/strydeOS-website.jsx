@@ -2385,9 +2385,9 @@ const ROICalc = ({ darkMode }) => {
 
 /* ─── Pricing ────────────────────────────────────────────────────────────────── */
 const PRICING_DATA_MONTHLY = {
-  solo:   { Intelligence: 69,  Ava: 99,  Pulse: 79,  full: 199, fullSetup: "£195" },
-  studio: { Intelligence: 99,  Ava: 149, Pulse: 99,  full: 299, fullSetup: "£195" },
-  clinic: { Intelligence: 149, Ava: 199, Pulse: 149, full: 399, fullSetup: "£195" },
+  solo:   { Intelligence: 69,  Ava: 99,  Pulse: 79,  full: 199 },
+  studio: { Intelligence: 99,  Ava: 149, Pulse: 99,  full: 299 },
+  clinic: { Intelligence: 199, Ava: 159, Pulse: 119, full: 399 },
 };
 const getPricing = (tier, billing) => {
   const m = PRICING_DATA_MONTHLY[tier];
@@ -2397,7 +2397,6 @@ const getPricing = (tier, billing) => {
     Ava: `£${Math.round(m.Ava * discount)}`,
     Pulse: `£${Math.round(m.Pulse * discount)}`,
     full: `£${Math.round(m.full * discount)}`,
-    fullSetup: m.fullSetup,
   };
 };
 const TIER_OPTIONS = [
@@ -2667,7 +2666,6 @@ const FullStackBanner = ({ tier, billing, darkMode }) => {
       <div style={{ textAlign: "right", position: "relative" }}>
         <span className="serif" style={{ fontSize: 38, color: "white", lineHeight: 1 }}>{p.full}</span>
         <span style={{ fontSize: 15, color: "rgba(255,255,255,0.6)" }}>/mo{billing === "annual" ? " (billed annually)" : ""}</span>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 3 }}>{p.fullSetup} one-time setup</div>
         <div style={{ fontSize: 11, fontWeight: 600, color: "#34D399", marginTop: 4 }}>Save vs individual</div>
       </div>
     </a>

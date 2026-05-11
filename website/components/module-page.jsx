@@ -83,9 +83,9 @@ const MonolithMark = ({ size = 44 }) => {
 };
 
 const tierPrices = {
-  solo:   { intelligence: 69,  ava: 119, pulse: 89,  full: 229 },
-  studio: { intelligence: 109, ava: 179, pulse: 129, full: 349 },
-  clinic: { intelligence: 179, ava: 259, pulse: 199, full: 499 },
+  solo:   { intelligence: 69,  ava: 99,  pulse: 79,  full: 199 },
+  studio: { intelligence: 99,  ava: 149, pulse: 99,  full: 299 },
+  clinic: { intelligence: 199, ava: 159, pulse: 119, full: 399 },
 };
 const tierLabels = { solo: "Solo (1)", studio: "Studio (2–5)", clinic: "Clinic (6+)" };
 

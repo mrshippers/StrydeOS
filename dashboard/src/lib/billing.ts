@@ -5,7 +5,7 @@
  *   Three tiers:  solo (1 clinician) | studio (2-5) | clinic (6+)
  *   Two intervals: month | year (year = 20% off)
  *   Four products: intelligence | pulse | ava | fullstack (all-three bundle)
- *   One-time fee:  Ava setup £195 (also charged on Full Stack)
+ *   One-time fee:  Ava setup £195 (Ava only — never on Full Stack)
  *
  * Env var naming: STRIPE_PRICE_{PRODUCT}_{TIER}_{INTERVAL}
  *   e.g. STRIPE_PRICE_INTELLIGENCE_STUDIO_MONTH
@@ -50,17 +50,17 @@ export const MODULE_PRICING: Record<
   intelligence: {
     solo:   { month:  6900, year:  66240 }, // £69   → £662.40/yr
     studio: { month:  9900, year:  95040 }, // £99   → £950.40/yr
-    clinic: { month: 14900, year: 143040 }, // £149  → £1,430.40/yr
+    clinic: { month: 19900, year: 191040 }, // £199  → £1,910.40/yr
   },
   ava: {
     solo:   { month:  9900, year:  95040 }, // £99   → £950.40/yr
     studio: { month: 14900, year: 143040 }, // £149  → £1,430.40/yr
-    clinic: { month: 19900, year: 191040 }, // £199  → £1,910.40/yr
+    clinic: { month: 15900, year: 152640 }, // £159  → £1,526.40/yr
   },
   pulse: {
     solo:   { month:  7900, year:  75840 }, // £79   → £758.40/yr
     studio: { month:  9900, year:  95040 }, // £99   → £950.40/yr
-    clinic: { month: 14900, year: 143040 }, // £149  → £1,430.40/yr
+    clinic: { month: 11900, year: 114240 }, // £119  → £1,142.40/yr
   },
   fullstack: {
     solo:   { month: 19900, year: 191040 }, // £199  → £1,910.40/yr
@@ -69,7 +69,7 @@ export const MODULE_PRICING: Record<
   },
 };
 
-/** Ava one-time setup fee (pence). Also charged on Full Stack purchase. */
+/** Ava one-time setup fee (pence). Ava only — never charged on Full Stack. */
 export const AVA_SETUP_FEE_PENCE = 19500; // £195
 
 // ─── Extra seat add-on pricing (in pence, GBP) ──────────────────────────────
