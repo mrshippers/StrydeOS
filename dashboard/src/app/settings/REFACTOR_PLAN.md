@@ -1,23 +1,26 @@
 # Settings Page Refactor Plan
 
-> Last updated: 2026-05-01
+> Last updated: 2026-05-12
 > Started: 2025 (file was 2,368 LOC)
 > Goal: Reduce `page.tsx` to <400 LOC of orchestration only.
 
 ## Current State
 
-`page.tsx`: **2,307 LOC** (down from peak ~2,587 LOC).
-Reduction this round: 280 LOC out, plus a 718-LOC `types/index.ts` split into 13 domain files.
+`page.tsx`: **977 LOC** (down from peak ~2,587 LOC, was 2,269 before Phase A).
+Phase A landed: 1,277 LOC moved out into `PmsIntegrationCard.tsx` (self-contained,
+~1,160 LOC including `ImportHistoryRow`).
 
 ## Already Extracted (in `_components/`)
 
-- `ProfileCard.tsx` (just landed)
+- `ProfileCard.tsx`
 - `SecurityCard.tsx`
 - `ClinicDetailsCard.tsx`
 - `TargetsCard.tsx`
 - `TeamManagementCard.tsx`
 - `GoogleReviewsCard.tsx`
-- `HepIntegrationCard.tsx` (just wired up — was extracted but unused)
+- `HepIntegrationCard.tsx`
+- `OnboardingChecklist.tsx`
+- `PmsIntegrationCard.tsx` (Phase A just landed — self-contained, takes only `cp` prop)
 - `ClinicianHeidiToggle.tsx`
 - `SeatLimitModal.tsx`
 - `RetriggerTourButton.tsx` (file exists but `page.tsx` still has the inline duplicate — see Phase D)
@@ -41,36 +44,32 @@ These are dropped from the plan.
 
 ## Remaining Phases (smallest risk first)
 
-### Phase A — PmsIntegrationCard (BIGGEST WIN)
+### Phase A — PmsIntegrationCard ✅ DONE (2026-05-12)
 
-The PMS Connection wrapper currently contains six interleaved subsystems inside one `<div>`:
+**Decision taken: self-contained pattern, not state-lifted.** Card receives only
+`cp: ClinicProfile | null` and pulls `useAuth` / `useToast` internally. All 28
+PMS state items, all 9 handlers, the `PMS_PROVIDERS` / `ONBOARDING_PMS_OPTIONS`
+/ `CANONICAL_FIELD_OPTIONS` / `REQUIRED_APPT_FIELDS` constants, the
+`PmsProviderOption` / `ImportHistoryRecord` / `OnboardingGuide` interfaces,
+the `ProviderLogo` helper, and the `ImportHistoryRow` sub-component all moved
+into `PmsIntegrationCard.tsx`. Result: `page.tsx` 2,269 → 977 LOC.
 
-1. PMS provider selection grid (`PMS_PROVIDERS` const + visual selector)
-2. API key input + Test Connection + Save flow
-3. Connected status display (sync, disconnect)
-4. CSV Bridge fallback (for non-API providers like WriteUpp)
-5. CSV Import Panel (collapsible, inside the wrapper)
-6. Onboarding Wizard (step 0–4 modal)
-7. Column Mapping screen (Phase 2 of CSV import)
-8. Email Ingest Address card (Phase 3)
-9. Import History card (Phase 4 — actually a sibling to the wrapper)
+Trade-off: card is ~1,160 LOC (bigger than the plan's 700-LOC estimate) because
+nothing was kept lifted in the parent. Parent shrinks more than the plan
+anticipated. Net total LOC similar; parent is now simpler.
 
-**Decision: extract as one file** (`PmsIntegrationCard.tsx`, ~700–730 LOC). It's a single bounded context (PMS data ingestion) with deep state entanglement. Splitting further is Phase B.
+Architectural alignment (per cross-module contracts landed in 89fd95e / 600a4f7 /
+8f7dc64):
+- PMS is **not** a Stryde module (`MODULES = ['ava','intelligence','pulse']`)
+  so the card does **not** register `ModuleHealth` and does **not** emit
+  `StrydeEvent`s. PMS keeps its existing `integration_health` collection.
+- Card touches no `/api/pms/*` server code — pure visual/state move.
+- Card imports types from `@/types` and `@/lib/csv-import/*` as before; no
+  switch to `@/lib/contracts` because PMS adapter types aren't surfaced there
+  yet (deferred — would be Phase E).
 
-**Lifted state** (parent retains, passes via props):
-- `pmsProvider`, `pmsApiKey`, `pmsConnected`, `pmsTesting`, `syncRunning`, `syncResult`, `pmsTestFailed`, `requestingAssist`, `assistRequested`, `importPanelOpen`
-- `mappingHeaders`, `mappingSampleRows`, `mappingFile`, `mappingFileType`, `mappingValues`, `mappingSaving`, `mappingSchemaName`
-- `importHistory`, `expandedHistoryId`, `historyLoading`, `historyLoaded`
-- `ingestCopied`
-- `wizardOpen`, `wizardStep`, `wizardPms`, `wizardGuide`, `wizardGuideLoading`, `tm3Platform`
-
-**Lifted handlers**: `handleTestPmsConnection`, `handleDisconnectPms`, `handleSyncNow`, `handleImportCSV`, `handleSchemaMapping`, `handleApplyMapping`, `loadImportHistory`, `loadOnboardingGuide`.
-
-**PMS-specific consts to move into the file**: `PMS_PROVIDERS`, `PmsProviderOption`, `ImportHistoryRecord`, `ONBOARDING_PMS_OPTIONS`.
-
-**Out of scope** for this extraction: don't touch any API endpoint code (`/api/pms/*`, `/api/hep/*`), don't change Firestore queries, don't refactor the actual data flow — pure visual/state move.
-
-**Verification**: `npx tsc --noEmit` must exit 0. Manual smoke test: visit `/settings`, attempt PMS connect with a test key, confirm form still renders and `pmsConnected` toggles correctly.
+**Verification done**: `npx tsc --noEmit` exit 0, `npm run lint` 0 errors,
+dashboard dev server hot-reloads cleanly.
 
 ### Phase B — Sub-divide PmsIntegrationCard
 
