@@ -6,24 +6,29 @@
 
 ## Current State
 
-`page.tsx`: **977 LOC** (down from peak ~2,587 LOC, was 2,269 before Phase A).
-Phase A landed: 1,277 LOC moved out into `PmsIntegrationCard.tsx` (self-contained,
-~1,160 LOC including `ImportHistoryRow`).
+`page.tsx`: **668 LOC** (down from peak ~2,587 LOC). Still above the <400 target;
+remaining bulk is `SettingsPage` orchestration of clinic profile state + team
+management glue + Stripe seat-limit checkout flow.
+
+Phase A → B → D landed in one session (2026-05-12). Net reduction this session:
+~1,600 LOC moved out of `page.tsx` into 6 new sub-components + 1 shared helper.
 
 ## Already Extracted (in `_components/`)
 
-- `ProfileCard.tsx`
-- `SecurityCard.tsx`
-- `ClinicDetailsCard.tsx`
-- `TargetsCard.tsx`
-- `TeamManagementCard.tsx`
-- `GoogleReviewsCard.tsx`
-- `HepIntegrationCard.tsx`
-- `OnboardingChecklist.tsx`
-- `PmsIntegrationCard.tsx` (Phase A just landed — self-contained, takes only `cp` prop)
-- `ClinicianHeidiToggle.tsx`
-- `SeatLimitModal.tsx`
-- `RetriggerTourButton.tsx` (file exists but `page.tsx` still has the inline duplicate — see Phase D)
+Top-level cards:
+- `ProfileCard.tsx`, `SecurityCard.tsx`, `ClinicDetailsCard.tsx`, `TargetsCard.tsx`
+- `TeamManagementCard.tsx`, `GoogleReviewsCard.tsx`, `HepIntegrationCard.tsx`
+- `OnboardingChecklist.tsx`, `HeidiConnectionCard.tsx`, `RetriggerTourButton.tsx`
+- `ClinicianHeidiToggle.tsx`, `SeatLimitModal.tsx`
+- `PmsIntegrationCard.tsx` (624 LOC parent, holds connection card + handlers + lifted state)
+- `ProviderLogo.tsx` (20 LOC shared helper)
+
+PMS sub-components (in `_components/pms/`):
+- `CsvImportPanel.tsx` (189 LOC) — collapsible AnimatePresence wrapper
+- `OnboardingWizard.tsx` (308 LOC) — 5-step setup modal with TM3-specific branch
+- `ColumnMapping.tsx` (192 LOC) — manual CSV column mapping screen
+- `EmailIngest.tsx` (79 LOC) — copy-to-clipboard import address (full + compact variants)
+- `ImportHistory.tsx` (169 LOC) — history list + `ImportHistoryRow`, exports `ImportHistoryRecord`
 
 ## Pattern
 
@@ -71,31 +76,57 @@ Architectural alignment (per cross-module contracts landed in 89fd95e / 600a4f7 
 **Verification done**: `npx tsc --noEmit` exit 0, `npm run lint` 0 errors,
 dashboard dev server hot-reloads cleanly.
 
-### Phase B — Sub-divide PmsIntegrationCard
+### Phase B — Sub-divide PmsIntegrationCard ✅ DONE (2026-05-12)
 
-After Phase A produces a 700+ LOC card, split it internally:
+PmsIntegrationCard reduced 1,331 → 624 LOC by lifting five children into
+`_components/pms/`. Parent keeps the PMS Connection panel (provider grid, API
+key input, connected state, CSV bridge card), all I/O handlers, and lifted
+state that crosses child boundaries (`csvUploading`, `csvResult`, mapping
+trigger state, import history, wizard open/step/pms). Children own pure UI
+interaction state.
 
-- `CsvImportPanel.tsx`
-- `OnboardingWizard.tsx`
-- `ColumnMapping.tsx`
-- `EmailIngest.tsx`
-- `ImportHistory.tsx`
+`ProviderLogo` extracted to `_components/ProviderLogo.tsx` (shared by parent +
+OnboardingWizard). `ImportHistoryRecord` is exported from `ImportHistory.tsx`
+and consumed by the parent — kept out of `@/lib/contracts` since it's a UI
+projection of the `/api/pms/import-history` response, not a cross-module event
+type.
 
-Needs a fresh look once Phase A lands. State boundaries become clearer once the card is its own module.
+Architectural review (system-architect) confirmed: no `PII_FIELD_MAP` changes,
+no `ModuleHealth` registration, no `StrydeEvent` emission. CSV uploads are an
+ingestion pipeline; PHI/PII classification happens server-side in the
+`appointments`/`patients` collection writers, not at the UI boundary.
 
-### Phase C — Onboarding Checklist
+### Phase C — OnboardingChecklist ✅ DONE earlier this session
 
-`page.tsx` lines ~1378–1446. Self-contained UI (renders 3 checklist items based on `onboarding.pmsConnected/cliniciansConfirmed/targetsSet`). Easy ~70-LOC extraction.
+Extracted in commit `ae6ab5e` before Phase A. Self-contained, takes 3 boolean
+props (`pmsConnected`, `cliniciansConfirmed`, `targetsSet`).
 
-### Phase D — Cleanup of Inline Duplicates
+### Phase D — Inline duplicate cleanup ✅ DONE (2026-05-12)
 
-These components have already been extracted to `_components/` but `page.tsx` still defines inline duplicates:
+- `RetriggerTourButton` inline definition was **byte-identical** to
+  `_components/RetriggerTourButton.tsx`. Deleted inline, kept the extracted
+  file, added import. No logic merge required.
+- `HeidiConnectionCard` extracted from inline (~250 LOC in `page.tsx`) to
+  `_components/HeidiConnectionCard.tsx` (254 LOC). Self-contained, pulls
+  `useAuth()`/`useToast()` internally. Touches `clinical_notes` (PHI) only via
+  authenticated `/api/heidi/*` routes — PHI never enters component state. No
+  ModuleHealth or contract types needed (Heidi is enrichment, not a Stryde
+  module per `MODULES = ['ava','intelligence','pulse']`).
+- `ProviderLogo` was extracted as part of Phase B (see above).
 
-- `RetriggerTourButton` (inline at ~line 169)
-- `HeidiConnectionCard` (inline at ~line 236, currently used in "Compatible Data Sources" section)
-- `ProviderLogo` helper (inline ~line 157, used by both PMS and HEP — can move to a shared util)
+## Remaining work
 
-Either remove the inline versions and import from `_components/`, or delete the unused `_components/` files if the inline is canonical. Pick one and reconcile.
+`page.tsx` is now 668 LOC. To reach the <400 target, the remaining bulk is the
+SettingsPage orchestrator itself:
+- Clinic profile state + `handleSaveProfile` + `handleSaveWithOnboarding` (~120 LOC)
+- Team management state + handlers + the seat-limit/extra-seat flow (~140 LOC)
+- The unsaved-changes dialog JSX (~50 LOC)
+
+These were not in the original plan as discrete phases. They're orchestration
+code by design — pulling them into hooks (e.g. `useClinicProfileForm`,
+`useTeamManagement`) is a different style of refactor than the
+component-extraction work above. Worth treating as a future phase if 668 LOC
+proves hard to navigate.
 
 ## Out Of Scope (don't touch)
 
