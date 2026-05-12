@@ -96,6 +96,7 @@ const STATIONS_RAW = [
   { id:'v123',  v:'v1.2.3', date:'24 Mar', cat:'platform', title:'In-app changelog',  desc:"What shipped, when, for whom. Every user sees it once. Then it's gone.",              ring:4, angle:175 },
   { id:'v124',  v:'v1.2.4', date:'28 Mar', cat:'platform', title:'Clinician layer',   desc:"Observational notes. Clinicians see what's relevant. Owners see everything.",         ring:4, angle:148 },
   { id:'v144',  v:'v1.4.4', date:'12 Apr', cat:'platform', title:'Security hardening sweep', desc:'Demo-bypass patch. Webhook fail-safe. Cross-clinic isolation proven. 606 tests green.', ring:5, angle:148 },
+  { id:'v146',  v:'v1.4.6', date:'12 May', cat:'platform', title:'Pricing refresh',         desc:'Clinic tier rebalanced — Intelligence £199, Ava £159, Pulse £119. Setup fee Ava-only, never on Full Stack. Maths in every brief verifiable by an owner.', ring:5, angle:165 },
 
   // ── PULSE (230°–310°) — existing 4 + 2 new ───────────────────────
   { id:'v112',  v:'v1.1.2', date:'18 Feb', cat:'pulse', title:'Opt-outs honoured',    desc:'Patient communication preferences enforced across every sequence.',                   ring:2, angle:270 },

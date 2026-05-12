@@ -1,5 +1,25 @@
 # StrydeOS Changelog
 
+## v0.12.0 — Pricing Matrix Refresh & Build Stability (12 May 2026)
+
+### Pricing Matrix Update
+- **Clinic tier prices revised** — Intelligence £149→£199, Ava £199→£159, Pulse £149→£119 (+ matching annual values at 20% off)
+- **Solo and Studio tiers unchanged** — Intelligence £69/£99, Ava £99/£149, Pulse £79/£99, Full Stack £199/£299
+- **Setup fee now Ava-only** — £195 charged only on standalone Ava subscriptions, never on Full Stack
+- **Stripe production reconciled** — 6 new Price IDs minted (Intelligence/Ava/Pulse × month/year for Clinic), env vars updated in Doppler + Vercel via `fix-stripe-prices.ts --apply`. Existing subscriptions retain their original Price IDs and bill at the old amounts; new checkouts use the new prices.
+- Source-of-truth: `dashboard/src/lib/billing.ts` (MODULE_PRICING constant). Checkout route, billing UI, both `api-docs.html` mirrors, 8 website/prototype files, and 4 deck/collateral files updated to match.
+
+### Mix & Match Clinic Bundle Recompute
+- Two-module Clinic bundles recomputed at ~10% off new sums: Intelligence + Ava £319, Intelligence + Pulse £289, Ava + Pulse £249. Solo and Studio bundles unchanged (already within acceptable discount range against new module sums).
+
+### Value Tab — Press-Tested ROI
+- `INTELLIGENCE-MODULE-BRIEF.md` illustrative scenario rewritten so module values actually sum to the stated total. Previous version showed Ava alone exceeding the claimed monthly total — clinic owner with a calculator would have caught it. New example: £2,160 total = £1,170 Ava + £600 Pulse + £390 Intelligence, 5.4x £399 subscription, +£1,761 net value. Each line derives from the £65 fallback session rate and the £75 industry-conservative review value.
+- `types/value-ledger.ts` example comment updated from `40000 = £400` (no matching SKU) to `39900 = £399` (Clinic Full Stack).
+
+### Build Stability (Sentry + Ava InsightEvent contracts)
+- `scrubSentryEvent` made generic over `E extends Event` — Sentry edge/server `beforeSend` callbacks now type-match on Next.js 15 without casting. Previous wider `Event` return broke `ErrorEvent` typing.
+- Added missing `EVENT_PROMPTS` entries for `AVA_CALL_BOOKED`, `AVA_CALL_ESCALATED`, `AVA_CALLBACK_REQUESTED`. These InsightEventTypes were introduced upstream by the cross-module contracts work but never wired into Intelligence's coaching narrative prompt map.
+
 ## v0.10.0 — RBAC Hardening & Onboarding (26 Mar 2026)
 
 ### Account Setup Widget (New)

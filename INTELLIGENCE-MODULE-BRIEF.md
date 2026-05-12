@@ -23,22 +23,23 @@ Three layers:
 
 ## The Value Equation
 
-An owner paying £400/month sees this on the Value tab:
+An owner on Clinic Full Stack (£399/month) sees this on the Value tab:
 
 ```
-StrydeOS generated £2,140 this month
-5.4x your subscription  |  +£1,740 net value
+StrydeOS generated £2,160 this month
+5.4x your £399 subscription  |  +£1,761 net value
 ```
 
-Broken down by module:
+Broken down by module (illustrative scenario — every figure derives from inputs the owner can verify):
 
 | Module | What it did | £ attributed |
 |--------|------------|-------------|
-| **Ava** | 340 calls handled, 12 after-hours bookings, 8 overflow bookings | £1,300+ labour saved, £1,300 in bookings |
-| **Pulse** | 6 dropout patients re-engaged, 3 DNA recoveries, 14 reviews prompted | £585 recovered revenue, £1,050 review value |
-| **Intelligence** | Follow-up rate +0.4 vs baseline, 2 ghost patients surfaced | £520/wk additional, £130 reactivated |
+| **Ava** | 340 calls handled · 12 after-hours bookings + 6 missed-call rescues | 18 × £65 session = **£1,170** booking revenue |
+| **Pulse** | 4 dropout patients re-engaged · 4 reviews posted | (4 × £75 re-engagement) + (4 × £75 review value) = **£600** |
+| **Intelligence** | Follow-up rate uplift +0.4 vs baseline | 6 extra rebookings × £65 session = **£390** |
+| **Total** | | **£2,160** |
 
-Every number has a source record. Every attribution has a confidence level (high/medium/low). Nothing inflated.
+Inputs (any owner can sub their own): £65 = fallback session rate (Tier 1 — `lib/constants.ts`, overridden by clinic's actual `sessionPricePence`). £75 review value = industry-conservative Google review acquisition cost. Labour-saved from Ava reception is logged separately as an operational saving, not revenue, and not counted in this total. Every attribution has a confidence level (high/medium/low) and a source record. Nothing inflated.
 
 ---
 
@@ -209,7 +210,7 @@ The competition:
 
 None of them can say: "This product generated 5x your subscription cost this month. Here's the audit trail."
 
-That's the pitch. That's the moat. That's why an owner keeps paying £400/month when someone asks "what does this thing actually do for me?"
+That's the pitch. That's the moat. That's why an owner keeps paying £399/month when someone asks "what does this thing actually do for me?"
 
 ---
 

@@ -106,7 +106,7 @@ export interface ValueSummary {
   intelligence: ModuleValueSummary;
 
   // ROI calculation (vs subscription cost)
-  subscriptionCostPence: number;    // Monthly cost in pence (e.g. 40000 = £400)
+  subscriptionCostPence: number;    // Monthly cost in pence (e.g. 39900 = £399 Clinic Full Stack)
   roiMultiple: number;              // totalValuePence / subscriptionCostPence
   netValuePence: number;            // totalValuePence - subscriptionCostPence
 

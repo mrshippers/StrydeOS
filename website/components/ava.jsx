@@ -79,9 +79,9 @@ const MonolithMark = ({ size = 44 }) => {
 
 /* ── Compare modal data (canonical pricing from module-page) ── */
 const tierPrices = {
-  solo:   { intelligence: 79,  ava: 149, pulse: 99,  full: 279 },
-  studio: { intelligence: 129, ava: 199, pulse: 149, full: 399 },
-  clinic: { intelligence: 199, ava: 299, pulse: 229, full: 599 },
+  solo:   { intelligence: 69,  ava: 99,  pulse: 79,  full: 199 },
+  studio: { intelligence: 99,  ava: 149, pulse: 99,  full: 299 },
+  clinic: { intelligence: 199, ava: 159, pulse: 119, full: 399 },
 };
 const tierLabels = { solo: "Solo (1)", studio: "Studio (2\u20135)", clinic: "Clinic (6+)" };
 

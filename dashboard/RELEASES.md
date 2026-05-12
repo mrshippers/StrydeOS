@@ -5,6 +5,25 @@
 
 ---
 
+## v0.12.0 — Pricing That Adds Up
+*New Clinic-tier numbers, single setup fee, and every figure in the briefs verifiable by an owner with a calculator.*
+
+The Clinic tier got re-priced and the Full Stack setup fee was retired. Intelligence sits at £199 (was £149 — undercharging for the depth at the Clinic tier), Ava drops to £159 (volume discount at scale, properly), Pulse settles at £119. Full Stack stays at £399. The only setup fee left in the system is £195 on standalone Ava, for phone provisioning — Full Stack never gets charged setup.
+
+We also pressure-tested the Value Equation example in the Intelligence brief. The previous illustration showed Ava alone attributing more than the claimed monthly total — a clinic owner with a calculator would have spotted that in 30 seconds. Rewritten so every line derives from inputs (£65 fallback session rate, £75 industry-conservative review value) and the column sums match the stated total.
+
+**What shipped:**
+- Clinic tier: Intelligence £199, Ava £159, Pulse £119, Full Stack £399 (unchanged)
+- Setup fee policy: Ava-only, never on Full Stack
+- Stripe Price IDs reconciled in production — existing subscriptions keep their old prices, new checkouts use the new ones
+- ROI examples in `INTELLIGENCE-MODULE-BRIEF.md` rewritten so module values sum to the stated total
+- Mix & Match two-module Clinic bundles recomputed: Intelligence + Ava £319, Intelligence + Pulse £289, Ava + Pulse £249
+- Build unblock: Sentry `beforeSend` typing fixed for Next.js 15, three missing Ava InsightEvent coaching prompts added
+
+**Post angle:** *"Honest pricing isn't just the headline number — it's the maths underneath. We updated our Clinic-tier pricing and tightened every illustrative ROI figure in our briefs so a clinic owner with a calculator can verify every number we put in front of them."*
+
+---
+
 ## v0.9.0 — The Website That Ships
 *Your marketing site now runs on the same stack as your product.*
 
