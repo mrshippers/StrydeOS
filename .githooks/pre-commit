@@ -36,8 +36,18 @@ fi
 FOUND=0
 
 for pattern in "${PATTERNS[@]}"; do
-  # Search staged file contents (not just diff) for secrets
-  MATCHES=$(echo "$STAGED" | xargs grep -lE -e "$pattern" 2>/dev/null || true)
+  # Iterate files one-by-one so filenames with spaces are preserved as a single
+  # arg. `--` marks end-of-options so filenames starting with `-` are not
+  # mistaken for flags. `-e "$pattern"` keeps the pattern from being parsed as
+  # a flag even when it starts with `-----` (e.g. PRIVATE KEY marker).
+  MATCHES=""
+  while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    if grep -lE -e "$pattern" -- "$file" >/dev/null 2>&1; then
+      MATCHES="${MATCHES}${MATCHES:+$'\n'}  - ${file}"
+    fi
+  done <<< "$STAGED"
+
   if [ -n "$MATCHES" ]; then
     if [ "$FOUND" -eq 0 ]; then
       echo ""
@@ -46,7 +56,8 @@ for pattern in "${PATTERNS[@]}"; do
     fi
     FOUND=1
     echo "  Pattern: $pattern"
-    echo "  Files:   $MATCHES"
+    echo "  Files:"
+    echo "$MATCHES"
     echo ""
   fi
 done
