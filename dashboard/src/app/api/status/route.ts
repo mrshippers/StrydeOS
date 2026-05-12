@@ -105,7 +105,7 @@ async function pingService(
 
     let status: ServiceStatus = "operational";
     if (res.status >= 500) status = "down";
-    else if (res.status >= 400 && res.status !== 401 && res.status !== 403 && res.status !== 404 && res.status !== 405)
+    else if (res.status >= 400 && res.status !== 400 && res.status !== 401 && res.status !== 403 && res.status !== 404 && res.status !== 405 && res.status !== 422)
       status = "degraded";
     if (latency > 5000 && status === "operational") status = "degraded";
 
@@ -200,8 +200,8 @@ async function checkAllServices(): Promise<StatusResponse> {
     // n8n — direct ping
     pingService("n8n", process.env.N8N_WEBHOOK_BASE_URL || "https://n8n.strydeos.com", emptyHistory()),
 
-    // Stripe — Atlassian Statuspage
-    checkStatuspage("stripe", "https://status.stripe.com", emptyHistory()),
+    // Stripe — direct ping (status.stripe.com JSON endpoint is 404; /v1/charges returns 401 when alive)
+    pingService("stripe", "https://api.stripe.com/v1/charges", emptyHistory(), "GET"),
 
     // WriteUpp — direct ping
     pingService("writeupp", "https://app.writeupp.com", emptyHistory()),
@@ -218,8 +218,8 @@ async function checkAllServices(): Promise<StatusResponse> {
     // Physitrack — direct ping
     pingService("physitrack", "https://api.physitrack.com", emptyHistory()),
 
-    // Heidi Health — direct ping
-    pingService("heidi", "https://registrar.api.heidihealth.com", emptyHistory()),
+    // Heidi Health — ping the JWT endpoint; 401 (no key) = alive, 5xx = down
+    pingService("heidi", "https://registrar.api.heidihealth.com/api/v2/ml-scribe/open-api/jwt?email=health%40check.invalid", emptyHistory(), "GET"),
 
     // Google Places — direct ping
     pingService("google_places", "https://places.googleapis.com", emptyHistory()),
