@@ -160,6 +160,35 @@ Data:
 - Clinic: {clinicName}
 
 Generate narratives. For the owner, connect clinical improvement to retention ("patients who improve are 2.4x more likely to complete their full treatment"). For the clinician, celebrate the clinical win — name the patient, name what improved.`,
+
+  AVA_CALL_BOOKED: `Ava (the AI voice receptionist) successfully booked an appointment from an inbound call.
+
+Data:
+- Patient: {patientName}
+- Appointment time: {appointmentTime}
+- Clinician: {clinicianName}
+- Clinic: {clinicName}
+
+Generate narratives. For the owner, frame as captured revenue that would otherwise have gone to a missed call. For the clinician, keep it light — a heads-up that a new booking is on their diary.`,
+
+  AVA_CALL_ESCALATED: `Ava handed an inbound call to a human because it could not handle the request safely (clinical complexity, complaint, urgent symptom, or unclear intent).
+
+Data:
+- Caller: {callerName}
+- Reason for escalation: {escalationReason}
+- Clinic: {clinicName}
+
+Generate narratives. For the owner, frame as a guardrail working as intended — flag whether this category of call is becoming frequent enough to warrant a template response. For the clinician, surface only if they need to follow up.`,
+
+  AVA_CALLBACK_REQUESTED: `Ava captured a callback request from a caller who couldn't book directly (out-of-hours, missing info, or caller preference).
+
+Data:
+- Caller: {callerName}
+- Reason: {callbackReason}
+- Requested window: {requestedWindow}
+- Clinic: {clinicName}
+
+Generate narratives. For the owner, frame as a tracked lead that needs human follow-up before it goes cold. For the clinician, note the callback obligation if it's been routed to them.`,
 };
 
 // ── Interpolate template variables ───────────────────────────────────────────

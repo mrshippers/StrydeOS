@@ -99,7 +99,7 @@ function walkAndRedact(value: unknown, depth: number, seen: WeakSet<object>): un
  *     return scrubSentryEvent(event, hint);
  *   }
  */
-export function scrubSentryEvent(event: Event, _hint?: EventHint): Event {
+export function scrubSentryEvent<E extends Event>(event: E, _hint?: EventHint): E {
   walkAndRedact(event as unknown as Record<string, unknown>, 0, new WeakSet());
   return event;
 }
