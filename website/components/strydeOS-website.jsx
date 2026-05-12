@@ -3030,7 +3030,7 @@ const FAQ = ({ darkMode }) => {
     { label: "Technical & B2B", items: [
       { q: "Which PMS platforms do you integrate with?", a: "Cliniko, WriteUpp, Halaxy, and Zanda are live today. PPS, TM3, Jane App, and other major platforms are on the integration roadmap. If your PMS has an API, we can likely connect." },
       { q: "Can I trial one module before committing to the full stack?", a: "Absolutely. Most clinics start with Intelligence or Ava and add modules as they see results. No pressure to take everything at once." },
-      { q: "Do you offer multi-site pricing?", a: "Yes. Contact us at hello@strydeos.com for Clinic tier pricing (5+ clinicians or multiple locations)." },
+      { q: "Do you offer multi-site pricing?", a: "Yes. Contact us at hello@strydeos.com for Clinic tier pricing (6+ clinicians or multiple locations)." },
       { q: "What compliance standards does StrydeOS meet?", a: "GDPR (UK + EU), HIPAA-aligned data handling, SOC 2 Type II on roadmap. Data hosted on UK/EU infrastructure with encryption at rest and in transit." },
     ]},
   ];
