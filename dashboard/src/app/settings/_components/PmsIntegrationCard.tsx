@@ -7,32 +7,23 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
 import { normalizeApiError } from "@/lib/api-errors";
 import Tooltip from "@/components/ui/Tooltip";
-import { AnimatePresence, motion } from "motion/react";
 import {
   Check,
-  X,
   Loader2,
   Link2,
   Unplug,
   CheckCircle2,
   ArrowRight,
-  AlertTriangle,
-  Sparkles,
   RefreshCw,
   XCircle,
-  Copy,
-  FileText,
-  Mail,
-  ChevronRight,
-  ChevronLeft,
   Upload,
-  Info,
 } from "lucide-react";
 import type { ClinicProfile, PmsProvider } from "@/types";
-import type { CanonicalField } from "@/lib/csv-import/types";
-import type { FailureSnapshot } from "@/lib/csv-import/failure-snapshot";
 import { brand } from "@/lib/brand";
-import CSVFailurePreview from "@/components/settings/CSVFailurePreview";
+import ProviderLogo from "./ProviderLogo";
+import CsvImportPanel from "./pms/CsvImportPanel";
+import ImportHistory, { type ImportHistoryRecord } from "./pms/ImportHistory";
+import EmailIngest from "./pms/EmailIngest";
 
 // ─── PMS provider catalogue + supporting types ────────────────────────────
 
@@ -59,75 +50,6 @@ const PMS_PROVIDERS: PmsProviderOption[] = [
   { id: "pps", label: "PPS (Rushcliff)", icon: "🩺", logo: "/integrations/pps.svg", comingSoon: true, hasApi: false },
 ];
 
-const ONBOARDING_PMS_OPTIONS = [
-  { id: "writeupp", label: "WriteUpp", icon: "📋", logo: "/integrations/writeupp.svg" },
-  { id: "cliniko", label: "Cliniko", icon: "🗂️", logo: "/integrations/cliniko-dark.svg", logoDark: "/integrations/cliniko-light.svg" },
-  { id: "tm3", label: "TM3", icon: "⚕️", logo: "/integrations/tm3.svg" },
-  { id: "jane", label: "Jane App", icon: "🌿", logo: "/integrations/jane.png" },
-  { id: "powerdiary", label: "Zanda (Power Diary)", icon: "📓", logo: "/integrations/powerdiary.png" },
-  { id: "halaxy", label: "Halaxy", icon: "💙", logo: "/integrations/halaxy.svg" },
-  { id: "other", label: "Other / Custom", icon: "📄" },
-];
-
-const CANONICAL_FIELD_OPTIONS: { value: string; label: string; required?: boolean }[] = [
-  { value: "ignore", label: "Ignore" },
-  { value: "date", label: "Date *", required: true },
-  { value: "time", label: "Time" },
-  { value: "endDate", label: "End Date" },
-  { value: "endTime", label: "End Time" },
-  { value: "patientId", label: "Patient ID" },
-  { value: "patientFirst", label: "First Name" },
-  { value: "patientLast", label: "Last Name" },
-  { value: "patientEmail", label: "Email" },
-  { value: "patientPhone", label: "Phone" },
-  { value: "patientDob", label: "Date of Birth" },
-  { value: "practitioner", label: "Practitioner *", required: true },
-  { value: "practitionerId", label: "Practitioner ID" },
-  { value: "type", label: "Appointment Type" },
-  { value: "status", label: "Status *", required: true },
-  { value: "notes", label: "Notes" },
-  { value: "price", label: "Price" },
-  { value: "duration", label: "Duration" },
-];
-
-const REQUIRED_APPT_FIELDS: CanonicalField[] = ["date", "practitioner", "status"];
-
-interface ImportHistoryRecord {
-  id: string;
-  fileName: string;
-  fileType: string;
-  schemaId: string;
-  provider: string;
-  rowsWritten: number;
-  rowsSkipped: number;
-  importedAt: string;
-  importedBy: string;
-  warnings?: { type: string; message: string }[];
-  status?: "failed";
-  errorReason?: string;
-  sender?: string;
-  snapshot?: FailureSnapshot;
-}
-
-interface OnboardingGuide {
-  title: string;
-  steps: { heading: string; body?: string }[];
-}
-
-const INGEST_EMAIL_DOMAIN = "ingest.strydeos.com";
-
-function ProviderLogo({ logo, logoDark, alt, className }: { logo: string; logoDark?: string; alt: string; className?: string }) {
-  if (logoDark) {
-    return (
-      <>
-        <img src={logo} alt={alt} className={`${className ?? ""} block dark:hidden`} />
-        <img src={logoDark} alt={alt} className={`${className ?? ""} hidden dark:block`} />
-      </>
-    );
-  }
-  return <img src={logo} alt={alt} className={className} />;
-}
-
 // ─── PmsIntegrationCard ───────────────────────────────────────────────────
 
 interface PmsIntegrationCardProps {
@@ -152,31 +74,25 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
   const [assistRequested, setAssistRequested] = useState(false);
   const [importPanelOpen, setImportPanelOpen] = useState(false);
 
-  // Column mapping state (Phase 2)
+  // Column mapping trigger state (set by handleImportCSV when server returns
+  // needsMapping; consumed by ColumnMapping child which owns its own
+  // interaction state — values, schema name, saving flag).
   const [mappingHeaders, setMappingHeaders] = useState<string[] | null>(null);
   const [mappingSampleRows, setMappingSampleRows] = useState<Record<string, string>[]>([]);
   const [mappingFile, setMappingFile] = useState<File | null>(null);
   const [mappingFileType, setMappingFileType] = useState<"appointments" | "patients">("appointments");
-  const [mappingValues, setMappingValues] = useState<Record<string, string>>({});
-  const [mappingSaving, setMappingSaving] = useState(false);
-  const [mappingSchemaName, setMappingSchemaName] = useState("");
 
-  // Import history state (Phase 4)
+  // Import history state (lifted so the CSV bridge card can show "Last import"
+  // alongside the standalone ImportHistory card below.)
   const [importHistory, setImportHistory] = useState<ImportHistoryRecord[]>([]);
-  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
 
-  // Ingest email copy state (Phase 3)
-  const [ingestCopied, setIngestCopied] = useState(false);
-
-  // Onboarding wizard state (Phase 5)
+  // Onboarding wizard state — lifted so the CSV bridge card can open the
+  // wizard pre-configured at step 4 (auto-import setup).
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(0);
   const [wizardPms, setWizardPms] = useState<string>("");
-  const [wizardGuide, setWizardGuide] = useState<OnboardingGuide | null>(null);
-  const [wizardGuideLoading, setWizardGuideLoading] = useState(false);
-  const [tm3Platform, setTm3Platform] = useState<"cloud" | "desktop">("cloud");
 
   // Sync PMS state with clinic profile on mount/change. Only treat PMS as
   // connected if the flag is true AND there's evidence of actual credentials
@@ -358,10 +274,6 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
         setMappingSampleRows(data.sampleRows ?? []);
         setMappingFile(file);
         setMappingFileType(fileType);
-        const initial: Record<string, string> = {};
-        for (const h of data.headers ?? []) initial[h] = "ignore";
-        setMappingValues(initial);
-        setMappingSchemaName("");
         toast("Unknown format — map your columns below", "info");
         return;
       }
@@ -388,50 +300,6 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
     setMappingHeaders(null);
     setMappingSampleRows([]);
     setMappingFile(null);
-    setMappingValues({});
-    setMappingSchemaName("");
-  }
-
-  async function handleSaveMapping() {
-    if (!firebaseUser || !mappingFile || !mappingHeaders) return;
-
-    const fieldMap: Record<string, string> = {};
-    for (const [header, value] of Object.entries(mappingValues)) {
-      if (value !== "ignore") fieldMap[header] = value;
-    }
-
-    const mapped = new Set(Object.values(fieldMap));
-    const missingRequired = REQUIRED_APPT_FIELDS.filter((f) => !mapped.has(f));
-    if (mappingFileType === "appointments" && missingRequired.length > 0) {
-      toast(`Required fields not mapped: ${missingRequired.join(", ")}`, "error");
-      return;
-    }
-
-    setMappingSaving(true);
-    try {
-      const token = await firebaseUser.getIdToken();
-
-
-      const schemaRes = await fetch(`/api/pms/csv-schema`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          name: mappingSchemaName.trim() || undefined,
-          fileType: mappingFileType,
-          fieldMap,
-        }),
-      });
-      const schemaData = await schemaRes.json().catch(() => ({}));
-      if (!schemaRes.ok) throw new Error(schemaData?.error ?? "Failed to save mapping");
-
-      await handleImportCSV(mappingFile, mappingFileType, schemaData.schemaId);
-      cancelMapping();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to save mapping";
-      toast(msg, "error");
-    } finally {
-      setMappingSaving(false);
-    }
   }
 
   async function loadImportHistory() {
@@ -459,51 +327,6 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
     if (firebaseUser && !historyLoaded) loadImportHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firebaseUser]);
-
-  async function copyIngestEmail() {
-    if (!clinicId) return;
-    const email = `import-${clinicId}@${INGEST_EMAIL_DOMAIN}`;
-    await navigator.clipboard.writeText(email);
-    setIngestCopied(true);
-    toast("Import email copied", "success");
-    setTimeout(() => setIngestCopied(false), 2000);
-  }
-
-  async function loadOnboardingGuide(pmsId: string) {
-    setWizardGuideLoading(true);
-    setWizardGuide(null);
-
-    // TM3 has no API — hardcoded guide, no Firestore lookup
-    if (pmsId === "tm3") {
-      setWizardGuide(null); // handled inline by TM3-specific wizard UI
-      setWizardGuideLoading(false);
-      return;
-    }
-
-    try {
-      const { getDoc, doc: firestoreDoc } = await import("firebase/firestore");
-      if (!db) return;
-      const snap = await getDoc(firestoreDoc(db, "onboarding_guides", pmsId));
-      if (snap.exists()) {
-        setWizardGuide(snap.data() as OnboardingGuide);
-      } else {
-        setWizardGuide({
-          title: `${ONBOARDING_PMS_OPTIONS.find((p) => p.id === pmsId)?.label ?? "Your PMS"} Export Guide`,
-          steps: [
-            { heading: "Export your data", body: "Look for a Data Export, Reports, or CSV Export option in your PMS. Export your Appointments data as a CSV file." },
-            { heading: "Upload to StrydeOS", body: "Drag and drop the exported CSV into the upload zone below." },
-          ],
-        });
-      }
-    } catch {
-      setWizardGuide({
-        title: "Export Guide",
-        steps: [{ heading: "Export your data as CSV from your PMS and upload it below." }],
-      });
-    } finally {
-      setWizardGuideLoading(false);
-    }
-  }
 
   return (
     <>
@@ -742,15 +565,7 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
                       ) : (
                         <p className="text-[12px] text-muted mb-3">No data imported yet. Upload your first {providerLabel} CSV or set up email auto-import below.</p>
                       )}
-                      {clinicId && (
-                        <div className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-white">
-                          <Mail size={12} className="text-blue shrink-0" />
-                          <code className="text-[11px] text-navy flex-1 break-all">import-{clinicId}@{INGEST_EMAIL_DOMAIN}</code>
-                          <button type="button" onClick={copyIngestEmail} className="shrink-0 text-blue hover:text-blue-bright transition-colors">
-                            {ingestCopied ? <Check size={12} /> : <Copy size={12} />}
-                          </button>
-                        </div>
-                      )}
+                      <EmailIngest clinicId={clinicId} variant="compact" />
                       <div className="flex items-center gap-2 mt-3">
                         <button
                           type="button"
@@ -776,556 +591,34 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
         )}
 
         {/* ─── CSV Import Panel (collapsible, inside PMS card) ───────── */}
-        <AnimatePresence>
-          {importPanelOpen && (
-            <motion.div
-              id="csv-import-section"
-              initial={{ opacity: 0, height: 0, marginTop: 0 }}
-              animate={{ opacity: 1, height: "auto", marginTop: 16 }}
-              exit={{ opacity: 0, height: 0, marginTop: 0 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden"
-            >
-              <div className="p-5 rounded-xl border border-blue/15 bg-blue/[0.02]">
-                <div className="flex items-start justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-semibold text-navy">Import from CSV</h4>
-                    <Tooltip content="Export your appointment or patient data from your PMS as a CSV file, then upload it here. StrydeOS auto-detects the format from WriteUpp, Cliniko, TM3, Jane App, and custom layouts. Uploading again merges — it won't create duplicates." side="bottom">
-                      <Info size={13} className="text-muted/60 hover:text-muted cursor-help transition-colors" />
-                    </Tooltip>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {!wizardOpen && (
-                      <button
-                        onClick={() => { setWizardOpen(true); setWizardStep(0); setWizardPms(""); }}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-white bg-blue hover:bg-blue-bright shadow-sm hover:shadow-md transition-all"
-                      >
-                        <Sparkles size={12} />
-                        Setup wizard
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setImportPanelOpen(false)}
-                      className="text-muted hover:text-navy transition-colors"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                </div>
-
-        {/* ── Onboarding Wizard (Phase 5) ─────────────────────────────── */}
-        {wizardOpen && (
-          <div className="mt-4 mb-5 p-5 rounded-xl border border-blue/20 bg-blue/5 animate-fade-in">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs font-semibold text-navy">
-                Step {wizardStep + 1} of 5 — Data Import Setup
-              </p>
-              <button onClick={() => setWizardOpen(false)} className="text-muted hover:text-navy transition-colors">
-                <X size={14} />
-              </button>
-            </div>
-
-            {/* Step 0: Select PMS */}
-            {wizardStep === 0 && (
-              <div>
-                <p className="text-sm font-medium text-navy mb-3">Which PMS do you use?</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {ONBOARDING_PMS_OPTIONS.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => { setWizardPms(p.id); loadOnboardingGuide(p.id); setWizardStep(1); }}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                        wizardPms === p.id ? "border-blue bg-blue/10 text-blue" : "border-border hover:border-blue/30 text-navy"
-                      }`}
-                    >
-                      {p.logo ? (
-                        <ProviderLogo logo={p.logo} logoDark={(p as { logoDark?: string }).logoDark} alt={p.label} className="h-5 w-auto max-w-[52px] object-contain shrink-0" />
-                      ) : (
-                        <span className="shrink-0">{p.icon}</span>
-                      )}
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Step 1: PMS-specific guide */}
-            {wizardStep === 1 && (
-              <div>
-                {wizardPms === "tm3" ? (
-                  <div>
-                    <p className="text-sm font-medium text-navy mb-3">Export appointments from TM3</p>
-                    <div className="flex gap-1 mb-4">
-                      {(["cloud", "desktop"] as const).map((p) => (
-                        <button
-                          key={p}
-                          onClick={() => setTm3Platform(p)}
-                          className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
-                            tm3Platform === p ? "bg-navy text-white" : "bg-cloud-light text-muted hover:text-navy"
-                          }`}
-                        >
-                          TM3 {p === "cloud" ? "Cloud" : "Desktop"}
-                        </button>
-                      ))}
-                    </div>
-                    <ol className="space-y-3">
-                      {(tm3Platform === "cloud" ? [
-                        { heading: "Go to Reports", body: "In TM3 Cloud, navigate to Reports and select Appointment Report." },
-                        { heading: "Set your date range", body: "For your first import, select the last 90 days. For recurring imports, the last 7 days." },
-                        { heading: "Select columns", body: "Include: Therapist, Date, Time, End Time, Type, Status, Client Ref, Amount, Forename, Surname." },
-                        { heading: "Export as CSV", body: "Click Export and save the file. You’ll upload it in the next step." },
-                      ] : [
-                        { heading: "Open Reports", body: "In TM3 Desktop, go to Reports and select Diary Export or Appointment Report." },
-                        { heading: "Set your date range", body: "For your first import, cover the last 90 days. For recurring, the last 7 days." },
-                        { heading: "Select all appointment columns", body: "Ensure Therapist, Date, Time, Type, Status, Client Ref, and Amount are included." },
-                        { heading: "Export to CSV", body: "Save the exported file. You’ll upload it in the next step." },
-                      ]).map((step, i) => (
-                        <li key={i} className="flex gap-3">
-                          <span className="w-6 h-6 rounded-full bg-navy/10 text-navy text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                            {i + 1}
-                          </span>
-                          <div>
-                            <p className="text-sm font-medium text-navy">{step.heading}</p>
-                            <p className="text-[12px] text-muted mt-0.5">{step.body}</p>
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                ) : wizardGuideLoading ? (
-                  <div className="flex items-center gap-2 text-muted text-sm py-4">
-                    <Loader2 size={14} className="animate-spin" /> Loading guide...
-                  </div>
-                ) : wizardGuide ? (
-                  <div>
-                    <p className="text-sm font-medium text-navy mb-3">{wizardGuide.title}</p>
-                    <ol className="space-y-3">
-                      {wizardGuide.steps.map((step, i) => (
-                        <li key={i} className="flex gap-3">
-                          <span className="w-6 h-6 rounded-full bg-blue/10 text-blue text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                            {i + 1}
-                          </span>
-                          <div>
-                            <p className="text-sm font-medium text-navy">{step.heading}</p>
-                            {step.body && <p className="text-[12px] text-muted mt-0.5">{step.body}</p>}
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                ) : null}
-                <div className="flex items-center gap-2 mt-4">
-                  <button onClick={() => setWizardStep(0)} className="flex items-center gap-1 text-[12px] text-muted hover:text-navy transition-colors">
-                    <ChevronLeft size={14} /> Back
-                  </button>
-                  <button
-                    onClick={() => setWizardStep(2)}
-                    className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }}
-                  >
-                    I have my CSV <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Upload (uses existing drag-drop below) */}
-            {wizardStep === 2 && (
-              <div>
-                <p className="text-sm font-medium text-navy mb-2">Upload your CSV file below</p>
-                <p className="text-[12px] text-muted mb-3">Drag and drop your exported CSV into one of the upload zones. StrydeOS will auto-detect the format.</p>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setWizardStep(1)} className="flex items-center gap-1 text-[12px] text-muted hover:text-navy transition-colors">
-                    <ChevronLeft size={14} /> Back
-                  </button>
-                  <span className="text-[11px] text-muted">Upload a file below to continue</span>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Confirm mapping */}
-            {wizardStep === 3 && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle2 size={16} className="text-success" />
-                  <p className="text-sm font-medium text-navy">
-                    {csvResult?.ok ? "Import complete" : mappingHeaders ? "Manual mapping required" : "Upload your CSV above"}
-                  </p>
-                </div>
-                {csvResult?.ok && (
-                  <p className="text-[12px] text-muted mb-3">{csvResult.msg}</p>
-                )}
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setWizardStep(2)} className="flex items-center gap-1 text-[12px] text-muted hover:text-navy transition-colors">
-                    <ChevronLeft size={14} /> Back
-                  </button>
-                  {csvResult?.ok && (
-                    <button
-                      onClick={() => setWizardStep(4)}
-                      className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }}
-                    >
-                      Next: recurring <ChevronRight size={14} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Set up recurring */}
-            {wizardStep === 4 && (
-              <div>
-                <p className="text-sm font-medium text-navy mb-2">Set up recurring imports</p>
-                {wizardPms === "tm3" ? (
-                  <div className="text-[12px] text-muted mb-3 space-y-2">
-                    <p>TM3 Cloud supports <strong className="text-navy">Scheduled Reports</strong>. Set one up to email your appointment CSV weekly to the address below — then StrydeOS imports automatically. Zero ongoing effort.</p>
-                    <ol className="list-decimal list-inside space-y-1 text-[11px]">
-                      <li>In TM3 Cloud, go to <strong className="text-navy">Reports &rarr; Scheduled Reports</strong></li>
-                      <li>Create a new schedule for the Appointment Report</li>
-                      <li>Set frequency to <strong className="text-navy">weekly</strong> (e.g. every Monday)</li>
-                      <li>Set the email recipient to your ingest address below</li>
-                    </ol>
-                  </div>
-                ) : (
-                  <p className="text-[12px] text-muted mb-3">
-                    For hands-free data import, point your PMS email export to your clinic&apos;s unique ingest address. Every CSV attachment sent here is imported automatically.
-                  </p>
-                )}
-                {clinicId && (
-                  <div className="flex items-center gap-2 p-3 rounded-xl border border-border bg-cloud-light">
-                    <Mail size={14} className="text-blue shrink-0" />
-                    <code className="text-[12px] text-navy flex-1 break-all">import-{clinicId}@{INGEST_EMAIL_DOMAIN}</code>
-                    <button onClick={copyIngestEmail} className="shrink-0 text-blue hover:text-blue-bright transition-colors">
-                      {ingestCopied ? <Check size={14} /> : <Copy size={14} />}
-                    </button>
-                  </div>
-                )}
-                <div className="flex items-center gap-2 mt-4">
-                  <button onClick={() => setWizardStep(3)} className="flex items-center gap-1 text-[12px] text-muted hover:text-navy transition-colors">
-                    <ChevronLeft size={14} /> Back
-                  </button>
-                  <button
-                    onClick={() => { setWizardOpen(false); toast("Setup complete", "success"); }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90"
-                    style={{ background: brand.success }}
-                  >
-                    <Check size={14} /> Done
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        <p className="text-[12px] text-muted mb-5">
-          Export your appointment or patient data from any PMS as CSV and drop it here. Format is auto-detected. Data populates instantly.
-        </p>
-
-        {/* ── Column Mapping Screen (Phase 2) ──────────────────────────── */}
-        {mappingHeaders && mappingHeaders.length > 0 ? (
-          <div className="animate-fade-in">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-sm font-semibold text-navy">Map your CSV columns</p>
-                <p className="text-[11px] text-muted mt-0.5">
-                  We couldn&apos;t auto-detect the format. Map each column to a StrydeOS field. Fields marked * are required for appointments.
-                </p>
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="block text-[11px] font-semibold text-muted uppercase tracking-wide mb-1">
-                Mapping name (optional)
-              </label>
-              <input
-                type="text"
-                value={mappingSchemaName}
-                onChange={(e) => setMappingSchemaName(e.target.value)}
-                placeholder="e.g. My PMS Export"
-                className="w-full max-w-xs px-3 py-2 rounded-lg border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-              />
-            </div>
-
-            {/* Preview table */}
-            <div className="overflow-x-auto rounded-xl border border-border mb-4">
-              <table className="w-full text-[11px]">
-                <thead>
-                  <tr className="border-b border-border bg-cloud-light">
-                    {mappingHeaders.map((h) => (
-                      <th key={h} className="px-3 py-2 text-left font-semibold text-navy whitespace-nowrap">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {mappingSampleRows.slice(0, 3).map((row, i) => (
-                    <tr key={i} className="border-b border-border/50">
-                      {mappingHeaders.map((h) => (
-                        <td key={h} className="px-3 py-1.5 text-muted whitespace-nowrap max-w-[200px] truncate">
-                          {row[h] || "—"}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Dropdowns */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-              {mappingHeaders.map((h) => (
-                <div key={h}>
-                  <label className="block text-[11px] font-medium text-muted mb-1 truncate" title={h}>
-                    {h}
-                  </label>
-                  <select
-                    value={mappingValues[h] ?? "ignore"}
-                    onChange={(e) => setMappingValues((prev) => ({ ...prev, [h]: e.target.value }))}
-                    className="w-full px-2 py-1.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
-                  >
-                    {CANONICAL_FIELD_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleSaveMapping}
-                disabled={mappingSaving}
-                className="btn-primary"
-              >
-                {mappingSaving ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                {mappingSaving ? "Saving..." : "Save mapping & import"}
-              </button>
-              <button
-                onClick={cancelMapping}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold text-muted hover:text-navy transition-colors"
-              >
-                <X size={14} />
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Standard drag-drop upload */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {(["appointments", "patients"] as const).map((type) => (
-                <label
-                  key={type}
-                  className={`relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${
-                    csvUploading ? "opacity-50 pointer-events-none" : "border-border hover:border-blue/40 hover:bg-blue/2"
-                  }`}
-                >
-                  <input
-                    type="file"
-                    accept=".csv,.xlsx,.xls"
-                    className="sr-only"
-                    disabled={csvUploading}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) {
-                        handleImportCSV(f, type);
-                        if (wizardOpen && wizardStep === 2) setWizardStep(3);
-                      }
-                      e.target.value = "";
-                    }}
-                  />
-                  <div className="w-10 h-10 rounded-xl bg-cloud-light flex items-center justify-center">
-                    {csvUploading ? <Loader2 size={18} className="animate-spin text-blue" /> : <ArrowRight size={18} className="text-navy rotate-90" />}
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-semibold text-navy capitalize">{type} CSV</p>
-                    <p className="text-[11px] text-muted mt-0.5">
-                      {type === "appointments" ? "Appointments + auto-recomputes metrics" : "Patient demographics"}
-                    </p>
-                  </div>
-                </label>
-              ))}
-            </div>
-
-            {csvResult && (
-              <div className={`flex items-start gap-2 mt-4 p-3 rounded-xl border text-[12px] ${csvResult.ok ? "border-success/20 bg-success/5 text-success" : "border-danger/20 bg-danger/5 text-danger"}`}>
-                {csvResult.ok ? <CheckCircle2 size={14} className="mt-0.5 shrink-0" /> : <XCircle size={14} className="mt-0.5 shrink-0" />}
-                <span>{csvResult.msg}</span>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ── Email Ingest Address (Phase 3) ────────────────────────────── */}
-        {clinicId && !wizardOpen && (
-          <div className="mt-5 p-4 rounded-xl border border-border bg-cloud-light/50">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-blue/10 flex items-center justify-center shrink-0">
-                <Mail size={14} className="text-blue" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <p className="text-xs font-semibold text-navy">Email-to-Import</p>
-                  <Tooltip content="Your clinic has a unique email address. Any CSV file sent as an attachment to this address is automatically imported into StrydeOS — no manual upload needed. Set your PMS to email scheduled reports here for hands-free data sync." side="bottom">
-                    <Info size={11} className="text-muted/60 hover:text-muted cursor-help transition-colors" />
-                  </Tooltip>
-                </div>
-                <p className="text-[11px] text-muted mb-2">
-                  Forward PMS exports or set up scheduled email delivery to this address. CSV attachments are imported automatically.
-                </p>
-                <div className="flex items-center gap-2">
-                  <code className="text-[11px] text-navy bg-white px-2 py-1 rounded border border-border break-all">
-                    import-{clinicId}@{INGEST_EMAIL_DOMAIN}
-                  </code>
-                  <button
-                    onClick={copyIngestEmail}
-                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-blue border border-blue/20 hover:bg-blue/5 transition-colors"
-                  >
-                    {ingestCopied ? <Check size={12} /> : <Copy size={12} />}
-                    {ingestCopied ? "Copied" : "Copy"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <p className="text-[11px] text-muted mt-4">
-          Supports WriteUpp, Cliniko, TM3, Jane App, and custom formats.
-          Uploading again merges — it won&apos;t create duplicates.
-        </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <CsvImportPanel
+          open={importPanelOpen}
+          onClose={() => setImportPanelOpen(false)}
+          clinicId={clinicId}
+          wizardOpen={wizardOpen}
+          wizardStep={wizardStep}
+          wizardPms={wizardPms}
+          setWizardOpen={setWizardOpen}
+          setWizardStep={setWizardStep}
+          setWizardPms={setWizardPms}
+          csvUploading={csvUploading}
+          csvResult={csvResult}
+          onImportCSV={handleImportCSV}
+          mappingHeaders={mappingHeaders}
+          mappingSampleRows={mappingSampleRows}
+          mappingFile={mappingFile}
+          mappingFileType={mappingFileType}
+          onCancelMapping={cancelMapping}
+        />
       </div>
 
       {/* Import History (Phase 4) */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display text-lg text-navy">Import History</h3>
-          <button
-            onClick={loadImportHistory}
-            disabled={historyLoading}
-            className="flex items-center gap-1.5 text-[11px] font-medium text-muted hover:text-navy transition-colors"
-          >
-            <RefreshCw size={12} className={historyLoading ? "animate-spin" : ""} />
-            Refresh
-          </button>
-        </div>
-
-        {importHistory.length === 0 ? (
-          <div className="text-center py-8">
-            <FileText size={24} className="mx-auto text-muted/70 mb-2" />
-            <p className="text-sm text-muted">{historyLoaded ? "No imports yet" : "Loading..."}</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {importHistory.map((rec) => (
-              <ImportHistoryRow
-                key={rec.id}
-                record={rec}
-                expanded={expandedHistoryId === rec.id}
-                onToggle={() =>
-                  setExpandedHistoryId(expandedHistoryId === rec.id ? null : rec.id)
-                }
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <ImportHistory
+        importHistory={importHistory}
+        historyLoading={historyLoading}
+        historyLoaded={historyLoaded}
+        onRefresh={loadImportHistory}
+      />
     </>
-  );
-}
-
-// ─── Import history row (success + failure states) ─────────────────────────
-
-function ImportHistoryRow({
-  record,
-  expanded,
-  onToggle,
-}: {
-  record: ImportHistoryRecord;
-  expanded: boolean;
-  onToggle: () => void;
-}) {
-  const isFailed = record.status === "failed";
-  const canExpand = isFailed && !!record.snapshot;
-
-  return (
-    <div className="rounded-xl border border-border/50 overflow-hidden">
-      <button
-        type="button"
-        onClick={canExpand ? onToggle : undefined}
-        disabled={!canExpand}
-        className={`w-full flex items-center gap-3 p-3 text-left transition-colors ${
-          canExpand ? "hover:bg-cloud-light/30 cursor-pointer" : ""
-        }`}
-      >
-        <div
-          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-            isFailed ? "bg-warn/10" : "bg-success/10"
-          }`}
-        >
-          {isFailed ? (
-            <AlertTriangle size={14} className="text-warn" />
-          ) : (
-            <CheckCircle2 size={14} className="text-success" />
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-medium text-navy truncate">{record.fileName}</p>
-            {!isFailed && (
-              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-blue/10 text-blue uppercase shrink-0">
-                {record.provider || record.schemaId}
-              </span>
-            )}
-            {isFailed && (
-              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-warn/10 text-warn uppercase shrink-0">
-                Failed · {record.errorReason ?? "error"}
-              </span>
-            )}
-          </div>
-          <p className="text-[11px] text-muted mt-0.5">
-            {isFailed
-              ? record.sender
-                ? `From ${record.sender}`
-                : "Import could not be processed"
-              : `${record.rowsWritten} written · ${record.rowsSkipped} skipped${
-                  record.fileType === "appointments" ? " · Metrics recomputed" : ""
-                }${
-                  record.warnings && record.warnings.length > 0
-                    ? ` · ${record.warnings.length} warning(s)`
-                    : ""
-                }`}
-          </p>
-        </div>
-        <p className="text-[10px] text-muted shrink-0">
-          {new Date(record.importedAt).toLocaleDateString("en-GB", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-        </p>
-        {canExpand && (
-          <span className="text-[10px] text-blue font-semibold shrink-0">
-            {expanded ? "Hide" : "Inspect"}
-          </span>
-        )}
-      </button>
-      {expanded && record.snapshot && (
-        <div className="p-3 bg-cloud-light/30 border-t border-border/50">
-          <CSVFailurePreview
-            snapshot={record.snapshot as FailureSnapshot}
-            sender={record.sender}
-            receivedAt={record.importedAt}
-          />
-        </div>
-      )}
-    </div>
   );
 }
