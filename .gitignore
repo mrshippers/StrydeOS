@@ -64,3 +64,8 @@ __pycache__/
 # Playwright
 test-results/
 playwright-report/
+
+# One-off scratch (not committed)
+/_scratch/
+Marketing Material/Campaigns/**/renders/
+Marketing Material/Campaigns/**/player.html
