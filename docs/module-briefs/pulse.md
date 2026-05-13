@@ -225,6 +225,7 @@ Pulse isn't a comms tool — it's a continuity engine. The difference matters be
 |------|---------|
 | `lib/pulse/insight-event-consumer.ts` | Idempotent event consumer + sequence dispatch |
 | `lib/pulse/track-reengagement.ts` | Re-engagement detection within attribution window |
+| `lib/pulse/cohort-summary.ts` | Pure cohort-rollup helper (count + avg risk score per lifecycle state) |
 | `lib/comms/trigger-sequences.ts` | n8n delivery + `pulseState` singleton write at run start/end |
 | `lib/comms/validate-n8n-webhook.ts` | Webhook signature verification |
 | `app/api/n8n/callback/route.ts` | Comms outcome callbacks (delivered, responded, no_action) |

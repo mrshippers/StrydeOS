@@ -188,6 +188,8 @@ The value attribution engine is built. Now every module needs to actually feed i
 - [ ] Outcome velocity metric (avg improvement per session) — blocked on outcome measures going live
 
 ### Dashboard
+
+- [x] Per-clinician KPI table — all six canonical KPIs now surfaced with sparklines (follow-up rate, HEP compliance, utilisation, DNA rate, revenue per session, NPS). HEP + revenue per session added in v0.13.
 - [ ] Value tab needs sparkline trends for deep metrics (data is there via `deepMetricsTrend`, UI not wired)
 - [ ] Quarterly summary view (computation exists, no UI)
 - [ ] Export / PDF for owner to share with business partner
