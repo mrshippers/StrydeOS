@@ -856,13 +856,15 @@ export default function IntelligencePage() {
                 <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">Follow-Up Rate</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">Utilisation</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">DNA Rate</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">HEP</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">Rev / Session</th>
                 <th className="text-right py-3 px-5 text-xs font-semibold text-muted uppercase tracking-wide">Active Pts</th>
               </tr>
             </thead>
             <tbody>
               {clinicianKpis.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-sm text-muted">
+                  <td colSpan={7} className="py-8 text-center text-sm text-muted">
                     Per-clinician performance data will appear once metrics are computed from appointment records.
                   </td>
                 </tr>
@@ -908,11 +910,27 @@ export default function IntelligencePage() {
                           <MiniSparkline data={c.dnaTrend} color={brand.danger} higherIsBetter={false} />
                         </div>
                       </td>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-4">
+                          <span className={`font-semibold text-sm ${c.hepComplianceRate >= 0.80 ? "text-success" : c.hepComplianceRate >= 0.50 ? "text-warn" : "text-danger"}`}>
+                            {Math.round(c.hepComplianceRate * 100)}%
+                          </span>
+                          <MiniSparkline data={c.hepTrend} color={brand.teal} higherIsBetter />
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-4">
+                          <span className="font-semibold text-sm text-navy">
+                            £{(c.revenuePerSessionPence / 100).toFixed(2)}
+                          </span>
+                          <MiniSparkline data={c.revPerSessionTrend} color={brand.purple} higherIsBetter />
+                        </div>
+                      </td>
                       <td className="py-4 px-5 text-right font-semibold text-navy">{c.activePatients}</td>
                     </tr>
                     {isExpanded && (
                       <tr key={`${c.clinicianId}-drill`} className="border-b border-border/50 bg-cloud-light/30">
-                        <td colSpan={5} className="px-5 pb-5 pt-3">
+                        <td colSpan={7} className="px-5 pb-5 pt-3">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                               <p className="text-[11px] font-semibold text-blue uppercase tracking-wide mb-2 flex items-center gap-1">

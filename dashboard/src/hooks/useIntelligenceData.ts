@@ -383,6 +383,8 @@ function deriveClinicianKpis(allStats: WeeklyStats[], patients: Patient[]): Clin
     const rebookTrend = clinicianStats.map((s) => s.followUpRate ?? 0);
     const utilisationTrend = clinicianStats.map((s) => s.utilisationRate ?? 0);
     const dnaTrend = clinicianStats.map((s) => s.dnaRate ?? 0);
+    const hepTrend = clinicianStats.map((s) => s.hepComplianceRate ?? 0);
+    const revPerSessionTrend = clinicianStats.map((s) => s.revenuePerSessionPence ?? 0);
 
     const myPatients = patients.filter((p) => p.clinicianId === cid);
     const active = myPatients
@@ -417,6 +419,10 @@ function deriveClinicianKpis(allStats: WeeklyStats[], patients: Patient[]): Clin
       rebookTrend,
       utilisationTrend,
       dnaTrend,
+      hepComplianceRate: latest?.hepComplianceRate ?? 0,
+      hepTrend,
+      revenuePerSessionPence: latest?.revenuePerSessionPence ?? 0,
+      revPerSessionTrend,
       drilldown: { active, droppedOff, completed },
     };
   });

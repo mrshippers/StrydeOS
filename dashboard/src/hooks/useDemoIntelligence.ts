@@ -208,6 +208,10 @@ export interface ClinicianKpiRow {
   rebookTrend: number[];
   utilisationTrend: number[];
   dnaTrend: number[];
+  hepComplianceRate: number;       // 0–1
+  hepTrend: number[];              // weekly values
+  revenuePerSessionPence: number;
+  revPerSessionTrend: number[];
   drilldown: {
     active: { name: string; sessions: string; lastSeen: string }[];
     droppedOff: { name: string; lastSeen: string; reason: string }[];
@@ -227,6 +231,10 @@ export function getDemoClinicianKpis(): ClinicianKpiRow[] {
       rebookTrend: [2.4, 2.5, 2.6, 2.7, 2.8, 2.9],
       utilisationTrend: [0.82, 0.84, 0.87, 0.85, 0.88, 0.88],
       dnaTrend: [0.08, 0.06, 0.05, 0.05, 0.04, 0.04],
+      hepComplianceRate: 0.71,
+      hepTrend: [0.65, 0.68, 0.71, 0.74, 0.71, 0.73, 0.71, 0.72],
+      revenuePerSessionPence: 7500,
+      revPerSessionTrend: [7200, 7400, 7500, 7600, 7500, 7800, 7500, 7600],
       drilldown: {
         active: [
           { name: "Sarah Mitchell", sessions: "3/6", lastSeen: "2d" },
@@ -253,6 +261,10 @@ export function getDemoClinicianKpis(): ClinicianKpiRow[] {
       rebookTrend: [2.1, 2.2, 2.3, 2.3, 2.4, 2.5],
       utilisationTrend: [0.80, 0.81, 0.82, 0.83, 0.83, 0.84],
       dnaTrend: [0.09, 0.09, 0.08, 0.08, 0.07, 0.07],
+      hepComplianceRate: 0.55,
+      hepTrend: [0.48, 0.50, 0.52, 0.54, 0.55, 0.55, 0.56, 0.55],
+      revenuePerSessionPence: 6800,
+      revPerSessionTrend: [6500, 6600, 6700, 6800, 6750, 6800, 6850, 6800],
       drilldown: {
         active: [
           { name: "Tom Edwards", sessions: "4/6", lastSeen: "2d" },
@@ -276,6 +288,10 @@ export function getDemoClinicianKpis(): ClinicianKpiRow[] {
       rebookTrend: [2.9, 3.0, 3.1, 3.2, 3.3, 3.4],
       utilisationTrend: [0.71, 0.72, 0.74, 0.75, 0.75, 0.76],
       dnaTrend: [0.06, 0.05, 0.04, 0.04, 0.03, 0.03],
+      hepComplianceRate: 0.84,
+      hepTrend: [0.79, 0.81, 0.82, 0.83, 0.84, 0.85, 0.84, 0.84],
+      revenuePerSessionPence: 8200,
+      revPerSessionTrend: [7900, 8000, 8100, 8200, 8150, 8200, 8250, 8200],
       drilldown: {
         active: [
           { name: "Amy Richardson", sessions: "2/6", lastSeen: "3d" },

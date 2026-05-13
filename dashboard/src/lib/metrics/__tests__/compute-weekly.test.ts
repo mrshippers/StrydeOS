@@ -415,3 +415,138 @@ describe("computeWeeklyMetricsForAllClinics", () => {
     expect(typeof computeWeeklyMetricsForAllClinics).toBe("function");
   });
 });
+
+// ─── deriveClinicianKpis field derivation ─────────────────────────────────────
+// Pure logic extracted from deriveClinicianKpis for isolated unit testing.
+// Tests verify the derivation contract for hepComplianceRate, hepTrend,
+// revenuePerSessionPence, and revPerSessionTrend.
+
+function deriveKpiFieldsFromStats(
+  allStats: WeeklyStats[],
+): {
+  clinicianId: string;
+  hepComplianceRate: number;
+  hepTrend: number[];
+  revenuePerSessionPence: number;
+  revPerSessionTrend: number[];
+}[] {
+  const clinicianIds = [...new Set(
+    allStats.filter((s) => s.clinicianId !== "all").map((s) => s.clinicianId),
+  )];
+
+  return clinicianIds.map((cid) => {
+    const stats = allStats
+      .filter((s) => s.clinicianId === cid)
+      .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+
+    const latest = stats[stats.length - 1];
+    return {
+      clinicianId: cid,
+      hepComplianceRate: latest?.hepComplianceRate ?? 0,
+      hepTrend: stats.map((s) => s.hepComplianceRate ?? 0),
+      revenuePerSessionPence: latest?.revenuePerSessionPence ?? 0,
+      revPerSessionTrend: stats.map((s) => s.revenuePerSessionPence ?? 0),
+    };
+  });
+}
+
+function mockWeeklyStat(overrides: Partial<WeeklyStats> = {}): WeeklyStats {
+  return {
+    id: "ws-1",
+    clinicianId: "clinician-1",
+    clinicianName: "Test Clinician",
+    weekStart: "2026-03-16",
+    followUpRate: 3.0,
+    followUpTarget: 4.0,
+    hepComplianceRate: 0.75,
+    hepRate: 0.75,
+    hepTarget: 0.95,
+    utilisationRate: 0.85,
+    dnaRate: 0.05,
+    treatmentCompletionRate: 0.8,
+    revenuePerSessionPence: 7500,
+    appointmentsTotal: 10,
+    initialAssessments: 2,
+    followUps: 8,
+    ...overrides,
+  };
+}
+
+describe("deriveClinicianKpis — hepComplianceRate and revenuePerSessionPence derivation", () => {
+  it("returns hepComplianceRate on each row using the latest week value", () => {
+    const allStats: WeeklyStats[] = [
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-09", hepComplianceRate: 0.60 }),
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-16", hepComplianceRate: 0.75 }),
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-23", hepComplianceRate: 0.80 }),
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-30", hepComplianceRate: 0.82 }),
+      mockWeeklyStat({ clinicianId: "c2", weekStart: "2026-03-09", hepComplianceRate: 0.45 }),
+      mockWeeklyStat({ clinicianId: "c2", weekStart: "2026-03-16", hepComplianceRate: 0.50 }),
+      mockWeeklyStat({ clinicianId: "c2", weekStart: "2026-03-23", hepComplianceRate: 0.55 }),
+      mockWeeklyStat({ clinicianId: "c2", weekStart: "2026-03-30", hepComplianceRate: 0.58 }),
+    ];
+
+    const result = deriveKpiFieldsFromStats(allStats);
+
+    const r1 = result.find((r) => r.clinicianId === "c1")!;
+    const r2 = result.find((r) => r.clinicianId === "c2")!;
+
+    // Latest week value is used for hepComplianceRate
+    expect(r1.hepComplianceRate).toBe(0.82);
+    expect(r2.hepComplianceRate).toBe(0.58);
+  });
+
+  it("returns hepTrend as an array of all weekly hepComplianceRate values in chronological order", () => {
+    const allStats: WeeklyStats[] = [
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-09", hepComplianceRate: 0.60 }),
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-16", hepComplianceRate: 0.70 }),
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-23", hepComplianceRate: 0.75 }),
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-30", hepComplianceRate: 0.80 }),
+    ];
+
+    const result = deriveKpiFieldsFromStats(allStats);
+    const r1 = result.find((r) => r.clinicianId === "c1")!;
+
+    expect(r1.hepTrend).toHaveLength(4);
+    expect(r1.hepTrend).toEqual([0.60, 0.70, 0.75, 0.80]);
+  });
+
+  it("returns revenuePerSessionPence on each row using the latest week value", () => {
+    const allStats: WeeklyStats[] = [
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-09", revenuePerSessionPence: 7000 }),
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-16", revenuePerSessionPence: 7200 }),
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-23", revenuePerSessionPence: 7400 }),
+      mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-30", revenuePerSessionPence: 7500 }),
+      mockWeeklyStat({ clinicianId: "c2", weekStart: "2026-03-09", revenuePerSessionPence: 6500 }),
+      mockWeeklyStat({ clinicianId: "c2", weekStart: "2026-03-16", revenuePerSessionPence: 6600 }),
+      mockWeeklyStat({ clinicianId: "c2", weekStart: "2026-03-23", revenuePerSessionPence: 6700 }),
+      mockWeeklyStat({ clinicianId: "c2", weekStart: "2026-03-30", revenuePerSessionPence: 6800 }),
+    ];
+
+    const result = deriveKpiFieldsFromStats(allStats);
+
+    const r1 = result.find((r) => r.clinicianId === "c1")!;
+    const r2 = result.find((r) => r.clinicianId === "c2")!;
+
+    expect(r1.revenuePerSessionPence).toBe(7500);
+    expect(r2.revenuePerSessionPence).toBe(6800);
+  });
+
+  it("defaults hepComplianceRate and revenuePerSessionPence to 0 when fields are missing from WeeklyStats", () => {
+    const statWithMissingFields = {
+      ...mockWeeklyStat({ clinicianId: "c1", weekStart: "2026-03-16" }),
+    } as WeeklyStats;
+    // Simulate missing fields by deleting them (Firestore docs may omit optional fields)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (statWithMissingFields as any).hepComplianceRate;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (statWithMissingFields as any).revenuePerSessionPence;
+
+    const result = deriveKpiFieldsFromStats([statWithMissingFields]);
+    const r1 = result.find((r) => r.clinicianId === "c1")!;
+
+    expect(r1.hepComplianceRate).toBe(0);
+    expect(r1.revenuePerSessionPence).toBe(0);
+    expect(r1.hepTrend).toEqual([0]);
+    expect(r1.revPerSessionTrend).toEqual([0]);
+  });
+});
