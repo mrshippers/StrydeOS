@@ -349,12 +349,16 @@ export default function Sidebar() {
           onClick={() => setNotifOpen(!notifOpen)}
           className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
           style={{
-            background: notifOpen ? "rgba(28,84,242,0.15)" : "rgba(11,37,69,0.06)",
-            border: `1px solid ${notifOpen ? "rgba(28,84,242,0.2)" : "rgba(11,37,69,0.08)"}`,
+            background: notifOpen
+              ? "rgba(28,84,242,0.15)"
+              : theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(11,37,69,0.06)",
+            border: `1px solid ${notifOpen
+              ? "rgba(28,84,242,0.2)"
+              : theme === "dark" ? "rgba(255,255,255,0.10)" : "rgba(11,37,69,0.08)"}`,
           }}
           aria-label="Notifications"
         >
-          <Bell size={15} className={notifOpen ? "text-blue" : "text-navy/40 hover:text-navy/70"} style={{ transition: "color 0.15s" }} />
+          <Bell size={15} className={notifOpen ? "text-blue" : theme === "dark" ? "text-white/40" : "text-navy/40"} style={{ transition: "color 0.15s" }} />
           {totalBellCount > 0 && (
             <span
               className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center text-[9px] font-bold text-white"

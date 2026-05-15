@@ -274,7 +274,7 @@ function StatCard({
 
       {/* Progress bar — bottom */}
       {progress !== undefined && (
-        <div className="h-[3px] w-full bg-black/[0.06]">
+        <div className="h-[3px] w-full bg-black/[0.06] dark:bg-white/[0.08]">
           <div
             className="h-full rounded-r-[2px] transition-all duration-700 ease-out"
             style={{

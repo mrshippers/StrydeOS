@@ -174,7 +174,7 @@ export function MfaEnrollment({ onComplete, onSkip }: MfaEnrollmentProps) {
       <div className="space-y-6">
         {qrCodeUrl && (
           <div className="flex justify-center">
-            <div className="p-4 rounded-2xl bg-white border-2 border-border">
+            <div className="p-4 rounded-2xl bg-white dark:!bg-white border-2 border-border">
               <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />
             </div>
           </div>

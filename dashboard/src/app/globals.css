@@ -62,22 +62,22 @@ body {
 }
 
 html.dark {
-  --color-cloud-dancer: #0B2545;
-  --color-cloud-light: rgba(255,255,255,0.05);
-  --color-cloud-dark: rgba(255,255,255,0.08);
-  --color-cream: #0F2240;
+  --color-cloud-dancer: #091d3e;
+  --color-cloud-light: rgba(255,255,255,0.04);
+  --color-cloud-dark: rgba(255,255,255,0.07);
+  --color-cream: #0B2545;
   --color-ink: rgba(255,255,255,0.95);
-  --color-muted: rgba(255,255,255,0.88);
-  --color-muted-strong: rgba(255,255,255,0.95);
-  --color-border: rgba(255,255,255,0.12);
+  --color-muted: rgba(255,255,255,0.55);
+  --color-muted-strong: rgba(255,255,255,0.80);
+  --color-border: rgba(255,255,255,0.10);
   --color-success: #10B981;
   --color-danger: #F87171;
-  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.25);
-  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.30);
+  --shadow-elevated: 0 8px 40px rgba(0, 0, 0, 0.45);
 }
 
 html.dark .bg-white {
-  background-color: rgba(255,255,255,0.08);
+  background-color: var(--color-cream);
 }
 
 html.dark .bg-cloud-dark {
@@ -415,6 +415,60 @@ html.dark .skeleton-shimmer {
 /* ─── Dark-mode Recharts overrides ──────────────────────────────────────────── */
 html.dark .recharts-cartesian-grid line {
   stroke: rgba(255,255,255,0.08) !important;
+}
+
+/* ─── Dark-mode brand utility class overrides ────────────────────────────────
+   @theme inline compiles Tailwind utilities to hardcoded values, so CSS
+   variable overrides alone don't reach them. These selectors re-apply
+   the correct dark-mode token for each brand class.                           */
+
+html.dark .bg-cloud-dancer     { background-color: #091d3e !important; }
+html.dark .bg-cloud-light      { background-color: rgba(255,255,255,0.05) !important; }
+html.dark .bg-cloud-dark       { background-color: rgba(255,255,255,0.08) !important; }
+html.dark .bg-cream            { background-color: #0B2545 !important; }
+
+html.dark .text-ink            { color: rgba(255,255,255,0.95) !important; }
+html.dark .text-muted          { color: rgba(255,255,255,0.55) !important; }
+html.dark .text-muted-strong   { color: rgba(255,255,255,0.80) !important; }
+
+html.dark .border-border       { border-color: rgba(255,255,255,0.10) !important; }
+html.dark .border-cloud-dark   { border-color: rgba(255,255,255,0.08) !important; }
+html.dark .bg-border           { background-color: rgba(255,255,255,0.10) !important; }
+
+html.dark .hover\:bg-cloud-light:hover   { background-color: rgba(255,255,255,0.06) !important; }
+html.dark .hover\:bg-cloud-dancer:hover  { background-color: rgba(255,255,255,0.04) !important; }
+html.dark .hover\:text-navy:hover        { color: rgba(255,255,255,0.90) !important; }
+html.dark .hover\:border-navy\/30:hover  { border-color: rgba(255,255,255,0.20) !important; }
+html.dark .hover\:border-navy\/20:hover  { border-color: rgba(255,255,255,0.14) !important; }
+
+/* Alert / status colours */
+html.dark .bg-success\/10   { background-color: rgba(16,185,129,0.12) !important; }
+html.dark .bg-danger\/10    { background-color: rgba(248,113,113,0.12) !important; }
+html.dark .bg-warn\/10      { background-color: rgba(245,158,11,0.12) !important; }
+html.dark .border-success\/20 { border-color: rgba(16,185,129,0.22) !important; }
+html.dark .border-danger\/20  { border-color: rgba(248,113,113,0.22) !important; }
+html.dark .text-success     { color: #10B981 !important; }
+html.dark .text-danger      { color: #F87171 !important; }
+html.dark .text-warn        { color: #FBBF24 !important; }
+
+/* Muted opacity variants that appear on light backgrounds */
+html.dark .text-muted\/60   { color: rgba(255,255,255,0.38) !important; }
+html.dark .text-muted\/80   { color: rgba(255,255,255,0.50) !important; }
+
+/* Scrollbar */
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+/* ─── Theme-switch transition smoothing ──────────────────────────────────────
+   Raise duration slightly on page-level containers so the background
+   sweep feels intentional rather than instant.                                */
+html.dark body, body {
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              color            0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html.dark .recharts-cartesian-axis-tick-value {

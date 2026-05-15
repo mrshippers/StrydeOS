@@ -170,7 +170,7 @@ export default function TourStep({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: pos.arrowSide === "top" ? -6 : 6 }}
             transition={{ duration: 0.35, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed w-[320px] rounded-2xl bg-white shadow-[var(--shadow-elevated)] overflow-hidden"
+            className="fixed w-[320px] rounded-2xl bg-white dark:bg-navy-mid shadow-[var(--shadow-elevated)] overflow-hidden"
             style={{
               top: pos.top,
               left: pos.left,

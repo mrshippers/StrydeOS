@@ -53,7 +53,7 @@ export default function ClinicPicker() {
 
       {open && (
         <div
-          className="absolute top-full left-0 mt-1 w-56 rounded-xl border bg-white shadow-lg z-50 py-1 overflow-hidden"
+          className="absolute top-full left-0 mt-1 w-56 rounded-xl border bg-white dark:bg-navy-mid shadow-lg z-50 py-1 overflow-hidden"
           style={{ borderColor: brand.border }}
         >
           <div className="px-3 py-1.5">

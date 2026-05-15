@@ -31,7 +31,7 @@ function getInitialTheme(): Theme {
   } catch {
     // localStorage unavailable
   }
-  return "light";
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

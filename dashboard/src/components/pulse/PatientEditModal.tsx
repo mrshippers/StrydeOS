@@ -72,7 +72,7 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 8 }}
           transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-lg rounded-[16px] bg-white shadow-[var(--shadow-elevated)] overflow-hidden"
+          className="w-full max-w-lg rounded-[16px] bg-white dark:bg-navy-mid shadow-[var(--shadow-elevated)] overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
