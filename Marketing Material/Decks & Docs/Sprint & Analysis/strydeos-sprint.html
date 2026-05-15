@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrydeOS · sprint to first close</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'Outfit', -apple-system, sans-serif;
+
+    --navy: #0B2545;
+    --navy-deep: #06182E;
+    --navy-mid: #132D5E;
+    --blue: #1C54F2;
+    --blue-bright: #2E6BFF;
+    --blue-glow: #4B8BF5;
+    --teal: #0891B2;
+    --teal-bright: #22D3EE;
+    --purple: #8B5CF6;
+    --purple-light: #C4B5FD;
+    --green: #059669;
+    --green-bright: #34D399;
+
+    --r-md: 10px;
+    --r-lg: 14px;
+    --r-xl: 18px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--navy-deep);
+    color: rgba(255,255,255,0.92);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .stage {
+    position: relative;
+    min-height: 100vh;
+    padding: 56px 24px 80px;
+    background:
+      radial-gradient(1400px 700px at -10% -20%, rgba(28,84,242,0.22), transparent 60%),
+      radial-gradient(1100px 600px at 110% 110%, rgba(34,211,238,0.13), transparent 55%),
+      radial-gradient(800px 500px at 50% 130%, rgba(139,92,246,0.10), transparent 60%),
+      linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+  }
+
+  .frame { max-width: 1080px; margin: 0 auto; }
+
+  .id-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 44px;
+    padding: 0 4px;
+  }
+
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 11px; color: rgba(255,255,255,0.6);
+    text-transform: lowercase; letter-spacing: 0.08em; font-weight: 500;
+  }
+
+  .brand .logo { font-weight: 600; color: #fff; letter-spacing: 0.04em; }
+  .brand .logo em { font-style: normal; color: var(--blue-glow); }
+
+  .brand-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--blue-glow);
+    box-shadow: 0 0 10px rgba(75,139,245,0.6);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  .meta {
+    font-size: 11px; color: rgba(255,255,255,0.4);
+    text-transform: lowercase; letter-spacing: 0.04em;
+  }
+
+  .hero { margin-bottom: 56px; padding: 0 4px; }
+
+  .hero-eyebrow {
+    font-size: 11px; color: var(--blue-glow);
+    text-transform: lowercase; letter-spacing: 0.1em;
+    margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
+    font-weight: 500;
+  }
+
+  .hero-eyebrow::before {
+    content: ''; display: block; width: 28px; height: 1px;
+    background: linear-gradient(90deg, var(--blue-glow), transparent);
+  }
+
+  .hero-title {
+    font-family: var(--serif);
+    font-size: clamp(44px, 5.5vw, 72px);
+    line-height: 1.05; font-weight: 400;
+    letter-spacing: -0.01em; color: #fff; margin-bottom: 20px;
+  }
+
+  .hero-title .accent {
+    background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 15.5px; line-height: 1.65;
+    color: rgba(255,255,255,0.65); max-width: 600px;
+  }
+
+  .section { margin-bottom: 36px; }
+
+  .sec-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 18px; padding: 0 4px;
+  }
+
+  .sec-label {
+    font-size: 11px; color: rgba(75,139,245,0.85);
+    text-transform: lowercase; letter-spacing: 0.08em; font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .sec-label::before {
+    content: ''; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--blue-glow);
+  }
+
+  .sec-aside {
+    font-size: 11px; color: rgba(255,255,255,0.4);
+    text-transform: lowercase; letter-spacing: 0.04em;
+  }
+
+  .card {
+    position: relative;
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid rgba(255,255,255,0.10);
+    border-radius: var(--r-lg);
+    backdrop-filter: blur(18px) saturate(120%);
+    -webkit-backdrop-filter: blur(18px) saturate(120%);
+    padding: 22px 24px; overflow: hidden;
+  }
+
+  .card::before {
+    content: ""; position: absolute; inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(160deg, rgba(75,139,245,0.06), rgba(255,255,255,0) 45%);
+    pointer-events: none;
+  }
+
+  .card-tight { padding: 16px 18px; }
+
+  .qa-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+  }
+
+  .qa-card { transition: border-color 0.2s ease; }
+  .qa-card:hover { border-color: rgba(75,139,245,0.25); }
+
+  .qa-num {
+    font-family: var(--serif); font-size: 24px;
+    color: rgba(75,139,245,0.5); font-weight: 400;
+    line-height: 1; margin-bottom: 12px; display: block;
+  }
+
+  .qa-title {
+    font-size: 14.5px; font-weight: 500; color: #fff;
+    margin-bottom: 8px; line-height: 1.35;
+  }
+
+  .qa-body {
+    font-size: 12.5px; line-height: 1.6;
+    color: rgba(255,255,255,0.65);
+  }
+
+  .qa-tag {
+    display: inline-block; font-size: 10px;
+    text-transform: lowercase; letter-spacing: 0.04em;
+    padding: 4px 10px; border-radius: 999px; margin-top: 14px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7); font-weight: 500;
+  }
+
+  .qa-tag.warn {
+    background: rgba(139,92,246,0.10);
+    border-color: rgba(196,181,253,0.30);
+    color: var(--purple-light);
+  }
+
+  .qa-tag.crit {
+    background: rgba(28,84,242,0.12);
+    border-color: rgba(75,139,245,0.35);
+    color: var(--blue-glow);
+  }
+
+  .qa-tag.ok {
+    background: rgba(5,150,105,0.10);
+    border-color: rgba(52,211,153,0.30);
+    color: var(--green-bright);
+  }
+
+  .qa-tag.teal {
+    background: rgba(8,145,178,0.10);
+    border-color: rgba(34,211,238,0.30);
+    color: var(--teal-bright);
+  }
+
+  .ready-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; margin-bottom: 14px;
+  }
+
+  .ready-tile {
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid rgba(255,255,255,0.10);
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    backdrop-filter: blur(14px);
+    position: relative; overflow: hidden;
+  }
+
+  .ready-tile::before {
+    content: ""; position: absolute; inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(160deg, rgba(75,139,245,0.05), rgba(255,255,255,0) 45%);
+    pointer-events: none;
+  }
+
+  .ready-label {
+    font-size: 11px; color: rgba(75,139,245,0.85);
+    text-transform: lowercase; letter-spacing: 0.04em;
+    margin-bottom: 8px; font-weight: 500;
+  }
+
+  .ready-value {
+    font-family: var(--serif); font-size: 40px;
+    line-height: 1; font-weight: 400;
+    background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 14px;
+  }
+
+  .ready-meter {
+    height: 4px; background: rgba(255,255,255,0.08);
+    border-radius: 999px; overflow: hidden; margin-bottom: 10px;
+  }
+
+  .ready-fill {
+    height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--blue), var(--blue-glow));
+    box-shadow: 0 0 12px rgba(75,139,245,0.4);
+  }
+
+  .ready-note {
+    font-size: 11.5px; color: rgba(255,255,255,0.55);
+    text-transform: lowercase; letter-spacing: 0.02em;
+    line-height: 1.5;
+  }
+
+  .gate-list {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  .gate {
+    display: grid; grid-template-columns: 32px 1fr auto;
+    gap: 16px; align-items: center;
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: var(--r-md);
+    padding: 16px 20px;
+    backdrop-filter: blur(12px);
+    position: relative; overflow: hidden;
+  }
+
+  .gate.done {
+    background: rgba(5,150,105,0.06);
+    border-color: rgba(52,211,153,0.25);
+  }
+
+  .gate.done::before {
+    content: ""; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 2px;
+    background: linear-gradient(180deg, var(--green-bright), var(--green));
+  }
+
+  .gate-num {
+    font-family: var(--serif); font-size: 18px;
+    color: rgba(75,139,245,0.55);
+  }
+
+  .gate.done .gate-num { color: var(--green-bright); }
+
+  .gate-body {
+    font-size: 13.5px; color: rgba(255,255,255,0.88); line-height: 1.45;
+  }
+
+  .gate-body small {
+    display: block; font-size: 11px;
+    color: rgba(255,255,255,0.45); margin-top: 4px;
+    text-transform: lowercase; letter-spacing: 0.02em;
+  }
+
+  .gate-pill {
+    font-size: 10px; text-transform: lowercase; letter-spacing: 0.06em;
+    padding: 5px 11px; border-radius: 999px;
+    background: rgba(75,139,245,0.10);
+    border: 0.5px solid rgba(75,139,245,0.30);
+    color: var(--blue-glow);
+    white-space: nowrap; font-weight: 500;
+  }
+
+  .gate-pill.done {
+    background: rgba(5,150,105,0.12);
+    border-color: rgba(52,211,153,0.35);
+    color: var(--green-bright);
+  }
+
+  .gate-pill.test {
+    background: rgba(8,145,178,0.10);
+    border-color: rgba(34,211,238,0.30);
+    color: var(--teal-bright);
+  }
+
+  .phase-rail {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+
+  .phase {
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    backdrop-filter: blur(12px);
+    position: relative; overflow: hidden;
+  }
+
+  .phase::before {
+    content: ""; position: absolute; inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(160deg, rgba(75,139,245,0.04), rgba(255,255,255,0) 45%);
+    pointer-events: none;
+  }
+
+  .phase-num {
+    font-size: 10px; color: var(--blue-glow);
+    text-transform: lowercase; letter-spacing: 0.08em;
+    margin-bottom: 6px; font-weight: 500;
+  }
+
+  .phase-title {
+    font-family: var(--serif); font-size: 19px;
+    line-height: 1.2; color: #fff; margin-bottom: 6px;
+  }
+
+  .phase-window {
+    font-size: 10.5px; color: rgba(255,255,255,0.5);
+    text-transform: lowercase; letter-spacing: 0.05em;
+    margin-bottom: 14px;
+  }
+
+  .phase-rule {
+    height: 2px; background: rgba(255,255,255,0.06);
+    border-radius: 999px; margin-bottom: 12px;
+  }
+
+  .phase:nth-child(1) .phase-rule {
+    background: linear-gradient(90deg, var(--blue), var(--blue-glow));
+    box-shadow: 0 0 8px rgba(75,139,245,0.4);
+  }
+
+  .phase-meta {
+    font-size: 11.5px; color: rgba(255,255,255,0.6); line-height: 1.55;
+  }
+
+  .board {
+    background:
+      radial-gradient(700px 350px at 0% 0%, rgba(28,84,242,0.18), transparent 60%),
+      radial-gradient(500px 300px at 100% 100%, rgba(34,211,238,0.10), transparent 60%),
+      rgba(11,37,69,0.5);
+    border: 0.5px solid rgba(75,139,245,0.20);
+    border-radius: var(--r-lg);
+    padding: 28px 30px;
+    backdrop-filter: blur(20px) saturate(120%);
+    position: relative; overflow: hidden;
+  }
+
+  .board::before {
+    content: ""; position: absolute; inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(160deg, rgba(75,139,245,0.10), rgba(255,255,255,0) 40%);
+    pointer-events: none;
+  }
+
+  .board-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 22px; flex-wrap: wrap; gap: 8px;
+  }
+
+  .board-eyebrow {
+    font-size: 11px; color: var(--blue-glow);
+    text-transform: lowercase; letter-spacing: 0.1em; font-weight: 500;
+  }
+
+  .board-target {
+    font-family: var(--serif); font-size: 24px;
+    color: #fff; line-height: 1.3; margin-bottom: 4px;
+  }
+
+  .board-target .accent {
+    background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .board-window {
+    font-size: 11px; color: rgba(255,255,255,0.5);
+    text-transform: lowercase; letter-spacing: 0.05em;
+  }
+
+  .board-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .task {
+    display: grid; grid-template-columns: 18px 28px 1fr;
+    gap: 14px; align-items: center;
+    padding: 13px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid rgba(255,255,255,0.08);
+    border-radius: var(--r-md);
+    transition: border-color 0.2s ease;
+  }
+
+  .task:hover { border-color: rgba(75,139,245,0.25); }
+
+  .task-box {
+    width: 14px; height: 14px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 3px;
+  }
+
+  .task-glyph {
+    font-size: 11px; color: rgba(255,255,255,0.5);
+    text-align: center;
+    text-transform: lowercase; letter-spacing: 0.04em; font-weight: 500;
+  }
+
+  .task-glyph.q { color: var(--blue-glow); }
+
+  .task-text {
+    font-size: 13.5px; color: rgba(255,255,255,0.88); line-height: 1.4;
+  }
+
+  .board-foot {
+    margin-top: 20px; padding-top: 18px;
+    border-top: 0.5px solid rgba(255,255,255,0.08);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .streak-label {
+    font-size: 11px; color: rgba(255,255,255,0.55);
+    text-transform: lowercase; letter-spacing: 0.06em; font-weight: 500;
+  }
+
+  .streak-bar { display: flex; gap: 4px; }
+
+  .streak-pip {
+    width: 30px; height: 4px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.10);
+  }
+
+  .foot {
+    margin-top: 56px; padding: 0 4px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: rgba(255,255,255,0.4);
+    text-transform: lowercase; letter-spacing: 0.04em;
+  }
+
+  .foot-tag {
+    font-family: var(--serif); font-style: normal; font-size: 14px;
+    color: rgba(255,255,255,0.55); text-transform: none; letter-spacing: 0;
+  }
+
+  .foot-tag .accent { color: var(--blue-glow); }
+
+  @media (max-width: 760px) {
+    .stage { padding: 36px 16px 60px; }
+    .qa-grid { grid-template-columns: 1fr; }
+    .ready-grid { grid-template-columns: 1fr; }
+    .phase-rail { grid-template-columns: 1fr; }
+    .gate { grid-template-columns: 28px 1fr; }
+    .gate-pill { grid-column: 2; justify-self: start; margin-top: 4px; }
+    .board { padding: 22px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="frame">
+
+    <div class="id-row">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span class="logo">Stryde<em>OS</em></span>
+        <span style="opacity: 0.5;">· sprint memo</span>
+      </div>
+      <div class="meta">14 day window · no scope drift</div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-eyebrow">closing the readiness gap</div>
+      <h1 class="hero-title">
+        Loop test, real data,<br>
+        <span class="accent">first non-Joe MRR.</span>
+      </h1>
+      <p class="hero-sub">
+        Twilio is approved. Ava is live. The deck is canon. What's left is the loop test, Pulse and Intelligence pulling real Cliniko data, and a multi-tenant trial under your own email before any prospect touches the door. Two weeks, no new features.
+      </p>
+    </div>
+
+    <div class="section">
+      <div class="sec-head">
+        <span class="sec-label">pricing deck · honest cuts</span>
+        <span class="sec-aside">six observations on canon</span>
+      </div>
+
+      <div class="qa-grid">
+        <div class="card qa-card">
+          <span class="qa-num">01</span>
+          <p class="qa-title">Clinic tier scales the wrong way.</p>
+          <p class="qa-body">
+            £399 for 6 plus clinicians works out at £66 each. At 10 it's £40. At 15 it's £26. Pricing power leaks exactly where the customer can pay most. Cap clinician count per tier, or move to base fee plus per seat.
+          </p>
+          <span class="qa-tag crit">leaks revenue</span>
+        </div>
+
+        <div class="card qa-card">
+          <span class="qa-num">02</span>
+          <p class="qa-title">Solo cannibalises Studio.</p>
+          <p class="qa-body">
+            A two-clinician partnership running lean buys Solo and shares the login. You won't catch it until churn data lands. Fix at the auth layer (single seat lock) or strip Ava from Solo (call routing isn't a one-line workflow anyway).
+          </p>
+          <span class="qa-tag warn">structural risk</span>
+        </div>
+
+        <div class="card qa-card">
+          <span class="qa-num">03</span>
+          <p class="qa-title">Hero anchors on cost-cutting.</p>
+          <p class="qa-body">
+            "Less than the receptionist" frames StrydeOS as a cheaper hire. Defensive. The buyer most likely to pay £299 is thinking growth, not headcount. Lead on revenue captured. Receptionist comparison belongs on slide 3.
+          </p>
+          <span class="qa-tag warn">positioning</span>
+        </div>
+
+        <div class="card qa-card">
+          <span class="qa-num">04</span>
+          <p class="qa-title">Path-to-£1M wants 280 customers.</p>
+          <p class="qa-body">
+            UK private MSK ICP is roughly 5,000 to 8,000 practices. 4 to 6 percent share. Achievable but tight. Pricing power on the Clinic tier is the lever that buys breathing room, not customer count.
+          </p>
+          <span class="qa-tag">market math</span>
+        </div>
+
+        <div class="card qa-card">
+          <span class="qa-num">05</span>
+          <p class="qa-title">Annual prepay buried.</p>
+          <p class="qa-body">
+            Two months free is a slide-5 footnote. That's £59,800 in January with zero billing risk. Should be a tier toggle, not a postscript. Cash compression is too useful to bury.
+          </p>
+          <span class="qa-tag ok">easy fix</span>
+        </div>
+
+        <div class="card qa-card">
+          <span class="qa-num">06</span>
+          <p class="qa-title">Setup fee floats unannounced.</p>
+          <p class="qa-body">
+            £3,980 setup (one-time) appears on slide 5 in the maths but never on the tier cards or in the receptionist comparison. A clinic owner reading top-down sees Studio at £299 and then a £3,980 number they didn't expect. Surface it on slide 1, or fold it into onboarding.
+          </p>
+          <span class="qa-tag teal">credibility gap</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head">
+        <span class="sec-label">app readiness · honest take</span>
+        <span class="sec-aside">post Twilio + Ava live</span>
+      </div>
+
+      <div class="ready-grid">
+        <div class="ready-tile">
+          <div class="ready-label">spires single tenant</div>
+          <div class="ready-value">82%</div>
+          <div class="ready-meter"><div class="ready-fill" style="width: 82%;"></div></div>
+          <div class="ready-note">twilio approved. ava live. loop test pending.</div>
+        </div>
+        <div class="ready-tile">
+          <div class="ready-label">studio full stack demo</div>
+          <div class="ready-value">70%</div>
+          <div class="ready-meter"><div class="ready-fill" style="width: 70%;"></div></div>
+          <div class="ready-note">pulse plus intelligence on real data is the gap.</div>
+        </div>
+        <div class="ready-tile">
+          <div class="ready-label">multi tenant production</div>
+          <div class="ready-value">65%</div>
+          <div class="ready-meter"><div class="ready-fill" style="width: 65%;"></div></div>
+          <div class="ready-note">personal email trial scheduled.</div>
+        </div>
+      </div>
+
+      <div class="card card-tight" style="margin-top: 14px;">
+        <p class="qa-body" style="font-size: 12.5px;">
+          The gap between "we built it" and "a stranger pays and uses it without you touching the database" is the entire sprint. Twilio clearing was the unlock. Now the maths is loop test, real-data parity, and a tenant trial. Two weeks if no new features land in the window.
+        </p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head">
+        <span class="sec-label">phase 1 · hard gates</span>
+        <span class="sec-aside">five rows green, not three</span>
+      </div>
+
+      <div class="gate-list">
+        <div class="gate done">
+          <span class="gate-num">01</span>
+          <div class="gate-body">
+            Twilio UK regulatory bundle approved
+            <small>cleared. number provisioned. ava live on the line.</small>
+          </div>
+          <span class="gate-pill done">done</span>
+        </div>
+        <div class="gate">
+          <span class="gate-num">02</span>
+          <div class="gate-body">
+            Full Ava loop test on Spires line
+            <small>inbound call → ava → cliniko booking → confirmation. end-to-end, no manual intervention.</small>
+          </div>
+          <span class="gate-pill test">test</span>
+        </div>
+        <div class="gate">
+          <span class="gate-num">03</span>
+          <div class="gate-body">
+            Pulse pulling real Cliniko data on Spires
+            <small>empty state replaced by real patient cohorts and discharge follow-ups.</small>
+          </div>
+          <span class="gate-pill">build</span>
+        </div>
+        <div class="gate">
+          <span class="gate-num">04</span>
+          <div class="gate-body">
+            Intelligence pulling real data on Spires
+            <small>per-clinician KPIs, conversion, LTV, no-show rate. live numbers, not placeholders.</small>
+          </div>
+          <span class="gate-pill">build</span>
+        </div>
+        <div class="gate">
+          <span class="gate-num">05</span>
+          <div class="gate-body">
+            Multi-tenant trial under personal email
+            <small>fresh tenant signup → onboarding → ava config → first call. no DB touches. fail it on purpose, find the gaps.</small>
+          </div>
+          <span class="gate-pill test">test</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head">
+        <span class="sec-label">14 day phase rail</span>
+        <span class="sec-aside">linear, not parallel</span>
+      </div>
+
+      <div class="phase-rail">
+        <div class="phase">
+          <div class="phase-num">phase 1</div>
+          <div class="phase-title">Hard gates</div>
+          <div class="phase-window">days 1 to 3</div>
+          <div class="phase-rule"></div>
+          <div class="phase-meta">loop tested. real data flowing. multi-tenant trial running.</div>
+        </div>
+        <div class="phase">
+          <div class="phase-num">phase 2</div>
+          <div class="phase-title">Dry run</div>
+          <div class="phase-window">days 4 to 6</div>
+          <div class="phase-rule"></div>
+          <div class="phase-meta">end-to-end with throwaway tenant. demo recorded. no asterisks.</div>
+        </div>
+        <div class="phase">
+          <div class="phase-num">phase 3</div>
+          <div class="phase-title">Activation</div>
+          <div class="phase-window">days 7 to 10</div>
+          <div class="phase-rule"></div>
+          <div class="phase-meta">paul collins out. cliniko listing live. five clinical performance audits booked.</div>
+        </div>
+        <div class="phase">
+          <div class="phase-num">phase 4</div>
+          <div class="phase-title">First close</div>
+          <div class="phase-window">days 11 to 14</div>
+          <div class="phase-rule"></div>
+          <div class="phase-meta">first non-joe MRR. retro. plan v2.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head">
+        <span class="sec-label">today · dopamine sprint</span>
+        <span class="sec-aside">nothing style</span>
+      </div>
+
+      <div class="board">
+        <div class="board-head">
+          <div>
+            <div class="board-target">
+              Phase 1 hard gates · <span class="accent">5 of 5 green</span>
+            </div>
+            <div class="board-window">60 minutes max · gate at 45</div>
+          </div>
+          <div class="board-eyebrow">sprint</div>
+        </div>
+
+        <div class="board-list">
+          <div class="task">
+            <div class="task-box"></div>
+            <div class="task-glyph q">⚡</div>
+            <div class="task-text">Call the Spires line from your mobile, log what Ava does end to end</div>
+          </div>
+          <div class="task">
+            <div class="task-box"></div>
+            <div class="task-glyph">──</div>
+            <div class="task-text">Wire Pulse to live Cliniko endpoint, render one real patient cohort</div>
+          </div>
+          <div class="task">
+            <div class="task-box"></div>
+            <div class="task-glyph q">⚡</div>
+            <div class="task-text">Sign up to StrydeOS using your personal Gmail, screenshot what breaks first</div>
+          </div>
+          <div class="task">
+            <div class="task-box"></div>
+            <div class="task-glyph">──</div>
+            <div class="task-text">Wire Intelligence to live data, render per-clinician KPIs for Joe</div>
+          </div>
+          <div class="task">
+            <div class="task-box"></div>
+            <div class="task-glyph q">⚡</div>
+            <div class="task-text">Mark task_plan.md phase 1, log what's green and what's still red</div>
+          </div>
+        </div>
+
+        <div class="board-foot">
+          <span class="streak-label">streak</span>
+          <div class="streak-bar">
+            <div class="streak-pip"></div>
+            <div class="streak-pip"></div>
+            <div class="streak-pip"></div>
+            <div class="streak-pip"></div>
+            <div class="streak-pip"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>StrydeOS · 2026.04.29</span>
+      <span class="foot-tag">Built by a clinic owner, <span class="accent">for clinic owners.</span></span>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

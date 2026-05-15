@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrydeOS &middot; The Maths</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B2545;
+    --navy-mid: #132D5E;
+    --blue: #1C54F2;
+    --blue-bright: #2E6BFF;
+    --blue-glow: #4B8BF5;
+    --teal: #0891B2;
+    --purple: #8B5CF6;
+    --cloud: #F2F1EE;
+    --ink: #111827;
+    --green: #059669;
+    --amber: #F59E0B;
+    --red: #DC2626;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Outfit', -apple-system, sans-serif;
+    background: var(--navy);
+    color: white;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ─── Slide base ────────────────────────────────────────────────── */
+  .slide {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(28,84,242,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(139,92,246,0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .slide-alt::before {
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 100%, rgba(8,145,178,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 20%, rgba(28,84,242,0.06) 0%, transparent 60%);
+  }
+
+  /* ─── Kicker (no chassis) ──────────────────────────────────────── */
+  .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .kicker-blue { color: var(--blue-glow); }
+  .kicker-teal { color: #22D3EE; }
+  .kicker-purple { color: #C4B5FD; }
+  .kicker-green { color: #34D399; }
+  .kicker-amber { color: #FCD34D; }
+
+  .kicker-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+
+  /* ─── Headline ─────────────────────────────────────────────────── */
+  .headline {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(42px, 5vw, 72px);
+    font-weight: 400;
+    line-height: 1.1;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
+
+  .headline .accent {
+    background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .headline .accent-green {
+    background: linear-gradient(135deg, #34D399, var(--green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .headline .accent-amber {
+    background: linear-gradient(135deg, #FCD34D, var(--amber));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .headline .accent-purple {
+    background: linear-gradient(135deg, #C4B5FD, var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subhead {
+    font-size: clamp(16px, 1.8vw, 22px);
+    font-weight: 400;
+    color: rgba(255,255,255,0.65);
+    text-align: center;
+    max-width: 760px;
+    line-height: 1.6;
+    margin-bottom: 60px;
+  }
+
+  /* ─── Stats row ─────────────────────────────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    width: min(1000px, 92vw);
+  }
+
+  .stat-card {
+    text-align: center;
+    padding: 32px 20px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .stat-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(32px, 3.5vw, 48px);
+    font-weight: 400;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.5;
+  }
+
+  .stat-green .stat-number { color: var(--green); }
+  .stat-blue .stat-number {
+    background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-teal .stat-number { color: #22D3EE; }
+  .stat-purple .stat-number { color: #C4B5FD; }
+
+  /* ─── Mix breakdown ────────────────────────────────────────────── */
+  .table-wrap {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    overflow: hidden;
+    width: min(900px, 92vw);
+  }
+
+  .data-row {
+    display: grid;
+    grid-template-columns: 1.4fr 0.6fr 0.6fr 0.8fr;
+    gap: 16px;
+    padding: 18px 24px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 14px;
+  }
+
+  .data-row.head {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+    padding: 16px 24px;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .data-row.total {
+    background: rgba(28,84,242,0.06);
+    border-top: 1px solid rgba(28,84,242,0.2);
+    border-bottom: none;
+    font-weight: 600;
+    color: white;
+  }
+
+  .data-row .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .data-row.head .num { text-align: right; }
+
+  /* ─── Milestone bars ───────────────────────────────────────────── */
+  .milestone-wrap { width: min(900px, 92vw); display: flex; flex-direction: column; gap: 16px; }
+
+  .milestone-row {
+    display: grid;
+    grid-template-columns: 200px 1fr 90px 90px 100px;
+    gap: 18px;
+    align-items: center;
+    padding: 22px 28px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+  }
+
+  .milestone-target {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+  }
+
+  .milestone-target .sub {
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    display: block;
+    margin-top: 2px;
+  }
+
+  .milestone-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .milestone-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--blue-glow));
+    border-radius: 4px;
+  }
+
+  .milestone-count {
+    text-align: right;
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: white;
+  }
+
+  .milestone-count .sub {
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  .milestone-time {
+    text-align: right;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .milestone-time strong {
+    display: block;
+    color: #34D399;
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    font-weight: 400;
+  }
+
+  /* ─── Velocity grid ────────────────────────────────────────────── */
+  .velocity-wrap {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    overflow: hidden;
+    width: min(900px, 92vw);
+  }
+
+  .velocity-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 18px 24px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 14px;
+  }
+
+  .velocity-row.head {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+    padding: 16px 24px;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .velocity-row .pace {
+    color: rgba(255,255,255,0.85);
+    font-weight: 500;
+  }
+
+  .velocity-row .target {
+    text-align: center;
+    color: rgba(255,255,255,0.7);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .velocity-row .target strong {
+    color: white;
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    font-weight: 400;
+    display: block;
+  }
+
+  .velocity-row .target .unit {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* ─── Cashflow comparison ──────────────────────────────────────── */
+  .cashflow-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    width: min(900px, 92vw);
+    margin-bottom: 32px;
+  }
+
+  .cashflow-card {
+    padding: 36px 32px;
+    border-radius: 16px;
+    position: relative;
+  }
+
+  .cashflow-card-muted {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .cashflow-card-active {
+    background: rgba(5,150,105,0.06);
+    border: 1px solid rgba(5,150,105,0.2);
+  }
+
+  .cashflow-card-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 18px;
+  }
+
+  .cashflow-card-muted .cashflow-card-label { color: rgba(255,255,255,0.4); }
+  .cashflow-card-active .cashflow-card-label { color: #34D399; }
+
+  .cashflow-card-price {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(36px, 4vw, 52px);
+    font-weight: 400;
+    line-height: 1.1;
+    margin-bottom: 4px;
+    color: white;
+  }
+
+  .cashflow-card-active .cashflow-card-price {
+    background: linear-gradient(135deg, #34D399, var(--green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .cashflow-card-per { font-size: 15px; color: rgba(255,255,255,0.55); margin-bottom: 18px; }
+  .cashflow-card-detail { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.6; }
+
+  /* ─── Insight callout ──────────────────────────────────────────── */
+  .insight-strip {
+    width: min(900px, 92vw);
+    padding: 20px 28px;
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.6;
+  }
+
+  .insight-strip svg { flex-shrink: 0; margin-top: 2px; }
+
+  .insight-strip strong { color: #FCD34D; font-weight: 600; }
+
+  .insight-strip-blue {
+    background: rgba(28,84,242,0.06);
+    border-color: rgba(28,84,242,0.2);
+  }
+  .insight-strip-blue strong { color: var(--blue-glow); }
+
+  .insight-strip-green {
+    background: rgba(5,150,105,0.06);
+    border-color: rgba(5,150,105,0.2);
+  }
+  .insight-strip-green strong { color: #34D399; }
+
+  /* ─── LTV ladder ───────────────────────────────────────────────── */
+  .ltv-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    width: min(1000px, 92vw);
+    margin-bottom: 32px;
+  }
+
+  .ltv-card {
+    padding: 24px 20px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    text-align: left;
+  }
+
+  .ltv-card-tier {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 6px;
+  }
+
+  .ltv-card-name {
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 18px;
+    line-height: 1.4;
+  }
+
+  .ltv-card-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 30px;
+    color: white;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .ltv-card-period {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 12px;
+  }
+
+  .ltv-card-breakdown {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.5;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ltv-card-clinic .ltv-card-value {
+    background: linear-gradient(135deg, #22D3EE, var(--teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ─── Churn impact rows ────────────────────────────────────────── */
+  .churn-wrap {
+    width: min(900px, 92vw);
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .churn-row {
+    display: grid;
+    grid-template-columns: 1.3fr 0.8fr 0.8fr 1fr;
+    gap: 16px;
+    padding: 18px 28px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 14px;
+  }
+
+  .churn-row.head {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .churn-row .label { color: rgba(255,255,255,0.85); font-weight: 500; }
+  .churn-row .label .tag { font-size: 11px; color: rgba(255,255,255,0.4); margin-left: 8px; font-weight: 400; }
+  .churn-row .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .churn-row .num.warn { color: #FCD34D; }
+  .churn-row .num.bad { color: #FCA5A5; }
+  .churn-row .num.good { color: #34D399; }
+  .churn-row .num strong { display: block; font-family: 'DM Serif Display', serif; font-size: 18px; font-weight: 400; }
+
+  /* ─── Wedge ladder ─────────────────────────────────────────────── */
+  .wedge-wrap {
+    width: min(900px, 92vw);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .wedge-step {
+    padding: 22px 28px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    display: grid;
+    grid-template-columns: 80px 1fr 140px 110px;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .wedge-step.bundle {
+    background: rgba(28,84,242,0.06);
+    border: 1px solid rgba(28,84,242,0.25);
+  }
+
+  .wedge-step .when {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+  }
+
+  .wedge-step .module {
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.5;
+  }
+
+  .wedge-step .module strong { color: white; font-weight: 600; }
+
+  .wedge-step .arpu {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: white;
+    text-align: right;
+  }
+
+  .wedge-step.bundle .arpu {
+    background: linear-gradient(135deg, var(--blue-bright), var(--blue-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .wedge-step .arpu .unit {
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    -webkit-text-fill-color: rgba(255,255,255,0.4);
+    background: none;
+  }
+
+  .wedge-step .delta {
+    text-align: right;
+    font-size: 12px;
+    color: #34D399;
+    font-weight: 500;
+  }
+
+  .wedge-step .delta.muted { color: rgba(255,255,255,0.3); }
+
+  /* ─── Footer ───────────────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    padding: 60px 40px;
+    color: rgba(255,255,255,0.3);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .footer strong { color: rgba(255,255,255,0.6); }
+
+  /* ─── Responsive ───────────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .slide { padding: 60px 28px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .data-row { grid-template-columns: 1fr 60px 60px 70px; padding: 14px 16px; font-size: 13px; }
+    .milestone-row { grid-template-columns: 1fr 70px 80px; gap: 10px; padding: 16px 18px; }
+    .milestone-row .milestone-bar { display: none; }
+    .velocity-row { grid-template-columns: 1fr 60px 60px 60px 70px; padding: 14px 16px; font-size: 12px; gap: 8px; }
+    .cashflow-grid { grid-template-columns: 1fr; gap: 20px; }
+    .ltv-grid { grid-template-columns: repeat(2, 1fr); }
+    .churn-row { grid-template-columns: 1fr 60px 70px 80px; padding: 14px 16px; font-size: 13px; }
+    .wedge-step { grid-template-columns: 1fr 90px; gap: 12px; padding: 16px 20px; }
+    .wedge-step .when, .wedge-step .delta { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 1 — Hero: The maths.
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="kicker kicker-blue">
+    <span class="kicker-dot" style="background: var(--blue-glow)"></span>
+    Pricing economics &middot; Internal analysis
+  </div>
+  <h1 class="headline">
+    The maths.<br>
+    <span class="accent">Without the deck.</span>
+  </h1>
+  <p class="subhead">
+    Twenty customers. Fifty. A hundred. The cashflow profile, the close rate required, the lifetime value per tier, and the levers that change the answer most. Modelled, not pitched.
+  </p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 2 — 20 customers headline scenario
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt">
+  <div class="kicker kicker-green">
+    <span class="kicker-dot" style="background: #34D399"></span>
+    Headline scenario
+  </div>
+  <h1 class="headline">
+    20 clinics signed.<br>
+    <span class="accent-green">&pound;71,760 ARR.</span>
+  </h1>
+  <p class="subhead">
+    Studio Full Stack at &pound;299/mo. Twenty contracts on the wall. Before churn, before mix, before annual prepay. The reference scenario that anchors every other number in this document.
+  </p>
+
+  <div class="stats-row">
+    <div class="stat-card stat-blue">
+      <div class="stat-number">&pound;5,980</div>
+      <div class="stat-label">Monthly recurring<br>revenue</div>
+    </div>
+    <div class="stat-card stat-green">
+      <div class="stat-number">&pound;71,760</div>
+      <div class="stat-label">Annual recurring<br>revenue</div>
+    </div>
+    <div class="stat-card stat-teal">
+      <div class="stat-number">&pound;3,980</div>
+      <div class="stat-label">Setup cash<br>(one-time)</div>
+    </div>
+    <div class="stat-card stat-purple">
+      <div class="stat-number">&pound;75,740</div>
+      <div class="stat-label">Year 1 cash<br>(zero churn)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 3 — Realistic mix
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="kicker kicker-blue">
+    <span class="kicker-dot" style="background: var(--blue-glow)"></span>
+    Mix scenarios
+  </div>
+  <h1 class="headline">
+    Pure Studio is fiction.<br>
+    <span class="accent">Mix is reality.</span>
+  </h1>
+  <p class="subhead">
+    Twenty signed clinics never look like twenty Studio Full Stack contracts. Some land modular. Some scale up. Here's the same headcount at a realistic mix, and what disciplined Full Stack conversion buys you on top.
+  </p>
+
+  <div class="table-wrap" style="margin-bottom: 28px;">
+    <div class="data-row head">
+      <div>Segment</div>
+      <div class="num">Count</div>
+      <div class="num">Avg &pound;/mo</div>
+      <div class="num">MRR</div>
+    </div>
+    <div class="data-row">
+      <div style="color:rgba(255,255,255,0.85);">Solo modular <span style="color:rgba(255,255,255,0.4);font-size:12px;">~1.5 modules attached</span></div>
+      <div class="num">6</div>
+      <div class="num">&pound;150</div>
+      <div class="num" style="color:white;font-weight:600;">&pound;900</div>
+    </div>
+    <div class="data-row">
+      <div style="color:rgba(255,255,255,0.85);">Studio Full Stack <span style="color:var(--blue-glow);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-left:8px;">core volume</span></div>
+      <div class="num">10</div>
+      <div class="num">&pound;299</div>
+      <div class="num" style="color:white;font-weight:600;">&pound;2,990</div>
+    </div>
+    <div class="data-row">
+      <div style="color:rgba(255,255,255,0.85);">Clinic Full Stack</div>
+      <div class="num">4</div>
+      <div class="num">&pound;399</div>
+      <div class="num" style="color:white;font-weight:600;">&pound;1,596</div>
+    </div>
+    <div class="data-row total">
+      <div>Realistic mix total</div>
+      <div class="num">20</div>
+      <div class="num"></div>
+      <div class="num">&pound;5,486</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;width:min(900px,92vw);">
+    <div style="padding:24px 28px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:14px;">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.4);margin-bottom:8px;font-weight:600;">Realistic ARR</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:36px;color:white;line-height:1;">&pound;65,832</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:6px;">From the 20-customer mix above</div>
+    </div>
+    <div style="padding:24px 28px;background:rgba(28,84,242,0.06);border:1px solid rgba(28,84,242,0.2);border-radius:14px;">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:var(--blue-glow);margin-bottom:8px;font-weight:600;">Lift if every Studio sale closes Full Stack</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:36px;background:linear-gradient(135deg, var(--blue-bright), var(--blue-glow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;">+&pound;5,928</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:6px;">Annual lift on the same headcount, ~&pound;500/mo MRR</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 4 — Path to milestones with velocity
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt">
+  <div class="kicker kicker-blue">
+    <span class="kicker-dot" style="background: var(--blue-glow)"></span>
+    The roadmap
+  </div>
+  <h1 class="headline">
+    From here<br>
+    <span class="accent">to a million.</span>
+  </h1>
+  <p class="subhead">
+    Customer counts to each ARR milestone, plus how fast you arrive at each one. Time-to-milestone column assumes a steady three Studio Full Stack closes per month. Pace dictates everything.
+  </p>
+
+  <div class="milestone-wrap">
+    <div class="milestone-row">
+      <div class="milestone-target">&pound;100K ARR<span class="sub">&pound;8,333 MRR</span></div>
+      <div class="milestone-bar"><div class="milestone-fill" style="width:10%;"></div></div>
+      <div class="milestone-count">28<span class="sub">Studio FS</span></div>
+      <div class="milestone-count" style="color:rgba(255,255,255,0.5);">~30<span class="sub">Mix</span></div>
+      <div class="milestone-time"><strong>9 mo</strong>at 3/mo close</div>
+    </div>
+    <div class="milestone-row">
+      <div class="milestone-target">&pound;250K ARR<span class="sub">&pound;20,833 MRR</span></div>
+      <div class="milestone-bar"><div class="milestone-fill" style="width:25%;"></div></div>
+      <div class="milestone-count">70<span class="sub">Studio FS</span></div>
+      <div class="milestone-count" style="color:rgba(255,255,255,0.5);">~76<span class="sub">Mix</span></div>
+      <div class="milestone-time"><strong>23 mo</strong>at 3/mo close</div>
+    </div>
+    <div class="milestone-row">
+      <div class="milestone-target">&pound;500K ARR<span class="sub">&pound;41,667 MRR</span></div>
+      <div class="milestone-bar"><div class="milestone-fill" style="width:50%;"></div></div>
+      <div class="milestone-count">140<span class="sub">Studio FS</span></div>
+      <div class="milestone-count" style="color:rgba(255,255,255,0.5);">~152<span class="sub">Mix</span></div>
+      <div class="milestone-time"><strong>47 mo</strong>at 3/mo close</div>
+    </div>
+    <div class="milestone-row">
+      <div class="milestone-target">&pound;1M ARR<span class="sub">&pound;83,333 MRR</span></div>
+      <div class="milestone-bar"><div class="milestone-fill" style="width:100%;"></div></div>
+      <div class="milestone-count">279<span class="sub">Studio FS</span></div>
+      <div class="milestone-count" style="color:rgba(255,255,255,0.5);">~304<span class="sub">Mix</span></div>
+      <div class="milestone-time"><strong>93 mo</strong>at 3/mo close</div>
+    </div>
+  </div>
+
+  <div style="height: 32px;"></div>
+
+  <div class="velocity-wrap">
+    <div class="velocity-row head">
+      <div>Close pace</div>
+      <div style="text-align:center;">&pound;100K ARR</div>
+      <div style="text-align:center;">&pound;250K ARR</div>
+      <div style="text-align:center;">&pound;500K ARR</div>
+      <div style="text-align:center;">&pound;1M ARR</div>
+    </div>
+    <div class="velocity-row">
+      <div class="pace">2 closes / month</div>
+      <div class="target"><strong>14 mo</strong><span class="unit">1.2 years</span></div>
+      <div class="target"><strong>35 mo</strong><span class="unit">2.9 years</span></div>
+      <div class="target"><strong>70 mo</strong><span class="unit">5.8 years</span></div>
+      <div class="target"><strong>140 mo</strong><span class="unit">11.7 years</span></div>
+    </div>
+    <div class="velocity-row">
+      <div class="pace">3 closes / month <span style="color:#34D399;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-left:6px;">target</span></div>
+      <div class="target"><strong>9 mo</strong><span class="unit">under a year</span></div>
+      <div class="target"><strong>23 mo</strong><span class="unit">1.9 years</span></div>
+      <div class="target"><strong>47 mo</strong><span class="unit">3.9 years</span></div>
+      <div class="target"><strong>93 mo</strong><span class="unit">7.7 years</span></div>
+    </div>
+    <div class="velocity-row">
+      <div class="pace">4 closes / month</div>
+      <div class="target"><strong>7 mo</strong><span class="unit">under a year</span></div>
+      <div class="target"><strong>17 mo</strong><span class="unit">1.4 years</span></div>
+      <div class="target"><strong>35 mo</strong><span class="unit">2.9 years</span></div>
+      <div class="target"><strong>70 mo</strong><span class="unit">5.8 years</span></div>
+    </div>
+    <div class="velocity-row" style="border-bottom:none;">
+      <div class="pace">6 closes / month</div>
+      <div class="target"><strong>5 mo</strong><span class="unit">under a year</span></div>
+      <div class="target"><strong>12 mo</strong><span class="unit">one year</span></div>
+      <div class="target"><strong>23 mo</strong><span class="unit">1.9 years</span></div>
+      <div class="target"><strong>47 mo</strong><span class="unit">3.9 years</span></div>
+    </div>
+  </div>
+
+  <div style="margin-top: 28px;" class="insight-strip insight-strip-blue">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    <div>To reach <strong>&pound;1M ARR within four years</strong>, the close rate must lift to roughly 6 a month before customer 100. This is the moment the GTM motion stops being founder-led and becomes a system. Plan the handoff at &pound;250K ARR, not &pound;500K.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 5 — Annual prepay cashflow lever
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="kicker kicker-green">
+    <span class="kicker-dot" style="background: #34D399"></span>
+    The cashflow lever
+  </div>
+  <h1 class="headline">
+    Twelve months upfront.<br>
+    <span class="accent-green">Two months free.</span>
+  </h1>
+  <p class="subhead">
+    The standard SaaS prepay play. A 16.7% effective discount in exchange for the year collected in January. The trade looks like revenue lost on the income statement and like runway gained on the bank statement. The bank statement wins for a bootstrapped founder.
+  </p>
+
+  <div class="cashflow-grid">
+    <div class="cashflow-card cashflow-card-muted">
+      <div class="cashflow-card-label">Monthly billing &middot; 20 clinics</div>
+      <div class="cashflow-card-price">&pound;5,980<span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:400;color:rgba(255,255,255,0.5);">/mo</span></div>
+      <div class="cashflow-card-per">&pound;71,760 collected over 12 months</div>
+      <div class="cashflow-card-detail">Cash arrives in twelve equal slices. Churn risk lives across the whole year. If a clinic cancels in March, you keep 3 months of revenue and lose 9.</div>
+    </div>
+    <div class="cashflow-card cashflow-card-active">
+      <div class="cashflow-card-label">Annual prepay &middot; 20 clinics</div>
+      <div class="cashflow-card-price">&pound;59,800<span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:400;-webkit-text-fill-color:rgba(255,255,255,0.5);background:none;">in Jan</span></div>
+      <div class="cashflow-card-per">12 months locked &middot; &pound;2,990 per customer</div>
+      <div class="cashflow-card-detail">A full year of revenue cleared on day one, plus &pound;3,980 setup cash. &pound;63,780 in the bank before the first February invoice. Zero billing risk for 12 months.</div>
+    </div>
+  </div>
+
+  <div class="insight-strip insight-strip-green">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+    <div>The trade is <strong>&pound;11,960 of nominal revenue for 12 months of certainty</strong>. For a bootstrapped founder running multiple ventures, the prepay path is almost always the right call. It eliminates first-year churn risk on contract, smooths out cashflow lumpiness, and converts 'will this customer pay next month' into a settled question.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 6 — Lifetime value per tier
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt">
+  <div class="kicker kicker-purple">
+    <span class="kicker-dot" style="background: #C4B5FD"></span>
+    Lifetime value
+  </div>
+  <h1 class="headline">
+    What a customer<br>
+    <span class="accent-purple">is worth at three years.</span>
+  </h1>
+  <p class="subhead">
+    Conservative 36-month average retention. Setup fee included. The number that anchors the CAC ceiling and underwrites every acquisition decision the practice makes.
+  </p>
+
+  <div class="ltv-grid">
+    <div class="ltv-card">
+      <div class="ltv-card-tier">Solo modular</div>
+      <div class="ltv-card-name">Avg 1.5 modules attached</div>
+      <div class="ltv-card-value">&pound;5,599</div>
+      <div class="ltv-card-period">36-month LTV</div>
+      <div class="ltv-card-breakdown">&pound;150 &times; 36<br>+ &pound;199 setup</div>
+    </div>
+    <div class="ltv-card">
+      <div class="ltv-card-tier">Solo Full Stack</div>
+      <div class="ltv-card-name">Bundled three modules</div>
+      <div class="ltv-card-value">&pound;7,363</div>
+      <div class="ltv-card-period">36-month LTV</div>
+      <div class="ltv-card-breakdown">&pound;199 &times; 36<br>+ &pound;199 setup</div>
+    </div>
+    <div class="ltv-card">
+      <div class="ltv-card-tier">Studio Full Stack</div>
+      <div class="ltv-card-name">2 to 5 clinicians</div>
+      <div class="ltv-card-value">&pound;10,963</div>
+      <div class="ltv-card-period">36-month LTV</div>
+      <div class="ltv-card-breakdown">&pound;299 &times; 36<br>+ &pound;199 setup</div>
+    </div>
+    <div class="ltv-card ltv-card-clinic">
+      <div class="ltv-card-tier">Clinic Full Stack</div>
+      <div class="ltv-card-name">6+ clinicians</div>
+      <div class="ltv-card-value">&pound;14,563</div>
+      <div class="ltv-card-period">36-month LTV</div>
+      <div class="ltv-card-breakdown">&pound;399 &times; 36<br>+ &pound;199 setup</div>
+    </div>
+  </div>
+
+  <div class="insight-strip insight-strip-blue">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <div>Healthy SaaS unit economics start at <strong>3x LTV/CAC</strong>. At an estimated &pound;500 to &pound;1,000 acquisition cost (LinkedIn, content, referrals, Clinical Performance Audit close rate), Studio Full Stack runs <strong>11x to 22x</strong>. The model has substantial room to invest in acquisition before unit economics become the constraint.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 7 — Churn sensitivity
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="kicker kicker-amber">
+    <span class="kicker-dot" style="background: #FCD34D"></span>
+    Churn sensitivity
+  </div>
+  <h1 class="headline">
+    What retention costs.<br>
+    <span class="accent-amber">Down to the pound.</span>
+  </h1>
+  <p class="subhead">
+    Twenty customers, &pound;71,760 starting ARR. Same year, different retention assumptions. Compounding erosion is the silent killer of every SaaS model that fails to instrument it. Track this monthly. Model it quarterly.
+  </p>
+
+  <div class="churn-wrap">
+    <div class="churn-row head">
+      <div>Monthly churn rate</div>
+      <div class="num">Customers lost / yr</div>
+      <div class="num">ARR erosion</div>
+      <div class="num">Implied retention</div>
+    </div>
+    <div class="churn-row">
+      <div class="label">1% monthly <span class="tag">best in class</span></div>
+      <div class="num good"><strong>~2.3</strong>customers</div>
+      <div class="num good"><strong>&pound;8,253</strong>annualised</div>
+      <div class="num good"><strong>88.6%</strong>annual</div>
+    </div>
+    <div class="churn-row">
+      <div class="label">2% monthly <span class="tag">good vertical SaaS</span></div>
+      <div class="num"><strong>~4.5</strong>customers</div>
+      <div class="num"><strong>&pound;16,150</strong>annualised</div>
+      <div class="num"><strong>78.5%</strong>annual</div>
+    </div>
+    <div class="churn-row">
+      <div class="label">3% monthly <span class="tag">typical</span></div>
+      <div class="num warn"><strong>~6.6</strong>customers</div>
+      <div class="num warn"><strong>&pound;23,680</strong>annualised</div>
+      <div class="num warn"><strong>69.4%</strong>annual</div>
+    </div>
+    <div class="churn-row" style="border-bottom:none;">
+      <div class="label">5% monthly <span class="tag">unsustainable</span></div>
+      <div class="num bad"><strong>~10.8</strong>customers</div>
+      <div class="num bad"><strong>&pound;38,750</strong>annualised</div>
+      <div class="num bad"><strong>54.0%</strong>annual</div>
+    </div>
+  </div>
+
+  <div style="height: 28px;"></div>
+
+  <div class="insight-strip insight-strip-green">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <div>Annual prepay structurally <strong>eliminates first-year churn on contract</strong>. The &pound;11,960 prepay discount on 20 customers protects against more than &pound;16,000 of expected ARR erosion at 2% monthly churn. The trade pays for itself in the first year and continues paying for the duration of the contract.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SLIDE 8 — Modular wedge to Full Stack
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt">
+  <div class="kicker kicker-blue">
+    <span class="kicker-dot" style="background: var(--blue-glow)"></span>
+    The GTM motion
+  </div>
+  <h1 class="headline">
+    Modular in.<br>
+    <span class="accent">Full Stack out.</span>
+  </h1>
+  <p class="subhead">
+    Customers don't buy three modules on day one. They buy Intelligence to fix the visibility problem. They add Ava when they see the missed-call data. They add Pulse when retention comes up. The wedge is the model. The bundle is the lock-in.
+  </p>
+
+  <div class="wedge-wrap">
+    <div class="wedge-step">
+      <div class="when">Day 1</div>
+      <div class="module"><strong>Land Intelligence</strong> &middot; Solo clinic, visibility-led close. Six numbers they have never tracked. Closes faster than any bundle pitch.</div>
+      <div class="arpu">&pound;69<span class="unit">/mo ARPU</span></div>
+      <div class="delta muted">Baseline</div>
+    </div>
+    <div class="wedge-step">
+      <div class="when">Month 2</div>
+      <div class="module"><strong>Attach Ava</strong> &middot; Intelligence dashboard surfaces missed-call volume in week 4. Ava becomes the obvious next step. No fresh sales cycle required.</div>
+      <div class="arpu">&pound;168<span class="unit">/mo ARPU</span></div>
+      <div class="delta">+143% ARPU</div>
+    </div>
+    <div class="wedge-step">
+      <div class="when">Month 4</div>
+      <div class="module"><strong>Attach Pulse</strong> &middot; Retention conversation gets concrete once they're tracking it. Pulse closes the loop on the discharged-but-not-followed-up gap.</div>
+      <div class="arpu">&pound;247<span class="unit">/mo ARPU</span></div>
+      <div class="delta">+47% ARPU</div>
+    </div>
+    <div class="wedge-step bundle">
+      <div class="when">Month 6</div>
+      <div class="module"><strong>Convert to Solo Full Stack</strong> &middot; Customer saves &pound;48/mo. Brand sticks. Switching cost climbs. The expansion motion completes.</div>
+      <div class="arpu">&pound;199<span class="unit">/mo ARPU</span></div>
+      <div class="delta">Customer saves &pound;48</div>
+    </div>
+  </div>
+
+  <div style="height: 28px;"></div>
+
+  <div class="insight-strip insight-strip-blue">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>
+    <div>Net effect on the same customer over six months: ARPU lifts from <strong>&pound;69 to &pound;199</strong>. A 188% revenue lift on the existing book without acquisition spend. Modular sells faster, the bundle locks in, the discount is the carrot for conversion. Land. Then expand. The pricing structure is built for this motion specifically.</div>
+  </div>
+</section>
+
+<div class="footer">
+  <strong>StrydeOS</strong> &middot; Pricing economics &middot; Internal analysis<br>
+  Built by a clinic owner, for clinic owners who'd rather know than hope.
+</div>
+
+</body>
+</html>

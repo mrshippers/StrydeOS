@@ -1,0 +1,373 @@
+# CLAUDE.md — StrydeOS
+
+> Claude Code operating instructions for the StrydeOS codebase.
+> Read this before touching anything. Last updated: 2026.
+
+---
+
+## Who You're Working With
+
+**Jamal** — physiotherapist, clinic owner (Spires Physiotherapy, West Hampstead), founder of StrydeOS.
+Intermediate-advanced developer. Self-taught. Moves fast. Doesn't need hand-holding on basics.
+
+**Communication rules:**
+- Recommendation first (1–2 sentences), reasoning second. Always.
+- No filler. No "Great question!" No corporate tone. No hedging.
+- Return full files/functions unless explicitly asked for a snippet.
+- Flag security and auth issues first when reviewing code.
+- Explain the *why*, not the *what*. Jamal knows his stack.
+
+---
+
+## What StrydeOS Is
+
+A **clinical performance tracking SaaS** built for private physiotherapy practices — with a clear path to white-labelling across allied health (therapy, medspa, dental).
+
+### The Core Philosophy — Stakeholder Triangle
+
+```
+Happy physio → Happy clients → Happy owner
+```
+
+You can't manage what you can't measure. Clinic owners have no visibility into what physios are doing well, where they're missing, or where patients drop off. StrydeOS closes that blind spot — without blaming clinicians. It surfaces gaps so they can be coached and improved.
+
+**Three stakeholders, all win:**
+- **Physio** → clarity on their own performance
+- **Patient** → better outcomes, better follow-through
+- **Owner** → EBITDA, reputation, retention
+
+### Target Market
+- Private physiotherapy practices (UK) — **NOT NHS**
+- NHS = too much red tape. Private practice owners think like business owners and respond to ROI.
+- Post-physio lock-in: therapy → medspa → dental
+
+---
+
+## Product Modules
+
+Three modules. Names are **locked** — do not rename, do not alias.
+
+| Module | Colour | Hex | Function |
+|--------|--------|-----|----------|
+| **Ava** | Royal Blue | `#1C54F2` | AI voice receptionist (ElevenLabs + Twilio + n8n) |
+| **Pulse** | Teal | `#0891B2` | Patient continuity / retention engine |
+| **Intelligence** | Purple | `#8B5CF6` | Clinical performance dashboard |
+
+### Ava — personality is product
+Reference: **Friday from Iron Man.** Intelligent, warm, dry, never robotic. Read `context/ava-personality.md` before writing any Ava copy or voice script. Collaborative framing only — *"Let Sue enjoy her coffee. Ava's got the phones."* Never replacement framing ("fire", "replace", "no sick days", "zero guesswork").
+
+---
+
+## Dogfood Clinic — Spires Physiotherapy
+
+StrydeOS is built and validated at Spires first.
+
+- **Location:** West Hampstead, London
+- **Team:** Jamal (MD, 1 day/week clinical), Andrew (clinician — primary case study), Max (clinician), Joe (business partner / MD — deep combined business + clinical knowledge)
+- **Current data:** Tracking Andrew + Max via Physitrack + WriteUpp
+- **Andrew's current follow-up rate:** ~2.4 (KPI target: improve this)
+- **Current programme assignment rate at Spires:** ~35%
+- Real gaps at Spires = real product requirements
+
+---
+
+## Tech Stack
+
+### Frontend
+- **Framework:** React / Next.js
+- **Styling:** Tailwind CSS
+- **Component approach:** Functional components, hooks only
+
+### Backend & Infrastructure
+- **Primary:** Firebase
+- **Auth:** Firebase Auth
+- **Database:** Firestore (`europe-west2` region — London)
+- **Collections:** `appointments`, `clinicians`, `physitrack_programs`, `metrics_weekly`
+- **Hosting:** Vercel / Firebase Hosting
+
+### Automation & Integrations
+- **Automation:** n8n
+- **Voice AI:** ElevenLabs (Conversational AI) + Twilio (telephony/SIP)
+- **White-label voice layer (future):** Vapify (wraps ElevenLabs at reseller phase)
+- **PMS integrations:** WriteUpp (primary), Cliniko, Halaxy, Zanda (Power Diary) — all live
+- **Roadmap:** TM3 (Blue Zinc), PPS (Rushcliff — API docs gated, requires PPS Express login), Pabau (requires API key), Jane App
+- **HEP integrations:** Physitrack (live), Rehab My Patient (live), Wibbi (pending — auth model needs rework)
+- **Clinical tools:** Heidi Health (clinical docs — data enrichment, not a competitor)
+- **PMS API bridge:** OpenClaw (handles PMS API access without official integration)
+
+### Dev Environment
+- **Primary IDE:** Cursor (Sonnet 4 as default model)
+- **Prototyping:** Claude Code
+- **Version control:** GitHub (private repos — commercial product)
+- **Deployment:** Vercel
+
+---
+
+## Brand Tokens — Source of Truth
+
+`brand.ts` is the **single source of truth** for all colour and typography values.
+**Never introduce values not in `brand.ts`. Never use the deprecated `#1648BC` / `#2968E0` — purge on sight.**
+
+### Colours
+
+| Token | Hex |
+|-------|-----|
+| Blue | `#1C54F2` |
+| BlueBright | `#2E6BFF` |
+| BlueGlow | `#4B8BF5` |
+| Navy | `#0B2545` |
+| NavyMid | `#132D5E` |
+| Teal | `#0891B2` |
+| Purple | `#8B5CF6` |
+| Cloud | `#F2F1EE` |
+| CloudLight | `#F9F8F6` |
+| CloudDark | `#E8E6E0` |
+| Cream | `#FAF9F7` |
+| Ink | `#111827` |
+| Muted | `#5C6370` |
+| MutedStrong | `#3F4752` |
+| Border | `#E2DFDA` |
+| Success | `#059669` |
+| Warning | `#F59E0B` |
+| Danger | `#EF4444` |
+
+**Dark surfaces use Navy `#0B2545` — no pure black anywhere in the brand.**
+
+### Typography (two fonts only — no exceptions)
+- **UI / Body:** Outfit (300–700)
+- **Headings:** DM Serif Display (weight 400 only — italic for emphasis)
+- **No Inter. No Roboto. No system fallbacks beyond the safety stack.**
+
+### Spatial System
+- **Base unit:** 4px
+- **Border-radius scale (strict):** 4 / 8 / 10 / 12 / 16 / 20 / 24 / 50px only
+- **Canonical radii tokens:** `--radius-card: 16px` · `--radius-chip: 50px` · `--radius-inner: 10px`
+- **Shadows:** `--shadow-card: 0 2px 12px rgba(11,37,69,.06)` · `--shadow-elevated: 0 8px 32px rgba(11,37,69,.10)`
+- **Tabular numerals** on every numeric value (`font-variant-numeric: tabular-nums`).
+
+---
+
+## Canonical Files — Do Not Reinterpret
+
+| File | Purpose |
+|------|---------|
+| `brand.ts` | Single source of truth for all colour + typography tokens |
+| `Marketing Material/Brand Assets/monolith.svg` | Canonical logo mark — do not reinterpret |
+| `Marketing Material/Brand Assets/MonolithLogo.tsx` | Logo React component |
+| `Marketing Material/Brand Assets/brand-identity-sheet.html` | Brand identity reference |
+| `Marketing Material/Brand Assets/logo-sheet.html` | Every Monolith size (favicons 16/32/48/64/180, social, app icon, wordmarks) |
+| `Marketing Material/Brand Assets/email-footer.html` | Canonical, installable email signatures (Option A Founder, Option B System) — copy SVG from here, never redraw |
+| `Marketing Material/Brand Assets/social-cards.html` | Social card templates |
+| `Marketing Material/Brand Assets/swagger-copy-bank.md` | The locked tone guide — ready-to-lift hero / kicker / CTA / social / subject copy |
+| `Marketing Material/Brand Assets/ava-personality.md` | Ava character brief (Friday from Iron Man reference) |
+| `Marketing Material/Brand Assets/brand-voice-guide.md` | Voice ideology, ICP, "Joe bar", banned phrases |
+| `strydeOS-website.jsx` | Marketing website |
+
+### Logo Rules
+- The Monolith mark: **gradient glass container**, ghost pillar, three ascending chevrons clipped inside, diagonal catch-light on the upper-right face.
+- **Never flat-fill the mark.** The Solid Royal variant is reserved for **app icons / favicons / constrained contexts only** — email signatures, web headers, marketing all use gradient glass.
+- Never reinterpret the mark.
+- In multi-logo sheets: each instance must use unique gradient and clipPath ID prefixes to prevent DOM conflicts.
+- On Cream variant: chevrons Royal Blue `#1C54F2` at 30/55/85% opacity. On Dark: chevrons white at 20/42/72%.
+
+---
+
+## Voice — Quartr precision meets Charlie Sheen confidence
+
+Premium, direct, a touch cheeky — never below the belt. Peer-to-peer with clinic owners who think like business owners.
+
+**The Joe bar:** *"Would I send this to Joe without editing?"* If no, rewrite.
+
+### Structural rules
+- Lead with the specific number. Follow with the implication. Never the reverse.
+- Two beats > rule of three (rule of three is an AI tell).
+- One idea per headline. Don't stack two payoffs.
+- State the fact. No "What if..." setups.
+- UK English. UK geography (Sheffield, Bristol, Manchester, Birmingham, Edinburgh, Clapham). No Americanisms.
+- Mix questions, incomplete thoughts, mid-beat pauses. Not every line is a hard stop.
+
+### Banned phrases (purge on sight)
+revolutionising · game-changing · seamlessly · leveraging · harnessing · at the forefront of · in today's landscape · journey · unlock · empower · showcase · highlight · underscore · tapestry · pivotal · vibrant · groundbreaking · nestled · testament · crucial · delve · foster · enhance · align with · *"Works weekends"* · *"No sick days"* · *"Zero guesswork"* · *"Replace your receptionist"* · anything that punches at workers.
+
+For ready-made hero / kicker / CTA / social / email-subject copy, lift directly from `swagger-copy-bank.md`.
+
+---
+
+## KPI Metrics — Confirmed from Spires
+
+These six metrics are validated from live Spires data. They are the canonical set for the dashboard.
+
+1. **Follow-up rate** — follow-ups booked ÷ initial assessments (weekly + rolling 90-day window)
+2. **HEP compliance** — patients given a programme ÷ patients seen
+3. **Utilisation** — booked slots ÷ available slots
+4. **DNA rate** — did-not-attend ÷ total booked
+5. **Revenue per session** — total revenue ÷ sessions delivered
+6. **NPS** — net promoter score (treated as EBITDA lever, not vanity)
+
+**Metric rule:** Every metric must connect to outcomes or revenue. No vanity stats.
+
+---
+
+## Dashboard Quality Bar
+
+**Aesthetic target:** Bloomberg terminal / Xero dashboard — clinical precision, zero noise, every number earns its place.
+
+- Clinician performance table uses a **coloured badge system** (defined in brand.ts palette)
+- Empty states are module-specific — not generic
+- Skeleton loading patterns for all async data
+- Dark mode surface stack: Navy `#0B2545` base, no pure black
+- Pill buttons (radius 50px). Primary = blue gradient `#2E6BFF → #1C54F2` with inset highlight + brand-shadow. Module variants for teal / purple / success.
+- Cards: cloud-light surface, 16px radius, 1px border `#E2DFDA`, `shadow-card`.
+- Focus ring: 2px cloud halo + 4px `rgba(28,84,242,0.3)` ring.
+- Email signatures: white background (never cream), 3px blue top bar, table-based, inline SVG gradient-glass Monolith.
+
+---
+
+## Hard Stops — Never Touch Without Explicit Instruction
+
+```
+Firebase logic
+Auth (Firebase Auth)
+Routing
+Existing PMS integrations (WriteUpp, Cliniko, Physitrack, OpenClaw)
+Real-time listener architecture
+Multi-tenant data model (clinicId partitioning)
+```
+
+If a change would touch any of the above, **stop and flag it** before proceeding.
+
+---
+
+## Model Usage Rules
+
+| Task | Model |
+|------|-------|
+| All day-to-day Cursor work | **Sonnet 4 (default)** |
+| Genuinely irreversible architectural decisions only | Opus (ask first) |
+
+Irreversible = multi-tenant data modelling, real-time listener architecture, complex state management intersections.
+
+---
+
+## Code Standards
+
+- Return **full files/functions**, never partial snippets unless explicitly asked
+- No sweeping rewrites — changes must be **surgical** and limited to what's specified
+- Always read the source file before making changes
+- Flag security / auth issues **first** when reviewing code
+- Don't suggest replacing what's working
+- No `console.log` left in production code
+- No hardcoded values — reference `brand.ts` and env vars
+- TypeScript preferred; match the existing typing conventions in the file being edited
+
+---
+
+## Architecture Principles
+
+### Data
+- Firestore region: `europe-west2` (London) — never change
+- `clinicId` partitioning is the multi-tenant isolation strategy — respect it in every query
+- Metrics are computed and cached in `metrics_weekly` — don't re-derive from raw collections unless building a backfill
+
+### Auth & RBAC
+- Firebase Auth only — no custom auth logic
+- **Four-tier role hierarchy:** `superadmin > owner > admin > clinician`
+- Role is **always read from Firestore** (`users/{uid}.role`) — never from JWT claims or client state
+- Permissions enforced at **four layers:** middleware (session cookie), AuthGuard (client redirect), API routes (`requireRole()`), Firestore security rules
+- Session cookie: HMAC-signed, HttpOnly, 8hr TTL (matches clinical workday) — contains only `{ uid, exp }`, no role
+
+#### Role Access Summary
+
+| Capability | Superadmin | Owner | Admin | Clinician |
+|-----------|-----------|-------|-------|-----------|
+| Dashboard (all clinicians) | Yes | Yes | Yes | **Own only** |
+| Settings (clinic details, KPIs, integrations) | Yes | Yes | Yes | **No** |
+| Settings (password, MFA) | Yes | Yes | Yes | Yes |
+| Billing / Checkout | Yes | Yes | Yes | **Redirect** |
+| Onboarding wizard | Yes | Yes | Yes | **Redirect** |
+| Compliance / SAR | Yes | Yes | Yes | **Redirect** |
+| Admin panel | Yes | **Redirect** | **Redirect** | **Redirect** |
+| API routes (PMS, HEP, comms, metrics) | Yes | Yes | Yes | **403** |
+
+#### Invite Flow
+- Owner adds clinician via Settings → creates Firebase Auth user + `users/{uid}` doc (with correct `clinicId`) + `clinicians` subcollection doc
+- Invited clinician sets password via email link, signs in → automatically under correct clinic
+- Signup route checks for existing invited users → blocks duplicate clinic creation with `INVITED_USER` error
+- Never expose Firebase config in client code outside of env vars
+
+### Integrations
+- WriteUpp + Cliniko are primary PMS sources via webhook / OpenClaw bridge
+- HEP data sources: Physitrack (live), Rehab My Patient (live), Wibbi (pending)
+- n8n handles all automation orchestration — don't replicate automation logic in the app
+
+### Voice (Ava module)
+- ElevenLabs Conversational AI for voice agent + Twilio for telephony/SIP
+- n8n for webhook routing
+- WriteUpp/Cliniko receive booking confirmations via webhook
+- White-label future path: Vapify wraps ElevenLabs at reseller phase
+
+---
+
+## Product Positioning — For Copy and Messaging
+
+- **Not** a tool that blames physios — it **surfaces gaps so they can be coached**
+- Conservative, clinically-grounded language always preferred over generic marketing copy
+- All messaging should connect clinical performance **directly to revenue outcomes**
+- NPS and Google Reviews are EBITDA levers, not just feedback
+- Target buyer thinks like a business owner and responds to ROI
+- Core differentiator: three-stakeholder model (owner / clinician / patient) — no competitor addresses all three
+- Built by an operator (Jamal runs Spires) — not a tech consultant's guess
+
+---
+
+## Roadmap Context
+
+### Now
+- Core KPI dashboard live with real Physitrack + WriteUpp data
+- HEP compliance + NPS tracking end-to-end
+- MVP live at Spires as pilot
+
+### Next
+- Onboard 1–2 other private physio practices
+- Pitch deck + sales motion built around stakeholder triangle
+- TM3 (Blue Zinc) integration — dominant legacy UK physio PMS, current blind spot
+- PPS (Rushcliff) integration — legacy UK incumbent, 2,400+ clinics, Physio First partner. API docs gated behind PPS Express login.
+- Outcome measures layer: NPRS, PSFS, QuickDASH, ODI, NDI (clinical-to-commercial correlation)
+
+### Later
+- White-label: therapy → medspa → dental
+- Per-seat or per-clinic SaaS pricing
+- Vapify white-label layer for Ava at reseller phase
+- Full multi-tenant self-serve onboarding
+
+---
+
+## Pending / Known Gaps
+
+- **TM3 (Blue Zinc)** — critical UK PMS integration, not yet built
+- **PPS (Rushcliff)** — legacy UK incumbent (2,400+ clinics, Physio First partner). API exists (docs.pps-api.com) but docs gated behind PPS Express login. Token-based API pricing from £80/mo. Contact sales@rushcliff.com for developer access.
+- **Pabau** — medspa/aesthetics PMS integration, awaiting API key access
+- **Outcome measures** — NPRS, PSFS, QuickDASH, ODI, NDI layer not yet started
+- **Loom embed** — demo video section on website, not yet implemented
+- **Driiva project** — separate auth + real-time + AI/ML project, requires same structured treatment
+
+---
+
+## What Not to Build
+
+- ROI calculator belongs on the **marketing website only** — never in the app
+- No NHS-specific features
+- No chatbot UI — Ava is voice-first
+- No vanity metrics — if it doesn't connect to outcomes or revenue, it doesn't belong
+
+---
+
+## Naming History (Context Only)
+
+- **TGT** → internal placeholder ("The Gain Train"). Never public-facing. Codebase was `tgt-clinical-dashboard`.
+- **StrydeOS** → current name. Stride / progress / MSK movement. macOS-but-MSK energy. Premium, clean.
+- Repo renamed: `tgt-clinical-dashboard` → `strydeos`
+
+---
+
+*End of CLAUDE.md. Keep this file current as the product evolves.*

@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StrydeOS — Design System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B2545; --navy-mid:#132D5E;
+    --blue:#1C54F2; --blue-bright:#2E6BFF; --blue-glow:#4B8BF5;
+    --teal:#0891B2; --purple:#8B5CF6;
+    --cloud:#F2F1EE; --cloud-light:#F9F8F6; --cloud-dark:#E8E6E0; --cream:#FAF9F7;
+    --ink:#111827; --muted:#5C6370; --muted-strong:#3F4752; --border:#E2DFDA;
+    --success:#059669; --warning:#F59E0B; --danger:#EF4444;
+    --shadow-card:0 2px 12px rgba(11,37,69,.06);
+    --shadow-elev:0 8px 32px rgba(11,37,69,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Outfit',sans-serif;background:var(--navy);color:#fff;line-height:1.6;font-feature-settings:"tnum"}
+  .page{max-width:1120px;margin:0 auto;padding:72px 48px 96px}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--blue-glow)}
+  .h1{font-family:'DM Serif Display',serif;font-size:64px;line-height:1.04;letter-spacing:-.02em;margin-top:14px}
+  .h1 .ital{font-style:italic;color:var(--blue-glow)}
+  .lede{margin-top:22px;max-width:640px;font-size:18px;color:rgba(255,255,255,.55)}
+  .meta{margin-top:28px;display:flex;gap:10px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:50px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);font-size:11px;font-weight:600;letter-spacing:.06em;color:rgba(255,255,255,.6);text-transform:uppercase}
+  .chip .dot{width:6px;height:6px;border-radius:50%;background:var(--success)}
+  hr.div{border:none;height:1px;background:rgba(255,255,255,.06);margin:80px 0}
+  .sec-head{display:flex;align-items:baseline;gap:18px;margin-bottom:6px}
+  .sec-num{font-family:'DM Serif Display',serif;font-size:38px;color:rgba(255,255,255,.16);line-height:1}
+  .sec-title{font-family:'DM Serif Display',serif;font-size:32px;letter-spacing:-.01em}
+  .sec-desc{font-size:14px;color:rgba(255,255,255,.45);max-width:620px;margin:14px 0 36px}
+  .sec-desc code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;font-size:12px;font-family:ui-monospace,monospace}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g5{grid-template-columns:repeat(5,1fr)}
+  .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:22px}
+  .card-cream{background:var(--cream);border:1px solid var(--border);border-radius:16px;padding:24px;color:var(--ink)}
+  .label-sm{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px}
+
+  /* swatches */
+  .sw{border-radius:12px;padding:16px;min-height:110px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden}
+  .sw-name{font-size:13px;font-weight:600}
+  .sw-hex{font-family:ui-monospace,monospace;font-size:11px;opacity:.7;margin-top:2px}
+  .sw-role{font-size:10px;opacity:.55;margin-top:6px;letter-spacing:.04em;text-transform:uppercase}
+  .light .sw-name,.light .sw-hex,.light .sw-role{color:var(--ink)}
+  .light .sw-hex,.light .sw-role{color:var(--muted)}
+
+  /* type spec */
+  .type-row{display:grid;grid-template-columns:160px 1fr;gap:24px;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .type-row:last-child{border-bottom:none}
+  .type-spec{font-size:11px;color:rgba(255,255,255,.4);font-family:ui-monospace,monospace;line-height:1.7}
+  .type-spec strong{display:block;color:rgba(255,255,255,.7);font-family:'Outfit',sans-serif;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:10px;margin-bottom:6px}
+
+  /* logo plates */
+  .plate{display:flex;align-items:center;justify-content:center;border-radius:14px;min-height:170px;position:relative;overflow:hidden}
+  .plate-cap{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.1em;text-transform:uppercase;margin-top:10px;font-weight:600}
+
+  /* tokens table */
+  .tok{display:grid;grid-template-columns:200px 1fr 1fr;gap:12px;padding:12px 16px;border-radius:8px;font-size:13px;align-items:center}
+  .tok:nth-child(odd){background:rgba(255,255,255,.025)}
+  .tok-name{font-family:ui-monospace,monospace;font-size:12px;color:#fff}
+  .tok-val{font-family:ui-monospace,monospace;font-size:12px;color:rgba(255,255,255,.55)}
+  .tok-use{font-size:12px;color:rgba(255,255,255,.45)}
+
+  /* components */
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:50px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;letter-spacing:.01em;text-decoration:none;border:none;cursor:pointer;transition:all .35s cubic-bezier(.16,1,.3,1)}
+  .btn-primary{background:linear-gradient(135deg,#2E6BFF,#1C54F2);color:#fff;box-shadow:0 2px 8px rgba(28,84,242,.19),0 0 0 1px rgba(46,107,255,.09),inset 0 1px 0 rgba(255,255,255,.15)}
+  .btn-teal{background:linear-gradient(135deg,#0AADCF,#0891B2);color:#fff;box-shadow:0 2px 8px rgba(8,145,178,.19),0 0 0 1px rgba(10,173,207,.09),inset 0 1px 0 rgba(255,255,255,.15)}
+  .btn-purple{background:linear-gradient(135deg,#A78BFA,#8B5CF6);color:#fff;box-shadow:0 2px 8px rgba(139,92,246,.19),0 0 0 1px rgba(167,139,250,.09),inset 0 1px 0 rgba(255,255,255,.15)}
+  .btn-success{background:linear-gradient(135deg,#10B981,#059669);color:#fff}
+  .btn-secondary{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.18)}
+  .btn-secondary.light{color:var(--navy);border-color:var(--border)}
+
+  .stat{display:flex;flex-direction:column;gap:14px}
+  .stat-v{font-family:'DM Serif Display',serif;font-size:64px;line-height:1;letter-spacing:-.02em}
+  .stat-l{font-size:16px;color:rgba(255,255,255,.55)}
+
+  .module-card{height:140px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;border:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(18,47,88,.7),rgba(11,37,69,.7));box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 12px 28px -20px rgba(0,0,0,.55)}
+  .module-card.ava{border-color:rgba(28,84,242,.4);background:linear-gradient(180deg,rgba(28,84,242,.15),rgba(11,37,69,.7))}
+  .module-card.pulse{border-color:rgba(8,145,178,.4);background:linear-gradient(180deg,rgba(8,145,178,.15),rgba(11,37,69,.7))}
+  .module-card.intel{border-color:rgba(139,92,246,.4);background:linear-gradient(180deg,rgba(139,92,246,.15),rgba(11,37,69,.7))}
+  .module-card .m-icon{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+  .module-card .m-title{font-family:'DM Serif Display',serif;font-size:28px;line-height:1}
+  .module-card.ava .m-title{color:var(--blue-glow)}
+  .module-card.pulse .m-title{color:#22D3EE}
+  .module-card.intel .m-title{color:#A78BFA}
+  .module-card .m-sub{font-size:14px;color:rgba(255,255,255,.55)}
+
+  /* voice cards */
+  .voice-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .voice-card{padding:18px 20px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+  .voice-card.bad{border-color:rgba(239,68,68,.25)}
+  .voice-card .vh{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+  .voice-card.good .vh{color:#34D399}
+  .voice-card.bad .vh{color:#FCA5A5}
+  .voice-card p{font-size:14px;color:rgba(255,255,255,.75);line-height:1.55}
+  .voice-card.bad p{color:rgba(255,255,255,.55)}
+
+  .rule{padding:10px 0;font-size:13.5px;color:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.05);display:flex;gap:10px;align-items:flex-start}
+  .rule:last-child{border-bottom:none}
+  .rule .mark{flex-shrink:0;width:18px;font-weight:700;font-family:ui-monospace,monospace}
+  .rule.do .mark{color:#34D399}
+  .rule.dont .mark{color:#FCA5A5}
+
+  .banned{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .banned span{font-size:11px;padding:3px 9px;border-radius:50px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:rgba(255,200,200,.75);text-decoration:line-through;text-decoration-color:rgba(239,68,68,.35)}
+
+  /* radii / shadow demo */
+  .r-demo{aspect-ratio:1;background:linear-gradient(135deg,rgba(75,139,245,.15),rgba(28,84,242,.05));border:1px solid rgba(255,255,255,.1);display:flex;align-items:flex-end;padding:14px;font-family:ui-monospace,monospace;font-size:11px;color:rgba(255,255,255,.55)}
+  .shadow-demo{height:160px;border-radius:16px;background:var(--cloud-light);display:flex;align-items:flex-end;padding:16px;color:var(--muted);font-size:11px;font-family:ui-monospace,monospace}
+
+  /* light-mode preview */
+  .light-block{background:var(--cloud);color:var(--ink);border-radius:20px;padding:36px;border:1px solid var(--border)}
+  .light-block .ll{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+  .light-block .lt{font-family:'DM Serif Display',serif;font-size:32px;margin-bottom:8px}
+  .light-block .lp{font-size:14px;color:var(--muted);max-width:480px;margin-bottom:24px}
+
+  /* signature */
+  .sig-founder{border-top:3px solid var(--blue);padding-top:16px;display:flex;gap:14px}
+  .sig-founder .col{border-left:2px solid var(--blue);padding-left:12px}
+  .sig-system{border-top:3px solid var(--blue);padding-top:16px;text-align:center}
+
+  /* footer */
+  .footer{margin-top:80px;padding-top:24px;border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.25)}
+
+  /* ascii ladder */
+  .ladder{font-family:ui-monospace,monospace;font-size:12px;color:rgba(255,255,255,.55);line-height:1.8;padding:18px 22px;background:rgba(0,0,0,.18);border-radius:12px;border:1px solid rgba(255,255,255,.06);white-space:pre}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header style="display:flex;justify-content:space-between;align-items:flex-end;gap:48px;flex-wrap:wrap">
+    <div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <!-- Monolith mark -->
+        <svg width="56" height="56" viewBox="0 0 100 100" fill="none">
+          <defs>
+            <linearGradient id="m-c" x1=".1" y1="0" x2=".85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity=".58"/><stop offset="100%" stop-color="#091D3E" stop-opacity=".72"/></linearGradient>
+            <radialGradient id="m-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity=".42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+            <linearGradient id="m-t" x1=".05" y1="1" x2=".35" y2="0"><stop offset="0%" stop-color="#fff" stop-opacity=".55"/><stop offset="100%" stop-color="#fff" stop-opacity=".97"/></linearGradient>
+            <linearGradient id="m-m" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#fff" stop-opacity="0"/><stop offset="28%" stop-color="#fff" stop-opacity=".6"/><stop offset="65%" stop-color="#fff" stop-opacity=".12"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></linearGradient>
+            <linearGradient id="m-b" x1=".1" y1="0" x2=".4" y2="1"><stop offset="0%" stop-color="#7ABBFF" stop-opacity=".65"/><stop offset="100%" stop-color="#1C54F2" stop-opacity=".06"/></linearGradient>
+            <clipPath id="m-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+            <clipPath id="m-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+          </defs>
+          <rect width="100" height="100" rx="24" fill="url(#m-c)"/>
+          <rect width="100" height="100" rx="24" fill="url(#m-r)"/>
+          <rect width="100" height="100" rx="24" fill="none" stroke="url(#m-b)" stroke-width="1.2"/>
+          <path d="M17 21 Q50 12 83 21" stroke="url(#m-m)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <rect x="35" y="20" width="22" height="60" rx="5" fill="#fff" fill-opacity=".07"/>
+          <rect x="35" y="46" width="22" height="34" rx="5" fill="#000" fill-opacity=".1"/>
+          <g clip-path="url(#m-p)">
+            <polyline points="32,80 46,72 60,80" stroke="#fff" stroke-opacity=".2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <polyline points="32,72 46,64 60,72" stroke="#fff" stroke-opacity=".42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <polyline points="32,64 46,56 60,64" stroke="#fff" stroke-opacity=".72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </g>
+          <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#m-t)" clip-path="url(#m-a)"/>
+          <line x1="33" y1="52" x2="59" y2="39" stroke="#fff" stroke-width="1.2" stroke-opacity=".55" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="eyebrow">Design System</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:36px;letter-spacing:-.02em;margin-top:4px">Stryde<span style="color:var(--blue-glow)">OS</span></div>
+        </div>
+      </div>
+      <h1 class="h1" style="margin-top:36px">The Clinic OS,<br><span class="ital">in one sheet.</span></h1>
+      <p class="lede">Everything one designer, engineer or operator needs to ship something on-brand. Extracted from <code style="font-family:ui-monospace,monospace;font-size:14px;background:rgba(255,255,255,.06);padding:2px 7px;border-radius:4px">brand.ts</code>, <code style="font-family:ui-monospace,monospace;font-size:14px;background:rgba(255,255,255,.06);padding:2px 7px;border-radius:4px">globals.css</code>, the v4.0 identity sheet and the brand voice guide. Single source of truth.</p>
+      <div class="meta">
+        <span class="chip"><span class="dot"></span>v4.0 · Feb 2026</span>
+        <span class="chip">Confidential · Internal</span>
+        <span class="chip">Driiva Ltd</span>
+      </div>
+    </div>
+  </header>
+
+  <hr class="div">
+
+  <!-- 01 IDEOLOGY -->
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><span class="eyebrow">Ideology</span></div>
+    <div class="sec-title">The infrastructure to compete.</div>
+    <p class="sec-desc">Every independent clinic owner should have the tools to build a million-pound practice — if they want. They're being gatekept, not by talent gaps, but by infrastructure. StrydeOS hands the PE-grade stack to the three-room practice in Sheffield, Bristol, Birmingham, or Clapham.</p>
+
+    <div class="grid g3">
+      <div class="card">
+        <div class="label-sm">The Bar</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:22px;line-height:1.25;font-style:italic;color:#fff">"Would I send this to Joe<br>without editing?"</div>
+        <p style="margin-top:14px;font-size:13px;color:rgba(255,255,255,.55);line-height:1.55">Not "is this premium." That specific question. Joe is a business partner with deep clinical + commercial knowledge. He'd clock a template in two sentences.</p>
+      </div>
+      <div class="card">
+        <div class="label-sm">Voice in One Line</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:22px;line-height:1.25;color:#fff">Quartr precision meets <span style="color:var(--blue-glow);font-style:italic">cultural fluency.</span></div>
+        <p style="margin-top:14px;font-size:13px;color:rgba(255,255,255,.55);line-height:1.55">Data-first, then the punchline. Earned confidence, not performed confidence.</p>
+      </div>
+      <div class="card">
+        <div class="label-sm">The ICP</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:22px;line-height:1.25;color:#fff">Private physio owner.<br>30s–50s. 2–10 clinicians.</div>
+        <p style="margin-top:14px;font-size:13px;color:rgba(255,255,255,.55);line-height:1.55">Smart, time-poor, business-minded. Frustrated by admin, not by ambition. Responds to specificity, ROI, and being spoken to as a peer.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <!-- 02 THE MARK -->
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><span class="eyebrow">The Mark</span></div>
+    <div class="sec-title">The Monolith.</div>
+    <p class="sec-desc">A performance pillar. The diagonal face catches light — precision at the apex. Beneath it, three chevrons climb. Momentum contained, then released. Container is <strong style="color:#fff">always gradient glass</strong>, never flat fill (except the Solid Royal variant). Canonical source: <code>MonolithLogo.tsx</code>.</p>
+
+    <!-- spec strip -->
+    <div class="grid g4" style="margin-bottom:32px">
+      <div class="card" style="padding:16px">
+        <div class="label-sm" style="margin-bottom:6px">Container</div>
+        <p style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.5">Linear <code style="font-family:ui-monospace,monospace;font-size:11px">#2E6BFF 58% → #091D3E 72%</code> + radial light <code style="font-family:ui-monospace,monospace;font-size:11px">#6AABFF 42%</code>. rx:24 squircle.</p>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="label-sm" style="margin-bottom:6px">Ghost Pillar</div>
+        <p style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.5">White at 7% opacity, rect (35,20→57,80), rx:5. Lower half darkened with black at 10%.</p>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="label-sm" style="margin-bottom:6px">Catch-light</div>
+        <p style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.5">Diagonal cut (35,52)→(57,40). Top face white gradient 55%→97%. Edge stroke 55%.</p>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="label-sm" style="margin-bottom:6px">3 Chevrons</div>
+        <p style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.5">Clipped inside pillar. Bottom 20% / sw:2 → Mid 42% / sw:2.5 → Top 72% / sw:3.2. Ascending.</p>
+      </div>
+    </div>
+
+    <!-- hero plate -->
+    <div class="plate" style="background:var(--navy);min-height:240px;margin-bottom:18px">
+      <svg width="180" height="180" viewBox="0 0 100 100" fill="none">
+        <defs>
+          <linearGradient id="x-c" x1=".1" y1="0" x2=".85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity=".58"/><stop offset="100%" stop-color="#091D3E" stop-opacity=".72"/></linearGradient>
+          <radialGradient id="x-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity=".42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+          <linearGradient id="x-t" x1=".05" y1="1" x2=".35" y2="0"><stop offset="0%" stop-color="#fff" stop-opacity=".55"/><stop offset="100%" stop-color="#fff" stop-opacity=".97"/></linearGradient>
+          <linearGradient id="x-b" x1=".1" y1="0" x2=".4" y2="1"><stop offset="0%" stop-color="#7ABBFF" stop-opacity=".65"/><stop offset="100%" stop-color="#1C54F2" stop-opacity=".06"/></linearGradient>
+          <clipPath id="x-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+          <clipPath id="x-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+        </defs>
+        <rect width="100" height="100" rx="24" fill="url(#x-c)"/>
+        <rect width="100" height="100" rx="24" fill="url(#x-r)"/>
+        <rect width="100" height="100" rx="24" fill="none" stroke="url(#x-b)" stroke-width="1.2"/>
+        <rect x="35" y="20" width="22" height="60" rx="5" fill="#fff" fill-opacity=".07"/>
+        <rect x="35" y="46" width="22" height="34" rx="5" fill="#000" fill-opacity=".1"/>
+        <g clip-path="url(#x-p)">
+          <polyline points="32,80 46,72 60,80" stroke="#fff" stroke-opacity=".2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <polyline points="32,72 46,64 60,72" stroke="#fff" stroke-opacity=".42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <polyline points="32,64 46,56 60,64" stroke="#fff" stroke-opacity=".72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </g>
+        <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#x-t)" clip-path="url(#x-a)"/>
+        <line x1="33" y1="52" x2="59" y2="39" stroke="#fff" stroke-width="1.2" stroke-opacity=".55" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <!-- colourways -->
+    <div class="label-sm">Colourways</div>
+    <div class="grid g3" style="margin-bottom:32px">
+      <div>
+        <div class="plate" style="background:var(--cream)">
+          <svg width="84" height="84" viewBox="0 0 100 100" fill="none">
+            <defs>
+              <linearGradient id="y-c" x1=".1" y1="0" x2=".85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity=".58"/><stop offset="100%" stop-color="#091D3E" stop-opacity=".72"/></linearGradient>
+              <radialGradient id="y-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity=".42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+              <linearGradient id="y-t" x1=".05" y1="1" x2=".35" y2="0"><stop offset="0%" stop-color="#fff" stop-opacity=".55"/><stop offset="100%" stop-color="#fff" stop-opacity=".97"/></linearGradient>
+              <clipPath id="y-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+              <clipPath id="y-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+            </defs>
+            <rect width="100" height="100" rx="24" fill="url(#y-c)"/>
+            <rect width="100" height="100" rx="24" fill="url(#y-r)"/>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="#fff" fill-opacity=".07"/>
+            <rect x="35" y="46" width="22" height="34" rx="5" fill="#000" fill-opacity=".1"/>
+            <g clip-path="url(#y-p)">
+              <polyline points="32,80 46,72 60,80" stroke="#1C54F2" stroke-opacity=".3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <polyline points="32,72 46,64 60,72" stroke="#1C54F2" stroke-opacity=".55" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <polyline points="32,64 46,56 60,64" stroke="#1C54F2" stroke-opacity=".85" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </g>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#y-t)" clip-path="url(#y-a)"/>
+          </svg>
+        </div>
+        <div class="plate-cap">On Cream · Chevrons Royal Blue</div>
+      </div>
+      <div>
+        <div class="plate" style="background:var(--navy-mid)">
+          <svg width="84" height="84" viewBox="0 0 100 100" fill="none">
+            <defs>
+              <linearGradient id="z-c" x1=".1" y1="0" x2=".85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity=".58"/><stop offset="100%" stop-color="#091D3E" stop-opacity=".72"/></linearGradient>
+              <radialGradient id="z-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity=".42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+              <linearGradient id="z-t" x1=".05" y1="1" x2=".35" y2="0"><stop offset="0%" stop-color="#fff" stop-opacity=".55"/><stop offset="100%" stop-color="#fff" stop-opacity=".97"/></linearGradient>
+              <clipPath id="z-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+              <clipPath id="z-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+            </defs>
+            <rect width="100" height="100" rx="24" fill="url(#z-c)"/>
+            <rect width="100" height="100" rx="24" fill="url(#z-r)"/>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="#fff" fill-opacity=".07"/>
+            <rect x="35" y="46" width="22" height="34" rx="5" fill="#000" fill-opacity=".1"/>
+            <g clip-path="url(#z-p)">
+              <polyline points="32,80 46,72 60,80" stroke="#fff" stroke-opacity=".2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <polyline points="32,72 46,64 60,72" stroke="#fff" stroke-opacity=".42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <polyline points="32,64 46,56 60,64" stroke="#fff" stroke-opacity=".72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </g>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#z-t)" clip-path="url(#z-a)"/>
+          </svg>
+        </div>
+        <div class="plate-cap">On Dark · Chevrons White</div>
+      </div>
+      <div>
+        <div class="plate" style="background:var(--navy)">
+          <svg width="84" height="84" viewBox="0 0 100 100" fill="none">
+            <defs>
+              <clipPath id="w-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+              <clipPath id="w-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+            </defs>
+            <rect width="100" height="100" rx="24" fill="#1C54F2"/>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="#fff" fill-opacity=".07"/>
+            <rect x="35" y="46" width="22" height="34" rx="5" fill="#000" fill-opacity=".08"/>
+            <g clip-path="url(#w-p)">
+              <polyline points="32,80 46,72 60,80" stroke="#fff" stroke-opacity=".25" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <polyline points="32,72 46,64 60,72" stroke="#fff" stroke-opacity=".5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <polyline points="32,64 46,56 60,64" stroke="#fff" stroke-opacity=".8" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </g>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="#fff" fill-opacity=".85" clip-path="url(#w-a)"/>
+          </svg>
+        </div>
+        <div class="plate-cap">Solid Royal · App Icon Only</div>
+      </div>
+    </div>
+
+    <!-- wordmark -->
+    <div class="label-sm">Wordmark Lockups</div>
+    <div class="grid g2">
+      <div class="plate" style="background:var(--navy-mid);min-height:120px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
+            <rect width="100" height="100" rx="24" fill="#1C54F2"/>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="#fff" fill-opacity=".15"/>
+            <g><polyline points="32,80 46,72 60,80" stroke="#fff" stroke-opacity=".4" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <polyline points="32,72 46,64 60,72" stroke="#fff" stroke-opacity=".6" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <polyline points="32,64 46,56 60,64" stroke="#fff" stroke-opacity=".85" stroke-width="3.2" stroke-linecap="round" fill="none"/></g>
+          </svg>
+          <span style="font-weight:700;font-size:24px;letter-spacing:-.02em;color:#fff">Stryde<span style="color:var(--blue-glow)">OS</span></span>
+        </div>
+      </div>
+      <div class="plate" style="background:var(--cream);min-height:120px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
+            <rect width="100" height="100" rx="24" fill="#1C54F2"/>
+            <rect x="35" y="20" width="22" height="60" rx="5" fill="#fff" fill-opacity=".15"/>
+            <g><polyline points="32,80 46,72 60,80" stroke="#fff" stroke-opacity=".4" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <polyline points="32,72 46,64 60,72" stroke="#fff" stroke-opacity=".6" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <polyline points="32,64 46,56 60,64" stroke="#fff" stroke-opacity=".85" stroke-width="3.2" stroke-linecap="round" fill="none"/></g>
+          </svg>
+          <span style="font-weight:700;font-size:24px;letter-spacing:-.02em;color:var(--navy)">Stryde<span style="color:var(--blue)">OS</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <!-- 03 PALETTE -->
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><span class="eyebrow">Palette</span></div>
+    <div class="sec-title">Tokens, not opinions.</div>
+    <p class="sec-desc">All values from <code>brand.ts</code>. Use the exported <code>brand</code> object or CSS custom properties from <code>globals.css</code>. Never invent new hexes — the deprecated <code>#1648BC</code> / <code>#2968E0</code> are gone.</p>
+
+    <div class="label-sm">Core Blues</div>
+    <div class="grid g5" style="margin-bottom:24px">
+      <div class="sw" style="background:var(--navy);border:1px solid rgba(255,255,255,.1)"><div class="sw-name">Navy</div><div class="sw-hex">#0B2545</div><div class="sw-role">Backgrounds</div></div>
+      <div class="sw" style="background:var(--navy-mid);border:1px solid rgba(255,255,255,.1)"><div class="sw-name">Navy Mid</div><div class="sw-hex">#132D5E</div><div class="sw-role">Surfaces</div></div>
+      <div class="sw" style="background:var(--blue)"><div class="sw-name">Blue</div><div class="sw-hex">#1C54F2</div><div class="sw-role">Primary · CTAs</div></div>
+      <div class="sw" style="background:var(--blue-bright)"><div class="sw-name">Blue Bright</div><div class="sw-hex">#2E6BFF</div><div class="sw-role">Hover · Active</div></div>
+      <div class="sw" style="background:var(--blue-glow)"><div class="sw-name">Blue Glow</div><div class="sw-hex">#4B8BF5</div><div class="sw-role">Accents · "OS"</div></div>
+    </div>
+
+    <div class="label-sm">Module Accents</div>
+    <div class="grid g3" style="margin-bottom:24px">
+      <div class="sw" style="background:var(--blue);min-height:90px"><div class="sw-name">Ava</div><div class="sw-hex">#1C54F2</div><div class="sw-role">Voice agent · calls→bookings</div></div>
+      <div class="sw" style="background:var(--teal);min-height:90px"><div class="sw-name">Pulse</div><div class="sw-hex">#0891B2</div><div class="sw-role">Retention · between sessions</div></div>
+      <div class="sw" style="background:var(--purple);min-height:90px"><div class="sw-name">Intelligence</div><div class="sw-hex">#8B5CF6</div><div class="sw-role">Data · KPIs · outcomes</div></div>
+    </div>
+
+    <div class="label-sm">Light-mode Surfaces</div>
+    <div class="grid g5 light" style="margin-bottom:24px">
+      <div class="sw" style="background:var(--cloud);border:1px solid var(--border)"><div class="sw-name">Cloud Dancer</div><div class="sw-hex">#F2F1EE</div><div class="sw-role">Page bg</div></div>
+      <div class="sw" style="background:var(--cloud-light);border:1px solid var(--border)"><div class="sw-name">Cloud Light</div><div class="sw-hex">#F9F8F6</div><div class="sw-role">Cards</div></div>
+      <div class="sw" style="background:var(--cloud-dark);border:1px solid var(--border)"><div class="sw-name">Cloud Dark</div><div class="sw-hex">#E8E6E0</div><div class="sw-role">Dividers</div></div>
+      <div class="sw" style="background:var(--cream);border:1px solid var(--border)"><div class="sw-name">Cream</div><div class="sw-hex">#FAF9F7</div><div class="sw-role">Alternates</div></div>
+      <div class="sw" style="background:var(--border);border:1px solid #c8c5be"><div class="sw-name">Border</div><div class="sw-hex">#E2DFDA</div><div class="sw-role">Borders</div></div>
+    </div>
+
+    <div class="label-sm">Text · Semantic</div>
+    <div class="grid g5">
+      <div class="sw" style="background:#111827;min-height:80px"><div class="sw-name">Ink</div><div class="sw-hex">#111827</div><div class="sw-role">Body</div></div>
+      <div class="sw light" style="background:#5C6370;min-height:80px"><div class="sw-name" style="color:#fff">Muted</div><div class="sw-hex" style="color:rgba(255,255,255,.7)">#5C6370</div><div class="sw-role" style="color:rgba(255,255,255,.55)">AA · 5.0:1</div></div>
+      <div class="sw" style="background:var(--success);min-height:80px"><div class="sw-name">Success</div><div class="sw-hex">#059669</div></div>
+      <div class="sw" style="background:var(--warning);min-height:80px"><div class="sw-name" style="color:#111827">Warning</div><div class="sw-hex" style="color:rgba(0,0,0,.55)">#F59E0B</div></div>
+      <div class="sw" style="background:var(--danger);min-height:80px"><div class="sw-name">Danger</div><div class="sw-hex">#EF4444</div></div>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <!-- 04 TYPOGRAPHY -->
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><span class="eyebrow">Typography</span></div>
+    <div class="sec-title">Two fonts. No exceptions.</div>
+    <p class="sec-desc">DM Serif Display for editorial moments. Outfit for everything else. Reach for italic DM Serif when a line needs to land.</p>
+
+    <div class="card">
+      <div class="type-row">
+        <div class="type-spec"><strong>Display</strong>DM Serif Display<br>Weight 400 only<br>Italic for emphasis<br>32–96px<br>letter-spacing: -.02em<br>line-height: 1.04–1.1</div>
+        <div>
+          <div style="font-family:'DM Serif Display',serif;font-size:56px;line-height:1.05;letter-spacing:-.02em">Nothing changes.<br><span style="font-style:italic;color:var(--blue-glow)">Everything improves.</span></div>
+        </div>
+      </div>
+      <div class="type-row">
+        <div class="type-spec"><strong>H2 · Section</strong>DM Serif Display 32–40px<br>letter-spacing: -.01em<br>line-height: 1.1</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:36px;letter-spacing:-.01em">The infrastructure to compete.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-spec"><strong>Body · UI</strong>Outfit 14–22px<br>weights 300–700<br>letter-spacing: -.006em<br>line-height: 1.55–1.6<br>tabular-nums on numerics</div>
+        <div>
+          <p style="font-size:22px;color:rgba(255,255,255,.8);line-height:1.55;margin-bottom:10px">Your PMS stays. Your HEP platform stays. Your phone number stays.</p>
+          <p style="font-size:14px;color:rgba(255,255,255,.55);line-height:1.6">StrydeOS connects to all of it and adds the layer your practice is missing. Built on the same primitives PE-backed networks use — priced for a three-room practice.</p>
+        </div>
+      </div>
+      <div class="type-row">
+        <div class="type-spec"><strong>Eyebrow / Label</strong>Outfit 10–11px<br>weight 600/700<br>letter-spacing: .12–.18em<br>uppercase<br>colour: blue-glow or muted</div>
+        <div style="display:flex;gap:24px;align-items:center">
+          <span class="eyebrow">01 — Architecture</span>
+          <span style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4)">Section Label</span>
+        </div>
+      </div>
+      <div class="type-row">
+        <div class="type-spec"><strong>Stat</strong>DM Serif Display 64–72px<br>line-height: 1<br>letter-spacing: -.02em<br>green / cyan / purple values</div>
+        <div style="display:flex;gap:64px">
+          <div class="stat"><div class="stat-v" style="color:#34D399">0</div><div class="stat-l">missed calls</div></div>
+          <div class="stat"><div class="stat-v" style="color:#22D3EE">Auto</div><div class="stat-l">rebooking</div></div>
+          <div class="stat"><div class="stat-v" style="color:#A78BFA">Live</div><div class="stat-l">KPIs</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <!-- 05 SPACING / RADII / SHADOW -->
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><span class="eyebrow">Spacing · Radii · Shadow</span></div>
+    <div class="sec-title">The grid beneath.</div>
+    <p class="sec-desc">Three radii, two shadows, one rhythm. Cards always 16px. Pills always 50px. Inner inputs / chips always 10px.</p>
+
+    <div class="grid g2">
+      <div class="card">
+        <div class="label-sm">Tokens</div>
+        <div class="tok"><span class="tok-name">--radius-card</span><span class="tok-val">16px</span><span class="tok-use">Cards, surfaces, plates</span></div>
+        <div class="tok"><span class="tok-name">--radius-chip</span><span class="tok-val">50px</span><span class="tok-use">Buttons, pills, badges</span></div>
+        <div class="tok"><span class="tok-name">--radius-inner</span><span class="tok-val">10px</span><span class="tok-use">Inputs, inner tiles, m-icon</span></div>
+        <div class="tok"><span class="tok-name">--shadow-card</span><span class="tok-val">0 2px 12px rgba(11,37,69,.06)</span><span class="tok-use">Default lift</span></div>
+        <div class="tok"><span class="tok-name">--shadow-elev</span><span class="tok-val">0 8px 32px rgba(11,37,69,.10)</span><span class="tok-use">Hover, modals</span></div>
+      </div>
+      <div class="grid g3">
+        <div>
+          <div class="r-demo" style="border-radius:10px">rx:10</div>
+          <div class="plate-cap">Inner</div>
+        </div>
+        <div>
+          <div class="r-demo" style="border-radius:16px">rx:16</div>
+          <div class="plate-cap">Card</div>
+        </div>
+        <div>
+          <div class="r-demo" style="border-radius:50px;aspect-ratio:auto;height:100%">pill</div>
+          <div class="plate-cap">Chip / Btn</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:18px">
+      <div class="shadow-demo" style="box-shadow:0 2px 12px rgba(11,37,69,.06)">shadow-card</div>
+      <div class="shadow-demo" style="box-shadow:0 8px 32px rgba(11,37,69,.10)">shadow-elevated</div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="label-sm">Vertical rhythm</div>
+      <div class="ladder">section gutter ........ 80px (hr.div)
+hero  → body .......... 36–44px
+title → desc .......... 14–22px
+desc  → grid .......... 24–36px
+card padding .......... 22–32px
+grid gap (cards) ...... 16px
+grid gap (swatches) ... 12–16px
+focus-ring ............ 2px halo + 4px brand@30%</div>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <!-- 06 COMPONENTS -->
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><span class="eyebrow">Components</span></div>
+    <div class="sec-title">The kit, on the table.</div>
+    <p class="sec-desc">Buttons, modules, and KPIs as they ship. Module cards always lead with the DM Serif title in the module's accent colour. Buttons are gradient — inset highlight, brand-shadow, 50px pill.</p>
+
+    <div class="label-sm">Buttons</div>
+    <div class="card" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:24px">
+      <button class="btn btn-primary">Get Started <span>→</span></button>
+      <button class="btn btn-teal">Open Pulse</button>
+      <button class="btn btn-purple">View Intelligence</button>
+      <button class="btn btn-success">Confirm</button>
+      <button class="btn btn-secondary">Learn more</button>
+      <button class="btn btn-primary" disabled style="opacity:.4;cursor:not-allowed">Disabled</button>
+    </div>
+
+    <div class="label-sm">Module Cards</div>
+    <div class="grid g3" style="margin-bottom:24px">
+      <div class="module-card ava">
+        <div class="m-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4B8BF5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V8a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5z"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="11" r="1"/><circle cx="16" cy="11" r="1"/></svg>
+        </div>
+        <div class="m-title">Ava</div>
+        <div class="m-sub">Calls → bookings</div>
+      </div>
+      <div class="module-card pulse">
+        <div class="m-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>
+        </div>
+        <div class="m-title">Pulse</div>
+        <div class="m-sub">Risk → re-engage</div>
+      </div>
+      <div class="module-card intel">
+        <div class="m-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="m-title">Intelligence</div>
+        <div class="m-sub">Data → KPIs</div>
+      </div>
+    </div>
+
+    <div class="label-sm">Light-mode Surface (Cloud Dancer)</div>
+    <div class="light-block">
+      <div class="ll">Dashboard · Live</div>
+      <div class="lt">£128K between them.</div>
+      <p class="lp">That's not talent. That's a missing layer. Three rooms in Sheffield, three in Bristol — the gap was always infrastructure.</p>
+      <div style="display:flex;gap:48px;margin-bottom:24px">
+        <div><div style="font-family:'DM Serif Display',serif;font-size:42px;color:var(--blue);line-height:1">£72.3k</div><div style="font-size:13px;color:var(--muted);margin-top:6px">MRR · Month 36 target</div></div>
+        <div><div style="font-family:'DM Serif Display',serif;font-size:42px;color:var(--teal);line-height:1">250</div><div style="font-size:13px;color:var(--muted);margin-top:6px">clinics</div></div>
+        <div><div style="font-family:'DM Serif Display',serif;font-size:42px;color:var(--purple);line-height:1">0.5%</div><div style="font-size:13px;color:var(--muted);margin-top:6px">of UK private physio market</div></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary">Get Started <span>→</span></button>
+        <button class="btn btn-secondary light">View Plan</button>
+      </div>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <!-- 07 VOICE -->
+  <section>
+    <div class="sec-head"><span class="sec-num">07</span><span class="eyebrow">Voice</span></div>
+    <div class="sec-title">Quartr precision. Cultural fluency.</div>
+    <p class="sec-desc">Lead with the specific number, follow with the implication. Never the reverse. Trailing implications beat spelling it out. Rule of three is AI — two is sharper.</p>
+
+    <div class="voice-grid" style="margin-bottom:24px">
+      <div class="voice-card good">
+        <div class="vh">✓ Sounds like StrydeOS</div>
+        <p style="font-family:'DM Serif Display',serif;font-size:20px;line-height:1.3;color:#fff;margin-bottom:8px">"£128K between them. That's not talent."</p>
+        <p style="font-size:13px;color:rgba(255,255,255,.55);font-style:italic">Reader fills in "it's data." Trailing implication. The number lands first.</p>
+      </div>
+      <div class="voice-card bad">
+        <div class="vh">✗ Sounds assembled</div>
+        <p style="font-family:'DM Serif Display',serif;font-size:20px;line-height:1.3;margin-bottom:8px">"Revolutionise your clinic by unlocking the power of seamless AI-driven workflows."</p>
+        <p style="font-size:13px;font-style:italic">Banned phrases. No specifics. No earned confidence.</p>
+      </div>
+      <div class="voice-card good">
+        <div class="vh">✓ Sounds like StrydeOS</div>
+        <p style="font-family:'DM Serif Display',serif;font-size:20px;line-height:1.3;color:#fff;margin-bottom:8px">"Nothing changes. <em style="color:var(--blue-glow)">Everything improves.</em>"</p>
+        <p style="font-size:13px;color:rgba(255,255,255,.55);font-style:italic">Two beats. One paradox. Earns the click.</p>
+      </div>
+      <div class="voice-card bad">
+        <div class="vh">✗ Off-tone</div>
+        <p style="font-family:'DM Serif Display',serif;font-size:20px;line-height:1.3;margin-bottom:8px">"Works weekends. Zero guesswork. No sick days."</p>
+        <p style="font-size:13px;font-style:italic">Punching at workers. Ava is collaborative — she handles volume, the team does the work that needs them.</p>
+      </div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <div class="label-sm">Structural Rules</div>
+        <div class="rule do"><span class="mark">✓</span><span>Lead with the specific number, follow with the implication. Never the reverse.</span></div>
+        <div class="rule do"><span class="mark">✓</span><span>One idea per headline. Don't stack two payoffs.</span></div>
+        <div class="rule do"><span class="mark">✓</span><span>Mix questions, incomplete thoughts, mid-beat pauses. Not every line is a hard stop.</span></div>
+        <div class="rule do"><span class="mark">✓</span><span>State the fact. No "What if..." setups.</span></div>
+        <div class="rule do"><span class="mark">✓</span><span>UK geography: Sheffield, Bristol, Manchester, Birmingham, Edinburgh, Clapham. Real cities.</span></div>
+      </div>
+      <div class="card">
+        <div class="label-sm">Never Sounds Like</div>
+        <div class="banned">
+          <span>revolutionising</span><span>game-changing</span><span>seamlessly</span><span>leveraging</span><span>harnessing</span><span>at the forefront of</span><span>in today's landscape</span><span>journey</span><span>unlock</span><span>empower</span><span>showcase</span><span>highlight</span><span>underscore</span><span>tapestry</span><span>pivotal</span><span>vibrant</span><span>groundbreaking</span><span>nestled</span><span>testament</span><span>crucial</span><span>delve</span><span>foster</span><span>enhance</span><span>align with</span>
+        </div>
+        <p style="font-size:12.5px;color:rgba(255,255,255,.5);margin-top:14px;line-height:1.55">Plus: "Works weekends." "No sick days." "Zero guesswork." Anything that punches at workers. Ever.</p>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card" style="border-left:3px solid var(--blue)"><div class="label-sm" style="color:var(--blue-glow)">Ava tone</div><p style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.55">Collaborative, not replacement. She handles the volume; the team does the work that needs them. Has a personality. Use it.</p></div>
+      <div class="card" style="border-left:3px solid var(--teal)"><div class="label-sm" style="color:#22D3EE">Pulse tone</div><p style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.55">Patient outcomes framing. Between sessions is where relationships either hold or disappear. Pulse lives there.</p></div>
+      <div class="card" style="border-left:3px solid var(--purple)"><div class="label-sm" style="color:#A78BFA">Intelligence tone</div><p style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.55">Clinical precision, no fluff. Numbers earn their place. Every stat connects to revenue or outcomes.</p></div>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <!-- 08 USAGE -->
+  <section>
+    <div class="sec-head"><span class="sec-num">08</span><span class="eyebrow">Usage Rules</span></div>
+    <div class="sec-title">Do / Don't.</div>
+
+    <div class="grid g2" style="margin-top:8px">
+      <div class="card">
+        <div class="label-sm" style="color:#34D399">✓ DO</div>
+        <div class="rule do"><span class="mark">✓</span><span>Use the gradient-glass container for all standard applications of the Monolith.</span></div>
+        <div class="rule do"><span class="mark">✓</span><span>Solid Royal variant only for app icons, favicons, constrained contexts.</span></div>
+        <div class="rule do"><span class="mark">✓</span><span>On Cream colourway uses royal-blue chevrons at 30/55/85% opacity.</span></div>
+        <div class="rule do"><span class="mark">✓</span><span>Maintain minimum 16px. Use <code style="font-family:ui-monospace,monospace;font-size:11px">simplified</code> prop at ≤24px.</span></div>
+        <div class="rule do"><span class="mark">✓</span><span>Source all values from <code style="font-family:ui-monospace,monospace;font-size:11px">brand.ts</code>. Single source of truth.</span></div>
+        <div class="rule do"><span class="mark">✓</span><span>Tabular numerals on every numeric value (<code style="font-family:ui-monospace,monospace;font-size:11px">font-variant-numeric: tabular-nums</code>).</span></div>
+      </div>
+      <div class="card">
+        <div class="label-sm" style="color:#FCA5A5">✗ DON'T</div>
+        <div class="rule dont"><span class="mark">✗</span><span>Never flat-fill the standard mark. Container is always gradient glass.</span></div>
+        <div class="rule dont"><span class="mark">✗</span><span>Never rotate, skew, add external shadows, or alter the diagonal cut angle.</span></div>
+        <div class="rule dont"><span class="mark">✗</span><span>Never place the mark on busy backgrounds without sufficient contrast.</span></div>
+        <div class="rule dont"><span class="mark">✗</span><span>Never use deprecated hexes: <span style="text-decoration:line-through;color:rgba(255,255,255,.4)">#1648BC</span> <span style="text-decoration:line-through;color:rgba(255,255,255,.4)">#2968E0</span>. Use #1C54F2 / #2E6BFF.</span></div>
+        <div class="rule dont"><span class="mark">✗</span><span>Never separate the chevrons from the pillar — they are clipped inside, always.</span></div>
+        <div class="rule dont"><span class="mark">✗</span><span>Never use generic fonts (Inter, Roboto, Arial). Two-font system is non-negotiable.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="div">
+
+  <!-- 09 EMAIL -->
+  <section>
+    <div class="sec-head"><span class="sec-num">09</span><span class="eyebrow">Email</span></div>
+    <div class="sec-title">Two signatures.</div>
+    <p class="sec-desc">Founder signature for personal comms (Jamal). System signature for automated comms.</p>
+
+    <p class="sec-desc" style="margin-top:-22px">Both signatures use the standard <strong style="color:#fff">gradient-glass Monolith</strong> — never Solid Royal. Both sit on white (not cream) so they render as native message content in iCloud, Gmail, Apple Mail and Outlook. Table-based markup. Full installable HTML in <code>context/email-footer.html</code>.</p>
+
+    <div class="grid g2">
+      <!-- OPTION A · FOUNDER -->
+      <div class="card-cream" style="background:#FFFFFF">
+        <div class="label-sm" style="color:var(--muted)">Option A · Founder · jamal@strydeos.com</div>
+        <div style="padding-top:16px;border-top:3px solid var(--blue);margin-top:8px">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">
+            <tr>
+              <td valign="top" style="vertical-align:top;padding-right:14px;width:44px">
+                <svg width="44" height="44" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block">
+                  <defs>
+                    <linearGradient id="sigA-c" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient>
+                    <radialGradient id="sigA-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+                    <linearGradient id="sigA-t" x1="0.05" y1="1" x2="0.35" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0.55"/><stop offset="100%" stop-color="white" stop-opacity="0.97"/></linearGradient>
+                    <linearGradient id="sigA-b" x1="0.1" y1="0" x2="0.4" y2="1"><stop offset="0%" stop-color="#7ABBFF" stop-opacity="0.65"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0.06"/></linearGradient>
+                    <clipPath id="sigA-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+                    <clipPath id="sigA-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+                  </defs>
+                  <rect width="100" height="100" rx="24" fill="url(#sigA-c)"/>
+                  <rect width="100" height="100" rx="24" fill="url(#sigA-r)"/>
+                  <rect width="100" height="100" rx="24" fill="none" stroke="url(#sigA-b)" stroke-width="1.2"/>
+                  <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+                  <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/>
+                  <g clip-path="url(#sigA-p)">
+                    <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                  </g>
+                  <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#sigA-t)" clip-path="url(#sigA-a)"/>
+                  <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+                </svg>
+              </td>
+              <td valign="top" style="vertical-align:top;border-left:2px solid var(--blue);padding-left:12px">
+                <div style="font-weight:600;font-size:14px;color:var(--ink);line-height:1.35">Jamal</div>
+                <div style="font-size:12px;color:var(--muted);line-height:1.5">Founder · StrydeOS</div>
+                <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px">Spires Physiotherapy · London</div>
+                <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:4px;font-style:italic">Built for clinical precision.</div>
+                <div style="font-size:12px;line-height:1.5;margin-top:6px">
+                  <a href="mailto:jamal@strydeos.com" style="color:var(--blue);text-decoration:none">jamal@strydeos.com</a>
+                  <span style="color:#C7C2BA;padding:0 6px">·</span>
+                  <a href="https://strydeos.com" style="color:var(--blue);text-decoration:none">strydeos.com</a>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- OPTION B · SYSTEM -->
+      <div class="card-cream" style="background:#FFFFFF">
+        <div class="label-sm" style="color:var(--muted)">Option B · System · hello@strydeos.com</div>
+        <div style="padding-top:16px;border-top:3px solid var(--blue);margin-top:8px;text-align:center">
+          <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:6px">
+            <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block">
+              <defs>
+                <linearGradient id="sigB-c" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient>
+                <radialGradient id="sigB-r" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+                <linearGradient id="sigB-t" x1="0.05" y1="1" x2="0.35" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0.55"/><stop offset="100%" stop-color="white" stop-opacity="0.97"/></linearGradient>
+                <clipPath id="sigB-p"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+                <clipPath id="sigB-a"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+              </defs>
+              <rect width="100" height="100" rx="24" fill="url(#sigB-c)"/>
+              <rect width="100" height="100" rx="24" fill="url(#sigB-r)"/>
+              <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+              <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/>
+              <g clip-path="url(#sigB-p)">
+                <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </g>
+              <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#sigB-t)" clip-path="url(#sigB-a)"/>
+              <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+            </svg>
+            <span style="font-weight:700;font-size:14px;color:var(--navy);letter-spacing:-.02em">Stryde<span style="color:var(--blue)">OS</span></span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.5">The Clinic OS for private practice</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;font-style:italic;line-height:1.5">Built for clinical precision.</div>
+          <div style="font-size:11px;line-height:1.5;margin-top:6px">
+            <a href="mailto:hello@strydeos.com" style="color:var(--blue);text-decoration:none">hello@strydeos.com</a>
+            <span style="color:#C7C2BA;padding:0 6px">·</span>
+            <a href="https://strydeos.com" style="color:var(--blue);text-decoration:none">strydeos.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div>© 2026 StrydeOS Ltd. All rights reserved.</div>
+    <div>Design System v4.0 · Source: <code style="font-family:ui-monospace,monospace">brand.ts</code> + <code style="font-family:ui-monospace,monospace">brand-identity-sheet v4.0</code></div>
+  </div>
+
+</div>
+</body>
+</html>
