@@ -68,7 +68,7 @@ export async function handleNoPmsToolCall(
       await resend.emails.send({
         from: "Ava at StrydeOS <ava@notifications.strydeos.com>",
         to: clinicEmail,
-        subject: `New contact from Ava${callerName ? ` — ${callerName}` : ""}`,
+        subject: `New contact from Ava${callerName ? ` - ${callerName}` : ""}`,
         html: buildContactEmail({
           callerPhone,
           callerName,

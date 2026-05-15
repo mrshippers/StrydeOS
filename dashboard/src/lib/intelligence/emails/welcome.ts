@@ -57,7 +57,7 @@ export function buildWelcomeEmail(
     </div>
   </div>
 
-  <p style="margin:0 0 24px;font-size:13px;color:#5C6370;line-height:1.6;font-family:'Outfit',Helvetica,Arial,sans-serif;">Any questions &mdash; reply to this email and we&rsquo;ll get back to you.</p>`;
+  <p style="margin:0 0 24px;font-size:13px;color:#5C6370;line-height:1.6;font-family:'Outfit',Helvetica,Arial,sans-serif;">Questions? Reply and we&rsquo;ll sort it.</p>`;
 
   return wrapEmailLayout(body, {
     subtitle: `${clinicName} is live`,
@@ -73,7 +73,7 @@ export function buildWelcomeText(
   passwordResetLink: string
 ): string {
   return [
-    `Welcome to StrydeOS — ${clinicName} is live`,
+    `Welcome to StrydeOS - ${clinicName} is live`,
     "",
     `${ownerFirstName}, your clinic is live. Here's what happens next.`,
     "",
@@ -88,7 +88,7 @@ export function buildWelcomeText(
     "3. See your first metrics by Friday",
     "   Once your PMS syncs, Intelligence builds your baseline.",
     "",
-    "Any questions — reply to this email and we'll get back to you.",
+    "Questions? Reply and we'll sort it.",
     "",
     textFooter({ footerNote: "StrydeOS" }),
   ].join("\n");

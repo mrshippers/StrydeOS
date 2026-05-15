@@ -36,7 +36,7 @@ export function buildUrgentAlertEmail(event: InsightEvent, clinicName: string): 
     </div>`;
 
   return wrapEmailLayout(body, {
-    subtitle: `Urgent Alert \u2014 ${clinicName}`,
+    subtitle: `Urgent Alert - ${clinicName}`,
     accentColor: "#E8913A",
     moduleLabel: "Intelligence",
     unsubscribeType: "urgent",
@@ -51,7 +51,7 @@ export function buildUrgentAlertEmail(event: InsightEvent, clinicName: string): 
 
 export function buildUrgentAlertText(event: InsightEvent, clinicName: string): string {
   const lines = [
-    `URGENT ALERT \u2014 ${clinicName}`,
+    `URGENT ALERT - ${clinicName}`,
     "",
     event.title,
     "",

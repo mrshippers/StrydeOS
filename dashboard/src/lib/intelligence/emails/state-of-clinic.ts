@@ -30,12 +30,12 @@ function delta(current: number | undefined, previous: number | undefined): strin
 }
 
 function fmtPct(val: number | undefined): string {
-  if (val == null) return "\u2014";
+  if (val == null) return "-";
   return `${Math.round(val * 100)}%`;
 }
 
 function fmtRate(val: number | undefined): string {
-  if (val == null) return "\u2014";
+  if (val == null) return "-";
   return val.toFixed(1);
 }
 
@@ -118,7 +118,7 @@ export function buildStateOfClinicEmail(data: DigestData): string {
     </div>`;
 
   return wrapEmailLayout(body, {
-    subtitle: `${clinicName} \u2014 Week of ${weekLabel}`,
+    subtitle: `${clinicName} - Week of ${weekLabel}`,
     accentColor: "#8B5CF6",
     moduleLabel: "Intelligence",
     unsubscribeType: "digest",
@@ -131,7 +131,7 @@ export function buildStateOfClinicText(data: DigestData): string {
   const { clinicName, weekLabel, topEvents, currentStats, previousStats: _prev } = data;
 
   const lines: string[] = [
-    `${clinicName} \u2014 Week of ${weekLabel}`,
+    `${clinicName} - Week of ${weekLabel}`,
     "",
     "\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550",
     "",

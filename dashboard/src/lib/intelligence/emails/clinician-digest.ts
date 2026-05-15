@@ -112,7 +112,7 @@ export function buildClinicianDigestEmail(data: ClinicianDigestData): string {
     </div>`;
 
   return wrapEmailLayout(body, {
-    subtitle: `Your week at ${clinicName} \u2014 ${weekLabel}`,
+    subtitle: `Your week at ${clinicName} - ${weekLabel}`,
     accentColor: "#8B5CF6",
     moduleLabel: "Intelligence",
     footerNote: "Sent by StrydeOS",
@@ -126,7 +126,7 @@ export function buildClinicianDigestEmail(data: ClinicianDigestData): string {
 export function buildClinicianDigestText(data: ClinicianDigestData): string {
   const { firstName, clinicName, weekLabel, stats, targets, patientsNeedingAction, focusNote, winNote } = data;
 
-  let text = `Your week at ${clinicName} \u2014 ${weekLabel}\n\n`;
+  let text = `Your week at ${clinicName} - ${weekLabel}\n\n`;
   text += `Hi ${firstName},\n\n`;
   text += `YOUR NUMBERS\n`;
   text += `Follow-up rate:  ${fmtRate(stats.followUpRate)}  (target: ${fmtRate(targets.followUpRate)} | UK avg: 4.0\u20135.5)\n`;
