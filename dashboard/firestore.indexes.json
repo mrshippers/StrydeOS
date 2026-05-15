@@ -121,6 +121,13 @@
         { "fieldPath": "clinicianId", "order": "ASCENDING" },
         { "fieldPath": "discharged", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "contact_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

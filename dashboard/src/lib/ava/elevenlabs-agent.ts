@@ -74,6 +74,20 @@ export async function createAvaTools(appUrl: string, apiKey: string): Promise<st
             slot_datetime: { type: "string", description: "Confirmed appointment date and time in ISO 8601 format, e.g. '2026-04-20T10:00:00'." },
             clinician_name: { type: "string", description: "Name of the clinician to book with (optional)." },
             appointment_type: { type: "string", description: "Type of appointment.", enum: ["initial_assessment", "follow_up"] },
+            body_region: {
+              type: "string",
+              description: "The body region the patient is seeking treatment for. Collect this during the call.",
+              enum: ["shoulder", "knee", "back", "neck", "hip", "ankle", "elbow", "wrist", "other"],
+            },
+            is_red_flag_screened: {
+              type: "boolean",
+              description: "Set to true only after asking a red-flag screening question (e.g. 'Have you had any saddle area numbness, bladder or bowel changes, or unexplained weight loss?') and confirming no red flags.",
+            },
+            insurance_type: {
+              type: "string",
+              description: "How the patient intends to pay for their appointment.",
+              enum: ["self_pay", "insurance", "unknown"],
+            },
           },
         },
       },
@@ -268,9 +282,9 @@ export async function uploadKnowledgeBaseText(
  * surfaced as a boolean, since stale/missing IDs are an expected condition
  * during cleanup before a re-sync.
  */
-export async function deleteKnowledgeBaseDoc(apiKey: string, docId: string): Promise<boolean> {
+export async function deleteKnowledgeBaseDoc(apiKey: string, agentId: string, docId: string): Promise<boolean> {
   try {
-    const res = await fetch(`${ELEVENLABS_API_URL}/convai/knowledge-base/${docId}`, {
+    const res = await fetch(`${ELEVENLABS_API_URL}/convai/agents/${agentId}/knowledge-base/${docId}`, {
       method: "DELETE",
       headers: { "xi-api-key": apiKey },
     });

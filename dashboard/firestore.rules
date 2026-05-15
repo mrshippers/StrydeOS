@@ -145,6 +145,12 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Contact Requests — no-PMS call capture; written by server API, readable by owners/admins
+      match /contact_requests/{requestId} {
+        allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
       // Clinical Notes — Heidi-synced clinical notes; clinicians see their own patients, owners/admins see all
       match /clinical_notes/{noteId} {
         allow read: if isSuperAdmin()

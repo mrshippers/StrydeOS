@@ -24,6 +24,9 @@ import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 const TOOLS_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
 import { withRequestLog } from "@/lib/request-logger";
 import { proxyToEngine } from "@/lib/ava/engine-proxy";
+import { computeFreeSlots } from "@/lib/ava/compute-free-slots";
+import type { HoursConfig } from "@/lib/ava/compute-free-slots";
+import { handleNoPmsToolCall } from "@/lib/ava/no-pms-handler";
 import type { PMSIntegrationConfig } from "@/types/pms";
 
 export const runtime = "nodejs";
@@ -47,6 +50,7 @@ async function handleCheckAvailability(
   adapter: ReturnType<typeof createPMSAdapter>,
   input: Record<string, unknown>,
   clinicId: string,
+  hoursConfig?: HoursConfig,
 ): Promise<string> {
   const db = getAdminDb();
 
@@ -100,7 +104,7 @@ async function handleCheckAvailability(
   }
 
   // WriteUpp has no free-slot endpoint — derive available slots from booked schedule
-  const freeSlots = computeFreeSlots(appointments, new Date(dateFrom), new Date(dateTo));
+  const freeSlots = computeFreeSlots(appointments, new Date(dateFrom), new Date(dateTo), hoursConfig);
   const whoDesc = clinicianName ? ` with ${clinicianName}` : "";
 
   if (freeSlots.length === 0) {
@@ -139,6 +143,10 @@ async function handleBookAppointment(
   const appointmentType = ((input.appointment_type as string) ?? "initial_assessment") as
     | "initial_assessment"
     | "follow_up";
+  const bodyRegion = (input.body_region as string)?.trim() || null;
+  const isRedFlagScreened =
+    typeof input.is_red_flag_screened === "boolean" ? input.is_red_flag_screened : null;
+  const insuranceType = (input.insurance_type as string)?.trim() || null;
 
   if (!firstName || !lastName) {
     return "I need your first and last name to book the appointment. Could you give me those?";
@@ -286,6 +294,9 @@ async function handleBookAppointment(
         pmsExternalId: pmsResult.externalId,
         pmsWriteStatus: "success",
         bookedBy: "ava",
+        bodyRegion,
+        isRedFlagScreened,
+        insuranceType,
         callId: conversationId ?? null,
         patientFirstName: firstName,
         patientLastName: lastName,
@@ -410,55 +421,6 @@ async function handleUpdateBooking(
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 /**
- * Compute free 45-minute appointment slots from a list of booked appointments.
- * Assumes Mon–Fri 09:00–18:00 clinic hours. Returns up to 6 free slots.
- */
-function computeFreeSlots(
-  appointments: { dateTime: string }[],
-  dateFrom: Date,
-  dateTo: Date,
-): Date[] {
-  const SLOT_MINS = 45;
-  const SLOT_MS = SLOT_MINS * 60_000;
-  const CLINIC_START_HOUR = 9;
-  const CLINIC_END_HOUR = 18;
-
-  const busyIntervals = appointments.map((a) => {
-    const start = new Date(a.dateTime).getTime();
-    return { start, end: start + SLOT_MS };
-  });
-
-  // Snap cursor to next 45-min boundary at or after dateFrom
-  const cursor = new Date(dateFrom);
-  cursor.setSeconds(0, 0);
-  const totalMins = cursor.getHours() * 60 + cursor.getMinutes();
-  const snappedMins = Math.ceil(totalMins / SLOT_MINS) * SLOT_MINS;
-  cursor.setHours(Math.floor(snappedMins / 60), snappedMins % 60, 0, 0);
-
-  const freeSlots: Date[] = [];
-
-  while (cursor < dateTo && freeSlots.length < 6) {
-    const day = cursor.getDay();
-    const hour = cursor.getHours();
-
-    if (day === 0 || day === 6 || hour < CLINIC_START_HOUR || hour >= CLINIC_END_HOUR) {
-      cursor.setDate(cursor.getDate() + 1);
-      cursor.setHours(CLINIC_START_HOUR, 0, 0, 0);
-      continue;
-    }
-
-    const slotStart = cursor.getTime();
-    const slotEnd = slotStart + SLOT_MS;
-    const isBusy = busyIntervals.some(({ start, end }) => slotStart < end && start < slotEnd);
-    if (!isBusy) freeSlots.push(new Date(cursor));
-
-    cursor.setMinutes(cursor.getMinutes() + SLOT_MINS);
-  }
-
-  return freeSlots;
-}
-
-/**
  * Parse a natural-language day reference into a future Date.
  * Handles: "Monday", "next Tuesday", "tomorrow", "2026-04-15", etc.
  */
@@ -531,6 +493,7 @@ async function handler(req: NextRequest) {
     }
 
     const clinicId = clinicSnap.docs[0].id;
+    const clinicData = clinicSnap.docs[0].data();
 
     // Load PMS config
     const configSnap = await db
@@ -542,10 +505,15 @@ async function handler(req: NextRequest) {
     const pmsConfig = configSnap.data() as PMSIntegrationConfig | undefined;
 
     if (!pmsConfig?.apiKey?.trim()) {
-      return NextResponse.json(
-        { response: "The booking system isn't connected for this clinic yet. Let me take your details and have someone call you back." },
-        { status: 200 },
+      const response = await handleNoPmsToolCall(
+        clinicId,
+        clinicData?.email as string | undefined,
+        tool_name,
+        toolInput,
+        conversation_id ?? "",
+        caller_phone ?? "",
       );
+      return NextResponse.json({ response }, { status: 200 });
     }
 
     // ── Python engine proxy ──────────────────────────────────────────────────
@@ -576,7 +544,12 @@ async function handler(req: NextRequest) {
 
     switch (tool_name) {
       case "check_availability":
-        result = await handleCheckAvailability(adapter, toolInput, clinicId);
+        result = await handleCheckAvailability(
+          adapter,
+          toolInput,
+          clinicId,
+          (clinicData?.ava as Record<string, unknown>)?.hours as HoursConfig | undefined,
+        );
         break;
       case "book_appointment":
         result = await handleBookAppointment(
