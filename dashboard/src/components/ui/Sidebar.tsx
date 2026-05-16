@@ -636,9 +636,12 @@ export default function Sidebar() {
 
           {/* Dark mode toggle */}
           <div className="mb-2">
-            <button
+            <div
+              role="button"
+              tabIndex={0}
               onClick={(e) => toggleTheme(e)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-white/30 hover:text-white/50 hover:bg-white/5 transition-all duration-200"
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleTheme(e as never); }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-white/30 hover:text-white/50 hover:bg-white/5 transition-all duration-200 cursor-pointer"
             >
               <BrightnessStackToggle
                 size={12}
@@ -649,7 +652,7 @@ export default function Sidebar() {
               <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/8 border border-white/10">
                 {typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform) ? "⌘" : "Ctrl+"}D
               </kbd>
-            </button>
+            </div>
           </div>
 
           {/* Profile menu */}
