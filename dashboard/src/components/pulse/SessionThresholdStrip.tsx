@@ -4,6 +4,7 @@ import type { FC } from "react";
 import { Zap } from "lucide-react";
 import type { Patient, Clinician } from "@/types";
 import { daysSince } from "@/lib/utils";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 interface Props {
   patients: Patient[];
@@ -20,7 +21,7 @@ export const SessionThresholdStrip: FC<Props> = ({
   if (onboarding.length === 0) return null;
 
   return (
-    <div className="rounded-[12px] border-l-4 border-teal bg-teal/5 border border-teal/20 p-4">
+    <GlassCard variant="standard" tint="pulse" className="p-4">
       <div className="flex items-center gap-2 mb-3">
         <Zap size={14} className="text-teal" />
         <h3 className="text-sm font-semibold text-teal">
@@ -57,6 +58,6 @@ export const SessionThresholdStrip: FC<Props> = ({
           );
         })}
       </div>
-    </div>
+    </GlassCard>
   );
 };

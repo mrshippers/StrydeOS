@@ -15,6 +15,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import { daysSince } from "@/lib/utils";
 import { useInsightEvents } from "@/hooks/useInsightEvents";
 import { brand } from "@/lib/brand";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 // Hoisted styles to avoid re-creation per patient row per render
 const INSIGHT_BADGE_STYLE = { background: `${brand.purple}12`, color: brand.purple } as const;
@@ -129,7 +130,7 @@ export const PatientBoard: FC<Props> = ({
             .reduce((acc, p, _, arr) => acc + (p.riskScore ?? 0) / arr.length, 0);
 
           return (
-            <div key={state} className="rounded-[12px] border border-border bg-white shadow-sm overflow-hidden">
+            <GlassCard key={state} variant="standard" tint="pulse">
               <button
                 onClick={() => setCollapsed((prev) => {
                   const next = new Set(prev);
@@ -167,7 +168,7 @@ export const PatientBoard: FC<Props> = ({
                         const isDropdownOpen = activeDropdown === p.id;
 
                         return (
-                          <div key={p.id} className="px-4 py-3">
+                          <GlassCard key={p.id} variant="row" tint="pulse" className="px-4 py-3">
                             <div
                               className="flex items-center gap-3 cursor-pointer"
                               onClick={() => setExpanded((prev) => {
@@ -246,14 +247,14 @@ export const PatientBoard: FC<Props> = ({
                             {isExpanded && p.heidiPatientId && (
                               <ClinicalNotesPanel patientId={p.id} />
                             )}
-                          </div>
+                          </GlassCard>
                         );
                       })}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </GlassCard>
           );
         })}
       </div>

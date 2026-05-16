@@ -4,6 +4,7 @@ import { useState, type FC } from "react";
 import { type ReactNode } from "react";
 import { Mail, MessageSquare, Clock, Send, Eye, MousePointer, CalendarCheck, ChevronDown, ChevronRight, PoundSterling } from "lucide-react";
 import type { SequenceDefinition } from "@/types/comms";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 interface SequenceStats {
   sent: number;
@@ -35,7 +36,7 @@ export const SequenceCard: FC<Props> = ({ definition, stats, showRevenue, onTogg
     : 0;
 
   return (
-    <div className="rounded-[12px] bg-white border border-border shadow-sm overflow-hidden transition-shadow hover:shadow-md">
+    <GlassCard variant="standard" tint="pulse">
       <div className="p-5">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-start gap-3">
@@ -136,6 +137,6 @@ export const SequenceCard: FC<Props> = ({ definition, stats, showRevenue, onTogg
           ))}
         </div>
       )}
-    </div>
+    </GlassCard>
   );
 };

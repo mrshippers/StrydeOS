@@ -7,6 +7,7 @@ import type { Patient, Clinician } from "@/types";
 import { updatePatient } from "@/lib/queries";
 import { useToast } from "@/components/ui/Toast";
 import { brand } from "@/lib/brand";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 interface Props {
   patient: Patient;
@@ -67,12 +68,10 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
         style={{ background: "rgba(11, 37, 69, 0.5)", backdropFilter: "blur(4px)" }}
         onClick={onClose}
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.93, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 8 }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-lg rounded-[16px] bg-white shadow-[var(--shadow-elevated)] overflow-hidden"
+        <GlassCard
+          variant="primary"
+          tint="pulse"
+          className="w-full max-w-lg"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -203,7 +202,7 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
               </button>
             </div>
           </div>
-        </motion.div>
+        </GlassCard>
       </motion.div>
     </AnimatePresence>
   );
