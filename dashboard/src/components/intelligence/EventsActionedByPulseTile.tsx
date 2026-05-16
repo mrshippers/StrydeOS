@@ -5,7 +5,7 @@
  * Intelligence-emitted events Pulse has actioned in the last 7 days.
  *
  * Wire: `/clinics/{clinicId}/events` filtered by `consumedBy` contains
- * `'pulse'`. This is the cross-module coupling surface — Intelligence owns
+ * `'pulse'`. This is the cross-module coupling surface - Intelligence owns
  * event emission, Pulse owns action, this tile is the handshake.
  *
  * Renders nothing until the subscription is ready to avoid flashing a
@@ -15,6 +15,7 @@
 import { useEventsActionedByPulse } from "@/hooks/useEventsActionedByPulse";
 import { brand } from "@/lib/brand";
 import { Activity } from "lucide-react";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 export default function EventsActionedByPulseTile() {
   const { count, loading } = useEventsActionedByPulse();
@@ -22,12 +23,11 @@ export default function EventsActionedByPulseTile() {
   if (loading) return null;
 
   return (
-    <section
-      className="rounded-[var(--radius-card)] border p-4 flex items-center gap-4"
-      style={{
-        borderColor: `${brand.teal}33`,
-        background: `${brand.teal}0F`,
-      }}
+    <GlassCard
+      variant="primary"
+      tint="pulse"
+      as="section"
+      className="p-4 flex items-center gap-4"
       aria-label="Events actioned by Pulse in the last seven days"
     >
       <div
@@ -53,6 +53,6 @@ export default function EventsActionedByPulseTile() {
       >
         Pulse
       </span>
-    </section>
+    </GlassCard>
   );
 }

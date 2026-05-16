@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 import {
   brand,
   moduleColors,
@@ -14,7 +14,8 @@ import { DURATION, EASING, useDoubleRAF } from "@/lib/motion";
 export type GlassVariant = "hero" | "primary" | "standard" | "row";
 export type GlassTint = "ava" | "pulse" | "intelligence" | "neutral";
 
-interface GlassCardProps {
+interface GlassCardProps
+  extends Omit<HTMLAttributes<HTMLElement>, "style" | "children"> {
   /**
    * Visual emphasis tier. Drives hover lift, border opacity, and
    * default ambient glow. `row` opts out of the six-layer glass for
@@ -34,8 +35,6 @@ interface GlassCardProps {
   ambient?: boolean;
   /** Render as a semantic element other than `div`. */
   as?: "div" | "section" | "article" | "aside";
-  /** Content padding and layout. Must not override depth tokens. */
-  className?: string;
   /** Extra inline style. Merged AFTER baseline so consumers can adjust layout. */
   style?: CSSProperties;
   children: ReactNode;
@@ -75,6 +74,7 @@ export function GlassCard({
   className,
   style,
   children,
+  ...rest
 }: GlassCardProps) {
   const mounted = useDoubleRAF();
   const [hovered, setHovered] = useState(false);
@@ -84,6 +84,7 @@ export function GlassCard({
     const Tag = As as "div";
     return (
       <Tag
+        {...rest}
         className={className}
         style={{
           position: "relative",
@@ -115,6 +116,7 @@ export function GlassCard({
   const Tag = As as "div";
   return (
     <Tag
+      {...rest}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={className}

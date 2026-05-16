@@ -5,7 +5,7 @@
  * existing Intelligence tabs. Reads from `/clinics/{clinicId}/kpis/*` via
  * `useKpis()`.
  *
- * Renders nothing (null) when `kpis` is empty — either the pipeline hasn't
+ * Renders nothing (null) when `kpis` is empty - either the pipeline hasn't
  * run yet or the user is in demo mode. The existing tabs below continue to
  * drive the dashboard in that case, so this is purely additive.
  */
@@ -14,6 +14,7 @@ import { useKpis } from "@/hooks/useKpis";
 import { brand } from "@/lib/brand";
 import { KPI_IDS, type KpiDoc, type KpiId } from "@/types/kpi";
 import { AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 const KPI_LABELS: Record<KpiId, string> = {
   "follow-up-rate": "Follow-up rate",
@@ -69,8 +70,6 @@ function formatRelativeTime(iso: string): string {
 export default function KpiProjectionStrip() {
   const { kpis, computeState } = useKpis();
 
-  // When projection is empty (first run or demo), render nothing — the
-  // existing dashboard tabs below handle the view.
   const hasAny = KPI_IDS.some((id) => kpis[id] != null);
   if (!hasAny) return null;
 
@@ -78,9 +77,11 @@ export default function KpiProjectionStrip() {
   const lastRecomputeAt = computeState?.lastFullRecomputeAt ?? null;
 
   return (
-    <section
-      className="rounded-[var(--radius-card)] bg-white border p-4"
-      style={{ borderColor: brand.border }}
+    <GlassCard
+      variant="primary"
+      tint="intelligence"
+      as="section"
+      className="p-4"
       aria-label="KPI projection strip"
     >
       <header className="flex items-center justify-between mb-3">
@@ -103,7 +104,7 @@ export default function KpiProjectionStrip() {
           return <KpiTile key={id} kpi={kpi} />;
         })}
       </div>
-    </section>
+    </GlassCard>
   );
 }
 
@@ -139,7 +140,7 @@ function KpiTilePlaceholder({ kpiId }: { kpiId: KpiId }) {
       <span className="text-[10px] font-semibold uppercase tracking-wide text-muted/70 leading-tight block mb-1">
         {KPI_LABELS[kpiId]}
       </span>
-      <p className="font-display text-lg text-muted/50 leading-tight">—</p>
+      <p className="font-display text-lg text-muted/50 leading-tight">-</p>
       <p className="text-[10px] text-muted/60 mt-0.5">pending</p>
     </div>
   );
