@@ -5,6 +5,7 @@ import * as Sentry from "@sentry/nextjs";
 import { brand } from "@/lib/brand";
 import { MonolithMark } from "@/components/MonolithLogo";
 import { RotateCcw } from "lucide-react";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 export default function GlobalError({
   error,
@@ -23,7 +24,8 @@ export default function GlobalError({
       className="min-h-screen flex flex-col items-center justify-center gap-6 px-6"
       style={{ background: `linear-gradient(180deg, ${brand.navy} 0%, #091C38 100%)` }}
     >
-      <div className="text-center max-w-md">
+      <GlassCard variant="primary" tint="neutral" className="max-w-md w-full">
+      <div className="text-center px-8 py-10">
         {/* Monolith mark */}
         <div className="mx-auto mb-8">
           <MonolithMark size={48} />
@@ -59,6 +61,7 @@ export default function GlobalError({
           Try again
         </button>
       </div>
+      </GlassCard>
     </div>
   );
 }

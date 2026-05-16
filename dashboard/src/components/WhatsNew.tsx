@@ -7,6 +7,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import PulseMark from "@/components/PulseMark";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 /**
  * Bump CURRENT_VERSION each time you add new entries to UPDATES.
@@ -153,10 +154,10 @@ export default function WhatsNew() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="whats-new-title"
-            className="w-full max-w-lg rounded-2xl overflow-hidden bg-cream"
-            style={{ boxShadow: "0 32px 80px rgba(0, 0, 0, 0.25)" }}
+            className="w-full max-w-lg relative"
             onClick={(e) => e.stopPropagation()}
           >
+            <GlassCard variant="primary" tint="neutral" className="bg-cream">
             {/* Close */}
             <button
               type="button"
@@ -655,6 +656,7 @@ export default function WhatsNew() {
                 {isLast ? <ArrowRight size={14} /> : <ChevronRight size={14} />}
               </button>
             </div>
+            </GlassCard>
           </motion.div>
         </motion.div>
       )}

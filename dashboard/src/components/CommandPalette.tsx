@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useClinicians } from "@/hooks/useClinicians";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 interface PaletteItem {
   id: string;
@@ -226,12 +227,9 @@ export default function CommandPalette() {
               exit={{ opacity: 0, y: -4, scale: 0.98 }}
               transition={{ type: "spring", stiffness: 380, damping: 30 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg rounded-2xl overflow-hidden bg-cream"
-              style={{
-                boxShadow: "0 24px 64px rgba(0,0,0,0.2)",
-                border: "1px solid var(--color-border)",
-              }}
+              className="w-full max-w-lg"
             >
+              <GlassCard variant="primary" tint="neutral" className="bg-cream">
               {/* Search input */}
               <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
                 <Search size={16} className="text-muted shrink-0" />
@@ -309,6 +307,7 @@ export default function CommandPalette() {
                   <Command size={10} />K to toggle
                 </span>
               </div>
+              </GlassCard>
             </motion.div>
           </motion.div>
         )}

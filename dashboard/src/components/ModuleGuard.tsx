@@ -16,6 +16,7 @@ import { MODULE_DISPLAY } from "@/lib/billing";
 import type { ModuleKey } from "@/lib/billing";
 import { brand } from "@/lib/brand";
 import { useAuth } from "@/hooks/useAuth";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 // ─── Per-module benefit bullets ───────────────────────────────────────────────
 
@@ -87,17 +88,12 @@ export default function ModuleGuard({ module, children }: Props) {
           />
 
           {/* Frosted card */}
-          <div
-            className="relative z-10 flex flex-col items-center text-center max-w-md w-full mx-6 px-8 py-10"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              border: `1px solid ${color}28`,
-              borderRadius: 24,
-              boxShadow: `0 0 80px ${color}12, 0 2px 40px rgba(11,37,69,0.5)`,
-            }}
+          <GlassCard
+            variant="standard"
+            tint={module}
+            className="relative z-10 max-w-md w-full mx-6"
           >
+            <div className="flex flex-col items-center text-center px-8 py-10">
             {/* Glowing lock icon */}
             <div className="relative mb-6">
               <div
@@ -174,7 +170,8 @@ export default function ModuleGuard({ module, children }: Props) {
                 </p>
               </>
             )}
-          </div>
+            </div>
+          </GlassCard>
         </div>
 
         {/* Keyframe animation */}
