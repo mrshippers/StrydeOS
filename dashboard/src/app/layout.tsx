@@ -61,8 +61,10 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={`${dmSerif.variable} ${outfit.variable}`} suppressHydrationWarning>
-      {/* Prevents flash of light mode for users with dark theme saved — static string, not XSS risk */}
-      <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('strydeos-app-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}` }} />
+      <head>
+        {/* Prevents flash of light mode for users with dark theme saved — static string, not XSS risk */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('strydeos-app-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}` }} />
+      </head>
       <body className="font-body antialiased">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeProvider>
