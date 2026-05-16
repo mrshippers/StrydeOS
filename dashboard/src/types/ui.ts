@@ -23,6 +23,7 @@ export interface StatCardProps {
   onClick?: () => void;
   action?: StatCardAction;
   sparklineData?: number[];
+  index?: number;
 }
 
 export interface AlertFlagProps {

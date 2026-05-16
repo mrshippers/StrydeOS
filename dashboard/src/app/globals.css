@@ -575,3 +575,36 @@ html.dark .chevron-glyph {
   100% { opacity: 0; }
 }
 
+/* ─── Module ambient drift orbs ─────────────────────────────────────────── */
+@keyframes stryde-drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(-24px, 32px) scale(1.04); }
+  66%       { transform: translate(18px, -18px) scale(0.97); }
+}
+
+@keyframes stryde-drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%       { transform: translate(28px, -40px) scale(1.06); }
+  75%       { transform: translate(-20px, 22px) scale(0.95); }
+}
+
+/* ─── Module strip LIVE badge pulse ─────────────────────────────────────── */
+@keyframes stryde-live-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* ─── Stat card entrance (staggered fade-up) ─────────────────────────────── */
+@keyframes stryde-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stryde-fade-up {
+  animation: stryde-fade-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stryde-fade-up { animation: none; }
+}
+

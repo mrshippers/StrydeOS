@@ -153,6 +153,7 @@ function StatCard({
   progress,
   action,
   sparklineData,
+  index,
 }: StatCardProps) {
   const dotStyle = STATUS_COLORS[status] ?? STATUS_COLORS.neutral;
   const { display: animatedValue, ref: countRef } = useCountUp(value);
@@ -174,15 +175,30 @@ function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`group relative rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden transition-all duration-300 ease-out flex flex-col ${
+      className={`stryde-fade-up group relative rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden transition-all duration-300 ease-out flex flex-col ${
         onClick ? "cursor-pointer hover:shadow-[var(--shadow-elevated)] hover:-translate-y-1 active:scale-[0.99] active:shadow-[var(--shadow-card)]" : "hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
       }`}
+      style={{ animationDelay: index !== undefined ? `${index * 80}ms` : "0ms" }}
     >
       {/* Hover glow — radial wash using status colour */}
       <div
         className="stat-card-glow"
         style={{
           background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${dotStyle.glow} 0%, transparent 70%)`,
+        }}
+      />
+
+      {/* Glass specular — inset highlight strip at top */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: 0, left: 0, right: 0,
+          height: 40,
+          background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 100%)",
+          pointerEvents: "none",
+          borderRadius: "inherit",
+          zIndex: 1,
         }}
       />
 
