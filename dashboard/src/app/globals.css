@@ -25,8 +25,10 @@
   --font-display: "DM Serif Display", serif;
   --font-body: "Outfit", sans-serif;
 
-  --shadow-card: 0 2px 12px rgba(11, 37, 69, 0.06);
-  --shadow-elevated: 0 8px 32px rgba(11, 37, 69, 0.10);
+  /* Three-layer shadow stacks - tokens/shadows.ts is the source of truth.
+     Update both this block and tokens/shadows.ts together. */
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.03), 0 4px 24px rgba(0,0,0,0.04), 0 12px 48px rgba(0,0,0,0.02);
+  --shadow-elevated: 0 2px 4px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06), 0 16px 56px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.7);
 
   --radius-card: 16px;
   --radius-chip: 50px;
@@ -72,8 +74,8 @@ html.dark {
   --color-border: rgba(255,255,255,0.12);
   --color-success: #10B981;
   --color-danger: #F87171;
-  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.25);
-  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.20), 0 4px 24px rgba(0,0,0,0.28), 0 12px 48px rgba(0,0,0,0.14);
+  --shadow-elevated: 0 2px 4px rgba(0,0,0,0.24), 0 8px 32px rgba(0,0,0,0.36), 0 16px 56px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 html.dark .bg-white {
@@ -519,5 +521,33 @@ html.dark .chevron-glyph {
 @keyframes kb-flash {
   0% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+/* Drift glow - hero variant ambient (GlassCard Fix 5) */
+@keyframes driftGlow {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+  50%      { transform: translate(20px, -10px) scale(1.1); opacity: 0.9; }
+}
+
+@keyframes driftGlowReverse {
+  0%, 100% { transform: translate(0, 0) scale(1.05); opacity: 0.55; }
+  50%      { transform: translate(-22px, 12px) scale(1); opacity: 0.85; }
+}
+
+.drift-glow {
+  animation: driftGlow 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.drift-glow-b {
+  animation: driftGlowReverse 8s ease-in-out infinite -2s;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drift-glow,
+  .drift-glow-b {
+    animation: none;
+  }
 }
 
