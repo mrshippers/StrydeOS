@@ -188,14 +188,15 @@ function StatCard({
         }}
       />
 
-      {/* Glass specular — inset highlight strip at top */}
+      {/* Glass specular — only renders on dark (navy) cards where it's visible */}
       <div
         aria-hidden
+        className="hidden dark:block"
         style={{
           position: "absolute",
           top: 0, left: 0, right: 0,
           height: 40,
-          background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 100%)",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)",
           pointerEvents: "none",
           borderRadius: "inherit",
           zIndex: 1,

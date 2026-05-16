@@ -9,161 +9,113 @@ const CONFIG: Record<Module, {
   sub: string;
   color: string;
   glow: string;
-  bgDark: string;
-  bgLight: string;
-  borderDark: string;
-  borderLight: string;
-  ambientBg: string;
   Icon: React.FC<{ color?: string; size?: number }>;
 }> = {
   ava: {
     sub: "Voice receptionist · inbound calls",
     color: "#1C54F2",
     glow: "#4B8BF5",
-    bgDark:    "linear-gradient(135deg, rgba(28,84,242,0.18) 0%, rgba(11,37,69,0.0) 60%)",
-    bgLight:   "linear-gradient(135deg, rgba(28,84,242,0.07) 0%, transparent 60%)",
-    borderDark:  "rgba(28,84,242,0.25)",
-    borderLight: "rgba(28,84,242,0.14)",
-    ambientBg: "rgba(28,84,242,0.18)",
     Icon: AvaIcon,
   },
   pulse: {
     sub: "Patient retention · continuity",
     color: "#0891B2",
     glow: "#22D3EE",
-    bgDark:    "linear-gradient(135deg, rgba(8,145,178,0.18) 0%, rgba(11,37,69,0.0) 60%)",
-    bgLight:   "linear-gradient(135deg, rgba(8,145,178,0.07) 0%, transparent 60%)",
-    borderDark:  "rgba(8,145,178,0.25)",
-    borderLight: "rgba(8,145,178,0.14)",
-    ambientBg: "rgba(8,145,178,0.18)",
     Icon: PulseIcon,
   },
   intelligence: {
     sub: "Clinical performance · KPI tracking",
     color: "#8B5CF6",
     glow: "#A78BFA",
-    bgDark:    "linear-gradient(135deg, rgba(139,92,246,0.18) 0%, rgba(11,37,69,0.0) 60%)",
-    bgLight:   "linear-gradient(135deg, rgba(139,92,246,0.07) 0%, transparent 60%)",
-    borderDark:  "rgba(139,92,246,0.25)",
-    borderLight: "rgba(139,92,246,0.14)",
-    ambientBg: "rgba(139,92,246,0.18)",
     Icon: IntelligenceIcon,
   },
 };
 
+// Always dark — this is a brand identity element, not a light/dark-mode component.
+// Matches the marketing site's module card aesthetic exactly.
 export default function ModuleStrip({ module }: { module: Module }) {
   const [mounted, setMounted] = useState(false);
-  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => requestAnimationFrame(() => setMounted(true)));
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  useEffect(() => {
-    const check = () => setIsDark(document.documentElement.classList.contains("dark"));
-    check();
-    const obs = new MutationObserver(check);
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    return () => obs.disconnect();
-  }, []);
-
   const cfg = CONFIG[module];
-  const iconColor = isDark ? cfg.glow : cfg.color;
-  const subtitleColor = isDark ? "rgba(255,255,255,0.42)" : "rgba(0,0,0,0.45)";
-  const badgeColor = isDark ? cfg.glow : cfg.color;
 
   return (
     <div
       style={{
         position: "relative",
         overflow: "hidden",
-        padding: "10px 24px",
+        padding: "11px 24px",
         display: "flex",
         alignItems: "center",
         gap: 12,
-        background: isDark ? cfg.bgDark : cfg.bgLight,
-        borderBottom: `1px solid ${isDark ? cfg.borderDark : cfg.borderLight}`,
+        // Dark navy base, module-color ambient wash from left — ported from marketing site
+        background: `radial-gradient(ellipse 70% 140% at -5% 50%, ${cfg.color}22, #0B2545 60%)`,
+        borderBottom: "1px solid rgba(255,255,255,0.07)",
         opacity: mounted ? 1 : 0,
-        transform: mounted ? "translateX(0)" : "translateX(-10px)",
+        transform: mounted ? "translateX(0)" : "translateX(-12px)",
         transition: "opacity 0.45s cubic-bezier(0.16,1,0.3,1), transform 0.45s cubic-bezier(0.16,1,0.3,1)",
       }}
     >
-      {/* Ambient glow behind icon */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          top: -50,
-          left: -30,
-          width: 140,
-          height: 140,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${cfg.ambientBg}, transparent 70%)`,
-          pointerEvents: "none",
-        }}
-      />
+      {/* Ambient glow behind icon — matches marketing site radial orb */}
+      <div aria-hidden style={{
+        position: "absolute", top: -40, left: -20,
+        width: 130, height: 130, borderRadius: "50%",
+        background: `radial-gradient(circle, ${cfg.color}1a, transparent 70%)`,
+        pointerEvents: "none",
+      }} />
 
-      {/* Module icon */}
-      <div
-        style={{
-          width: 30,
-          height: 30,
-          borderRadius: 8,
-          flexShrink: 0,
-          background: isDark
-            ? `linear-gradient(135deg, ${cfg.color}88, rgba(11,37,69,0.8))`
-            : `linear-gradient(135deg, ${cfg.color}18, ${cfg.color}0a)`,
-          border: `1px solid ${cfg.color}${isDark ? "45" : "28"}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: `0 0 12px ${cfg.color}14`,
-        }}
-      >
-        <cfg.Icon color={iconColor} size={16} />
+      {/* Glass specular — top edge highlight from marketing site */}
+      <div aria-hidden style={{
+        position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+        background: "linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 55%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* Module icon — same container spec as marketing site module card */}
+      <div style={{
+        position: "relative", zIndex: 1,
+        width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+        background: `linear-gradient(135deg, ${cfg.color}28, ${cfg.color}10)`,
+        border: `1px solid ${cfg.color}32`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        boxShadow: `0 0 14px ${cfg.color}20, inset 0 1px 0 rgba(255,255,255,0.06)`,
+      }}>
+        <cfg.Icon color={cfg.glow} size={16} />
       </div>
 
-      {/* Tagline only — page already has its own heading */}
-      <div
-        style={{
-          fontSize: 11,
-          color: subtitleColor,
-          letterSpacing: "0.01em",
-        }}
-      >
+      {/* Tagline — no module name; page heading owns that */}
+      <div style={{
+        position: "relative", zIndex: 1,
+        fontSize: 11,
+        color: "rgba(255,255,255,0.44)",
+        letterSpacing: "0.015em",
+        fontFamily: "'Outfit', sans-serif",
+      }}>
         {cfg.sub}
       </div>
 
       {/* LIVE badge */}
-      <div style={{ marginLeft: "auto" }}>
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "3px 10px",
-            borderRadius: 50,
-            background: `${cfg.color}${isDark ? "15" : "0d"}`,
-            border: `1px solid ${cfg.color}${isDark ? "30" : "20"}`,
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase" as const,
-            color: badgeColor,
-          }}
-        >
-          <span
-            style={{
-              width: 5,
-              height: 5,
-              borderRadius: "50%",
-              background: badgeColor,
-              boxShadow: `0 0 6px ${badgeColor}`,
-              animation: "stryde-live-pulse 2s ease-in-out infinite",
-              display: "inline-block",
-            }}
-          />
+      <div style={{ marginLeft: "auto", position: "relative", zIndex: 1 }}>
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 5,
+          padding: "3px 10px", borderRadius: 50,
+          background: `${cfg.color}18`,
+          border: `1px solid ${cfg.color}28`,
+          fontSize: 10, fontWeight: 700,
+          letterSpacing: "0.12em", textTransform: "uppercase" as const,
+          color: cfg.glow,
+        }}>
+          <span style={{
+            width: 5, height: 5, borderRadius: "50%",
+            background: cfg.glow,
+            boxShadow: `0 0 6px ${cfg.glow}`,
+            animation: "stryde-live-pulse 2s ease-in-out infinite",
+            display: "inline-block",
+          }} />
           LIVE
         </span>
       </div>
