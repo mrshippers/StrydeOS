@@ -25,7 +25,8 @@
     "test:e2e:ui": "npx playwright test --ui",
     "test:e2e:headed": "E2E_NO_SERVER=1 npx playwright test --headed",
     "test:e2e:full": "npm run build && npx playwright test",
-    "check:boundaries": "bash scripts/check-module-boundaries.sh"
+    "check:boundaries": "bash scripts/check-module-boundaries.sh",
+    "audit:contrast": "npx tsx scripts/audit-contrast.ts"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.80",
