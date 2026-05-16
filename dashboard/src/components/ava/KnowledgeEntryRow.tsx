@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 interface KnowledgeEntryRowProps {
   title: string;
@@ -23,7 +24,11 @@ export default function KnowledgeEntryRow({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
-    <div className="group relative py-3 first:pt-1 last:pb-0 border-b border-border/20 last:border-0">
+    <GlassCard
+      variant="row"
+      tint="ava"
+      className="group relative py-3 first:pt-1 last:pb-0 border-b border-border/20 last:border-0"
+    >
       <div className="space-y-1.5">
         {/* Title row */}
         <div className="flex items-center gap-2">
@@ -97,6 +102,6 @@ export default function KnowledgeEntryRow({
         )}
       </div>
 
-    </div>
+    </GlassCard>
   );
 }

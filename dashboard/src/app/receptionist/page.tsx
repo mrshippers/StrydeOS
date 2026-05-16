@@ -36,6 +36,7 @@ import {
 } from "recharts";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import { formatPercent } from "@/lib/utils";
@@ -156,7 +157,7 @@ class AvaErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
             subtitle="AI call handling"
             accentColor="#1C54F2"
           />
-          <div className="rounded-[var(--radius-card)] border border-border bg-white p-8 flex flex-col items-center gap-4 text-center shadow-[var(--shadow-card)]">
+          <GlassCard variant="standard" tint="ava" className="p-8 flex flex-col items-center gap-4 text-center">
             <div className="w-12 h-12 rounded-2xl bg-blue/8 flex items-center justify-center">
               <AlertCircle size={22} className="text-blue opacity-60" />
             </div>
@@ -166,7 +167,7 @@ class AvaErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
               </p>
               <p className="text-sm text-muted max-w-sm">
                 The call dashboard couldn&apos;t load this time. Your call logs and
-                configuration are safe — give it another go.
+                configuration are safe - give it another go.
               </p>
             </div>
             <button
@@ -175,7 +176,7 @@ class AvaErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
             >
               Try again
             </button>
-          </div>
+          </GlassCard>
         </div>
       );
     }
@@ -336,7 +337,7 @@ function ReceptionistContent() {
       {callsError && <ErrorBanner message={callsError} onRetry={() => router.refresh()} />}
       {/* Active call indicator */}
       {activeCall && (
-        <div className="rounded-[var(--radius-card)] bg-blue/5 border border-blue/20 p-4 flex items-center gap-3">
+        <GlassCard variant="standard" tint="ava" className="p-4 flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-blue animate-pulse" />
           <Radio size={16} className="text-blue" />
           <span className="text-sm font-medium text-navy">
@@ -345,7 +346,7 @@ function ReceptionistContent() {
           {activeCall.callerPhone && (
             <span className="text-sm text-muted">{activeCall.callerPhone}</span>
           )}
-        </div>
+        </GlassCard>
       )}
 
       {/* View toggle */}
@@ -404,7 +405,7 @@ function ReceptionistContent() {
           </div>
 
           {/* 7-day call volume chart */}
-          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+          <GlassCard variant="primary" tint="ava" className="p-6">
             <h3 className="font-display text-lg text-navy mb-1">7-Day Call Volume</h3>
             <p className="text-xs text-muted mb-4">Calls handled by Ava this week</p>
             <ResponsiveContainer width="100%" height={220}>
@@ -446,10 +447,10 @@ function ReceptionistContent() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </GlassCard>
 
           {/* Today's call log */}
-          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
+          <GlassCard variant="primary" tint="ava">
             <div className="p-6 pb-0">
               <div className="flex items-start justify-between mb-1">
                 <div>
@@ -680,10 +681,10 @@ function ReceptionistContent() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </GlassCard>
 
           {/* After-hours digest preview */}
-          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
+          <GlassCard variant="standard" tint="ava">
             <button
               onClick={() => setDigestExpanded((v) => !v)}
               className="w-full flex items-center justify-between p-5 text-left hover:bg-cloud-light/30 transition-colors"
@@ -735,11 +736,11 @@ function ReceptionistContent() {
                   ) : (
                     <p className="mb-2">No after-hours voicemails overnight.</p>
                   )}
-                  <p className="text-muted mt-3">— Ava, StrydeOS</p>
+                  <p className="text-muted mt-3">- Ava, StrydeOS</p>
                 </div>
               </div>
             )}
-          </div>
+          </GlassCard>
         </>
       )}
 
@@ -763,7 +764,7 @@ function ReceptionistContent() {
             />
           )}
           {/* Master On/Off Switch */}
-          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+          <GlassCard variant="primary" tint="ava" className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-blue/10 flex items-center justify-center">
@@ -802,10 +803,10 @@ function ReceptionistContent() {
                 />
               </button>
             </div>
-          </div>
+          </GlassCard>
 
           {/* Call Handling Rules */}
-          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+          <GlassCard variant="primary" tint="ava" className="p-6">
             <h3 className="font-display text-lg text-navy mb-4">Call Handling Rules</h3>
             <div className="space-y-3">
               {[
@@ -881,10 +882,10 @@ function ReceptionistContent() {
                 );
               })}
             </div>
-          </div>
+          </GlassCard>
 
           {/* Clinic Details */}
-          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+          <GlassCard variant="primary" tint="ava" className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display text-lg text-navy">Clinic Details</h3>
               {!isOwner && (
@@ -1006,7 +1007,7 @@ function ReceptionistContent() {
                 Saving...
               </p>
             )}
-          </div>
+          </GlassCard>
 
           {/* Clinic Knowledge Base */}
           <KnowledgeBaseEditor clinicId={user?.clinicId} />
