@@ -6,6 +6,7 @@ import { brand } from "@/lib/brand";
 import { getInitials } from "@/lib/utils";
 import type { Clinician, ClinicProfile, OnboardingState } from "@/types";
 import ClinicianHeidiToggle from "./ClinicianHeidiToggle";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 type SortOrder = "asc" | "desc";
 
@@ -87,7 +88,7 @@ export default function TeamManagementCard({
   }, [clinicians, sortOrder]);
 
   return (
-    <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+    <GlassCard variant="standard" tint="neutral" className="p-6">
       <div className="flex items-center justify-between mb-1">
         <div>
           <h3 className="font-display text-lg text-navy">Clinic Management</h3>
@@ -404,6 +405,6 @@ export default function TeamManagementCard({
           );
         })}
       </div>
-    </div>
+    </GlassCard>
   );
 }

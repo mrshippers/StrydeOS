@@ -1,5 +1,7 @@
 "use client";
 
+import { GlassCard } from "@/components/ui/GlassCard";
+
 interface TargetsCardProps {
   followUpTarget: string;
   setFollowUpTarget: (v: string) => void;
@@ -30,7 +32,7 @@ export default function TargetsCard({
   showBenchmarks = true,
 }: TargetsCardProps) {
   return (
-    <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+    <GlassCard variant="standard" tint="neutral" className="p-6">
       <h3 className="font-display text-lg text-navy mb-1">KPI Targets</h3>
       {showBenchmarks && (
         <p className="text-[11px] text-muted mb-4">
@@ -86,6 +88,6 @@ export default function TargetsCard({
         </div>
       </div>
 
-    </div>
+    </GlassCard>
   );
 }

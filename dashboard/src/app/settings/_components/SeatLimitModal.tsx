@@ -13,6 +13,7 @@ import {
   formatGBP,
   type TierKey,
 } from "@/lib/billing";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 export interface SeatLimitInfo {
   currentCount: number;
@@ -135,10 +136,10 @@ export default function SeatLimitModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="seat-limit-title"
-            className="w-full max-w-md rounded-2xl overflow-hidden bg-cream"
-            style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.25)" }}
+            className="w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
+            <GlassCard variant="primary" tint="neutral" className="overflow-hidden">
             {/* Header */}
             <div
               className="relative px-8 pt-7 pb-6"
@@ -291,6 +292,7 @@ export default function SeatLimitModal({
                 Not right now
               </button>
             </div>
+            </GlassCard>
           </motion.div>
         </motion.div>
       )}

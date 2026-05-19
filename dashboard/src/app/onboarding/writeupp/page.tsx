@@ -27,6 +27,7 @@ import { Check, Copy, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
 import { brand } from "@/lib/brand";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 const INGEST_DOMAIN = "ingest.strydeos.com";
 const WRITEUPP_REPORTS_URL = "https://app.writeupp.com/reports";
@@ -165,7 +166,7 @@ export default function ConnectWriteUppPage() {
       {/* Content */}
       <div className="flex-1 flex items-start justify-center px-6 py-8">
         <div className="w-full max-w-2xl">
-          <div className="rounded-2xl bg-white shadow-[0_32px_80px_rgba(0,0,0,0.25)] overflow-hidden">
+          <GlassCard variant="hero" tint="neutral" className="overflow-hidden">
             {/* Hero */}
             <div
               className="px-8 pt-10 pb-8"
@@ -292,7 +293,7 @@ export default function ConnectWriteUppPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </GlassCard>
         </div>
       </div>
     </div>

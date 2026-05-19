@@ -10,6 +10,7 @@ import { db } from "@/lib/firebase";
 import { AnimatePresence, motion } from "motion/react";
 import { Lock, Shield, Loader2, X, CheckCircle2 } from "lucide-react";
 import { brand } from "@/lib/brand";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 const MfaEnrollment = dynamic(
   () => import("@/components/MfaEnrollment").then((mod) => mod.MfaEnrollment),
@@ -165,7 +166,7 @@ export default function SecurityCard() {
     <>
       {/* Change Password */}
       {user.uid !== "demo" && firebaseUser && (
-        <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+        <GlassCard variant="standard" tint="neutral" className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-xl bg-blue/10 flex items-center justify-center">
               <Lock size={16} className="text-blue" />
@@ -235,12 +236,12 @@ export default function SecurityCard() {
               At least 10 characters with an uppercase letter, a number, and a special character.
             </p>
           </div>
-        </div>
+        </GlassCard>
       )}
 
       {/* Two-Factor Authentication */}
       {user.uid !== "demo" && (
-        <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+        <GlassCard variant="standard" tint="neutral" className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-xl bg-blue/10 flex items-center justify-center">
               <Shield size={16} className="text-blue" />
@@ -318,7 +319,7 @@ export default function SecurityCard() {
               )}
             </div>
           )}
-        </div>
+        </GlassCard>
       )}
 
       {/* MFA Enrollment Modal */}
@@ -337,12 +338,14 @@ export default function SecurityCard() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden p-8"
+                className="w-full max-w-2xl"
               >
-                <MfaEnrollment
-                  onComplete={handleMfaEnrollmentComplete}
-                  onSkip={() => setShowMfaEnrollment(false)}
-                />
+                <GlassCard variant="primary" tint="neutral" className="overflow-hidden p-8">
+                  <MfaEnrollment
+                    onComplete={handleMfaEnrollmentComplete}
+                    onSkip={() => setShowMfaEnrollment(false)}
+                  />
+                </GlassCard>
               </motion.div>
             </div>
           </>

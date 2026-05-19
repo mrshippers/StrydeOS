@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 // ─── Brand tokens ────────────────────────────────────────────────────────────
 
@@ -279,16 +280,8 @@ export default function TrialPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-16"
         >
-          {BENEFITS.map((b, i) => (
-            <div
-              key={b.title}
-              className="rounded-2xl p-5"
-              style={{
-                background: "white",
-                border: `1px solid ${C.border}`,
-                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-              }}
-            >
+          {BENEFITS.map((b) => (
+            <GlassCard key={b.title} variant="standard" tint="neutral" className="p-5">
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
                 style={{
@@ -306,7 +299,7 @@ export default function TrialPage() {
               <div className="text-xs" style={{ color: C.muted, lineHeight: 1.55 }}>
                 {b.desc}
               </div>
-            </div>
+            </GlassCard>
           ))}
         </motion.div>
 

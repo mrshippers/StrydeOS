@@ -100,6 +100,30 @@ StrydeOS is built and validated at Spires first.
 
 ---
 
+## Secrets & Environment — Doppler is Source of Truth
+
+All secrets live in **Doppler** (project: `strydeos`, configs: `dev` / `stg` / `prd`).
+Every project root has a committed `doppler.yaml` that pins it to the right config.
+
+### Rules
+
+- **Never read from `.env.local`.** Every `package.json` dev/build/start script must be prefixed with `doppler run --`. The dashboard script is `"dev": "doppler run -- next dev"` — match that pattern.
+- **Never commit `.env*` files.** `.env*` is gitignored. If you find one in a project root, it's a stale artifact — delete it or upload its contents to Doppler with `doppler secrets upload <file> --project strydeos --config dev`.
+- **Worktrees Just Work.** Because `doppler.yaml` is committed at every project root, a fresh worktree resolves Doppler config automatically. Do not copy or symlink `.env.local` into worktrees.
+- **Vercel pulls from Doppler** via the Doppler→Vercel integration. Do not set env vars manually in the Vercel dashboard — change them in Doppler and they propagate to preview + production.
+- **Firebase Functions secrets** are pushed from Doppler with `doppler secrets download --no-file --format env | xargs -I{} firebase functions:secrets:set {}` (or per-secret with `doppler run -- firebase deploy --only functions`). Functions never read from a `.env` file.
+
+### When something is missing locally
+
+If `npm run dev` errors with "X env var required":
+1. Check it exists in Doppler: `doppler secrets get X`
+2. If missing, add it: `doppler secrets set X=value --project strydeos --config dev`
+3. If present, you're not running through Doppler — check the dev script starts with `doppler run --`
+
+The class of bug "blank screen because env var missing in dev" is structurally impossible when this pattern is followed. If you hit it, the fix is to add Doppler — not to copy a `.env.local`.
+
+---
+
 ## Brand Tokens — Source of Truth
 
 `brand.ts` is the **single source of truth** for all colour and typography values.  
