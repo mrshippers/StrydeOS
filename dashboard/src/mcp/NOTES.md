@@ -52,7 +52,16 @@ Stretch:
 
 Add complaints, surprises, missing signatures here as they come up. Date them. Each entry should be one sentence describing the friction, not a full proposal.
 
-(empty - dogfood week starts now)
+- 2026-05-20: shipped HTTP transport ahead of schedule (route at `src/app/api/mcp/route.ts`) so the MCP can be used from claude.ai. Bearer-secret auth, scope hardcoded to Spires/superadmin. Dogfooding from claude.ai instead of Claude Code. Original Phase B + C plan collapsed into one pass.
+
+## Phase D (deferred) - OAuth + per-clinic scoping
+
+Required before exposing the HTTP transport to anyone other than the founder. Currently anyone with `MCP_BEARER_SECRET` has full Spires/superadmin access.
+
+- Replace bearer-secret with Firebase ID token auth via existing `verifyApiRequest` from `@/lib/auth-guard`
+- Or implement OAuth 2.1 flow if Anthropic's claude.ai integration requires it
+- Derive `clinicId` + `role` from `VerifiedUser` instead of hardcoded constants in `route.ts`
+- Rate limiting per token
 
 ---
 

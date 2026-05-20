@@ -1,8 +1,11 @@
 # stryde-ops MCP server
 
-Founder-local TypeScript MCP server exposing read + control tools over StrydeOS clinic data and Ava. Phase A: stdio transport only, 11 tools.
+TypeScript MCP server exposing read + control tools over StrydeOS clinic data and Ava. Two transports share one tool registry.
 
-See [MCP_PHASE_A_PLAN.md](../../docs/MCP_PHASE_A_PLAN.md) for the architecture decision and Phase B/C roadmap. See [NOTES.md](./NOTES.md) for the in-flight cut/keep/add list.
+- **stdio** for Claude Code on your laptop
+- **HTTP** at `/api/mcp` on portal.strydeos.com for claude.ai
+
+11 tools. See [MCP_PHASE_A_PLAN.md](../../docs/MCP_PHASE_A_PLAN.md) for the architecture decision and Phase C roadmap. See [NOTES.md](./NOTES.md) for the cut/keep/add list.
 
 ## Run locally
 
@@ -37,6 +40,32 @@ Add this to `~/.claude.json` under `mcpServers`:
 ```
 
 Restart Claude Code / the VS Code extension to pick it up.
+
+## Use from claude.ai (HTTP transport)
+
+The same server is mounted as a Next.js Route Handler at [src/app/api/mcp/route.ts](../app/api/mcp/route.ts). When deployed to portal.strydeos.com, claude.ai can call it as a custom MCP integration.
+
+### Required env vars on Vercel
+
+Set in Doppler under `strydeos` project, `prd` config (per the project Doppler convention):
+
+| Env var | Purpose |
+|---|---|
+| `MCP_BEARER_SECRET` | Long random string. Bearer token claude.ai presents on every request. Generate with `openssl rand -base64 48`. |
+| `ELEVENLABS_API_KEY` | Already set, required for Ava tools. |
+| `FIREBASE_*` | Already set for the dashboard. Admin SDK reuses them. |
+
+### Add to claude.ai
+
+In claude.ai, go to Settings -> Integrations -> Add custom integration:
+
+- **Name:** stryde-ops
+- **URL:** `https://portal.strydeos.com/api/mcp`
+- **Auth headers:** `Authorization: Bearer <value of MCP_BEARER_SECRET>`
+
+The HTTP transport hardcodes the scope to `CLINIC_ID=spires`, `MCP_ROLE=superadmin`. Anyone with the secret has founder-equivalent access. Treat the secret like a production credential — Doppler-managed, never in chat or commits.
+
+Promote to OAuth + per-clinic scoping before exposing to anyone other than yourself. Tracked under "Phase D" in [NOTES.md](./NOTES.md).
 
 ## Smoke asks
 
