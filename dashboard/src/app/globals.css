@@ -243,14 +243,14 @@ body {
 }
 
 html.dark {
-  --color-cloud-dancer: #0B2545;
-  --color-cloud-light: rgba(255,255,255,0.05);
-  --color-cloud-dark: rgba(255,255,255,0.08);
-  --color-cream: #0F2240;
+  --color-cloud-dancer: #091d3e;
+  --color-cloud-light: rgba(255,255,255,0.04);
+  --color-cloud-dark: rgba(255,255,255,0.07);
+  --color-cream: #0B2545;
   --color-ink: rgba(255,255,255,0.95);
-  --color-muted: rgba(255,255,255,0.88);
-  --color-muted-strong: rgba(255,255,255,0.95);
-  --color-border: rgba(255,255,255,0.12);
+  --color-muted: rgba(255,255,255,0.55);
+  --color-muted-strong: rgba(255,255,255,0.80);
+  --color-border: rgba(255,255,255,0.10);
   --color-success: #10B981;
   --color-danger: #F87171;
   --shadow-card: 0 1px 2px rgba(0,0,0,0.20), 0 4px 24px rgba(0,0,0,0.28), 0 12px 48px rgba(0,0,0,0.14);
@@ -258,7 +258,7 @@ html.dark {
 }
 
 html.dark .bg-white {
-  background-color: rgba(255,255,255,0.08);
+  background-color: var(--color-cream);
 }
 
 html.dark .bg-cloud-dark {
@@ -598,6 +598,60 @@ html.dark .recharts-cartesian-grid line {
   stroke: rgba(255,255,255,0.08) !important;
 }
 
+/* ─── Dark-mode brand utility class overrides ────────────────────────────────
+   @theme inline compiles Tailwind utilities to hardcoded values, so CSS
+   variable overrides alone don't reach them. These selectors re-apply
+   the correct dark-mode token for each brand class.                           */
+
+html.dark .bg-cloud-dancer     { background-color: #091d3e !important; }
+html.dark .bg-cloud-light      { background-color: rgba(255,255,255,0.05) !important; }
+html.dark .bg-cloud-dark       { background-color: rgba(255,255,255,0.08) !important; }
+html.dark .bg-cream            { background-color: #0B2545 !important; }
+
+html.dark .text-ink            { color: rgba(255,255,255,0.95) !important; }
+html.dark .text-muted          { color: rgba(255,255,255,0.55) !important; }
+html.dark .text-muted-strong   { color: rgba(255,255,255,0.80) !important; }
+
+html.dark .border-border       { border-color: rgba(255,255,255,0.10) !important; }
+html.dark .border-cloud-dark   { border-color: rgba(255,255,255,0.08) !important; }
+html.dark .bg-border           { background-color: rgba(255,255,255,0.10) !important; }
+
+html.dark .hover\:bg-cloud-light:hover   { background-color: rgba(255,255,255,0.06) !important; }
+html.dark .hover\:bg-cloud-dancer:hover  { background-color: rgba(255,255,255,0.04) !important; }
+html.dark .hover\:text-navy:hover        { color: rgba(255,255,255,0.90) !important; }
+html.dark .hover\:border-navy\/30:hover  { border-color: rgba(255,255,255,0.20) !important; }
+html.dark .hover\:border-navy\/20:hover  { border-color: rgba(255,255,255,0.14) !important; }
+
+/* Alert / status colours */
+html.dark .bg-success\/10   { background-color: rgba(16,185,129,0.12) !important; }
+html.dark .bg-danger\/10    { background-color: rgba(248,113,113,0.12) !important; }
+html.dark .bg-warn\/10      { background-color: rgba(245,158,11,0.12) !important; }
+html.dark .border-success\/20 { border-color: rgba(16,185,129,0.22) !important; }
+html.dark .border-danger\/20  { border-color: rgba(248,113,113,0.22) !important; }
+html.dark .text-success     { color: #10B981 !important; }
+html.dark .text-danger      { color: #F87171 !important; }
+html.dark .text-warn        { color: #FBBF24 !important; }
+
+/* Muted opacity variants that appear on light backgrounds */
+html.dark .text-muted\/60   { color: rgba(255,255,255,0.38) !important; }
+html.dark .text-muted\/80   { color: rgba(255,255,255,0.50) !important; }
+
+/* Scrollbar */
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+/* ─── Theme-switch transition smoothing ──────────────────────────────────────
+   Raise duration slightly on page-level containers so the background
+   sweep feels intentional rather than instant.                                */
+html.dark body, body {
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              color            0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 html.dark .recharts-cartesian-axis-tick-value {
   fill: rgba(255,255,255,0.70) !important;
 }
@@ -723,9 +777,39 @@ html.dark .chevron-glyph {
   pointer-events: none;
 }
 
+/* ─── Module ambient drift orbs (ModuleAmbient.tsx) ─────────────────────── */
+@keyframes stryde-drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(-24px, 32px) scale(1.04); }
+  66%       { transform: translate(18px, -18px) scale(0.97); }
+}
+
+@keyframes stryde-drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%       { transform: translate(28px, -40px) scale(1.06); }
+  75%       { transform: translate(-20px, 22px) scale(0.95); }
+}
+
+/* ─── Module strip LIVE badge pulse (ModuleStrip.tsx) ───────────────────── */
+@keyframes stryde-live-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* ─── Stat card entrance (staggered fade-up) ─────────────────────────────── */
+@keyframes stryde-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stryde-fade-up {
+  animation: stryde-fade-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .drift-glow,
-  .drift-glow-b {
+  .drift-glow-b,
+  .stryde-fade-up {
     animation: none;
   }
 }

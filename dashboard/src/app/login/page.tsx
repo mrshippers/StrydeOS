@@ -16,10 +16,75 @@ import {
 } from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { getFirebaseAuth } from "@/lib/firebase";
-import { AlertCircle, Loader2, ArrowRight, Check, Building2, Shield, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Loader2, ArrowRight, Check, Building2, Shield, Eye, EyeOff, Moon, X } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
 import { trackCTAClick } from "@/lib/funnel-events";
+import { useTheme } from "@/components/ThemeProvider";
+import ApertureDarkModeToggle from "@/components/ui/ApertureDarkModeToggle";
+
+const DARK_MODE_UPDATE_KEY = "strydeos-dark-mode-v2-seen";
+
+function DarkModeUpdateBanner() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(DARK_MODE_UPDATE_KEY)) setVisible(true);
+    } catch {}
+  }, []);
+
+  const dismiss = () => {
+    try { localStorage.setItem(DARK_MODE_UPDATE_KEY, "1"); } catch {}
+    setVisible(false);
+  };
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, y: 24, scale: 0.96, x: "-50%" }}
+          animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+          exit={{ opacity: 0, y: 16, scale: 0.96, x: "-50%" }}
+          transition={{ delay: 1.8, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed bottom-6 left-1/2 z-50"
+        >
+          <div
+            className="flex items-center gap-3.5 pl-4 pr-3 py-3 rounded-2xl"
+            style={{
+              background: "linear-gradient(135deg, #0B2545 0%, #132D5E 100%)",
+              border: "1px solid rgba(75,139,245,0.25)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(28,84,242,0.08)",
+            }}
+          >
+            <div
+              className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "rgba(28,84,242,0.20)", border: "1px solid rgba(28,84,242,0.25)" }}
+            >
+              <Moon size={13} className="text-blue-bright" style={{ color: "#4B8BF5" }} />
+            </div>
+            <div className="mr-1">
+              <p className="text-[13px] font-semibold text-white leading-tight">Dark mode redesigned</p>
+              <p className="text-[11px] leading-tight" style={{ color: "rgba(255,255,255,0.45)" }}>
+                Better contrast, elevation &amp; legibility
+              </p>
+            </div>
+            <button
+              onClick={dismiss}
+              className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors"
+              style={{ color: "rgba(255,255,255,0.30)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "rgba(255,255,255,0.65)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.30)"; }}
+              aria-label="Dismiss"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
 
 const LAST_EMAIL_KEY = "strydeos_last_email";
 const REMEMBER_ME_KEY = "strydeos_remember_me";
@@ -27,17 +92,26 @@ const REMEMBER_ME_KEY = "strydeos_remember_me";
 type AuthMode = "signin" | "signup";
 
 function LoginHeader({ onTryDemo }: { onTryDemo: () => Promise<void> }) {
+  const { theme, toggleTheme } = useTheme();
   return (
     <header className="fixed top-0 left-0 right-0 flex items-center justify-between px-6 py-4 z-10 bg-cloud-dancer">
-      <StrydeOSLogo size={34} fontSize={17} theme="light" gap={10} />
-      <button
-        type="button"
-        onClick={onTryDemo}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-navy border border-border hover:border-navy/30 hover:bg-cloud-light transition-colors"
-      >
-        Try demo
-        <ArrowRight size={14} />
-      </button>
+      <StrydeOSLogo size={34} fontSize={17} theme={theme === "dark" ? "dark" : "light"} gap={10} />
+      <div className="flex items-center gap-2">
+        <ApertureDarkModeToggle
+          size={30}
+          isDark={theme === "dark"}
+          onToggle={() => toggleTheme()}
+          className="text-navy/35 hover:text-navy/70 transition-colors"
+        />
+        <button
+          type="button"
+          onClick={onTryDemo}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-navy border border-border hover:border-navy/30 hover:bg-cloud-light transition-colors"
+        >
+          Try demo
+          <ArrowRight size={14} />
+        </button>
+      </div>
     </header>
   );
 }
@@ -880,5 +954,10 @@ function LoginPageInner() {
 }
 
 export default function LoginPage() {
-  return <LoginPageInner />;
+  return (
+    <>
+      <LoginPageInner />
+      <DarkModeUpdateBanner />
+    </>
+  );
 }

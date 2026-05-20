@@ -52,8 +52,8 @@ export default function BrightnessStackToggle({
   const opacities = isDark ? darkOpacities : lightOpacities;
   const widths = isDark ? darkWidths : lightWidths;
 
-  const t = "0.4s cubic-bezier(0.4, 0, 0.2, 1)";
-  const fg = "#4B8BF5";
+  const t = "0.42s cubic-bezier(0.34, 1.56, 0.64, 1)";
+  const fg = "#4B8BF5"; // brand.blueGlow
 
   return (
     <button

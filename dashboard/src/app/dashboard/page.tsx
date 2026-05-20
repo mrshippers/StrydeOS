@@ -123,8 +123,7 @@ export default function DashboardPage() {
     return clinic.status === "onboarding" && !dpaAccepted && user.role === "owner";
   })();
 
-  const firstName = user?.firstName ?? "";
-  const greeting = firstName ? `Good to see you, ${firstName}` : "Overview";
+  const clinicName = user?.clinicProfile?.name ?? "Your clinic";
 
   const periodConfig = PERIODS.find((p) => p.id === period) ?? PERIODS[2];
   const scaledRevenuePence = Math.round(revenueMtdPence * periodConfig.revenueScale);
@@ -155,10 +154,10 @@ export default function DashboardPage() {
       >
         <div>
           <h1 className="font-display text-navy dark:text-white text-[32px] leading-[1.05] tracking-[-0.6px]">
-            {greeting}.
+            Dashboard
           </h1>
-          <p className="text-[12.5px] mt-1.5 text-muted dark:text-white/45 tracking-wide uppercase">
-            {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+          <p className="text-[13px] mt-1.5 text-muted dark:text-white/55 font-medium">
+            {clinicName} · {periodConfig.revenueLabel}
           </p>
         </div>
         <TimeframeSegment value={period} onChange={setPeriod} />
@@ -167,8 +166,8 @@ export default function DashboardPage() {
       {/* Error state */}
       {error && <ErrorBanner message={error} />}
 
-      {/* Four-tile grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Four-tile grid — single row on wide screens */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <RevenueTile
           revenueMtdPence={scaledRevenuePence}
           periodLabel={periodConfig.revenueLabel}

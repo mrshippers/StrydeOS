@@ -24,6 +24,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { CallbackType } from "@/lib/firebase/voiceInteractions";
 import KnowledgeBaseEditor from "@/components/ava/KnowledgeBaseEditor";
+import AvaOrb from "@/components/ava/AvaOrb";
 import {
   ResponsiveContainer,
   BarChart,
@@ -156,6 +157,7 @@ class AvaErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
             title="Ava"
             subtitle="AI call handling"
             accentColor="#1C54F2"
+            hero={<AvaOrb size={56} />}
           />
           <GlassCard variant="standard" tint="ava" className="p-8 flex flex-col items-center gap-4 text-center">
             <div className="w-12 h-12 rounded-2xl bg-blue/8 flex items-center justify-center">
