@@ -498,7 +498,20 @@ export default function Sidebar() {
                     />
                   )}
                   <span className="relative z-[1] flex items-center gap-3 w-full">
-                    <item.icon size={16} strokeWidth={isActive ? 2 : 1.5} />
+                    <span
+                      className={
+                        !isLocked && item.moduleKey === "pulse"
+                          ? "module-mark module-mark--pulse"
+                          : !isLocked && item.moduleKey === "ava"
+                            ? "module-mark module-mark--ava"
+                            : !isLocked && item.moduleKey === "intelligence"
+                              ? "module-mark module-mark--intelligence"
+                              : "inline-flex"
+                      }
+                      style={{ color: !isLocked && isActive ? item.accent : undefined }}
+                    >
+                      <item.icon size={16} strokeWidth={isActive ? 2 : 1.5} />
+                    </span>
                     <span className="flex-1">{item.label}</span>
                     {isLocked ? (
                       <Lock size={11} className="text-white/20" />

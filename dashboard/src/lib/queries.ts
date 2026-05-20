@@ -413,9 +413,18 @@ export function subscribeInsightEvents(
  * older `insight_events` collection. Event shape: `{ type, kpiId, severity,
  * createdAt, consumedBy[], ... }` with `createdAt` as ISO string.
  */
+export interface PulseActionedEvent {
+  id: string;
+  createdAt: string;
+  type: string;
+  revenueImpact: number;
+  patientName?: string;
+  consumedBy: string[];
+}
+
 export function subscribeEventsActionedByPulse(
   clinicId: string | null,
-  callback: (events: Array<{ id: string; createdAt: string; consumedBy: string[] }>) => void,
+  callback: (events: PulseActionedEvent[]) => void,
   onError: (err: Error) => void
 ): Unsubscribe {
   if (!db || !clinicId) {
@@ -436,11 +445,20 @@ export function subscribeEventsActionedByPulse(
   return onSnapshot(
     q,
     (snapshot) => {
-      const data = snapshot.docs.map((d) => {
-        const raw = d.data() as { createdAt?: string; consumedBy?: string[] };
+      const data = snapshot.docs.map((d): PulseActionedEvent => {
+        const raw = d.data() as {
+          createdAt?: string;
+          consumedBy?: string[];
+          type?: string;
+          revenueImpact?: number;
+          patientName?: string;
+        };
         return {
           id: d.id,
           createdAt: raw.createdAt ?? "",
+          type: raw.type ?? "",
+          revenueImpact: Number(raw.revenueImpact ?? 0),
+          patientName: raw.patientName,
           consumedBy: raw.consumedBy ?? [],
         };
       });

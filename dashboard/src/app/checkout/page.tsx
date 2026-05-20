@@ -486,7 +486,7 @@ function CheckoutInner() {
               className="px-8 pt-8 pb-6"
               style={{
                 background:
-                  "linear-gradient(135deg, #0B2545 0%, #132D5E 100%)",
+                  "var(--surface-tile)",
               }}
             >
               <div className="flex items-center gap-4 mb-4">

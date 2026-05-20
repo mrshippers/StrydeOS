@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useState, useRef, useEffect, memo } from "react";
+import { useState, useRef, useEffect, memo, type ReactNode } from "react";
 import type { Clinician } from "@/types";
 
 interface PageHeaderProps {
@@ -11,6 +11,8 @@ interface PageHeaderProps {
   selectedClinician?: string;
   onClinicianChange?: (id: string) => void;
   accentColor?: string;
+  /** Optional hero visual (orb, badge, illustration) rendered left of the title block. */
+  hero?: ReactNode;
 }
 
 // Re-renders when props change. onClinicianChange should be useCallback-stable in parent.
@@ -21,6 +23,7 @@ function PageHeader({
   selectedClinician,
   onClinicianChange,
   accentColor,
+  hero,
 }: PageHeaderProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -45,29 +48,32 @@ function PageHeader({
       className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6"
       style={accentColor ? { borderTop: `3px solid ${accentColor}`, paddingTop: 16 } : undefined}
     >
-      <div>
-        <div className="flex items-center gap-2.5">
-          {accentColor && (
-            <span
-              className="relative flex h-2.5 w-2.5"
-            >
+      <div className={hero ? "flex items-center gap-5" : undefined}>
+        {hero}
+        <div>
+          <div className="flex items-center gap-2.5">
+            {accentColor && !hero && (
               <span
-                className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50"
-                style={{ backgroundColor: accentColor }}
-              />
-              <span
-                className="relative inline-flex rounded-full h-2.5 w-2.5"
-                style={{ backgroundColor: accentColor, boxShadow: `0 0 8px ${accentColor}80` }}
-              />
-            </span>
+                className="relative flex h-2.5 w-2.5"
+              >
+                <span
+                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50"
+                  style={{ backgroundColor: accentColor }}
+                />
+                <span
+                  className="relative inline-flex rounded-full h-2.5 w-2.5"
+                  style={{ backgroundColor: accentColor, boxShadow: `0 0 8px ${accentColor}80` }}
+                />
+              </span>
+            )}
+            <h1 className="font-display text-[32px] text-navy dark:text-white leading-tight">
+              {title}
+            </h1>
+          </div>
+          {subtitle && (
+            <p className="text-[14px] text-navy/70 dark:text-white/60 mt-1 leading-relaxed font-medium">{subtitle}</p>
           )}
-          <h1 className="font-display text-[32px] text-navy dark:text-white leading-tight">
-            {title}
-          </h1>
         </div>
-        {subtitle && (
-          <p className="text-[14px] text-navy/70 dark:text-white/60 mt-1 leading-relaxed font-medium">{subtitle}</p>
-        )}
       </div>
 
       {clinicians && onClinicianChange && (

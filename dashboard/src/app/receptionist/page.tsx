@@ -330,8 +330,9 @@ function ReceptionistContent() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Ava"
-        subtitle="AI call handling — today's calls, booking outcomes, and 7-day volume"
+        subtitle="AI call handling - today's calls, booking outcomes, and 7-day volume"
         accentColor="#1C54F2"
+        hero={<AvaOrb size={56} />}
       />
 
       {callsError && <ErrorBanner message={callsError} onRetry={() => router.refresh()} />}

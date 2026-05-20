@@ -33,6 +33,185 @@
   --radius-card: 16px;
   --radius-chip: 50px;
   --radius-inner: 10px;
+
+  /* Tile surface: dark gradient on light bg, subtle frost lift on dark bg.
+     GlassCard `style={{ background: 'var(--surface-tile)' }}` resolves per theme. */
+  --surface-tile: linear-gradient(135deg, #0B2545 0%, #132D5E 100%);
+  --surface-tile-flat: #0B2545;
+}
+
+html.dark {
+  --surface-tile: linear-gradient(135deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.06) 100%);
+  --surface-tile-flat: rgba(255,255,255,0.04);
+}
+
+/* ─── Sidebar module marks: live animated icons ─────────────────────────────
+   Each module's icon breathes / rotates / pulses subtly so the sidebar
+   feels alive. Low amplitude, slow tempo — alive, not distracting. */
+.module-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes module-pulse-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.module-mark--pulse > svg {
+  animation: module-pulse-rotate 9s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes module-ava-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.92; }
+  50%      { transform: scale(1.08); opacity: 1; }
+}
+.module-mark--ava > svg {
+  animation: module-ava-breathe 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes module-intel-ecg {
+  0%, 100% { transform: scaleY(1); opacity: 0.9; }
+  20%      { transform: scaleY(1.18); opacity: 1; }
+  40%      { transform: scaleY(0.92); opacity: 0.92; }
+  60%      { transform: scaleY(1.06); opacity: 1; }
+}
+.module-mark--intelligence > svg {
+  animation: module-intel-ecg 2.2s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .module-mark > svg { animation: none !important; }
+}
+
+/* ─── Ava Orb: live-pulsing freeform spherical presence ─────────────────────
+   The Ava module's signature visual. Six layered effects:
+     1. halo  — outer soft glow that breathes
+     2. core  — main sphere with rotating conic swirl (blue → indigo → purple)
+     3. inner — subtle inset shadow to give marble-like depth
+     4. shine — top-left specular highlight that pulses
+     5. drift — second slow-rotating overlay for chromatic depth
+     6. bolt  — optional lightning badge top-right (Ava identifier)
+   Pure CSS, GPU-only properties (transform / opacity). */
+.ava-orb {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+.ava-orb__halo {
+  position: absolute;
+  inset: -28%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(75, 139, 245, 0.45) 0%, rgba(139, 92, 246, 0.18) 40%, transparent 72%);
+  filter: blur(10px);
+  animation: ava-orb-pulse 4.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+.ava-orb__core {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      from 0deg,
+      #1C54F2 0%,
+      #4B8BF5 18%,
+      #8B5CF6 38%,
+      #C084FC 50%,
+      #6366F1 65%,
+      #2E6BFF 82%,
+      #1C54F2 100%
+    );
+  animation: ava-orb-rotate 9s linear infinite;
+  z-index: 1;
+}
+.ava-orb__inner {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 70% 75%, rgba(11, 37, 69, 0.55) 0%, transparent 55%),
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.25) 0%, transparent 35%);
+  box-shadow:
+    inset -6px -6px 18px rgba(11, 37, 69, 0.45),
+    inset 4px 4px 14px rgba(255, 255, 255, 0.22),
+    0 6px 24px rgba(28, 84, 242, 0.35),
+    0 2px 6px rgba(11, 37, 69, 0.25);
+  z-index: 2;
+  pointer-events: none;
+}
+.ava-orb__shine {
+  position: absolute;
+  top: 10%;
+  left: 16%;
+  width: 32%;
+  height: 22%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.3) 40%, transparent 72%);
+  filter: blur(1.5px);
+  animation: ava-orb-shine 3.4s ease-in-out infinite;
+  z-index: 3;
+  pointer-events: none;
+}
+.ava-orb__drift {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 180deg,
+    transparent 0%,
+    rgba(192, 132, 252, 0.18) 25%,
+    transparent 50%,
+    rgba(75, 139, 245, 0.22) 75%,
+    transparent 100%
+  );
+  animation: ava-orb-rotate-reverse 14s linear infinite;
+  mix-blend-mode: screen;
+  z-index: 2;
+  pointer-events: none;
+}
+.ava-orb__bolt {
+  position: absolute;
+  top: -4%;
+  right: -4%;
+  width: 36%;
+  height: 36%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0F2240 0%, #1A3566 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+}
+.ava-orb__bolt > svg {
+  color: rgba(255, 255, 255, 0.92);
+  fill: rgba(255, 255, 255, 0.92);
+}
+
+@keyframes ava-orb-rotate         { to { transform: rotate(360deg); } }
+@keyframes ava-orb-rotate-reverse { to { transform: rotate(-360deg); } }
+@keyframes ava-orb-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.78; }
+  50%      { transform: scale(1.18); opacity: 1; }
+}
+@keyframes ava-orb-shine {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.95; transform: scale(1.12) translate(2%, -2%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ava-orb__halo,
+  .ava-orb__core,
+  .ava-orb__shine,
+  .ava-orb__drift { animation: none !important; }
 }
 
 *,
