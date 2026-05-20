@@ -1,7 +1,7 @@
 # CLAUDE.md — StrydeOS
 
 > Claude Code operating instructions for the StrydeOS codebase.  
-> Read this before touching anything. Last updated: 2025.
+> Read this before touching anything. Last updated: 2026-05-16.
 
 ---
 
@@ -43,6 +43,41 @@ You can't manage what you can't measure. Clinic owners have no visibility into w
 
 ---
 
+## Repo Layout
+
+- `dashboard/` — primary Next.js 15 app. Tailwind v4, LangChain/LangGraph, AI SDK Gateway, ElevenLabs client, Sentry + OpenTelemetry, Playwright E2E. **All dev commands live here** (root `package.json` is a seed-only stub).
+- `StrydeOutreach/` — autonomous QA + 4-touch outreach engine. Live since 14 May 2026 at `outreach.strydeos.com`. Has its own CLAUDE.md.
+- `StrydeLens/` — Lens subproject. Has its own CLAUDE.md.
+- `ava_graph/` — LangGraph definitions for the Ava voice agent.
+- `Marketing Material/` — brand assets, pitch deck source, email comms templates (canonical).
+- `docs/` — module briefs, audits, technical whitepaper, sub-processor DPA register.
+- `scripts/` — reusable ops scripts.
+- `website/` — marketing site source.
+- `Research/`, `To do/`, `logs/`, `test-results/` — non-code.
+
+---
+
+## Commands
+
+Run inside `dashboard/`:
+
+```bash
+npm run dev                # Next dev server
+npm run dev:mobile         # Next dev exposed on 0.0.0.0 (LAN testing)
+npm run build              # Production build
+npm run lint               # eslint src
+npm test                   # vitest run
+npm run test:e2e           # playwright (E2E_NO_SERVER=1)
+npm run test:e2e:ui        # playwright UI mode
+npm run check:boundaries   # enforces Ava/Pulse/Intelligence module isolation
+npm run seed:spires        # local seed
+npm run seed:production    # production seed (use with care)
+```
+
+Module-boundary check runs as part of pre-commit. Don't bypass with `--no-verify`.
+
+---
+
 ## Product Modules
 
 Three modules. Names are **locked** — do not rename, do not alias.
@@ -52,6 +87,17 @@ Three modules. Names are **locked** — do not rename, do not alias.
 | **Ava** | Royal Blue | `#1C54F2` | AI voice receptionist (ElevenLabs + Twilio + n8n) |
 | **Pulse** | Teal | `#0891B2` | Patient continuity / retention engine |
 | **Intelligence** | Purple | `#8B5CF6` | Clinical performance dashboard |
+
+### Pricing (locked)
+
+| Bundle | Monthly | One-off |
+|---|---|---|
+| Intelligence | £129 | — |
+| Ava | £199 | £250 setup |
+| Pulse | £149 | — |
+| Full Stack (all three) | £399 | — |
+
+Do not invent or round prices. Source of truth: `StrydeOutreach/CLAUDE.md` + `dashboard/docs/briefs/`.
 
 ---
 
@@ -144,6 +190,22 @@ StrydeOS is built and validated at Spires first.
 - The Monolith mark: gradient glass container (not solid), ghost pillar, three ascending chevrons clipped inside
 - **Never reinterpret the mark**
 - In multi-logo sheets: each instance must use unique gradient and clipPath ID prefixes to prevent DOM conflicts
+
+### Email Comms Templates — Canonical
+
+Location: `Marketing Material/Email comms templates/`. Seven canonical HTML templates:
+
+1. `1-invite.html` — clinician invite
+2. `2-urgent-alert.html` — clinic urgent notifications
+3. `3-state-of-clinic.html` — weekly summary
+4. `4-clinician-digest.html` — per-clinician weekly digest
+5. `5-welcome.html` — owner welcome
+6. `6-marketing-announcement.html` — product/marketing announcements
+7. `7-how-to-import.html` — onboarding import guide
+
+Plus `sig-option-a.html` / `sig-option-b.html` — email signature variants (table-layout rebuild, commit `6d37067`).
+
+**Rules:** Never plain text for product emails. Never use the Driiva sender identity for StrydeOS mail. Em dashes were stripped in commit `2bb5901` — don't reintroduce. iCloud Mail MCP defaults to `"Jamal @ StrydeOS" <jamal@strydeos.com>`.
 
 ---
 
@@ -258,6 +320,29 @@ Irreversible = multi-tenant data modelling, real-time listener architecture, com
 
 ---
 
+## Secrets — Doppler
+
+Doppler is the single source of truth for secrets across StrydeOS + Driiva. Workspace: `Driiva Stryde`, project: `strydeos`, configs: `dev`, `dev_personal`, `stg`, `prd`.
+
+- **Never** set secrets directly in Vercel / Firebase / GitHub Actions — set in Doppler, let integrations sync downstream.
+- **Never** `vercel env pull` or `doppler secrets download` to disk for inspection. Audit value-free (key name + length + pollution flag only).
+- **Known pattern:** paste pollution leaves a literal 2-char `\n` escape at value ends — silently breaks Firebase Installations (400 INVALID_ARGUMENT), CORS matching, WebAuthn origin matching. Re-run the clean script if symptoms return.
+- Adding/rotating: set in Doppler `prd` → Vercel sync propagates ~30s → trigger rebuild (trivial commit or `vercel redeploy`).
+
+---
+
+## Build Style — Dashboard
+
+- **Module boundaries enforced.** Ava / Pulse / Intelligence cannot import from each other directly. Cross-module work goes through `shared/` or the data layer. `npm run check:boundaries` runs at pre-commit; failures block the commit.
+- **Testing:** vitest for unit/integration, Playwright for E2E. E2E runs with `E2E_NO_SERVER=1` against a pre-built server.
+- **Observability:** Sentry + OpenTelemetry. Don't add bespoke logging — instrument with OTel spans.
+- **AI orchestration:** LangChain + LangGraph for agentic flows (Ava). AI SDK Gateway for model routing — don't import provider SDKs (`@ai-sdk/anthropic`, `@ai-sdk/openai`) directly unless explicitly asked.
+- **Pre-commit:** Husky runs lint + secret scanner + module-boundary check. Don't bypass.
+- **Owner Summary** four-tile layout is the canonical landing page (commit `5eef643` replaced the prior landing). Don't substitute a generic dashboard.
+- **TypeScript first** — match the existing typing conventions in the file being edited.
+
+---
+
 ## Product Positioning — For Copy and Messaging
 
 - **Not** a tool that blames physios — it **surfaces gaps so they can be coached**
@@ -299,7 +384,7 @@ Irreversible = multi-tenant data modelling, real-time listener architecture, com
 - **Pabau** — medspa/aesthetics PMS integration, awaiting API key access
 - **Outcome measures** — NPRS, PSFS, QuickDASH, ODI, NDI layer not yet started
 - **Loom embed** — demo video section on website, not yet implemented
-- **Driiva project** — separate auth + real-time + AI/ML project, requires same structured treatment
+- **Driiva project** — separate codebase at `Documents/DriivaMVP/`. Has its own CLAUDE.md and shares the `Driiva Stryde` Doppler workspace.
 
 ---
 
