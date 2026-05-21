@@ -88,16 +88,20 @@ Three modules. Names are **locked** — do not rename, do not alias.
 | **Pulse** | Teal | `#0891B2` | Patient continuity / retention engine |
 | **Intelligence** | Purple | `#8B5CF6` | Clinical performance dashboard |
 
-### Pricing (locked)
+### Pricing (locked — April 2026)
 
-| Bundle | Monthly | One-off |
-|---|---|---|
-| Intelligence | £129 | — |
-| Ava | £199 | £250 setup |
-| Pulse | £149 | — |
-| Full Stack (all three) | £399 | — |
+|                | Solo (1)  | Studio (2–5) | Clinic (6+) |
+|----------------|-----------|--------------|-------------|
+| Intelligence   | £69       | £99          | £149        |
+| Ava            | £99       | £149         | £199        |
+| Pulse          | £79       | £99          | £149        |
+| **Full Stack** | **£199**  | **£299**     | **£399**    |
 
-Do not invent or round prices. Source of truth: `StrydeOutreach/CLAUDE.md` + `dashboard/docs/briefs/`.
+**Setup fee (Ava only): £195 one-time** — covers phone provisioning + voice training. No setup fee on Intelligence or Pulse. No lock-in contracts at any tier.
+
+Bundle discount applied automatically on Full Stack. Mix-and-match any two modules ~10% off.
+
+Do not invent or round prices. Canonical artifact: `Marketing Material/strydeos-pricing-deck.html`. Secondary references: `StrydeOutreach/CLAUDE.md`, `dashboard/docs/briefs/`.
 
 ---
 
@@ -132,10 +136,10 @@ StrydeOS is built and validated at Spires first.
 - **Automation:** n8n
 - **Voice AI:** ElevenLabs (Conversational AI) + Twilio (telephony/SIP)
 - **White-label voice layer (future):** Vapify (wraps ElevenLabs at reseller phase)
-- **PMS integrations:** WriteUpp (primary), Cliniko, Halaxy, Zanda (Power Diary) — all live
+- **PMS integrations:** all four **live in code** — Cliniko (REST API, production), WriteUpp (live via import pipeline), Halaxy (live in code), Zanda / Power Diary (live in code). Spires runs primarily on WriteUpp + Physitrack. Production rollout maturity differs from code-completeness — confirm per-clinic before promising "live integration" in sales conversation.
 - **Roadmap:** TM3 (Blue Zinc), PPS (Rushcliff — API docs gated, requires PPS Express login), Pabau (requires API key), Jane App
 - **HEP integrations:** Physitrack (live), Rehab My Patient (live), Wibbi (pending — auth model needs rework)
-- **Clinical tools:** Heidi Health (clinical docs — data enrichment, not a competitor)
+- **Clinical tools:** Heidi Health — clinical scribe (legacy positioning as data enrichment) **+ Heidi Comms** (AI receptionist, launched Feb 2026). Heidi Comms overlaps with Ava on voice/SMS/chat/scheduling but Heidi remains NHS/GP/horizontal — no physio-specific KPIs, no HEP compliance tracking, no patient retention engine. **StrydeOS positioning: physio-vertical OS, not generic AI care platform.** Concede notes integration entirely (don't build scribe). Their distribution + capital advantage is real; market overlap in private UK physio is minimal today, will widen in 12–18 months. Track but don't react.
 - **PMS API bridge:** OpenClaw (handles PMS API access without official integration)
 
 ### Dev Environment
