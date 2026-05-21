@@ -49,29 +49,12 @@ export default async function AuthorizePage({ searchParams }: Props) {
           boxShadow: "0 8px 48px rgba(0,0,0,0.4)",
         }}
       >
-        <div
-          style={{
-            width: 44,
-            height: 44,
-            background: "#1C54F2",
-            borderRadius: 10,
-            marginBottom: 20,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 2L2 7v5c0 5.55 4.18 10.74 10 12 5.82-1.26 10-6.45 10-12V7L12 2z"
-              fill="white"
-            />
-          </svg>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icon" alt="StrydeOS" width={44} height={44} style={{ marginBottom: 20, borderRadius: 10 }} />
         <h1
           style={{ fontSize: 18, fontWeight: 700, marginBottom: 6, color: "#0B2545" }}
         >
-          Authorize stryde-ops
+          Authorize StrydeOS Ops
         </h1>
         <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 24, lineHeight: 1.5 }}>
           <strong style={{ color: "#111" }}>{redirectHost}</strong> is requesting
