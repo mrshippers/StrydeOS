@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException, Query, Request
 
+from ava_graph.api.rate_limit import limiter
 from ava_graph.graph.state import AvaState
 
 logger = logging.getLogger(__name__)
@@ -90,6 +91,7 @@ def normalize_phone_to_e164(phone: str) -> str:
 
 
 @router.post("/webhook/ava")
+@limiter.limit("60/minute")
 async def webhook_ava(
     request: Request,
     webhook_type: str = Query(..., description="Webhook type: call_started|patient_confirmed"),
@@ -374,7 +376,8 @@ class ToolExecuteResponse(BaseModel):
 
 
 @router.post("/tools/execute", response_model=ToolExecuteResponse)
-async def execute_tool(body: ToolExecuteRequest) -> ToolExecuteResponse:
+@limiter.limit("120/minute")
+async def execute_tool(request: Request, body: ToolExecuteRequest) -> ToolExecuteResponse:
     """
     Execute a PMS tool directly without invoking the LangGraph workflow.
 

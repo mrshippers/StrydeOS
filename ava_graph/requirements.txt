@@ -1,0 +1,3 @@
+sentry-sdk[fastapi]>=2.0.0
+slowapi>=0.1.9
+twilio>=9.0.0

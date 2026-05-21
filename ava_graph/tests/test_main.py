@@ -1,6 +1,12 @@
 """Tests for FastAPI main application setup."""
 
+import os
 import pytest
+
+# Must be set before importing app — triggers module-level ALLOWED_ORIGINS and SENTRY_DSN checks
+os.environ.setdefault("ALLOWED_ORIGINS", "http://testserver,http://localhost:3000")
+os.environ.setdefault("SENTRY_DSN", "https://fake@sentry.io/0")
+
 from fastapi.testclient import TestClient
 
 from ava_graph.main import app
@@ -22,16 +28,21 @@ def test_app_starts(client):
 
 
 def test_health_check(client):
-    """Test that health check endpoint returns ok status."""
+    """Health endpoint returns status + checks dict regardless of dep state."""
     response = client.get("/health")
-    assert response.status_code == 200
+    assert response.status_code in (200, 503)
     data = response.json()
-    assert data["status"] == "ok"
+    assert data["status"] in ("ok", "degraded")
+    assert "checks" in data
+    assert "version" in data
 
 
 def test_cors_headers(client):
-    """Test that CORS headers are present in response."""
-    response = client.get("/", headers={"Origin": "http://example.com"})
+    """CORS headers present for allowed origins, absent for disallowed."""
+    response = client.get("/", headers={"Origin": "http://testserver"})
     assert response.status_code == 200
-    # CORS headers should be in the response
     assert "access-control-allow-origin" in response.headers
+
+    response_blocked = client.get("/", headers={"Origin": "http://evil.example.com"})
+    assert response_blocked.status_code == 200
+    assert response_blocked.headers.get("access-control-allow-origin") != "http://evil.example.com"

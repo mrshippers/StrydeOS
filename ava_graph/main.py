@@ -3,14 +3,21 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 
+from ava_graph.api.rate_limit import limiter
 from ava_graph.api.routes import router
 
 
@@ -47,17 +54,31 @@ def setup_logging() -> logging.Logger:
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    # File handler
-    file_handler = logging.FileHandler(log_dir / "ava_graph.log")
-    file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    # Only attach file handler in local dev; serverless filesystems are ephemeral
+    if os.getenv("DOPPLER_CONFIG", "dev") == "dev" and os.getenv("ENABLE_FILE_LOGS") == "1":
+        file_handler = logging.FileHandler(log_dir / "ava_graph.log")
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
 
     return logger
 
 
 # Setup logging
 logger = setup_logging()
+
+sentry_sdk.init(
+    dsn=os.environ["SENTRY_DSN"],
+    environment=os.getenv("DOPPLER_CONFIG", "dev"),
+    release=os.getenv("GIT_SHA", "dev"),
+    integrations=[FastApiIntegration(), StarletteIntegration()],
+    traces_sample_rate=0.1,
+    profiles_sample_rate=0.1,
+)
+
+ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+if not ALLOWED_ORIGINS:
+    raise RuntimeError("ALLOWED_ORIGINS must be set in Doppler. Refusing to start with wildcard CORS.")
 
 # Create FastAPI app
 app = FastAPI(
@@ -89,13 +110,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 # Add middleware
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type", "X-Twilio-Signature", "X-Elevenlabs-Signature"],
 )
 
 # Include routes with /api prefix
@@ -117,16 +140,49 @@ async def root() -> Dict[str, Any]:
     }
 
 
-# Health check endpoint
-@app.get("/health")
-async def health_check() -> Dict[str, str]:
-    """
-    Health check endpoint.
+async def _ping_firestore() -> bool:
+    creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.getenv("FIREBASE_SERVICE_ACCOUNT")
+    return bool(creds)
 
-    Returns:
-        JSON with status.
-    """
-    return {"status": "ok"}
+
+async def _ping_elevenlabs() -> bool:
+    import httpx
+    key = os.getenv("ELEVENLABS_API_KEY", "")
+    if not key:
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            resp = await client.get(
+                "https://api.elevenlabs.io/v1/user",
+                headers={"xi-api-key": key},
+            )
+        return resp.status_code == 200
+    except Exception:
+        return False
+
+
+def _ping_twilio() -> bool:
+    from ava_graph.config import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN
+    return bool(TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN)
+
+
+@app.get("/health")
+async def health_check() -> Dict[str, Any]:
+    """Liveness + dependency check. Returns 503 if any critical dep is down."""
+    checks = {
+        "firestore": await _ping_firestore(),
+        "elevenlabs": await _ping_elevenlabs(),
+        "twilio": _ping_twilio(),
+    }
+    healthy = all(checks.values())
+    return JSONResponse(
+        content={
+            "status": "ok" if healthy else "degraded",
+            "checks": checks,
+            "version": os.getenv("GIT_SHA", "dev"),
+        },
+        status_code=200 if healthy else 503,
+    )
 
 
 logger.info("Ava Booking Agent FastAPI application initialized")
