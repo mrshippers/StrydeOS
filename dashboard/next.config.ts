@@ -30,15 +30,6 @@ const nextConfig: NextConfig = {
       "recharts",
     ],
   },
-  async redirects() {
-    return [
-      {
-        source: "/favicon.ico",
-        destination: "/icon",
-        permanent: true,
-      },
-    ];
-  },
   async headers() {
     return [
       {
