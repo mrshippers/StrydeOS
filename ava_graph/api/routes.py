@@ -11,8 +11,9 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
+from ava_graph.api.auth import verify_elevenlabs_secret
 from ava_graph.api.rate_limit import limiter
 from ava_graph.graph.state import AvaState
 
@@ -90,7 +91,7 @@ def normalize_phone_to_e164(phone: str) -> str:
     return phone
 
 
-@router.post("/webhook/ava")
+@router.post("/webhook/ava", dependencies=[Depends(verify_elevenlabs_secret)])
 @limiter.limit("60/minute")
 async def webhook_ava(
     request: Request,

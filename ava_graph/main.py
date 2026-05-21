@@ -19,6 +19,7 @@ from starlette.responses import JSONResponse, Response
 
 from ava_graph.api.rate_limit import limiter
 from ava_graph.api.routes import router
+from ava_graph.api.tenant import TenantResolverMiddleware
 
 
 # Configure logging
@@ -112,6 +113,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 # Add middleware
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(TenantResolverMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
