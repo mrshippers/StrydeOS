@@ -9,7 +9,8 @@
     "@vercel/analytics": "^1.6.1",
     "animejs": "^4.4.1",
     "dotenv": "^16.4.0",
-    "firebase": "^11.10.0"
+    "firebase": "^11.10.0",
+    "firebase-admin": "^13.10.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
