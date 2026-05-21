@@ -143,8 +143,14 @@ async def root() -> Dict[str, Any]:
 
 
 async def _ping_firestore() -> bool:
-    creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.getenv("FIREBASE_SERVICE_ACCOUNT")
-    return bool(creds)
+    try:
+        from ava_graph.config import get_firestore_db
+        db = get_firestore_db()
+        # Lightweight read — just fetch a single known doc rather than a full list
+        await db.collection("clinics").limit(1).get()
+        return True
+    except Exception:
+        return False
 
 
 async def _ping_elevenlabs() -> bool:

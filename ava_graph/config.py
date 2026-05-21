@@ -5,7 +5,31 @@ from functools import lru_cache
 from typing import Optional
 
 import httpx
+from google.cloud import firestore_v1
+from google.oauth2 import service_account
 from twilio.rest import Client as TwilioClient
+
+FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "")
+_FIRESTORE_SCOPES = ["https://www.googleapis.com/auth/cloud-platform"]
+
+
+@lru_cache(maxsize=1)
+def get_firestore_db() -> firestore_v1.AsyncClient:
+    """
+    Async Firestore client built from individual service-account env vars.
+    Doppler stores FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, FIREBASE_PROJECT_ID.
+    Handles paste-polluted \\n escapes in the private key.
+    """
+    private_key = os.environ["FIREBASE_PRIVATE_KEY"].replace("\\n", "\n")
+    info = {
+        "type": "service_account",
+        "project_id": os.environ["FIREBASE_PROJECT_ID"],
+        "private_key": private_key,
+        "client_email": os.environ["FIREBASE_CLIENT_EMAIL"],
+        "token_uri": "https://oauth2.googleapis.com/token",
+    }
+    creds = service_account.Credentials.from_service_account_info(info, scopes=_FIRESTORE_SCOPES)
+    return firestore_v1.AsyncClient(project=os.environ["FIREBASE_PROJECT_ID"], credentials=creds)
 
 # Environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")

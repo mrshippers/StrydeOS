@@ -59,9 +59,8 @@ class TenantResolverMiddleware(BaseHTTPMiddleware):
 async def _clinic_exists(clinic_id: str) -> bool:
     """Return True if clinics/{clinic_id} document exists in Firestore."""
     try:
-        from google.cloud import firestore_v1
-
-        db = firestore_v1.AsyncClient(project=os.environ.get("FIREBASE_PROJECT_ID"))
+        from ava_graph.config import get_firestore_db
+        db = get_firestore_db()
         doc = await db.collection("clinics").document(clinic_id).get()
         return doc.exists
     except Exception:
