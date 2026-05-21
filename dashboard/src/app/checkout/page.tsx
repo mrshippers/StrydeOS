@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
+import { GlassCard } from "@/components/ui/GlassCard";
 import {
   MODULE_PRICING,
   TIER_LABELS,
@@ -479,13 +480,13 @@ function CheckoutInner() {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-lg"
         >
-          <div className="rounded-2xl bg-white overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.25)]">
+          <GlassCard variant="primary" tint="neutral" className="overflow-hidden">
             {/* Card header — navy gradient */}
             <div
               className="px-8 pt-8 pb-6"
               style={{
                 background:
-                  "linear-gradient(135deg, #0B2545 0%, #132D5E 100%)",
+                  "var(--surface-tile)",
               }}
             >
               <div className="flex items-center gap-4 mb-4">
@@ -658,7 +659,7 @@ function CheckoutInner() {
 
               <CheckoutFooter />
             </div>
-          </div>
+          </GlassCard>
 
           {/* Back link */}
           <div className="text-center mt-6">

@@ -89,9 +89,12 @@ export default function InsightNudge({ stats, previousStats }: InsightNudgeProps
     <div
       className="rounded-[var(--radius-card)] px-5 py-4 flex items-start gap-3"
       style={{
-        background: isAllGood ? "rgba(5,150,105,0.04)" : "rgba(28,84,242,0.04)",
+        // Left-anchored radial wash replaces the prior 3px solid left rail
+        // (banned per feedback_no_hard_lines.md). Same colour anchor, smooth blend.
+        background: isAllGood
+          ? "radial-gradient(ellipse 40% 130% at 0% 50%, rgba(5,150,105,0.14), transparent 65%), rgba(5,150,105,0.04)"
+          : "radial-gradient(ellipse 40% 130% at 0% 50%, rgba(28,84,242,0.14), transparent 65%), rgba(28,84,242,0.04)",
         border: isAllGood ? "1px solid rgba(5,150,105,0.10)" : "1px solid rgba(28,84,242,0.10)",
-        borderLeft: `3px solid ${isAllGood ? brand.success : brand.blue}`,
       }}
     >
       {isAllGood

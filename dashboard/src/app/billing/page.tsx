@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
+import { GlassCard } from "@/components/ui/GlassCard";
 import {
   MODULE_DISPLAY,
   MODULE_KEYS,
@@ -142,12 +143,14 @@ function ModuleCard({ moduleKey, isActive, isLoading, tier, interval, canManage,
   );
 
   return (
-    <div
-      className={`relative rounded-2xl p-6 flex flex-col gap-4 transition-all duration-200 bg-white border ${isActive || isDemo ? "" : "border-border"}`}
+    <GlassCard
+      variant="standard"
+      tint="neutral"
+      className="p-6 flex flex-col gap-4"
       style={isActive || isDemo ? { borderColor: `${color}40` } : undefined}
     >
       {/* Top accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${color}, ${color}50)` }} />
+      <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl z-[2]" style={{ background: `linear-gradient(90deg, ${color}, ${color}50)` }} />
 
       {/* Name + status */}
       <div className="flex items-center gap-3 mt-1">
@@ -200,7 +203,7 @@ function ModuleCard({ moduleKey, isActive, isLoading, tier, interval, canManage,
           Billing controlled by clinic owner. Ask them to enable {name}.
         </div>
       ) : null}
-    </div>
+    </GlassCard>
   );
 }
 
@@ -222,9 +225,9 @@ function FullStackCard({ tier, interval, allActive, isLoading, isDemo, onActivat
   const saving = individualTotal - price;
 
   return (
-    <div className="relative rounded-2xl p-6 mt-4 overflow-hidden bg-white border border-blue-glow/30">
+    <GlassCard variant="primary" tint="neutral" className="p-6 mt-4">
       {/* Tri-colour top bar */}
-      <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl bg-gradient-to-r from-purple via-blue to-teal" />
+      <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl z-[2] bg-gradient-to-r from-purple via-blue to-teal" />
 
       <div className="flex items-start justify-between gap-6 mt-1">
         <div>
@@ -278,7 +281,7 @@ function FullStackCard({ tier, interval, allActive, isLoading, isDemo, onActivat
           <Check size={16} strokeWidth={2.5} /> All modules active
         </div>
       )}
-    </div>
+    </GlassCard>
   );
 }
 
@@ -497,7 +500,7 @@ export default function BillingPage() {
 
       {/* Subscription status row — hidden in demo (no real subscription) */}
       {!isDemo && (
-        <div className="mb-8 flex items-center justify-between px-5 py-4 rounded-2xl bg-cloud-dark border border-border">
+        <GlassCard variant="standard" tint="neutral" className="mb-8 flex items-center justify-between px-5 py-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-strong mb-1">Subscription</p>
             <div className="flex items-center gap-2">
@@ -515,7 +518,7 @@ export default function BillingPage() {
               {portalLoading ? <Loader2 size={13} className="animate-spin" /> : <><CreditCard size={13} /> Manage billing <ExternalLink size={11} className="opacity-60" /></>}
             </button>
           )}
-        </div>
+        </GlassCard>
       )}
 
       {/* Tier + interval selectors */}
@@ -559,7 +562,7 @@ export default function BillingPage() {
         const seatPrice = EXTRA_SEAT_PRICING[interval];
 
         return (
-          <div className="mt-6 rounded-2xl p-5 bg-white border border-border">
+          <GlassCard variant="standard" tint="neutral" className="mt-6 p-5">
             <div className="flex items-center gap-2 mb-4">
               <Users size={15} className="text-navy" />
               <h3 className="text-[14px] font-semibold text-navy">Clinician Seats</h3>
@@ -593,7 +596,7 @@ export default function BillingPage() {
                 . Added to your existing subscription immediately.
               </p>
             </div>
-          </div>
+          </GlassCard>
         );
       })()}
 

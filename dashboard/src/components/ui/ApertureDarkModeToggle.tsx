@@ -19,6 +19,7 @@ export default function ApertureDarkModeToggle({
     if (typeof window === "undefined") return false;
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
+  const [pressing, setPressing] = useState(false);
 
   const isDark = controlledDark !== undefined ? controlledDark : internalDark;
 
@@ -37,16 +38,18 @@ export default function ApertureDarkModeToggle({
   };
 
   const half = size / 2;
-  const outerR = half * 0.9;
-  const pupilR = isDark ? outerR * 0.72 : outerR * 0.34;
+  const outerR = half * 0.88;
+  // Pupil: large (closed iris / dark) vs small (open iris / light)
+  const pupilR = isDark ? outerR * 0.70 : outerR * 0.32;
   const strokeW = Math.max(1.2, size * 0.05);
   const bladeW = Math.max(1, size * 0.04);
 
+  // 3 blade pairs (each blade is a full chord across the circle)
   const blades = [0, 60, 120].map((deg) => {
     const rad = (deg * Math.PI) / 180;
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
-    const reach = outerR * 0.97;
+    const reach = outerR * 0.95;
     return {
       x1: half + cos * reach,
       y1: half - sin * reach,
@@ -55,13 +58,29 @@ export default function ApertureDarkModeToggle({
     };
   });
 
-  const fg = "currentColor";
-  const t = "0.35s cubic-bezier(0.4, 0, 0.2, 1)";
+  // Blade rotation: 60deg when dark (almost fully closed), 0 when light
+  const bladeRotation = isDark ? 60 : 0;
+  const bladeOpacity = isDark ? 0.08 : 1;
+
+  // Easing: spring-like for open, ease-in for close
+  const ease = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+  const easeClose = "cubic-bezier(0.4, 0, 0.2, 1)";
+  const duration = "0.42s";
+  const t = `${duration} ${isDark ? easeClose : ease}`;
+
+  // Subtle ring glow in dark mode
+  const ringColor = isDark ? "rgba(75,139,245,0.85)" : "currentColor";
+  const ringFilter = isDark ? `drop-shadow(0 0 ${size * 0.06}px rgba(75,139,245,0.5))` : "none";
+
+  const scale = pressing ? 0.88 : 1;
 
   return (
     <button
       type="button"
       onClick={toggle}
+      onMouseDown={() => setPressing(true)}
+      onMouseUp={() => setPressing(false)}
+      onMouseLeave={() => setPressing(false)}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       className={className}
       style={{
@@ -75,6 +94,9 @@ export default function ApertureDarkModeToggle({
         justifyContent: "center",
         color: "inherit",
         WebkitTapHighlightColor: "transparent",
+        willChange: "transform",
+        transform: `scale(${scale})`,
+        transition: `transform 0.12s ${easeClose}`,
       }}
     >
       <svg
@@ -82,22 +104,31 @@ export default function ApertureDarkModeToggle({
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         xmlns="http://www.w3.org/2000/svg"
-        style={{ display: "block", overflow: "visible" }}
+        style={{
+          display: "block",
+          overflow: "visible",
+          filter: ringFilter,
+          transition: `filter ${duration} ${easeClose}`,
+        }}
       >
+        {/* Outer ring */}
         <circle
           cx={half}
           cy={half}
           r={outerR}
-          stroke={fg}
+          stroke={ringColor}
           strokeWidth={strokeW}
           fill="none"
+          style={{ transition: `stroke ${duration} ${easeClose}` }}
         />
+
+        {/* Aperture blades — rotate and fade as iris closes/opens */}
         <g
           style={{
             transformOrigin: `${half}px ${half}px`,
-            transform: isDark ? "rotate(30deg)" : "rotate(0deg)",
+            transform: `rotate(${bladeRotation}deg)`,
             transition: `transform ${t}, opacity ${t}`,
-            opacity: isDark ? 0.12 : 1,
+            opacity: bladeOpacity,
           }}
         >
           {blades.map((b, i) => (
@@ -107,18 +138,23 @@ export default function ApertureDarkModeToggle({
               y1={b.y1}
               x2={b.x2}
               y2={b.y2}
-              stroke={fg}
+              stroke={ringColor}
               strokeWidth={bladeW}
               strokeLinecap="round"
+              style={{ transition: `stroke ${duration} ${easeClose}` }}
             />
           ))}
         </g>
+
+        {/* Centre pupil — grows to fill iris in dark mode */}
         <circle
           cx={half}
           cy={half}
           r={pupilR}
-          fill={fg}
-          style={{ transition: `r ${t}` }}
+          fill={ringColor}
+          style={{
+            transition: `r ${duration} ${isDark ? easeClose : ease}, fill ${duration} ${easeClose}`,
+          }}
         />
       </svg>
     </button>

@@ -1,5 +1,7 @@
 "use client";
 
+import { GlassCard } from "@/components/ui/GlassCard";
+
 interface ClinicDetailsCardProps {
   clinicName: string;
   setClinicName: (v: string) => void;
@@ -42,7 +44,7 @@ export default function ClinicDetailsCard({
   setTimezone,
 }: ClinicDetailsCardProps) {
   return (
-    <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+    <GlassCard variant="standard" tint="neutral" className="p-6">
       <h3 className="font-display text-lg text-navy mb-4">Clinic Details</h3>
 
       <div className="space-y-4">
@@ -164,6 +166,6 @@ export default function ClinicDetailsCard({
           </select>
         </div>
       </div>
-    </div>
+    </GlassCard>
   );
 }

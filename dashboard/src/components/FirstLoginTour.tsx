@@ -8,6 +8,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import { useSidebar } from "@/context/SidebarContext";
 import TourStep, { type TourStepDef } from "./TourStep";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 const TOUR_STEPS: TourStepDef[] = [
   {
@@ -201,11 +202,9 @@ export default function FirstLoginTour() {
                 delay: 0.12,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="w-full max-w-lg rounded-2xl overflow-hidden bg-cream"
-              style={{
-                boxShadow: "0 32px 80px rgba(0, 0, 0, 0.25)",
-              }}
+              className="w-full max-w-lg"
             >
+              <GlassCard variant="standard" tint="neutral" className="bg-cream">
               {/* Gradient header */}
               <div
                 className="px-8 pt-8 pb-6"
@@ -258,6 +257,7 @@ export default function FirstLoginTour() {
                   I&apos;ll explore
                 </button>
               </div>
+              </GlassCard>
             </motion.div>
           </motion.div>
         )}

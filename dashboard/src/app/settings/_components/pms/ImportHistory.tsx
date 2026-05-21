@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { FailureSnapshot } from "@/lib/csv-import/failure-snapshot";
 import CSVFailurePreview from "@/components/settings/CSVFailurePreview";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 export interface ImportHistoryRecord {
   id: string;
@@ -43,7 +44,7 @@ export default function ImportHistory({
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
 
   return (
-    <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+    <GlassCard variant="standard" tint="neutral" className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-display text-lg text-navy">Import History</h3>
         <button
@@ -75,7 +76,7 @@ export default function ImportHistory({
           ))}
         </div>
       )}
-    </div>
+    </GlassCard>
   );
 }
 

@@ -4,6 +4,7 @@ import { use, useMemo } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 import { useDemoPatients } from "@/hooks/useDemoData";
 import { useClinicians } from "@/hooks/useClinicians";
@@ -137,7 +138,7 @@ export default function PatientDetailPage({
       </Link>
 
       {/* Patient header */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+      <GlassCard variant="standard" tint="pulse" className="p-6">
         <div className="flex items-start gap-4">
           <div className="w-14 h-14 rounded-full bg-navy flex items-center justify-center text-lg font-bold text-white shrink-0">
             {getInitials(patient.name)}
@@ -171,7 +172,7 @@ export default function PatientDetailPage({
             </div>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       {/* Key stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -207,7 +208,7 @@ export default function PatientDetailPage({
       </div>
 
       {/* Course progress bar */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+      <GlassCard variant="standard" tint="pulse" className="p-5">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-navy">Treatment Progress</h3>
           <span className="text-sm font-bold text-navy">{progress}%</span>
@@ -235,10 +236,10 @@ export default function PatientDetailPage({
             </div>
           ))}
         </div>
-      </div>
+      </GlassCard>
 
       {/* Timeline */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+      <GlassCard variant="standard" tint="pulse" className="p-6">
         <h3 className="font-display text-lg text-navy mb-4">Activity Timeline</h3>
         <div className="relative">
           <div className="absolute left-[15px] top-0 bottom-0 w-px bg-border" />
@@ -268,7 +269,7 @@ export default function PatientDetailPage({
             })}
           </div>
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }

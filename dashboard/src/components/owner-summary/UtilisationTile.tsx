@@ -1,6 +1,8 @@
 "use client";
 
+import { GlassCard } from "@/components/ui/GlassCard";
 import { brand } from "@/lib/brand";
+import { DURATION, EASING } from "@/lib/motion";
 import { BarChart2 } from "lucide-react";
 
 interface ClinicianUtilisationRow {
@@ -18,11 +20,13 @@ export default function UtilisationTile({ rows, loading }: UtilisationTileProps)
   const visibleRows = rows.slice(0, 4);
 
   return (
-    <div
-      className="rounded-[var(--radius-card)] p-5 flex flex-col gap-4 border-l-2"
+    <GlassCard
+      variant="hero"
+      tint="ava"
+      className="p-5 flex flex-col gap-4"
       style={{
-        background: "linear-gradient(135deg, #0B2545 0%, #132D5E 100%)",
-        borderLeftColor: brand.blue,
+        background: "var(--surface-tile)",
+        minHeight: 148,
       }}
     >
       <div className="flex items-center gap-2">
@@ -48,12 +52,13 @@ export default function UtilisationTile({ rows, loading }: UtilisationTileProps)
                     {pct}%
                   </span>
                 </div>
-                <div className="h-[2px] w-full bg-white/10 rounded-full overflow-hidden">
+                <div className="h-[3px] w-full bg-white/10 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full"
                     style={{
                       width: `${pct}%`,
                       background: brand.blue,
+                      transition: `width ${DURATION.pill}ms ${EASING}`,
                     }}
                   />
                 </div>
@@ -62,6 +67,6 @@ export default function UtilisationTile({ rows, loading }: UtilisationTileProps)
           })}
         </ul>
       )}
-    </div>
+    </GlassCard>
   );
 }

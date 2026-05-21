@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
 import { normalizeApiError } from "@/lib/api-errors";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 export default function HeidiConnectionCard() {
   const { user, firebaseUser } = useAuth();
@@ -131,7 +132,7 @@ export default function HeidiConnectionCard() {
         : "Not connected";
 
   return (
-    <div className="rounded-xl border border-border p-4">
+    <GlassCard variant="standard" tint="neutral" className="p-4">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-white border border-border flex items-center justify-center shrink-0 p-1.5">
           <img src="/integrations/heidi.svg" alt="Heidi" className="w-full h-full object-contain" />
@@ -249,6 +250,6 @@ export default function HeidiConnectionCard() {
           )}
         </div>
       </div>
-    </div>
+    </GlassCard>
   );
 }

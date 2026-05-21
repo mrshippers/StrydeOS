@@ -1,6 +1,8 @@
 "use client";
 
+import { GlassCard } from "@/components/ui/GlassCard";
 import { brand } from "@/lib/brand";
+import { DURATION, EASING, useMorphValue } from "@/lib/motion";
 import { UserMinus, CheckCircle } from "lucide-react";
 
 interface RetentionAlert {
@@ -18,13 +20,18 @@ interface RetentionTileProps {
 export default function RetentionTile({ alerts, alertCount, loading }: RetentionTileProps) {
   const visibleAlerts = alerts.slice(0, 3);
   const overflow = alertCount > 3 ? alertCount - 3 : 0;
+  const morph = useMorphValue(alertCount);
+  const morphOpacity = morph.isAnimating ? 0 : 1;
+  const morphDur = morph.isAnimating ? DURATION.morphOut : DURATION.morphIn;
 
   return (
-    <div
-      className="rounded-[var(--radius-card)] p-5 flex flex-col gap-4 border-l-2"
+    <GlassCard
+      variant="hero"
+      tint="pulse"
+      className="p-5 flex flex-col gap-4"
       style={{
-        background: "linear-gradient(135deg, #0B2545 0%, #132D5E 100%)",
-        borderLeftColor: brand.warning,
+        background: "var(--surface-tile)",
+        minHeight: 148,
       }}
     >
       <div className="flex items-center gap-2">
@@ -45,8 +52,14 @@ export default function RetentionTile({ alerts, alertCount, loading }: Retention
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          <p className="text-[32px] font-bold text-white leading-none tabular-nums">
-            {alertCount} at risk
+          <p
+            className="text-[32px] font-bold text-white leading-none tabular-nums"
+            style={{
+              opacity: morphOpacity,
+              transition: `opacity ${morphDur}ms ${EASING}`,
+            }}
+          >
+            {morph.value} at risk
           </p>
           <ul className="flex flex-col gap-1.5">
             {visibleAlerts.map((alert) => (
@@ -63,6 +76,6 @@ export default function RetentionTile({ alerts, alertCount, loading }: Retention
           )}
         </div>
       )}
-    </div>
+    </GlassCard>
   );
 }

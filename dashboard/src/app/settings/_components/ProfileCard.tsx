@@ -6,6 +6,7 @@ import { Loader2, Save } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 export default function ProfileCard() {
   const { user, firebaseUser, refreshClinicProfile } = useAuth();
@@ -50,7 +51,7 @@ export default function ProfileCard() {
     profileLastName !== (user?.lastName ?? "");
 
   return (
-    <div id="profile-section" className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+    <GlassCard id="profile-section" variant="standard" tint="neutral" className="p-6">
       <h3 className="font-display text-lg text-navy mb-1">Your Profile</h3>
       <p className="text-xs text-muted mb-4">How your name appears across StrydeOS</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -87,6 +88,6 @@ export default function ProfileCard() {
           </button>
         </div>
       )}
-    </div>
+    </GlassCard>
   );
 }

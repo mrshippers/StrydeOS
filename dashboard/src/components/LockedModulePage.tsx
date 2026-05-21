@@ -11,6 +11,7 @@ import { MODULE_DISPLAY } from "@/lib/billing";
 import type { ModuleKey } from "@/lib/billing";
 import { brand } from "@/lib/brand";
 import { useAuth } from "@/hooks/useAuth";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 // ─── Per-module benefit bullets ───────────────────────────────────────────────
 
@@ -68,17 +69,12 @@ export default function LockedModulePage({ module }: Props) {
       />
 
       {/* Frosted glass card */}
-      <div
-        className="relative z-10 flex flex-col items-center text-center max-w-md w-full mx-6 px-8 py-10"
-        style={{
-          background: "rgba(255,255,255,0.04)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          border: `1px solid ${color}28`,
-          borderRadius: 24,
-          boxShadow: `0 0 60px ${color}14, 0 2px 32px rgba(11,37,69,0.4)`,
-        }}
+      <GlassCard
+        variant="hero"
+        tint={module}
+        className="relative z-10 max-w-md w-full mx-6"
       >
+        <div className="flex flex-col items-center text-center px-8 py-10">
         {/* Glowing dot + lock */}
         <div className="relative mb-6">
           <div
@@ -150,7 +146,8 @@ export default function LockedModulePage({ module }: Props) {
             </p>
           </>
         )}
-      </div>
+        </div>
+      </GlassCard>
 
       {/* Keyframe animations via inline style tag */}
       <style>{`

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 const MfaEnrollment = dynamic(
   () => import("@/components/MfaEnrollment").then((mod) => mod.MfaEnrollment),
@@ -42,7 +43,7 @@ export default function MfaSetupPage() {
       className="min-h-screen flex items-center justify-center px-6"
       style={{ background: "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)" }}
     >
-      <div className="w-full max-w-2xl rounded-2xl bg-white p-8 shadow-[0_32px_80px_rgba(0,0,0,0.25)]">
+      <GlassCard variant="primary" tint="neutral" className="w-full max-w-2xl p-8">
         {mfaRequired && (
           <div className="mb-6 p-4 rounded-xl bg-blue/10 border border-blue/20">
             <p className="text-sm text-navy">
@@ -56,7 +57,7 @@ export default function MfaSetupPage() {
           onComplete={() => router.push("/dashboard")}
           onSkip={!mfaRequired ? () => router.push("/dashboard") : undefined}
         />
-      </div>
+      </GlassCard>
     </div>
   );
 }

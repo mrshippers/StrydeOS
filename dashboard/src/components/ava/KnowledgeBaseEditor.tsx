@@ -18,6 +18,7 @@ import {
   CATEGORY_LABELS,
   type KnowledgeCategory,
 } from "@/lib/ava/ava-knowledge";
+import { GlassCard } from "@/components/ui/GlassCard";
 import KnowledgeCategoryCard from "./KnowledgeCategoryCard";
 
 interface KnowledgeBaseEditorProps {
@@ -109,7 +110,7 @@ export default function KnowledgeBaseEditor({ clinicId }: KnowledgeBaseEditorPro
 
   if (!clinicId) {
     return (
-      <div className="rounded-[20px] overflow-hidden border border-white/[0.08] shadow-[0_4px_24px_rgba(11,37,69,0.12)]">
+      <GlassCard variant="hero" tint="ava">
         <div className="relative bg-gradient-to-br from-[#0B2545] via-[#0f2f52] to-[#0B2545] p-6">
           <div className="flex items-center gap-3.5">
             <div className="relative w-10 h-10 rounded-xl bg-white/[0.08] backdrop-blur-sm flex items-center justify-center border border-white/[0.06]">
@@ -124,13 +125,13 @@ export default function KnowledgeBaseEditor({ clinicId }: KnowledgeBaseEditorPro
         <div className="bg-white p-6 text-center">
           <p className="text-sm text-muted">Your clinic setup is still in progress. Once onboarding is complete, you can teach Ava about your clinic here.</p>
         </div>
-      </div>
+      </GlassCard>
     );
   }
 
   if (loading) {
     return (
-      <div className="rounded-[20px] overflow-hidden border border-white/[0.08] shadow-[0_4px_24px_rgba(11,37,69,0.12)]">
+      <GlassCard variant="hero" tint="ava">
         <div className="relative bg-gradient-to-br from-[#0B2545] via-[#0f2f52] to-[#0B2545] p-6">
           <div className="animate-pulse space-y-4">
             <div className="h-5 bg-white/10 rounded w-48" />
@@ -142,13 +143,13 @@ export default function KnowledgeBaseEditor({ clinicId }: KnowledgeBaseEditorPro
             <div key={i} className="h-14 bg-cloud-light/60 rounded-xl animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
           ))}
         </div>
-      </div>
+      </GlassCard>
     );
   }
 
   return (
-    <div className="rounded-[20px] overflow-hidden border border-white/[0.08] shadow-[0_4px_24px_rgba(11,37,69,0.12)]">
-      {/* ─── Hero header ─── */}
+    <GlassCard variant="hero" tint="ava">
+      {/* Hero header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0B2545] via-[#0f2f52] to-[#0d2a4d]" />
         <div className="absolute inset-0 overflow-hidden">
@@ -383,6 +384,6 @@ export default function KnowledgeBaseEditor({ clinicId }: KnowledgeBaseEditorPro
       </div>
 
       {/* Keyframes defined in globals.css: kb-wave-drift, kb-breathe, kb-slide-up, kb-flash */}
-    </div>
+    </GlassCard>
   );
 }

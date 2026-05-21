@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
 import { normalizeApiError } from "@/lib/api-errors";
 import { Star, Loader2 } from "lucide-react";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 interface ReviewsConfigSummary {
   displayName?: string;
@@ -160,7 +161,7 @@ export default function GoogleReviewsCard() {
     status === "connected" ? "Connected" : status === "loading" ? "Loading…" : "Not connected";
 
   return (
-    <div className="rounded-xl border border-border p-4">
+    <GlassCard variant="standard" tint="neutral" className="p-4">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-warn/10 border border-warn/20 flex items-center justify-center shrink-0">
           <Star size={18} className="text-warn" fill="currentColor" />
@@ -274,6 +275,6 @@ export default function GoogleReviewsCard() {
           ) : null}
         </div>
       </div>
-    </div>
+    </GlassCard>
   );
 }

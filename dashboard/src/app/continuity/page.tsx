@@ -18,6 +18,7 @@ import { SessionThresholdStrip } from "@/components/pulse/SessionThresholdStrip"
 import { PatientBoard } from "@/components/pulse/PatientBoard";
 import { SequenceCard } from "@/components/pulse/SequenceCard";
 import { CustomisePanel } from "@/components/pulse/CustomisePanel";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { formatPercent, daysSince } from "@/lib/utils";
 import {
   Users,
@@ -156,7 +157,7 @@ function ContinuityPage() {
 
       {/* Setup banner — shown when no comms have been sent yet (real user only) */}
       {!commsIsDemo && commsStats.totalSent === 0 && !loading && (
-        <div className="rounded-[var(--radius-card)] border border-teal/20 bg-white p-5">
+        <GlassCard variant="standard" tint="pulse" className="p-5">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-teal/10 flex items-center justify-center shrink-0 mt-0.5">
               <Zap size={14} className="text-teal" />
@@ -170,7 +171,7 @@ function ContinuityPage() {
               </p>
             </div>
           </div>
-        </div>
+        </GlassCard>
       )}
 
       {/* Comms summary stats */}
@@ -330,7 +331,7 @@ function ContinuityPage() {
       {/* Send Log */}
       {activeView === "log" && (
         <div className="animate-fade-in">
-          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
+          <GlassCard variant="standard" tint="pulse">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -404,7 +405,7 @@ function ContinuityPage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </GlassCard>
         </div>
       )}
 
@@ -429,12 +430,10 @@ function ContinuityPage() {
             style={{ background: "rgba(11, 37, 69, 0.5)", backdropFilter: "blur(4px)" }}
             onClick={() => setPreviewSequenceType(null)}
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.93, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 8 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-md rounded-2xl bg-white shadow-[var(--shadow-elevated)] overflow-hidden"
+            <GlassCard
+              variant="primary"
+              tint="pulse"
+              className="w-full max-w-md"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between p-5 border-b border-border">
@@ -490,7 +489,7 @@ function ContinuityPage() {
                   Template variables in <span className="font-mono text-navy bg-cloud-dark px-1 rounded">[brackets]</span> are resolved with real patient data at send time.
                 </p>
               </div>
-            </motion.div>
+            </GlassCard>
           </motion.div>
         )}
       </AnimatePresence>

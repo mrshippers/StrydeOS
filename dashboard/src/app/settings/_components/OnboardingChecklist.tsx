@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight, CheckCircle2, Circle } from "lucide-react";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 interface OnboardingChecklistProps {
   pmsConnected: boolean;
@@ -20,7 +21,7 @@ export default function OnboardingChecklist({
   ];
 
   return (
-    <div className="rounded-[var(--radius-card)] border-2 border-blue/30 bg-blue/5 p-6">
+    <GlassCard variant="standard" tint="neutral" className="p-6">
       <div className="flex items-center gap-3 mb-4">
         <div className="h-9 w-9 rounded-xl bg-blue/10 flex items-center justify-center">
           <ArrowRight size={16} className="text-blue" />
@@ -59,6 +60,6 @@ export default function OnboardingChecklist({
           </div>
         ))}
       </div>
-    </div>
+    </GlassCard>
   );
 }

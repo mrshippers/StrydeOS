@@ -301,6 +301,55 @@ const GREETINGS_LATE: GreetingPool = {
   ],
 };
 
+// ─── Time-band selection (shared with light-weight callers) ────────────────
+
+export type TimeBand = "morning" | "afternoon" | "evening" | "late";
+
+export function getTimeBand(hour = new Date().getHours()): TimeBand {
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 17) return "afternoon";
+  if (hour >= 17 && hour < 22) return "evening";
+  return "late";
+}
+
+const POOLS_BY_BAND: Record<TimeBand, GreetingPool> = {
+  morning: GREETINGS_MORNING,
+  afternoon: GREETINGS_AFTERNOON,
+  evening: GREETINGS_EVENING,
+  late: GREETINGS_LATE,
+};
+
+/**
+ * Lightweight greeting picker for surfaces that don't need the full
+ * Intelligence subtext (e.g. the Dashboard page header). Picks once per
+ * session per band so the phrase is stable across re-renders, then ticks
+ * to a new pool when the time band changes.
+ */
+export function getTimeGreeting(firstName?: string): string {
+  const band = getTimeBand();
+  const cacheKey = `strydeos_greeting_band_${band}`;
+
+  let phrase: string | null = null;
+  try {
+    phrase = sessionStorage.getItem(cacheKey);
+  } catch { /* sessionStorage unavailable */ }
+
+  if (!phrase) {
+    const pool = POOLS_BY_BAND[band];
+    const template = firstName
+      ? pickRandom(pool.withName)
+      : pickRandom(pool.withoutName);
+    phrase = template.replace(/\{name\}/g, firstName ?? "");
+    try {
+      sessionStorage.setItem(cacheKey, phrase);
+    } catch { /* sessionStorage unavailable */ }
+  } else if (firstName && phrase.includes("{name}")) {
+    phrase = phrase.replace(/\{name\}/g, firstName);
+  }
+
+  return phrase;
+}
+
 // ─── Session-persistent greeting ────────────────────────────────────────────
 
 const SESSION_GREETED_KEY = "strydeos_greeted";

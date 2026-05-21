@@ -28,6 +28,7 @@ import type { OnboardingStage, PmsProvider } from "@/types";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
 import type { ModuleKey } from "@/lib/billing";
 import EnrichmentReview from "@/components/onboarding/EnrichmentReview";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 // ─── Brand tokens ────────────────────────────────────────────────────────────
 
@@ -511,8 +512,8 @@ export default function OnboardingPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-2xl bg-white overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.25)]"
             >
+              <GlassCard variant="hero" tint="neutral" className="overflow-hidden">
               {/* Card header */}
               <div className="px-8 pt-8 pb-6" style={{ background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)` }}>
                 <div className="flex items-center gap-3 mb-3">
@@ -979,6 +980,7 @@ export default function OnboardingPage() {
                   </button>
                 </div>
               </div>
+              </GlassCard>
             </motion.div>
           </AnimatePresence>
         </div>

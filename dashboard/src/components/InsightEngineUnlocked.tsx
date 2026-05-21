@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { useInsightEngineUnlock } from "@/hooks/useInsightEngineUnlock";
 import { brand } from "@/lib/brand";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 const STEPS = [
   {
@@ -141,7 +142,7 @@ export default function InsightEngineUnlocked() {
 
           {/* Card */}
           <motion.div
-            className="relative w-full max-w-[420px] overflow-hidden"
+            className="relative w-full max-w-[420px]"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{
@@ -149,13 +150,14 @@ export default function InsightEngineUnlocked() {
               delay: CARD_DELAY / 1000,
               ease: [0.22, 1, 0.36, 1],
             }}
-            style={{
-              background: `linear-gradient(165deg, ${brand.navyMid} 0%, ${brand.navy} 100%)`,
-              borderRadius: 20,
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: `0 0 60px ${brand.purple}20, 0 0 120px ${brand.blue}10`,
-            }}
           >
+            <GlassCard
+              variant="hero"
+              tint="neutral"
+              style={{
+                background: `linear-gradient(165deg, ${brand.navyMid} 0%, ${brand.navy} 100%)`,
+              }}
+            >
             {/* Top accent bar */}
             <div
               className="h-[3px] w-full"
@@ -345,6 +347,7 @@ export default function InsightEngineUnlocked() {
                 )}
               </AnimatePresence>
             </div>
+            </GlassCard>
           </motion.div>
         </motion.div>
       )}

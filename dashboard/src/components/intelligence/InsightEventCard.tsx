@@ -10,7 +10,12 @@ import {
 } from "lucide-react";
 import { brand } from "@/lib/brand";
 import { useAuth } from "@/hooks/useAuth";
-import type { InsightEvent, InsightSeverity } from "@/types/insight-events";
+import {
+  EVENT_TO_SEQUENCE,
+  type InsightEvent,
+  type InsightSeverity,
+} from "@/types/insight-events";
+import { Sparkles } from "lucide-react";
 
 const SEVERITY_CONFIG: Record<
   InsightSeverity,
@@ -148,7 +153,26 @@ export default function InsightEventCard({
               </span>
             )}
 
-            {event.type === "PATIENT_DROPOUT_RISK" && event.actionTarget === "patient" && (
+            {/* Action with Pulse: only when Pulse hasn't already actioned + the type has a sequence mapping */}
+            {!hasPulseAction && !isResolved && EVENT_TO_SEQUENCE[event.type] && (
+              <Link
+                href={`/continuity?event=${event.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1.5 text-[11px] font-semibold rounded-full px-2.5 py-1 border ml-auto transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{
+                  color: brand.teal,
+                  background: `${brand.teal}14`,
+                  borderColor: `${brand.teal}33`,
+                }}
+              >
+                <Sparkles size={10} />
+                Action with Pulse
+                <ExternalLink size={9} />
+              </Link>
+            )}
+
+            {/* Fallback for legacy DROPOUT_RISK patient-actionable events without an EVENT_TO_SEQUENCE mapping check */}
+            {event.type === "PATIENT_DROPOUT_RISK" && event.actionTarget === "patient" && hasPulseAction && (
               <Link
                 href="/continuity"
                 className="inline-flex items-center gap-1 text-[11px] font-semibold hover:underline"

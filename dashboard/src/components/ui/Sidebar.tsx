@@ -349,12 +349,16 @@ export default function Sidebar() {
           onClick={() => setNotifOpen(!notifOpen)}
           className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
           style={{
-            background: notifOpen ? "rgba(28,84,242,0.15)" : "rgba(11,37,69,0.06)",
-            border: `1px solid ${notifOpen ? "rgba(28,84,242,0.2)" : "rgba(11,37,69,0.08)"}`,
+            background: notifOpen
+              ? "rgba(28,84,242,0.15)"
+              : theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(11,37,69,0.06)",
+            border: `1px solid ${notifOpen
+              ? "rgba(28,84,242,0.2)"
+              : theme === "dark" ? "rgba(255,255,255,0.10)" : "rgba(11,37,69,0.08)"}`,
           }}
           aria-label="Notifications"
         >
-          <Bell size={15} className={notifOpen ? "text-blue" : "text-navy/40 hover:text-navy/70"} style={{ transition: "color 0.15s" }} />
+          <Bell size={15} className={notifOpen ? "text-blue" : theme === "dark" ? "text-white/40" : "text-navy/40"} style={{ transition: "color 0.15s" }} />
           {totalBellCount > 0 && (
             <span
               className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
@@ -498,7 +502,20 @@ export default function Sidebar() {
                     />
                   )}
                   <span className="relative z-[1] flex items-center gap-3 w-full">
-                    <item.icon size={16} strokeWidth={isActive ? 2 : 1.5} />
+                    <span
+                      className={
+                        !isLocked && item.moduleKey === "pulse"
+                          ? "module-mark module-mark--pulse"
+                          : !isLocked && item.moduleKey === "ava"
+                            ? "module-mark module-mark--ava"
+                            : !isLocked && item.moduleKey === "intelligence"
+                              ? "module-mark module-mark--intelligence"
+                              : "inline-flex"
+                      }
+                      style={{ color: !isLocked && isActive ? item.accent : undefined }}
+                    >
+                      <item.icon size={16} strokeWidth={isActive ? 2 : 1.5} />
+                    </span>
                     <span className="flex-1">{item.label}</span>
                     {isLocked ? (
                       <Lock size={11} className="text-white/20" />
@@ -632,9 +649,12 @@ export default function Sidebar() {
 
           {/* Dark mode toggle */}
           <div className="mb-2">
-            <button
+            <div
+              role="button"
+              tabIndex={0}
               onClick={(e) => toggleTheme(e)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-white/30 hover:text-white/50 hover:bg-white/5 transition-all duration-200"
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleTheme(e as never); }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-white/30 hover:text-white/50 hover:bg-white/5 transition-all duration-200 cursor-pointer"
             >
               <BrightnessStackToggle
                 size={12}
@@ -645,7 +665,7 @@ export default function Sidebar() {
               <kbd className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/8 border border-white/10">
                 {typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform) ? "⌘" : "Ctrl+"}D
               </kbd>
-            </button>
+            </div>
           </div>
 
           {/* Profile menu */}

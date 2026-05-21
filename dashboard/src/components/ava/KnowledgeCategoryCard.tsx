@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown, Plus } from "lucide-react";
 import type { KnowledgeEntry, KnowledgeCategory } from "@/lib/ava/ava-knowledge";
 import { CATEGORY_LABELS, CATEGORY_DESCRIPTIONS, CATEGORY_SUGGESTIONS } from "@/lib/ava/ava-knowledge";
+import { GlassCard } from "@/components/ui/GlassCard";
 import KnowledgeEntryRow from "./KnowledgeEntryRow";
 
 const CATEGORY_ICONS: Record<KnowledgeCategory, string> = {
@@ -41,15 +42,7 @@ export default function KnowledgeCategoryCard({
   const icon = CATEGORY_ICONS[category];
 
   return (
-    <div
-      className={`
-        rounded-2xl border overflow-hidden transition-all duration-300
-        ${expanded
-          ? "bg-white border-border/60 shadow-[0_1px_8px_rgba(11,37,69,0.04)]"
-          : "bg-white/60 border-border/30 hover:border-border/50 hover:bg-white/80"
-        }
-      `}
-    >
+    <GlassCard variant="primary" tint="ava">
       <button
         onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors group"
@@ -160,6 +153,6 @@ export default function KnowledgeCategoryCard({
           </div>
         </div>
       </div>
-    </div>
+    </GlassCard>
   );
 }

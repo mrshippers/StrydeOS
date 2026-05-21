@@ -11,6 +11,7 @@ import { Clock, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { brand } from "@/lib/brand";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 const DISMISS_KEY = "strydeos_trial_banner_dismissed";
 
@@ -40,15 +41,18 @@ export default function TrialBanner() {
           : `${days} days left in your trial`;
 
   return (
-    <div
-      className="flex items-center justify-between gap-4 px-4 py-2.5 rounded-xl mb-5 text-sm"
+    <GlassCard
+      variant="standard"
+      tint="neutral"
+      className="mb-5 text-sm"
       style={{
         background: urgent ? "rgba(245,158,11,0.10)" : "rgba(245,158,11,0.06)",
-        border: urgent
-          ? "1px solid rgba(245,158,11,0.30)"
-          : "1px solid rgba(245,158,11,0.15)",
+        borderColor: urgent
+          ? "rgba(245,158,11,0.30)"
+          : "rgba(245,158,11,0.15)",
       }}
     >
+      <div className="flex items-center justify-between gap-4 px-4 py-2.5">
       <div className="flex items-center gap-2.5 min-w-0">
         <Clock size={13} style={{ color: brand.warning }} className="shrink-0" />
         <span className="text-[12px] font-medium truncate" style={{ color: brand.warning }}>
@@ -84,6 +88,7 @@ export default function TrialBanner() {
           <X size={13} />
         </button>
       </div>
-    </div>
+      </div>
+    </GlassCard>
   );
 }

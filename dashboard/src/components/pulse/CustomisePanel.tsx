@@ -5,6 +5,7 @@ import { X, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import type { LifecycleState, SequenceType } from "@/types";
 import type { UserPreferences } from "@/hooks/useUserPreferences";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 interface Props {
   open: boolean;
@@ -127,7 +128,12 @@ export const CustomisePanel: FC<Props> = ({ open, onClose, preferences, onUpdate
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed right-0 top-0 bottom-0 z-50 w-80 bg-white shadow-xl overflow-y-auto"
+            className="fixed right-0 top-0 bottom-0 z-50 w-80"
+          >
+          <GlassCard
+            variant="standard"
+            tint="pulse"
+            className="h-full overflow-y-auto"
           >
             <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -172,6 +178,7 @@ export const CustomisePanel: FC<Props> = ({ open, onClose, preferences, onUpdate
                 </div>
               </div>
             </div>
+          </GlassCard>
           </motion.div>
         </>
       )}

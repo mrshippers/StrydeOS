@@ -1,22 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lightbulb, CheckCheck } from "lucide-react";
+import { Lightbulb, CheckCheck, TrendingDown } from "lucide-react";
 import { brand } from "@/lib/brand";
 import { useInsightEvents } from "@/hooks/useInsightEvents";
+import { DURATION, EASING, useMorphValue } from "@/lib/motion";
 import InsightEventCard from "./InsightEventCard";
 import ErrorBanner from "@/components/ui/ErrorBanner";
 
 /**
- * Full list of recent insight events.
- * Used in the "Insights" tab on the Intelligence page.
+ * Full list of recent insight events, sorted by £ revenueImpact desc so the
+ * money sitting on the table sits at the top. Header surfaces the total £ at
+ * risk across active critical + warning events — the owner's headline number.
  */
 export default function InsightFeed() {
   const router = useRouter();
   const { events, activeEvents, markAsRead, loading, error } = useInsightEvents();
   const [showDismissed, setShowDismissed] = useState(false);
-  const displayEvents = showDismissed ? events : activeEvents;
+
+  const sortedActive = useMemo(
+    () =>
+      [...activeEvents].sort(
+        (a, b) => (b.revenueImpact ?? 0) - (a.revenueImpact ?? 0)
+      ),
+    [activeEvents]
+  );
+
+  const sortedAll = useMemo(
+    () =>
+      [...events].sort(
+        (a, b) => (b.revenueImpact ?? 0) - (a.revenueImpact ?? 0)
+      ),
+    [events]
+  );
+
+  const displayEvents = showDismissed ? sortedAll : sortedActive;
+
+  const atRiskTotal = useMemo(
+    () =>
+      activeEvents
+        .filter((e) => e.severity === "critical" || e.severity === "warning")
+        .reduce((sum, e) => sum + (e.revenueImpact ?? 0), 0),
+    [activeEvents]
+  );
+  const morphAtRisk = useMemo(() => Math.round(atRiskTotal), [atRiskTotal]);
+  const morph = useMorphValue(morphAtRisk);
+  const valOpacity = morph.isAnimating ? 0 : 1;
+  const valDur = morph.isAnimating ? DURATION.morphOut : DURATION.morphIn;
 
   if (loading) {
     return (
@@ -52,19 +83,36 @@ export default function InsightFeed() {
 
   return (
     <div className="space-y-4">
-      {/* Header row */}
-      <div className="flex items-center justify-between">
-        <p className="text-[12px] font-semibold text-muted">
-          {activeEvents.length} active insight{activeEvents.length !== 1 ? "s" : ""}
-          {events.length > activeEvents.length && (
-            <span className="text-muted/60 ml-1">
-              ({events.length - activeEvents.length} dismissed)
+      {/* Header row — £ at risk anchor + meta */}
+      <div className="flex items-end justify-between gap-3 flex-wrap">
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <p className="text-[12px] font-semibold text-muted">
+            {activeEvents.length} active insight{activeEvents.length !== 1 ? "s" : ""}
+            {events.length > activeEvents.length && (
+              <span className="text-muted/60 ml-1">
+                ({events.length - activeEvents.length} dismissed)
+              </span>
+            )}
+          </p>
+          {atRiskTotal > 0 && (
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px] font-semibold tabular-nums"
+              style={{
+                background: `${brand.danger}14`,
+                color: brand.danger,
+                opacity: valOpacity,
+                transition: `opacity ${valDur}ms ${EASING}`,
+              }}
+            >
+              <TrendingDown size={11} />
+              £{morph.value.toLocaleString("en-GB")} at risk
             </span>
           )}
-        </p>
+        </div>
         <div className="flex items-center gap-2">
           {events.length > activeEvents.length && (
             <button
+              type="button"
               onClick={() => setShowDismissed(!showDismissed)}
               className="text-[11px] font-semibold text-muted hover:text-navy transition-colors"
             >
@@ -74,7 +122,7 @@ export default function InsightFeed() {
         </div>
       </div>
 
-      {/* Events list */}
+      {/* Events list — sorted by £ impact desc */}
       <div className="space-y-3">
         {displayEvents.map((event) => (
           <InsightEventCard

@@ -10,6 +10,7 @@ import {
   Check,
 } from "lucide-react";
 import { brand } from "@/lib/brand";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 interface HepProviderOption {
   id: string;
@@ -98,7 +99,7 @@ export default function HepIntegrationCard({
   }
 
   return (
-    <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+    <GlassCard variant="standard" tint="neutral" className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-display text-lg text-navy">HEP Integration</h3>
         <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-teal/10 text-teal">
@@ -239,6 +240,6 @@ export default function HepIntegrationCard({
           )}
         </div>
       )}
-    </div>
+    </GlassCard>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { ChevronDown, ChevronUp, Info, Users } from "lucide-react";
 import type { WeeklyStats, MetricStatus } from "@/types";
 import { getInitials, formatPercent, formatRate } from "@/lib/utils";
+import { brand } from "@/lib/brand";
 
 interface ClinicianRow {
   clinicianId: string;
@@ -258,7 +259,11 @@ function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
                   className="group border-b border-border/50 cursor-pointer transition-all duration-200 hover:bg-blue/[0.04] active:bg-blue/[0.06]"
                   style={{
                     height: 52,
-                    borderLeft: hasAlert ? "3px solid #F59E0B" : undefined,
+                    // Soft amber glow from the left edge replaces the prior 3px solid rail
+                    // (banned per feedback_no_hard_lines.md). Brand-tokened colour.
+                    boxShadow: hasAlert
+                      ? `inset 16px 0 18px -10px ${brand.warning}40`
+                      : undefined,
                   }}
                 >
                   <td className="px-5 py-2">

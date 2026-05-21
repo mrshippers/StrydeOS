@@ -24,6 +24,7 @@ import ProviderLogo from "./ProviderLogo";
 import CsvImportPanel from "./pms/CsvImportPanel";
 import ImportHistory, { type ImportHistoryRecord } from "./pms/ImportHistory";
 import EmailIngest from "./pms/EmailIngest";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 // ─── PMS provider catalogue + supporting types ────────────────────────────
 
@@ -331,7 +332,7 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
   return (
     <>
       {/* PMS Connection */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+      <GlassCard variant="standard" tint="neutral" className="p-6">
         <div className="mb-4">
           <h3 className="font-display text-lg text-navy">PMS Connection</h3>
         </div>
@@ -610,7 +611,7 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
           mappingFileType={mappingFileType}
           onCancelMapping={cancelMapping}
         />
-      </div>
+      </GlassCard>
 
       {/* Import History (Phase 4) */}
       <ImportHistory
