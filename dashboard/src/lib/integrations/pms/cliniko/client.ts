@@ -13,8 +13,17 @@ export interface ClinikoConfig {
   baseUrl?: string; // e.g. "https://api.au1.cliniko.com/v1"
 }
 
-/** Shard regions to probe during connection test */
-const SHARD_PROBES = ["au1", "uk1", "us1"];
+/** Shard regions to probe during connection test (fallback only) */
+const SHARD_PROBES = ["uk1", "uk2", "uk3", "au1", "au2", "us1"];
+
+/**
+ * Extract the shard from a Cliniko API key.
+ * Keys optionally end with `-{shard}` e.g. `...xyz-uk3`.
+ */
+function extractShard(apiKey: string): string | null {
+  const match = apiKey.match(/-([a-z]{2}\d+)$/);
+  return match ? match[1] : null;
+}
 
 export async function clinikoFetch<T>(
   config: ClinikoConfig,
@@ -78,8 +87,13 @@ export async function testClinikoConnection(
     }
   }
 
-  // Probe each shard
-  for (const shard of SHARD_PROBES) {
+  // Build probe order: key-derived shard first, then fallbacks
+  const keyShard = extractShard(config.apiKey);
+  const probeOrder = keyShard
+    ? [keyShard, ...SHARD_PROBES.filter((s) => s !== keyShard)]
+    : SHARD_PROBES;
+
+  for (const shard of probeOrder) {
     const base = `https://api.${shard}.cliniko.com/v1`;
     try {
       await clinikoFetch<{ id: string }>({ ...config, baseUrl: base }, "/user");
@@ -87,8 +101,8 @@ export async function testClinikoConnection(
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       errors.push(`${base} → ${msg}`);
-      
-      // Stop early on auth failures (wrong key)
+
+      // Stop early on auth failures (wrong key, not wrong shard)
       if (msg.includes("401")) {
         return { ok: false, error: `Authentication failed — check your Cliniko API key.\n${msg}` };
       }
@@ -97,7 +111,7 @@ export async function testClinikoConnection(
 
   return {
     ok: false,
-    error: `Could not reach Cliniko API. Tried ${SHARD_PROBES.length} shard regions:\n${errors.join("\n")}\n\nVerify your API key or contact Cliniko support.`,
+    error: `Could not reach Cliniko API. Tried shards: ${probeOrder.join(", ")}.\n${errors.join("\n")}\n\nVerify your API key or contact Cliniko support.`,
   };
 }
 
