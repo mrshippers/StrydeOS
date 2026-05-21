@@ -22,6 +22,7 @@ import { StrydeOSLogo } from "@/components/MonolithLogo";
 import { trackCTAClick } from "@/lib/funnel-events";
 import { useTheme } from "@/components/ThemeProvider";
 import ApertureDarkModeToggle from "@/components/ui/ApertureDarkModeToggle";
+import { GlassCard } from "@/components/ui/GlassCard";
 
 const DARK_MODE_UPDATE_KEY = "strydeos-dark-mode-v2-seen";
 
@@ -98,10 +99,10 @@ function LoginHeader({ onTryDemo }: { onTryDemo: () => Promise<void> }) {
       <StrydeOSLogo size={34} fontSize={17} theme={theme === "dark" ? "dark" : "light"} gap={10} />
       <div className="flex items-center gap-2">
         <ApertureDarkModeToggle
-          size={30}
+          size={38}
           isDark={theme === "dark"}
           onToggle={() => toggleTheme()}
-          className="text-navy/35 hover:text-navy/70 transition-colors"
+          className="text-navy/50 hover:text-navy/85 dark:text-white/55 dark:hover:text-white/95 transition-colors"
         />
         <button
           type="button"
@@ -414,7 +415,19 @@ function LoginPageInner() {
     );
   }
 
-  if (user) return null;
+  // Show a thin shell during the redirect window so the page isn't visually empty.
+  // Previously returned null, which created a blank-page flash in dark mode.
+  if (user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-cloud-dancer">
+        <LoginHeader onTryDemo={enterDemoMode} />
+        <div className="flex-1 flex items-center justify-center gap-3">
+          <Loader2 size={18} className="animate-spin text-muted dark:text-white/55" />
+          <span className="text-[13px] text-muted dark:text-white/55">Taking you to your dashboard...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!isFirebaseConfigured) {
     return (
@@ -467,10 +480,15 @@ function LoginPageInner() {
           <div className="flex-1 flex items-center justify-center pt-4">
             <div className="w-full max-w-[400px]">
               <motion.div
-                className="rounded-2xl p-6 bg-white border border-border shadow-[var(--shadow-elevated)]"
                 {...fadeUp}
                 transition={{ duration: 0.4, delay: stagger * 1, ease: [0.2, 0.8, 0.2, 1] }}
               >
+                <GlassCard
+                  variant="primary"
+                  tint="ava"
+                  className="p-6"
+                  style={{ background: "var(--surface-tile)" }}
+                >
                 {/* Mode toggle */}
                 <div className="flex rounded-xl bg-cloud-light p-1 mb-6">
                   <button
@@ -914,6 +932,7 @@ function LoginPageInner() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+                </GlassCard>
               </motion.div>
 
               <motion.p

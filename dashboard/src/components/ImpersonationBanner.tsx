@@ -19,7 +19,11 @@ export default function ImpersonationBanner() {
   return (
     <div
       className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-4 py-2.5"
-      style={{ background: brand.warning, borderBottom: "1px solid rgba(255,255,255,0.15)" }}
+      style={{
+        // Soft bottom fade instead of a 1px solid divider — blends into the page.
+        background: `linear-gradient(180deg, ${brand.warning} 0%, ${brand.warning} 78%, rgba(245,158,11,0.78) 100%)`,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+      }}
     >
       <div className="flex items-center gap-2.5">
         <Eye size={14} className="text-ink shrink-0" />

@@ -20,10 +20,18 @@ export type KnowledgeCategory =
   | "custom";    // Custom Notes
 
 /** Where this entry came from. Defaults to "manual" if absent (backward compat). */
-export type KnowledgeSource = "manual" | "auto";
+export type KnowledgeSource = "manual" | "auto" | "ai_generated";
 
 /** Synth confidence hint, used only for auto-enriched entries. */
 export type KnowledgeConfidence = "high" | "medium" | "low";
+
+/**
+ * Review state for an entry.
+ *  - approved (or absent / legacy) → live, visible to Ava
+ *  - draft → AI-generated suggestion in the review queue, NOT visible to Ava
+ *  - archived → soft-deleted, NOT visible to Ava
+ */
+export type KnowledgeStatus = "draft" | "approved" | "archived";
 
 export interface KnowledgeEntry {
   id: string;
@@ -35,6 +43,52 @@ export interface KnowledgeEntry {
   source?: KnowledgeSource;
   /** Synth confidence, only meaningful for source === "auto". */
   confidence?: KnowledgeConfidence;
+  /** Review state. Absent = legacy entry, treated as approved. */
+  status?: KnowledgeStatus;
+  /** Provenance for AI-generated drafts. */
+  generatedFrom?: {
+    buzzword: string;
+    model: string;
+    promptVersion: string;
+  };
+}
+
+// ─── Draft / approval helpers ────────────────────────────────────────────────
+
+/**
+ * Apply backward-compat defaults when reading an entry from Firestore.
+ * Pre-Slice-1 entries have no status / source; they're treated as
+ * approved manual entries so they remain live without a migration.
+ */
+export function normaliseEntryForRead(entry: KnowledgeEntry): KnowledgeEntry {
+  return {
+    ...entry,
+    status: entry.status ?? "approved",
+    source: entry.source ?? "manual",
+  };
+}
+
+/**
+ * Defaults applied when creating a new entry.
+ * Manual entries (UI path) go straight to live. AI-generated entries land
+ * as drafts in the review queue and require explicit approval.
+ */
+export function newEntryDefaults(
+  source: KnowledgeSource,
+): { status: KnowledgeStatus; source: KnowledgeSource } {
+  return {
+    status: source === "ai_generated" ? "draft" : "approved",
+    source,
+  };
+}
+
+/**
+ * Filter to entries that are visible to Ava. Drafts and archived entries
+ * are gated out. Entries with no status (legacy, pre-Slice-1) are treated
+ * as approved so existing clinics don't lose their KB on upgrade.
+ */
+export function filterLiveEntries(entries: KnowledgeEntry[]): KnowledgeEntry[] {
+  return entries.filter((e) => e.status === undefined || e.status === "approved");
 }
 
 export interface KnowledgeChunk {
@@ -136,14 +190,18 @@ export interface AvaSyncState {
 /**
  * Compile all knowledge entries into a single document string.
  * Used as system prompt fallback when ElevenLabs KB API is unavailable.
+ *
+ * Filters via filterLiveEntries first — drafts and archived entries never
+ * reach the Ava agent, even via the fallback path.
  */
 export function compileKnowledgeDocument(entries: KnowledgeEntry[]): string {
-  if (entries.length === 0) return "";
+  const live = filterLiveEntries(entries);
+  if (live.length === 0) return "";
 
   const sections: string[] = [];
 
   for (const category of CATEGORY_ORDER) {
-    const categoryEntries = entries.filter((e) => e.category === category);
+    const categoryEntries = live.filter((e) => e.category === category);
     if (categoryEntries.length === 0) continue;
 
     const label = CATEGORY_LABELS[category];
@@ -160,12 +218,16 @@ export function compileKnowledgeDocument(entries: KnowledgeEntry[]): string {
 /**
  * Compile knowledge entries into per-category chunks for ElevenLabs KB.
  * Each chunk becomes a separate document for better semantic search boundaries.
+ *
+ * Filters via filterLiveEntries first — drafts and archived entries are
+ * invisible to the sync layer.
  */
 export function compileKnowledgeChunks(entries: KnowledgeEntry[]): KnowledgeChunk[] {
+  const live = filterLiveEntries(entries);
   const chunks: KnowledgeChunk[] = [];
 
   for (const category of CATEGORY_ORDER) {
-    const categoryEntries = entries.filter((e) => e.category === category);
+    const categoryEntries = live.filter((e) => e.category === category);
     if (categoryEntries.length === 0) continue;
 
     const label = CATEGORY_LABELS[category];

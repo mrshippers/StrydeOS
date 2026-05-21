@@ -46,7 +46,6 @@ function PageHeader({
   return (
     <div
       className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6"
-      style={accentColor ? { borderTop: `3px solid ${accentColor}`, paddingTop: 16 } : undefined}
     >
       <div className={hero ? "flex items-center gap-5" : undefined}>
         {hero}

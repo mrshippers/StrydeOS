@@ -15,6 +15,7 @@ import UtilisationTile from "@/components/owner-summary/UtilisationTile";
 import DemoBanner from "@/components/ui/DemoBanner";
 import { brand } from "@/lib/brand";
 import { DURATION, EASING, useSlidingPill } from "@/lib/motion";
+import { getTimeGreeting } from "@/lib/greeting";
 
 type Period = "today" | "7d" | "30d" | "90d";
 
@@ -91,6 +92,24 @@ const staggerItem = (delay: number) => ({
   transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const, delay },
 });
 
+function useTickingGreeting(firstName?: string): string {
+  const [phrase, setPhrase] = useState(() => getTimeGreeting(firstName));
+  useEffect(() => {
+    const recompute = () => setPhrase(getTimeGreeting(firstName));
+    // Tick every minute so the greeting flips when the time band changes.
+    const id = setInterval(recompute, 60_000);
+    const onVis = () => {
+      if (document.visibilityState === "visible") recompute();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [firstName]);
+  return phrase;
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -124,6 +143,7 @@ export default function DashboardPage() {
   })();
 
   const clinicName = user?.clinicProfile?.name ?? "Your clinic";
+  const greeting = useTickingGreeting(user?.firstName);
 
   const periodConfig = PERIODS.find((p) => p.id === period) ?? PERIODS[2];
   const scaledRevenuePence = Math.round(revenueMtdPence * periodConfig.revenueScale);
@@ -153,8 +173,11 @@ export default function DashboardPage() {
         {...staggerItem(0)}
       >
         <div>
-          <h1 className="font-display text-navy dark:text-white text-[32px] leading-[1.05] tracking-[-0.6px]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted/80 dark:text-white/40 mb-1.5">
             Dashboard
+          </p>
+          <h1 className="font-display text-navy dark:text-white text-[32px] leading-[1.05] tracking-[-0.6px]">
+            {greeting}
           </h1>
           <p className="text-[13px] mt-1.5 text-muted dark:text-white/55 font-medium">
             {clinicName} · {periodConfig.revenueLabel}
@@ -166,8 +189,8 @@ export default function DashboardPage() {
       {/* Error state */}
       {error && <ErrorBanner message={error} />}
 
-      {/* Four-tile grid — single row on wide screens */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Four-tile grid — 2x2 at lg, single row only on xl+ (avoids narrow Utilisation crush) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <RevenueTile
           revenueMtdPence={scaledRevenuePence}
           periodLabel={periodConfig.revenueLabel}

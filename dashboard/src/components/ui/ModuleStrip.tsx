@@ -45,6 +45,7 @@ export default function ModuleStrip({ module }: { module: Module }) {
 
   return (
     <div
+      className="module-strip"
       style={{
         position: "relative",
         overflow: "hidden",
@@ -52,9 +53,8 @@ export default function ModuleStrip({ module }: { module: Module }) {
         display: "flex",
         alignItems: "center",
         gap: 12,
-        // Dark navy base, module-color ambient wash from left — ported from marketing site
+        // Dark navy base, module-color ambient wash from left - ported from marketing site.
         background: `radial-gradient(ellipse 70% 140% at -5% 50%, ${cfg.color}22, #0B2545 60%)`,
-        borderBottom: "1px solid rgba(255,255,255,0.07)",
         opacity: mounted ? 1 : 0,
         transform: mounted ? "translateX(0)" : "translateX(-12px)",
         transition: "opacity 0.45s cubic-bezier(0.16,1,0.3,1), transform 0.45s cubic-bezier(0.16,1,0.3,1)",
