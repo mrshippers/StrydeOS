@@ -6,6 +6,8 @@
  * TypeScript PMS adapters.
  */
 
+import { GoogleAuth, type IdTokenClient } from "google-auth-library";
+
 export interface EnginePayload {
   tool_name: string;
   tool_input: Record<string, unknown>;
@@ -26,13 +28,44 @@ export interface EngineResult {
 // Slow engines fall through to the TS PMS adapters via null return.
 const DEFAULT_TIMEOUT_MS = 3_000;
 
+// Module-level cache — IdTokenClient reuses the token until expiry (~1hr)
+let _idTokenClient: IdTokenClient | null = null;
+let _idTokenClientAudience = "";
+
+async function getIdToken(audience: string): Promise<string | null> {
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  if (!clientEmail || !privateKey) return null;
+
+  try {
+    if (!_idTokenClient || _idTokenClientAudience !== audience) {
+      const auth = new GoogleAuth({
+        credentials: { client_email: clientEmail, private_key: privateKey },
+      });
+      _idTokenClient = await auth.getIdTokenClient(audience);
+      _idTokenClientAudience = audience;
+    }
+    const rawHeaders = await _idTokenClient.getRequestHeaders();
+    const authHeader =
+      typeof (rawHeaders as Headers).get === "function"
+        ? (rawHeaders as Headers).get("Authorization")
+        : (rawHeaders as unknown as Record<string, string>).Authorization ?? null;
+    return authHeader ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * POST `payload` to `${engineUrl}/api/tools/execute` and return the parsed
  * response, or null if the engine is unreachable / slow / returns an error.
  *
- * @param engineUrl  Base URL of the Python service, e.g. "http://localhost:8000"
+ * clinic_id is appended as a query param so the Python tenant middleware
+ * validates it before the request body is parsed.
+ *
+ * @param engineUrl  Base URL of the Python service, e.g. "https://ava-graph-xxx.run.app"
  * @param payload    Tool dispatch payload
- * @param timeoutMs  Abort after this many milliseconds (default 3000 — sized for live phone calls)
+ * @param timeoutMs  Abort after this many milliseconds (default 3000)
  */
 export async function proxyToEngine(
   engineUrl: string,
@@ -40,17 +73,21 @@ export async function proxyToEngine(
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ): Promise<EngineResult | null> {
   try {
-    const response = await fetch(`${engineUrl}/api/tools/execute`, {
+    const url = `${engineUrl}/api/tools/execute?clinic_id=${encodeURIComponent(payload.clinic_id)}`;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+    // Cloud Run requires a GCP identity token when allUsers invoker is blocked
+    const idToken = await getIdToken(engineUrl);
+    if (idToken) headers.Authorization = idToken;
+
+    const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(timeoutMs),
     });
 
-    if (!response.ok) {
-      return null;
-    }
-
+    if (!response.ok) return null;
     return (await response.json()) as EngineResult;
   } catch {
     return null;

@@ -32,10 +32,6 @@ def setup_logging() -> logging.Logger:
     Returns:
         Configured logger instance.
     """
-    # Create logs directory if it doesn't exist
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)
-
     # Get root logger
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -57,6 +53,8 @@ def setup_logging() -> logging.Logger:
 
     # Only attach file handler in local dev; serverless filesystems are ephemeral
     if os.getenv("DOPPLER_CONFIG", "dev") == "dev" and os.getenv("ENABLE_FILE_LOGS") == "1":
+        log_dir = Path("logs")
+        log_dir.mkdir(exist_ok=True)
         file_handler = logging.FileHandler(log_dir / "ava_graph.log")
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
