@@ -24,7 +24,7 @@ export default function PatientRow({
       className="block rounded-xl bg-white border border-border p-4 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition-all duration-200 hover:-translate-y-0.5"
     >
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-9 h-9 rounded-full bg-navy flex items-center justify-center text-[11px] font-bold text-white shrink-0">
+        <div className="w-9 h-9 rounded-full bg-navy flex items-center justify-center text-[11px] font-bold text-navy dark:text-white shrink-0">
           {getInitials(patient.name)}
         </div>
         <div className="flex-1 min-w-0">

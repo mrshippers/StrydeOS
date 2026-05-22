@@ -381,7 +381,7 @@ function CheckoutInner() {
             "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)",
         }}
       >
-        <Loader2 size={24} className="animate-spin text-white/60" />
+        <Loader2 size={24} className="animate-spin text-navy/70 dark:text-white/60" />
       </div>
     );
   }
@@ -399,18 +399,18 @@ function CheckoutInner() {
       >
         <div className="text-center max-w-md px-6">
           <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle size={24} className="text-white/60" />
+            <AlertCircle size={24} className="text-navy/70 dark:text-white/60" />
           </div>
-          <h1 className="font-display text-2xl text-white mb-2">
+          <h1 className="font-display text-2xl text-navy dark:text-white mb-2">
             Plan not recognised
           </h1>
-          <p className="text-sm text-white/60 mb-6">
+          <p className="text-sm text-navy/70 dark:text-white/60 mb-6">
             The plan in the URL isn&apos;t valid. Head back to the website to
             choose a plan.
           </p>
           <a
             href="https://strydeos.com/#pricing"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white bg-blue hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-navy dark:text-white bg-blue hover:opacity-90 transition-opacity"
           >
             <ArrowLeft size={14} />
             Back to pricing
@@ -431,7 +431,7 @@ function CheckoutInner() {
             "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)",
         }}
       >
-        <Loader2 size={24} className="animate-spin text-white/60" />
+        <Loader2 size={24} className="animate-spin text-navy/70 dark:text-white/60" />
       </div>
     );
   }
@@ -466,7 +466,7 @@ function CheckoutInner() {
         <button
           type="button"
           onClick={() => router.push("/dashboard")}
-          className="text-xs text-white/50 hover:text-white/80 transition-colors"
+          className="text-xs text-navy/65 dark:text-white/50 hover:text-white/80 transition-colors"
         >
           Go to dashboard
         </button>
@@ -494,15 +494,15 @@ function CheckoutInner() {
                   <ModuleIcon color={meta.color} size={64} />
                 </div>
                 <div>
-                  <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">
+                  <div className="text-[11px] font-semibold text-navy/55 dark:text-white/40 uppercase tracking-wider mb-0.5">
                     {tierLabel.label} · {tierLabel.detail}
                   </div>
-                  <h1 className="font-display text-[24px] text-white leading-tight">
+                  <h1 className="font-display text-[24px] text-navy dark:text-white leading-tight">
                     {meta.name}
                   </h1>
                 </div>
               </div>
-              <p className="text-[13px] text-white/60 leading-relaxed">
+              <p className="text-[13px] text-navy/70 dark:text-white/60 leading-relaxed">
                 {meta.description}
               </p>
             </div>
@@ -665,7 +665,7 @@ function CheckoutInner() {
           <div className="text-center mt-6">
             <a
               href="https://strydeos.com/#pricing"
-              className="inline-flex items-center gap-1.5 text-[12px] text-white/40 hover:text-white/70 transition-colors"
+              className="inline-flex items-center gap-1.5 text-[12px] text-navy/55 dark:text-white/40 hover:text-white/70 transition-colors"
             >
               <ArrowLeft size={12} />
               Back to pricing
@@ -692,7 +692,7 @@ export default function CheckoutPage() {
               "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)",
           }}
         >
-          <Loader2 size={24} className="animate-spin text-white/60" />
+          <Loader2 size={24} className="animate-spin text-navy/70 dark:text-white/60" />
         </div>
       }
     >

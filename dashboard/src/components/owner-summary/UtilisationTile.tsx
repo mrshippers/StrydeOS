@@ -31,7 +31,7 @@ export default function UtilisationTile({ rows, loading }: UtilisationTileProps)
     >
       <div className="flex items-center gap-2">
         <BarChart2 size={16} style={{ color: brand.blue }} />
-        <span className="text-[11px] font-semibold tracking-widest uppercase text-white/40">
+        <span className="text-[11px] font-semibold tracking-widest uppercase text-navy/55 dark:text-white/40">
           Utilisation
         </span>
       </div>
@@ -39,7 +39,7 @@ export default function UtilisationTile({ rows, loading }: UtilisationTileProps)
       {loading ? (
         <div className="animate-pulse bg-white/5 rounded-lg h-10 w-32" />
       ) : visibleRows.length === 0 ? (
-        <p className="text-[13px] text-white/50">No clinician data yet</p>
+        <p className="text-[13px] text-navy/65 dark:text-white/50">No clinician data yet</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {visibleRows.map((row) => {
@@ -47,8 +47,8 @@ export default function UtilisationTile({ rows, loading }: UtilisationTileProps)
             return (
               <li key={row.clinicianId} className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-white/70 truncate">{row.name}</span>
-                  <span className="text-[13px] text-white/70 tabular-nums ml-3 shrink-0">
+                  <span className="text-[13px] text-navy/80 dark:text-white/70 truncate">{row.name}</span>
+                  <span className="text-[13px] text-navy/80 dark:text-white/70 tabular-nums ml-3 shrink-0">
                     {pct}%
                   </span>
                 </div>

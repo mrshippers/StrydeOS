@@ -229,7 +229,7 @@ export default function EnrichmentReview({
                             type="button"
                             onClick={() => commitEdit(entry.id)}
                             disabled={saving}
-                            className="text-[11px] font-semibold text-white bg-blue px-3 py-1 rounded-lg hover:opacity-90 disabled:opacity-50"
+                            className="text-[11px] font-semibold text-navy dark:text-white bg-blue px-3 py-1 rounded-lg hover:opacity-90 disabled:opacity-50"
                           >
                             Save
                           </button>
@@ -308,7 +308,7 @@ export default function EnrichmentReview({
                         type="button"
                         onClick={() => handleAddNew(cat)}
                         disabled={!newTitle.trim() || !newContent.trim() || saving}
-                        className="text-[11px] font-semibold text-white bg-blue px-3 py-1 rounded-lg hover:opacity-90 disabled:opacity-40"
+                        className="text-[11px] font-semibold text-navy dark:text-white bg-blue px-3 py-1 rounded-lg hover:opacity-90 disabled:opacity-40"
                       >
                         Add entry
                       </button>

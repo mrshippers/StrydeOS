@@ -166,7 +166,7 @@ export default function ClinicianHeidiToggle({ clinician, clinicHeidiConnected }
                 type="button"
                 onClick={handleToggle}
                 disabled={saving}
-                className="text-[11px] font-semibold text-white bg-blue hover:bg-blue-bright px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                className="text-[11px] font-semibold text-navy dark:text-white bg-blue hover:bg-blue-bright px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
               >
                 Enable Heidi
               </button>
@@ -176,7 +176,7 @@ export default function ClinicianHeidiToggle({ clinician, clinicHeidiConnected }
                   type="button"
                   onClick={handleConnect}
                   disabled={saving || !email.trim()}
-                  className="text-[11px] font-semibold text-white bg-blue hover:bg-blue-bright px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                  className="text-[11px] font-semibold text-navy dark:text-white bg-blue hover:bg-blue-bright px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {saving && <Loader2 size={11} className="animate-spin" />}
                   {clinician.heidiEnabled ? "Save email" : "Save & connect"}

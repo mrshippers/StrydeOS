@@ -197,7 +197,7 @@ export default function InsightEngineUnlocked() {
                 transition={{ delay: TITLE_DELAY / 1000, duration: 0.5 }}
               >
                 <h2
-                  className="font-display text-[28px] text-white leading-tight mb-2"
+                  className="font-display text-[28px] text-navy dark:text-white leading-tight mb-2"
                   style={{ fontWeight: 400 }}
                 >
                   The Insight Engine
@@ -264,7 +264,7 @@ export default function InsightEngineUnlocked() {
                         >
                           {step.module}
                         </span>
-                        <p className="text-[14px] font-semibold text-white mt-0.5">
+                        <p className="text-[14px] font-semibold text-navy dark:text-white mt-0.5">
                           {step.title}
                         </p>
                         <p className="text-[12px] mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>
@@ -298,7 +298,7 @@ export default function InsightEngineUnlocked() {
                       </p>
                     </div>
                     <p
-                      className="font-display text-[28px] text-white shrink-0 ml-4"
+                      className="font-display text-[28px] text-navy dark:text-white shrink-0 ml-4"
                       style={{ fontWeight: 400 }}
                     >
                       £{revenueRecovered.toLocaleString()}

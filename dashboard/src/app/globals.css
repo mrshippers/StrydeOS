@@ -34,15 +34,24 @@
   --radius-chip: 50px;
   --radius-inner: 10px;
 
-  /* Tile surface: dark gradient on light bg, subtle frost lift on dark bg.
-     GlassCard `style={{ background: 'var(--surface-tile)' }}` resolves per theme. */
-  --surface-tile: linear-gradient(135deg, #0B2545 0%, #132D5E 100%);
-  --surface-tile-flat: #0B2545;
+  /* Tile surface: clean white card in light mode, subtle frost lift in dark.
+     Light mode renders as a Linear / Mercury / Stripe-style premium white card
+     with shadow + ambient module tint glow doing the visual lift. The white-
+     alpha glass layers from GlassCard become invisible on white, which is the
+     intended outcome - we don't want PS5 glass on a light page, that's a
+     dark-mode aesthetic.
+     Dark mode keeps the frost lift since the glass layers read against navy. */
+  --surface-tile: linear-gradient(180deg, #FFFFFF 0%, #FAF9F7 100%);
+  --surface-tile-flat: #FFFFFF;
+  --surface-tile-text: var(--color-navy);
+  --surface-tile-text-muted: rgba(11, 37, 69, 0.55);
 }
 
 html.dark {
   --surface-tile: linear-gradient(135deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.06) 100%);
   --surface-tile-flat: rgba(255,255,255,0.04);
+  --surface-tile-text: rgba(255, 255, 255, 0.95);
+  --surface-tile-text-muted: rgba(255, 255, 255, 0.55);
 }
 
 /* ─── Sidebar module marks: live animated icons ─────────────────────────────
@@ -220,32 +229,149 @@ html.dark .ava-orb__halo {
   .ava-orb__drift { animation: none !important; }
 }
 
-/* ─── ModuleStrip — per-mode blending ───────────────────────────────────────
-   The strip is always dark navy (brand identity element). Treatment differs:
-   - Light page: float as a dark card with rounded bottom corners + soft drop
-     shadow. Intentional contrast against cream bg.
-   - Dark page: fade bottom into the exact page bg colour so it reads as a
-     seamless ambient band, not a banner with an edge.
-   Per design rule feedback_no_hard_lines.md - never use a solid divider line. */
+/* ─── ModuleStrip — sleek floating per-module banner ──────────────────────
+   Mode-aware. Light = white floating card with module tint wash from left,
+   subtle border + soft drop shadow. Dark = frosted navy lift with stronger
+   tint wash. Both render the strip as a contained floating card with
+   matching radii on all corners. No edge bleed, no mask gymnastics.
+   Tint colour comes from --strip-tint / --strip-glow set by the component. */
 .module-strip {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-radius: 16px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  isolation: isolate;
+}
+.module-strip--mounted {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-/* Light mode: dark card on cream — rounded bottom, soft shadow, no fade */
-html:not(.dark) .module-strip {
-  border-radius: 0 0 24px 24px;
-  box-shadow: 0 8px 22px rgba(11, 37, 69, 0.10), 0 2px 6px rgba(11, 37, 69, 0.06);
-}
-
-/* Dark mode: fade overlay at the bottom that reaches the exact page bg colour */
-html.dark .module-strip::after {
+/* Soft left radial wash carrying the module identity. Rendered as a pseudo
+   element so it stays behind content (z-index 0) and can be tuned per mode. */
+.module-strip::before {
   content: "";
   position: absolute;
-  inset: auto 0 0 0;
-  height: 32px;
-  background: linear-gradient(180deg, transparent 0%, var(--color-cloud-dancer) 100%);
+  inset: 0;
+  background: radial-gradient(
+    ellipse 55% 130% at -2% 50%,
+    color-mix(in srgb, var(--strip-tint) 16%, transparent),
+    transparent 60%
+  );
+  z-index: 0;
   pointer-events: none;
-  z-index: 10;
+}
+
+/* Light mode: white card on cream */
+html:not(.dark) .module-strip {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAF9F7 100%);
+  border: 1px solid rgba(11, 37, 69, 0.06);
+  box-shadow:
+    0 1px 2px rgba(11, 37, 69, 0.04),
+    0 6px 20px rgba(11, 37, 69, 0.06),
+    0 16px 40px rgba(11, 37, 69, 0.04);
+}
+
+/* Dark mode: frosted lift on navy page */
+html.dark .module-strip {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.07) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 8px 24px rgba(0, 0, 0, 0.28);
+}
+html.dark .module-strip::before {
+  background: radial-gradient(
+    ellipse 55% 130% at -2% 50%,
+    color-mix(in srgb, var(--strip-tint) 28%, transparent),
+    transparent 60%
+  );
+}
+
+/* Icon container */
+.module-strip__icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--strip-tint) 16%, transparent),
+    color-mix(in srgb, var(--strip-tint) 6%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, var(--strip-tint) 22%, transparent);
+  box-shadow:
+    0 0 14px color-mix(in srgb, var(--strip-tint) 12%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Subtitle */
+.module-strip__sub {
+  position: relative;
+  z-index: 1;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: rgba(11, 37, 69, 0.55);
+}
+html.dark .module-strip__sub {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* LIVE pill */
+.module-strip__live {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 50px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--strip-tint) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--strip-tint) 22%, transparent);
+  color: var(--strip-tint);
+}
+html.dark .module-strip__live {
+  background: color-mix(in srgb, var(--strip-tint) 18%, transparent);
+  border-color: color-mix(in srgb, var(--strip-tint) 30%, transparent);
+  color: var(--strip-glow);
+}
+.module-strip__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--strip-glow);
+  box-shadow: 0 0 6px var(--strip-glow);
+  animation: stryde-live-pulse 2s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes stryde-live-pulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.18); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .module-strip__dot { animation: none; }
 }
 
 *,

@@ -172,10 +172,10 @@ export default function ConnectWriteUppPage() {
               className="px-8 pt-10 pb-8"
               style={{ background: `linear-gradient(135deg, ${brand.navy} 0%, ${brand.navyMid} 100%)` }}
             >
-              <h1 className="font-display text-white text-[32px] leading-tight" style={{ fontWeight: 400 }}>
+              <h1 className="font-display text-navy dark:text-white text-[32px] leading-tight" style={{ fontWeight: 400 }}>
                 Connect WriteUpp
               </h1>
-              <p className="mt-3 text-[14px] text-white/70 leading-relaxed">
+              <p className="mt-3 text-[14px] text-navy/80 dark:text-white/70 leading-relaxed">
                 Two minutes. No CSVs to remember. WriteUpp emails it here weekly.
               </p>
             </div>
@@ -312,7 +312,7 @@ function StepCard({
   return (
     <div className="flex gap-4 p-5 rounded-2xl bg-cloud-light border border-border">
       <div
-        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold text-white"
+        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold text-navy dark:text-white"
         style={{ background: brand.blue }}
       >
         {number}

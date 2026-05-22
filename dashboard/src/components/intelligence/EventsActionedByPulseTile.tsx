@@ -107,7 +107,7 @@ export default function EventsActionedByPulseTile() {
           >
             <Zap size={12} />
           </span>
-          <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white/55 dark:text-white/55">
+          <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-navy/70 dark:text-white/55">
             Pulse Impact · 7 days
           </span>
         </div>
@@ -121,13 +121,13 @@ export default function EventsActionedByPulseTile() {
 
       <div className="flex flex-col gap-1">
         <p
-          className="font-display text-[40px] leading-none tabular-nums text-white"
+          className="font-display text-[40px] leading-none tabular-nums text-navy dark:text-white"
           style={{ opacity: valOpacity, transition: `opacity ${valDur}ms ${EASING}` }}
         >
           £{morphRecovered.value.toLocaleString("en-GB")}
         </p>
         <p
-          className="text-[12px] text-white/55 tracking-wide"
+          className="text-[12px] text-navy/70 dark:text-white/55 tracking-wide"
           style={{
             opacity: valOpacity,
             transition: `opacity ${valDur}ms ${EASING} ${DURATION.subtitleDelay}ms`,
@@ -140,7 +140,7 @@ export default function EventsActionedByPulseTile() {
       <div className="flex items-end justify-between gap-3">
         <div className="flex-1">
           <Sparkline counts={dailyCounts} />
-          <div className="flex justify-between text-[9px] text-white/35 mt-1 tracking-wider uppercase">
+          <div className="flex justify-between text-[9px] text-navy/50 dark:text-white/35 mt-1 tracking-wider uppercase">
             <span>6d</span>
             <span>5d</span>
             <span>4d</span>
@@ -156,20 +156,20 @@ export default function EventsActionedByPulseTile() {
         <div className="flex flex-col gap-1.5 pt-1 border-t border-white/[0.06]">
           {breakdown.rebooks > 0 && (
             <div className="flex items-center justify-between text-[12px]">
-              <span className="text-white/70">
+              <span className="text-navy/80 dark:text-white/70">
                 {breakdown.rebooks} rebook nudge{breakdown.rebooks === 1 ? "" : "s"}
               </span>
-              <span className="tabular-nums text-white/85 font-semibold">
+              <span className="tabular-nums text-navy/90 dark:text-white/85 font-semibold">
                 £{rebookRecovery.toLocaleString("en-GB")}
               </span>
             </div>
           )}
           {breakdown.retention > 0 && (
             <div className="flex items-center justify-between text-[12px]">
-              <span className="text-white/70">
+              <span className="text-navy/80 dark:text-white/70">
                 {breakdown.retention} retention save{breakdown.retention === 1 ? "" : "s"}
               </span>
-              <span className="tabular-nums text-white/85 font-semibold">
+              <span className="tabular-nums text-navy/90 dark:text-white/85 font-semibold">
                 £{retentionRecovery.toLocaleString("en-GB")}
               </span>
             </div>
@@ -184,13 +184,13 @@ export default function EventsActionedByPulseTile() {
         >
           <span className="flex items-center gap-2 min-w-0">
             <span
-              className="w-5 h-5 rounded-full shrink-0 inline-flex items-center justify-center text-[9px] font-bold text-white"
+              className="w-5 h-5 rounded-full shrink-0 inline-flex items-center justify-center text-[9px] font-bold text-navy dark:text-white"
               style={{ background: `${brand.teal}66` }}
             >
               {patientInitial(latest.patientName)}
             </span>
-            <span className="text-white/65 truncate">
-              Last action: <span className="text-white/85">{timeAgo(latest.createdAt)}</span>
+            <span className="text-navy/75 dark:text-white/65 truncate">
+              Last action: <span className="text-navy/90 dark:text-white/85">{timeAgo(latest.createdAt)}</span>
               {latest.patientName ? ` · ${latest.patientName.split(" ")[0]}` : ""}
             </span>
           </span>
@@ -205,9 +205,9 @@ export default function EventsActionedByPulseTile() {
       )}
 
       {!hasData && (
-        <p className="text-[12px] text-white/45 italic">
+        <p className="text-[12px] text-navy/60 dark:text-white/45 italic">
           No actions yet this week. Pulse activates automatically when Intelligence emits an event.
-          <span className="text-white/30 ml-1 tabular-nums">({morphCount.value} events)</span>
+          <span className="text-navy/45 dark:text-white/30 ml-1 tabular-nums">({morphCount.value} events)</span>
         </p>
       )}
     </GlassCard>

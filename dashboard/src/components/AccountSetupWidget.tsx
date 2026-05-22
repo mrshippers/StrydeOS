@@ -52,7 +52,7 @@ function CircularProgress({ completed, total, size = 32 }: { completed: number; 
         />
       </svg>
       <span
-        className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white/80"
+        className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-navy/85 dark:text-white/80"
       >
         {completed}/{total}
       </span>
@@ -226,7 +226,7 @@ export default function AccountSetupWidget() {
             title="Complete your account setup"
           >
             <CircularProgress completed={completedCount} total={steps.length} size={28} />
-            <span className="text-[11px] font-semibold text-white/70">Setup</span>
+            <span className="text-[11px] font-semibold text-navy/80 dark:text-white/70">Setup</span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -250,10 +250,10 @@ export default function AccountSetupWidget() {
               <div className="flex items-center gap-3">
                 <CircularProgress completed={completedCount} total={steps.length} size={36} />
                 <div>
-                  <p className="text-sm font-semibold text-white leading-tight">
+                  <p className="text-sm font-semibold text-navy dark:text-white leading-tight">
                     Complete your account
                   </p>
-                  <p className="text-[11px] text-white/40 mt-0.5">
+                  <p className="text-[11px] text-navy/55 dark:text-white/40 mt-0.5">
                     {completedCount} of {steps.length} done
                   </p>
                 </div>
@@ -261,13 +261,13 @@ export default function AccountSetupWidget() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setOpen(!open)}
-                  className="w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
+                  className="w-6 h-6 rounded-md flex items-center justify-center text-navy/45 dark:text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
                 >
                   {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                 </button>
                 <button
                   onClick={handleClose}
-                  className="w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
+                  className="w-6 h-6 rounded-md flex items-center justify-center text-navy/45 dark:text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"
                 >
                   <X size={13} />
                 </button>
@@ -303,8 +303,8 @@ export default function AccountSetupWidget() {
                         <Icon size={14} className="text-blue-glow" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-medium text-white/80">{next.label}</p>
-                        <p className="text-[10px] text-white/30">{next.description}</p>
+                        <p className="text-[12px] font-medium text-navy/85 dark:text-white/80">{next.label}</p>
+                        <p className="text-[10px] text-navy/45 dark:text-white/30">{next.description}</p>
                       </div>
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ background: "rgba(75, 139, 245, 0.15)", color: brand.blueGlow }}>
                         Next
@@ -350,11 +350,11 @@ export default function AccountSetupWidget() {
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className={`text-[12px] font-medium ${step.done ? "text-white/40 line-through" : "text-white/80"}`}>
+                            <p className={`text-[12px] font-medium ${step.done ? "text-navy/55 dark:text-white/40 line-through" : "text-navy/85 dark:text-white/80"}`}>
                               {step.label}
                             </p>
                             {!step.done && (
-                              <p className="text-[10px] text-white/30">{step.description}</p>
+                              <p className="text-[10px] text-navy/45 dark:text-white/30">{step.description}</p>
                             )}
                           </div>
                           {step.done && (
@@ -371,7 +371,7 @@ export default function AccountSetupWidget() {
                   <div className="px-4 pb-4 pt-1">
                     <button
                       onClick={handleDismissPermanently}
-                      className="w-full text-center text-[10px] text-white/20 hover:text-white/40 transition-colors py-1"
+                      className="w-full text-center text-[10px] text-navy/35 dark:text-white/20 hover:text-white/40 transition-colors py-1"
                     >
                       Don't show this again
                     </button>

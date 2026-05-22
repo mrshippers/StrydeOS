@@ -152,7 +152,7 @@ export default function OnboardingWizard({
                     key={p}
                     onClick={() => setTm3Platform(p)}
                     className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
-                      tm3Platform === p ? "bg-navy text-white" : "bg-cloud-light text-muted hover:text-navy"
+                      tm3Platform === p ? "bg-navy text-navy dark:text-white" : "bg-cloud-light text-muted hover:text-navy"
                     }`}
                   >
                     TM3 {p === "cloud" ? "Cloud" : "Desktop"}
@@ -295,7 +295,7 @@ export default function OnboardingWizard({
             </button>
             <button
               onClick={() => { onClose(); toast("Setup complete", "success"); }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-navy dark:text-white transition-all hover:opacity-90"
               style={{ background: brand.success }}
             >
               <Check size={14} /> Done

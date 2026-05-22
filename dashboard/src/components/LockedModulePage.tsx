@@ -99,13 +99,13 @@ export default function LockedModulePage({ module }: Props) {
 
         {/* Module name */}
         <h2
-          className="font-display text-[28px] text-white mb-3 leading-tight"
+          className="font-display text-[28px] text-navy dark:text-white mb-3 leading-tight"
         >
           {name}
         </h2>
 
         {/* Description */}
-        <p className="text-[13px] text-white/45 leading-relaxed mb-7">
+        <p className="text-[13px] text-navy/60 dark:text-white/45 leading-relaxed mb-7">
           {description}
         </p>
 
@@ -119,14 +119,14 @@ export default function LockedModulePage({ module }: Props) {
               >
                 <Check size={9} style={{ color }} strokeWidth={2.5} />
               </div>
-              <span className="text-[13px] text-white/60 leading-snug">{benefit}</span>
+              <span className="text-[13px] text-navy/70 dark:text-white/60 leading-snug">{benefit}</span>
             </li>
           ))}
         </ul>
 
         {/* CTA — only show billing link to owners/admins */}
         {isClinician ? (
-          <p className="text-[13px] text-white/40">
+          <p className="text-[13px] text-navy/55 dark:text-white/40">
             Ask your clinic owner to unlock this module.
           </p>
         ) : (
@@ -138,7 +138,7 @@ export default function LockedModulePage({ module }: Props) {
               Unlock {name}
             </Link>
 
-            <p className="mt-4 text-[11px] text-white/25">
+            <p className="mt-4 text-[11px] text-navy/40 dark:text-white/25">
               Manage your plan on the{" "}
               <Link href="/billing" className="underline underline-offset-2 hover:text-white/45 transition-colors">
                 billing page

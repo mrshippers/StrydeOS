@@ -65,10 +65,10 @@ function TierSelector({ value, onChange }: { value: TierKey; onChange: (t: TierK
           <button
             key={tier}
             onClick={() => onChange(tier)}
-            className={`flex-1 py-2.5 px-3 rounded-lg text-center transition-all duration-200 ${active ? "bg-blue text-white shadow-[0_2px_12px_rgba(28,84,242,0.35)]" : "bg-transparent"}`}
+            className={`flex-1 py-2.5 px-3 rounded-lg text-center transition-all duration-200 ${active ? "bg-blue text-navy dark:text-white shadow-[0_2px_12px_rgba(28,84,242,0.35)]" : "bg-transparent"}`}
           >
-            <div className={`text-[13px] font-semibold ${active ? "text-white" : "text-navy"}`}>{label}</div>
-            <div className={`text-[10px] mt-0.5 ${active ? "text-white/80" : "text-muted-strong"}`}>{detail}</div>
+            <div className={`text-[13px] font-semibold ${active ? "text-navy dark:text-white" : "text-navy"}`}>{label}</div>
+            <div className={`text-[10px] mt-0.5 ${active ? "text-navy/85 dark:text-white/80" : "text-muted-strong"}`}>{detail}</div>
           </button>
         );
       })}

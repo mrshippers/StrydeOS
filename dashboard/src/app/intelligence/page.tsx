@@ -880,7 +880,7 @@ export default function IntelligencePage() {
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-2.5">
                           {isExpanded ? <ChevronUp size={14} className="text-muted" /> : <ChevronDown size={14} className="text-muted" />}
-                          <div className="w-8 h-8 rounded-full bg-navy flex items-center justify-center text-[11px] font-bold text-white shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-navy flex items-center justify-center text-[11px] font-bold text-navy dark:text-white shrink-0">
                             {c.clinicianName.slice(0, 2).toUpperCase()}
                           </div>
                           <span className="font-semibold text-navy">{c.clinicianName}</span>
@@ -1391,7 +1391,7 @@ export default function IntelligencePage() {
                 ]).map((c) => (
                   <div key={c.name} className="rounded-xl border border-border p-4">
                     <div className="flex items-center gap-2.5 mb-3">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ background: c.color }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-navy dark:text-white" style={{ background: c.color }}>
                         {c.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
@@ -1554,7 +1554,7 @@ export default function IntelligencePage() {
                 <button
                   type="button"
                   onClick={() => router.push("/settings#reviews")}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white bg-purple hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-navy dark:text-white bg-purple hover:opacity-90 transition-opacity"
                 >
                   <Star size={12} />
                   Connect in Settings

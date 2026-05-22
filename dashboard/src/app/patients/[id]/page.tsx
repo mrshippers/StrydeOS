@@ -140,7 +140,7 @@ export default function PatientDetailPage({
       {/* Patient header */}
       <GlassCard variant="standard" tint="pulse" className="p-6">
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-full bg-navy flex items-center justify-center text-lg font-bold text-white shrink-0">
+          <div className="w-14 h-14 rounded-full bg-navy flex items-center justify-center text-lg font-bold text-navy dark:text-white shrink-0">
             {getInitials(patient.name)}
           </div>
           <div className="flex-1 min-w-0">
@@ -228,7 +228,7 @@ export default function PatientDetailPage({
               key={i}
               className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
                 i < patient.sessionCount
-                  ? "bg-success text-white"
+                  ? "bg-success text-navy dark:text-white"
                   : "bg-cloud-dark text-muted"
               }`}
             >

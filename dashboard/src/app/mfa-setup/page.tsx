@@ -31,7 +31,7 @@ export default function MfaSetupPage() {
         className="min-h-screen flex items-center justify-center"
         style={{ background: "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)" }}
       >
-        <Loader2 size={24} className="animate-spin text-white/60" />
+        <Loader2 size={24} className="animate-spin text-navy/70 dark:text-white/60" />
       </div>
     );
   }

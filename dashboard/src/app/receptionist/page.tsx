@@ -174,7 +174,7 @@ class AvaErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
             </div>
             <button
               onClick={() => this.setState({ hasError: false, error: null })}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white bg-blue transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-navy dark:text-white bg-blue transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
             >
               Try again
             </button>
@@ -854,7 +854,7 @@ function ReceptionistContent() {
                     {isLocked ? (
                       <div className="relative">
                         <div className="w-5 h-5 rounded border-2 border-success bg-success flex items-center justify-center">
-                          <CheckCircle size={12} className="text-white" />
+                          <CheckCircle size={12} className="text-navy dark:text-white" />
                         </div>
                         <Lock size={10} className="absolute -bottom-1 -right-1 text-success bg-white rounded-full p-0.5" />
                       </div>

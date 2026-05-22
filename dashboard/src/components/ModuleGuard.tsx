@@ -54,7 +54,7 @@ export default function ModuleGuard({ module, children }: Props) {
         className="min-h-screen flex items-center justify-center"
         style={{ background: "#0B2545" }}
       >
-        <Loader2 size={28} className="animate-spin text-white/50" />
+        <Loader2 size={28} className="animate-spin text-navy/65 dark:text-white/50" />
       </div>
     );
   }
@@ -116,15 +116,15 @@ export default function ModuleGuard({ module, children }: Props) {
             </div>
 
             {/* Title */}
-            <h2 className="font-display text-[28px] text-white mb-2 leading-tight">
+            <h2 className="font-display text-[28px] text-navy dark:text-white mb-2 leading-tight">
               {name}
             </h2>
 
             {/* Subtitle */}
-            <p className="text-[14px] text-white/40 leading-relaxed mb-1">
+            <p className="text-[14px] text-navy/55 dark:text-white/40 leading-relaxed mb-1">
               {name} isn&apos;t part of your current plan.
             </p>
-            <p className="text-[13px] text-white/30 leading-relaxed mb-7">
+            <p className="text-[13px] text-navy/45 dark:text-white/30 leading-relaxed mb-7">
               Subscribe to unlock full access.
             </p>
 
@@ -138,7 +138,7 @@ export default function ModuleGuard({ module, children }: Props) {
                   >
                     <Check size={9} style={{ color }} strokeWidth={2.5} />
                   </div>
-                  <span className="text-[13px] text-white/55 leading-snug">
+                  <span className="text-[13px] text-navy/70 dark:text-white/55 leading-snug">
                     {benefit}
                   </span>
                 </li>
@@ -147,7 +147,7 @@ export default function ModuleGuard({ module, children }: Props) {
 
             {/* CTA — only show billing link to owners/admins */}
             {isClinician ? (
-              <p className="text-[13px] text-white/40">
+              <p className="text-[13px] text-navy/55 dark:text-white/40">
                 Ask your clinic owner to unlock this module.
               </p>
             ) : (
@@ -159,7 +159,7 @@ export default function ModuleGuard({ module, children }: Props) {
                   Unlock {name}
                 </Link>
 
-                <p className="mt-4 text-[11px] text-white/25">
+                <p className="mt-4 text-[11px] text-navy/40 dark:text-white/25">
                   Manage your plan on the{" "}
                   <Link
                     href="/billing"

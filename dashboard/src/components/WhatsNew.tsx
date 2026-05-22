@@ -162,7 +162,7 @@ export default function WhatsNew() {
             <button
               type="button"
               onClick={dismiss}
-              className="absolute top-4 right-4 z-10 p-1.5 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors"
+              className="absolute top-4 right-4 z-10 p-1.5 rounded-lg text-navy/55 dark:text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors"
               aria-label="Close what's new"
             >
               <X size={16} />
@@ -192,18 +192,18 @@ export default function WhatsNew() {
                           className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
                           style={{ background: "rgba(255,255,255,0.10)" }}
                         >
-                          <PhoneCall size={22} className="text-white" />
+                          <PhoneCall size={22} className="text-navy dark:text-white" />
                         </div>
                         <div>
-                          <h2 id="whats-new-title" className="font-display text-[22px] text-white leading-tight">
+                          <h2 id="whats-new-title" className="font-display text-[22px] text-navy dark:text-white leading-tight">
                             Ava — what we fixed
                           </h2>
-                          <p className="text-[12px] text-white/50 mt-0.5">
+                          <p className="text-[12px] text-navy/65 dark:text-white/50 mt-0.5">
                             Tested on real calls at Spires
                           </p>
                         </div>
                       </div>
-                      <p className="text-[13px] text-white/70 leading-relaxed">
+                      <p className="text-[13px] text-navy/80 dark:text-white/70 leading-relaxed">
                         A few things weren&rsquo;t working right. We found them,
                         fixed them, and verified everything on the live number.
                       </p>
@@ -276,15 +276,15 @@ export default function WhatsNew() {
                       <div className="flex items-center gap-3.5 mb-3">
                         <PulseMark size={48} />
                         <div>
-                          <h2 className="font-display text-[22px] text-white leading-tight">
+                          <h2 className="font-display text-[22px] text-navy dark:text-white leading-tight">
                             Pulse — what it does
                           </h2>
-                          <p className="text-[12px] text-white/50 mt-0.5">
+                          <p className="text-[12px] text-navy/65 dark:text-white/50 mt-0.5">
                             Keeps patients coming back
                           </p>
                         </div>
                       </div>
-                      <p className="text-[13px] text-white/70 leading-relaxed">
+                      <p className="text-[13px] text-navy/80 dark:text-white/70 leading-relaxed">
                         Patients drop off between sessions. Pulse spots who&rsquo;s
                         at risk and follows up automatically — without you doing anything.
                       </p>
@@ -354,10 +354,10 @@ export default function WhatsNew() {
                           "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)",
                       }}
                     >
-                      <h2 className="font-display text-[20px] text-white leading-tight">
+                      <h2 className="font-display text-[20px] text-navy dark:text-white leading-tight">
                         Everything else we fixed
                       </h2>
-                      <p className="text-[12px] text-white/40 mt-0.5">
+                      <p className="text-[12px] text-navy/55 dark:text-white/40 mt-0.5">
                         Smaller things that were quietly wrong
                       </p>
                     </div>
@@ -452,18 +452,18 @@ export default function WhatsNew() {
                           className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
                           style={{ background: "rgba(255,255,255,0.10)" }}
                         >
-                          <Activity size={22} className="text-white" />
+                          <Activity size={22} className="text-navy dark:text-white" />
                         </div>
                         <div>
-                          <h2 className="font-display text-[22px] text-white leading-tight">
+                          <h2 className="font-display text-[22px] text-navy dark:text-white leading-tight">
                             Live numbers, not snapshots
                           </h2>
-                          <p className="text-[12px] text-white/50 mt-0.5">
+                          <p className="text-[12px] text-navy/65 dark:text-white/50 mt-0.5">
                             Intelligence and Pulse now move in real time
                           </p>
                         </div>
                       </div>
-                      <p className="text-[13px] text-white/70 leading-relaxed">
+                      <p className="text-[13px] text-navy/80 dark:text-white/70 leading-relaxed">
                         Your dashboard used to show yesterday&rsquo;s picture.
                         Now every number updates as soon as the data behind it
                         does, and tells you if something&rsquo;s wrong instead
@@ -540,18 +540,18 @@ export default function WhatsNew() {
                           className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
                           style={{ background: "rgba(255,255,255,0.10)" }}
                         >
-                          <Network size={22} className="text-white" />
+                          <Network size={22} className="text-navy dark:text-white" />
                         </div>
                         <div>
-                          <h2 className="font-display text-[22px] text-white leading-tight">
+                          <h2 className="font-display text-[22px] text-navy dark:text-white leading-tight">
                             Modules now move together
                           </h2>
-                          <p className="text-[12px] text-white/55 mt-0.5">
+                          <p className="text-[12px] text-navy/70 dark:text-white/55 mt-0.5">
                             Ava, Pulse and Intelligence share one nervous system
                           </p>
                         </div>
                       </div>
-                      <p className="text-[13px] text-white/75 leading-relaxed">
+                      <p className="text-[13px] text-navy/85 dark:text-white/75 leading-relaxed">
                         Until now, each module spoke its own language. Calls
                         ended in one place, retention nudges happened in
                         another, and your dashboard was blind to most of it.

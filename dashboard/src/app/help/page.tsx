@@ -383,7 +383,7 @@ export default function HelpPage() {
                 onClick={() => setActiveCategory(cat)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
                   activeCategory === cat
-                    ? "text-white"
+                    ? "text-navy dark:text-white"
                     : "text-muted hover:text-ink dark:hover:text-white/60 hover:bg-cloud-light dark:hover:bg-white/[0.04]"
                 }`}
                 style={

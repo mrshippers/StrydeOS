@@ -54,7 +54,7 @@ export default function KnowledgeCategoryCard({
               w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold tracking-wide
               transition-all duration-300
               ${expanded
-                ? "bg-[#0B2545] text-white/80 shadow-sm"
+                ? "bg-[#0B2545] text-navy/85 dark:text-white/80 shadow-sm"
                 : "bg-cloud-light text-muted/60 group-hover:bg-[#0B2545]/5 group-hover:text-navy/50"
               }
             `}

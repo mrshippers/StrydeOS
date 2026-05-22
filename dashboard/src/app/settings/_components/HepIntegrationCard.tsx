@@ -212,7 +212,7 @@ export default function HepIntegrationCard({
               <button
                 onClick={handleTestHep}
                 disabled={!hepApiKey.trim() || hepTesting}
-                className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-navy dark:text-white transition-all duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: (!hepApiKey.trim() && !hepTesting) ? "#9CA3AF" : brand.success }}
               >
                 {hepTesting ? (

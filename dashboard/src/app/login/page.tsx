@@ -65,7 +65,7 @@ function DarkModeUpdateBanner() {
               <Moon size={13} className="text-blue-bright" style={{ color: "#4B8BF5" }} />
             </div>
             <div className="mr-1">
-              <p className="text-[13px] font-semibold text-white leading-tight">Dark mode redesigned</p>
+              <p className="text-[13px] font-semibold text-navy dark:text-white leading-tight">Dark mode redesigned</p>
               <p className="text-[11px] leading-tight" style={{ color: "rgba(255,255,255,0.45)" }}>
                 Better contrast, elevation &amp; legibility
               </p>
@@ -445,7 +445,7 @@ function LoginPageInner() {
               <button
                 type="button"
                 onClick={enterDemoMode}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 bg-blue"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-navy dark:text-white transition-all duration-200 hover:opacity-90 bg-blue"
               >
                 Enter dashboard (demo)
                 <ArrowRight size={14} />
@@ -576,7 +576,7 @@ function LoginPageInner() {
                             <motion.button
                               type="submit"
                               disabled={mfaVerifying || mfaCode.length !== 6}
-                              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-blue transition-colors duration-200 hover:opacity-90 disabled:opacity-50"
+                              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-navy dark:text-white bg-blue transition-colors duration-200 hover:opacity-90 disabled:opacity-50"
                               whileTap={shouldReduce ? {} : { scale: 0.97 }}
                             >
                               {mfaVerifying ? (
@@ -690,7 +690,7 @@ function LoginPageInner() {
                               className="peer sr-only"
                             />
                             <span className="h-[18px] w-[18px] rounded-[5px] border border-border bg-cloud-light transition-all peer-checked:bg-blue peer-checked:border-blue peer-focus-visible:ring-2 peer-focus-visible:ring-blue/30 group-hover:border-navy/30" />
-                            <Check size={12} className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" strokeWidth={3} />
+                            <Check size={12} className="absolute text-navy dark:text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" strokeWidth={3} />
                           </span>
                           <span className="text-[13px] text-navy/70 group-hover:text-navy transition-colors">
                             Remember me
@@ -717,7 +717,7 @@ function LoginPageInner() {
                         <motion.button
                           type="submit"
                           disabled={submitting}
-                          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-blue transition-colors duration-200 hover:opacity-90 disabled:opacity-50"
+                          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-navy dark:text-white bg-blue transition-colors duration-200 hover:opacity-90 disabled:opacity-50"
                           whileTap={shouldReduce ? {} : { scale: 0.97 }}
                         >
                           {submitting ? (
@@ -909,7 +909,7 @@ function LoginPageInner() {
                         <motion.button
                           type="submit"
                           disabled={submitting || !clinicName.trim() || !fullName.trim() || !email.trim() || password.length < 8}
-                          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-blue transition-colors duration-200 hover:opacity-90 disabled:opacity-50"
+                          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-navy dark:text-white bg-blue transition-colors duration-200 hover:opacity-90 disabled:opacity-50"
                           whileTap={shouldReduce ? {} : { scale: 0.97 }}
                         >
                           {submitting ? (
@@ -960,7 +960,7 @@ function LoginPageInner() {
             transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
           >
             <div className="w-12 h-12 rounded-full flex items-center justify-center bg-success">
-              <Check size={22} className="text-white" strokeWidth={3} />
+              <Check size={22} className="text-navy dark:text-white" strokeWidth={3} />
             </div>
             <p className="text-sm font-medium text-muted">
               {mode === "signup" ? "Account created — setting up your clinic..." : "Signing you in..."}

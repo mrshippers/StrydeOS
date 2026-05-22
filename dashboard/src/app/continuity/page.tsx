@@ -473,7 +473,7 @@ function ContinuityPage() {
                 {previewData.channel === "sms" ? (
                   <div className="flex justify-end">
                     <div
-                      className="max-w-[85%] rounded-2xl rounded-br-sm px-4 py-3 text-[13px] leading-relaxed text-white"
+                      className="max-w-[85%] rounded-2xl rounded-br-sm px-4 py-3 text-[13px] leading-relaxed text-navy dark:text-white"
                       style={{ background: "#1C54F2" }}
                     >
                       {previewData.body}

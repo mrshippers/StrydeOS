@@ -13,6 +13,11 @@ import TodayTile from "@/components/owner-summary/TodayTile";
 import RetentionTile from "@/components/owner-summary/RetentionTile";
 import UtilisationTile from "@/components/owner-summary/UtilisationTile";
 import DemoBanner from "@/components/ui/DemoBanner";
+import EventsActionedByPulseTile from "@/components/intelligence/EventsActionedByPulseTile";
+import InsightFeed from "@/components/intelligence/InsightFeed";
+import { GlassCard } from "@/components/ui/GlassCard";
+import Link from "next/link";
+import { Lightbulb, ArrowRight } from "lucide-react";
 import { brand } from "@/lib/brand";
 import { DURATION, EASING, useSlidingPill } from "@/lib/motion";
 import { getTimeGreeting } from "@/lib/greeting";
@@ -204,6 +209,45 @@ export default function DashboardPage() {
         />
         <RetentionTile alerts={retentionAlerts} alertCount={retentionAlertCount} loading={loading} />
         <UtilisationTile rows={clinicianUtilisation} loading={loading} />
+      </div>
+
+      {/* Operational row: cross-module activity (left) + actionable insights (right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-1">
+          <EventsActionedByPulseTile />
+        </div>
+        <div className="lg:col-span-2">
+          <GlassCard
+            variant="standard"
+            tint="intelligence"
+            className="p-5"
+            style={{ background: "var(--surface-tile)", minHeight: 220 }}
+            as="section"
+          >
+            <header className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-6 h-6 rounded-full inline-flex items-center justify-center"
+                  style={{ background: `${brand.purple}22`, color: brand.purple }}
+                >
+                  <Lightbulb size={12} />
+                </span>
+                <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-navy/70 dark:text-white/55">
+                  Insights to action
+                </h2>
+              </div>
+              <Link
+                href="/intelligence"
+                className="flex items-center gap-1 text-[11.5px] font-semibold hover:opacity-100 opacity-75 transition-opacity"
+                style={{ color: brand.purple }}
+              >
+                Open Intelligence
+                <ArrowRight size={11} />
+              </Link>
+            </header>
+            <InsightFeed />
+          </GlassCard>
+        </div>
       </div>
     </div>
   );

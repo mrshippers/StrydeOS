@@ -92,7 +92,7 @@ export default function RouteErrorFallback({
 
         <button
           onClick={reset}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-navy dark:text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
           style={{
             background: accentColor,
             boxShadow: `0 4px 16px ${accentColor}30`,

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import ModuleGuard from "@/components/ModuleGuard";
-import ModuleStrip from "@/components/ui/ModuleStrip";
 import ModuleAmbient from "@/components/ui/ModuleAmbient";
 
 export const metadata: Metadata = {
@@ -11,7 +10,6 @@ export default function ReceptionistLayout({ children }: { children: React.React
   return (
     <ModuleGuard module="ava">
       <ModuleAmbient module="ava">
-        <ModuleStrip module="ava" />
         {children}
       </ModuleAmbient>
     </ModuleGuard>

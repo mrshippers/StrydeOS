@@ -451,7 +451,7 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
                 <button
                   onClick={handleTestPms}
                   disabled={!pmsApiKey.trim() || pmsTesting}
-                  className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-navy dark:text-white transition-all duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ background: (!pmsApiKey.trim() && !pmsTesting) ? "#9CA3AF" : brand.success }}
                 >
                   {pmsTesting ? (
