@@ -14,6 +14,8 @@ const PMS_DOMAIN_ALLOWLIST = [
   "api.au3.cliniko.com",
   "api.eu1.cliniko.com",
   "api.uk1.cliniko.com",
+  "api.uk2.cliniko.com",
+  "api.uk3.cliniko.com",
   "api.ca1.cliniko.com",
   "api.halaxy.com",
   "api.au.halaxy.com",
