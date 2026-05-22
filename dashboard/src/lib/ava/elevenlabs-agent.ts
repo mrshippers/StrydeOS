@@ -323,6 +323,28 @@ export async function setAgentKnowledgeBase(
 }
 
 /**
+ * Attach or detach a phone number from an ElevenLabs agent.
+ * Pass agentId = null to detach (pause - calls no longer routed to Ava).
+ * Pass agentId = string to attach (activate).
+ */
+export async function setPhoneNumberAgent(
+  apiKey: string,
+  phoneNumberId: string,
+  agentId: string | null,
+): Promise<void> {
+  const res = await fetch(`${ELEVENLABS_API_URL}/convai/phone-numbers/${phoneNumberId}`, {
+    method: "PATCH",
+    headers: { "xi-api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ agent_id: agentId }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`ElevenLabs phone number update failed (${res.status}): ${body}`);
+  }
+}
+
+/**
  * Fetch the current agent config — used after a sync to verify the
  * knowledge_base field is populated as expected.
  */

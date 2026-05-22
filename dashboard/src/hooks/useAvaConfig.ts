@@ -219,13 +219,22 @@ export function useAvaConfig(clinicId: string | undefined) {
   }, [getToken]);
 
   const toggleEnabled = useCallback(async () => {
-    const newEnabled = !config.enabled;
-    if (newEnabled && !config.phone) {
-      setError("Provision a phone number before enabling Ava");
-      throw new Error("No phone number provisioned");
+    const token = await getToken();
+    const res = await fetch("/api/ava/toggle", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      const msg = (body as { error?: string }).error ?? "Failed to toggle Ava";
+      setError(msg);
+      throw new Error(msg);
     }
-    await save({ config: { ...config, enabled: newEnabled } });
-  }, [config, save]);
+
+    const { enabled } = (await res.json()) as { enabled: boolean };
+    setConfig((prev) => ({ ...prev, enabled }));
+  }, [getToken]);
 
   const toggleRule = useCallback(
     async (rule: keyof AvaRules) => {
