@@ -48,10 +48,27 @@
 }
 
 html.dark {
-  --surface-tile: linear-gradient(135deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.06) 100%);
-  --surface-tile-flat: rgba(255,255,255,0.04);
+  /* Dark mode card surface: solid navy gradient. Same recipe as the spec's
+     hero card. Cleaner than the prior frosted-lift approach which produced
+     washed-out artefacts when stacked under the 6-layer glass overlay. */
+  --surface-tile: linear-gradient(135deg, #0B2545 0%, #132D5E 100%);
+  --surface-tile-flat: #0B2545;
   --surface-tile-text: rgba(255, 255, 255, 0.95);
   --surface-tile-text-muted: rgba(255, 255, 255, 0.55);
+}
+
+/* Dark mode: suppress L1-L5 white-alpha glass overlays. They were specced
+   for white surfaces and create plastic-y banding when stacked on navy.
+   L6 (inner border highlight) stays but dimmed to a subtle edge cue. */
+html.dark .glass-layer--l1,
+html.dark .glass-layer--l2,
+html.dark .glass-layer--l3,
+html.dark .glass-layer--l4,
+html.dark .glass-layer--l5 {
+  display: none !important;
+}
+html.dark .glass-layer--l6 {
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 /* ─── Sidebar module marks: live animated icons ─────────────────────────────
