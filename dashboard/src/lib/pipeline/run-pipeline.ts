@@ -50,7 +50,11 @@ export async function runPipeline(
 
   // Load pipeline config for lastFullRunAt (used by attribution stage)
   const pipelineSnap = await configBase.doc(PIPELINE_DOC_ID).get();
-  const lastFullRunAt = pipelineSnap.data()?.lastFullRunAt as string | undefined;
+  const pipelineData = pipelineSnap.data() ?? {};
+  const lastFullRunAt = pipelineData.lastFullRunAt as string | undefined;
+  // Auto-backfill: first sync ever (no backfillCompleted flag) picks up full history,
+  // not just the 4-week incremental window, so historical patients are not missed.
+  const effectiveBackfill = options.backfill || !(pipelineData.backfillCompleted as boolean | undefined);
 
   // ── Load PMS config ──────────────────────────────────────────────────────
   const pmsSnap = await configBase.doc(PMS_DOC_ID).get();
@@ -94,7 +98,7 @@ export async function runPipeline(
     clinicId,
     pmsAdapter,
     clinicianMap,
-    { ...options, sessionPricePence }
+    { ...options, backfill: effectiveBackfill, sessionPricePence }
   );
   stages.push(s2);
   await logIntegrationHealth(db, clinicId, pmsConfig.provider, "pms", s2);
@@ -232,7 +236,7 @@ export async function runPipeline(
   // ── Stage 7: Compute Weekly Metrics ──────────────────────────────────────
   const metricsStart = Date.now();
   try {
-    const weeksBack = options.backfill ? BACKFILL_WEEKS : INCREMENTAL_WEEKS + 2;
+    const weeksBack = effectiveBackfill ? BACKFILL_WEEKS : INCREMENTAL_WEEKS + 2;
     const { written } = await computeWeeklyMetricsForClinic(
       db,
       clinicId,
@@ -297,7 +301,7 @@ export async function runPipeline(
     lastFullRunAt: completedAt,
     lastFullRunStatus: allOk ? "success" : "error",
   };
-  if (options.backfill) {
+  if (effectiveBackfill) {
     pipelineUpdate.backfillCompleted = true;
     pipelineUpdate.backfillCompletedAt = completedAt;
   }
