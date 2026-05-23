@@ -9,6 +9,14 @@
       ]
     },
     {
+      "collectionGroup": "metrics_weekly",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "clinicianId", "order": "ASCENDING" },
+        { "fieldPath": "weekStart", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "clinicians",
       "queryScope": "COLLECTION",
       "fields": [

@@ -290,9 +290,9 @@ export function aggregateWeek(
     appointmentsTotal: total,
     initialAssessments,
     followUps,
-    npsScore,
+    npsScore: npsScore ?? null,
     reviewCount,
-    avgRating,
+    avgRating: avgRating ?? null,
     reviewVelocity: reviewCount - priorWeekReviewCount,
     dnaByDayOfWeek,
     dnaByTimeSlot,
@@ -301,7 +301,7 @@ export function aggregateWeek(
     voiceTransferRate: voiceKpis.voiceTransferRate,
     computedAt: new Date().toISOString(),
     statisticallyRepresentative: total >= 5,
-    caveatNote: total < 5 ? `Low volume week (${total} appointments)` : undefined,
+    caveatNote: total < 5 ? `Low volume week (${total} appointments)` : null,
   };
 }
 

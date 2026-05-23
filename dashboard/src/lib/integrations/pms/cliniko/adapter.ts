@@ -15,10 +15,11 @@ export function createClinikoAdapter(config: ClinikoConfig): PMSAdapter {
     async getAppointments(params) {
       const { clinicianExternalId, dateFrom, dateTo } = params;
       
-      // Build query filters using Cliniko's q[] array syntax
+      // Build query filters using Cliniko's q[] array syntax.
+      // Cliniko requires full UTC timestamps, not plain date strings.
       const filters: string[] = [
-        `starts_at:>=${dateFrom}`,
-        `starts_at:<=${dateTo}`,
+        `starts_at:>=${dateFrom}T00:00:00Z`,
+        `starts_at:<=${dateTo}T23:59:59Z`,
       ];
       
       if (clinicianExternalId) {
