@@ -15,15 +15,15 @@ export interface WeeklyStats {
   appointmentsTotal: number;
   initialAssessments: number;
   followUps: number;
-  npsScore?: number;
+  npsScore?: number | null;
   reviewCount?: number;
-  avgRating?: number;
+  avgRating?: number | null;
   reviewVelocity?: number;
   dnaByDayOfWeek?: Record<string, number>;
   dnaByTimeSlot?: Record<string, number>;
   computedAt?: string;
   statisticallyRepresentative?: boolean;
-  caveatNote?: string;
+  caveatNote?: string | null;
   /** Revenue breakdown by appointment type (IA, follow-up, review, discharge) in pence */
   revenueByAppointmentType?: Record<string, number>;
   /** Revenue from insured patients in pence */
