@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { AvaIcon, PulseIcon, IntelligenceIcon } from "./ModuleIcons";
 
 type Module = "ava" | "pulse" | "intelligence";
@@ -31,8 +31,14 @@ const CONFIG: Record<Module, {
   },
 };
 
-// Always dark — this is a brand identity element, not a light/dark-mode component.
-// Matches the marketing site's module card aesthetic exactly.
+/**
+ * Sleek mode-aware module strip rendered above each module page.
+ *
+ * Layout: rounded floating card. Per-module tint surfaces as a soft left
+ * radial wash + matching pill icon container + LIVE badge.
+ * Styling lives in globals.css under `.module-strip` (light + dark variants).
+ * Component just sets the tint colour via CSS vars and renders semantic markup.
+ */
 export default function ModuleStrip({ module }: { module: Module }) {
   const [mounted, setMounted] = useState(false);
 
@@ -43,82 +49,27 @@ export default function ModuleStrip({ module }: { module: Module }) {
 
   const cfg = CONFIG[module];
 
+  const cssVars = {
+    "--strip-tint": cfg.color,
+    "--strip-glow": cfg.glow,
+  } as CSSProperties;
+
   return (
     <div
-      className="module-strip"
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        padding: "11px 24px",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        // Dark navy base, module-color ambient wash from left - ported from marketing site.
-        background: `radial-gradient(ellipse 70% 140% at -5% 50%, ${cfg.color}22, #0B2545 60%)`,
-        opacity: mounted ? 1 : 0,
-        transform: mounted ? "translateX(0)" : "translateX(-12px)",
-        transition: "opacity 0.45s cubic-bezier(0.16,1,0.3,1), transform 0.45s cubic-bezier(0.16,1,0.3,1)",
-      }}
+      className={`module-strip module-strip--${module} ${mounted ? "module-strip--mounted" : ""}`}
+      style={cssVars}
+      data-module={module}
     >
-      {/* Ambient glow behind icon — matches marketing site radial orb */}
-      <div aria-hidden style={{
-        position: "absolute", top: -40, left: -20,
-        width: 130, height: 130, borderRadius: "50%",
-        background: `radial-gradient(circle, ${cfg.color}1a, transparent 70%)`,
-        pointerEvents: "none",
-      }} />
-
-      {/* Glass specular — top edge highlight from marketing site */}
-      <div aria-hidden style={{
-        position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-        background: "linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 55%)",
-        pointerEvents: "none",
-      }} />
-
-      {/* Module icon — same container spec as marketing site module card */}
-      <div style={{
-        position: "relative", zIndex: 1,
-        width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-        background: `linear-gradient(135deg, ${cfg.color}28, ${cfg.color}10)`,
-        border: `1px solid ${cfg.color}32`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        boxShadow: `0 0 14px ${cfg.color}20, inset 0 1px 0 rgba(255,255,255,0.06)`,
-      }}>
+      <span className="module-strip__icon">
         <cfg.Icon color={cfg.glow} size={16} />
-      </div>
+      </span>
 
-      {/* Tagline — no module name; page heading owns that */}
-      <div style={{
-        position: "relative", zIndex: 1,
-        fontSize: 11,
-        color: "rgba(255,255,255,0.44)",
-        letterSpacing: "0.015em",
-        fontFamily: "'Outfit', sans-serif",
-      }}>
-        {cfg.sub}
-      </div>
+      <span className="module-strip__sub">{cfg.sub}</span>
 
-      {/* LIVE badge */}
-      <div style={{ marginLeft: "auto", position: "relative", zIndex: 1 }}>
-        <span style={{
-          display: "inline-flex", alignItems: "center", gap: 5,
-          padding: "3px 10px", borderRadius: 50,
-          background: `${cfg.color}18`,
-          border: `1px solid ${cfg.color}28`,
-          fontSize: 10, fontWeight: 700,
-          letterSpacing: "0.12em", textTransform: "uppercase" as const,
-          color: cfg.glow,
-        }}>
-          <span style={{
-            width: 5, height: 5, borderRadius: "50%",
-            background: cfg.glow,
-            boxShadow: `0 0 6px ${cfg.glow}`,
-            animation: "stryde-live-pulse 2s ease-in-out infinite",
-            display: "inline-block",
-          }} />
-          LIVE
-        </span>
-      </div>
+      <span className="module-strip__live">
+        <span className="module-strip__dot" />
+        Live
+      </span>
     </div>
   );
 }

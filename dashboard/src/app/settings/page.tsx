@@ -506,7 +506,7 @@ export default function SettingsPage() {
                 </button>
                 <button
                   onClick={confirmLeave}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors hover:opacity-90"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-navy dark:text-white transition-colors hover:opacity-90"
                   style={{ background: brand.danger }}
                 >
                   Discard & leave

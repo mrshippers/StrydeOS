@@ -451,7 +451,7 @@ export default function OnboardingPage() {
   if (authLoading && currentStep > 0) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 60%, ${C.blue} 100%)` }}>
-        <Loader2 size={24} className="animate-spin text-white/60" />
+        <Loader2 size={24} className="animate-spin text-navy/70 dark:text-white/60" />
       </div>
     );
   }
@@ -465,7 +465,7 @@ export default function OnboardingPage() {
           <StrydeOSLogo size={34} fontSize={17} theme="dark" gap={10} />
         </a>
         {isAuthenticated && (
-          <button onClick={() => router.push("/dashboard")} className="text-xs text-white/50 hover:text-white/80 transition-colors">
+          <button onClick={() => router.push("/dashboard")} className="text-xs text-navy/65 dark:text-white/50 hover:text-white/80 transition-colors">
             Skip setup
           </button>
         )}
@@ -481,7 +481,7 @@ export default function OnboardingPage() {
               return (
                 <div key={s.id} className="flex items-center gap-2 flex-1 last:flex-none">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold transition-all duration-300 ${
-                    done ? "bg-success text-white" : active ? "bg-white text-navy" : "bg-white/10 text-white/40"
+                    done ? "bg-success text-navy dark:text-white" : active ? "bg-white text-navy" : "bg-white/10 text-navy/55 dark:text-white/40"
                   }`}>
                     {done ? <Check size={13} /> : i + 1}
                   </div>
@@ -494,7 +494,7 @@ export default function OnboardingPage() {
           </div>
           <div className="flex justify-between mt-1.5 px-0.5">
             {STEPS.map((s, i) => (
-              <p key={s.id} className={`text-[10px] font-medium transition-colors ${currentStep === i ? "text-white" : "text-white/30"}`}>
+              <p key={s.id} className={`text-[10px] font-medium transition-colors ${currentStep === i ? "text-navy dark:text-white" : "text-navy/45 dark:text-white/30"}`}>
                 {s.title}
               </p>
             ))}
@@ -521,13 +521,13 @@ export default function OnboardingPage() {
                     <step.icon size={20} style={{ color: step.color }} />
                   </div>
                   <div>
-                    <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">
+                    <div className="text-[11px] font-semibold text-navy/55 dark:text-white/40 uppercase tracking-wider mb-0.5">
                       Step {currentStep + 1} of {STEPS.length}
                     </div>
-                    <h2 className="font-display text-[22px] text-white leading-tight">{step.title}</h2>
+                    <h2 className="font-display text-[22px] text-navy dark:text-white leading-tight">{step.title}</h2>
                   </div>
                 </div>
-                <p className="text-[14px] text-white/60 leading-relaxed">{step.subtitle}</p>
+                <p className="text-[14px] text-navy/70 dark:text-white/60 leading-relaxed">{step.subtitle}</p>
               </div>
 
               {/* Card body */}
@@ -633,7 +633,7 @@ export default function OnboardingPage() {
                         <label className="flex items-start gap-3 cursor-pointer">
                           <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 transition-all ${dpaAccepted ? "bg-success" : "border-2 border-border"}`}
                             onClick={() => setDpaAccepted(!dpaAccepted)}>
-                            {dpaAccepted && <Check size={11} className="text-white" />}
+                            {dpaAccepted && <Check size={11} className="text-navy dark:text-white" />}
                           </div>
                           <span className="text-sm text-navy" onClick={() => setDpaAccepted(!dpaAccepted)}>
                             I accept the Data Processing Agreement on behalf of my clinic
@@ -650,7 +650,7 @@ export default function OnboardingPage() {
                         <label className="flex items-start gap-3 cursor-pointer">
                           <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 transition-all ${commsConsent ? "bg-success" : "border-2 border-border"}`}
                             onClick={() => setCommsConsent(!commsConsent)}>
-                            {commsConsent && <Check size={11} className="text-white" />}
+                            {commsConsent && <Check size={11} className="text-navy dark:text-white" />}
                           </div>
                           <span className="text-sm text-navy" onClick={() => setCommsConsent(!commsConsent)}>
                             I confirm my clinic has patient consent frameworks for automated communications
@@ -768,7 +768,7 @@ export default function OnboardingPage() {
                               <div className={`w-5 h-5 rounded flex items-center justify-center mt-0.5 shrink-0 transition-all ${
                                 enabled ? "bg-success" : "border-2 border-border"
                               }`}>
-                                {enabled && <Check size={11} className="text-white" />}
+                                {enabled && <Check size={11} className="text-navy dark:text-white" />}
                               </div>
                               <div>
                                 <p className={`text-sm font-semibold ${enabled ? "text-navy" : "text-muted"}`}>{seq.label}</p>
@@ -805,7 +805,7 @@ export default function OnboardingPage() {
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 shrink-0 ${
                             selectedPms === pms.id ? "border-blue bg-blue" : "border-border"
                           }`}>
-                            {selectedPms === pms.id && <Check size={11} className="text-white" />}
+                            {selectedPms === pms.id && <Check size={11} className="text-navy dark:text-white" />}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-0.5">

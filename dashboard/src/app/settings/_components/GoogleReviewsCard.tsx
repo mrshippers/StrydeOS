@@ -265,7 +265,7 @@ export default function GoogleReviewsCard() {
                   type="button"
                   onClick={handleConnect}
                   disabled={testing || saving || !placeId.trim()}
-                  className="text-[11px] font-semibold text-white bg-blue hover:bg-blue-bright px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                  className="text-[11px] font-semibold text-navy dark:text-white bg-blue hover:bg-blue-bright px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {(testing || saving) && <Loader2 size={12} className="animate-spin" />}
                   {testing ? "Testing…" : saving ? "Saving…" : "Connect & sync"}

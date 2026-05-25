@@ -84,7 +84,7 @@ export default function CsvImportPanel({
                 {!wizardOpen && (
                   <button
                     onClick={() => { setWizardOpen(true); setWizardStep(0); setWizardPms(""); }}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-white bg-blue hover:bg-blue-bright shadow-sm hover:shadow-md transition-all"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-navy dark:text-white bg-blue hover:bg-blue-bright shadow-sm hover:shadow-md transition-all"
                   >
                     <Sparkles size={12} />
                     Setup wizard

@@ -220,23 +220,23 @@ export default function FirstLoginTour() {
                       border: "1px solid rgba(255,255,255,0.1)",
                     }}
                   >
-                    <Sparkles size={20} className="text-white" />
+                    <Sparkles size={20} className="text-navy dark:text-white" />
                   </div>
                   <div>
-                    <h2 className="font-display text-[22px] text-white leading-tight">
+                    <h2 className="font-display text-[22px] text-navy dark:text-white leading-tight">
                       Welcome to StrydeOS
                     </h2>
                   </div>
                 </div>
 
-                <p className="text-[15px] text-white/80 leading-relaxed">
+                <p className="text-[15px] text-navy/85 dark:text-white/80 leading-relaxed">
                   {isDemo ? (
                     <>You&apos;re viewing the demo. This is {clinicName}&apos;s clinical operating system — the same dashboard real clinics use to optimise performance.</>
                   ) : (
                     <>Welcome to StrydeOS, {firstName}. This is {clinicName}&apos;s unique clinical operating system, designed to optimise your practice from just &lsquo;good&rsquo; to industry-leading, whether big or small.</>
                   )}
                 </p>
-                <p className="text-[14px] text-white/50 mt-3">
+                <p className="text-[14px] text-navy/65 dark:text-white/50 mt-3">
                   Would you like a tour, or are you happy to explore on your own?
                 </p>
               </div>

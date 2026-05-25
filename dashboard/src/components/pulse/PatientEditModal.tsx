@@ -78,7 +78,7 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
           <div className="flex items-center justify-between p-5 border-b border-border">
             <div className="flex items-center gap-2.5">
               <div
-                className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[10px] font-bold text-white"
+                className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[10px] font-bold text-navy dark:text-white"
                 style={{ background: brand.teal }}
               >
                 {patient.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}

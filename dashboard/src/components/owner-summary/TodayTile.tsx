@@ -37,7 +37,7 @@ export default function TodayTile({
     >
       <div className="flex items-center gap-2">
         <Calendar size={16} style={{ color: brand.teal }} />
-        <span className="text-[11px] font-semibold tracking-widest uppercase text-white/40">
+        <span className="text-[11px] font-semibold tracking-widest uppercase text-navy/55 dark:text-white/40">
           Schedule
         </span>
       </div>
@@ -48,7 +48,7 @@ export default function TodayTile({
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-1">
             <p
-              className="text-[32px] font-bold text-white leading-none tabular-nums"
+              className="text-[32px] font-bold text-navy dark:text-white leading-none tabular-nums"
               style={{
                 opacity: valueOpacity,
                 transition: `opacity ${valueDur}ms ${EASING}`,
@@ -57,7 +57,7 @@ export default function TodayTile({
               {morph.value}
             </p>
             <p
-              className="text-[13px] text-white/50"
+              className="text-[13px] text-navy/65 dark:text-white/50"
               style={{
                 opacity: labelOpacity,
                 transition: `opacity ${labelDur}ms ${EASING} ${DURATION.subtitleDelay}ms`,

@@ -43,17 +43,17 @@ export default function CheckoutSuccessPage() {
         className="flex flex-col items-center gap-5"
       >
         <div className="w-16 h-16 rounded-full flex items-center justify-center bg-success shadow-[0_0_40px_rgba(5,150,105,0.4)]">
-          <Check size={28} className="text-white" strokeWidth={3} />
+          <Check size={28} className="text-navy dark:text-white" strokeWidth={3} />
         </div>
         <div className="text-center">
-          <h1 className="font-display text-[28px] text-white mb-2">
+          <h1 className="font-display text-[28px] text-navy dark:text-white mb-2">
             Payment confirmed
           </h1>
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-navy/70 dark:text-white/60">
             Setting up your account…
           </p>
         </div>
-        <Loader2 size={18} className="animate-spin text-white/40 mt-2" />
+        <Loader2 size={18} className="animate-spin text-navy/55 dark:text-white/40 mt-2" />
       </motion.div>
 
       <div className="fixed bottom-8">

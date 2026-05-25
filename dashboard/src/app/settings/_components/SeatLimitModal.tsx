@@ -152,7 +152,7 @@ export default function SeatLimitModal({
                 onClick={onClose}
                 disabled={purchasing}
                 aria-label="Close"
-                className="absolute top-4 right-4 p-1.5 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors disabled:opacity-40"
+                className="absolute top-4 right-4 p-1.5 rounded-lg text-navy/55 dark:text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors disabled:opacity-40"
               >
                 <X size={15} />
               </button>
@@ -162,23 +162,23 @@ export default function SeatLimitModal({
                   className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0"
                   style={{ background: "rgba(255,255,255,0.10)" }}
                 >
-                  <UserPlus size={20} className="text-white" />
+                  <UserPlus size={20} className="text-navy dark:text-white" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-0.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-navy/55 dark:text-white/40 mb-0.5">
                     Seat limit reached
                   </p>
                   <h2
                     id="seat-limit-title"
-                    className="font-display text-[20px] text-white leading-tight"
+                    className="font-display text-[20px] text-navy dark:text-white leading-tight"
                   >
                     You&rsquo;re at {currentCount} of {limit} clinicians
                   </h2>
                 </div>
               </div>
 
-              <p className="text-[13px] text-white/65 leading-relaxed">
-                Your <span className="text-white font-semibold">{tierLabel}</span> plan includes{" "}
+              <p className="text-[13px] text-navy/75 dark:text-white/65 leading-relaxed">
+                Your <span className="text-navy dark:text-white font-semibold">{tierLabel}</span> plan includes{" "}
                 {tierLimit} seat{tierLimit === 1 ? "" : "s"}
                 {extraSeats > 0 ? ` plus ${extraSeats} extra` : ""}. Add another seat or upgrade
                 your plan to bring {pending?.name ?? "a new clinician"} on.
@@ -189,7 +189,7 @@ export default function SeatLimitModal({
             {pending && (
               <div className="mx-8 mt-5 px-4 py-3 rounded-xl border border-border bg-white flex items-center gap-3">
                 <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-navy dark:text-white shrink-0"
                   style={{ background: "#0B2545" }}
                 >
                   {getInitials(pending.name)}

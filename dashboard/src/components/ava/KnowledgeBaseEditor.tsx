@@ -117,8 +117,8 @@ export default function KnowledgeBaseEditor({ clinicId }: KnowledgeBaseEditorPro
               <Zap size={17} className="text-blue-glow" />
             </div>
             <div>
-              <h3 className="font-display text-[17px] text-white tracking-[-0.01em]">Clinic Knowledge Base</h3>
-              <p className="text-[11px] text-white/40 mt-0.5">Complete onboarding to configure Ava&apos;s knowledge base</p>
+              <h3 className="font-display text-[17px] text-navy dark:text-white tracking-[-0.01em]">Clinic Knowledge Base</h3>
+              <p className="text-[11px] text-navy/55 dark:text-white/40 mt-0.5">Complete onboarding to configure Ava&apos;s knowledge base</p>
             </div>
           </div>
         </div>
@@ -175,8 +175,8 @@ export default function KnowledgeBaseEditor({ clinicId }: KnowledgeBaseEditorPro
                 <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-blue-glow border-2 border-[#0B2545]" style={{ animation: "kb-breathe 3s ease-in-out infinite" }} />
               </div>
               <div>
-                <h3 className="font-display text-[17px] text-white tracking-[-0.01em]">Clinic Knowledge Base</h3>
-                <p className="text-[11px] text-white/40 mt-0.5">
+                <h3 className="font-display text-[17px] text-navy dark:text-white tracking-[-0.01em]">Clinic Knowledge Base</h3>
+                <p className="text-[11px] text-navy/55 dark:text-white/40 mt-0.5">
                   {entries.length} {entries.length === 1 ? "entry" : "entries"} teaching Ava about your clinic
                 </p>
               </div>
@@ -185,7 +185,7 @@ export default function KnowledgeBaseEditor({ clinicId }: KnowledgeBaseEditorPro
             {entries.length > 0 && (
               <div className="flex items-center gap-1.5 bg-white/[0.06] rounded-full px-3 py-1 border border-white/[0.06]">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ animation: "kb-breathe 4s ease-in-out infinite" }} />
-                <span className="text-[10px] text-white/50 font-medium">
+                <span className="text-[10px] text-navy/65 dark:text-white/50 font-medium">
                   {lastSyncedAt ? "Live" : "Draft"}
                 </span>
               </div>
@@ -266,7 +266,7 @@ export default function KnowledgeBaseEditor({ clinicId }: KnowledgeBaseEditorPro
                 ? "bg-[#0B2545] text-blue-glow"
                 : entries.length === 0
                   ? "bg-cloud-light text-muted cursor-not-allowed"
-                  : "bg-[#0B2545] text-white hover:shadow-[0_0_20px_rgba(30,107,255,0.25)] active:scale-[0.97]"
+                  : "bg-[#0B2545] text-navy dark:text-white hover:shadow-[0_0_20px_rgba(30,107,255,0.25)] active:scale-[0.97]"
               }
             `}
           >

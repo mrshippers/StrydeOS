@@ -34,7 +34,7 @@ function highlight(text: string, query: string): React.ReactNode {
   const parts = text.split(regex);
   return parts.map((part, i) =>
     regex.test(part) ? (
-      <mark key={i} className="bg-blue/30 text-white rounded px-0.5">
+      <mark key={i} className="bg-blue/30 text-navy dark:text-white rounded px-0.5">
         {part}
       </mark>
     ) : (
@@ -68,11 +68,11 @@ function AccordionItem({
       >
         <ChevronDown
           size={14}
-          className={`mt-0.5 shrink-0 text-white/30 transition-transform duration-200 group-hover:text-white/50 ${
+          className={`mt-0.5 shrink-0 text-navy/45 dark:text-white/30 transition-transform duration-200 group-hover:text-white/50 ${
             open ? "rotate-180" : ""
           }`}
         />
-        <span className="text-[13px] font-medium text-white/80 leading-snug">
+        <span className="text-[13px] font-medium text-navy/85 dark:text-white/80 leading-snug">
           {highlight(entry.question, query)}
         </span>
       </button>
@@ -96,7 +96,7 @@ function AccordionItem({
                   {entry.formula}
                 </div>
               )}
-              <p className="text-[12.5px] text-white/55 leading-relaxed whitespace-pre-line">
+              <p className="text-[12.5px] text-navy/70 dark:text-white/55 leading-relaxed whitespace-pre-line">
                 {highlight(entry.answer, query)}
               </p>
               {entry.clinicNote && (
@@ -104,8 +104,8 @@ function AccordionItem({
                   className="mt-3 flex gap-2 px-3 py-2.5 rounded-lg"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
                 >
-                  <Info size={12} className="text-white/30 shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-white/35 leading-relaxed">
+                  <Info size={12} className="text-navy/45 dark:text-white/30 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-navy/50 dark:text-white/35 leading-relaxed">
                     {entry.clinicNote}
                   </p>
                 </div>
@@ -158,17 +158,17 @@ function PanelContent({ onClose }: { onClose: () => void }) {
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <BookOpen size={14} className="text-blue-glow" />
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-white/30">
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-navy/45 dark:text-white/30">
                 Help Centre
               </span>
             </div>
-            <h2 className="text-[18px] font-display text-white leading-tight">
+            <h2 className="text-[18px] font-display text-navy dark:text-white leading-tight">
               Metrics & Guides
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/[0.06] transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-navy/45 dark:text-white/30 hover:text-white/70 hover:bg-white/[0.06] transition-colors"
             aria-label="Close help panel"
           >
             <X size={15} />
@@ -179,7 +179,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
         <div className="relative">
           <Search
             size={13}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-navy/40 dark:text-white/25 pointer-events-none"
           />
           <input
             ref={searchRef}
@@ -187,7 +187,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search metrics, modules…"
-            className="w-full pl-8 pr-3 py-2 rounded-lg text-[12.5px] text-white placeholder:text-white/25 outline-none transition-colors"
+            className="w-full pl-8 pr-3 py-2 rounded-lg text-[12.5px] text-navy dark:text-white placeholder:text-white/25 outline-none transition-colors"
             style={{
               background: "rgba(255,255,255,0.06)",
               border: "1px solid rgba(255,255,255,0.08)",
@@ -201,8 +201,8 @@ function PanelContent({ onClose }: { onClose: () => void }) {
             onClick={() => setActiveCategory("all")}
             className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
               activeCategory === "all"
-                ? "text-white"
-                : "text-white/35 hover:text-white/60"
+                ? "text-navy dark:text-white"
+                : "text-navy/50 dark:text-white/35 hover:text-white/60"
             }`}
             style={
               activeCategory === "all"
@@ -218,8 +218,8 @@ function PanelContent({ onClose }: { onClose: () => void }) {
               onClick={() => setActiveCategory(cat)}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
                 activeCategory === cat
-                  ? "text-white"
-                  : "text-white/35 hover:text-white/60"
+                  ? "text-navy dark:text-white"
+                  : "text-navy/50 dark:text-white/35 hover:text-white/60"
               }`}
               style={
                 activeCategory === cat
@@ -237,10 +237,10 @@ function PanelContent({ onClose }: { onClose: () => void }) {
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-[13px] text-white/30">
+            <p className="text-[13px] text-navy/45 dark:text-white/30">
               No results for &ldquo;{query}&rdquo;
             </p>
-            <p className="text-[11px] text-white/20 mt-1">
+            <p className="text-[11px] text-navy/35 dark:text-white/20 mt-1">
               Try a different term or browse all categories.
             </p>
           </div>
@@ -262,7 +262,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
           href="https://wild-jaw-b99.notion.site/StrydeOS-Setup-Guide-8d119c6ab90a43d7b6456845c23bb534"
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-[12px] font-medium text-white/50 hover:text-white/80 transition-colors group"
+          className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-[12px] font-medium text-navy/65 dark:text-white/50 hover:text-white/80 transition-colors group"
           style={{
             background: "rgba(5,150,105,0.08)",
             border: "1px solid rgba(5,150,105,0.15)",
@@ -273,7 +273,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
         </a>
         <button
           onClick={handleViewFullHelp}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-[12.5px] font-medium text-white/60 hover:text-white transition-colors group"
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-[12.5px] font-medium text-navy/70 dark:text-white/60 hover:text-white transition-colors group"
           style={{
             background: "rgba(255,255,255,0.04)",
             border: "1px solid rgba(255,255,255,0.07)",
@@ -282,7 +282,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
           <span>View full Help Centre</span>
           <ArrowRight
             size={13}
-            className="text-white/30 group-hover:text-white/70 group-hover:translate-x-0.5 transition-all"
+            className="text-navy/45 dark:text-white/30 group-hover:text-white/70 group-hover:translate-x-0.5 transition-all"
           />
         </button>
       </div>

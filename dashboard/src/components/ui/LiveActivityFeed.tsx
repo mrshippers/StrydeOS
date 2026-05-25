@@ -23,10 +23,10 @@ function FeedItem({ item }: { item: ActivityItem }) {
         className="w-[5px] h-[5px] rounded-full shrink-0"
         style={{ background: color }}
       />
-      <span className="flex-1 min-w-0 text-[11px] text-white/70 truncate leading-snug">
+      <span className="flex-1 min-w-0 text-[11px] text-navy/80 dark:text-white/70 truncate leading-snug">
         {item.text}
       </span>
-      <span className="text-[9px] text-white/30 shrink-0 tabular-nums">
+      <span className="text-[9px] text-navy/45 dark:text-white/30 shrink-0 tabular-nums">
         {relativeTime(item.timestamp)}
       </span>
     </div>
@@ -48,7 +48,7 @@ export default function LiveActivityFeed() {
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[10px] font-semibold uppercase tracking-[1.5px] text-white/35">
+        <span className="text-[10px] font-semibold uppercase tracking-[1.5px] text-navy/50 dark:text-white/35">
           Clinic Pulse
         </span>
         <div className="flex gap-[4px]">
@@ -79,7 +79,7 @@ export default function LiveActivityFeed() {
           ))
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-[11px] text-white/25 italic text-center">
+            <p className="text-[11px] text-navy/40 dark:text-white/25 italic text-center">
               All quiet — your clinic is running smoothly
             </p>
           </div>

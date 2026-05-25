@@ -31,27 +31,27 @@ export default function GlobalError({
           <MonolithMark size={48} />
         </div>
 
-        <h2 className="font-display text-[22px] text-white mb-2">
+        <h2 className="font-display text-[22px] text-navy dark:text-white mb-2">
           Well, that wasn&apos;t supposed to happen
         </h2>
-        <p className="text-[14px] text-white/40 leading-relaxed mb-2">
+        <p className="text-[14px] text-navy/55 dark:text-white/40 leading-relaxed mb-2">
           StrydeOS hit an unexpected error. Your data is completely safe — this
           is a display issue on our end.
         </p>
-        <p className="text-[13px] text-white/25 leading-relaxed mb-8">
+        <p className="text-[13px] text-navy/40 dark:text-white/25 leading-relaxed mb-8">
           Try again, or refresh the page. If it keeps happening, we&apos;re
           already on it.
         </p>
 
         {error.digest && (
-          <p className="text-[10px] text-white/15 font-mono mb-6 select-all">
+          <p className="text-[10px] text-navy/30 dark:text-white/15 font-mono mb-6 select-all">
             ref: {error.digest}
           </p>
         )}
 
         <button
           onClick={reset}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-[14px] font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-[14px] font-semibold text-navy dark:text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97]"
           style={{
             background: brand.blue,
             boxShadow: `0 4px 20px ${brand.blue}40`,

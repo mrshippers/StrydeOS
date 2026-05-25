@@ -465,7 +465,7 @@ export default function TrialPage() {
           <button
             onClick={handleStart}
             disabled={!selected}
-            className="inline-flex items-center gap-3 px-10 py-4 rounded-full text-base font-bold text-white transition-all duration-300"
+            className="inline-flex items-center gap-3 px-10 py-4 rounded-full text-base font-bold text-navy dark:text-white transition-all duration-300"
             style={{
               background: selected
                 ? `linear-gradient(135deg, ${C.blueBright}, ${C.blue})`

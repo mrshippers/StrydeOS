@@ -36,7 +36,7 @@ export default function RevenueTile({
     >
       <div className="flex items-center gap-2">
         <PoundSterling size={16} style={{ color: brand.purple }} />
-        <span className="text-[11px] font-semibold tracking-widest uppercase text-white/40">
+        <span className="text-[11px] font-semibold tracking-widest uppercase text-navy/55 dark:text-white/40">
           Revenue
         </span>
       </div>
@@ -49,7 +49,7 @@ export default function RevenueTile({
       ) : (
         <div className="flex flex-col gap-1">
           <p
-            className="text-[32px] font-bold text-white leading-none tabular-nums"
+            className="text-[32px] font-bold text-navy dark:text-white leading-none tabular-nums"
             style={{
               opacity: valueOpacity,
               transition: `opacity ${valueDur}ms ${EASING}`,
@@ -58,7 +58,7 @@ export default function RevenueTile({
             £{morph.value.toLocaleString("en-GB")}
           </p>
           <p
-            className="text-[13px] text-white/50"
+            className="text-[13px] text-navy/65 dark:text-white/50"
             style={{
               opacity: labelOpacity,
               transition: `opacity ${labelDur}ms ${EASING} ${DURATION.subtitleDelay}ms`,

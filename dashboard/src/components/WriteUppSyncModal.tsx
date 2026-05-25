@@ -126,7 +126,7 @@ export default function WriteUppSyncModal() {
               <button
                 type="button"
                 onClick={dismiss}
-                className="absolute top-4 right-4 p-1.5 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors"
+                className="absolute top-4 right-4 p-1.5 rounded-lg text-navy/55 dark:text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors"
                 aria-label="Close"
               >
                 <X size={15} />
@@ -137,22 +137,22 @@ export default function WriteUppSyncModal() {
                   className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0"
                   style={{ background: "rgba(255,255,255,0.10)" }}
                 >
-                  <Mail size={20} className="text-white" />
+                  <Mail size={20} className="text-navy dark:text-white" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-0.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-navy/55 dark:text-white/40 mb-0.5">
                     WriteUpp sync
                   </p>
                   <h2
                     id="writeupp-sync-title"
-                    className="font-display text-[20px] text-white leading-tight"
+                    className="font-display text-[20px] text-navy dark:text-white leading-tight"
                   >
                     Connect your data
                   </h2>
                 </div>
               </div>
 
-              <p className="text-[13px] text-white/65 leading-relaxed">
+              <p className="text-[13px] text-navy/75 dark:text-white/65 leading-relaxed">
                 {statusLine}
               </p>
             </div>

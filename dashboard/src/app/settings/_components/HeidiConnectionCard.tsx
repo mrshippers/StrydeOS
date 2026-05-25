@@ -223,7 +223,7 @@ export default function HeidiConnectionCard() {
                 <button
                   onClick={handleConnect}
                   disabled={saving || !apiKey.trim()}
-                  className="text-[11px] font-semibold text-white bg-blue hover:bg-blue-bright px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                  className="text-[11px] font-semibold text-navy dark:text-white bg-blue hover:bg-blue-bright px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {saving ? "Validating…" : "Connect"}
                 </button>

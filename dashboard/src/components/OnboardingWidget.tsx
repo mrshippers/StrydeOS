@@ -141,7 +141,7 @@ export default function OnboardingWidget() {
             }}
           >
             <ProgressRing progress={progress} />
-            <span className="text-xs font-semibold text-white/80">
+            <span className="text-xs font-semibold text-navy/85 dark:text-white/80">
               Setup: {completedCount}/{steps.length} complete
             </span>
             <Zap size={12} className="text-blue-glow" />
@@ -176,7 +176,7 @@ export default function OnboardingWidget() {
               <div className="relative px-6 pt-6 pb-4" style={{ background: "linear-gradient(135deg, #0B2545, #132D5E)" }}>
                 <button
                   onClick={handleDismissModal}
-                  className="absolute top-4 right-4 w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                  className="absolute top-4 right-4 w-7 h-7 rounded-lg flex items-center justify-center text-navy/55 dark:text-white/40 hover:text-white hover:bg-white/10 transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -185,13 +185,13 @@ export default function OnboardingWidget() {
                     className="h-10 w-10 rounded-xl flex items-center justify-center"
                     style={{ background: "linear-gradient(135deg, #1C54F2, #4B8BF5)" }}
                   >
-                    <Zap size={18} className="text-white" />
+                    <Zap size={18} className="text-navy dark:text-white" />
                   </div>
                   <div>
-                    <h2 className="font-display text-xl text-white leading-tight">
+                    <h2 className="font-display text-xl text-navy dark:text-white leading-tight">
                       Welcome to StrydeOS
                     </h2>
-                    <p className="text-xs text-white/40 mt-0.5">
+                    <p className="text-xs text-navy/55 dark:text-white/40 mt-0.5">
                       {cp?.name ? `Let's get ${cp.name} set up` : "Let's get your clinic set up"}
                     </p>
                   </div>

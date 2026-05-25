@@ -36,7 +36,7 @@ export default function RetentionTile({ alerts, alertCount, loading }: Retention
     >
       <div className="flex items-center gap-2">
         <UserMinus size={16} style={{ color: brand.warning }} />
-        <span className="text-[11px] font-semibold tracking-widest uppercase text-white/40">
+        <span className="text-[11px] font-semibold tracking-widest uppercase text-navy/55 dark:text-white/40">
           Retention
         </span>
       </div>
@@ -53,7 +53,7 @@ export default function RetentionTile({ alerts, alertCount, loading }: Retention
       ) : (
         <div className="flex flex-col gap-3">
           <p
-            className="text-[32px] font-bold text-white leading-none tabular-nums"
+            className="text-[32px] font-bold text-navy dark:text-white leading-none tabular-nums"
             style={{
               opacity: morphOpacity,
               transition: `opacity ${morphDur}ms ${EASING}`,
@@ -64,15 +64,15 @@ export default function RetentionTile({ alerts, alertCount, loading }: Retention
           <ul className="flex flex-col gap-1.5">
             {visibleAlerts.map((alert) => (
               <li key={alert.id} className="flex items-center justify-between">
-                <span className="text-[13px] text-white/70 truncate">{alert.name}</span>
-                <span className="text-[13px] text-white/50 tabular-nums ml-3 shrink-0">
+                <span className="text-[13px] text-navy/80 dark:text-white/70 truncate">{alert.name}</span>
+                <span className="text-[13px] text-navy/65 dark:text-white/50 tabular-nums ml-3 shrink-0">
                   {alert.daysSinceLastSession}d
                 </span>
               </li>
             ))}
           </ul>
           {overflow > 0 && (
-            <p className="text-[12px] text-white/30">+{overflow} more</p>
+            <p className="text-[12px] text-navy/45 dark:text-white/30">+{overflow} more</p>
           )}
         </div>
       )}

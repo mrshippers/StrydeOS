@@ -49,12 +49,12 @@ export function BaaClickthrough({ clinicId, onAccept }: BaaClickthroughProps) {
       <div className="flex items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2.5">
           <div
-            className="h-8 w-8 rounded-lg flex items-center justify-center text-white font-display text-sm font-bold"
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-navy dark:text-white font-display text-sm font-bold"
             style={{ background: "rgba(255,255,255,0.15)" }}
           >
             S
           </div>
-          <span className="font-display text-[16px] text-white">StrydeOS</span>
+          <span className="font-display text-[16px] text-navy dark:text-white">StrydeOS</span>
         </div>
       </div>
 
@@ -143,7 +143,7 @@ export function BaaClickthrough({ clinicId, onAccept }: BaaClickthroughProps) {
               type="button"
               onClick={handleAccept}
               disabled={!accepted || saving}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white bg-blue transition-colors hover:opacity-90 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-navy dark:text-white bg-blue transition-colors hover:opacity-90 disabled:opacity-50"
               whileTap={accepted && !saving ? { scale: 0.97 } : {}}
             >
               {saving ? (

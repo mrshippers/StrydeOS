@@ -133,13 +133,17 @@ export function GlassCard({
         ...style,
       }}
     >
-      {/* Six-layer PS5 glass - tokens/glass.ts */}
-      <div style={glass.L1} />
-      <div style={glass.L2} />
-      <div style={glass.L3} />
-      <div style={glass.L4} />
-      <div style={glass.L5} />
-      <div style={glass.L6} />
+      {/* Six-layer PS5 glass - tokens/glass.ts.
+          Class names let globals.css suppress L1-L5 in dark mode where the
+          white-alpha overlays would otherwise create washed-out plastic
+          artefacts on dark navy surfaces. L6 (inner border) keeps a subtle
+          edge highlight, dimmed via the same selector. */}
+      <div className="glass-layer glass-layer--l1" style={glass.L1} />
+      <div className="glass-layer glass-layer--l2" style={glass.L2} />
+      <div className="glass-layer glass-layer--l3" style={glass.L3} />
+      <div className="glass-layer glass-layer--l4" style={glass.L4} />
+      <div className="glass-layer glass-layer--l5" style={glass.L5} />
+      <div className="glass-layer glass-layer--l6" style={glass.L6} />
 
       {/* Ambient drift glow - hero default-on, others off unless overridden */}
       {ambientAlpha > 0 && (

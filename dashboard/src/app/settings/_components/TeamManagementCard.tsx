@@ -113,7 +113,7 @@ export default function TeamManagementCard({
             <button
               type="button"
               onClick={handleConfirmTeam}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-navy dark:text-white transition-all hover:opacity-90"
               style={{ background: brand.success }}
             >
               <CheckCircle2 size={12} />
@@ -266,7 +266,7 @@ export default function TeamManagementCard({
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-cloud-light/50 transition-colors text-left"
               >
-                <div className="w-9 h-9 rounded-full bg-navy flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                <div className="w-9 h-9 rounded-full bg-navy flex items-center justify-center text-[10px] font-bold text-navy dark:text-white shrink-0">
                   {getInitials(c.name)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -390,7 +390,7 @@ export default function TeamManagementCard({
                               setConfirmDeleteId(null);
                               setExpandedClinicianId(null);
                             }}
-                            className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white transition-all hover:opacity-90"
+                            className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-navy dark:text-white transition-all hover:opacity-90"
                             style={{ background: brand.danger }}
                           >
                             Yes, remove

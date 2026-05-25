@@ -112,7 +112,7 @@ function HeaderTooltip({ text }: { text: string }) {
       </button>
       {open && (
         <div
-          className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-56 px-3 py-2.5 rounded-lg text-[12px] leading-relaxed text-white/90 shadow-lg animate-fade-in border border-white/10"
+          className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-56 px-3 py-2.5 rounded-lg text-[12px] leading-relaxed text-navy/95 dark:text-white/90 shadow-lg animate-fade-in border border-white/10"
           style={{ background: "#132D5E" }}
         >
           {text}
@@ -268,7 +268,7 @@ function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
                 >
                   <td className="px-5 py-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-navy flex items-center justify-center text-[11px] font-bold text-white shrink-0 transition-shadow duration-200 group-hover:ring-2 group-hover:ring-blue/20">
+                      <div className="w-8 h-8 rounded-full bg-navy flex items-center justify-center text-[11px] font-bold text-navy dark:text-white shrink-0 transition-shadow duration-200 group-hover:ring-2 group-hover:ring-blue/20">
                         {getInitials(row.clinicianName)}
                       </div>
                       <span className="text-[14px] font-medium text-navy">
