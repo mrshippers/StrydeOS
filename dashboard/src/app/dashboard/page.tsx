@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useOwnerSummary } from "@/hooks/useOwnerSummary";
+import { useOwnerSummary, type OwnerSummaryPeriod } from "@/hooks/useOwnerSummary";
 import { useProgress } from "@/components/TopProgressBar";
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import RevenueTile from "@/components/owner-summary/RevenueTile";
@@ -21,14 +21,15 @@ import { Lightbulb, ArrowRight } from "lucide-react";
 import { brand } from "@/lib/brand";
 import { DURATION, EASING, useSlidingPill } from "@/lib/motion";
 import { getTimeGreeting } from "@/lib/greeting";
+import { TrendStrip } from "@/components/dashboard/TrendStrip";
 
-type Period = "today" | "7d" | "30d" | "90d";
+type Period = OwnerSummaryPeriod;
 
-const PERIODS: { id: Period; label: string; revenueScale: number; todayScale: number; appointmentLabel: string; revenueLabel: string }[] = [
-  { id: "today", label: "Today", revenueScale: 1 / 30, todayScale: 1, appointmentLabel: "appointments today", revenueLabel: "Today" },
-  { id: "7d", label: "7d", revenueScale: 7 / 30, todayScale: 6.8, appointmentLabel: "appointments this week", revenueLabel: "Last 7 days" },
-  { id: "30d", label: "30d", revenueScale: 1, todayScale: 28, appointmentLabel: "appointments this month", revenueLabel: "Month to date" },
-  { id: "90d", label: "90d", revenueScale: 3, todayScale: 85, appointmentLabel: "appointments this quarter", revenueLabel: "Last 90 days" },
+const PERIODS: { id: Period; label: string; appointmentLabel: string; revenueLabel: string }[] = [
+  { id: "today", label: "Today", appointmentLabel: "appointments today", revenueLabel: "Today" },
+  { id: "7d",    label: "7d",    appointmentLabel: "appointments this week", revenueLabel: "Last 7 days" },
+  { id: "30d",   label: "30d",   appointmentLabel: "appointments this month", revenueLabel: "Last 30 days" },
+  { id: "90d",   label: "90d",   appointmentLabel: "appointments this quarter", revenueLabel: "Last 90 days" },
 ];
 
 function TimeframeSegment({ value, onChange }: { value: Period; onChange: (p: Period) => void }) {
@@ -131,7 +132,7 @@ export default function DashboardPage() {
     loading,
     error,
     usedDemo,
-  } = useOwnerSummary();
+  } = useOwnerSummary(period);
 
   useEffect(() => {
     if (loading) {
@@ -151,8 +152,6 @@ export default function DashboardPage() {
   const greeting = useTickingGreeting(user?.firstName);
 
   const periodConfig = PERIODS.find((p) => p.id === period) ?? PERIODS[2];
-  const scaledRevenuePence = Math.round(revenueMtdPence * periodConfig.revenueScale);
-  const scaledTodayTotal = Math.round(todayTotal * periodConfig.todayScale);
 
   return (
     <div className="space-y-6">
@@ -197,12 +196,12 @@ export default function DashboardPage() {
       {/* Four-tile grid — 2x2 at lg, single row only on xl+ (avoids narrow Utilisation crush) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <RevenueTile
-          revenueMtdPence={scaledRevenuePence}
+          revenueMtdPence={revenueMtdPence}
           periodLabel={periodConfig.revenueLabel}
           loading={loading}
         />
         <TodayTile
-          todayTotal={scaledTodayTotal}
+          todayTotal={todayTotal}
           todayDnas={todayDnas}
           periodLabel={periodConfig.appointmentLabel}
           loading={loading}
@@ -249,6 +248,23 @@ export default function DashboardPage() {
           </GlassCard>
         </div>
       </div>
+
+      {/* Clinic Pulse strip — 12-week sparkline trend for key metrics */}
+      <motion.div {...staggerItem(0.25)}>
+        <div className="mb-3 flex items-center gap-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted/70 dark:text-white/40">
+            Clinic pulse
+          </p>
+          <div
+            className="h-px flex-1 opacity-30"
+            style={{ background: `linear-gradient(to right, ${brand.navy}40, transparent)` }}
+          />
+          <p className="text-[10.5px] text-muted/50 dark:text-white/30 font-medium">
+            12-week trend
+          </p>
+        </div>
+        <TrendStrip />
+      </motion.div>
     </div>
   );
 }

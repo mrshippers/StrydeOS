@@ -49,9 +49,20 @@ const DEMO_DATA: OwnerSummaryData = {
   usedDemo: true,
 };
 
-function startOfMonthIso(): string {
+export type OwnerSummaryPeriod = "today" | "7d" | "30d" | "90d";
+
+function dateFromForPeriod(period: OwnerSummaryPeriod): string {
   const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  switch (period) {
+    case "today":
+      return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
+    case "7d":
+      return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    case "30d":
+      return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    case "90d":
+      return new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+  }
 }
 
 function todayDateString(): string {
@@ -59,10 +70,11 @@ function todayDateString(): string {
   return now.toISOString().slice(0, 10);
 }
 
-export function useOwnerSummary(): OwnerSummaryData {
+export function useOwnerSummary(period: OwnerSummaryPeriod = "30d"): OwnerSummaryData {
   const { user } = useAuth();
   const clinicId = user?.clinicId ?? null;
   const isDemo = user?.uid === "demo";
+  const sessionPricePence = user?.clinicProfile?.sessionPricePence ?? 0;
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -74,8 +86,9 @@ export function useOwnerSummary(): OwnerSummaryData {
 
   useEffect(() => {
     if (isDemo) return;
+    setApptReady(false);
 
-    const dateFrom = startOfMonthIso();
+    const dateFrom = dateFromForPeriod(period);
 
     const unsubAppt = subscribeAppointments(
       clinicId,
@@ -93,7 +106,7 @@ export function useOwnerSummary(): OwnerSummaryData {
     );
 
     return () => { unsubAppt(); unsubPatients(); };
-  }, [clinicId, isDemo]);
+  }, [clinicId, isDemo, period]);
 
   if (isDemo) return DEMO_DATA;
 
@@ -101,14 +114,14 @@ export function useOwnerSummary(): OwnerSummaryData {
 
   const revenueMtdPence = appointments.reduce((sum, a) => {
     if (a.status === "completed" || a.status === "scheduled") {
-      return sum + (a.revenueAmountPence ?? 0);
+      return sum + (a.revenueAmountPence ?? sessionPricePence);
     }
     return sum;
   }, 0);
 
   const todayAppts = appointments.filter((a) => a.dateTime.slice(0, 10) === today);
-  const todayTotal = todayAppts.length;
-  const todayDnas = todayAppts.filter((a) => a.status === "dna").length;
+  const todayTotal = period === "today" ? appointments.length : todayAppts.length;
+  const todayDnas = (period === "today" ? appointments : todayAppts).filter((a) => a.status === "dna").length;
 
   const alertPatients = patients
     .filter(

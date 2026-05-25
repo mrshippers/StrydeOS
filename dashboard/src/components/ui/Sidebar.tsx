@@ -23,6 +23,7 @@ import {
   CreditCard,
   HelpCircle,
   FileText,
+  Aperture,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { LogoNav, MonolithMark } from "@/components/MonolithLogo";
@@ -336,38 +337,81 @@ export default function Sidebar() {
         <MonolithMark size={32} />
       </motion.div>
 
-      {/* Desktop: floating notification bell — always visible top-right */}
+      {/* Desktop: floating aperture + notification bell — always visible top-right */}
       <motion.div
-        className="fixed top-5 right-5 z-[45] hidden lg:flex"
+        className="fixed top-5 right-5 z-[45] hidden lg:flex items-center gap-2"
         initial={false}
-        animate={{
-          opacity: 1,
-          scale: 1,
-        }}
+        animate={{ opacity: 1, scale: 1 }}
       >
-        <button
+        {/* Aperture theme toggle */}
+        <motion.button
+          onClick={(e) => toggleTheme(e)}
+          className="relative w-9 h-9 rounded-full flex items-center justify-center"
+          style={{
+            background: theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(11,37,69,0.06)",
+            border: `1px solid ${theme === "dark" ? "rgba(255,255,255,0.10)" : "rgba(11,37,69,0.08)"}`,
+            boxShadow: "none",
+            transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s",
+          }}
+          whileHover={{
+            boxShadow: `0 0 0 3px ${brand.blue}22, 0 0 12px ${brand.blue}30`,
+            borderColor: `${brand.blue}50`,
+          }}
+          whileTap={{ scale: 0.92 }}
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          <motion.div
+            animate={{ rotate: 0 }}
+            whileTap={{ rotate: 180 }}
+            transition={{ type: "spring", stiffness: 300, damping: 18 }}
+          >
+            <Aperture
+              size={15}
+              style={{
+                color: theme === "dark" ? "rgba(255,255,255,0.40)" : `rgba(11,37,69,0.40)`,
+                transition: "color 0.15s",
+              }}
+            />
+          </motion.div>
+        </motion.button>
+
+        {/* Notification bell */}
+        <motion.button
           onClick={() => setNotifOpen(!notifOpen)}
-          className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
+          className="relative w-9 h-9 rounded-full flex items-center justify-center"
           style={{
             background: notifOpen
-              ? "rgba(28,84,242,0.15)"
+              ? `${brand.blue}22`
               : theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(11,37,69,0.06)",
             border: `1px solid ${notifOpen
-              ? "rgba(28,84,242,0.2)"
+              ? `${brand.blue}40`
               : theme === "dark" ? "rgba(255,255,255,0.10)" : "rgba(11,37,69,0.08)"}`,
+            boxShadow: notifOpen ? `0 0 0 3px ${brand.blue}18, 0 0 14px ${brand.blue}28` : "none",
+            transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s",
           }}
+          whileHover={{
+            boxShadow: `0 0 0 3px ${brand.blue}22, 0 0 12px ${brand.blue}30`,
+            borderColor: `${brand.blue}50`,
+          }}
+          whileTap={{ scale: 0.92 }}
           aria-label="Notifications"
         >
-          <Bell size={15} className={notifOpen ? "text-blue" : theme === "dark" ? "text-white/40" : "text-navy/40"} style={{ transition: "color 0.15s" }} />
+          <Bell
+            size={15}
+            style={{
+              color: notifOpen
+                ? brand.blue
+                : theme === "dark" ? "rgba(255,255,255,0.40)" : "rgba(11,37,69,0.40)",
+              transition: "color 0.15s",
+            }}
+          />
           {totalBellCount > 0 && (
             <span
-              className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-              style={{ background: brand.danger, boxShadow: `0 2px 6px ${brand.danger}40` }}
-            >
-              {totalBellCount}
-            </span>
+              className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full"
+              style={{ background: brand.blue, boxShadow: `0 0 6px ${brand.blue}80` }}
+            />
           )}
-        </button>
+        </motion.button>
       </motion.div>
 
       {/* Desktop: left-edge hover trigger strip when collapsed */}
@@ -446,21 +490,36 @@ export default function Sidebar() {
 
           {/* Notification bell */}
           <div ref={notifRef} data-tour="notification-bell">
-            <button
+            <motion.button
               onClick={() => setNotifOpen(!notifOpen)}
-              className="relative w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+              className="relative w-8 h-8 rounded-full flex items-center justify-center"
+              style={{
+                background: notifOpen ? `${brand.blue}22` : "rgba(255,255,255,0.06)",
+                border: `1px solid ${notifOpen ? `${brand.blue}40` : "rgba(255,255,255,0.10)"}`,
+                boxShadow: notifOpen ? `0 0 0 3px ${brand.blue}18, 0 0 12px ${brand.blue}28` : "none",
+                transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s",
+              }}
+              whileHover={{
+                boxShadow: `0 0 0 3px ${brand.blue}22, 0 0 10px ${brand.blue}30`,
+                borderColor: `${brand.blue}50`,
+              }}
+              whileTap={{ scale: 0.92 }}
               aria-label="Notifications"
             >
-              <Bell size={15} className="text-white/50 hover:text-white/80 transition-colors" />
+              <Bell
+                size={14}
+                style={{
+                  color: notifOpen ? brand.blue : "rgba(255,255,255,0.45)",
+                  transition: "color 0.15s",
+                }}
+              />
               {totalBellCount > 0 && (
                 <span
-                  className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                  style={{ background: brand.danger }}
-                >
-                  {totalBellCount}
-                </span>
+                  className="absolute -top-0.5 -right-0.5 w-[7px] h-[7px] rounded-full"
+                  style={{ background: brand.blue, boxShadow: `0 0 5px ${brand.blue}90` }}
+                />
               )}
-            </button>
+            </motion.button>
           </div>
         </div>
 

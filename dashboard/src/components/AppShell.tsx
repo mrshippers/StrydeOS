@@ -19,6 +19,7 @@ import SampleDataBanner from "@/components/SampleDataBanner";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
 import ClinicPicker from "@/components/ClinicPicker";
 import WriteUppSyncModal from "@/components/WriteUppSyncModal";
+import HelpWidget from "@/components/ui/HelpWidget";
 
 const SplashScreen = dynamic(
   () => import("@/components/SplashScreen"),
@@ -106,6 +107,7 @@ function AppLayout({ children, impersonating }: { children: React.ReactNode; imp
       <InsightEngineUnlocked />
       <CommandPalette />
       <WriteUppSyncModal />
+      <HelpWidget />
     </>
   );
 }
