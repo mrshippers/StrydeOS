@@ -22,6 +22,7 @@ import { brand } from "@/lib/brand";
 import { DURATION, EASING, useSlidingPill } from "@/lib/motion";
 import { getTimeGreeting } from "@/lib/greeting";
 import { TrendStrip } from "@/components/dashboard/TrendStrip";
+import SectionLabel from "@/components/ui/SectionLabel";
 
 type Period = OwnerSummaryPeriod;
 
@@ -177,9 +178,7 @@ export default function DashboardPage() {
         {...staggerItem(0)}
       >
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted/80 dark:text-white/40 mb-1.5">
-            Dashboard
-          </p>
+          <SectionLabel className="mb-1.5">Dashboard</SectionLabel>
           <h1 className="font-display text-navy dark:text-white text-[32px] leading-[1.05] tracking-[-0.6px]">
             {greeting}
           </h1>
@@ -252,9 +251,7 @@ export default function DashboardPage() {
       {/* Clinic Pulse strip — 12-week sparkline trend for key metrics */}
       <motion.div {...staggerItem(0.25)}>
         <div className="mb-3 flex items-center gap-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted/70 dark:text-white/40">
-            Clinic pulse
-          </p>
+          <SectionLabel>Clinic pulse</SectionLabel>
           <div
             className="h-px flex-1 opacity-30"
             style={{ background: `linear-gradient(to right, ${brand.navy}40, transparent)` }}

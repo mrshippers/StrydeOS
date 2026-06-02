@@ -30,9 +30,19 @@
   --shadow-card: 0 1px 2px rgba(0,0,0,0.03), 0 4px 24px rgba(0,0,0,0.04), 0 12px 48px rgba(0,0,0,0.02);
   --shadow-elevated: 0 2px 4px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06), 0 16px 56px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.7);
 
+  /* Strict radius scale — the only allowed radii (CLAUDE.md spatial system).
+     Semantic aliases below map onto it: card = 16, inner = 12, chip = 50.
+     The glass-card family renders at 24 (see GlassCard / tokens/glass.ts). */
+  --radius-4: 4px;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-20: 20px;
+  --radius-24: 24px;
+
   --radius-card: 16px;
   --radius-chip: 50px;
-  --radius-inner: 10px;
+  --radius-inner: 12px;
 
   /* Tile surface: clean white card in light mode, subtle frost lift in dark.
      Light mode renders as a Linear / Mercury / Stripe-style premium white card
