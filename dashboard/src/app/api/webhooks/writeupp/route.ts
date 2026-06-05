@@ -58,14 +58,22 @@ async function handler(request: NextRequest) {
 
     const db = getAdminDb();
 
-    // Check if this webhook was already processed recently
+    // Atomic dedup claim: create() fails with ALREADY_EXISTS if another
+    // concurrent invocation (WriteUpp retries on slow responses; Vercel runs
+    // concurrent lambdas) already claimed this exact payload. This replaces a
+    // non-atomic get()-then-set() that let both racers run the full pipeline,
+    // duplicating patient comms (SMS/email), bookings, and metric counts.
+    // TTL cleanup handled by data-health/cleanup cron.
     const dedupRef = db.collection("_webhook_dedup").doc(idempotencyKey);
-    const dedupSnap = await dedupRef.get();
-    if (dedupSnap.exists) {
-      return NextResponse.json({ ok: true, deduplicated: true });
+    try {
+      await dedupRef.create({ processedAt: new Date().toISOString(), event });
+    } catch (err) {
+      // gRPC code 6 = ALREADY_EXISTS — a concurrent request won the claim.
+      if ((err as { code?: number }).code === 6) {
+        return NextResponse.json({ ok: true, deduplicated: true });
+      }
+      throw err;
     }
-    // Mark as processed (TTL cleanup handled by data-health/cleanup cron)
-    await dedupRef.set({ processedAt: new Date().toISOString(), event });
 
     // Optimised clinic resolution: use clinicId from body/header if available,
     // otherwise fall back to scanning WriteUpp-configured clinics.

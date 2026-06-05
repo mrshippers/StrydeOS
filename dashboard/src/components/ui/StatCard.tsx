@@ -4,19 +4,20 @@ import { useState, useEffect, useRef, useCallback, memo } from "react";
 import Link from "next/link";
 import type { StatCardProps } from "@/types";
 import { ChevronUp, ChevronDown, Minus, AlertTriangle } from "lucide-react";
+import { brand, hexToRgba } from "@/lib/brand";
 
 const STATUS_COLORS: Record<string, { dot: string; glow: string }> = {
-  ok:      { dot: "#059669", glow: "rgba(5,150,105,0.45)" },
-  warn:    { dot: "#F59E0B", glow: "rgba(245,158,11,0.45)" },
-  danger:  { dot: "#EF4444", glow: "rgba(239,68,68,0.45)" },
-  neutral: { dot: "#6B7280", glow: "rgba(107,114,128,0.2)" },
+  ok:      { dot: brand.success, glow: hexToRgba(brand.success, 0.45) },
+  warn:    { dot: brand.warning, glow: hexToRgba(brand.warning, 0.45) },
+  danger:  { dot: brand.danger,  glow: hexToRgba(brand.danger, 0.45) },
+  neutral: { dot: brand.muted,   glow: hexToRgba(brand.muted, 0.2) },
 };
 
 const TREND_COLORS: Record<string, string> = {
-  up:   "#059669",
-  down: "#EF4444",
-  warn: "#F59E0B",
-  flat: "#6B7280",
+  up:   brand.success,
+  down: brand.danger,
+  warn: brand.warning,
+  flat: brand.muted,
 };
 
 function useCountUp(rawTarget: string | number, duration = 800): { display: string; ref: React.RefObject<HTMLElement | null> } {
@@ -99,10 +100,10 @@ function Sparkline({ data, status }: { data: number[]; status: string }) {
   if (data.length < 2) return null;
 
   const lineColor =
-    status === "ok"      ? "#059669" :
-    status === "danger"  ? "#EF4444" :
-    status === "warn"    ? "#F59E0B" :
-    "#6B7280";
+    status === "ok"      ? brand.success :
+    status === "danger"  ? brand.danger :
+    status === "warn"    ? brand.warning :
+    brand.muted;
 
   const W = 48;
   const H = 20;
@@ -169,13 +170,26 @@ function StatCard({
   const trendColor = TREND_COLORS[trend ?? "flat"];
 
   const progressFill = status === "warn" || status === "danger"
-    ? "#F59E0B"
+    ? brand.warning
     : undefined;
 
   return (
     <div
       onClick={onClick}
-      className={`stryde-fade-up group relative rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden transition-all duration-300 ease-out flex flex-col ${
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      aria-label={onClick ? (typeof label === "string" ? label : undefined) : undefined}
+      className={`stryde-fade-up group relative rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden transition-all duration-300 ease-out flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring,#1C54F2)] focus-visible:ring-offset-2 ${
         onClick ? "cursor-pointer hover:shadow-[var(--shadow-elevated)] hover:-translate-y-1 active:scale-[0.99] active:shadow-[var(--shadow-card)]" : "hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
       }`}
       style={{ animationDelay: index !== undefined ? `${index * 80}ms` : "0ms" }}
@@ -273,7 +287,7 @@ function StatCard({
               href={action.href}
               onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-1 text-[12px] font-semibold transition-colors hover:underline"
-              style={{ color: "#1C54F2" }}
+              style={{ color: brand.blue }}
             >
               {action.label} <span className="inline-block transition-transform duration-150 group-hover:translate-x-0.5">→</span>
             </Link>
@@ -281,7 +295,7 @@ function StatCard({
             <button
               onClick={(e) => { e.stopPropagation(); action.onClick?.(); }}
               className="inline-flex items-center gap-1 text-[12px] font-semibold transition-colors hover:underline"
-              style={{ color: "#1C54F2" }}
+              style={{ color: brand.blue }}
             >
               {action.label} <span className="inline-block transition-transform duration-150 group-hover:translate-x-0.5">→</span>
             </button>
@@ -296,7 +310,7 @@ function StatCard({
             className="h-full rounded-r-[2px] transition-all duration-700 ease-out"
             style={{
               width: `${Math.min(Math.max(progress, 0), 100)}%`,
-              background: progressFill ?? "linear-gradient(90deg, #0891B2, #4B8BF5)",
+              background: progressFill ?? `linear-gradient(90deg, ${brand.teal}, ${brand.blueGlow})`,
             }}
           />
         </div>

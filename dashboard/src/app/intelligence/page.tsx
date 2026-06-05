@@ -1366,10 +1366,10 @@ export default function IntelligencePage() {
                   <Activity size={16} className="text-purple" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-navy mb-1">Clinical outcomes correlate with revenue</h4>
+                  <h4 className="text-sm font-semibold text-navy mb-1">Clinical outcomes connect to revenue</h4>
                   <p className="text-xs text-muted leading-relaxed">
-                    Patients who improve <span className="font-semibold text-navy">≥3 points on NPRS</span> are <span className="font-semibold text-success">2.4×</span> more likely to complete their full treatment and <span className="font-semibold text-success">1.8×</span> more likely to leave a Google review.
-                    Tracking outcomes turns clinical quality into a measurable revenue signal.
+                    Patients who show a meaningful improvement on validated measures like <span className="font-semibold text-navy">NPRS</span> and <span className="font-semibold text-navy">PSFS</span> tend to complete their full course of treatment and are more likely to recommend you.
+                    Tracking outcomes turns clinical quality into a measurable revenue signal you can act on.
                   </p>
                 </div>
               </div>

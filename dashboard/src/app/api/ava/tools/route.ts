@@ -15,6 +15,7 @@
  * Returns { response: string } — ElevenLabs speaks this back to the caller.
  */
 
+import * as crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
@@ -462,8 +463,18 @@ async function handler(req: NextRequest) {
     if (!TOOLS_SECRET) {
       return NextResponse.json({ error: "Tools secret not configured" }, { status: 500 });
     }
+    // Constant-time Bearer comparison (matches the timingSafeEqual pattern used
+    // by every other secret-checked webhook — writeupp, resend, n8n, etc.).
     const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${TOOLS_SECRET}`) {
+    const presented = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice("Bearer ".length)
+      : "";
+    const presentedBuf = Buffer.from(presented);
+    const expectedBuf = Buffer.from(TOOLS_SECRET);
+    if (
+      presentedBuf.length !== expectedBuf.length ||
+      !crypto.timingSafeEqual(presentedBuf, expectedBuf)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
