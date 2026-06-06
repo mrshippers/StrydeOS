@@ -160,7 +160,7 @@ export default function DashboardPage() {
       {showOnboardingBanner && (
         <div className="flex items-center justify-between gap-3 px-4 py-2 rounded-xl bg-blue/3 border border-blue/10">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-blue/8 flex items-center justify-center text-blue text-[10px] font-bold">!</div>
+            <div className="w-6 h-6 rounded-lg bg-blue/8 flex items-center justify-center text-blue text-[10px] font-bold">!</div>
             <p className="text-xs font-medium text-navy">Finish setting up your clinic</p>
           </div>
           <a href="/onboarding" className="btn-primary" style={{ padding: "6px 18px", fontSize: 11 }}>
