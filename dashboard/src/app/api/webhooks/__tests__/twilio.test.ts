@@ -185,11 +185,15 @@ describe("POST /api/webhooks/twilio", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 500 when TWILIO_AUTH_TOKEN is not set", async () => {
+  it("returns 200 (config_missing) when TWILIO_AUTH_TOKEN is not set", async () => {
+    // Deliberate route behaviour: a missing token on OUR side is a deploy bug,
+    // not a transient fault. The route returns 200 + structured config_missing
+    // (logged CRITICAL) so Twilio doesn't retry-storm us. See twilio/route.ts.
     delete process.env.TWILIO_AUTH_TOKEN;
     const req = await makeRequest({ MessageSid: "SM123", MessageStatus: "delivered" });
     const { POST } = await import("../twilio/route");
     const res = await POST(req);
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ error: "config_missing" });
   });
 });

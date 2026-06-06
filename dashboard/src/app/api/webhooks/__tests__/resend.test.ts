@@ -45,13 +45,18 @@ function makeDb(commsLogEntry?: Record<string, unknown> | null) {
   return { db, updateImpl };
 }
 
+const TEST_SECRET = "test-resend-secret";
+
 async function makeRequest(body: Record<string, unknown>, clinicId = "clinic-1") {
   return new NextRequest(
     `http://localhost/api/webhooks/resend?clinicId=${clinicId}`,
     {
       method: "POST",
       body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-resend-signature": TEST_SECRET,
+      },
     },
   );
 }
@@ -60,6 +65,8 @@ describe("POST /api/webhooks/resend", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    // Route now requires a shared secret; the request signature must match it.
+    process.env.RESEND_WEBHOOK_SECRET = TEST_SECRET;
   });
 
   it("sets openedAt when event is email.opened", async () => {
@@ -172,11 +179,44 @@ describe("POST /api/webhooks/resend", () => {
     const req = new NextRequest("http://localhost/api/webhooks/resend", {
       method: "POST",
       body: JSON.stringify({ type: "email.opened", data: { email_id: "re_abc" } }),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-resend-signature": TEST_SECRET,
+      },
     });
 
     const { POST } = await import("../resend/route");
     const res = await POST(req);
     expect(res.status).toBe(400);
+  });
+
+  it("returns 401 when the signature does not match the configured secret", async () => {
+    const req = new NextRequest(
+      "http://localhost/api/webhooks/resend?clinicId=clinic-1",
+      {
+        method: "POST",
+        body: JSON.stringify({ type: "email.opened", data: { email_id: "re_abc" } }),
+        headers: {
+          "Content-Type": "application/json",
+          "x-resend-signature": "wrong-secret",
+        },
+      },
+    );
+
+    const { POST } = await import("../resend/route");
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 200 (config_missing) when RESEND_WEBHOOK_SECRET is not set", async () => {
+    // Deliberate route behaviour: a missing secret on OUR side is a deploy bug.
+    // The route returns 200 + structured config_missing (logged CRITICAL) so
+    // Resend doesn't retry-storm us. See resend/route.ts.
+    delete process.env.RESEND_WEBHOOK_SECRET;
+    const req = await makeRequest({ type: "email.opened", data: { email_id: "re_abc" } });
+    const { POST } = await import("../resend/route");
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ error: "config_missing" });
   });
 });

@@ -3,16 +3,34 @@
 import type { ReactNode } from "react";
 import { MonolithMark } from "@/components/MonolithLogo";
 import { moduleColors } from "@/lib/brand";
+import { AvaIcon, PulseIcon, IntelligenceIcon } from "@/components/ui/ModuleIcons";
+
+type ModuleKey = "ava" | "pulse" | "intelligence";
 
 interface EmptyStateProps {
   icon?: ReactNode;
   heading: string;
-  subtext: string;
+  subtext: ReactNode;
   action?: ReactNode;
-  module?: "ava" | "pulse" | "intelligence";
+  module?: ModuleKey;
 }
 
-export default function EmptyState({ heading, subtext, action, module }: EmptyStateProps) {
+const MODULE_MARK: Record<ModuleKey, (color: string) => ReactNode> = {
+  ava: (color) => <AvaIcon color={color} size={30} />,
+  pulse: (color) => <PulseIcon color={color} size={30} />,
+  intelligence: (color) => <IntelligenceIcon color={color} size={30} />,
+};
+
+/**
+ * EmptyState — module-aware empty state.
+ *
+ * When `module` is set it leads with that module's animated mark inside a
+ * tinted squircle (Ava / Pulse / Intelligence identity per CLAUDE.md) rather
+ * than the generic Monolith. A custom `icon` overrides; no module falls back
+ * to the Monolith mark. Dark mode is handled globally (globals.css text-navy /
+ * muted overrides), consistent with the rest of the portal.
+ */
+export default function EmptyState({ heading, subtext, action, module, icon }: EmptyStateProps) {
   const accentColor = moduleColors[module ?? "default"];
 
   return (
@@ -25,7 +43,21 @@ export default function EmptyState({ heading, subtext, action, module }: EmptySt
       />
 
       <div className="relative mb-6">
-        <MonolithMark size={64} />
+        {icon ? (
+          icon
+        ) : module ? (
+          <span
+            className="inline-flex h-16 w-16 items-center justify-center rounded-2xl"
+            style={{
+              background: `${accentColor}14`,
+              boxShadow: `inset 0 0 0 1px ${accentColor}26`,
+            }}
+          >
+            {MODULE_MARK[module](accentColor)}
+          </span>
+        ) : (
+          <MonolithMark size={64} />
+        )}
       </div>
 
       <h3 className="relative font-display text-2xl text-navy mb-2">{heading}</h3>
