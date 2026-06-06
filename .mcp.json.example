@@ -1,0 +1,13 @@
+{
+  "_comment": "Template for project-scoped MCP servers. Copy to .mcp.json and fill in real values. Claude Code on the web reads .mcp.json (it is part of the repo clone); it does NOT read servers added locally via `claude mcp add`. See docs/mcp/icloud-mail-setup.md.",
+  "mcpServers": {
+    "icloud-mail": {
+      "command": "npx",
+      "args": ["-y", "REPLACE_WITH_YOUR_ICLOUD_MCP_PACKAGE"],
+      "env": {
+        "ICLOUD_USERNAME": "jamal@strydeos.com",
+        "ICLOUD_APP_PASSWORD": "${ICLOUD_APP_PASSWORD}"
+      }
+    }
+  }
+}
