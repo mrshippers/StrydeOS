@@ -32,11 +32,11 @@ function DarkModeUpdateBanner() {
   useEffect(() => {
     try {
       if (!localStorage.getItem(DARK_MODE_UPDATE_KEY)) setVisible(true);
-    } catch {}
+    } catch { /* ignore unavailable storage */ }
   }, []);
 
   const dismiss = () => {
-    try { localStorage.setItem(DARK_MODE_UPDATE_KEY, "1"); } catch {}
+    try { localStorage.setItem(DARK_MODE_UPDATE_KEY, "1"); } catch { /* ignore unavailable storage */ }
     setVisible(false);
   };
 
