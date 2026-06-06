@@ -82,14 +82,16 @@ describe("proxyToEngine — success path", () => {
     expect(result!.result).toContain("John Doe");
   });
 
-  it("POSTs to /api/tools/execute on the engine URL", async () => {
+  it("POSTs to /api/tools/execute with the clinic_id query param for tenant scoping", async () => {
     mockFetch.mockResolvedValue(makeOkResponse({ result: "ok", slots: [] }));
 
     await proxyToEngine(ENGINE_URL, BASE_PAYLOAD);
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url] = mockFetch.mock.calls[0];
-    expect(url).toBe("http://localhost:8000/api/tools/execute");
+    // clinic_id is appended so the Python tenant middleware validates it
+    // before parsing the body. See engine-proxy.ts.
+    expect(url).toBe("http://localhost:8000/api/tools/execute?clinic_id=clinic_001");
   });
 
   it("sends the full payload as JSON", async () => {
