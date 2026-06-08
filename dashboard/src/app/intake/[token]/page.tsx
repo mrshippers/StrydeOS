@@ -147,7 +147,7 @@ export default function InsuranceIntakePage() {
 
   return (
     <div className="min-h-screen bg-cloud-dancer flex flex-col items-center px-5 py-10">
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-lg animate-fade-in">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <div className="w-11 h-11 rounded-xl bg-blue/10 flex items-center justify-center">

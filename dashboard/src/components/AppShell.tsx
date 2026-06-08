@@ -117,9 +117,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, impersonating } = useAuth();
   const isChromeless = CHROMELESS_PATHS.some((p) => pathname.startsWith(p));
 
-  /* Show splash only on the very first visit — never again */
+  /* Show splash only on the very first visit — never again. Never on public /
+     patient-facing (chromeless) pages — they get a soft fade-in instead. */
   const [showSplash, setShowSplash] = useState(() => {
     if (typeof window === "undefined") return false;
+    if (isChromeless) return false;
     try {
       return !localStorage.getItem(SPLASH_SEEN_KEY);
     } catch {
