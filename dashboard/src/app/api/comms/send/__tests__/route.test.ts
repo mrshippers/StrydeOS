@@ -152,6 +152,7 @@ vi.mock("@/lib/twilio", () => ({
     messages: { create: (...args: unknown[]) => mockTwilioCreate(...args) },
   }),
   getTwilioPhone: () => "+441234567890",
+  getSmsSender: () => "+441234567890",
 }));
 
 const mockResendSend = vi.fn();

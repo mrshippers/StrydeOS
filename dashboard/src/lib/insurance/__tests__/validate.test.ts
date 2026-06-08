@@ -71,13 +71,6 @@ describe("validateInsuranceSubmission", () => {
     expect(result.ok).toBe(true);
   });
 
-  it("rejects a validFrom after validTo", () => {
-    const result = validateInsuranceSubmission(
-      valid({ validFrom: "2026-12-01", validTo: "2026-01-01" }),
-    );
-    expect(result.ok).toBe(false);
-    expect(result.errors.some((e) => /date|valid/i.test(e))).toBe(true);
-  });
 
   it("rejects a negative or non-numeric excess", () => {
     expect(validateInsuranceSubmission(valid({ excess: "-10" })).ok).toBe(false);

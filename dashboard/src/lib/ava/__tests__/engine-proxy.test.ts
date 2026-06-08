@@ -89,7 +89,8 @@ describe("proxyToEngine — success path", () => {
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url] = mockFetch.mock.calls[0];
-    expect(url).toBe("http://localhost:8000/api/tools/execute");
+    // The engine URL may carry a clinic_id query param; assert the path prefix.
+    expect(url).toContain("http://localhost:8000/api/tools/execute");
   });
 
   it("sends the full payload as JSON", async () => {

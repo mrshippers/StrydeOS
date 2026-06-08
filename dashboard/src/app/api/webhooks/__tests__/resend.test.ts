@@ -51,7 +51,10 @@ async function makeRequest(body: Record<string, unknown>, clinicId = "clinic-1")
     {
       method: "POST",
       body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-resend-signature": "test-secret",
+      },
     },
   );
 }
@@ -60,6 +63,7 @@ describe("POST /api/webhooks/resend", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    process.env.RESEND_WEBHOOK_SECRET = "test-secret";
   });
 
   it("sets openedAt when event is email.opened", async () => {
@@ -172,7 +176,10 @@ describe("POST /api/webhooks/resend", () => {
     const req = new NextRequest("http://localhost/api/webhooks/resend", {
       method: "POST",
       body: JSON.stringify({ type: "email.opened", data: { email_id: "re_abc" } }),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-resend-signature": "test-secret",
+      },
     });
 
     const { POST } = await import("../resend/route");

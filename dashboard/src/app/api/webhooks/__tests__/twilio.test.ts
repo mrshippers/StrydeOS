@@ -185,11 +185,12 @@ describe("POST /api/webhooks/twilio", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 500 when TWILIO_AUTH_TOKEN is not set", async () => {
+  it("returns 200 (config_missing) when TWILIO_AUTH_TOKEN is not set", async () => {
     delete process.env.TWILIO_AUTH_TOKEN;
     const req = await makeRequest({ MessageSid: "SM123", MessageStatus: "delivered" });
     const { POST } = await import("../twilio/route");
     const res = await POST(req);
-    expect(res.status).toBe(500);
+    // Hardened webhook returns 200 to suppress Twilio retries when misconfigured.
+    expect(res.status).toBe(200);
   });
 });
