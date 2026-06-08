@@ -9,6 +9,8 @@
  *   - check_availability: queries PMS for open slots
  *   - book_appointment: creates booking in PMS + Firestore mirror
  *   - update_booking: cancels or reschedules via PMS
+ *   - send_insurance_intake_link: texts the patient a secure insurance/pre-auth
+ *     intake link mid-call (same pipeline as the staff failsafe)
  *
  * Auth: Bearer token (ELEVENLABS_WEBHOOK_SECRET). ElevenLabs tool-call webhooks
  *        use Authorization: Bearer — HMAC is only for conversation event webhooks.
@@ -20,6 +22,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
+import { createIntakeLink } from "@/lib/insurance/create-link";
+import { getTwilio, getSmsSender } from "@/lib/twilio";
 // Tool-call auth uses a static Bearer token (ElevenLabs tool webhooks don't
 // send HMAC signatures — that's only for conversation event webhooks).
 const TOOLS_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
@@ -453,6 +457,51 @@ function parseFutureDate(input: string): Date {
   return new Date(now.getTime() + 24 * 60 * 60 * 1000);
 }
 
+/**
+ * Ava mid-call action: generate a secure insurance-intake link and text it to
+ * the patient so they can confirm insurance + pre-authorisation before their
+ * appointment. Reuses the same link + delivery path as the staff failsafe, so
+ * the voice and form journeys share one pipeline.
+ */
+async function handleSendInsuranceLink(
+  toolInput: Record<string, unknown>,
+  clinicId: string,
+  callerPhone: string,
+): Promise<string> {
+  const patientRef =
+    ((toolInput.patient_external_id as string) ?? "").trim() ||
+    ((toolInput.patient_phone as string) ?? callerPhone ?? "").trim() ||
+    "ava-caller";
+  const rawPhone = (((toolInput.patient_phone as string) ?? callerPhone) ?? "").replace(/[^\d+]/g, "");
+  const smsTo = rawPhone.startsWith("+")
+    ? rawPhone
+    : rawPhone.startsWith("0")
+      ? `+44${rawPhone.slice(1)}`
+      : rawPhone
+        ? `+${rawPhone}`
+        : "";
+  if (!smsTo) {
+    return "I can send you a secure link to confirm your insurance, but I don't have a mobile number for you. What's the best number to text?";
+  }
+  try {
+    const link = await createIntakeLink(getAdminDb(), clinicId, {
+      patientRef,
+      insurerOptions: [],
+      createdBy: "ava",
+      nowMs: Date.now(),
+    });
+    await getTwilio().messages.create({
+      from: getSmsSender(),
+      to: smsTo,
+      body: `Please confirm your insurance details before your appointment using this secure link: ${link.url} - takes under a minute. Reply STOP to opt out.`,
+    });
+    return "Perfect, I've just texted you a secure link to confirm your insurance details before your appointment. It only takes a minute.";
+  } catch (err) {
+    console.error("[ava/tools] send_insurance_intake_link failed:", err instanceof Error ? err.message : String(err));
+    return "I tried to text you the insurance link but something went wrong on our side. The team will follow up.";
+  }
+}
+
 // ─── Main Handler ───────────────────────────────────────────────────────────
 
 async function handler(req: NextRequest) {
@@ -573,6 +622,9 @@ async function handler(req: NextRequest) {
         break;
       case "update_booking":
         result = await handleUpdateBooking(adapter, toolInput, clinicId);
+        break;
+      case "send_insurance_intake_link":
+        result = await handleSendInsuranceLink(toolInput, clinicId, caller_phone ?? "");
         break;
       default:
         result = "I'm not sure how to help with that. Can I take a message and have someone call you back?";
