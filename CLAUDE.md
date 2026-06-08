@@ -1,7 +1,7 @@
 # CLAUDE.md — StrydeOS
 
 > Claude Code operating instructions for the StrydeOS codebase.  
-> Read this before touching anything. Last updated: 2026-05-16.
+> Read this before touching anything. Last updated: 2026-06-08.
 
 ---
 
@@ -45,14 +45,14 @@ You can't manage what you can't measure. Clinic owners have no visibility into w
 
 ## Repo Layout
 
-- `dashboard/` — primary Next.js 15 app. Tailwind v4, LangChain/LangGraph, AI SDK Gateway, ElevenLabs client, Sentry + OpenTelemetry, Playwright E2E. **All dev commands live here** (root `package.json` is a seed-only stub).
-- `StrydeOutreach/` — autonomous QA + 4-touch outreach engine. Live since 14 May 2026 at `outreach.strydeos.com`. Has its own CLAUDE.md.
-- `StrydeLens/` — Lens subproject. Has its own CLAUDE.md.
-- `ava_graph/` — LangGraph definitions for the Ava voice agent.
+- `dashboard/` — primary Next.js 15 app. Tailwind v4, LangChain/LangGraph, AI SDK Gateway, ElevenLabs client, Sentry + OpenTelemetry, Playwright E2E. **All dev commands live here** (root `package.json` is a seed-only stub). Contains `src/mcp/` (the `stryde-ops` MCP server) and `src/app/api/mcp/` (its HTTP transport).
+- `StrydeOutreach/` — autonomous QA + 4-touch outreach engine. Live since 14 May 2026 at `outreach.strydeos.com`. **Nested independent git repo** (own `.git`, not a submodule) — has its own CLAUDE.md.
+- `StrydeLens/` — Lens subproject. **Nested independent git repo.** Its CLAUDE.md is stale (a 2025-era copy of the old StrydeOS doc — 1hr TTL, 4-collection list, real Spires PII) — do not trust it; rewrite or delete.
+- `ava_graph/` — Ava voice agent: LangGraph definitions **+ deployed to Cloud Run** with its own PMS-booking MCP (`ava_graph/mcp_server.py`) and intent eval harness (`ava_graph/tests/eval/`).
 - `Marketing Material/` — brand assets, pitch deck source, email comms templates (canonical).
-- `docs/` — module briefs, audits, technical whitepaper, sub-processor DPA register.
-- `scripts/` — reusable ops scripts.
-- `website/` — marketing site source.
+- `docs/` — module briefs (`docs/module-briefs/`), audits, technical whitepaper, sub-processor DPA register.
+- `scripts/` — reusable ops scripts, incl. the reference `strydeOS_mcp.py` (pricing/capability MCP).
+- `website/` — marketing site source. Hosts the live Ava demo (repaired `277d1e3`).
 - `Research/`, `To do/`, `logs/`, `test-results/` — non-code.
 
 ---
@@ -62,19 +62,39 @@ You can't manage what you can't measure. Clinic owners have no visibility into w
 Run inside `dashboard/`:
 
 ```bash
-npm run dev                # Next dev server
+npm run dev                # Next dev server (doppler run -- next dev)
 npm run dev:mobile         # Next dev exposed on 0.0.0.0 (LAN testing)
 npm run build              # Production build
 npm run lint               # eslint src
 npm test                   # vitest run
 npm run test:e2e           # playwright (E2E_NO_SERVER=1)
 npm run test:e2e:ui        # playwright UI mode
+npm run test:e2e:headed    # playwright headed
+npm run test:e2e:full      # full E2E (boots a server)
 npm run check:boundaries   # enforces Ava/Pulse/Intelligence module isolation
+npm run mcp:stdio          # run the stryde-ops MCP server over stdio (Claude Code)
+npm run audit:contrast     # WCAG contrast audit via CDP-attached Playwright
+npm run analyze            # bundle analyzer
+npm run seed:clinic        # seed a single clinic
 npm run seed:spires        # local seed
-npm run seed:production    # production seed (use with care)
+npm run seed:production     # production seed (use with care)
+npm run purge:seed         # remove seeded data
+npm run setup:superadmin   # bootstrap a superadmin
+npm run promote:superadmin # promote a user to superadmin
 ```
 
+Node is pinned to **`22.x`** (`engines` in `dashboard/package.json`).
 Module-boundary check runs as part of pre-commit. Don't bypass with `--no-verify`.
+
+---
+
+## MCP Servers
+
+Three MCP servers live in this repo (see `dashboard/src/mcp/README.md`):
+
+1. **`stryde-ops`** (`dashboard/src/mcp/`, TypeScript) — inbound, founder-local. 11 tools over clinic data + Ava control. Two transports share one registry: **stdio** (`npm run mcp:stdio`, for Claude Code) and **HTTP** at `portal.strydeos.com/api/mcp` (claude.ai custom integration). ⚠ The HTTP transport hardcodes scope to `CLINIC_ID=spires` + `MCP_ROLE=superadmin` — **anyone holding `MCP_BEARER_SECRET` has founder-equivalent access**. Per-clinic scoping + full OAuth is Phase D (deferred); OAuth client_credentials + Authorization Code/PKCE endpoints exist for the claude.ai flow.
+2. **`ava-pms-tools`** (`ava_graph/mcp_server.py`, Python FastMCP) — outbound; Ava's live-call PMS booking tools (cliniko / writeupp / tm3 / jane).
+3. **`strydeOS`** (`scripts/strydeOS_mcp.py`, Python FastMCP) — reference server for marketing/sales drafting: `get_pricing_tiers`, `get_pilot_metrics`, `get_pms_capability`. Treat as the canonical machine-readable pricing/capability source — keep it in sync with this file.
 
 ---
 
@@ -101,7 +121,17 @@ Three modules. Names are **locked** — do not rename, do not alias.
 
 Bundle discount applied automatically on Full Stack. Mix-and-match any two modules ~10% off.
 
-Do not invent or round prices. Canonical artifact: `Marketing Material/strydeos-pricing-deck.html`. Secondary references: `StrydeOutreach/CLAUDE.md`, `dashboard/docs/briefs/`.
+Do not invent or round prices. Canonical artifact: `Marketing Material/strydeos-pricing-deck.html`. Machine-readable source: the `strydeOS` MCP `get_pricing_tiers` tool (`scripts/strydeOS_mcp.py`). Secondary reference: `StrydeOutreach/CLAUDE.md`.
+
+> ⚠ **Pricing reconciliation needed (founder decision, do not auto-change):** three sources disagree on two points — (a) whether the £195 Ava setup fee also applies to Full Stack (this file says Ava-only; `scripts/strydeOS_mcp.py` says it applies to Full Stack too; `StrydeOutreach/CLAUDE.md` says no setup fee on Full Stack); (b) Clinic-tier Ava (£199 here vs £159 in StrydeOutreach) and Clinic-tier Pulse (£149 here vs £119 in StrydeOutreach). Monthly tier prices are otherwise consistent everywhere. Decide once, then sync all three.
+
+### Insurance / Intake (module — shipped, delivered under Pulse)
+
+A patient insurance + address intake surface added in commits `9dea070` / `f80b494`:
+- Public token-gated form at `/intake/[token]` (postcodes.io address lookup) → staff review queue at `/compliance/insurance` → staff-approved write back to the PMS (Cliniko writes insurance summary + confirmed address to the patient profile).
+- PMS-agnostic core in `dashboard/src/lib/insurance/`; Cliniko is the only wired PMS today.
+- Daily cron `/api/insurance/poll-and-send` (09:00) polls Cliniko upcoming bookings, windows/dedupes, and emails patients a secure intake link.
+- Gated by `featureFlags.insuranceIntake`. Collections: `insurance_intake_links`, `pre_auths`.
 
 ---
 
@@ -129,7 +159,7 @@ StrydeOS is built and validated at Spires first.
 - **Primary:** Firebase
 - **Auth:** Firebase Auth
 - **Database:** Firestore (`europe-west2` region — London)
-- **Collections:** `appointments`, `clinicians`, `physitrack_programs`, `metrics_weekly`
+- **Collections (core):** `clinics`, `users`, `clinicians`, `appointments`, `patients`, `metrics_weekly`, `reviews`, `insight_events`, `comms_log`, `audit_logs`, `sequence_definitions`, `insurance_intake_links`, `pre_auths` (~30 total referenced in code; `physitrack_programs` is no longer used). All `clinicId`-partitioned.
 - **Hosting:** Vercel / Firebase Hosting
 
 ### Automation & Integrations
@@ -137,7 +167,7 @@ StrydeOS is built and validated at Spires first.
 - **Voice AI:** ElevenLabs (Conversational AI) + Twilio (telephony/SIP)
 - **White-label voice layer (future):** Vapify (wraps ElevenLabs at reseller phase)
 - **PMS integrations:** all four **live in code** — Cliniko (REST API, production), WriteUpp (live via import pipeline), Halaxy (live in code), Zanda / Power Diary (live in code). Spires runs primarily on WriteUpp + Physitrack. Production rollout maturity differs from code-completeness — confirm per-clinic before promising "live integration" in sales conversation.
-- **Roadmap:** TM3 (Blue Zinc), PPS (Rushcliff — API docs gated, requires PPS Express login), Pabau (requires API key), Jane App
+- **Roadmap:** TM3 (Blue Zinc) and Jane App — Ava booking-tool **stubs now exist in code** (`ava_graph/tools/tm3.py`, `jane.py`), not production. PPS (Rushcliff — API docs gated, requires PPS Express login), Pabau (requires API key).
 - **HEP integrations:** Physitrack (live), Rehab My Patient (live), Wibbi (pending — auth model needs rework)
 - **Clinical tools:** Heidi Health — clinical scribe (legacy positioning as data enrichment) **+ Heidi Comms** (AI receptionist, launched Feb 2026). Heidi Comms overlaps with Ava on voice/SMS/chat/scheduling but Heidi remains NHS/GP/horizontal — no physio-specific KPIs, no HEP compliance tracking, no patient retention engine. **StrydeOS positioning: physio-vertical OS, not generic AI care platform.** Concede notes integration entirely (don't build scribe). Their distribution + capital advantage is real; market overlap in private UK physio is minimal today, will widen in 12–18 months. Track but don't react.
 - **PMS API bridge:** OpenClaw (handles PMS API access without official integration)
@@ -335,6 +365,12 @@ Irreversible = multi-tenant data modelling, real-time listener architecture, com
 - Signup route checks for existing invited users → blocks duplicate clinic creation with `INVITED_USER` error
 - Never expose Firebase config in client code outside of env vars
 
+#### In-app role editor
+- Owner/admin can change a member's role in Settings via `PATCH /api/clinicians/[id]/role`. Guards: last-owner protection (can't demote the only owner), no self-change, admin cannot grant `owner`. (Role is no longer set only at invite time.)
+
+#### Feature flags
+- Per-clinic capabilities live in `featureFlags` on the clinic doc (`dashboard/src/types/clinic.ts`): `intelligence`, `continuity`, `receptionist`, `outcomeTracking`, `insuranceIntake`, `clinicianNudges`, `clinicianDigest`. Treat as part of the multi-tenant model — gate features off the flag, never a hardcoded `clinicId` check.
+
 ### Integrations
 - WriteUpp + Cliniko are primary PMS sources via webhook / OpenClaw bridge
 - HEP data sources: Physitrack (live), Rehab My Patient (live), Wibbi (pending)
@@ -344,6 +380,9 @@ Irreversible = multi-tenant data modelling, real-time listener architecture, com
 - ElevenLabs Conversational AI for voice agent + Twilio for telephony/SIP
 - n8n for webhook routing
 - WriteUpp/Cliniko receive booking confirmations via webhook
+- **`ava_graph` is deployed to Cloud Run** (no longer just LangGraph definitions) with its own PMS-booking MCP (`ava-pms-tools`); the portal proxies to it
+- **Post-call webhook** (`/api/ava/post-call`, `/api/webhooks/elevenlabs`) writes call facts/transcripts on ElevenLabs transcription events (auth via `ELEVENLABS_WEBHOOK_SECRET`)
+- **Real pause/resume:** `/api/ava/toggle` attaches/detaches the clinic phone number from the ElevenLabs agent — paused = no `agent_id`, calls go unanswered
 - White-label future path: Vapify wraps ElevenLabs at reseller phase
 
 ---
@@ -407,11 +446,40 @@ Doppler is the single source of truth for secrets across StrydeOS + Driiva. Work
 
 ## Pending / Known Gaps
 
-- **TM3 (Blue Zinc)** — critical UK PMS integration, not yet built
+- **`main` is behind `harden/alpha-security`.** As of 2026-06-08, all June work (security hardening, per-clinic PMS ingest, insurance/intake, RBAC role editor, Ava intent eval, website Ava-demo fix) lives on `harden/alpha-security` (`f80b494`); `main` is stuck at `c30694a` (25 May). `harden/alpha-security` is the de facto trunk — merge or branch from it, not `main`.
+- **TM3 (Blue Zinc)** — critical UK PMS integration; only an Ava booking-tool stub exists, not production
 - **PPS (Rushcliff)** — legacy UK incumbent (2,400+ clinics, Physio First partner). API exists (docs.pps-api.com) but docs gated behind PPS Express login. Token-based API pricing from £80/mo. Contact sales@rushcliff.com for developer access.
 - **Pabau** — medspa/aesthetics PMS integration, awaiting API key access
-- **Outcome measures** — NPRS, PSFS, QuickDASH, ODI, NDI layer not yet started
-- **Loom embed** — demo video section on website, not yet implemented
+- **Outcome measures** — NPRS, PSFS, QuickDASH, ODI, NDI layer not yet started (`featureFlags.outcomeTracking` exists, surface not built)
+- **Ava live demo** shipped on the marketing website (`277d1e3`) — supersedes the old "Loom embed" gap.
+
+### Cron jobs (`dashboard/vercel.json`, 7 total)
+
+`/api/pipeline/run` (06:00) · `/api/intelligence/detect` (06:30) · `/api/intelligence/digest` (Sun 07:00) · `/api/intelligence/clinician-digest` (Mon 07:30) · `/api/data-health/check-staleness` (08:00) · `/api/data-health/cleanup` (Sun 03:00) · `/api/insurance/poll-and-send` (09:00).
+
+### Security posture (alpha hardening, `harden/alpha-security`)
+
+- Cleared critical protobufjs RCE + all highs (Next 15.5.15 → 15.5.18).
+- Rate-limiter `failClosed` option — secret/auth endpoints refuse rather than fail-open when Redis (Upstash) is unavailable.
+- Atomic `create()` dedup claim on the WriteUpp webhook (concurrent retries can't double-fire).
+- Per-clinic HMAC ingest token bound to `clinicId` for `pms/import-csv/inbound` (set `inboundTokenRequired` to retire the global secret).
+- Constant-time Bearer comparison on `api/ava/tools`.
+
+---
+
+## Operator Ecosystem (sibling projects)
+
+All of Jamal's ventures run under the **Shippers** operator brand (GitHub/HF: `mrshippers`) and share the no-em-dash / UK-English / "ship, don't ask" conventions. Each has its own CLAUDE.md — keep cross-references accurate.
+
+| Project | Path | What it is | Secrets |
+|---|---|---|---|
+| **StrydeOS** (this repo) | `~/Desktop/StrydeOS` | Clinical performance SaaS for UK private physio. Flagship. | Doppler `strydeos` |
+| **Driiva** | `~/Documents/DriivaMVP` | Telematics insurtech for young UK drivers. Pre-raise. | Doppler `driiva` |
+| **TradeMind** | `~/Downloads/AI/Shippers/TradeMind` | Mobile AI for UK electricians (voice → EIC/EICR certs). Client: Addison Garnett. | Supabase fn secrets |
+| **shippers-tt** | `~/Projects/shippers-tt` | Personal operator system (timetable + venture dashboard). Tracks all the above. | Doppler `shippers-tt` |
+
+⚠ `~/DRIIVA` (uppercase) is a **stale abandoned copy** of Driiva (last commit 12 Apr, different remote `mrshippers/DRIIVA.git`) — ignore it; canonical Driiva is `~/Documents/DriivaMVP`.
+
 - **Driiva project** — separate codebase at `Documents/DriivaMVP/`. Has its own CLAUDE.md and shares the `Driiva Stryde` Doppler workspace.
 
 ---
