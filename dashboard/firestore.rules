@@ -133,6 +133,19 @@ service cloud.firestore {
         allow update, delete: if false;
       }
 
+      // Insurance Intake (special category PHI) — review queue. Owners/admins read
+      // via the API; all writes are server-only through the Admin SDK.
+      match /insurance_intakes/{intakeId} {
+        allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
+      // Insurance intake links — secure-link metadata. Server-only; the public
+      // form reads/writes exclusively through the token-gated API (Admin SDK).
+      match /insurance_intake_links/{linkId} {
+        allow read, write: if false;
+      }
+
       // Call Log — Ava voice agent call records; readable by clinic members, written by server webhook
       match /calls/{callId} {
         allow read: if isClinicMember(clinicId) || isSuperAdmin();
