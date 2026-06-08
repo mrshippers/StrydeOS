@@ -6,7 +6,6 @@ import { X, ArrowRight, ArrowLeft, ChevronRight, Activity, Users, TrendingUp, Me
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
-import PulseMark from "@/components/PulseMark";
 import { GlassCard } from "@/components/ui/GlassCard";
 
 /**
@@ -17,7 +16,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
  * Show logic: modal appears once per version bump, on next login after
  * the version changes. Once dismissed it stays dismissed until the next bump.
  */
-const CURRENT_VERSION = "2026-05-07-contracts";
+const CURRENT_VERSION = "2026-05-26-pipeline-dashboard";
 
 const TOTAL_CARDS = 5;
 
@@ -49,12 +48,10 @@ export default function WhatsNew() {
     getDoc(userRef).then((snap) => {
       const seenVersion = snap.data()?.whatsNewSeenVersion;
       if (seenVersion === CURRENT_VERSION) {
-        // Sync localStorage so future checks are instant
         try { localStorage.setItem("strydeos_whats_new_seen", CURRENT_VERSION); } catch { /* ignore */ }
         setChecking(false);
         return;
       }
-      // Show after splash screen exits
       setTimeout(() => { setVisible(true); setChecking(false); }, 800);
     }).catch(() => {
       setChecking(false);
@@ -66,17 +63,14 @@ export default function WhatsNew() {
 
     if (!user || user.uid === "demo") return;
 
-    // Always write localStorage (instant on next load, survives Firestore failures)
     try { localStorage.setItem("strydeos_whats_new_seen", CURRENT_VERSION); } catch { /* ignore */ }
 
-    // Also persist to Firestore for cross-device dismissal
     if (db) {
       const userRef = doc(db, "users", user.uid);
       updateDoc(userRef, { whatsNewSeenVersion: CURRENT_VERSION }).catch(() => { /* localStorage already set */ });
     }
   }, [user]);
 
-  // Focus trap: keep Tab/Shift+Tab inside modal, Escape to dismiss
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -124,6 +118,8 @@ export default function WhatsNew() {
   const next = useCallback(() => setCard((c) => Math.min(c + 1, TOTAL_CARDS - 1)), []);
   const prev = useCallback(() => setCard((c) => Math.max(c - 1, 0)), []);
   const isLast = card === TOTAL_CARDS - 1;
+
+  void checking;
 
   return (
     <AnimatePresence>
@@ -173,18 +169,18 @@ export default function WhatsNew() {
               <AnimatePresence mode="wait" initial={false}>
                 {card === 0 && (
                   <motion.div
-                    key="ava"
+                    key="pipeline"
                     initial={{ opacity: 0, x: 60 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -60 }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {/* ── Card 0: Ava fixes ── */}
+                    {/* ── Card 0: Cliniko pipeline live ── */}
                     <div
                       className="px-8 pt-7 pb-6 relative"
                       style={{
                         background:
-                          "linear-gradient(135deg, #0B2545 0%, #132D5E 50%, #1C54F2 100%)",
+                          "linear-gradient(135deg, #053B47 0%, #0A5C6B 40%, #0891B2 100%)",
                       }}
                     >
                       <div className="flex items-center gap-3.5 mb-3">
@@ -192,48 +188,48 @@ export default function WhatsNew() {
                           className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
                           style={{ background: "rgba(255,255,255,0.10)" }}
                         >
-                          <PhoneCall size={22} className="text-navy dark:text-white" />
+                          <Network size={22} className="text-white" />
                         </div>
                         <div>
-                          <h2 id="whats-new-title" className="font-display text-[22px] text-navy dark:text-white leading-tight">
-                            Ava — what we fixed
+                          <h2 id="whats-new-title" className="font-display text-[22px] text-white leading-tight">
+                            Your clinic data is live
                           </h2>
-                          <p className="text-[12px] text-navy/65 dark:text-white/50 mt-0.5">
-                            Tested on real calls at Spires
+                          <p className="text-[12px] text-white/50 mt-0.5">
+                            Pipeline fixed, history backfilled
                           </p>
                         </div>
                       </div>
-                      <p className="text-[13px] text-navy/80 dark:text-white/70 leading-relaxed">
-                        A few things weren&rsquo;t working right. We found them,
-                        fixed them, and verified everything on the live number.
+                      <p className="text-[13px] text-white/70 leading-relaxed">
+                        Your Cliniko appointment history now syncs correctly.
+                        First run pulls everything. Weekly runs keep it current without any manual work.
                       </p>
                     </div>
 
                     <div className="px-8 py-5 space-y-3.5">
                       {[
                         {
-                          icon: Brain,
-                          color: "#1C54F2",
-                          label: "Ava understands why people are calling",
-                          detail: "Calls were occasionally going to the wrong place. Fixed — Ava reads the caller\u2019s intent correctly from the first few seconds",
+                          icon: Network,
+                          color: "#0891B2",
+                          label: "Full appointment history pulled on first run",
+                          detail: "First sync backfills your entire Cliniko history. Every week before today counts in your KPIs.",
                         },
                         {
-                          icon: Calendar,
-                          color: "#1C54F2",
-                          label: "Bookings are actually landing in the diary",
-                          detail: "Ava was confirming calls without writing them to WriteUpp. That\u2019s fixed \u2014 appointments save in real time during the call",
+                          icon: Activity,
+                          color: "#0891B2",
+                          label: "Weekly runs keep it current automatically",
+                          detail: "The pipeline runs on schedule. KPIs update without you doing anything manually.",
                         },
                         {
-                          icon: Shield,
-                          color: "#1C54F2",
-                          label: "Insured patients get the right questions",
-                          detail: "Pre-authorisation was being skipped for some callers. Ava now walks through it properly, with a fallback if they don\u2019t have the reference number",
+                          icon: Users,
+                          color: "#0891B2",
+                          label: "Retention alerts now show real patients",
+                          detail: "The patients in your Pulse tile come from live PMS data, not placeholders.",
                         },
                         {
-                          icon: MessageSquare,
-                          color: "#1C54F2",
-                          label: "Transfers and confirmation texts are working",
-                          detail: "Transfers were dropping intermittently. Fixed. Patients now get a confirmation text automatically after every booking",
+                          icon: TrendingUp,
+                          color: "#0891B2",
+                          label: "Pipeline failures surface on your dashboard",
+                          detail: "If a sync run fails, the dashboard tells you. No more silently showing last week’s numbers.",
                         },
                       ].map((item) => (
                         <div key={item.label} className="flex items-start gap-3">
@@ -259,62 +255,67 @@ export default function WhatsNew() {
 
                 {card === 1 && (
                   <motion.div
-                    key="pulse"
+                    key="period"
                     initial={{ opacity: 0, x: 60 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -60 }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {/* ── Card 1: Pulse ── */}
+                    {/* ── Card 1: Period-aware dashboard cards ── */}
                     <div
                       className="px-8 pt-7 pb-6 relative"
                       style={{
                         background:
-                          "linear-gradient(135deg, #053B47 0%, #0A5C6B 40%, #0891B2 100%)",
+                          "linear-gradient(135deg, #0B2545 0%, #132D5E 50%, #1C54F2 100%)",
                       }}
                     >
                       <div className="flex items-center gap-3.5 mb-3">
-                        <PulseMark size={48} />
+                        <div
+                          className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(255,255,255,0.10)" }}
+                        >
+                          <Calendar size={22} className="text-white" />
+                        </div>
                         <div>
-                          <h2 className="font-display text-[22px] text-navy dark:text-white leading-tight">
-                            Pulse — what it does
+                          <h2 className="font-display text-[22px] text-white leading-tight">
+                            Today, 7d, 30d, 90d - all real
                           </h2>
-                          <p className="text-[12px] text-navy/65 dark:text-white/50 mt-0.5">
-                            Keeps patients coming back
+                          <p className="text-[12px] text-white/50 mt-0.5">
+                            Period selector queries actual records
                           </p>
                         </div>
                       </div>
-                      <p className="text-[13px] text-navy/80 dark:text-white/70 leading-relaxed">
-                        Patients drop off between sessions. Pulse spots who&rsquo;s
-                        at risk and follows up automatically — without you doing anything.
+                      <p className="text-[13px] text-white/70 leading-relaxed">
+                        Each period now re-queries your actual appointment records.
+                        Revenue and session count match the date window you selected.
                       </p>
                     </div>
 
                     <div className="px-8 py-5 space-y-3.5">
                       {[
                         {
-                          icon: Activity,
-                          color: "#0891B2",
-                          label: "Know who\u2019s about to drop off",
-                          detail: "Pulse flags patients who haven\u2019t rebooked and are mid-treatment \u2014 based on attendance, progress, and how engaged they are with their exercises",
-                        },
-                        {
-                          icon: Users,
-                          color: "#0891B2",
-                          label: "See where every patient is in their treatment",
-                          detail: "From first appointment to discharge \u2014 nothing falls through the cracks",
-                        },
-                        {
-                          icon: MessageSquare,
-                          color: "#0891B2",
-                          label: "Reminders and follow-ups go out automatically",
-                          detail: "Rebooking nudges, HEP check-ins, reactivation messages \u2014 timed and sent without you touching anything",
+                          icon: Calendar,
+                          color: "#1C54F2",
+                          label: "Revenue matches the exact date window",
+                          detail: "Selecting 30 days shows completed and booked revenue for those 30 days. Same logic applies for 7d, 90d, and today.",
                         },
                         {
                           icon: TrendingUp,
-                          color: "#0891B2",
-                          label: "See which messages are actually working",
-                          detail: "When a patient rebooks after a message, we track it \u2014 so you can see what\u2019s driving retention",
+                          color: "#1C54F2",
+                          label: "Session count comes from your actual diary",
+                          detail: "Today’s count is today’s bookings, not a scaled estimate of a monthly figure.",
+                        },
+                        {
+                          icon: Activity,
+                          color: "#1C54F2",
+                          label: "DNA rate calculated per window",
+                          detail: "Did-not-attend rate is drawn from appointments within the selected period only.",
+                        },
+                        {
+                          icon: Brain,
+                          color: "#1C54F2",
+                          label: "Session price used as revenue fallback",
+                          detail: "If your PMS does not return a revenue figure, your clinic’s session price fills the gap automatically.",
                         },
                       ].map((item) => (
                         <div key={item.label} className="flex items-start gap-3">
@@ -340,106 +341,13 @@ export default function WhatsNew() {
 
                 {card === 2 && (
                   <motion.div
-                    key="platform"
+                    key="trend"
                     initial={{ opacity: 0, x: 60 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -60 }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {/* ── Card 2: Other fixes ── */}
-                    <div
-                      className="px-8 pt-7 pb-5 relative"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)",
-                      }}
-                    >
-                      <h2 className="font-display text-[20px] text-navy dark:text-white leading-tight">
-                        Everything else we fixed
-                      </h2>
-                      <p className="text-[12px] text-navy/55 dark:text-white/40 mt-0.5">
-                        Smaller things that were quietly wrong
-                      </p>
-                    </div>
-
-                    <div className="px-8 py-5 space-y-4" role="list">
-                      {[
-                        {
-                          tag: "Ava",
-                          tagColor: "#1C54F2",
-                          title: "After-hours calls no longer go nowhere",
-                          description:
-                            "Calls outside clinic hours were hitting a dead end. Fixed \u2014 Ava now handles them properly and sends a callback SMS.",
-                        },
-                        {
-                          tag: "Ava",
-                          tagColor: "#1C54F2",
-                          title: "Transfers no longer drop",
-                          description:
-                            "Warm transfers were failing for callers with withheld numbers. That\u2019s resolved.",
-                        },
-                        {
-                          tag: "Intelligence",
-                          tagColor: "#8B5CF6",
-                          title: "Your dashboard now shows when data was last updated",
-                          description:
-                            "KPIs were showing stale numbers with no indication. You can now see exactly how fresh the data is.",
-                        },
-                        {
-                          tag: "Intelligence",
-                          tagColor: "#8B5CF6",
-                          title: "Insights and activity feed are now date-accurate",
-                          description:
-                            "Entries were showing the wrong dates or appearing as \u2018just now\u2019 when they weren\u2019t. Fixed.",
-                        },
-                        {
-                          tag: "Platform",
-                          tagColor: "#64748B",
-                          title: "A number of smaller bugs squashed",
-                          description:
-                            "Notification badges showing wrong counts, pulse activity showing ghost entries, revenue card showing incorrect totals \u2014 all fixed.",
-                        },
-                      ].map((entry) => (
-                        <div key={entry.title} className="flex items-start gap-3" role="listitem">
-                          <div
-                            className="mt-1 w-2 h-2 rounded-full shrink-0"
-                            style={{ background: entry.tagColor }}
-                            aria-hidden="true"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span
-                                className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                                style={{
-                                  color: entry.tagColor,
-                                  background: `${entry.tagColor}12`,
-                                }}
-                              >
-                                {entry.tag}
-                              </span>
-                            </div>
-                            <p className="text-[13px] font-semibold text-navy leading-snug">
-                              {entry.title}
-                            </p>
-                            <p className="text-[12px] text-muted leading-relaxed mt-0.5">
-                              {entry.description}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-
-                {card === 3 && (
-                  <motion.div
-                    key="sync"
-                    initial={{ opacity: 0, x: 60 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -60 }}
-                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    {/* ── Card 3: Intelligence + Pulse sync refactor ── */}
+                    {/* ── Card 2: Clinic Pulse sparkline strip ── */}
                     <div
                       className="px-8 pt-7 pb-6 relative"
                       style={{
@@ -452,50 +360,134 @@ export default function WhatsNew() {
                           className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
                           style={{ background: "rgba(255,255,255,0.10)" }}
                         >
-                          <Activity size={22} className="text-navy dark:text-white" />
+                          <TrendingUp size={22} className="text-white" />
                         </div>
                         <div>
-                          <h2 className="font-display text-[22px] text-navy dark:text-white leading-tight">
-                            Live numbers, not snapshots
+                          <h2 className="font-display text-[22px] text-white leading-tight">
+                            12 weeks at a glance
                           </h2>
-                          <p className="text-[12px] text-navy/65 dark:text-white/50 mt-0.5">
-                            Intelligence and Pulse now move in real time
+                          <p className="text-[12px] text-white/50 mt-0.5">
+                            Clinic Pulse trend strip
                           </p>
                         </div>
                       </div>
-                      <p className="text-[13px] text-navy/80 dark:text-white/70 leading-relaxed">
-                        Your dashboard used to show yesterday&rsquo;s picture.
-                        Now every number updates as soon as the data behind it
-                        does, and tells you if something&rsquo;s wrong instead
-                        of hiding it.
+                      <p className="text-[13px] text-white/70 leading-relaxed">
+                        Three key metrics as sparklines over the last 12 weeks,
+                        sitting at the bottom of your dashboard. Fills in as weekly pipeline runs complete.
                       </p>
                     </div>
 
                     <div className="px-8 py-5 space-y-3.5">
                       {[
                         {
-                          icon: Activity,
-                          color: "#8B5CF6",
-                          label: "Every KPI shows when it was last refreshed",
-                          detail: "If the pipeline fails, the dashboard tells you. No more silently showing last week’s numbers as if they were today’s",
-                        },
-                        {
-                          icon: MessageSquare,
-                          color: "#0891B2",
-                          label: "Your message log now tracks send to reply",
-                          detail: "Before, ‘no action’ meant either sent and ignored, or still waiting on the carrier. You can now tell them apart at a glance",
-                        },
-                        {
                           icon: TrendingUp,
                           color: "#8B5CF6",
-                          label: "Revenue numbers are no longer faked",
-                          detail: "If you haven’t set your session price, revenue shows ‘set your session price’ instead of guessing. What you see is what you earned",
+                          label: "Follow-up rate over 12 weeks",
+                          detail: "See whether your follow-up booking rate is heading up or down week on week.",
                         },
                         {
                           icon: Brain,
                           color: "#8B5CF6",
-                          label: "Outcomes and reputation show real data only",
-                          detail: "Empty clinics get a clean empty state. Enter outcome scores or collect reviews, and the trends appear — no placeholders pretending to be yours",
+                          label: "HEP compliance trend",
+                          detail: "Track how consistently your clinicians are assigning exercise programmes over time.",
+                        },
+                        {
+                          icon: Activity,
+                          color: "#8B5CF6",
+                          label: "DNA rate history",
+                          detail: "Spot patterns in no-shows. If a particular stretch of weeks spikes, the sparkline shows it.",
+                        },
+                        {
+                          icon: MessageSquare,
+                          color: "#8B5CF6",
+                          label: "Delta badge vs 4 weeks ago",
+                          detail: "Each sparkline shows how the latest week compares to where you were a month ago.",
+                        },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-start gap-3">
+                          <div
+                            className="mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ background: `${item.color}14` }}
+                          >
+                            <item.icon size={14} style={{ color: item.color }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-navy leading-snug">
+                              {item.label}
+                            </p>
+                            <p className="text-[12px] text-muted leading-relaxed mt-0.5">
+                              {item.detail}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {card === 3 && (
+                  <motion.div
+                    key="ava"
+                    initial={{ opacity: 0, x: 60 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -60 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {/* ── Card 3: Ava pause/resume + call capture ── */}
+                    <div
+                      className="px-8 pt-7 pb-6 relative"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #0B2545 0%, #132D5E 50%, #1C54F2 100%)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3.5 mb-3">
+                        <div
+                          className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(255,255,255,0.10)" }}
+                        >
+                          <PhoneCall size={22} className="text-white" />
+                        </div>
+                        <div>
+                          <h2 className="font-display text-[22px] text-white leading-tight">
+                            Ava handles interruptions properly
+                          </h2>
+                          <p className="text-[12px] text-white/50 mt-0.5">
+                            Real pause/resume and full call capture
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-[13px] text-white/70 leading-relaxed">
+                        Pausing now physically detaches the phone from the agent.
+                        And every call is logged, including ones that end before Ava says anything.
+                      </p>
+                    </div>
+
+                    <div className="px-8 py-5 space-y-3.5">
+                      {[
+                        {
+                          icon: PhoneCall,
+                          color: "#1C54F2",
+                          label: "Pause detaches the phone from the agent",
+                          detail: "Previously, pausing was cosmetic. Now it physically removes the phone from the ElevenLabs agent. Resuming reattaches it.",
+                        },
+                        {
+                          icon: Shield,
+                          color: "#1C54F2",
+                          label: "All calls logged, including instant hangups",
+                          detail: "Calls that end before Ava speaks now appear in the log as zero-duration entries. Nothing goes missing.",
+                        },
+                        {
+                          icon: MessageSquare,
+                          color: "#1C54F2",
+                          label: "Post-call summary for every call",
+                          detail: "A summary is generated for every call, not just ones that resulted in a booking.",
+                        },
+                        {
+                          icon: Brain,
+                          color: "#1C54F2",
+                          label: "Webhook catches all call outcomes",
+                          detail: "The post-call webhook fires for short calls, missed calls, and hangups. All recorded correctly.",
                         },
                       ].map((item) => (
                         <div key={item.label} className="flex items-start gap-3">
@@ -521,13 +513,13 @@ export default function WhatsNew() {
 
                 {card === 4 && (
                   <motion.div
-                    key="contracts"
+                    key="ui"
                     initial={{ opacity: 0, x: 60 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -60 }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {/* ── Card 4: Modules now move together (cross-module contracts) ── */}
+                    {/* ── Card 4: Dashboard UI uplift ── */}
                     <div
                       className="px-8 pt-7 pb-6 relative"
                       style={{
@@ -540,51 +532,48 @@ export default function WhatsNew() {
                           className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
                           style={{ background: "rgba(255,255,255,0.10)" }}
                         >
-                          <Network size={22} className="text-navy dark:text-white" />
+                          <Activity size={22} className="text-white" />
                         </div>
                         <div>
-                          <h2 className="font-display text-[22px] text-navy dark:text-white leading-tight">
-                            Modules now move together
+                          <h2 className="font-display text-[22px] text-white leading-tight">
+                            Dashboard feels like it should
                           </h2>
-                          <p className="text-[12px] text-navy/70 dark:text-white/55 mt-0.5">
-                            Ava, Pulse and Intelligence share one nervous system
+                          <p className="text-[12px] text-white/60 mt-0.5">
+                            Cleaner, sharper, more useful
                           </p>
                         </div>
                       </div>
-                      <p className="text-[13px] text-navy/85 dark:text-white/75 leading-relaxed">
-                        Until now, each module spoke its own language. Calls
-                        ended in one place, retention nudges happened in
-                        another, and your dashboard was blind to most of it.
-                        That&rsquo;s changed — handoffs between modules are
-                        now structured, traced, and tested.
+                      <p className="text-[13px] text-white/75 leading-relaxed">
+                        Tiles render cleanly in both light and dark mode.
+                        New controls in the header. A help button in the corner of every page.
                       </p>
                     </div>
 
                     <div className="px-8 py-5 space-y-3.5">
                       {[
                         {
-                          icon: PhoneCall,
-                          color: "#1C54F2",
-                          label: "Missed calls don’t get missed twice",
-                          detail: "When Ava flags a call for human callback, it now triggers Pulse’s continuity sequence automatically — no one has to remember to chase",
-                        },
-                        {
-                          icon: TrendingUp,
-                          color: "#8B5CF6",
-                          label: "Voice activity feeds your KPIs",
-                          detail: "Intelligence can now report on Ava — booking conversion rate, after-hours capture, calls handled without a human",
-                        },
-                        {
-                          icon: Network,
+                          icon: Activity,
                           color: "#0891B2",
-                          label: "Broken handoffs caught before they ship",
-                          detail: "If a change in Ava would break Pulse, the build now fails. No more silent drift between modules",
+                          label: "Glass card banding fixed in dark mode",
+                          detail: "Stacked white overlays were creating visible bands on tile surfaces. Resolved across all dashboard tiles.",
+                        },
+                        {
+                          icon: Shield,
+                          color: "#0891B2",
+                          label: "Notification bell redesigned",
+                          detail: "Circular button with a glow ring on hover. Unread count shows as a small dot badge.",
+                        },
+                        {
+                          icon: Brain,
+                          color: "#0891B2",
+                          label: "Aperture toggle next to the bell",
+                          detail: "Switch between light and dark mode directly from the dashboard header, without going into settings.",
                         },
                         {
                           icon: Lock,
-                          color: "#0B2545",
-                          label: "Patient data marked private by design",
-                          detail: "Call transcripts, phone numbers and clinical notes are now tagged so logs and analytics scrub them automatically",
+                          color: "#0891B2",
+                          label: "Help orb in the bottom-right corner",
+                          detail: "A small button sits fixed at the bottom right of every page. Click it for guidance without leaving the screen.",
                         },
                       ].map((item) => (
                         <div key={item.label} className="flex items-start gap-3">

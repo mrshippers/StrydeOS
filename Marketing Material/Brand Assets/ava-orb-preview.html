@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ava Orb — preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B2545;
+    --navy-mid: #132D5E;
+    --cream: #F2F1EE;
+    --cream-elev: #FAF9F7;
+    --ink: #111827;
+    --muted: #5C6370;
+    --border: #E2DFDA;
+    --blue: #1C54F2;
+    --blue-bright: #2E6BFF;
+    --blue-glow: #4B8BF5;
+    --purple: #8B5CF6;
+    --purple-bright: #C084FC;
+    --indigo: #6366F1;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: "Outfit", -apple-system, sans-serif;
+    background: var(--navy);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.006em;
+    min-height: 100vh;
+  }
+  .page {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+  }
+  @media (max-width: 900px) {
+    .page { grid-template-columns: 1fr; }
+  }
+
+  .frame {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 40px;
+    overflow: hidden;
+  }
+  .frame--light {
+    background: linear-gradient(180deg, var(--cream-elev) 0%, var(--cream) 100%);
+    color: var(--ink);
+  }
+  .frame--dark {
+    background: linear-gradient(180deg, #0F2240 0%, var(--navy) 100%);
+    color: #fff;
+  }
+  .frame__label {
+    position: absolute;
+    top: 28px;
+    left: 32px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    opacity: 0.45;
+  }
+  .frame--dark .frame__label { color: rgba(255,255,255,0.55); }
+
+  .stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    z-index: 1;
+  }
+
+  .stage__title {
+    font-family: "DM Serif Display", serif;
+    font-size: 32px;
+    line-height: 1.05;
+    letter-spacing: -0.6px;
+    text-align: center;
+  }
+  .stage__title small {
+    display: block;
+    font-family: "Outfit", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    opacity: 0.55;
+    margin-top: 8px;
+  }
+
+  .stage__sizes {
+    display: flex;
+    align-items: center;
+    gap: 56px;
+    margin-top: 8px;
+  }
+  .stage__size-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .stage__size-row span {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.45;
+  }
+
+  /* ─── The orb ─── */
+  .ava-orb { position: relative; display: inline-block; isolation: isolate; }
+  .ava-orb__halo {
+    position: absolute; inset: -32%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(28, 84, 242, 0.55) 0%, rgba(139, 92, 246, 0.28) 38%, transparent 72%);
+    filter: blur(12px);
+    animation: ava-orb-pulse 4.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .frame--dark .ava-orb__halo {
+    background: radial-gradient(circle, rgba(75, 139, 245, 0.42) 0%, rgba(139, 92, 246, 0.18) 40%, transparent 72%);
+    filter: blur(10px);
+  }
+  .ava-orb__core {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      #1C54F2 0%, #4B8BF5 18%, #8B5CF6 38%, #C084FC 50%,
+      #6366F1 65%, #2E6BFF 82%, #1C54F2 100%
+    );
+    animation: ava-orb-rotate 9s linear infinite;
+    z-index: 1;
+  }
+  .ava-orb__drift {
+    position: absolute; inset: 4%;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 180deg,
+      transparent 0%, rgba(192, 132, 252, 0.18) 25%, transparent 50%,
+      rgba(75, 139, 245, 0.22) 75%, transparent 100%
+    );
+    animation: ava-orb-rotate-reverse 14s linear infinite;
+    mix-blend-mode: screen;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .ava-orb__inner {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 70% 75%, rgba(11, 37, 69, 0.55) 0%, transparent 55%),
+      radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.25) 0%, transparent 35%);
+    box-shadow:
+      inset -6px -6px 18px rgba(11, 37, 69, 0.45),
+      inset 4px 4px 14px rgba(255, 255, 255, 0.22),
+      0 6px 24px rgba(28, 84, 242, 0.35),
+      0 2px 6px rgba(11, 37, 69, 0.25);
+    z-index: 3;
+    pointer-events: none;
+  }
+  .ava-orb__shine {
+    position: absolute; top: 10%; left: 16%;
+    width: 32%; height: 22%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.3) 40%, transparent 72%);
+    filter: blur(1.5px);
+    animation: ava-orb-shine 3.4s ease-in-out infinite;
+    z-index: 4;
+    pointer-events: none;
+  }
+  .ava-orb__bolt {
+    position: absolute; top: -4%; right: -4%;
+    width: 36%; height: 36%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0F2240 0%, #1A3566 100%);
+    border: 1.5px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 5;
+  }
+  .ava-orb__bolt svg {
+    width: 56%; height: 56%;
+    color: rgba(255, 255, 255, 0.92);
+    fill: rgba(255, 255, 255, 0.92);
+    stroke: rgba(255, 255, 255, 0.92);
+  }
+
+  @keyframes ava-orb-rotate         { to { transform: rotate(360deg); } }
+  @keyframes ava-orb-rotate-reverse { to { transform: rotate(-360deg); } }
+  @keyframes ava-orb-pulse {
+    0%, 100% { transform: scale(1);    opacity: 0.78; }
+    50%      { transform: scale(1.18); opacity: 1; }
+  }
+  @keyframes ava-orb-shine {
+    0%, 100% { opacity: 0.55; transform: scale(1); }
+    50%      { opacity: 0.95; transform: scale(1.12) translate(2%, -2%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ava-orb__halo, .ava-orb__core, .ava-orb__shine, .ava-orb__drift { animation: none !important; }
+  }
+
+  /* Sample card to show in-context use */
+  .sample-card {
+    margin-top: 40px;
+    width: 100%;
+    max-width: 340px;
+    padding: 20px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .frame--light .sample-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 24px rgba(0,0,0,0.04);
+  }
+  .frame--dark .sample-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.07) 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.24), 0 8px 32px rgba(0,0,0,0.36);
+  }
+  .sample-card__text { display: flex; flex-direction: column; gap: 4px; }
+  .sample-card__title {
+    font-family: "DM Serif Display", serif;
+    font-size: 22px;
+    line-height: 1;
+  }
+  .sample-card__sub { font-size: 12.5px; opacity: 0.55; }
+
+  .footer {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    background: rgba(11, 37, 69, 0.85);
+    color: rgba(255,255,255,0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 8px 14px;
+    border-radius: 50px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+  .footer code {
+    color: rgba(255,255,255,0.95);
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <section class="frame frame--light">
+    <span class="frame__label">Light mode · cream surface</span>
+    <div class="stage">
+      <h1 class="stage__title">
+        Ava
+        <small>Live-pulsing freeform orb</small>
+      </h1>
+
+      <div class="stage__sizes">
+        <div class="stage__size-row">
+          <span>56px · header</span>
+          <div class="ava-orb" style="width:56px;height:56px">
+            <span class="ava-orb__halo"></span>
+            <span class="ava-orb__core"></span>
+            <span class="ava-orb__drift"></span>
+            <span class="ava-orb__inner"></span>
+            <span class="ava-orb__shine"></span>
+            <span class="ava-orb__bolt">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </span>
+          </div>
+        </div>
+        <div class="stage__size-row">
+          <span>96px · hero</span>
+          <div class="ava-orb" style="width:96px;height:96px">
+            <span class="ava-orb__halo"></span>
+            <span class="ava-orb__core"></span>
+            <span class="ava-orb__drift"></span>
+            <span class="ava-orb__inner"></span>
+            <span class="ava-orb__shine"></span>
+            <span class="ava-orb__bolt">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sample-card">
+        <div class="ava-orb" style="width:40px;height:40px;flex:none">
+          <span class="ava-orb__halo"></span>
+          <span class="ava-orb__core"></span>
+          <span class="ava-orb__drift"></span>
+          <span class="ava-orb__inner"></span>
+          <span class="ava-orb__shine"></span>
+          <span class="ava-orb__bolt">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </span>
+        </div>
+        <div class="sample-card__text">
+          <span class="sample-card__title">Ava</span>
+          <span class="sample-card__sub">AI call handling · today</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="frame frame--dark">
+    <span class="frame__label">Dark mode · navy surface</span>
+    <div class="stage">
+      <h1 class="stage__title">
+        Ava
+        <small>Live-pulsing freeform orb</small>
+      </h1>
+
+      <div class="stage__sizes">
+        <div class="stage__size-row">
+          <span>56px · header</span>
+          <div class="ava-orb" style="width:56px;height:56px">
+            <span class="ava-orb__halo"></span>
+            <span class="ava-orb__core"></span>
+            <span class="ava-orb__drift"></span>
+            <span class="ava-orb__inner"></span>
+            <span class="ava-orb__shine"></span>
+            <span class="ava-orb__bolt">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </span>
+          </div>
+        </div>
+        <div class="stage__size-row">
+          <span>96px · hero</span>
+          <div class="ava-orb" style="width:96px;height:96px">
+            <span class="ava-orb__halo"></span>
+            <span class="ava-orb__core"></span>
+            <span class="ava-orb__drift"></span>
+            <span class="ava-orb__inner"></span>
+            <span class="ava-orb__shine"></span>
+            <span class="ava-orb__bolt">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sample-card">
+        <div class="ava-orb" style="width:40px;height:40px;flex:none">
+          <span class="ava-orb__halo"></span>
+          <span class="ava-orb__core"></span>
+          <span class="ava-orb__drift"></span>
+          <span class="ava-orb__inner"></span>
+          <span class="ava-orb__shine"></span>
+          <span class="ava-orb__bolt">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </span>
+        </div>
+        <div class="sample-card__text">
+          <span class="sample-card__title">Ava</span>
+          <span class="sample-card__sub">AI call handling · today</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="footer">
+  Ava Orb · 6-layer composition · <code>halo · core · drift · inner · shine · bolt</code>
+</div>
+
+</body>
+</html>
