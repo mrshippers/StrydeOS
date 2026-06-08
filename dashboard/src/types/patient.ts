@@ -54,7 +54,14 @@ export interface Patient {
   name: string;
   dob?: string;
   contact: PatientContact;
+  /** Primary (most-seen) clinician — the patient's "owner". */
   clinicianId: string;
+  /**
+   * Every clinician who has seen this patient (always includes clinicianId).
+   * Drives per-clinician visibility: a clinician sees a patient only if they
+   * are in the caseload. Overlap happens only when 1+ clinicians have seen them.
+   */
+  caseload?: string[];
   insuranceFlag: boolean;
   insurerName?: string;
   preAuthStatus: PreAuthStatus;

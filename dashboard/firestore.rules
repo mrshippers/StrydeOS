@@ -59,12 +59,16 @@ service cloud.firestore {
         allow write: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
       }
 
-      // Patients — clinicians can only read their own patients
+      // Patients — clinicians can only read patients in their caseload (every
+      // clinician who has seen them). Primary clinicianId kept for back-compat
+      // with docs written before caseload existed.
       match /patients/{patientId} {
         allow read: if isSuperAdmin()
           || isClinicOwnerOrAdmin(clinicId)
           || (isClinicMember(clinicId)
-              && resource.data.clinicianId == getUserData().clinicianId);
+              && (resource.data.clinicianId == getUserData().clinicianId
+                  || (resource.data.caseload is list
+                      && getUserData().clinicianId in resource.data.caseload)));
         allow write: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
       }
 
