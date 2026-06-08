@@ -313,6 +313,10 @@ export default function AvaShowcase() {
   // "now" and cause overlap (two Avas talking over each other).
   const playheadRef = useRef(0);
   const activeSourcesRef = useRef([]);
+  // Output sample rate is read from conversation_initiation_metadata, never hardcoded.
+  // If the agent's output format changes (e.g. pcm_24000), audio still plays at the
+  // correct pitch instead of turning into chipmunk.
+  const outputSampleRateRef = useRef(16000);
 
   // Refs for canvas
   const playingRef = useRef(false);
@@ -432,11 +436,16 @@ export default function AvaShowcase() {
       ws.onopen = () => {
         clearTimeout(connectionTimeout);
 
-        keepaliveRef.current = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: "ping" }));
-          }
-        }, 30000);
+        // REQUIRED handshake. ElevenLabs ConvAI does NOT start the session until the
+        // client sends conversation_initiation_client_data. Without it the socket opens,
+        // the server emits conversation_initiation_metadata, then sits idle forever —
+        // no greeting, no responses (the "connected but silent" bug). Verified by
+        // headless repro: omit it → 0 audio chunks; send it → Ava greets in ~900ms.
+        ws.send(JSON.stringify({ type: "conversation_initiation_client_data" }));
+
+        // No client-side keepalive: the server sends its own ping events (we reply
+        // with a matching pong below). Emitting an unsolicited {type:"ping"} is
+        // off-protocol and can make ElevenLabs drop the socket — only ever respond.
 
         setPlaying(true);
         setConnectionState("connected");
@@ -470,8 +479,8 @@ export default function AvaShowcase() {
 
               if (audioContextRef.current) {
                 const ctx = audioContextRef.current;
-                // ElevenLabs sends PCM16 @ 16000 Hz
-                const audioBuffer = ctx.createBuffer(1, float32.length, 16000);
+                // Sample rate comes from conversation_initiation_metadata (default 16000)
+                const audioBuffer = ctx.createBuffer(1, float32.length, outputSampleRateRef.current);
                 audioBuffer.getChannelData(0).set(float32);
                 const source = ctx.createBufferSource();
                 source.buffer = audioBuffer;
@@ -502,7 +511,11 @@ export default function AvaShowcase() {
           }
 
           if (data.type === "conversation_initiation_metadata") {
-            console.log("[Ava] Session initiated:", data.conversation_initiation_metadata_event?.conversation_id);
+            const meta = data.conversation_initiation_metadata_event;
+            const fmt = meta?.agent_output_audio_format; // e.g. "pcm_16000"
+            const rate = fmt && parseInt(String(fmt).split("_")[1], 10);
+            if (rate && !Number.isNaN(rate)) outputSampleRateRef.current = rate;
+            console.log("[Ava] Session initiated:", meta?.conversation_id, "@", outputSampleRateRef.current, "Hz");
           }
 
           if (data.type === "ping") {
@@ -604,6 +617,11 @@ export default function AvaShowcase() {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.55; transform: scale(0.85); }
         }
+        @keyframes ctaPulse {
+          0%, 100% { box-shadow: 0 6px 20px rgba(28,84,242,0.34), 0 0 0 1px rgba(46,107,255,0.22), inset 0 1px 0 rgba(255,255,255,0.25); }
+          50%      { box-shadow: 0 9px 30px rgba(28,84,242,0.48), 0 0 0 5px rgba(46,107,255,0.10), inset 0 1px 0 rgba(255,255,255,0.32); }
+        }
+        @keyframes ctaSpin { to { transform: rotate(360deg); } }
       `}</style>
 
       {/* DEBUG: State Monitor */}
@@ -615,7 +633,7 @@ export default function AvaShowcase() {
           borderBottom: "2px solid #00ff00",
         }}>
           <div>[Ava DEBUG] playing={String(playing)} | glow={glow.toFixed(2)} | elapsed={elapsed}s | cardHover={String(cardHover)}</div>
-          <div>[Ava DEBUG] ws={wsRef.current ? wsRef.current.readyState : "null"} | mediaRecorder={mediaRecorderRef.current ? mediaRecorderRef.current.state : "null"}</div>
+          <div>[Ava DEBUG] ws={wsRef.current ? wsRef.current.readyState : "null"} | conn={connectionState} | activations={activations}</div>
         </div>
       )}
 
@@ -780,39 +798,85 @@ export default function AvaShowcase() {
             />
           </div>
 
-          {/* ——— Footer: mini wave + elapsed/duration + hint ——— */}
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            paddingTop: 10, position: "relative",
-          }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              opacity: playing ? 1 : 0,
-              transition: "opacity 0.4s ease",
-            }}>
-              <MiniWave playing={playing} />
-              <span style={{
-                fontSize: 10, fontWeight: 400, color: B.mutedSoft,
-                fontVariantNumeric: "tabular-nums",
-                minWidth: 30,
-              }}>
-                {elapsed}s
-              </span>
-            </div>
+          {/* ——— Try Ava — primary call-to-action ——— */}
+          {(() => {
+            const isLive = playing;
+            const isConnecting = connectionState === "connecting";
+            const isError = connectionState === "error";
+            const limitReached = activations >= MAX_ACTIVATIONS && !isLive && !isConnecting;
+            const callsLeft = MAX_ACTIVATIONS - activations;
 
-            <span style={{
-              fontSize: 10, fontWeight: 400, color: B.mutedSoft,
-              opacity: playing ? 0 : 0.6,
-              transition: "opacity 0.4s ease",
-              fontStyle: "italic",
-            }}>
-              {activations >= MAX_ACTIVATIONS
-                ? "demo limit reached — refresh to retry"
-                : activations === 0
-                  ? "tap the monolith to talk to Ava"
-                  : `${MAX_ACTIVATIONS - activations} demo call${MAX_ACTIVATIONS - activations === 1 ? "" : "s"} left`}
-            </span>
-          </div>
+            const mic = (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0" /><line x1="12" y1="18" x2="12" y2="22" /></svg>
+            );
+            const stopIcon = (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5" /></svg>
+            );
+            const spinner = (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ animation: "ctaSpin 0.8s linear infinite" }}><circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" /><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+            );
+
+            let bg, color, border, shadow, icon, label, animate = false;
+            if (isLive) {
+              bg = "linear-gradient(135deg, #EF5B5F, #D62A2F)"; color = "#fff"; border = "transparent";
+              shadow = "0 6px 20px rgba(214,42,47,0.34), inset 0 1px 0 rgba(255,255,255,0.22)";
+              icon = stopIcon; label = `End call · ${elapsed}s`;
+            } else if (isConnecting) {
+              bg = "rgba(28,84,242,0.08)"; color = B.blue; border = "rgba(28,84,242,0.18)";
+              shadow = "none"; icon = spinner; label = "Connecting…";
+            } else if (limitReached) {
+              bg = "rgba(0,0,0,0.035)"; color = B.mutedSoft; border = B.borderSoft;
+              shadow = "none"; icon = null; label = "Demo limit reached";
+            } else {
+              bg = "linear-gradient(135deg, #2E6BFF, #1C54F2)"; color = "#fff"; border = "transparent";
+              shadow = "0 6px 20px rgba(28,84,242,0.34), 0 0 0 1px rgba(46,107,255,0.22), inset 0 1px 0 rgba(255,255,255,0.25)";
+              icon = mic; label = isError ? "Try Ava again" : "Talk to Ava"; animate = true;
+            }
+
+            return (
+              <div style={{ paddingTop: 14, position: "relative" }}>
+                {isError && errorMsg && (
+                  <p style={{ fontSize: 11, color: "#B91C1C", textAlign: "center", margin: "0 0 9px", lineHeight: 1.4 }}>{errorMsg}</p>
+                )}
+                <button
+                  onClick={toggle}
+                  disabled={limitReached}
+                  aria-label={isLive ? "End call with Ava" : "Talk to Ava — live voice demo"}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
+                    padding: "13px 20px", borderRadius: 14,
+                    border: `1px solid ${border}`, background: bg, color,
+                    fontFamily: "'Outfit', sans-serif", fontSize: 14.5, fontWeight: 600, letterSpacing: "0.01em",
+                    cursor: limitReached ? "default" : "pointer",
+                    boxShadow: shadow === "none" ? "none" : shadow,
+                    transition: "background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease",
+                    animation: animate ? "ctaPulse 2.6s ease-in-out infinite" : "none",
+                  }}
+                  onMouseEnter={(e) => { if (!limitReached) e.currentTarget.style.transform = "translateY(-1px)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}
+                >
+                  {icon}{label}
+                </button>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 9, minHeight: 14 }}>
+                  {isLive ? (
+                    <>
+                      <MiniWave playing />
+                      <span style={{ fontSize: 10.5, color: B.mutedSoft, letterSpacing: "0.02em" }}>Listening — just start talking</span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: 10.5, color: B.mutedSoft, letterSpacing: "0.02em", fontVariantNumeric: "tabular-nums" }}>
+                      {limitReached
+                        ? "Refresh the page to try again"
+                        : isConnecting
+                          ? "Reaching Ava…"
+                          : `Live voice demo · talk to the real Ava · ${callsLeft} call${callsLeft === 1 ? "" : "s"} left`}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </>
