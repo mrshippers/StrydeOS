@@ -3,7 +3,8 @@ export interface Clinician {
   name: string;
   role: string;
   email?: string;
-  authRole?: "clinician" | "admin";
+  /** Access role mirror of the linked user's RBAC role (display + editing in the team UI). */
+  authRole?: "clinician" | "admin" | "owner";
   status?: "invited" | "active";
   authUid?: string;
   pmsExternalId?: string;

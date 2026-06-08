@@ -42,7 +42,14 @@ interface TeamManagementCardProps {
   handleDeactivateClinician: (id: string, name: string) => void;
   handleConfirmTeam: () => void;
   handleSendInvite: (clinicianId: string) => void;
+  /** RBAC editing — the signed-in user's uid (to block self-edits), whether they can grant owner, and the change handler. */
+  currentUserUid?: string;
+  canAssignOwner?: boolean;
+  updatingRoleId?: string | null;
+  handleUpdateRole: (clinicianId: string, role: "owner" | "admin" | "clinician") => void;
 }
+
+const ROLE_LABEL: Record<string, string> = { owner: "Owner", admin: "Admin", clinician: "Clinician" };
 
 export default function TeamManagementCard({
   clinicProfile: cp,
@@ -75,6 +82,10 @@ export default function TeamManagementCard({
   handleDeactivateClinician,
   handleConfirmTeam,
   handleSendInvite,
+  currentUserUid,
+  canAssignOwner = false,
+  updatingRoleId = null,
+  handleUpdateRole,
 }: TeamManagementCardProps) {
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
@@ -283,7 +294,7 @@ export default function TeamManagementCard({
                 )}
                 {c.authRole && (
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 bg-purple/10 text-purple">
-                    {c.authRole === "admin" ? "Admin" : "Clinician"}
+                    {ROLE_LABEL[c.authRole] ?? "Clinician"}
                   </span>
                 )}
                 <span
@@ -355,6 +366,42 @@ export default function TeamManagementCard({
                       </p>
                     )}
                   </div>
+
+                  {/* Permissions / RBAC — owners & admins only */}
+                  {canManageTeam && (
+                    <div className="pt-1">
+                      <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-2">
+                        Permissions
+                      </p>
+                      {c.authUid && c.authUid === currentUserUid ? (
+                        <p className="text-[12px] text-muted">You cannot change your own role.</p>
+                      ) : !c.authUid ? (
+                        <p className="text-[12px] text-muted">
+                          This clinician has not signed in yet. Roles can be set once they accept their invite.
+                        </p>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={c.authRole ?? "clinician"}
+                            disabled={updatingRoleId === c.id}
+                            onChange={(e) =>
+                              handleUpdateRole(c.id, e.target.value as "owner" | "admin" | "clinician")
+                            }
+                            className="px-3 py-2 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors disabled:opacity-50"
+                          >
+                            <option value="clinician">Clinician — own metrics only</option>
+                            <option value="admin">Admin — all clinicians + settings</option>
+                            {(canAssignOwner || c.authRole === "owner") && (
+                              <option value="owner">Owner — full access + billing</option>
+                            )}
+                          </select>
+                          {updatingRoleId === c.id && (
+                            <Loader2 size={14} className="animate-spin text-muted" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Heidi clinical notes opt-in */}
                   <ClinicianHeidiToggle

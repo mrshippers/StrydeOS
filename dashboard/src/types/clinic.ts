@@ -6,6 +6,8 @@ export interface FeatureFlags {
   receptionist: boolean;
   /** Opt-in: enable outcome measures recording + correlation in Intelligence. */
   outcomeTracking?: boolean;
+  /** Opt-in: auto-send the insurance intake form to patients before their appointment (Pulse). Default false. */
+  insuranceIntake?: boolean;
 
   // ─── Clinician Engagement Layer ───────────────────────────
   /** Fix 1: Today's Focus nudges on clinician dashboard. Default true. */
