@@ -42,14 +42,6 @@ export function validateInsuranceSubmission(
     errors.push("Policy number may only contain letters, numbers, spaces and dashes.");
   }
 
-  if (input.validFrom && input.validTo) {
-    const from = Date.parse(input.validFrom);
-    const to = Date.parse(input.validTo);
-    if (!Number.isNaN(from) && !Number.isNaN(to) && from > to) {
-      errors.push("The valid-from date must not be after the valid-to date.");
-    }
-  }
-
   if (input.excess !== undefined && input.excess !== "") {
     const pence = excessToPence(input.excess);
     if (pence === undefined || pence < 0) {

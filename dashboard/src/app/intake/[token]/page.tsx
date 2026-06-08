@@ -36,8 +36,6 @@ export default function InsuranceIntakePage() {
   const [authorisationCode, setAuthorisationCode] = useState("");
   const [claimReference, setClaimReference] = useState("");
   const [excess, setExcess] = useState("");
-  const [validFrom, setValidFrom] = useState("");
-  const [validTo, setValidTo] = useState("");
   const [consent, setConsent] = useState(false);
 
   const [addressLine1, setAddressLine1] = useState("");
@@ -115,8 +113,6 @@ export default function InsuranceIntakePage() {
           authorisationCode: authorisationCode || undefined,
           claimReference: claimReference || undefined,
           excess: excess || undefined,
-          validFrom: validFrom || undefined,
-          validTo: validTo || undefined,
           addressLine1: addressLine1 || undefined,
           addressLine2: addressLine2 || undefined,
           town: town || undefined,
@@ -256,17 +252,9 @@ export default function InsuranceIntakePage() {
               </Field>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <Field label="Excess">
-                <input type="text" value={excess} onChange={(e) => setExcess(e.target.value)} placeholder="£0" className="form-input" />
-              </Field>
-              <Field label="Valid from">
-                <input type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} className="form-input" />
-              </Field>
-              <Field label="Valid to">
-                <input type="date" value={validTo} onChange={(e) => setValidTo(e.target.value)} className="form-input" />
-              </Field>
-            </div>
+            <Field label="Excess">
+              <input type="text" value={excess} onChange={(e) => setExcess(e.target.value)} placeholder="£0" className="form-input" />
+            </Field>
 
             <div className="pt-1">
               <div className="flex items-center gap-2 mb-3">

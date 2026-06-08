@@ -21,6 +21,7 @@ import { testClinikoConnection } from "@/lib/integrations/pms/cliniko/client";
 import { createIntakeLink } from "@/lib/insurance/create-link";
 import { buildInsuranceIntakeEmail } from "@/lib/intelligence/emails/insurance-intake";
 import { getResend } from "@/lib/resend";
+import { getTwilio, getSmsSender } from "@/lib/twilio";
 import type { PMSIntegrationConfig } from "@/types/pms";
 import type { InsuranceFieldMap } from "@/lib/insurance/types";
 
@@ -89,13 +90,37 @@ async function handler(request: NextRequest) {
       emailed = !error;
     }
 
+    // SMS — the patient's mobile is often the faster channel. Best-effort.
+    let texted = false;
+    const rawPhone = (patient.phone ?? "").replace(/[^\d+]/g, "");
+    const smsTo = rawPhone.startsWith("+")
+      ? rawPhone
+      : rawPhone.startsWith("0")
+        ? `+44${rawPhone.slice(1)}`
+        : rawPhone
+          ? `+${rawPhone}`
+          : "";
+    if (smsTo) {
+      try {
+        const firstName = patient.firstName ? ` ${patient.firstName}` : "";
+        await getTwilio().messages.create({
+          from: getSmsSender(),
+          to: smsTo,
+          body: `Hi${firstName}, please confirm your insurance details for your upcoming appointment using this secure link: ${link.url} - takes under a minute. Reply STOP to opt out.`,
+        });
+        texted = true;
+      } catch {
+        texted = false;
+      }
+    }
+
     await writeAuditLog(db, clinicId, {
       userId: user.uid, userEmail: user.email,
       action: "write", resource: "insurance_intake_send", resourceId: link.linkId,
-      metadata: { patientRef, emailed }, ip: extractIpFromRequest(request),
+      metadata: { patientRef, emailed, texted }, ip: extractIpFromRequest(request),
     });
 
-    return NextResponse.json({ ok: true, url: link.url, emailed, email: patient.email ?? null });
+    return NextResponse.json({ ok: true, url: link.url, emailed, texted, email: patient.email ?? null });
   } catch (e) {
     return handleApiError(e);
   }
