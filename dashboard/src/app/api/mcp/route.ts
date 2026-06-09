@@ -17,7 +17,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { TOOLS } from "@/mcp/registry";
@@ -106,7 +105,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const tools = TOOLS.map((t) => ({
         name: t.name,
         description: t.description,
-        inputSchema: zodToJsonSchema(t.module.inputSchema as z.ZodTypeAny, {
+        inputSchema: zodToJsonSchema(t.module.inputSchema, {
           target: "openApi3",
           $refStrategy: "none",
         }),

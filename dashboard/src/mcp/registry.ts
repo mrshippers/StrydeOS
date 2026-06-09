@@ -15,9 +15,13 @@ import * as reengagementQueue from "./tools/pulse/reengagement-queue";
 import * as integrationsHealth from "./tools/ops/integrations-health";
 import * as reviewsList from "./tools/ops/reviews-list";
 
-interface ToolModule<I = unknown, D = unknown> {
-  inputSchema: z.ZodType<I>;
-  run: (ctx: ToolContext, input: I) => Promise<ToolResult<D>>;
+// Every tool module exposes a Zod object schema (`z.object({...}).strict()`) and
+// a `run` function. Typing `inputSchema` as a ZodObject (not a bare ZodType)
+// preserves `.shape`, which the stdio registration path reads, and lets the
+// compiler keep each module's concrete input type instead of erasing it.
+interface ToolModule<S extends z.ZodObject<z.ZodRawShape> = z.ZodObject<z.ZodRawShape>, D = unknown> {
+  inputSchema: S;
+  run: (ctx: ToolContext, input: z.infer<S>) => Promise<ToolResult<D>>;
 }
 
 export interface ToolDefinition {
@@ -155,13 +159,12 @@ export function registerAll(server: McpServer, ctx: ToolContext): void {
   uniqueNamesCheck();
 
   for (const tool of TOOLS) {
-    const schema = tool.module.inputSchema as z.ZodObject<z.ZodRawShape>;
     server.registerTool(
       tool.name,
       {
         title: tool.title,
         description: tool.description,
-        inputSchema: schema.shape,
+        inputSchema: tool.module.inputSchema.shape,
         annotations: tool.annotations,
       },
       async (rawInput: unknown) => {
