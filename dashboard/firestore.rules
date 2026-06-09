@@ -220,5 +220,10 @@ service cloud.firestore {
     match /funnel_events/{document=**} {
       allow read, write: if false;
     }
+    // Intake short-links (slug → signed token). Server-only; resolved by the
+    // /i/[slug] redirect via Admin SDK. Never client-accessible.
+    match /intake_shortlinks/{slug} {
+      allow read, write: if false;
+    }
   }
 }

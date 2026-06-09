@@ -3,11 +3,13 @@
  * auto-send cron so the link document shape + token signing stay in one place.
  */
 
+import { randomBytes } from "crypto";
 import type { Firestore } from "firebase-admin/firestore";
 import { signIntakeToken } from "./intake-token";
 import { resolveInsurerOptions } from "./insurers";
 
 const INTAKE_LINKS = "insurance_intake_links";
+const SHORTLINKS = "intake_shortlinks";
 const LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const INTAKE_CONSENT_VERSION = "intake-v1";
 
@@ -25,9 +27,18 @@ export interface CreateIntakeLinkParams {
 export interface IntakeLinkResult {
   linkId: string;
   token: string;
+  /** Full self-verifying link (long signed token in the path). */
   url: string;
+  /** Short, shareable link (slug → token) — use this for SMS. */
+  shortUrl: string;
+  slug: string;
   expiresAt: string;
   insurerOptions: string[];
+}
+
+/** Short, URL-safe slug for shareable links (no lookalike-confusing chars). */
+function makeSlug(): string {
+  return randomBytes(6).toString("base64url"); // 8 chars, ~2.8e14 space
 }
 
 function appBaseUrl(): string {
@@ -56,11 +67,27 @@ export async function createIntakeLink(
   });
 
   const token = signIntakeToken({ clinicId, linkId: ref.id, exp });
+  const expiresAt = new Date(exp).toISOString();
+
+  // Short-link pointer (slug → token) so SMS carries a clean, clickable URL
+  // instead of a 200-char signed token. Resolved by /i/[slug] via Admin SDK.
+  const slug = makeSlug();
+  await db.collection(SHORTLINKS).doc(slug).set({
+    token,
+    clinicId,
+    linkId: ref.id,
+    expiresAt,
+    createdAt: new Date(params.nowMs).toISOString(),
+  });
+
+  const base = appBaseUrl();
   return {
     linkId: ref.id,
     token,
-    url: `${appBaseUrl()}/intake/${token}`,
-    expiresAt: new Date(exp).toISOString(),
+    url: `${base}/intake/${token}`,
+    shortUrl: `${base}/i/${slug}`,
+    slug,
+    expiresAt,
     insurerOptions,
   };
 }

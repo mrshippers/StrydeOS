@@ -493,7 +493,7 @@ async function handleSendInsuranceLink(
     await getTwilio().messages.create({
       from: getSmsSender(),
       to: smsTo,
-      body: `Please confirm your insurance details before your appointment using this secure link: ${link.url} - takes under a minute. Reply STOP to opt out.`,
+      body: `Please confirm your insurance details before your appointment using this secure link: ${link.shortUrl} - takes under a minute. Reply STOP to opt out.`,
     });
     return "Perfect, I've just texted you a secure link to confirm your insurance details before your appointment. It only takes a minute.";
   } catch (err) {

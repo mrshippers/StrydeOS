@@ -106,7 +106,7 @@ async function handler(request: NextRequest) {
         await getTwilio().messages.create({
           from: getSmsSender(),
           to: smsTo,
-          body: `Hi${firstName}, please confirm your insurance details for your upcoming appointment using this secure link: ${link.url} - takes under a minute. Reply STOP to opt out.`,
+          body: `Hi${firstName}, please confirm your insurance details for your upcoming appointment using this secure link: ${link.shortUrl} - takes under a minute. Reply STOP to opt out.`,
         });
         texted = true;
       } catch {
