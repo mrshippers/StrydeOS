@@ -47,9 +47,8 @@ export async function POST(req: NextRequest) {
   new URLSearchParams(body).forEach((v, k) => { params[k] = v; });
 
   const reqUrlObj = new URL(req.url);
-  const proto = req.headers.get("x-forwarded-proto") ?? "https";
-  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
-  const canonicalUrl = `${proto}://${host}${reqUrlObj.pathname}${reqUrlObj.search}`;
+  const baseUrl = (process.env.APP_URL ?? "https://portal.strydeos.com").replace(/\/$/, "");
+  const canonicalUrl = `${baseUrl}${reqUrlObj.pathname}${reqUrlObj.search}`;
   const isValid = twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, canonicalUrl, params);
 
   if (!isValid) {

@@ -14,12 +14,10 @@ import { createAvaTools, createAvaAgent } from "@/lib/ava/elevenlabs-agent";
  * 2. Creates ElevenLabs agent if one doesn't exist yet
  * 3. Wires the number's voiceUrl to ElevenLabs' native Twilio handler
  *    (https://api.elevenlabs.io/twilio/inbound-call)
- * 4. Stores the number + agent ID in Firestore
- * 5. Returns the provisioned number
- *
- * Note: after provisioning, the phone number must also be linked to the agent
- * in the ElevenLabs dashboard (Phone Numbers → Import from Twilio) so ElevenLabs
- * knows which agent to route inbound calls to.
+ * 4. Imports the number into ElevenLabs via POST /v1/convai/phone-numbers/create-twilio
+ *    and stores the returned phone_number_id as ava.phone_number_id in Firestore
+ * 5. Stores the number + agent ID in Firestore
+ * 6. Returns the provisioned number
  *
  * Requires: owner / admin / superadmin role.
  */
@@ -151,7 +149,47 @@ async function handler(req: NextRequest) {
     const voiceUrl = `https://api.elevenlabs.io/twilio/inbound-call`;
     const { phoneNumber, phoneSid } = await purchaseUkNumber({ locality, voiceUrl });
 
-    // 3. Persist to Firestore
+    // 3. Register the Twilio number with ElevenLabs to get a phone_number_id.
+    //    toggle/route.ts reads ava.phone_number_id — without this step the toggle
+    //    always returns "No phone number provisioned" because it looks for the ElevenLabs
+    //    ID, not the Twilio SID.
+    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+    if (!ELEVENLABS_API_KEY) {
+      throw new Error("ELEVENLABS_API_KEY is not configured");
+    }
+
+    const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
+    const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+      throw new Error("TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN is not configured");
+    }
+
+    const elPhoneRes = await fetch("https://api.elevenlabs.io/v1/convai/phone-numbers/create-twilio", {
+      method: "POST",
+      headers: { "xi-api-key": ELEVENLABS_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone_number: phoneNumber,
+        sid: phoneSid,
+        account_sid: TWILIO_ACCOUNT_SID,
+        auth_token: TWILIO_AUTH_TOKEN,
+        label: `${clinicData.name || "Clinic"} - Ava`,
+      }),
+    });
+
+    if (!elPhoneRes.ok) {
+      const body = await elPhoneRes.text();
+      throw new Error(`ElevenLabs phone number import failed (${elPhoneRes.status}): ${body}`);
+    }
+
+    const elPhoneData = await elPhoneRes.json();
+    const elevenLabsPhoneNumberId = elPhoneData.phone_number_id as string;
+
+    if (!elevenLabsPhoneNumberId) {
+      throw new Error("ElevenLabs phone number import returned no phone_number_id");
+    }
+
+    // 4. Persist to Firestore — store both the Twilio SID and the ElevenLabs
+    //    phone_number_id so toggle/route.ts can attach/detach the agent.
     const now = new Date().toISOString();
     await db.collection("clinics").doc(clinicId).update({
       "ava.config.phone": phoneNumber,
@@ -159,6 +197,7 @@ async function handler(req: NextRequest) {
       "ava.toolIds": toolIds ?? [],
       "ava.provider": "elevenlabs",
       "ava.twilioPhoneSid": phoneSid,
+      "ava.phone_number_id": elevenLabsPhoneNumberId,
       "ava.provisionedAt": now,
       "ava.provisioningInProgress": false,
       "ava.provisioningLockAt": null,

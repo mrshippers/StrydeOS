@@ -11,11 +11,36 @@
 // silently breaks every webhook signature check.
 const ELEVENLABS_WEBHOOK_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
 
+/**
+ * Verify an ElevenLabs webhook request.
+ *
+ * @param rawBody         - The raw request body string (read before any JSON.parse).
+ * @param signatureHeader - The full `ElevenLabs-Signature` header value,
+ *                          format: `t=<timestamp>,v0=<hex_hmac>`.
+ *
+ * ElevenLabs constructs the signed payload as `${timestamp}.${rawBody}` where
+ * `timestamp` is the `t=` field from the header. Signing just the raw body
+ * (without the timestamp prefix) will always produce a mismatch.
+ */
 export async function verifyElevenLabsSignature(
-  body: string,
+  rawBody: string,
   signatureHeader: string | null
 ): Promise<boolean> {
   if (!ELEVENLABS_WEBHOOK_SECRET || !signatureHeader) return false;
+
+  // Parse t=<timestamp> and v0=<hex> from the header.
+  const parts = Object.fromEntries(
+    signatureHeader.split(",").map((p) => {
+      const idx = p.indexOf("=");
+      return [p.slice(0, idx), p.slice(idx + 1)] as [string, string];
+    })
+  );
+  const timestamp = parts["t"];
+  const received = parts["v0"];
+  if (!timestamp || !received) return false;
+
+  // ElevenLabs HMAC payload is `${timestamp}.${rawBody}`.
+  const payload = `${timestamp}.${rawBody}`;
 
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -25,20 +50,18 @@ export async function verifyElevenLabsSignature(
     false,
     ["sign"]
   );
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
-  const expected = Array.from(new Uint8Array(signature))
+  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+  const expected = Array.from(new Uint8Array(sig))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  // ElevenLabs may send "v0=<hex>" or just "<hex>"
-  const provided = signatureHeader.replace(/^v\d+=/, "");
-  const a = new TextEncoder().encode(expected);
-  const b = new TextEncoder().encode(provided);
-  // Constant-time comparison — bail if byte lengths differ
-  if (a.byteLength !== b.byteLength) return false;
+  // Constant-time comparison — bail if byte lengths differ.
+  const a = encoder.encode(expected);
+  const bBytes = encoder.encode(received);
+  if (a.byteLength !== bBytes.byteLength) return false;
   let result = 0;
   for (let i = 0; i < a.length; i++) {
-    result |= a[i] ^ b[i];
+    result |= a[i] ^ bBytes[i];
   }
   return result === 0;
 }

@@ -61,7 +61,10 @@ async function handler(request: NextRequest) {
   const body = await request.text();
   const params: Record<string, string> = {};
   new URLSearchParams(body).forEach((v, k) => { params[k] = v; });
-  const isValid = twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, request.url, params);
+  const reqUrlObj = new URL(request.url);
+  const baseUrl = (process.env.APP_URL ?? "https://portal.strydeos.com").replace(/\/$/, "");
+  const canonicalUrl = `${baseUrl}${reqUrlObj.pathname}${reqUrlObj.search}`;
+  const isValid = twilio.validateRequest(TWILIO_AUTH_TOKEN, sig, canonicalUrl, params);
   if (!isValid) {
     return new NextResponse("Forbidden", { status: 403 });
   }

@@ -226,7 +226,7 @@ async function routerNode(
   state: typeof AvaState.State
 ): Promise<Partial<typeof AvaState.State>> {
   const model = new ChatAnthropic({
-    model: "claude-haiku-4-5-20251001",
+    model: "claude-haiku-4-5",
     temperature: 0,
     maxTokens: 20,
   });
@@ -710,7 +710,7 @@ export async function redFlagDetectorNode(
     const timestamp = new Date();
 
     // Audit log — full detail
-    void db.collection("red_flag_alerts").add({
+    void db.collection("clinics").doc(state.callMeta.clinicId).collection("red_flag_alerts").add({
       timestamp,
       clinicId: state.callMeta.clinicId,
       callId: state.callMeta.callId ?? null,
@@ -774,7 +774,7 @@ export async function intentRouterNode(
   state: typeof AvaState.State
 ): Promise<Partial<typeof AvaState.State>> {
   const model = new ChatAnthropic({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     temperature: 0,
     maxTokens: 50,
   });
@@ -837,6 +837,7 @@ export async function structuredIntakeNode(
   if (intake) {
     const sessionId = `${state.callMeta.clinicId}_${state.callMeta.callId ?? Date.now()}`;
     void getAdminDb()
+      .collection("clinics").doc(state.callMeta.clinicId)
       .collection("sessions")
       .doc(sessionId)
       .set({ structuredIntake: intake }, { merge: true })
