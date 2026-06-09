@@ -343,8 +343,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           } else {
             setFirebaseUser(null);
-            setUser(null);
-            await clearServerSession();
+            // Demo sessions are client-state only — restore across reloads so a
+            // mid-demo refresh doesn't dump the viewer back to the login screen.
+            let demoActive = false;
+            try {
+              demoActive = sessionStorage.getItem("strydeos_demo_scenario") !== null;
+            } catch { /* sessionStorage unavailable */ }
+            if (demoActive) {
+              // Re-mint the demo cookie so an expired one can't redirect-loop
+              await fetch("/api/auth/demo", { method: "POST" }).catch(() => {});
+              setUser(DEMO_USER);
+            } else {
+              setUser(null);
+              await clearServerSession();
+            }
           }
         } catch (err) {
           console.error("[Auth] Failed to load user profile:", err);
@@ -383,11 +395,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const auth = getFirebaseAuth();
       if (!auth) throw new Error("Firebase is not configured. Use demo mode.");
       await signInWithEmailAndPassword(auth, email, password);
+      try {
+        sessionStorage.removeItem("strydeos_demo_scenario");
+      } catch { /* sessionStorage unavailable */ }
     },
     []
   );
 
   const signOut = useCallback(async () => {
+    // Clear the demo marker first — fbSignOut re-fires onAuthStateChanged,
+    // which would otherwise restore the demo session mid-sign-out.
+    try {
+      sessionStorage.removeItem("strydeos_demo_scenario");
+    } catch { /* sessionStorage unavailable */ }
     const auth = getFirebaseAuth();
     if (auth) await fbSignOut(auth);
     setUser(null);

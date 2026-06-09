@@ -163,7 +163,9 @@ function LoginPageInner() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && user) {
+    // Demo users are not auto-redirected — landing on /login from the demo
+    // banner means they want the real sign-in form.
+    if (!authLoading && user && user.uid !== "demo") {
       const next = searchParams.get("next");
       const dest = next && next.startsWith("/") && !next.startsWith("//")
         ? next
@@ -185,6 +187,12 @@ function LoginPageInner() {
     }, 3000);
     return () => clearTimeout(fallback);
   }, [success, searchParams]);
+
+  async function handleTryDemo() {
+    await enterDemoMode();
+    // Demo users skip the signed-in auto-redirect, so navigate explicitly
+    router.replace("/dashboard");
+  }
 
   function switchMode(newMode: AuthMode) {
     setMode(newMode);
@@ -407,7 +415,7 @@ function LoginPageInner() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-cloud-dancer">
-        <LoginHeader onTryDemo={enterDemoMode} />
+        <LoginHeader onTryDemo={handleTryDemo} />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 size={24} className="animate-spin text-muted" />
         </div>
@@ -417,10 +425,10 @@ function LoginPageInner() {
 
   // Show a thin shell during the redirect window so the page isn't visually empty.
   // Previously returned null, which created a blank-page flash in dark mode.
-  if (user) {
+  if (user && user.uid !== "demo") {
     return (
       <div className="min-h-screen flex flex-col bg-cloud-dancer">
-        <LoginHeader onTryDemo={enterDemoMode} />
+        <LoginHeader onTryDemo={handleTryDemo} />
         <div className="flex-1 flex items-center justify-center gap-3">
           <Loader2 size={18} className="animate-spin text-muted dark:text-white/55" />
           <span className="text-[13px] text-muted dark:text-white/55">Taking you to your dashboard...</span>
@@ -432,7 +440,7 @@ function LoginPageInner() {
   if (!isFirebaseConfigured) {
     return (
       <div className="min-h-screen flex flex-col px-4 bg-cloud-dancer">
-        <LoginHeader onTryDemo={enterDemoMode} />
+        <LoginHeader onTryDemo={handleTryDemo} />
         <div className="flex-1 flex items-center justify-center pt-4">
           <div className="w-full max-w-[400px]">
             <div className="rounded-2xl p-8 text-center bg-white border border-border shadow-[var(--shadow-elevated)]">
@@ -444,7 +452,7 @@ function LoginPageInner() {
               </p>
               <button
                 type="button"
-                onClick={enterDemoMode}
+                onClick={handleTryDemo}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-navy dark:text-white transition-all duration-200 hover:opacity-90 bg-blue"
               >
                 Enter dashboard (demo)
@@ -476,7 +484,7 @@ function LoginPageInner() {
           exit={shouldReduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
           transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          <LoginHeader onTryDemo={enterDemoMode} />
+          <LoginHeader onTryDemo={handleTryDemo} />
           <div className="flex-1 flex items-center justify-center pt-4">
             <div className="w-full max-w-[400px]">
               <motion.div
