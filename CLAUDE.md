@@ -1,7 +1,7 @@
 # CLAUDE.md — StrydeOS
 
 > Claude Code operating instructions for the StrydeOS codebase.  
-> Read this before touching anything. Last updated: 2026-06-08.
+> Read this before touching anything. Last updated: 2026-06-09.
 
 ---
 
@@ -47,7 +47,7 @@ You can't manage what you can't measure. Clinic owners have no visibility into w
 
 - `dashboard/` — primary Next.js 15 app. Tailwind v4, LangChain/LangGraph, AI SDK Gateway, ElevenLabs client, Sentry + OpenTelemetry, Playwright E2E. **All dev commands live here** (root `package.json` is a seed-only stub). Contains `src/mcp/` (the `stryde-ops` MCP server) and `src/app/api/mcp/` (its HTTP transport).
 - `StrydeOutreach/` — autonomous QA + 4-touch outreach engine. Live since 14 May 2026 at `outreach.strydeos.com`. **Nested independent git repo** (own `.git`, not a submodule) — has its own CLAUDE.md.
-- `StrydeLens/` — Lens subproject. **Nested independent git repo.** Its CLAUDE.md is stale (a 2025-era copy of the old StrydeOS doc — 1hr TTL, 4-collection list, real Spires PII) — do not trust it; rewrite or delete.
+- `StrydeLens/` — Lens subproject (repo created March 2026). **Nested independent git repo.** Its CLAUDE.md is a stale verbatim copy of the *old* StrydeOS root doc — the header still self-labels "Last updated: 2025" (a placeholder, not a real date: StrydeLens did not exist in 2025), and it carries a 1hr TTL, a 4-collection list, and real Spires PII. Nothing in it reflects StrydeLens — do not trust it; rewrite or delete (still carries PII).
 - `ava_graph/` — Ava voice agent: LangGraph definitions **+ deployed to Cloud Run** with its own PMS-booking MCP (`ava_graph/mcp_server.py`) and intent eval harness (`ava_graph/tests/eval/`).
 - `Marketing Material/` — brand assets, pitch deck source, email comms templates (canonical).
 - `docs/` — module briefs (`docs/module-briefs/`), audits, technical whitepaper, sub-processor DPA register.
@@ -117,13 +117,13 @@ Three modules. Names are **locked** — do not rename, do not alias.
 | Pulse          | £79       | £99          | £149        |
 | **Full Stack** | **£199**  | **£299**     | **£399**    |
 
-**Setup fee (Ava only): £195 one-time** — covers phone provisioning + voice training. No setup fee on Intelligence or Pulse. No lock-in contracts at any tier.
+**Setup fee: £195 one-time, Ava standalone only** — covers phone provisioning + voice training. No setup fee on Intelligence or Pulse, and **waived on Full Stack** (Ava's setup is bundled in). No lock-in contracts at any tier.
 
 Bundle discount applied automatically on Full Stack. Mix-and-match any two modules ~10% off.
 
-Do not invent or round prices. Canonical artifact: `Marketing Material/strydeos-pricing-deck.html`. Machine-readable source: the `strydeOS` MCP `get_pricing_tiers` tool (`scripts/strydeOS_mcp.py`). Secondary reference: `StrydeOutreach/CLAUDE.md`.
+Do not invent or round prices. Canonical artifact: `Marketing Material/Decks & Docs/strydeos-pricing-deck.html`. Machine-readable source: the `strydeOS` MCP `get_pricing_tiers` tool (`scripts/strydeOS_mcp.py`). Secondary reference: `StrydeOutreach/CLAUDE.md`.
 
-> ⚠ **Pricing reconciliation needed (founder decision, do not auto-change):** three sources disagree on two points — (a) whether the £195 Ava setup fee also applies to Full Stack (this file says Ava-only; `scripts/strydeOS_mcp.py` says it applies to Full Stack too; `StrydeOutreach/CLAUDE.md` says no setup fee on Full Stack); (b) Clinic-tier Ava (£199 here vs £159 in StrydeOutreach) and Clinic-tier Pulse (£149 here vs £119 in StrydeOutreach). Monthly tier prices are otherwise consistent everywhere. Decide once, then sync all three.
+> ✅ **Pricing reconciled to the deck (2026-06-09).** Both prior discrepancies are resolved against the canonical deck above: (a) the £195 setup fee is **Ava standalone only and waived on Full Stack** — `scripts/strydeOS_mcp.py` was corrected (no Full Stack setup fee); (b) Clinic-tier modules are **Intelligence £149 / Ava £199 / Pulse £149** — deck-confirmed by the maths (Clinic Full Stack £399 at a £98/mo saving = £497 of modules) — and `StrydeOutreach/CLAUDE.md` had stale Clinic cells (Intelligence £199, Ava £159, Pulse £119), now corrected. All three sources agree.
 
 ### Insurance / Intake (module — shipped, delivered under Pulse)
 
@@ -446,7 +446,7 @@ Doppler is the single source of truth for secrets across StrydeOS + Driiva. Work
 
 ## Pending / Known Gaps
 
-- **`main` is behind `harden/alpha-security`.** As of 2026-06-08, all June work (security hardening, per-clinic PMS ingest, insurance/intake, RBAC role editor, Ava intent eval, website Ava-demo fix) lives on `harden/alpha-security` (`f80b494`); `main` is stuck at `c30694a` (25 May). `harden/alpha-security` is the de facto trunk — merge or branch from it, not `main`.
+- **`harden/alpha-security` is merged into `main`** (merge `0c30e6d`, 2026-06-09; `main` then advanced with the short-intake-link work). All June work (security hardening, per-clinic PMS ingest, insurance/intake, RBAC role editor, Ava intent eval, website Ava-demo fix) is now on `main`. `main` is the trunk again — branch from `main`, not `harden/alpha-security` (which is retained but stale).
 - **TM3 (Blue Zinc)** — critical UK PMS integration; only an Ava booking-tool stub exists, not production
 - **PPS (Rushcliff)** — legacy UK incumbent (2,400+ clinics, Physio First partner). API exists (docs.pps-api.com) but docs gated behind PPS Express login. Token-based API pricing from £80/mo. Contact sales@rushcliff.com for developer access.
 - **Pabau** — medspa/aesthetics PMS integration, awaiting API key access
@@ -478,7 +478,7 @@ All of Jamal's ventures run under the **Shippers** operator brand (GitHub/HF: `m
 | **TradeMind** | `~/Downloads/AI/Shippers/TradeMind` | Mobile AI for UK electricians (voice → EIC/EICR certs). Client: Addison Garnett. | Supabase fn secrets |
 | **shippers-tt** | `~/Projects/shippers-tt` | Personal operator system (timetable + venture dashboard). Tracks all the above. | Doppler `shippers-tt` |
 
-⚠ `~/DRIIVA` (uppercase) is a **stale abandoned copy** of Driiva (last commit 12 Apr, different remote `mrshippers/DRIIVA.git`) — ignore it; canonical Driiva is `~/Documents/DriivaMVP`.
+Canonical Driiva is `~/Documents/DriivaMVP` (remote `mrshippers/Driiva.git`). The stale uppercase `~/DRIIVA` copy (abandoned 12 Apr, separate remote `mrshippers/DRIIVA.git`) was **deleted 2026-06-09** — if it reappears, it is not canonical.
 
 - **Driiva project** — separate codebase at `Documents/DriivaMVP/`. Has its own CLAUDE.md and shares the `Driiva Stryde` Doppler workspace.
 

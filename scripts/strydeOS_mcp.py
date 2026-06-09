@@ -77,10 +77,10 @@ def get_pricing_tiers() -> dict:
         },
         "setup_fees": {
             "ava_standalone": 195,
-            "fullstack": 195,
+            "fullstack": 0,
             "intelligence_standalone": 0,
             "pulse_standalone": 0,
-            "note": "Single £195 flat fee covers Ava phone provisioning. Charged once whether Ava is bought alone or as part of Full Stack.",
+            "note": "£195 one-time setup fee on Ava standalone only (phone provisioning + voice training). Waived on Full Stack and not charged on Intelligence or Pulse.",
         },
         "annual_billing": {
             "discount_pct": 20,
