@@ -47,14 +47,16 @@ export function createClinikoAdapter(config: ClinikoConfig): PMSAdapter {
         first_name?: string;
         last_name?: string;
         email?: string;
-        phone_numbers?: Array<{ number?: string }>;
+        patient_phone_numbers?: Array<{ number?: string; phone_type?: string }>;
         date_of_birth?: string;
         dva_card_number?: string;
         concession_type?: string;
       }>(config, `/patients/${encodeURIComponent(externalId)}`);
-      
-      // Extract first phone number if available
-      const phone = data?.phone_numbers?.[0]?.number;
+
+      // Cliniko returns phones under `patient_phone_numbers` (not `phone_numbers`).
+      // Prefer a Mobile number for SMS, else fall back to the first on file.
+      const phones = data?.patient_phone_numbers ?? [];
+      const phone = (phones.find((p) => p.phone_type === "Mobile") ?? phones[0])?.number;
       
       return {
         externalId: String(data?.id ?? externalId),
