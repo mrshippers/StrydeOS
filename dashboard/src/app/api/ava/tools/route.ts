@@ -24,6 +24,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { createIntakeLink } from "@/lib/insurance/create-link";
 import { buildInsuranceIntakeSms } from "@/lib/insurance/sms";
+import { checkIntakeSuppression } from "@/lib/insurance/dedupe";
 import { getTwilio } from "@/lib/twilio";
 import { getClinicBranding } from "@/lib/comms/clinic-branding";
 // Tool-call auth uses a static Bearer token (ElevenLabs tool webhooks don't
@@ -487,6 +488,12 @@ async function handleSendInsuranceLink(
   }
   try {
     const db = getAdminDb();
+    const supp = await checkIntakeSuppression(db, clinicId, patientRef, Date.now());
+    if (supp.suppress) {
+      return supp.reason === "already_submitted"
+        ? "It looks like you've already completed your insurance form recently, so you're all set - no need to do it again."
+        : "I've already sent you a secure link very recently - please check your texts. I won't send another just yet so your phone doesn't get cluttered.";
+    }
     const branding = await getClinicBranding(db, clinicId);
     const link = await createIntakeLink(db, clinicId, {
       patientRef,

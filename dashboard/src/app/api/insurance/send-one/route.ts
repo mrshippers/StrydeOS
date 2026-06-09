@@ -20,6 +20,7 @@ import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { testClinikoConnection } from "@/lib/integrations/pms/cliniko/client";
 import { createIntakeLink } from "@/lib/insurance/create-link";
 import { buildInsuranceIntakeSms } from "@/lib/insurance/sms";
+import { checkIntakeSuppression } from "@/lib/insurance/dedupe";
 import { buildInsuranceIntakeEmail } from "@/lib/intelligence/emails/insurance-intake";
 import { getResend } from "@/lib/resend";
 import { getTwilio } from "@/lib/twilio";
@@ -43,9 +44,24 @@ async function handler(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const patientRef = (body.patientRef as string | undefined)?.trim();
     const appointmentId = (body.appointmentId as string | undefined)?.trim() || null;
+    const force = body.force === true;
     if (!patientRef) return NextResponse.json({ error: "patientRef is required" }, { status: 400 });
 
     const db = getAdminDb();
+
+    // Anti-spam: refuse a duplicate send unless staff explicitly force it. The
+    // patient has either already submitted (within validity) or was texted/
+    // emailed within the cooldown window.
+    if (!force) {
+      const supp = await checkIntakeSuppression(db, clinicId, patientRef, Date.now());
+      if (supp.suppress) {
+        return NextResponse.json(
+          { ok: false, suppressed: true, reason: supp.reason, lastSentAt: supp.lastSentAt },
+          { status: 409 },
+        );
+      }
+    }
+
     const branding = await getClinicBranding(db, clinicId);
     const cfgSnap = await db.collection("clinics").doc(clinicId).collection(INTEGRATIONS_PMS).doc(PMS_DOC_ID).get();
     const cfg = cfgSnap.data() as PMSIntegrationConfig | undefined;

@@ -22,6 +22,7 @@ import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { testClinikoConnection } from "@/lib/integrations/pms/cliniko/client";
 import { createIntakeLink } from "@/lib/insurance/create-link";
 import { selectAppointmentsForIntake } from "@/lib/insurance/auto-send";
+import { evaluateIntakeSuppression, type IntakeLinkLike } from "@/lib/insurance/dedupe";
 import { buildInsuranceIntakeEmail } from "@/lib/intelligence/emails/insurance-intake";
 import { brandingFromClinicData } from "@/lib/comms/clinic-branding";
 import { getResend } from "@/lib/resend";
@@ -44,6 +45,7 @@ interface ClinicResult {
   candidates?: number;
   sent?: number;
   noEmail?: number;
+  suppressed?: number;
   errors?: string[];
 }
 
@@ -78,7 +80,17 @@ async function processClinic(
 
   const linksSnap = await db.collection("clinics").doc(clinicId).collection(INTAKE_LINKS).get();
   const linked = new Set<string>();
-  linksSnap.forEach((d) => { const a = (d.data() as { appointmentId?: string }).appointmentId; if (a) linked.add(String(a)); });
+  const linksByPatient = new Map<string, IntakeLinkLike[]>();
+  linksSnap.forEach((d) => {
+    const x = d.data() as { appointmentId?: string; patientRef?: string };
+    if (x.appointmentId) linked.add(String(x.appointmentId));
+    const ref = String(x.patientRef ?? "");
+    if (ref) {
+      const arr = linksByPatient.get(ref) ?? [];
+      arr.push(x as IntakeLinkLike);
+      linksByPatient.set(ref, arr);
+    }
+  });
 
   const candidates = selectAppointmentsForIntake(
     appts.map((a) => ({ externalId: a.externalId, patientExternalId: a.patientExternalId, dateTime: a.dateTime, status: a.status })),
@@ -90,11 +102,16 @@ async function processClinic(
   try { fieldMap = adapter.discoverInsuranceFields ? await adapter.discoverInsuranceFields() : null; } catch { fieldMap = null; }
 
   const branding = brandingFromClinicData(clinicData);
-  let sent = 0, noEmail = 0;
+  let sent = 0, noEmail = 0, suppressed = 0;
   const errors: string[] = [];
 
   for (const c of candidates) {
     try {
+      // Anti-spam: skip patients who already submitted (within validity) or were
+      // sent a link within the cooldown — across any channel (manual/Ava/cron).
+      const supp = evaluateIntakeSuppression(linksByPatient.get(c.patientRef) ?? [], Date.now());
+      if (supp.suppress) { suppressed++; continue; }
+
       const patient = await adapter.getPatient(c.patientRef);
       if (!patient.email) { noEmail++; continue; }
 
@@ -132,11 +149,11 @@ async function processClinic(
     await writeAuditLog(db, clinicId, {
       userId: "system", userEmail: "",
       action: "write", resource: "insurance_intake_autosend",
-      metadata: { sent, noEmail, candidates: candidates.length },
+      metadata: { sent, noEmail, suppressed, candidates: candidates.length },
     });
   }
 
-  return { clinicId, ok: true, candidates: candidates.length, sent, noEmail, errors: errors.length ? errors : undefined };
+  return { clinicId, ok: true, candidates: candidates.length, sent, noEmail, suppressed, errors: errors.length ? errors : undefined };
 }
 
 async function handler(request: NextRequest) {

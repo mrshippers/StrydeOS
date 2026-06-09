@@ -12,8 +12,12 @@ import { Send, Loader2, CheckCircle2, Copy, AlertCircle } from "lucide-react";
 interface SendResult {
   url?: string;
   emailed?: boolean;
+  texted?: boolean;
   email?: string | null;
   error?: string;
+  suppressed?: boolean;
+  reason?: "already_submitted" | "recently_sent";
+  lastSentAt?: string | null;
 }
 
 export default function SendInsuranceFormButton({ className }: { className?: string }) {
@@ -27,8 +31,7 @@ export default function SendInsuranceFormButton({ className }: { className?: str
 
   if (!user || !["owner", "admin", "superadmin"].includes(user.role)) return null;
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function send(force: boolean) {
     if (!firebaseUser) return;
     setSending(true);
     setResult(null);
@@ -37,15 +40,24 @@ export default function SendInsuranceFormButton({ className }: { className?: str
       const res = await fetch("/api/insurance/send-one", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ patientRef, appointmentId: appointmentId || undefined }),
+        body: JSON.stringify({ patientRef, appointmentId: appointmentId || undefined, force }),
       });
       const data = await res.json().catch(() => ({}));
-      setResult(res.ok ? data : { error: data.error ?? "Could not send." });
+      if (res.status === 409 && data.suppressed) {
+        setResult({ suppressed: true, reason: data.reason, lastSentAt: data.lastSentAt ?? null });
+      } else {
+        setResult(res.ok ? data : { error: data.error ?? "Could not send." });
+      }
     } catch {
       setResult({ error: "Network error." });
     } finally {
       setSending(false);
     }
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    void send(false);
   }
 
   function reset() {
@@ -99,6 +111,27 @@ export default function SendInsuranceFormButton({ className }: { className?: str
                   </button>
                   <button onClick={reset} className="flex-1 py-3 rounded-xl text-sm font-semibold text-navy border border-border hover:bg-cloud-light transition-colors">
                     Done
+                  </button>
+                </div>
+              </div>
+            ) : result?.suppressed ? (
+              <div className="space-y-4">
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 flex items-start gap-2">
+                  <AlertCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-navy">
+                    {result.reason === "already_submitted"
+                      ? "This patient has already completed the insurance form recently"
+                      : "A secure link was already sent to this patient recently"}
+                    {result.lastSentAt ? ` (${new Date(result.lastSentAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })})` : ""}
+                    . Avoid sending again unless they asked.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={reset} className="flex-1 py-3 rounded-xl text-sm font-semibold text-navy border border-border hover:bg-cloud-light transition-colors">
+                    Cancel
+                  </button>
+                  <button onClick={() => void send(true)} disabled={sending} className="btn-primary flex-1 justify-center" style={{ padding: "12px 0" }}>
+                    {sending ? <Loader2 size={16} className="animate-spin" /> : "Send anyway"}
                   </button>
                 </div>
               </div>
