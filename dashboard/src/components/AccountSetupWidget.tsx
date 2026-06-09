@@ -77,8 +77,9 @@ export default function AccountSetupWidget() {
 
   // Verify clinician flag against real data — flag can be stale
   const [hasClinicians, setHasClinicians] = useState(false);
+  const isDemo = user?.uid === "demo";
   useEffect(() => {
-    if (!clinicId) return;
+    if (!clinicId || isDemo) return;
     const db = getFirestore();
     const q = query(
       collection(db, "clinics", clinicId, "clinicians"),
@@ -88,7 +89,7 @@ export default function AccountSetupWidget() {
     getDocs(q).then((snap) => setHasClinicians(!snap.empty)).catch((err) => {
       console.error("[AccountSetupWidget] Failed to check clinician count:", err instanceof Error ? err.message : err);
     });
-  }, [clinicId]);
+  }, [clinicId, isDemo]);
 
   const steps: SetupStep[] = useMemo(() => {
     if (!user || !cp) return [];

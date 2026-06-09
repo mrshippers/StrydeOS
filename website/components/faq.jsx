@@ -831,7 +831,9 @@ export default function FAQPage() {
               Get in touch
             </a>
             <a
-              href="#"
+              href="https://calendly.com/hello-strydeos/20min"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
                 padding: "13px 28px", background: "transparent",

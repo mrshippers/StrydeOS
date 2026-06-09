@@ -2,9 +2,9 @@
 
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
-import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 
+import { useAuth } from "@/hooks/useAuth";
 import { useDemoPatients } from "@/hooks/useDemoData";
 import { useClinicians } from "@/hooks/useClinicians";
 import { getDemoCommsLog } from "@/hooks/useDemoComms";
@@ -113,7 +113,11 @@ function TimelineCard({ timeline }: { timeline: TimelineEvent[] }) {
   function toggle(id: string) {
     setExpanded((prev: Set<string>) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   }
@@ -190,9 +194,11 @@ export default function PatientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { user } = useAuth();
   const patients = useDemoPatients();
   const { clinicians } = useClinicians();
-  const patient = patients.find((p) => p.id === id);
+  // Patient detail is a demo-only surface for now — real clinics must never see sample records
+  const patient = user?.uid === "demo" ? patients.find((p) => p.id === id) : undefined;
   const clinician = clinicians.find((c) => c.id === patient?.clinicianId);
   const timeline = useMemo(() => buildTimeline(id), [id]);
 

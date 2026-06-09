@@ -2422,7 +2422,7 @@ const ROICalc = ({ darkMode }) => {
 const PRICING_DATA_MONTHLY = {
   solo:   { Intelligence: 69,  Ava: 99,  Pulse: 79,  full: 199 },
   studio: { Intelligence: 99,  Ava: 149, Pulse: 99,  full: 299 },
-  clinic: { Intelligence: 199, Ava: 159, Pulse: 119, full: 399 },
+  clinic: { Intelligence: 149, Ava: 199, Pulse: 149, full: 399 },
 };
 const getPricing = (tier, billing) => {
   const m = PRICING_DATA_MONTHLY[tier];

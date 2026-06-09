@@ -364,6 +364,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isFirebaseConfigured || !db || !user?.clinicId) return;
+    // Demo sessions have no Firebase Auth identity — the listener would only permission-error
+    if (user.uid === "demo") return;
     const unsubscribe = onSnapshot(
       doc(db, "clinics", user.clinicId),
       (snap) => {
@@ -374,7 +376,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
     return () => unsubscribe();
-  }, [user?.clinicId]);
+  }, [user?.clinicId, user?.uid]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {

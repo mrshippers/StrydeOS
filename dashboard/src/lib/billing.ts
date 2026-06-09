@@ -50,17 +50,17 @@ export const MODULE_PRICING: Record<
   intelligence: {
     solo:   { month:  6900, year:  66240 }, // £69   → £662.40/yr
     studio: { month:  9900, year:  95040 }, // £99   → £950.40/yr
-    clinic: { month: 19900, year: 191040 }, // £199  → £1,910.40/yr
+    clinic: { month: 14900, year: 143040 }, // £149  → £1,430.40/yr
   },
   ava: {
     solo:   { month:  9900, year:  95040 }, // £99   → £950.40/yr
     studio: { month: 14900, year: 143040 }, // £149  → £1,430.40/yr
-    clinic: { month: 15900, year: 152640 }, // £159  → £1,526.40/yr
+    clinic: { month: 19900, year: 191040 }, // £199  → £1,910.40/yr
   },
   pulse: {
     solo:   { month:  7900, year:  75840 }, // £79   → £758.40/yr
     studio: { month:  9900, year:  95040 }, // £99   → £950.40/yr
-    clinic: { month: 11900, year: 114240 }, // £119  → £1,142.40/yr
+    clinic: { month: 14900, year: 143040 }, // £149  → £1,430.40/yr
   },
   fullstack: {
     solo:   { month: 19900, year: 191040 }, // £199  → £1,910.40/yr

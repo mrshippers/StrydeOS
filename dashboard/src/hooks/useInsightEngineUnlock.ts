@@ -26,7 +26,8 @@ export function useInsightEngineUnlock(): UseInsightEngineUnlockResult {
   const { user } = useAuth();
   const clinicId = user?.clinicId ?? null;
   const role = user?.role;
-  const isEligible = role === "owner" || role === "admin" || role === "superadmin";
+  // Demo sessions have no Firebase Auth identity — the listener would only permission-error
+  const isEligible = user?.uid !== "demo" && (role === "owner" || role === "admin" || role === "superadmin");
 
   const [data, setData] = useState<InsightEngineMilestone | null>(null);
   const [shouldShow, setShouldShow] = useState(false);

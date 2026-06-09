@@ -12,7 +12,6 @@ import RevenueTile from "@/components/owner-summary/RevenueTile";
 import TodayTile from "@/components/owner-summary/TodayTile";
 import RetentionTile from "@/components/owner-summary/RetentionTile";
 import UtilisationTile from "@/components/owner-summary/UtilisationTile";
-import DemoBanner from "@/components/ui/DemoBanner";
 import EventsActionedByPulseTile from "@/components/intelligence/EventsActionedByPulseTile";
 import InsightFeed from "@/components/intelligence/InsightFeed";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -132,7 +131,6 @@ export default function DashboardPage() {
     clinicianUtilisation,
     loading,
     error,
-    usedDemo,
   } = useOwnerSummary(period);
 
   useEffect(() => {
@@ -168,9 +166,6 @@ export default function DashboardPage() {
           </a>
         </div>
       )}
-
-      {/* Demo banner */}
-      {usedDemo && <DemoBanner />}
 
       {/* Header + timeframe segment */}
       <motion.div

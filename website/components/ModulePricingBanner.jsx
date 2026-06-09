@@ -30,7 +30,7 @@ const TIERS = [
 const PRICING = {
   solo:   { ava: 99,  pulse: 79,  intelligence: 69  },
   studio: { ava: 149, pulse: 99,  intelligence: 99  },
-  clinic: { ava: 159, pulse: 119, intelligence: 199 },
+  clinic: { ava: 199, pulse: 149, intelligence: 149 },
 };
 
 const SETUP = {
