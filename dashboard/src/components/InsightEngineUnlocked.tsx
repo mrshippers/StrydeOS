@@ -186,7 +186,7 @@ export default function InsightEngineUnlocked() {
                     className="w-1.5 h-1.5 rounded-full animate-pulse"
                     style={{ background: brand.blueGlow }}
                   />
-                  New Capability Unlocked
+                  Insight engine active
                 </span>
               </motion.div>
 

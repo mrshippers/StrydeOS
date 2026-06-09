@@ -156,7 +156,7 @@ export default function ModuleGuard({ module, children }: Props) {
                   href="/billing"
                   className={`btn-primary w-full justify-center ${color === "#0891B2" ? "btn-primary-teal" : color === "#8B5CF6" ? "btn-primary-purple" : color === "#059669" ? "btn-primary-success" : ""}`}
                 >
-                  Unlock {name}
+                  Add {name} to your plan
                 </Link>
 
                 <p className="mt-4 text-[11px] text-navy/40 dark:text-white/25">

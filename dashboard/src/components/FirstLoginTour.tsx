@@ -231,9 +231,9 @@ export default function FirstLoginTour() {
 
                 <p className="text-[15px] text-navy/85 dark:text-white/80 leading-relaxed">
                   {isDemo ? (
-                    <>You&apos;re viewing the demo. This is {clinicName}&apos;s clinical operating system — the same dashboard real clinics use to optimise performance.</>
+                    <>You&apos;re viewing the demo. This is the same dashboard {clinicName} runs day to day, loaded with sample data.</>
                   ) : (
-                    <>Welcome to StrydeOS, {firstName}. This is {clinicName}&apos;s unique clinical operating system, designed to optimise your practice from just &lsquo;good&rsquo; to industry-leading, whether big or small.</>
+                    <>Welcome, {firstName}. This is {clinicName}&apos;s operational dashboard. It shows where sessions, follow-ups and revenue are slipping, and what to do about each.</>
                   )}
                 </p>
                 <p className="text-[14px] text-navy/65 dark:text-white/50 mt-3">

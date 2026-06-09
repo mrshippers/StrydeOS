@@ -69,8 +69,6 @@ async function handler(req: NextRequest): Promise<NextResponse> {
       updatedAt: new Date().toISOString(),
     });
 
-    console.log(`[ava/toggle] clinic=${clinicId} enabled=${newEnabled}`);
-
     return NextResponse.json({ enabled: newEnabled });
   } catch (error) {
     console.error("[ava/toggle] error:", error);

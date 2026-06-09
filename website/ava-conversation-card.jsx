@@ -409,14 +409,12 @@ export default function AvaShowcase() {
       // Initialize AudioContext if needed
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        console.log("[Ava] Created new AudioContext");
       }
       const audioContext = audioContextRef.current;
 
       // Resume audio context if suspended (browser requirement for audio playback)
       if (audioContext.state === "suspended") {
         await audioContext.resume();
-        console.log("[Ava] Resumed suspended AudioContext");
       }
 
       // Connect WebSocket — ScriptProcessor below streams user audio; MediaRecorder was redundant and caused double-mic bugs
@@ -454,7 +452,6 @@ export default function AvaShowcase() {
       ws.onmessage = async (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log("[Ava] Received message type:", data.type);
 
           // ElevenLabs sends audio in audio_event.audio_base_64 (PCM16 @ 16000 Hz)
           if (data.type === "audio") {
@@ -515,20 +512,12 @@ export default function AvaShowcase() {
             const fmt = meta?.agent_output_audio_format; // e.g. "pcm_16000"
             const rate = fmt && parseInt(String(fmt).split("_")[1], 10);
             if (rate && !Number.isNaN(rate)) outputSampleRateRef.current = rate;
-            console.log("[Ava] Session initiated:", meta?.conversation_id, "@", outputSampleRateRef.current, "Hz");
           }
 
           if (data.type === "ping") {
             ws.send(JSON.stringify({ type: "pong", event_id: data.ping_event?.event_id }));
           }
 
-          if (data.type === "user_transcript") {
-            console.log(`[Ava] 👤 User said: "${data.user_transcription_event?.user_transcript}"`);
-          }
-
-          if (data.type === "agent_response") {
-            console.log(`[Ava] 🤖 Agent: "${data.agent_response_event?.agent_response}"`);
-          }
         } catch (err) {
           console.error("[Ava] Error processing message:", err);
         }

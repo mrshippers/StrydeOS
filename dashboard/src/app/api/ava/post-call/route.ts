@@ -177,10 +177,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       .collection("voiceInteractions")
       .doc(conversation_id)
       .set(doc, { merge: true });
-
-    console.log(
-      `[post-call] Wrote voiceInteraction ${conversation_id} for clinic ${clinicId}`
-    );
   } catch (err) {
     console.error("[post-call] Firestore write failed:", err);
     return new NextResponse("Internal Server Error", { status: 500 });
