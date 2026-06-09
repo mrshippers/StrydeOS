@@ -64,6 +64,7 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
 
   const [pmsProvider, setPmsProvider] = useState<string>("");
   const [pmsApiKey, setPmsApiKey] = useState("");
+  const [sessionPrice, setSessionPrice] = useState("");
   const [pmsConnected, setPmsConnected] = useState(false);
   const [pmsTesting, setPmsTesting] = useState(false);
   const [syncRunning, setSyncRunning] = useState(false);
@@ -110,6 +111,7 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
         cp.onboardingV2?.stage ?? ""
       );
     setPmsConnected(pmsFlag && pmsVerified);
+    setSessionPrice(cp.sessionPricePence ? String(cp.sessionPricePence / 100) : "");
   }, [cp]);
 
   async function handleTestPms() {
@@ -151,6 +153,12 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
       }
       setPmsConnected(true);
       setPmsApiKey("");
+      if (sessionPrice.trim() && clinicId && db) {
+        const pricePence = Math.round(parseFloat(sessionPrice) * 100);
+        if (!isNaN(pricePence) && pricePence > 0) {
+          await updateDoc(doc(db, "clinics", clinicId), { sessionPricePence: pricePence });
+        }
+      }
       await refreshClinicProfile();
       toast("PMS connected and key saved securely", "success");
     } catch {
@@ -448,6 +456,20 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
                   placeholder={`Enter your ${PMS_PROVIDERS.find((p) => p.id === pmsProvider)?.label ?? pmsProvider} API key`}
                   className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
                 />
+                <div className="mt-3">
+                  <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                    Session price (£) <span className="normal-case font-normal text-muted/70">— used for Revenue per session KPI</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={sessionPrice}
+                    onChange={(e) => setSessionPrice(e.target.value)}
+                    placeholder="e.g. 65"
+                    className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
+                  />
+                </div>
                 <button
                   onClick={handleTestPms}
                   disabled={!pmsApiKey.trim() || pmsTesting}
