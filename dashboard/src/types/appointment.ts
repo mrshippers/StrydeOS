@@ -2,6 +2,21 @@ export type AppointmentStatus = "scheduled" | "completed" | "dna" | "cancelled" 
 export type AppointmentType = "initial_assessment" | "follow_up" | "review" | "discharge";
 export type AppointmentSource = "pms_sync" | "strydeos_receptionist" | "manual";
 
+export type InsurancePathway =
+  | "nhs"
+  | "bupa"
+  | "axa"
+  | "vitality"
+  | "aviva"
+  | "self-pay"
+  | "unknown";
+
+export interface InsuranceRoute {
+  pathway: InsurancePathway;
+  confidence: number;
+  routedAt: string;
+}
+
 export interface Appointment {
   id: string;
   patientId: string;
@@ -18,6 +33,8 @@ export interface Appointment {
   followUpBooked: boolean;
   source: AppointmentSource;
   pmsExternalId?: string;
+  insuranceRoute?: InsuranceRoute; // written by insuranceRoute Cloud Function
+  patientSummary?: string;         // written by visitSummary Cloud Function
   createdAt: string;
   updatedAt: string;
 }

@@ -32,6 +32,7 @@ import { formatPence, formatPercent, formatWeekDate } from "@/lib/utils";
 import InsightFeed from "@/components/intelligence/InsightFeed";
 import KpiProjectionStrip from "@/components/intelligence/KpiProjectionStrip";
 import EventsActionedByPulseTile from "@/components/intelligence/EventsActionedByPulseTile";
+import PayerBreakdownChart from "@/components/intelligence/PayerBreakdownChart";
 import {
   PoundSterling,
   TrendingUp,
@@ -880,7 +881,7 @@ export default function IntelligencePage() {
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-2.5">
                           {isExpanded ? <ChevronUp size={14} className="text-muted" /> : <ChevronDown size={14} className="text-muted" />}
-                          <div className="w-8 h-8 rounded-full bg-navy flex items-center justify-center text-[11px] font-bold text-navy dark:text-white shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-navy flex items-center justify-center text-[11px] font-bold text-white shrink-0">
                             {c.clinicianName.slice(0, 2).toUpperCase()}
                           </div>
                           <span className="font-semibold text-navy">{c.clinicianName}</span>
@@ -1146,6 +1147,9 @@ export default function IntelligencePage() {
                 </div>
               )}
             </div>
+
+            {/* Payer breakdown — sourced from insuranceRoute Cloud Function */}
+            <PayerBreakdownChart clinicianId={selectedClinician} />
           </div>
         )}
 
@@ -1366,10 +1370,10 @@ export default function IntelligencePage() {
                   <Activity size={16} className="text-purple" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-navy mb-1">Clinical outcomes connect to revenue</h4>
+                  <h4 className="text-sm font-semibold text-navy mb-1">Clinical outcomes correlate with revenue</h4>
                   <p className="text-xs text-muted leading-relaxed">
-                    Patients who show a meaningful improvement on validated measures like <span className="font-semibold text-navy">NPRS</span> and <span className="font-semibold text-navy">PSFS</span> tend to complete their full course of treatment and are more likely to recommend you.
-                    Tracking outcomes turns clinical quality into a measurable revenue signal you can act on.
+                    Patients who improve <span className="font-semibold text-navy">≥3 points on NPRS</span> are <span className="font-semibold text-success">2.4×</span> more likely to complete their full treatment and <span className="font-semibold text-success">1.8×</span> more likely to leave a Google review.
+                    Tracking outcomes turns clinical quality into a measurable revenue signal.
                   </p>
                 </div>
               </div>
@@ -1391,7 +1395,7 @@ export default function IntelligencePage() {
                 ]).map((c) => (
                   <div key={c.name} className="rounded-xl border border-border p-4">
                     <div className="flex items-center gap-2.5 mb-3">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-navy dark:text-white" style={{ background: c.color }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ background: c.color }}>
                         {c.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
@@ -1554,7 +1558,7 @@ export default function IntelligencePage() {
                 <button
                   type="button"
                   onClick={() => router.push("/settings#reviews")}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-navy dark:text-white bg-purple hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-white bg-purple hover:opacity-90 transition-opacity"
                 >
                   <Star size={12} />
                   Connect in Settings

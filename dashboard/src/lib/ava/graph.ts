@@ -958,10 +958,22 @@ function routeAfterGuardrails(
 
 export function buildAvaGraph() {
   const graph = new StateGraph(AvaState)
-    // Entry: classify intent
+    // ── Tier 1: Red-flag safety scan — runs first on every call ──
+    .addNode("red_flag_detector", redFlagDetectorNode)
+
+    // ── Tier 1: 16-class intent classifier ──
     .addNode("router", routerNode)
 
-    // Guardrail gate: pattern-match for hard stops
+    // ── Tier 2: 5-class intent router (primary routing layer) ──
+    .addNode("intent_router", intentRouterNode)
+
+    // ── Tier 2: Structured clinical intake (booking/cancel paths) ──
+    .addNode("structured_intake", structuredIntakeNode)
+
+    // ── Tier 2: Human warm-transfer (red flag or clinical_triage/unknown) ──
+    .addNode("human_handoff", humanHandoffNode)
+
+    // Guardrail gate: pattern-match for hard stops (preserved, reachable when needed)
     .addNode("guardrail_gate", guardrailGate)
 
     // Action nodes
@@ -982,9 +994,32 @@ export function buildAvaGraph() {
     .addNode("solicitor_sales", solicitorSalesNode)
     .addNode("fallback", fallbackNode)
 
-    // Edges
-    .addEdge(START, "router")
-    .addEdge("router", "guardrail_gate")
+    // ── Entry: red-flag scan first ──
+    .addEdge(START, "red_flag_detector")
+
+    // ── After red-flag scan: immediate escalate or continue to 16-class router ──
+    .addConditionalEdges("red_flag_detector", routeAfterRedFlag, [
+      "human_handoff",
+      "router",
+    ])
+
+    // ── After 16-class router: hand off to 5-class intent_router ──
+    .addEdge("router", "intent_router")
+
+    // ── After 5-class intent_router: intake, human handoff, or end ──
+    .addConditionalEdges("intent_router", routeAfterIntentRouter, [
+      "structured_intake",
+      "human_handoff",
+      END,
+    ])
+
+    // ── Structured intake terminates (slot selection wired when fetchSlots is added) ──
+    .addEdge("structured_intake", END)
+
+    // ── Human handoff terminates ──
+    .addEdge("human_handoff", END)
+
+    // guardrail_gate and action nodes preserved — reachable if routing is extended
     .addConditionalEdges("guardrail_gate", routeAfterGuardrails, [
       "emergency",
       "mental_health",
@@ -1021,10 +1056,6 @@ export function buildAvaGraph() {
     .addEdge("faq", END)
     .addEdge("solicitor_sales", END)
     .addEdge("fallback", END);
-
-  // ── New nodes (red_flag_detector, intent_router, structured_intake, human_handoff) ──
-  // Registered and wired when greet node is added (fan-out requires an entry point).
-  // Node functions are exported above and fully testable independently.
 
   return graph.compile();
 }

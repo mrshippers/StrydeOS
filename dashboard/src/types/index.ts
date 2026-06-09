@@ -54,6 +54,8 @@ export type {
   AppointmentStatus,
   AppointmentType,
   AppointmentSource,
+  InsurancePathway,
+  InsuranceRoute,
   Appointment,
 } from "./appointment";
 

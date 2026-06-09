@@ -1,10 +1,9 @@
 "use client";
 
-import { use, useMemo } from "react";
+import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
-import { GlassCard } from "@/components/ui/GlassCard";
 
 import { useDemoPatients } from "@/hooks/useDemoData";
 import { useClinicians } from "@/hooks/useClinicians";
@@ -21,6 +20,9 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
 } from "lucide-react";
 
 interface TimelineEvent {
@@ -31,6 +33,7 @@ interface TimelineEvent {
   detail: string;
   icon: React.ElementType;
   color: string;
+  aiSummary?: string;
 }
 
 function buildTimeline(patientId: string): TimelineEvent[] {
@@ -102,6 +105,85 @@ function buildTimeline(patientId: string): TimelineEvent[] {
   return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
+// ─── Timeline card with optional AI summary expansion ─────────────────────────
+
+function TimelineCard({ timeline }: { timeline: TimelineEvent[] }) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggle(id: string) {
+    setExpanded((prev: Set<string>) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  return (
+    <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+      <h3 className="font-display text-lg text-navy mb-4">Activity Timeline</h3>
+      <div className="relative">
+        <div className="absolute left-[15px] top-0 bottom-0 w-px bg-border" />
+        <div className="space-y-5">
+          {timeline.map((event) => {
+            const Icon = event.icon;
+            const isOpen = expanded.has(event.id);
+            return (
+              <div key={event.id} className="flex gap-4 relative">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 relative z-10"
+                  style={{ background: `${event.color}15` }}
+                >
+                  <Icon size={14} style={{ color: event.color }} />
+                </div>
+                <div className="flex-1 pb-1">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-sm font-semibold text-navy">{event.title}</span>
+                    <span className="text-[10px] text-muted flex items-center gap-1">
+                      <Clock size={9} />
+                      {daysSince(event.date)}d ago
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted leading-relaxed">{event.detail}</p>
+
+                  {event.aiSummary && (
+                    <div className="mt-2">
+                      <button
+                        onClick={() => toggle(event.id)}
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full transition-colors"
+                        style={{
+                          background: "rgba(139,92,246,0.08)",
+                          color: "#8B5CF6",
+                        }}
+                      >
+                        <Sparkles size={9} />
+                        AI summary
+                        {isOpen
+                          ? <ChevronUp size={9} />
+                          : <ChevronDown size={9} />}
+                      </button>
+                      {isOpen && (
+                        <p
+                          className="mt-1.5 text-xs leading-relaxed pl-1 border-l-2"
+                          style={{
+                            color: "#5C6370",
+                            borderColor: "rgba(139,92,246,0.3)",
+                          }}
+                        >
+                          {event.aiSummary}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PatientDetailPage({
   params,
 }: {
@@ -138,9 +220,9 @@ export default function PatientDetailPage({
       </Link>
 
       {/* Patient header */}
-      <GlassCard variant="standard" tint="pulse" className="p-6">
+      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-full bg-navy flex items-center justify-center text-lg font-bold text-navy dark:text-white shrink-0">
+          <div className="w-14 h-14 rounded-full bg-navy flex items-center justify-center text-lg font-bold text-white shrink-0">
             {getInitials(patient.name)}
           </div>
           <div className="flex-1 min-w-0">
@@ -172,7 +254,7 @@ export default function PatientDetailPage({
             </div>
           </div>
         </div>
-      </GlassCard>
+      </div>
 
       {/* Key stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -208,7 +290,7 @@ export default function PatientDetailPage({
       </div>
 
       {/* Course progress bar */}
-      <GlassCard variant="standard" tint="pulse" className="p-5">
+      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-navy">Treatment Progress</h3>
           <span className="text-sm font-bold text-navy">{progress}%</span>
@@ -228,7 +310,7 @@ export default function PatientDetailPage({
               key={i}
               className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
                 i < patient.sessionCount
-                  ? "bg-success text-navy dark:text-white"
+                  ? "bg-success text-white"
                   : "bg-cloud-dark text-muted"
               }`}
             >
@@ -236,40 +318,10 @@ export default function PatientDetailPage({
             </div>
           ))}
         </div>
-      </GlassCard>
+      </div>
 
       {/* Timeline */}
-      <GlassCard variant="standard" tint="pulse" className="p-6">
-        <h3 className="font-display text-lg text-navy mb-4">Activity Timeline</h3>
-        <div className="relative">
-          <div className="absolute left-[15px] top-0 bottom-0 w-px bg-border" />
-          <div className="space-y-5">
-            {timeline.map((event) => {
-              const Icon = event.icon;
-              return (
-                <div key={event.id} className="flex gap-4 relative">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 relative z-10"
-                    style={{ background: `${event.color}15` }}
-                  >
-                    <Icon size={14} style={{ color: event.color }} />
-                  </div>
-                  <div className="flex-1 pb-1">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-sm font-semibold text-navy">{event.title}</span>
-                      <span className="text-[10px] text-muted flex items-center gap-1">
-                        <Clock size={9} />
-                        {daysSince(event.date)}d ago
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted leading-relaxed">{event.detail}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </GlassCard>
+      <TimelineCard timeline={timeline} />
     </div>
   );
 }
