@@ -19,6 +19,7 @@ import { isEncrypted, decryptCredential } from "@/lib/crypto/credentials";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { testClinikoConnection } from "@/lib/integrations/pms/cliniko/client";
 import { createIntakeLink } from "@/lib/insurance/create-link";
+import { buildInsuranceIntakeSms } from "@/lib/insurance/sms";
 import { buildInsuranceIntakeEmail } from "@/lib/intelligence/emails/insurance-intake";
 import { getResend } from "@/lib/resend";
 import { getTwilio } from "@/lib/twilio";
@@ -102,11 +103,14 @@ async function handler(request: NextRequest) {
           : "";
     if (smsTo) {
       try {
-        const firstName = patient.firstName ? ` ${patient.firstName}` : "";
         await getTwilio().messages.create({
           from: branding.smsSender,
           to: smsTo,
-          body: `Hi${firstName}, please confirm your insurance details for your upcoming appointment using this secure link: ${link.shortUrl} - takes under a minute. Reply STOP to opt out.`,
+          body: buildInsuranceIntakeSms({
+            patientName: [patient.firstName, patient.lastName].filter(Boolean).join(" ") || undefined,
+            link: link.shortUrl,
+            clinicName: branding.clinicName,
+          }),
         });
         texted = true;
       } catch {

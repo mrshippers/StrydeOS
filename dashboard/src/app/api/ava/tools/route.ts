@@ -23,6 +23,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { createIntakeLink } from "@/lib/insurance/create-link";
+import { buildInsuranceIntakeSms } from "@/lib/insurance/sms";
 import { getTwilio } from "@/lib/twilio";
 import { getClinicBranding } from "@/lib/comms/clinic-branding";
 // Tool-call auth uses a static Bearer token (ElevenLabs tool webhooks don't
@@ -496,7 +497,7 @@ async function handleSendInsuranceLink(
     await getTwilio().messages.create({
       from: branding.smsSender,
       to: smsTo,
-      body: `Please confirm your insurance details before your appointment using this secure link: ${link.shortUrl} - takes under a minute. Reply STOP to opt out.`,
+      body: buildInsuranceIntakeSms({ link: link.shortUrl, clinicName: branding.clinicName }),
     });
     return "Perfect, I've just texted you a secure link to confirm your insurance details before your appointment. It only takes a minute.";
   } catch (err) {
