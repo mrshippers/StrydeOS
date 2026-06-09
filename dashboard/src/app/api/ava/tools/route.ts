@@ -397,6 +397,7 @@ async function handleUpdateBooking(
   adapter: ReturnType<typeof createPMSAdapter>,
   input: Record<string, unknown>,
   clinicId: string,
+  hoursConfig?: HoursConfig,
 ): Promise<string> {
   const action = (input.action as string)?.toLowerCase();
   const bookingId = (input.booking_id as string)?.trim();
@@ -408,6 +409,13 @@ async function handleUpdateBooking(
   if (action === "cancel") {
     try {
       await adapter.updateAppointmentStatus(bookingId, "cancelled");
+      try {
+        const db = getAdminDb();
+        await db.collection("clinics").doc(clinicId).collection("appointments").doc(bookingId).update({
+          status: "cancelled",
+          updatedAt: new Date().toISOString(),
+        });
+      } catch { /* best-effort Firestore mirror */ }
       return "That appointment has been cancelled. Would you like to rebook for another time?";
     } catch {
       return "I'm having trouble cancelling that booking right now. Let me take a note and have someone sort it out for you today.";
@@ -415,12 +423,154 @@ async function handleUpdateBooking(
   }
 
   if (action === "reschedule") {
-    const newDatetime = input.new_datetime as string;
+    const newDatetime = input.new_datetime as string | undefined;
+    const db = getAdminDb();
+
+    // ── Phase 1: No new time yet — look up the clinician and offer real slots ──
     if (!newDatetime) {
-      return "When would you like to move the appointment to?";
+      let clinicianExternalId: string | undefined;
+      let clinicianName: string | undefined;
+
+      try {
+        const apptSnap = await db
+          .collection("clinics")
+          .doc(clinicId)
+          .collection("appointments")
+          .doc(bookingId)
+          .get();
+
+        if (apptSnap.exists) {
+          const data = apptSnap.data()!;
+          clinicianExternalId = data.clinicianId as string | undefined;
+
+          if (clinicianExternalId) {
+            const cSnap = await db.collection("clinics").doc(clinicId).collection("clinicians").get();
+            const match = cSnap.docs.find(
+              (d) => (d.data().pmsExternalId ?? d.id) === clinicianExternalId,
+            );
+            if (match) clinicianName = match.data().name as string | undefined;
+          }
+        }
+      } catch { /* proceed with generic slots if appointment lookup fails */ }
+
+      const now = new Date();
+      const dateFrom = now.toISOString();
+      const dateTo = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const whoDesc = clinicianName ? ` with ${clinicianName}` : "";
+
+      let freeSlots: Date[] = [];
+      try {
+        const appointments = await adapter.getAppointments({ clinicianExternalId, dateFrom, dateTo });
+        freeSlots = computeFreeSlots(appointments, new Date(dateFrom), new Date(dateTo), hoursConfig);
+      } catch {
+        return `I'm having a bit of trouble checking the diary right now. What day were you thinking${whoDesc}? I'll pass it on and someone will confirm your new slot.`;
+      }
+
+      if (freeSlots.length === 0) {
+        return `We don't have any free slots in the next week${whoDesc}. Would you like me to check further ahead?`;
+      }
+
+      const slotStrings = freeSlots.slice(0, 3).map((slot) => {
+        const dayStr = slot.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+        const timeStr = slot.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+        return `${dayStr} at ${timeStr}`;
+      });
+
+      if (slotStrings.length === 1) {
+        return `I can see ${slotStrings[0]} is available${whoDesc}. Shall I move your appointment to that slot?`;
+      }
+      return `I can see a few openings${whoDesc}: ${slotStrings.join(", or ")}. Which works best for you?`;
     }
-    // For now, cancel + rebook is the safest pattern across PMS providers
-    return "Let me check if that new time is available. One moment.";
+
+    // ── Phase 2: Patient has picked a time — cancel old, book new ──
+    const dt = new Date(newDatetime);
+    if (isNaN(dt.getTime())) {
+      return "I didn't quite catch the new date and time. Could you say it again — for example, Tuesday at 2pm?";
+    }
+    if (dt.getTime() < Date.now() - 5 * 60_000) {
+      return "That time seems to be in the past. Could you give me a future date and time?";
+    }
+
+    let clinicianExternalId = "";
+    let clinicianName = "one of our physios";
+    let patientExternalId = "";
+    let appointmentType: "initial_assessment" | "follow_up" = "follow_up";
+
+    try {
+      const apptSnap = await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("appointments")
+        .doc(bookingId)
+        .get();
+
+      if (apptSnap.exists) {
+        const data = apptSnap.data()!;
+        clinicianExternalId = (data.clinicianId as string) ?? "";
+        patientExternalId = (data.patientId as string) ?? "";
+        appointmentType = (data.appointmentType as "initial_assessment" | "follow_up") ?? "follow_up";
+
+        if (clinicianExternalId) {
+          const cSnap = await db.collection("clinics").doc(clinicId).collection("clinicians").get();
+          const match = cSnap.docs.find((d) => (d.data().pmsExternalId ?? d.id) === clinicianExternalId);
+          if (match) clinicianName = (match.data().name as string) ?? clinicianName;
+        }
+      }
+    } catch { /* proceed — PMS rebook may still work if we have enough data */ }
+
+    if (!clinicianExternalId || !patientExternalId) {
+      return "I'm having trouble finding the full appointment details. Let me take a note and have someone rebook this for you within the hour.";
+    }
+
+    const durationMinutes = 45;
+    const endTime = new Date(dt.getTime() + durationMinutes * 60_000).toISOString();
+
+    try {
+      await adapter.updateAppointmentStatus(bookingId, "cancelled");
+
+      const pmsResult = await adapter.createAppointment({
+        patientExternalId,
+        clinicianExternalId,
+        dateTime: dt.toISOString(),
+        endTime,
+        appointmentType,
+        notes: "[Rescheduled by Ava — AI receptionist]",
+      });
+
+      const now = new Date().toISOString();
+      await db
+        .collection("clinics").doc(clinicId).collection("appointments").doc(bookingId)
+        .update({ status: "cancelled", updatedAt: now });
+
+      const newDocId = pmsResult.externalId ?? db.collection("_").doc().id;
+      await db
+        .collection("clinics").doc(clinicId).collection("appointments").doc(newDocId)
+        .set({
+          patientId: patientExternalId,
+          clinicianId: clinicianExternalId,
+          dateTime: dt.toISOString(),
+          endTime,
+          status: "scheduled",
+          appointmentType,
+          isInitialAssessment: appointmentType === "initial_assessment",
+          hepAssigned: false,
+          revenueAmountPence: 0,
+          followUpBooked: false,
+          source: "strydeos_receptionist",
+          pmsExternalId: pmsResult.externalId,
+          pmsWriteStatus: "success",
+          bookedBy: "ava",
+          rescheduledFromId: bookingId,
+          createdAt: now,
+          updatedAt: now,
+        });
+
+      const dateStr = dt.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+      const timeStr = dt.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+      return `Done — I've moved your appointment to ${dateStr} at ${timeStr} with ${clinicianName}. You'll receive a confirmation text shortly.`;
+    } catch {
+      return "I'm having a bit of trouble rescheduling right now. Let me take a note and have someone sort this for you within the hour.";
+    }
   }
 
   return "Would you like to cancel or reschedule the appointment?";
@@ -632,7 +782,12 @@ async function handler(req: NextRequest) {
         );
         break;
       case "update_booking":
-        result = await handleUpdateBooking(adapter, toolInput, clinicId);
+        result = await handleUpdateBooking(
+          adapter,
+          toolInput,
+          clinicId,
+          (clinicData?.ava as Record<string, unknown>)?.hours as HoursConfig | undefined,
+        );
         break;
       case "send_insurance_intake_link":
         result = await handleSendInsuranceLink(toolInput, clinicId, caller_phone ?? "");

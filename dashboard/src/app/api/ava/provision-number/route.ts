@@ -145,8 +145,14 @@ async function handler(req: NextRequest) {
       );
     }
 
-    // 2. Buy a UK number, wiring its voiceUrl to ElevenLabs' native Twilio handler
-    const voiceUrl = `https://api.elevenlabs.io/twilio/inbound-call`;
+    // 2. Buy a UK number, wiring its voiceUrl to our inbound-call proxy so
+    //    multi-tenant routing, red-flag triggers, and LangGraph 2-tier routing
+    //    all run before the call reaches ElevenLabs.
+    const appUrlForWebhook = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrlForWebhook) {
+      throw new Error("NEXT_PUBLIC_APP_URL is not configured");
+    }
+    const voiceUrl = `${appUrlForWebhook}/api/ava/inbound-call?clinicId=${clinicId}`;
     const { phoneNumber, phoneSid } = await purchaseUkNumber({ locality, voiceUrl });
 
     // 3. Register the Twilio number with ElevenLabs to get a phone_number_id.
