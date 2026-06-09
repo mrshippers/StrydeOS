@@ -23,7 +23,8 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { createIntakeLink } from "@/lib/insurance/create-link";
-import { getTwilio, getSmsSender } from "@/lib/twilio";
+import { getTwilio } from "@/lib/twilio";
+import { getClinicBranding } from "@/lib/comms/clinic-branding";
 // Tool-call auth uses a static Bearer token (ElevenLabs tool webhooks don't
 // send HMAC signatures — that's only for conversation event webhooks).
 const TOOLS_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
@@ -484,14 +485,16 @@ async function handleSendInsuranceLink(
     return "I can send you a secure link to confirm your insurance, but I don't have a mobile number for you. What's the best number to text?";
   }
   try {
-    const link = await createIntakeLink(getAdminDb(), clinicId, {
+    const db = getAdminDb();
+    const branding = await getClinicBranding(db, clinicId);
+    const link = await createIntakeLink(db, clinicId, {
       patientRef,
       insurerOptions: [],
       createdBy: "ava",
       nowMs: Date.now(),
     });
     await getTwilio().messages.create({
-      from: getSmsSender(),
+      from: branding.smsSender,
       to: smsTo,
       body: `Please confirm your insurance details before your appointment using this secure link: ${link.shortUrl} - takes under a minute. Reply STOP to opt out.`,
     });

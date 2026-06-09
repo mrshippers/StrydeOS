@@ -23,6 +23,7 @@ import { testClinikoConnection } from "@/lib/integrations/pms/cliniko/client";
 import { createIntakeLink } from "@/lib/insurance/create-link";
 import { selectAppointmentsForIntake } from "@/lib/insurance/auto-send";
 import { buildInsuranceIntakeEmail } from "@/lib/intelligence/emails/insurance-intake";
+import { brandingFromClinicData } from "@/lib/comms/clinic-branding";
 import { getResend } from "@/lib/resend";
 import { writeAuditLog } from "@/lib/audit-log";
 import type { PMSIntegrationConfig } from "@/types/pms";
@@ -88,7 +89,7 @@ async function processClinic(
   let fieldMap: InsuranceFieldMap | null = null;
   try { fieldMap = adapter.discoverInsuranceFields ? await adapter.discoverInsuranceFields() : null; } catch { fieldMap = null; }
 
-  const fromEmail = process.env.RESEND_FROM_EMAIL ?? "noreply@strydeos.com";
+  const branding = brandingFromClinicData(clinicData);
   let sent = 0, noEmail = 0;
   const errors: string[] = [];
 
@@ -109,12 +110,12 @@ async function processClinic(
       const name = [patient.firstName, patient.lastName].filter(Boolean).join(" ");
       const { html, text } = buildInsuranceIntakeEmail({
         patientName: name || undefined,
-        clinicName: (clinicData.name as string) ?? "Your clinic",
+        clinicName: branding.clinicName,
         url: link.url,
       });
 
       const { error } = await getResend().emails.send({
-        from: `StrydeOS <${fromEmail}>`,
+        from: branding.emailFrom,
         to: patient.email,
         subject: "Confirm your insurance before your appointment",
         html,

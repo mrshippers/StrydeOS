@@ -121,6 +121,12 @@ export interface ClinicProfile {
   address?: string;
   phone?: string;
   receptionPhone?: string;
+  /**
+   * White-label outbound comms overrides. When unset, patient-facing texts/emails
+   * derive their sender from `name` (see lib/comms/clinic-branding.ts).
+   */
+  smsSenderId?: string;
+  emailFromName?: string;
   sessionPricePence?: number;
   parkingInfo?: string;
   website?: string;

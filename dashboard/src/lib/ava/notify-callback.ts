@@ -6,7 +6,8 @@
  */
 
 import { getAdminDb } from "@/lib/firebase-admin";
-import { getTwilio, getSmsSender } from "@/lib/twilio";
+import { getTwilio } from "@/lib/twilio";
+import { brandingFromClinicData } from "@/lib/comms/clinic-branding";
 
 export interface CallbackNotification {
   clinicId: string;
@@ -68,7 +69,7 @@ export async function sendBookingAcknowledgement(params: {
     );
 
     const tw = getTwilio();
-    const fromPhone = getSmsSender();
+    const fromPhone = brandingFromClinicData(clinicData).smsSender;
 
     const body = clinicPhone
       ? `Hi, thanks for calling ${clinicName}. Your appointment request has been received — we'll confirm your slot by text within the hour. Questions? Call us on ${clinicPhone}.`
@@ -106,7 +107,7 @@ export async function sendCallbackNotification(
     if (!toPhone) return;
 
     const tw = getTwilio();
-    const fromPhone = getSmsSender();
+    const fromPhone = brandingFromClinicData(clinicData).smsSender;
     const body = formatSmsBody(notification);
 
     await tw.messages.create({

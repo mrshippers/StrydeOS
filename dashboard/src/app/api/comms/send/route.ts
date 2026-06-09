@@ -22,6 +22,7 @@ import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, requireRole, requireClinic, handleApiError } from "@/lib/auth-guard";
 import { getTwilio, getSmsSender } from "@/lib/twilio";
+import { brandingFromClinicData, type ClinicBranding } from "@/lib/comms/clinic-branding";
 import { getResend } from "@/lib/resend";
 import type { SequenceType, CommsChannel, CommsLogEntry } from "@/types";
 import { withRequestLog } from "@/lib/request-logger";
@@ -140,12 +141,14 @@ async function handler(request: NextRequest) {
     let clinicName = "";
     let bookingUrl = "";
     let reviewLink = "";
+    let branding: ClinicBranding | null = null;
     try {
       const clinicDoc = await db.collection("clinics").doc(clinicId).get();
       const clinicData = clinicDoc.exists ? (clinicDoc.data() ?? {}) : {};
       clinicName = (clinicData.name as string) ?? "";
       bookingUrl = (clinicData.bookingUrl as string) ?? "";
       reviewLink = (clinicData.googleReviewUrl as string) ?? "";
+      branding = brandingFromClinicData(clinicData);
     } catch (err) {
       Sentry.captureException(err, { tags: { context: "comms_clinic_meta_read" } });
       // Non-fatal — fall through with empty strings; unresolved-token
@@ -206,7 +209,7 @@ async function handler(request: NextRequest) {
         const twilio = getTwilio();
         const msg = await twilio.messages.create({
           body: resolvedBody,
-          from: getSmsSender(),
+          from: branding?.smsSender ?? getSmsSender(),
           to: recipient,
         });
         twilioSid = msg.sid;
@@ -218,7 +221,7 @@ async function handler(request: NextRequest) {
         const fromEmail = process.env.RESEND_FROM_EMAIL ?? "noreply@strydeos.com";
         const resend = getResend();
         const { data, error } = await resend.emails.send({
-          from: `StrydeOS Pulse <${fromEmail}>`,
+          from: branding?.emailFrom ?? `StrydeOS Pulse <${fromEmail}>`,
           to,
           subject: resolvedSubject,
           text: resolvedBody,

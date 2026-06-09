@@ -21,7 +21,8 @@ import { testClinikoConnection } from "@/lib/integrations/pms/cliniko/client";
 import { createIntakeLink } from "@/lib/insurance/create-link";
 import { buildInsuranceIntakeEmail } from "@/lib/intelligence/emails/insurance-intake";
 import { getResend } from "@/lib/resend";
-import { getTwilio, getSmsSender } from "@/lib/twilio";
+import { getTwilio } from "@/lib/twilio";
+import { getClinicBranding } from "@/lib/comms/clinic-branding";
 import type { PMSIntegrationConfig } from "@/types/pms";
 import type { InsuranceFieldMap } from "@/lib/insurance/types";
 
@@ -44,6 +45,7 @@ async function handler(request: NextRequest) {
     if (!patientRef) return NextResponse.json({ error: "patientRef is required" }, { status: 400 });
 
     const db = getAdminDb();
+    const branding = await getClinicBranding(db, clinicId);
     const cfgSnap = await db.collection("clinics").doc(clinicId).collection(INTEGRATIONS_PMS).doc(PMS_DOC_ID).get();
     const cfg = cfgSnap.data() as PMSIntegrationConfig | undefined;
     if (!cfg?.apiKey?.trim() || !cfg.provider) {
@@ -73,15 +75,13 @@ async function handler(request: NextRequest) {
 
     let emailed = false;
     if (patient.email) {
-      const clinicName = (await db.collection("clinics").doc(clinicId).get()).data()?.name ?? "Your clinic";
       const { html, text } = buildInsuranceIntakeEmail({
         patientName: [patient.firstName, patient.lastName].filter(Boolean).join(" ") || undefined,
-        clinicName,
+        clinicName: branding.clinicName,
         url: link.url,
       });
-      const fromEmail = process.env.RESEND_FROM_EMAIL ?? "noreply@strydeos.com";
       const { error } = await getResend().emails.send({
-        from: `StrydeOS <${fromEmail}>`,
+        from: branding.emailFrom,
         to: patient.email,
         subject: "Confirm your insurance before your appointment",
         html,
@@ -104,7 +104,7 @@ async function handler(request: NextRequest) {
       try {
         const firstName = patient.firstName ? ` ${patient.firstName}` : "";
         await getTwilio().messages.create({
-          from: getSmsSender(),
+          from: branding.smsSender,
           to: smsTo,
           body: `Hi${firstName}, please confirm your insurance details for your upcoming appointment using this secure link: ${link.shortUrl} - takes under a minute. Reply STOP to opt out.`,
         });
