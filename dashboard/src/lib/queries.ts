@@ -150,7 +150,10 @@ export function subscribePatients(
 
   const constraints: QueryConstraint[] = [];
   if (clinicianId) {
-    constraints.push(where("clinicianId", "==", clinicianId));
+    // Visibility is caseload-based: a clinician sees a patient only if they are
+    // in the patient's caseload (every clinician who has seen them). The primary
+    // clinician is always in their own caseload, so "own patients" still resolve.
+    constraints.push(where("caseload", "array-contains", clinicianId));
   }
   constraints.push(limit(500));
 

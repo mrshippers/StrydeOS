@@ -1,4 +1,9 @@
 import type { AppointmentStatus, PmsProvider } from "./index";
+import type {
+  InsuranceRecord,
+  InsuranceFieldMap,
+  InsuranceWriteResult,
+} from "@/lib/insurance/types";
 
 // ─── Canonical PMS Types (provider-agnostic) ─────────────────────────────────
 
@@ -87,6 +92,22 @@ export interface PMSAdapter {
 
   /** Optional: find a patient in the PMS by phone number. Returns externalId or null. */
   findPatientByPhone?(phone: string): Promise<string | null>;
+
+  /**
+   * Optional: discover the tenant's insurance custom fields (Insurance Intake).
+   * Returns the per-tenant field tokens + insurer dropdown options, or a map
+   * flagged for invoice-extra-info fallback when those fields are absent.
+   */
+  discoverInsuranceFields?(): Promise<InsuranceFieldMap>;
+
+  /**
+   * Optional: write a captured insurance record into the PMS as custom patient
+   * fields + billing info. Falls back to invoice extra info per the field map.
+   */
+  writeInsurance?(
+    record: InsuranceRecord,
+    fieldMap: InsuranceFieldMap,
+  ): Promise<InsuranceWriteResult>;
 }
 
 // ─── PMS Integration Config (server-side only) ──────────────────────────────

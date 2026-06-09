@@ -1,8 +1,10 @@
-import type { PMSAdapter, PMSAppointment, PMSPatient, PMSClinician, InsuranceInfo } from "@/types/pms";
+import type { PMSAdapter, InsuranceInfo } from "@/types/pms";
 import type { AppointmentStatus } from "@/types";
 import { clinikoFetch, clinikoFetchAll, testClinikoConnection, type ClinikoConfig } from "./client";
 import { mapClinikoAppointment, mapClinikoClinician } from "./mappers";
 import type { ClinikoAppointmentRow, ClinikoPractitionerRow } from "./mappers";
+import { discoverClinikoInsuranceFields, writeInsuranceToCliniko } from "./insurance";
+import type { InsuranceFieldMap, InsuranceRecord } from "@/lib/insurance/types";
 
 export function createClinikoAdapter(config: ClinikoConfig): PMSAdapter {
   return {
@@ -150,6 +152,16 @@ export function createClinikoAdapter(config: ClinikoConfig): PMSAdapter {
       } catch {
         return null;
       }
+    },
+
+    // ─── Insurance Intake (Stream B) ─────────────────────────────────────────
+
+    discoverInsuranceFields(): Promise<InsuranceFieldMap> {
+      return discoverClinikoInsuranceFields(config);
+    },
+
+    writeInsurance(record: InsuranceRecord, fieldMap: InsuranceFieldMap) {
+      return writeInsuranceToCliniko(config, record, fieldMap);
     },
   };
 }

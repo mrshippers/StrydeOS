@@ -2084,8 +2084,42 @@ const Products = ({ darkMode }) => {
           ))}
         </div>
 
-        {/* Panel */}
-        <div id={`product-${p.id}`} key={active} className="product-grid" style={{ animation: "fadeIn 0.4s ease" }}>
+        {/* Panel — premium glass slab (gloss over the whole component) */}
+        <div key={active} style={{ position: "relative", animation: "fadeIn 0.4s ease" }}>
+          {/* base glass surface */}
+          <div aria-hidden style={{
+            position: "absolute", inset: 0, borderRadius: 28,
+            background: darkMode
+              ? "linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.012) 55%, rgba(255,255,255,0.035))"
+              : "linear-gradient(160deg, rgba(255,255,255,0.6), rgba(255,255,255,0.26) 55%, rgba(255,255,255,0.46))",
+            border: `1px solid ${darkMode ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.7)"}`,
+            boxShadow: darkMode
+              ? "0 30px 80px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.06)"
+              : "0 30px 70px rgba(28,84,242,0.08), 0 4px 14px rgba(11,37,69,0.05), inset 0 1px 0 rgba(255,255,255,0.85)",
+            pointerEvents: "none",
+          }} />
+          {/* top gloss sheen */}
+          <div aria-hidden style={{
+            position: "absolute", top: 0, left: 0, right: 0, height: 160, borderRadius: "28px 28px 0 0",
+            background: darkMode
+              ? "linear-gradient(180deg, rgba(255,255,255,0.06), transparent)"
+              : "linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.16) 42%, transparent 100%)",
+            pointerEvents: "none",
+          }} />
+          {/* diagonal catch-light */}
+          <div aria-hidden style={{
+            position: "absolute", inset: 0, borderRadius: 28,
+            background: "linear-gradient(116deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0) 28%, rgba(255,255,255,0) 72%, rgba(255,255,255,0.14) 100%)",
+            opacity: darkMode ? 0.28 : 0.7, pointerEvents: "none",
+          }} />
+          {/* active-product accent line */}
+          <div aria-hidden style={{
+            position: "absolute", top: -1, left: 28, right: 28, height: 2, borderRadius: 2,
+            background: `linear-gradient(90deg, transparent, ${p.color}, transparent)`,
+            opacity: 0.55, pointerEvents: "none",
+          }} />
+
+          <div id={`product-${p.id}`} className="product-grid" style={{ position: "relative", padding: "clamp(24px, 3.6vw, 44px)" }}>
           <div>
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 6,
@@ -2144,6 +2178,7 @@ const Products = ({ darkMode }) => {
           </div>
 
           <div className="product-visual">{p.visual}</div>
+          </div>
         </div>
       </div>
     </section>

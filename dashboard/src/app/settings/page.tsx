@@ -418,8 +418,32 @@ export default function SettingsPage() {
     }
   }
 
+  const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
+  async function handleUpdateRole(clinicianId: string, role: "owner" | "admin" | "clinician") {
+    if (!firebaseUser) return;
+    setUpdatingRoleId(clinicianId);
+    try {
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch(`/api/clinicians/${clinicianId}/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ role }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(normalizeApiError(res.status, data?.error, "Could not change role."));
+      }
+      // useClinicians is a live subscription — the list updates automatically.
+    } catch {
+      alert("Network error changing role.");
+    } finally {
+      setUpdatingRoleId(null);
+    }
+  }
+
   const canManageTeam =
     user?.role === "owner" || user?.role === "admin" || user?.role === "superadmin";
+  const canAssignOwner = user?.role === "owner" || user?.role === "superadmin";
 
   const onboarding = cp?.onboarding ?? { pmsConnected: false, cliniciansConfirmed: false, targetsSet: false };
   const onboardingComplete = onboarding.pmsConnected && onboarding.cliniciansConfirmed && onboarding.targetsSet;
@@ -647,6 +671,10 @@ export default function SettingsPage() {
         handleDeactivateClinician={handleDeactivateClinician}
         handleConfirmTeam={handleConfirmTeam}
         handleSendInvite={handleSendInvite}
+        currentUserUid={user?.uid}
+        canAssignOwner={canAssignOwner}
+        updatingRoleId={updatingRoleId}
+        handleUpdateRole={handleUpdateRole}
       />
 
       <SeatLimitModal

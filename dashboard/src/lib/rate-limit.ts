@@ -26,10 +26,13 @@ const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 async function checkRedisRateLimit(
   key: string,
   limit: number,
-  windowMs: number
+  windowMs: number,
+  failClosed = false
 ): Promise<{ limited: boolean; remaining: number }> {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) {
-    return { limited: false, remaining: limit };
+    // No distributed backend configured. For failClosed callers (secret/auth
+    // endpoints) this is a misconfiguration we must not silently allow through.
+    return { limited: failClosed, remaining: failClosed ? 0 : limit };
   }
 
   const windowSec = Math.ceil(windowMs / 1000);
@@ -49,8 +52,9 @@ async function checkRedisRateLimit(
   });
 
   if (!res.ok) {
-    // Redis unavailable — fail open (allow request)
-    return { limited: false, remaining: limit };
+    // Redis unavailable. Default: fail open (availability over strictness).
+    // failClosed callers (secret/auth/abuse-sensitive routes) block instead.
+    return { limited: failClosed, remaining: 0 };
   }
 
   const results = await res.json() as { result: number }[];
@@ -100,6 +104,14 @@ export interface RateLimitOptions {
   limit: number;
   /** Window duration in milliseconds. */
   windowMs: number;
+  /**
+   * When true, a missing/unavailable Redis backend BLOCKS the request (429)
+   * instead of allowing it. Use on secret-verified / auth / abuse-sensitive
+   * endpoints where "fail open" would remove the only enforceable ceiling.
+   * Only honoured by checkRateLimitAsync (the sync path cannot await Redis).
+   * Defaults to false to preserve availability-first behaviour elsewhere.
+   */
+  failClosed?: boolean;
 }
 
 export interface RateLimitResult {
@@ -179,7 +191,7 @@ export async function checkRateLimitAsync(
   if (UPSTASH_URL && UPSTASH_TOKEN) {
     try {
       const redisKey = `rl:${ip}:${options.limit}:${options.windowMs}`;
-      return await checkRedisRateLimit(redisKey, options.limit, options.windowMs);
+      return await checkRedisRateLimit(redisKey, options.limit, options.windowMs, options.failClosed);
     } catch (err) {
       Sentry.addBreadcrumb({
         category: "rate-limit",
@@ -187,7 +199,15 @@ export async function checkRateLimitAsync(
         level: "warning",
         data: { error: err instanceof Error ? err.message : String(err) },
       });
+      // On hard failure, failClosed callers must not fall through to the
+      // per-instance in-memory limiter (which allows the request).
+      if (options.failClosed) {
+        return { limited: true, remaining: 0 };
+      }
     }
+  } else if (options.failClosed) {
+    // No Redis configured at all and the caller demands a real ceiling.
+    return { limited: true, remaining: 0 };
   }
 
   return checkRateLimit(request, options);

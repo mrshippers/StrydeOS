@@ -24,9 +24,32 @@ import type { CSVFileType } from "@/lib/csv-import/types";
 
 const INBOUND_SECRET = process.env.CSV_INBOUND_SECRET?.trim() ?? "";
 
-function extractClinicIdFromRecipient(recipient: string): string | null {
-  const match = recipient.match(/^import-([a-zA-Z0-9_-]+)@/);
-  return match ? match[1] : null;
+/**
+ * Per-clinic ingest token: HMAC(CSV_INBOUND_SECRET, clinicId). A tokenised
+ * ingest address (import-{clinicId}.{token}@…) carries a token that only ever
+ * authorises ITS OWN clinicId, so a sender holding the global secret cannot
+ * inject CSV data into another clinic. Backward-compatible: legacy
+ * import-{clinicId}@… addresses still pass on the global secret alone.
+ */
+function deriveClinicInboundToken(clinicId: string): string {
+  return crypto
+    .createHmac("sha256", INBOUND_SECRET)
+    .update(`csv-inbound:${clinicId}`)
+    .digest("hex")
+    .slice(0, 32);
+}
+
+/**
+ * Parse the recipient localpart. Accepts:
+ *   import-{clinicId}@host           → { clinicId, token: null }   (legacy)
+ *   import-{clinicId}.{token}@host   → { clinicId, token }         (clinic-bound)
+ * clinicId (Firestore id) never contains a dot, so the dot delimiter is unambiguous.
+ */
+function extractClinicAndToken(recipient: string): { clinicId: string | null; token: string | null } {
+  const withToken = recipient.match(/^import-([a-zA-Z0-9_-]+)\.([a-f0-9]{32})@/);
+  if (withToken) return { clinicId: withToken[1], token: withToken[2] };
+  const legacy = recipient.match(/^import-([a-zA-Z0-9_-]+)@/);
+  return { clinicId: legacy ? legacy[1] : null, token: null };
 }
 
 /**
@@ -161,9 +184,16 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     recipient = ((formData.get("recipient") ?? formData.get("to")) as string) ?? "";
     from = ((formData.get("from") as string) ?? "").trim();
 
+    let presentedToken: string | null =
+      (formData.get("clinicToken") as string | null) ??
+      request.nextUrl.searchParams.get("t") ??
+      null;
+
     clinicId = (formData.get("clinicId") as string) ?? "";
     if (!clinicId) {
-      clinicId = extractClinicIdFromRecipient(recipient) ?? "";
+      const parsed = extractClinicAndToken(recipient);
+      clinicId = parsed.clinicId ?? "";
+      if (!presentedToken) presentedToken = parsed.token;
     }
     if (!clinicId) {
       return NextResponse.json({ error: "Could not determine clinicId from recipient or form data" }, { status: 400 });
@@ -176,11 +206,45 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     }
 
     const clinicData = clinicDoc.data() as
-      | { status?: string; allowedInboundSenders?: string[] }
+      | { status?: string; allowedInboundSenders?: string[]; inboundTokenRequired?: boolean }
       | undefined;
     if (clinicData?.status === "suspended" || clinicData?.status === "deleted") {
       // We don't service suspended clinics — no failure record.
       return NextResponse.json({ error: "Clinic is not active" }, { status: 403 });
+    }
+
+    // Per-clinic token binding (cross-tenant injection defence). If a token was
+    // presented (tokenised ingest address import-{clinicId}.{token}@… or a
+    // clinicToken field), it MUST match THIS clinic — so a sender holding only the
+    // global secret cannot target another clinicId. A clinic can set
+    // inboundTokenRequired to fully retire the legacy global-secret-only path;
+    // otherwise legacy senders remain supported for backward compatibility.
+    if (presentedToken) {
+      const expected = deriveClinicInboundToken(clinicId);
+      const a = Buffer.from(presentedToken);
+      const b = Buffer.from(expected);
+      if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+        await writeFailureRecord(db, {
+          clinicId,
+          errorReason: "invalid_clinic_token",
+          fileName,
+          sender: from,
+          recipient,
+        });
+        return NextResponse.json({ error: "Invalid clinic token" }, { status: 403 });
+      }
+    } else if (clinicData?.inboundTokenRequired === true) {
+      await writeFailureRecord(db, {
+        clinicId,
+        errorReason: "clinic_token_required",
+        fileName,
+        sender: from,
+        recipient,
+      });
+      return NextResponse.json(
+        { error: "This clinic requires a tokenised ingest address" },
+        { status: 403 }
+      );
     }
 
     // Accept Mailgun ("file") and SendGrid/Twilio ("attachment1") field names.

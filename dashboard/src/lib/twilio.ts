@@ -18,6 +18,16 @@ export function getTwilioPhone(): string {
   return phone;
 }
 
+/**
+ * SMS sender. The provisioned voice number is often a UK geographic/landline
+ * (e.g. 020...) that is NOT SMS-capable, so prefer an explicit SMS sender when
+ * set — a UK alphanumeric sender ID (e.g. "StrydeOS") or a messaging-capable
+ * number — and only fall back to the voice number.
+ */
+export function getSmsSender(): string {
+  return process.env.TWILIO_SMS_SENDER?.trim() || getTwilioPhone();
+}
+
 // ─── Per-clinic number provisioning ─────────────────────────────────────────
 
 /**

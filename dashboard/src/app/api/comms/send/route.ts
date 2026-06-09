@@ -21,7 +21,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, requireRole, requireClinic, handleApiError } from "@/lib/auth-guard";
-import { getTwilio, getTwilioPhone } from "@/lib/twilio";
+import { getTwilio, getSmsSender } from "@/lib/twilio";
 import { getResend } from "@/lib/resend";
 import type { SequenceType, CommsChannel, CommsLogEntry } from "@/types";
 import { withRequestLog } from "@/lib/request-logger";
@@ -206,7 +206,7 @@ async function handler(request: NextRequest) {
         const twilio = getTwilio();
         const msg = await twilio.messages.create({
           body: resolvedBody,
-          from: getTwilioPhone(),
+          from: getSmsSender(),
           to: recipient,
         });
         twilioSid = msg.sid;

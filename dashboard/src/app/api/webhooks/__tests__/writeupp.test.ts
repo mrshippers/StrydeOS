@@ -48,6 +48,16 @@ function createDedupDocRef(key: string) {
       dedupStore.set(key, data);
       return Promise.resolve();
     }),
+    // Mirror Firestore Admin SDK create(): succeeds only if the doc is absent,
+    // otherwise rejects with gRPC ALREADY_EXISTS (code 6). The route relies on
+    // this for an atomic, race-free dedup claim.
+    create: vi.fn().mockImplementation((data: Record<string, unknown>) => {
+      if (dedupStore.has(key)) {
+        return Promise.reject(Object.assign(new Error("ALREADY_EXISTS"), { code: 6 }));
+      }
+      dedupStore.set(key, data);
+      return Promise.resolve();
+    }),
   };
 }
 

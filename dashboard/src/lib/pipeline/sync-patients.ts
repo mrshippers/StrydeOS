@@ -4,6 +4,16 @@ import type { StageResult } from "./types";
 
 const CONCURRENCY = 10;
 
+/**
+ * The patient's caseload — every distinct clinician who has seen them, with the
+ * primary clinician always included. Drives per-clinician patient visibility.
+ */
+export function computeCaseload(clinicianIds: string[], primary: string): string[] {
+  const set = new Set(clinicianIds.filter(Boolean));
+  if (primary && primary !== "unknown") set.add(primary);
+  return [...set];
+}
+
 async function batchAsync<T, R>(
   items: T[],
   concurrency: number,
@@ -122,11 +132,17 @@ export async function syncPatients(
         }
 
         const primaryClinician = getPrimaryClinician(extId);
+        const extCounts = clinicianCounts.get(extId);
+        const caseload = computeCaseload(
+          extCounts ? [...extCounts.keys()] : [],
+          primaryClinician
+        );
 
         if (existingDocId) {
           // Re-fetch from PMS to keep name + contact in sync
           const updateData: Record<string, unknown> = {
             clinicianId: primaryClinician,
+            caseload,
             updatedAt: now,
           };
           try {
@@ -158,6 +174,7 @@ export async function syncPatients(
               phone: phone ?? null,
             },
             clinicianId: primaryClinician,
+            caseload,
             insuranceFlag,
             insurerName: insurerName ?? null,
             preAuthStatus: insuranceFlag ? "pending" : "not_required",

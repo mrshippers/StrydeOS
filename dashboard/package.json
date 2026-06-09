@@ -21,6 +21,7 @@
     "fix:joe": "npx tsx scripts/fix-joe-user.ts",
     "send:test-sms": "npx tsx scripts/send-test-sms.ts",
     "test": "vitest run",
+    "test:llm": "RUN_LLM_TESTS=1 doppler run -- vitest run src/lib/ava/__tests__/graph.test.ts src/lib/ava/__tests__/graph-nodes.test.ts",
     "test:e2e": "E2E_NO_SERVER=1 npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "test:e2e:headed": "E2E_NO_SERVER=1 npx playwright test --headed",

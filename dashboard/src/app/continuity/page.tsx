@@ -19,6 +19,7 @@ import { PatientBoard } from "@/components/pulse/PatientBoard";
 import { SequenceCard } from "@/components/pulse/SequenceCard";
 import { CustomisePanel } from "@/components/pulse/CustomisePanel";
 import { GlassCard } from "@/components/ui/GlassCard";
+import SendInsuranceFormButton from "@/components/insurance/SendInsuranceFormButton";
 import { formatPercent, daysSince } from "@/lib/utils";
 import {
   Users,
@@ -150,6 +151,11 @@ function ContinuityPage() {
         onClinicianChange={setSelectedClinician}
         accentColor="#0891B2"
       />
+
+      {/* Manual failsafe — send the insurance intake form to a patient */}
+      <div className="flex justify-end -mt-2">
+        <SendInsuranceFormButton />
+      </div>
 
       {/* Error banners */}
       {patientsError && <ErrorBanner message="Patient data couldn't load — some cards may be incomplete." onRetry={() => router.refresh()} />}

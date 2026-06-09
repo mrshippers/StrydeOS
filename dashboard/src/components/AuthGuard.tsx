@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
-const PUBLIC_PATHS = ["/login", "/trial", "/onboarding"];
+const PUBLIC_PATHS = ["/login", "/trial", "/onboarding", "/intake"];
 const MFA_EXEMPT_PATHS = ["/login", "/mfa-setup"];
 
 function matchesPath(pathname: string, paths: string[]): boolean {

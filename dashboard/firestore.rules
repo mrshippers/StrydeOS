@@ -59,12 +59,16 @@ service cloud.firestore {
         allow write: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
       }
 
-      // Patients — clinicians can only read their own patients
+      // Patients — clinicians can only read patients in their caseload (every
+      // clinician who has seen them). Primary clinicianId kept for back-compat
+      // with docs written before caseload existed.
       match /patients/{patientId} {
         allow read: if isSuperAdmin()
           || isClinicOwnerOrAdmin(clinicId)
           || (isClinicMember(clinicId)
-              && resource.data.clinicianId == getUserData().clinicianId);
+              && (resource.data.clinicianId == getUserData().clinicianId
+                  || (resource.data.caseload is list
+                      && getUserData().clinicianId in resource.data.caseload)));
         allow write: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
       }
 
@@ -131,6 +135,19 @@ service cloud.firestore {
         allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
         allow create: if isClinicOwnerOrAdmin(clinicId);
         allow update, delete: if false;
+      }
+
+      // Insurance Intake (special category PHI) — review queue. Owners/admins read
+      // via the API; all writes are server-only through the Admin SDK.
+      match /insurance_intakes/{intakeId} {
+        allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
+      // Insurance intake links — secure-link metadata. Server-only; the public
+      // form reads/writes exclusively through the token-gated API (Admin SDK).
+      match /insurance_intake_links/{linkId} {
+        allow read, write: if false;
       }
 
       // Call Log — Ava voice agent call records; readable by clinic members, written by server webhook

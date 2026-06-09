@@ -1,0 +1,509 @@
+# Intent eval set for Ava
+# Intents: booking | cancel | reschedule | insurer-question
+# Target: 95%+ classification accuracy
+# Last updated: 2026-05-21
+
+utterances:
+  # ── BOOKING (35) ────────────────────────────────────────────────────────────
+  - id: "b001"
+    intent: booking
+    text: "Hi I'd like to book an appointment please"
+    notes: "direct"
+
+  - id: "b002"
+    intent: booking
+    text: "I've never been before, can I make an appointment?"
+    notes: "initial assessment, new patient"
+
+  - id: "b003"
+    intent: booking
+    text: "My GP referred me — I need to come in for an assessment"
+    notes: "GP referral"
+
+  - id: "b004"
+    intent: booking
+    text: "I was referred by my consultant after my MRI"
+    notes: "consultant referral"
+
+  - id: "b005"
+    intent: booking
+    text: "Something's wrong with my shoulder, I think I need to see someone"
+    notes: "vague presenting complaint"
+
+  - id: "b006"
+    intent: booking
+    text: "My back's been giving me grief for weeks, I need help"
+    notes: "urgency signal, colloquial"
+
+  - id: "b007"
+    intent: booking
+    text: "I'd like to book with Sarah if she's available"
+    notes: "specific clinician request"
+
+  - id: "b008"
+    intent: booking
+    text: "Can I see the same physio I saw last time? Andrew, I think?"
+    notes: "returning patient, specific clinician"
+
+  - id: "b009"
+    intent: booking
+    text: "I came in last year for my knee — I think I need to come back"
+    notes: "returning patient"
+
+  - id: "b010"
+    intent: booking
+    text: "I'm in absolute agony with my neck, is there anything today?"
+    notes: "urgency, pain intensity"
+
+  - id: "b011"
+    intent: booking
+    text: "Do you have anything this week for a new patient?"
+    notes: "initial assessment, time-flexible"
+
+  - id: "b012"
+    intent: booking
+    text: "I'd like to book a follow-up after my session last week"
+    notes: "follow-up"
+
+  - id: "b013"
+    intent: booking
+    text: "My physio said to book a follow-up in two weeks"
+    notes: "follow-up, clinician-directed"
+
+  - id: "b014"
+    intent: booking
+    text: "I need an appointment for my hip — I've been limping for a month"
+    notes: "hip complaint, delay in seeking help"
+
+  - id: "b015"
+    intent: booking
+    text: "I'm not sure if physio is right for me but I'd like to come in and find out"
+    notes: "hesitant, uncertain"
+
+  - id: "b016"
+    intent: booking
+    text: "Is it possible to get an appointment this week or next?"
+    notes: "flexible timing, new patient implied"
+
+  - id: "b017"
+    intent: booking
+    text: "I've been proper poorly with my knee, can I book in?"
+    notes: "regional dialect, urgency"
+
+  - id: "b018"
+    intent: booking
+    text: "I need to book an initial assessment for my wrist"
+    notes: "explicit initial assessment"
+
+  - id: "b019"
+    intent: booking
+    text: "Hello, I'd like to make an appointment please, first time calling"
+    notes: "phone anxiety signal"
+
+  - id: "b020"
+    intent: booking
+    text: "Can I book someone in for physio? It's for my mum"
+    notes: "booking on behalf of another"
+
+  - id: "b021"
+    intent: booking
+    text: "I wish to enquire about booking a physiotherapy appointment"
+    notes: "formal register"
+
+  - id: "b022"
+    intent: booking
+    text: "Do you do sports injuries? I've done something to my ankle running"
+    notes: "sports injury, service enquiry + booking intent"
+
+  - id: "b023"
+    intent: booking
+    text: "I've got chronic lower back pain, I need to see someone as soon as possible"
+    notes: "urgency, chronic condition"
+
+  - id: "b024"
+    intent: booking
+    text: "My elbow's been agony for weeks, can I get booked in?"
+    notes: "colloquial, time elapsed"
+
+  - id: "b025"
+    intent: booking
+    text: "I need a physio appointment for my knee — I'm post-op about six weeks"
+    notes: "post-surgical, clinical context"
+
+  - id: "b026"
+    intent: booking
+    text: "Is there any availability on a Saturday?"
+    notes: "day-specific request, booking intent"
+
+  - id: "b027"
+    intent: booking
+    text: "Hi, I'd like to get an appointment as soon as you can fit me in"
+    notes: "urgency"
+
+  - id: "b028"
+    intent: booking
+    text: "I've been struggling with my hip for a while, think I need physio"
+    notes: "vague, delayed presentation"
+
+  - id: "b029"
+    intent: booking
+    text: "Can I book an appointment? I'm not sure what type I need"
+    notes: "uncertain about appointment type"
+
+  - id: "b030"
+    intent: booking
+    text: "I'd like to come in for an assessment — my GP said to give you a call"
+    notes: "GP referral, directed"
+
+  - id: "b031"
+    intent: booking
+    text: "My neck's been killing me since last week, can I come in?"
+    notes: "neck pain, urgency"
+
+  - id: "b032"
+    intent: booking
+    text: "I was seen by a consultant who recommended physio for my shoulder"
+    notes: "consultant referral, shoulder"
+
+  - id: "b033"
+    intent: booking
+    text: "I need to book in — I've not been seen before and I've got knee pain"
+    notes: "new patient, knee"
+
+  - id: "b034"
+    intent: booking
+    text: "Cheers, can I get an appointment for my back please"
+    notes: "casual, colloquial opener"
+
+  - id: "b035"
+    intent: booking
+    text: "I'm not sure if I need a first appointment or a follow-up — I saw someone here six months ago"
+    notes: "returning patient, uncertain type"
+
+  # ── CANCEL (20) ─────────────────────────────────────────────────────────────
+  - id: "c001"
+    intent: cancel
+    text: "I need to cancel my appointment please"
+    notes: "direct"
+
+  - id: "c002"
+    intent: cancel
+    text: "I can't make it on Thursday, can I cancel?"
+    notes: "specific day"
+
+  - id: "c003"
+    intent: cancel
+    text: "I'm feeling a lot better actually, I don't think I need to come in"
+    notes: "feeling better, implied cancel"
+
+  - id: "c004"
+    intent: cancel
+    text: "What's your cancellation policy?"
+    notes: "policy enquiry"
+
+  - id: "c005"
+    intent: cancel
+    text: "My mum wants to cancel her appointment"
+    notes: "third-party cancel"
+
+  - id: "c006"
+    intent: cancel
+    text: "I need to cancel — something's come up at work"
+    notes: "reason given, direct"
+
+  - id: "c007"
+    intent: cancel
+    text: "Do I get charged if I cancel last minute?"
+    notes: "cancellation fee enquiry"
+
+  - id: "c008"
+    intent: cancel
+    text: "I'd like to cancel my booking for next Monday"
+    notes: "specific day"
+
+  - id: "c009"
+    intent: cancel
+    text: "Hi, can I cancel my appointment for tomorrow please"
+    notes: "short notice"
+
+  - id: "c010"
+    intent: cancel
+    text: "I won't be able to make my appointment this week"
+    notes: "indirect but clear cancel intent"
+
+  - id: "c011"
+    intent: cancel
+    text: "I need to cancel — I've caught a cold and don't want to come in"
+    notes: "illness reason"
+
+  - id: "c012"
+    intent: cancel
+    text: "Can I cancel all my upcoming appointments please"
+    notes: "multiple bookings"
+
+  - id: "c013"
+    intent: cancel
+    text: "I want to cancel, I don't think physio is helping me"
+    notes: "dissatisfaction implied"
+
+  - id: "c014"
+    intent: cancel
+    text: "I need to cancel my appointment — I have a clash"
+    notes: "scheduling conflict"
+
+  - id: "c015"
+    intent: cancel
+    text: "I'd like to cancel, I've been referred to a specialist instead"
+    notes: "onward referral"
+
+  - id: "c016"
+    intent: cancel
+    text: "Is it too late to cancel my appointment for this afternoon?"
+    notes: "time-sensitive, same day"
+
+  - id: "c017"
+    intent: cancel
+    text: "I'm calling to cancel — my husband has the reference number if you need it"
+    notes: "third-party calling"
+
+  - id: "c018"
+    intent: cancel
+    text: "I need to cancel today's appointment, I can't get there in time"
+    notes: "travel/logistics reason"
+
+  - id: "c019"
+    intent: cancel
+    text: "Hi, my knee has actually cleared up so I don't need the appointment anymore"
+    notes: "symptom resolution"
+
+  - id: "c020"
+    intent: cancel
+    text: "Can you cancel my appointment? Reference is SP1042"
+    notes: "has reference number"
+
+  # ── RESCHEDULE (20) ─────────────────────────────────────────────────────────
+  - id: "r001"
+    intent: reschedule
+    text: "I need to reschedule my appointment please"
+    notes: "direct"
+
+  - id: "r002"
+    intent: reschedule
+    text: "Can we move my appointment to a different time?"
+    notes: "time change"
+
+  - id: "r003"
+    intent: reschedule
+    text: "Can we push my appointment back a week?"
+    notes: "push back, colloquial"
+
+  - id: "r004"
+    intent: reschedule
+    text: "I've got a clash on Tuesday — is there anything on Wednesday instead?"
+    notes: "specific days, scheduling conflict"
+
+  - id: "r005"
+    intent: reschedule
+    text: "Is there any chance of an earlier slot? I need to come in sooner"
+    notes: "earlier appointment"
+
+  - id: "r006"
+    intent: reschedule
+    text: "I need to move my appointment — something's come up"
+    notes: "vague reason"
+
+  - id: "r007"
+    intent: reschedule
+    text: "Can I change my appointment time to later in the day?"
+    notes: "same day, later time"
+
+  - id: "r008"
+    intent: reschedule
+    text: "I'd like to rebook for a different day if possible"
+    notes: "day change"
+
+  - id: "r009"
+    intent: reschedule
+    text: "I can't make Friday — do you have anything the following Monday?"
+    notes: "specific days"
+
+  - id: "r010"
+    intent: reschedule
+    text: "I need to change my appointment, I've got a hospital appointment that day"
+    notes: "conflict reason"
+
+  - id: "r011"
+    intent: reschedule
+    text: "Is there anything earlier this week? I'd really like to be seen sooner"
+    notes: "urgency, earlier slot"
+
+  - id: "r012"
+    intent: reschedule
+    text: "My work schedule's changed — can I move to a morning slot?"
+    notes: "time of day preference"
+
+  - id: "r013"
+    intent: reschedule
+    text: "I need to move my appointment to next week instead"
+    notes: "week change"
+
+  - id: "r014"
+    intent: reschedule
+    text: "Can I swap my 3pm appointment to the morning?"
+    notes: "time swap"
+
+  - id: "r015"
+    intent: reschedule
+    text: "I booked for Thursday but I think I need to change it"
+    notes: "uncertain but reschedule intent"
+
+  - id: "r016"
+    intent: reschedule
+    text: "I want to move my appointment — can I come in on Saturday instead?"
+    notes: "weekend preference"
+
+  - id: "r017"
+    intent: reschedule
+    text: "My appointment's next Monday but I need to bring it forward"
+    notes: "bring forward"
+
+  - id: "r018"
+    intent: reschedule
+    text: "I can't make tomorrow anymore, is there anything Thursday or Friday?"
+    notes: "short notice, alternative days"
+
+  - id: "r019"
+    intent: reschedule
+    text: "Hi, I'd like to move my follow-up appointment please"
+    notes: "follow-up reschedule"
+
+  - id: "r020"
+    intent: reschedule
+    text: "Can I change the time? I need something after 5pm"
+    notes: "evening preference"
+
+  # ── INSURER-QUESTION (25) ────────────────────────────────────────────────────
+  - id: "i001"
+    intent: insurer-question
+    text: "Does my BUPA cover physiotherapy?"
+    notes: "BUPA, coverage question"
+
+  - id: "i002"
+    intent: insurer-question
+    text: "I have AXA health insurance — do you accept that?"
+    notes: "AXA"
+
+  - id: "i003"
+    intent: insurer-question
+    text: "Do you take Aviva health insurance?"
+    notes: "Aviva"
+
+  - id: "i004"
+    intent: insurer-question
+    text: "Am I covered for this?"
+    notes: "vague coverage question"
+
+  - id: "i005"
+    intent: insurer-question
+    text: "I'm not sure whether to go through insurance or just pay myself"
+    notes: "self-pay vs insurance, undecided"
+
+  - id: "i006"
+    intent: insurer-question
+    text: "My employer covers physio — will that work here?"
+    notes: "employer health scheme"
+
+  - id: "i007"
+    intent: insurer-question
+    text: "Do you accept WPA insurance?"
+    notes: "WPA"
+
+  - id: "i008"
+    intent: insurer-question
+    text: "I have Simply Health — is that okay?"
+    notes: "Simply Health"
+
+  - id: "i009"
+    intent: insurer-question
+    text: "I think I've got Cigna through work but I'm not sure if it covers physio"
+    notes: "Cigna, uncertain coverage"
+
+  - id: "i010"
+    intent: insurer-question
+    text: "I have some kind of health insurance — I'm not sure which one"
+    notes: "unknown insurer"
+
+  - id: "i011"
+    intent: insurer-question
+    text: "Will my health insurance pay for this or do I need to pay upfront?"
+    notes: "payment mechanism question"
+
+  - id: "i012"
+    intent: insurer-question
+    text: "I'm going through BUPA, do I need an authorisation number?"
+    notes: "BUPA, pre-authorisation"
+
+  - id: "i013"
+    intent: insurer-question
+    text: "Do you work with private health insurers?"
+    notes: "general insurer enquiry"
+
+  - id: "i014"
+    intent: insurer-question
+    text: "My GP referred me but I have private health insurance — how does that work?"
+    notes: "GP referral + insurance confusion"
+
+  - id: "i015"
+    intent: insurer-question
+    text: "I have a Vitality health plan — can I use that?"
+    notes: "Vitality"
+
+  - id: "i016"
+    intent: insurer-question
+    text: "Do you do insurance claims or is it all self-pay?"
+    notes: "general insurance vs self-pay"
+
+  - id: "i017"
+    intent: insurer-question
+    text: "I'm covered through my work health scheme but I don't know the provider name"
+    notes: "employer scheme, unknown provider"
+
+  - id: "i018"
+    intent: insurer-question
+    text: "I've got health insurance but I've never used it before — can you help me understand how it works?"
+    notes: "unfamiliar with insurance process"
+
+  - id: "i019"
+    intent: insurer-question
+    text: "Does BUPA cover all the sessions or just the first one?"
+    notes: "BUPA, coverage depth"
+
+  - id: "i020"
+    intent: insurer-question
+    text: "My insurer said I can self-refer — is that right?"
+    notes: "self-referral via insurance"
+
+  - id: "i021"
+    intent: insurer-question
+    text: "I have AXA PPP — is that the same as AXA health?"
+    notes: "AXA PPP variant"
+
+  - id: "i022"
+    intent: insurer-question
+    text: "Do you invoice my insurance directly or do I pay and claim back?"
+    notes: "billing mechanism"
+
+  - id: "i023"
+    intent: insurer-question
+    text: "I'm not sure if I'm self-pay or if my company covers it — how do I find out?"
+    notes: "confused about coverage"
+
+  - id: "i024"
+    intent: insurer-question
+    text: "I have health insurance through my husband's work but I don't know what it is"
+    notes: "spouse's employer scheme, unknown insurer"
+
+  - id: "i025"
+    intent: insurer-question
+    text: "Can you see me as a private patient even if I also have insurance?"
+    notes: "private vs insurance query"
