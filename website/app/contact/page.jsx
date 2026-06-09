@@ -4,11 +4,13 @@ export const metadata = {
   title: 'Contact',
   description:
     'Get in touch with StrydeOS. Book a free 20-minute Clinical Performance Audit for your practice.',
+  alternates: { canonical: '/contact' },
   openGraph: {
     title: 'Contact | StrydeOS',
     description:
       'Get in touch with StrydeOS. Book a free 20-minute Clinical Performance Audit for your practice.',
     url: 'https://strydeos.com/contact',
+    images: ['/brand/og-card.png'],
   },
 };
 

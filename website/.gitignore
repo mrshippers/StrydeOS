@@ -2,3 +2,9 @@
 .next
 node_modules
 .env*.local
+
+# Brand/SEO assets must ship despite the root-level "*.png" ignore
+!app/icon.png
+!app/apple-icon.png
+!public/brand/og-card.png
+!public/brand/logo-mark.png
