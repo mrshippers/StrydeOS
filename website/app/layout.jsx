@@ -48,6 +48,9 @@ export const metadata = {
     follow: true,
     googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
   },
+  verification: {
+    google: '89kPpsA8XhAnER1AlE-8gIqx3q6CS7by1BoZEmAFRSc',
+  },
 };
 
 export const viewport = {
