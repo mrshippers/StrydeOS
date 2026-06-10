@@ -42,7 +42,7 @@ export default function PayerBreakdownChart({ clinicianId = "all" }: Props) {
 
   if (loading) {
     return (
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6 animate-pulse">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6 animate-pulse">
         <div className="h-5 w-40 bg-cloud-dark rounded mb-2" />
         <div className="h-3 w-60 bg-cloud-dark rounded mb-6" />
         <div className="h-48 bg-cloud-dark rounded-xl" />
@@ -52,7 +52,7 @@ export default function PayerBreakdownChart({ clinicianId = "all" }: Props) {
 
   if (error) {
     return (
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
         <p className="text-sm text-danger">{error}</p>
       </div>
     );
@@ -60,7 +60,7 @@ export default function PayerBreakdownChart({ clinicianId = "all" }: Props) {
 
   if (slices.length === 0) {
     return (
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
         <h3 className="font-display text-lg text-navy mb-1">Payer Breakdown</h3>
         <p className="text-xs text-muted mb-4">Insurance pathway split across the last 90 days</p>
         <div className="flex items-center gap-3 p-4 rounded-xl bg-cloud-light border border-border text-sm text-muted">
@@ -72,7 +72,7 @@ export default function PayerBreakdownChart({ clinicianId = "all" }: Props) {
   }
 
   return (
-    <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+    <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
       <h3 className="font-display text-lg text-navy mb-1">Payer Breakdown</h3>
       <p className="text-xs text-muted mb-5">
         Insurance pathway split across the last 90 days &middot; {total} routed appointments

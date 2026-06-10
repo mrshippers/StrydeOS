@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import type { WeeklyStats, TrendLine } from "@/types";
 import { formatWeekDate } from "@/lib/utils";
+import { chartTheme } from "@/lib/tokens";
 
 interface TrendChartProps {
   data: WeeklyStats[];
@@ -78,7 +79,7 @@ export default function TrendChart({
     return (
       <ResponsiveContainer width="100%" height={height || 100}>
         <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E2DFDA" vertical={false} opacity={0.5} />
+          <CartesianGrid strokeDasharray={chartTheme.grid.strokeDasharray} stroke={chartTheme.grid.stroke} vertical={false} />
           {hasRateLines && (
             <YAxis yAxisId="rate" hide domain={[0, 5]} />
           )}
@@ -108,26 +109,26 @@ export default function TrendChart({
   }
 
   return (
-    <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+    <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
       <h3 className="font-display text-lg text-navy mb-1">90-Day Rolling Trend</h3>
       <p className="text-xs text-muted mb-4">
         Rolling performance across selected metrics
       </p>
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-          <CartesianGrid strokeDasharray="4 4" stroke="#E2DFDA" vertical={false} />
+          <CartesianGrid strokeDasharray={chartTheme.grid.strokeDasharray} stroke={chartTheme.grid.stroke} vertical={false} />
           <XAxis
             dataKey="weekLabel"
-            tick={{ fontSize: 11, fill: "#6B7280" }}
+            tick={chartTheme.tick}
             tickLine={false}
-            axisLine={{ stroke: "#E2DFDA" }}
+            axisLine={chartTheme.axisLine}
           />
           {hasRateLines && (
             <YAxis
               yAxisId="rate"
               orientation="left"
               domain={[0, 5]}
-              tick={{ fontSize: 11, fill: "#6B7280" }}
+              tick={chartTheme.tick}
               tickLine={false}
               axisLine={false}
               width={35}
@@ -139,7 +140,7 @@ export default function TrendChart({
               orientation={hasRateLines ? "right" : "left"}
               domain={[0, 1]}
               tickFormatter={(v: number) => `${Math.round(v * 100)}%`}
-              tick={{ fontSize: 11, fill: "#6B7280" }}
+              tick={chartTheme.tick}
               tickLine={false}
               axisLine={false}
               width={45}

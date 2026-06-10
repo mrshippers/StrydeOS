@@ -9,7 +9,7 @@ export default function LoginLoading() {
       <div className={`${pulse} h-9 w-36 mb-8`} />
 
       {/* Auth card */}
-      <div className="w-full max-w-md rounded-2xl bg-white border border-border shadow-[var(--shadow-card)] p-8">
+      <div className="w-full max-w-md rounded-2xl bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-8">
         <div className={`${pulse} h-7 w-40 mb-2`} />
         <div className={`${pulse} h-4 w-56 mb-8`} />
 

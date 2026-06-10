@@ -272,7 +272,7 @@ function ContinuityPage() {
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="rounded-[12px] bg-white border border-border p-4 shadow-sm">
+                <div key={i} className="rounded-[12px] bg-white surface-lit border border-border p-4 shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full skeleton-shimmer shrink-0" />
                     <div className="flex-1">

@@ -23,7 +23,7 @@ export default function UtilisationTile({ rows, loading }: UtilisationTileProps)
     <GlassCard
       variant="hero"
       tint="ava"
-      className="p-5 flex flex-col gap-4"
+      className="surface-emboss p-5 flex flex-col gap-4"
       style={{
         background: "var(--surface-tile)",
         minHeight: 148,

@@ -117,7 +117,7 @@ export default function InsightEventCard({
 
           {/* Suggested action — only show if no narrative (narrative includes the action) */}
           {!compact && !hasNarrative && (
-            <div className="mt-2 px-3 py-2 rounded-lg bg-cloud-light border border-border/50">
+            <div className="mt-2 px-3 py-2 rounded-lg surface-well">
               <p className="text-[12px] font-semibold text-navy">
                 → {event.suggestedAction}
               </p>

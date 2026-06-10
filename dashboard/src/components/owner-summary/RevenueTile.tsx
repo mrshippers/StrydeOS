@@ -28,7 +28,7 @@ export default function RevenueTile({
     <GlassCard
       variant="hero"
       tint="intelligence"
-      className="p-5 flex flex-col gap-4"
+      className="surface-emboss p-5 flex flex-col gap-4"
       style={{
         background: "var(--surface-tile)",
         minHeight: 148,

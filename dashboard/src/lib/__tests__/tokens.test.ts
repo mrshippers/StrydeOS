@@ -43,17 +43,18 @@ describe("tokens/colors", () => {
 });
 
 describe("tokens/shadows", () => {
-  it("rest stack has three black-alpha layers", () => {
+  it("rest stack has three navy-tinted layers", () => {
     expect(shadows.rest).toContain("0 1px 2px");
-    expect(shadows.rest).toContain("0 4px 24px");
-    expect(shadows.rest).toContain("0 12px 48px");
+    expect(shadows.rest).toContain("0 4px 16px");
+    expect(shadows.rest).toContain("0 16px 48px");
+    expect(shadows.rest).toContain("rgba(11,37,69");
   });
 
-  it("hover stack adds a fourth layer plus inset highlight", () => {
-    expect(shadows.hover).toContain("0 2px 4px");
-    expect(shadows.hover).toContain("0 8px 32px");
-    expect(shadows.hover).toContain("0 16px 56px");
-    expect(shadows.hover).toContain("inset 0 1px 0 rgba(255,255,255,0.7)");
+  it("hover stack adds a deeper layer plus inset highlight", () => {
+    expect(shadows.hover).toContain("0 2px 6px");
+    expect(shadows.hover).toContain("0 12px 32px");
+    expect(shadows.hover).toContain("0 24px 64px");
+    expect(shadows.hover).toContain("inset 0 1px 0 rgba(255,255,255,0.85)");
   });
 
   it("modal stack matches the canonical SeatLimitModal depth", () => {

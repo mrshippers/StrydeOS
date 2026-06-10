@@ -11,7 +11,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { ShieldCheck, Loader2, CheckCircle2, AlertCircle, Lock, MapPin, Search } from "lucide-react";
+import { ShieldCheck, Loader2, AlertCircle, Lock, MapPin, Search } from "lucide-react";
+import { brand } from "@/lib/brand";
+import MonolithPulse from "@/components/ui/MonolithPulse";
+import { DocumentMark } from "@/components/ui/ModuleIcons";
 
 interface IntakeMeta {
   clinicName: string;
@@ -159,17 +162,18 @@ export default function InsuranceIntakePage() {
 
         {phase === "loading" && (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className="animate-spin text-muted" />
+            <MonolithPulse size={48} />
           </div>
         )}
 
         {phase === "error" && (
-          <StatusCard icon={<AlertCircle size={28} className="text-danger" />} title="Link unavailable" body={loadError} />
+          <StatusCard accent={brand.danger} icon={<DocumentMark color={brand.danger} size={30} />} title="Link unavailable" body={loadError} />
         )}
 
         {phase === "submitted" && (
           <StatusCard
-            icon={<CheckCircle2 size={28} className="text-success" />}
+            accent={brand.success}
+            icon={<DocumentMark color={brand.success} size={30} />}
             title="Already received"
             body="Your insurance details have already been submitted. There is nothing more to do."
           />
@@ -177,14 +181,15 @@ export default function InsuranceIntakePage() {
 
         {phase === "done" && (
           <StatusCard
-            icon={<CheckCircle2 size={28} className="text-success" />}
+            accent={brand.success}
+            icon={<DocumentMark color={brand.success} size={30} />}
             title="Thank you"
             body="Your insurance details have been sent to the clinic. They will be added to your file ahead of your appointment."
           />
         )}
 
         {phase === "form" && (
-          <form onSubmit={handleSubmit} className="rounded-2xl bg-white border border-border p-6 shadow-sm space-y-5">
+          <form onSubmit={handleSubmit} className="rounded-2xl bg-white surface-lit border border-border p-6 shadow-sm space-y-5">
             <p className="text-sm text-muted">
               Please confirm your private insurance details below. It takes under a minute and means your
               appointment can be processed without delay.
@@ -346,10 +351,19 @@ function Field({ label, required, children }: { label: string; required?: boolea
   );
 }
 
-function StatusCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+function StatusCard({ icon, title, body, accent }: { icon: React.ReactNode; title: string; body: string; accent?: string }) {
   return (
-    <div className="rounded-2xl bg-white border border-border p-8 text-center shadow-sm">
-      <div className="h-14 w-14 rounded-xl bg-cloud-light flex items-center justify-center mx-auto mb-4">{icon}</div>
+    <div className="rounded-2xl bg-white surface-lit border border-border p-8 text-center shadow-sm">
+      <div
+        className={`h-14 w-14 rounded-xl flex items-center justify-center mx-auto mb-4 ${accent ? "" : "bg-cloud-light"}`}
+        style={
+          accent
+            ? { background: `${accent}14`, boxShadow: `inset 0 0 0 1px ${accent}26` }
+            : undefined
+        }
+      >
+        {icon}
+      </div>
       <h2 className="font-display text-[22px] text-navy mb-2">{title}</h2>
       <p className="text-sm text-muted">{body}</p>
     </div>

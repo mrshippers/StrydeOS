@@ -26,9 +26,10 @@
   --font-body: "Outfit", sans-serif;
 
   /* Three-layer shadow stacks - tokens/shadows.ts is the source of truth.
-     Update both this block and tokens/shadows.ts together. */
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.03), 0 4px 24px rgba(0,0,0,0.04), 0 12px 48px rgba(0,0,0,0.02);
-  --shadow-elevated: 0 2px 4px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06), 0 16px 56px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.7);
+     Update both this block and tokens/shadows.ts together.
+     Navy-tinted: cool ambient light on the warm canvas, not grey dirt. */
+  --shadow-card: 0 1px 2px rgba(11,37,69,0.05), 0 4px 16px rgba(11,37,69,0.06), 0 16px 48px rgba(11,37,69,0.05);
+  --shadow-elevated: 0 2px 6px rgba(11,37,69,0.07), 0 12px 32px rgba(11,37,69,0.09), 0 24px 64px rgba(11,37,69,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
 
   /* Strict radius scale — the only allowed radii (CLAUDE.md spatial system).
      Semantic aliases below map onto it: card = 16, inner = 12, chip = 50.
@@ -51,34 +52,97 @@
      intended outcome - we don't want PS5 glass on a light page, that's a
      dark-mode aesthetic.
      Dark mode keeps the frost lift since the glass layers read against navy. */
-  --surface-tile: linear-gradient(180deg, #FFFFFF 0%, #FAF9F7 100%);
+  --surface-tile: linear-gradient(180deg, #FFFFFF 0%, #FBFAF8 55%, #F5F3F0 100%);
   --surface-tile-flat: #FFFFFF;
   --surface-tile-text: var(--color-navy);
   --surface-tile-text-muted: rgba(11, 37, 69, 0.55);
+  /* Engraved-porcelain hairlines: strictly 1px insets (top light, bottom
+     shade), never blurred multi-px neumorphism. Rendered via .surface-emboss. */
+  --surface-tile-emboss: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(11, 37, 69, 0.05);
+}
+
+/* Chart primitives — consumed via tokens/charts.ts (chartTheme). Grid is a
+   navy hairline on light, white hairline on dark; ticks are muted micro-type. */
+:root {
+  --chart-grid: rgba(11, 37, 69, 0.06);
+  --chart-tick: #6B7280;
 }
 
 html.dark {
   /* Dark mode card surface: solid navy gradient. Same recipe as the spec's
      hero card. Cleaner than the prior frosted-lift approach which produced
      washed-out artefacts when stacked under the 6-layer glass overlay. */
-  --surface-tile: linear-gradient(135deg, #0B2545 0%, #132D5E 100%);
+  --surface-tile: linear-gradient(180deg, #14305F 0%, #0B2545 100%);
   --surface-tile-flat: #0B2545;
   --surface-tile-text: rgba(255, 255, 255, 0.95);
   --surface-tile-text-muted: rgba(255, 255, 255, 0.55);
+  --surface-tile-emboss: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
 }
 
-/* Dark mode: suppress L1-L5 white-alpha glass overlays. They were specced
+/* Emboss hairlines as an ::after overlay so they never fight a consumer's
+   box-shadow (GlassCard sets its own inline; StatCard uses shadow utilities).
+   Hosts are position:relative with overflow hidden, so inset 0 + inherit works. */
+.surface-emboss::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: var(--surface-tile-emboss);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Simulated light direction for light-mode bypass cards (bg-white border
+   border-border): top edge dissolves, bottom edge carries the weight. */
+.surface-lit {
+  border-color: rgba(11, 37, 69, 0.06);
+  border-bottom-color: rgba(11, 37, 69, 0.11);
+}
+html.dark .surface-lit {
+  border-color: rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.14);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Debossed inner well — the third elevation stratum. Canvas below card,
+   card above canvas, well recessed into card. */
+.surface-well {
+  background: linear-gradient(180deg, rgba(11, 37, 69, 0.035), rgba(11, 37, 69, 0.015));
+  box-shadow: inset 0 1px 2px rgba(11, 37, 69, 0.05);
+  border: 1px solid rgba(11, 37, 69, 0.05);
+}
+html.dark .surface-well {
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Terminal-table row hover: a barely-there ink wash, not a colour shift. */
+.row-hover:hover {
+  background: rgba(11, 37, 69, 0.02);
+}
+html.dark .row-hover:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Dark mode: suppress L2/L3/L5 white-alpha glass overlays — they were specced
    for white surfaces and create plastic-y banding when stacked on navy.
-   L6 (inner border highlight) stays but dimmed to a subtle edge cue. */
-html.dark .glass-layer--l1,
+   L1 (top specular) and L4 (bottom hairline) come back dimmed so dark cards
+   read as top-lit objects rather than flat panels; L6 keeps the edge cue. */
 html.dark .glass-layer--l2,
 html.dark .glass-layer--l3,
-html.dark .glass-layer--l4,
 html.dark .glass-layer--l5 {
   display: none !important;
 }
+html.dark .glass-layer--l1 {
+  height: 64px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, transparent 100%) !important;
+}
+html.dark .glass-layer--l4 {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent) !important;
+}
 html.dark .glass-layer--l6 {
-  border-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* ─── Sidebar module marks: live animated icons ─────────────────────────────
@@ -416,7 +480,13 @@ html {
 
 body {
   font-family: var(--font-body);
-  background: var(--color-cloud-dancer, #0B2545);
+  /* Canvas atmosphere: faint off-axis brand tints over the base colour so the
+     page reads as a lit room, not a flat sheet. The base colour still drives
+     the 0.4s theme sweep (background-image does not transition - acceptable). */
+  background:
+    radial-gradient(1100px 700px at 75% -8%, rgba(28, 84, 242, 0.04), transparent 60%),
+    radial-gradient(800px 600px at 8% 108%, rgba(8, 145, 178, 0.03), transparent 60%),
+    var(--color-cloud-dancer, #0b2545);
   color: var(--color-ink);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -440,8 +510,32 @@ html.dark {
   --color-border: rgba(255,255,255,0.10);
   --color-success: #10B981;
   --color-danger: #F87171;
+  --chart-grid: rgba(255, 255, 255, 0.06);
+  --chart-tick: rgba(255, 255, 255, 0.55);
   --shadow-card: 0 1px 2px rgba(0,0,0,0.20), 0 4px 24px rgba(0,0,0,0.28), 0 12px 48px rgba(0,0,0,0.14);
-  --shadow-elevated: 0 2px 4px rgba(0,0,0,0.24), 0 8px 32px rgba(0,0,0,0.36), 0 16px 56px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.06);
+  --shadow-elevated: 0 2px 4px rgba(0,0,0,0.24), 0 8px 32px rgba(0,0,0,0.36), 0 16px 56px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px rgba(75,139,245,0.10);
+}
+
+/* Dark canvas atmosphere: single cool blue-glow wash from the top right. */
+html.dark body {
+  background:
+    radial-gradient(1100px 700px at 75% -8%, rgba(75, 139, 245, 0.08), transparent 60%),
+    var(--color-cloud-dancer, #091d3e);
+}
+
+/* Film grain: sub-perceptual feTurbulence noise over the whole canvas.
+   Fixed + pointer-events none, so it costs nothing in interaction terms. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+html.dark body::before {
+  opacity: 0.022;
 }
 
 html.dark .bg-white {
@@ -818,6 +912,12 @@ html.dark .bg-cloud-light      { background-color: rgba(255,255,255,0.05) !impor
 html.dark .bg-cloud-dark       { background-color: rgba(255,255,255,0.08) !important; }
 html.dark .bg-cream            { background-color: #0B2545 !important; }
 
+/* Opacity variants (bg-cloud-light/50 etc.) compile to their own classes and
+   escape the exact-match overrides above, leaving washed-out light bands on
+   navy. Attribute-prefix selectors catch every alpha step. */
+html.dark [class*="bg-cloud-light/"] { background-color: rgba(255,255,255,0.05) !important; }
+html.dark [class*="bg-cloud-dark/"]  { background-color: rgba(255,255,255,0.07) !important; }
+
 html.dark .text-ink            { color: rgba(255,255,255,0.95) !important; }
 html.dark .text-muted          { color: rgba(255,255,255,0.55) !important; }
 html.dark .text-muted-strong   { color: rgba(255,255,255,0.80) !important; }
@@ -1004,6 +1104,23 @@ html.dark .chevron-glyph {
 @keyframes stryde-live-pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.35; }
+}
+
+/* ─── Monolith pulse loader (MonolithPulse.tsx) ──────────────────────────── */
+@keyframes monolith-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.06); }
+}
+
+.monolith-pulse {
+  animation: monolith-pulse 2.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .monolith-pulse {
+    animation: none;
+  }
 }
 
 /* ─── Stat card entrance (staggered fade-up) ─────────────────────────────── */

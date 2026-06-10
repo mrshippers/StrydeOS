@@ -19,7 +19,7 @@ export default function OnboardingLoading() {
       </div>
 
       {/* Form card */}
-      <div className="w-full max-w-lg rounded-2xl bg-white border border-border shadow-[var(--shadow-card)] p-8">
+      <div className="w-full max-w-lg rounded-2xl bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-8">
         <div className={`${pulse} h-7 w-56 mb-2`} />
         <div className={`${pulse} h-4 w-72 mb-8`} />
 

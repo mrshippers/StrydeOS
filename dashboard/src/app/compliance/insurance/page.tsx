@@ -15,6 +15,9 @@ import {
   ShieldCheck, Loader2, CheckCircle2, XCircle, Clock, FileText, Mic, Upload, AlertCircle,
   Plus, Link2, Copy,
 } from "lucide-react";
+import { brand } from "@/lib/brand";
+import MonolithPulse from "@/components/ui/MonolithPulse";
+import { ShieldMark } from "@/components/ui/ModuleIcons";
 
 type Status = "pending" | "approved" | "rejected";
 
@@ -104,7 +107,7 @@ export default function InsuranceReviewPage() {
   if (!user) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin text-muted" />
+        <MonolithPulse size={48} />
       </div>
     );
   }
@@ -150,13 +153,19 @@ export default function InsuranceReviewPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 size={24} className="animate-spin text-muted" />
+          <MonolithPulse />
         </div>
       ) : rows.length === 0 ? (
         <div className="text-center py-16">
-          <div className="h-16 w-16 rounded-xl bg-muted/10 flex items-center justify-center mx-auto mb-4">
-            <ShieldCheck size={28} className="text-muted" />
-          </div>
+          <span
+            className="inline-flex h-16 w-16 items-center justify-center rounded-2xl mx-auto mb-4"
+            style={{
+              background: `${brand.blue}14`,
+              boxShadow: `inset 0 0 0 1px ${brand.blue}26`,
+            }}
+          >
+            <ShieldMark color={brand.blue} size={30} />
+          </span>
           <h3 className="font-display text-[20px] text-navy mb-2">Nothing {tab}</h3>
           <p className="text-sm text-muted">
             {tab === "pending" ? "New insurance submissions will appear here for review." : `No ${tab} submissions.`}
@@ -167,7 +176,7 @@ export default function InsuranceReviewPage() {
           {rows.map((row) => {
             const Icon = SOURCE_ICON[row.source] ?? FileText;
             return (
-              <div key={row.id} className="rounded-xl bg-white border border-border p-5">
+              <div key={row.id} className="rounded-xl bg-white surface-lit border border-border p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">

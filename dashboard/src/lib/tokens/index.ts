@@ -10,3 +10,5 @@ export { motion } from "./motion";
 export type { Variant, MotionEasing } from "./motion";
 export { glass } from "./glass";
 export type { GlassLayer } from "./glass";
+export { chartTheme } from "./charts";
+export type { ChartTheme } from "./charts";

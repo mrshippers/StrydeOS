@@ -38,6 +38,7 @@ import {
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { chartTheme } from "@/lib/tokens";
 
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import { formatPercent } from "@/lib/utils";
@@ -320,7 +321,7 @@ function ReceptionistContent() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-[var(--radius-card)] bg-white border border-border h-24 skeleton-shimmer"
+              className="rounded-[var(--radius-card)] bg-white surface-lit border border-border h-24 skeleton-shimmer"
             />
           ))}
         </div>
@@ -416,19 +417,29 @@ function ReceptionistContent() {
                 data={volumeData}
                 margin={{ top: 5, right: 10, bottom: 5, left: 0 }}
               >
+                <defs>
+                  {/* Vertical blue gradient for active bars; lower-volume bars
+                      step down through blue-glow alpha so they still read on
+                      navy in dark mode (the old beige fill rendered as a
+                      light-grey slab). */}
+                  <linearGradient id="avaCallVolumeActive" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2E6BFF" />
+                    <stop offset="100%" stopColor="#1C54F2" />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid
-                  strokeDasharray="4 4"
-                  stroke="#E2DFDA"
+                  strokeDasharray={chartTheme.grid.strokeDasharray}
+                  stroke={chartTheme.grid.stroke}
                   vertical={false}
                 />
                 <XAxis
                   dataKey="day"
-                  tick={{ fontSize: 12, fill: "#6B7280" }}
+                  tick={chartTheme.tick}
                   tickLine={false}
-                  axisLine={{ stroke: "#E2DFDA" }}
+                  axisLine={chartTheme.axisLine}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: "#6B7280" }}
+                  tick={chartTheme.tick}
                   tickLine={false}
                   axisLine={false}
                   width={30}
@@ -440,10 +451,10 @@ function ReceptionistContent() {
                       key={d.day}
                       fill={
                         d.calls > 15
-                          ? "#1C54F2"
+                          ? "url(#avaCallVolumeActive)"
                           : d.calls > 5
-                          ? "#0891B2"
-                          : "#E2DFDA"
+                          ? "rgba(75,139,245,0.45)"
+                          : "rgba(75,139,245,0.16)"
                       }
                     />
                   ))}

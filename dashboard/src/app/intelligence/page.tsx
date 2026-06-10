@@ -27,6 +27,7 @@ import { usePatients } from "@/hooks/usePatients";
 import { useValueLedger } from "@/hooks/useValueLedger";
 import { recordOutcomeScores } from "@/lib/queries";
 import { brand } from "@/lib/brand";
+import { chartTheme } from "@/lib/tokens";
 import type { OutcomeMeasureType, Patient } from "@/types";
 import { formatPence, formatPercent, formatWeekDate } from "@/lib/utils";
 import InsightFeed from "@/components/intelligence/InsightFeed";
@@ -157,7 +158,7 @@ function OutcomeScoreEntry({
   };
 
   return (
-    <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+    <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
       <h3 className="font-display text-lg text-navy mb-1">Record Outcome Scores</h3>
       <p className="text-xs text-muted mb-5">
         Enter standardised outcome measure scores for a patient session. Scores are stored per-session and aggregated at practice level.
@@ -268,18 +269,32 @@ function MiniSparkline({ data: rawData, color, higherIsBetter }: { data: number[
       <polyline
         points={points}
         fill="none"
-        stroke={trending ? color : brand.danger}
+        stroke={color}
         strokeWidth={1.8}
         strokeLinejoin="round"
         strokeLinecap="round"
         opacity={0.85}
       />
+      {/* Deuteranopia-safe trend encoding: improving = filled dot in the
+          metric colour; declining = hollow amber dot (shape + colour pair,
+          never red-vs-green alone). */}
       {data.map((v, i) => {
         const x = (i / divisor) * w;
         const y = h - ((v - min) / range) * h;
-        return i === data.length - 1 ? (
-          <circle key={i} cx={x} cy={y} r={3} fill={trending ? color : brand.danger} />
-        ) : null;
+        if (i !== data.length - 1) return null;
+        return trending ? (
+          <circle key={i} cx={x} cy={y} r={3} fill={color} />
+        ) : (
+          <circle
+            key={i}
+            cx={x}
+            cy={y}
+            r={3}
+            fill="var(--color-cream, #FAF9F7)"
+            stroke={brand.warning}
+            strokeWidth={1.5}
+          />
+        );
       })}
     </svg>
   );
@@ -320,14 +335,14 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="rounded-[var(--radius-card)] bg-white border border-border h-40" />
+      <div className="space-y-6">
+        <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border h-40 skeleton-shimmer" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="rounded-[var(--radius-card)] bg-white border border-border h-32" />
+            <div key={i} className="rounded-[var(--radius-card)] bg-white surface-lit border border-border h-32 skeleton-shimmer" />
           ))}
         </div>
-        <div className="rounded-[var(--radius-card)] bg-white border border-border h-64" />
+        <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border h-64 skeleton-shimmer" />
       </div>
     );
   }
@@ -355,7 +370,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
   return (
     <div className="space-y-6">
       {/* ── ROI Hero Card ──────────────────────────────────── */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">This Month</p>
@@ -399,7 +414,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
         {moduleBreakdown.map((mod) => (
           <div
             key={mod.module}
-            className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5 relative overflow-hidden"
+            className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5 relative overflow-hidden"
           >
             <div className="absolute top-0 left-0 right-0 h-1" style={{ background: mod.color }} />
             <h4 className="text-sm font-semibold text-navy mb-1 mt-1">{mod.label}</h4>
@@ -420,7 +435,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
       </div>
 
       {/* ── Attribution Feed ───────────────────────────────── */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
         <h3 className="font-display text-lg text-navy mb-1">Attribution Feed</h3>
         <p className="text-xs text-muted mb-4">Recent value events sorted by impact — highest first</p>
         {topEvents.length === 0 ? (
@@ -466,7 +481,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Cost of Empty Chair */}
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.danger}12` }}>
                   <AlertTriangle size={14} style={{ color: brand.danger }} />
@@ -482,7 +497,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
             </div>
 
             {/* Net Growth */}
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.success}12` }}>
                   <UserPlus size={14} style={{ color: brand.success }} />
@@ -501,7 +516,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
             </div>
 
             {/* Rebooking Lag */}
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.warning}12` }}>
                   <Clock size={14} style={{ color: brand.warning }} />
@@ -519,7 +534,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
             </div>
 
             {/* Discharge Quality */}
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.teal}12` }}>
                   <Shield size={14} style={{ color: brand.teal }} />
@@ -535,7 +550,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
             </div>
 
             {/* Patient LTV */}
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.purple}12` }}>
                   <PoundSterling size={14} style={{ color: brand.purple }} />
@@ -553,7 +568,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
             </div>
 
             {/* Revenue per Delivered Hour */}
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${brand.blue}12` }}>
                   <BarChart2 size={14} style={{ color: brand.blue }} />
@@ -572,7 +587,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
 
           {/* Retention Curve */}
           {deepMetrics.retentionCurve.length > 0 && (
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
               <h4 className="font-display text-lg text-navy mb-1">Retention Curve</h4>
               <p className="text-xs text-muted mb-4">
                 Patient drop-off by session — biggest loss at session {deepMetrics.biggestDropoffSession} ({deepMetrics.biggestDropoffPercent.toFixed(0)}% drop)
@@ -844,7 +859,7 @@ export default function IntelligencePage() {
       </div>
 
       {/* Clinician KPI table with sparklines + drill-down */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] overflow-hidden">
         <div className="p-6 pb-0">
           <h3 className="font-display text-lg text-navy mb-1">Clinician Performance</h3>
           <p className="text-xs text-muted mb-4">90-day rolling trends — click a row to see patient-level breakdown</p>
@@ -852,14 +867,14 @@ export default function IntelligencePage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border bg-cloud-light/50">
-                <th className="text-left py-3 px-5 text-xs font-semibold text-muted uppercase tracking-wide">Clinician</th>
-                <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">Follow-Up Rate</th>
-                <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">Utilisation</th>
-                <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">DNA Rate</th>
-                <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">HEP</th>
-                <th className="text-left py-3 px-4 text-xs font-semibold text-muted uppercase tracking-wide">Rev / Session</th>
-                <th className="text-right py-3 px-5 text-xs font-semibold text-muted uppercase tracking-wide">Active Pts</th>
+              <tr className="surface-well border-b border-border">
+                <th className="text-left py-3 px-5 text-[10px] font-semibold text-muted uppercase tracking-[0.08em]">Clinician</th>
+                <th className="text-right py-3 px-4 text-[10px] font-semibold text-muted uppercase tracking-[0.08em]">Follow-Up Rate</th>
+                <th className="text-right py-3 px-4 text-[10px] font-semibold text-muted uppercase tracking-[0.08em]">Utilisation</th>
+                <th className="text-right py-3 px-4 text-[10px] font-semibold text-muted uppercase tracking-[0.08em]">DNA Rate</th>
+                <th className="text-right py-3 px-4 text-[10px] font-semibold text-muted uppercase tracking-[0.08em]">HEP</th>
+                <th className="text-right py-3 px-4 text-[10px] font-semibold text-muted uppercase tracking-[0.08em]">Rev / Session</th>
+                <th className="text-right py-3 px-5 text-[10px] font-semibold text-muted uppercase tracking-[0.08em]">Active Pts</th>
               </tr>
             </thead>
             <tbody>
@@ -876,7 +891,7 @@ export default function IntelligencePage() {
                   <Fragment key={c.clinicianId}>
                     <tr
                       onClick={() => toggleClinician(c.clinicianId)}
-                      className={`border-b border-border/50 cursor-pointer transition-colors ${isExpanded ? "bg-cloud-light/50" : "hover:bg-cloud-light/30"}`}
+                      className={`border-b border-border/40 cursor-pointer transition-colors ${isExpanded ? "bg-cloud-light/50" : "row-hover"}`}
                     >
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-2.5">
@@ -888,46 +903,56 @@ export default function IntelligencePage() {
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <div className="flex items-center gap-4">
-                          <span className={`font-semibold text-sm ${c.rebookRate >= 3.5 ? "text-success" : c.rebookRate >= 2.5 ? "text-warn" : "text-danger"}`}>
+                        <div className="flex items-center justify-end gap-4">
+                          <span className={`font-semibold text-sm tabular-nums ${c.rebookRate >= 3.5 ? "text-success" : c.rebookRate >= 2.5 ? "text-warn" : "text-danger"}`}>
                             {c.rebookRate.toFixed(1)}x
                           </span>
-                          <MiniSparkline data={c.rebookTrend} color={brand.success} higherIsBetter />
+                          <div className="w-[72px] shrink-0">
+                            <MiniSparkline data={c.rebookTrend} color={brand.success} higherIsBetter />
+                          </div>
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <div className="flex items-center gap-4">
-                          <span className={`font-semibold text-sm ${c.utilisationRate >= 0.85 ? "text-success" : c.utilisationRate >= 0.70 ? "text-warn" : "text-danger"}`}>
+                        <div className="flex items-center justify-end gap-4">
+                          <span className={`font-semibold text-sm tabular-nums ${c.utilisationRate >= 0.85 ? "text-success" : c.utilisationRate >= 0.70 ? "text-warn" : "text-danger"}`}>
                             {Math.round(c.utilisationRate * 100)}%
                           </span>
-                          <MiniSparkline data={c.utilisationTrend} color={brand.blue} higherIsBetter />
+                          <div className="w-[72px] shrink-0">
+                            <MiniSparkline data={c.utilisationTrend} color={brand.blue} higherIsBetter />
+                          </div>
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <div className="flex items-center gap-4">
-                          <span className={`font-semibold text-sm ${c.dnaRate <= 0.04 ? "text-success" : c.dnaRate <= 0.08 ? "text-warn" : "text-danger"}`}>
+                        <div className="flex items-center justify-end gap-4">
+                          <span className={`font-semibold text-sm tabular-nums ${c.dnaRate <= 0.04 ? "text-success" : c.dnaRate <= 0.08 ? "text-warn" : "text-danger"}`}>
                             {Math.round(c.dnaRate * 100)}%
                           </span>
-                          <MiniSparkline data={c.dnaTrend} color={brand.danger} higherIsBetter={false} />
+                          <div className="w-[72px] shrink-0">
+                            <MiniSparkline data={c.dnaTrend} color={brand.danger} higherIsBetter={false} />
+                          </div>
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <div className="flex items-center gap-4">
-                          <span className={`font-semibold text-sm ${c.hepComplianceRate >= 0.80 ? "text-success" : c.hepComplianceRate >= 0.50 ? "text-warn" : "text-danger"}`}>
+                        <div className="flex items-center justify-end gap-4">
+                          <span className={`font-semibold text-sm tabular-nums ${c.hepComplianceRate >= 0.80 ? "text-success" : c.hepComplianceRate >= 0.50 ? "text-warn" : "text-danger"}`}>
                             {Math.round(c.hepComplianceRate * 100)}%
                           </span>
-                          <MiniSparkline data={c.hepTrend} color={brand.teal} higherIsBetter />
+                          <div className="w-[72px] shrink-0">
+                            <MiniSparkline data={c.hepTrend} color={brand.teal} higherIsBetter />
+                          </div>
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <div className="flex items-center gap-4">
-                          <span className="font-semibold text-sm text-navy">
+                        <div className="flex items-center justify-end gap-4">
+                          <span className="font-semibold text-sm text-navy tabular-nums">
                             £{(c.revenuePerSessionPence / 100).toFixed(2)}
                           </span>
-                          <MiniSparkline data={c.revPerSessionTrend} color={brand.purple} higherIsBetter />
+                          <div className="w-[72px] shrink-0">
+                            <MiniSparkline data={c.revPerSessionTrend} color={brand.purple} higherIsBetter />
+                          </div>
                         </div>
                       </td>
-                      <td className="py-4 px-5 text-right font-semibold text-navy">{c.activePatients}</td>
+                      <td className="py-4 px-5 text-right font-semibold text-navy tabular-nums">{c.activePatients}</td>
                     </tr>
                     {isExpanded && (
                       <tr key={`${c.clinicianId}-drill`} className="border-b border-border/50 bg-cloud-light/30">
@@ -991,7 +1016,7 @@ export default function IntelligencePage() {
       </div>
 
       {/* Benchmark comparison */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
         <div className="flex items-center gap-2 mb-1">
           <BarChart2 size={16} className="text-purple" />
           <h3 className="font-display text-lg text-navy">Benchmark Comparison</h3>
@@ -1019,7 +1044,10 @@ export default function IntelligencePage() {
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-sm font-medium text-navy">{b.metric}</span>
                   <div className="flex items-center gap-3 text-xs">
-                    <span className={`font-bold ${!hasData ? "text-muted" : beating ? "text-success" : "text-warn"}`}>
+                    {/* Deuteranopia-safe: blue = beating peers, amber = lagging,
+                        chevron glyph pairs shape with colour. */}
+                    <span className={`inline-flex items-center gap-0.5 font-bold ${!hasData ? "text-muted" : beating ? "text-blue" : "text-warn"}`}>
+                      {hasData && (beating ? <ChevronUp size={12} strokeWidth={2.5} /> : <ChevronDown size={12} strokeWidth={2.5} />)}
                       You: {hasData ? formatVal(b.yourValue) : "—"}
                     </span>
                     <span className="text-muted">Peers: {formatVal(b.peerMedian)}</span>
@@ -1035,7 +1063,7 @@ export default function IntelligencePage() {
                     className="absolute left-0 top-0 h-full rounded-full transition-all duration-700"
                     style={{
                       width: `${yourPct}%`,
-                      background: beating ? brand.success : brand.warning,
+                      background: beating ? brand.blue : brand.warning,
                     }}
                   />
                 </div>
@@ -1076,7 +1104,7 @@ export default function IntelligencePage() {
         {activeTab === "revenue" && (
           <div className="space-y-6">
             {/* Revenue by clinician */}
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
               <h3 className="font-display text-lg text-navy mb-1">Revenue by Clinician</h3>
               <p className="text-xs text-muted mb-4">Total revenue attributed per clinician across the reporting period</p>
               {revByClinician.length === 0 ? (
@@ -1087,11 +1115,11 @@ export default function IntelligencePage() {
               ) : (
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={revByClinician} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke={brand.border} vertical={false} />
-                    <XAxis dataKey="clinicianName" tick={{ fontSize: 12, fill: brand.muted }} tickLine={false} axisLine={{ stroke: brand.border }} />
+                    <CartesianGrid strokeDasharray={chartTheme.grid.strokeDasharray} stroke={chartTheme.grid.stroke} vertical={false} />
+                    <XAxis dataKey="clinicianName" tick={chartTheme.tick} tickLine={false} axisLine={chartTheme.axisLine} />
                     <YAxis
                       tickFormatter={(v: number) => `£${(v / 100).toFixed(0)}`}
-                      tick={{ fontSize: 11, fill: brand.muted }}
+                      tick={chartTheme.tick}
                       tickLine={false}
                       axisLine={false}
                       width={60}
@@ -1111,7 +1139,7 @@ export default function IntelligencePage() {
             </div>
 
             {/* Revenue by condition */}
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
               <h3 className="font-display text-lg text-navy mb-1">Revenue by Condition</h3>
               <p className="text-xs text-muted mb-4">Which conditions drive the most revenue across the practice</p>
               {revByCondition.length === 0 ? (
@@ -1157,14 +1185,14 @@ export default function IntelligencePage() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* DNA by day of week */}
-              <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+              <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
                 <h3 className="font-display text-lg text-navy mb-1">DNA by Day of Week</h3>
                 <p className="text-xs text-muted mb-4">Which days see the most no-shows</p>
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={dnaByDay} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke={brand.border} vertical={false} />
-                    <XAxis dataKey="shortDay" tick={{ fontSize: 12, fill: brand.muted }} tickLine={false} axisLine={{ stroke: brand.border }} />
-                    <YAxis tick={{ fontSize: 11, fill: brand.muted }} tickLine={false} axisLine={false} width={30} />
+                    <CartesianGrid strokeDasharray={chartTheme.grid.strokeDasharray} stroke={chartTheme.grid.stroke} vertical={false} />
+                    <XAxis dataKey="shortDay" tick={chartTheme.tick} tickLine={false} axisLine={chartTheme.axisLine} />
+                    <YAxis tick={chartTheme.tick} tickLine={false} axisLine={false} width={30} />
                     <Tooltip content={<ChartTooltip />} />
                     <Bar dataKey="dnaCount" name="DNAs" radius={[6, 6, 0, 0]}>
                       {dnaByDay.map((d) => (
@@ -1176,16 +1204,16 @@ export default function IntelligencePage() {
               </div>
 
               {/* DNA by time slot */}
-              <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+              <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
                 <h3 className="font-display text-lg text-navy mb-1">DNA by Time Slot</h3>
                 <p className="text-xs text-muted mb-4">DNA rate breakdown by appointment time slot</p>
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={dnaBySlot} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke={brand.border} vertical={false} />
-                    <XAxis dataKey="slot" tick={{ fontSize: 10, fill: brand.muted }} tickLine={false} axisLine={{ stroke: brand.border }} />
+                    <CartesianGrid strokeDasharray={chartTheme.grid.strokeDasharray} stroke={chartTheme.grid.stroke} vertical={false} />
+                    <XAxis dataKey="slot" tick={chartTheme.tick} tickLine={false} axisLine={chartTheme.axisLine} />
                     <YAxis
                       tickFormatter={(v: number) => `${Math.round(v * 100)}%`}
-                      tick={{ fontSize: 11, fill: brand.muted }}
+                      tick={chartTheme.tick}
                       tickLine={false}
                       axisLine={false}
                       width={40}
@@ -1206,7 +1234,7 @@ export default function IntelligencePage() {
             </div>
 
             {/* DNA insights */}
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
               <h3 className="font-display text-lg text-navy mb-3">Insights</h3>
               {dnaByDay.length === 0 || dnaByDay.every((d) => d.dnaCount === 0) ? (
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-cloud-light border border-border text-sm text-muted">
@@ -1258,7 +1286,7 @@ export default function IntelligencePage() {
 
         {activeTab === "referrals" && (
           <div className="space-y-6">
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
               <h3 className="font-display text-lg text-navy mb-1">Referral Source Attribution</h3>
               <p className="text-xs text-muted mb-4">Where your patients come from and the revenue they generate</p>
               {referrals.length === 0 ? (
@@ -1310,7 +1338,7 @@ export default function IntelligencePage() {
 
             {/* Referral insight */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+              <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <ArrowUpRight size={16} className="text-success" />
                   <h4 className="text-sm font-semibold text-navy">Top Revenue Source</h4>
@@ -1325,7 +1353,7 @@ export default function IntelligencePage() {
                   )}
                 </p>
               </div>
-              <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+              <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Users size={16} className="text-blue" />
                   <h4 className="text-sm font-semibold text-navy">Highest Value per Patient</h4>
@@ -1380,7 +1408,7 @@ export default function IntelligencePage() {
             </div>
 
             {/* Per-clinician outcome aggregation */}
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
               <h3 className="font-display text-lg text-navy mb-1">Average Improvement by Clinician</h3>
               <p className="text-xs text-muted mb-4">NPRS change (lower = better) and PSFS change (higher = better) averaged across completed treatments</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1426,7 +1454,7 @@ export default function IntelligencePage() {
             />
 
             {/* Outcome measure trends */}
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
               <h3 className="font-display text-lg text-navy mb-1">Outcome Measure Trends</h3>
               <p className="text-xs text-muted mb-4">Clinic-wide average scores across all active patients</p>
               <ResponsiveContainer width="100%" height={320}>
@@ -1476,7 +1504,7 @@ export default function IntelligencePage() {
                   : last.avgScore > first.avgScore;
                 const changeAbs = Math.abs(last.avgScore - first.avgScore).toFixed(1);
                 return (
-                  <div key={ot.measureType} className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+                  <div key={ot.measureType} className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-sm font-semibold text-navy">{ot.shortName}</h4>
                       <div className={`flex items-center gap-1 text-xs font-semibold ${improved ? "text-success" : "text-danger"}`}>
@@ -1570,7 +1598,7 @@ export default function IntelligencePage() {
             )}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* NPS */}
-              <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+              <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
                 <h3 className="font-display text-lg text-navy mb-1">NPS Score</h3>
                 <p className="text-xs text-muted mb-4">Net Promoter Score from post-discharge surveys</p>
 
@@ -1596,16 +1624,16 @@ export default function IntelligencePage() {
 
                 <ResponsiveContainer width="100%" height={160}>
                   <LineChart data={nps.trend} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke={brand.border} vertical={false} />
-                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: brand.muted }} tickLine={false} axisLine={{ stroke: brand.border }} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: brand.muted }} tickLine={false} axisLine={false} width={30} />
-                    <Line type="monotone" dataKey="score" stroke={brand.blue} strokeWidth={2.5} dot={{ r: 3, fill: brand.blue, strokeWidth: 0 }} />
+                    <CartesianGrid strokeDasharray={chartTheme.grid.strokeDasharray} stroke={chartTheme.grid.stroke} vertical={false} />
+                    <XAxis dataKey="month" tick={chartTheme.tick} tickLine={false} axisLine={chartTheme.axisLine} />
+                    <YAxis domain={[0, 100]} tick={chartTheme.tick} tickLine={false} axisLine={false} width={30} />
+                    <Line type="monotone" dataKey="score" stroke={brand.blue} strokeWidth={chartTheme.line.strokeWidth} dot={{ r: 3, fill: brand.blue, strokeWidth: 0 }} activeDot={chartTheme.activeDot} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
 
               {/* Google Reviews */}
-              <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+              <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
                 <h3 className="font-display text-lg text-navy mb-1">Google Reviews</h3>
                 <p className="text-xs text-muted mb-4">Review count and monthly velocity</p>
 
@@ -1632,9 +1660,9 @@ export default function IntelligencePage() {
 
                 <ResponsiveContainer width="100%" height={160}>
                   <BarChart data={reviews.monthlyVelocity} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke={brand.border} vertical={false} />
-                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: brand.muted }} tickLine={false} axisLine={{ stroke: brand.border }} />
-                    <YAxis tick={{ fontSize: 11, fill: brand.muted }} tickLine={false} axisLine={false} width={20} />
+                    <CartesianGrid strokeDasharray={chartTheme.grid.strokeDasharray} stroke={chartTheme.grid.stroke} vertical={false} />
+                    <XAxis dataKey="month" tick={chartTheme.tick} tickLine={false} axisLine={chartTheme.axisLine} />
+                    <YAxis tick={chartTheme.tick} tickLine={false} axisLine={false} width={20} />
                     <Tooltip content={<ChartTooltip />} />
                     <Bar dataKey="count" name="Reviews" fill={brand.warning} radius={[6, 6, 0, 0]} />
                   </BarChart>

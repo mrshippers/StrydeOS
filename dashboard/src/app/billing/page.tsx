@@ -559,7 +559,7 @@ export default function BillingPage() {
             </div>
           </div>
           {hasActiveSubscription && canManageBilling && (
-            <button onClick={handleManageBilling} disabled={portalLoading} className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-muted hover:text-navy transition-colors disabled:opacity-50 bg-white border border-border">
+            <button onClick={handleManageBilling} disabled={portalLoading} className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold text-muted hover:text-navy transition-colors disabled:opacity-50 bg-white surface-lit border border-border">
               {portalLoading ? <Loader2 size={13} className="animate-spin" /> : <><CreditCard size={13} /> Manage billing <ExternalLink size={11} className="opacity-60" /></>}
             </button>
           )}

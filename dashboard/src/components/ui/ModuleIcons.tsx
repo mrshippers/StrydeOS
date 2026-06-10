@@ -80,3 +80,59 @@ export function IntelligenceIcon({ color = "#8B5CF6", size = 20 }: { color?: str
     </svg>
   );
 }
+
+export function ShieldMark({ color = "#1C54F2", size = 20 }: { color?: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden>
+      {/* Outer shield */}
+      <path
+        d="M10,2 L16.5,4.5 L16.5,9.5 C16.5,13.5 13.8,16.6 10,18 C6.2,16.6 3.5,13.5 3.5,9.5 L3.5,4.5 Z"
+        stroke={color} strokeWidth="1.2" fill={color} fillOpacity="0.06"
+        strokeLinecap="round" strokeLinejoin="round" opacity="0.7"
+      />
+      {/* Inner layered shield */}
+      <path
+        d="M10,4.6 L14.2,6.3 L14.2,9.4 C14.2,12.1 12.5,14.3 10,15.4 C7.5,14.3 5.8,12.1 5.8,9.4 L5.8,6.3 Z"
+        stroke={color} strokeWidth="0.9" fill={color} fillOpacity="0.1" opacity="0.8"
+        strokeLinecap="round" strokeLinejoin="round"
+      />
+      {/* Slow-breathing inner dot */}
+      <circle cx="10" cy="9.8" r="1.5" fill={color} opacity="0.9">
+        <animate attributeName="r" values="1.5;2;1.5" dur="2.4s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.9;0.6;0.9" dur="2.4s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="10" cy="9.8" r="2.8" stroke={color} strokeWidth="0.5" fill="none" opacity="0.25">
+        <animate attributeName="r" values="2.8;3.4;2.8" dur="2.4s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.25;0.08;0.25" dur="2.4s" repeatCount="indefinite" />
+      </circle>
+    </svg>
+  );
+}
+
+export function DocumentMark({ color = "#1C54F2", size = 20 }: { color?: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden>
+      {/* Page outline with folded corner */}
+      <path
+        d="M5,2.5 L12,2.5 L15.5,6 L15.5,17 C15.5,17.3 15.3,17.5 15,17.5 L5,17.5 C4.7,17.5 4.5,17.3 4.5,17 L4.5,3 C4.5,2.7 4.7,2.5 5,2.5 Z"
+        stroke={color} strokeWidth="1.2" fill={color} fillOpacity="0.06"
+        strokeLinecap="round" strokeLinejoin="round" opacity="0.7"
+      />
+      <path
+        d="M12,2.5 L12,6 L15.5,6"
+        stroke={color} strokeWidth="1" fill="none"
+        strokeLinecap="round" strokeLinejoin="round" opacity="0.55"
+      />
+      {/* Text lines */}
+      <line x1="7" y1="9" x2="13" y2="9" stroke={color} strokeWidth="0.9" strokeLinecap="round" opacity="0.45" />
+      <line x1="7" y1="11.5" x2="13" y2="11.5" stroke={color} strokeWidth="0.9" strokeLinecap="round" opacity="0.45" />
+      <line x1="7" y1="14" x2="10.5" y2="14" stroke={color} strokeWidth="0.9" strokeLinecap="round" opacity="0.45" />
+      {/* Animated scan-line sweep */}
+      <line x1="5.2" y1="4" x2="14.8" y2="4" stroke={color} strokeWidth="1.1" strokeLinecap="round" opacity="0">
+        <animate attributeName="y1" values="4;16;4" dur="2.6s" repeatCount="indefinite" />
+        <animate attributeName="y2" values="4;16;4" dur="2.6s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0;0.75;0.75;0" keyTimes="0;0.1;0.45;0.5" dur="2.6s" repeatCount="indefinite" />
+      </line>
+    </svg>
+  );
+}

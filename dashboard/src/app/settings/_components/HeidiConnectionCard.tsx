@@ -134,7 +134,7 @@ export default function HeidiConnectionCard() {
   return (
     <GlassCard variant="standard" tint="neutral" className="p-4">
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-white border border-border flex items-center justify-center shrink-0 p-1.5">
+        <div className="w-10 h-10 rounded-xl bg-white surface-lit border border-border flex items-center justify-center shrink-0 p-1.5">
           <img src="/integrations/heidi.svg" alt="Heidi" className="w-full h-full object-contain" />
         </div>
         <div className="flex-1 min-w-0">

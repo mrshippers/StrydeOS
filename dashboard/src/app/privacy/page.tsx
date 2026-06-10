@@ -65,7 +65,7 @@ export default function PrivacyPage() {
 
           {/* Jurisdiction selector */}
           {!user && (
-            <div className="mb-8 p-4 rounded-xl bg-white border border-border">
+            <div className="mb-8 p-4 rounded-xl bg-white surface-lit border border-border">
               <label className="block text-xs font-semibold text-muted uppercase tracking-widest mb-2">
                 Select your region
               </label>
