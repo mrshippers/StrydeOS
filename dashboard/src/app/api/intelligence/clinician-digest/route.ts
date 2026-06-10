@@ -17,15 +17,29 @@ import { withRequestLog } from "@/lib/request-logger";
  * Data scoping: each clinician's stats are queried by their clinicianId.
  * Revenue figures are never included. Benchmarks labelled "UK avg".
  */
+/** Monday of the current week as YYYY-MM-DD — the dedup key for weekly sends. */
+function currentWeekKey(): string {
+  const d = new Date();
+  const day = d.getDay();
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  return d.toISOString().slice(0, 10);
+}
+
 async function handler(request: NextRequest) {
+  // Cron processes every active clinic. A signed-in owner/admin can trigger a
+  // re-send, but only for their own clinic — never the whole tenant base.
+  let scopeClinicId: string | null = null;
+
   try {
     verifyCronRequest(request);
   } catch {
     const user = await verifyApiRequest(request);
     requireRole(user, ["owner", "admin", "superadmin"]);
+    if (user.role !== "superadmin") scopeClinicId = user.clinicId;
   }
 
   const db = getAdminDb();
+  const weekKey = currentWeekKey();
   const allResults: Array<{
     clinicId: string;
     sent: number;
@@ -39,6 +53,13 @@ async function handler(request: NextRequest) {
     .get();
 
   for (const clinicDoc of clinicsSnap.docs) {
+    if (scopeClinicId && clinicDoc.id !== scopeClinicId) continue;
+    // Once per clinic per week — manual triggers and cron double-fires must
+    // not send clinicians duplicate digests.
+    if (clinicDoc.data().clinicianDigestLastWeek === weekKey) {
+      allResults.push({ clinicId: clinicDoc.id, sent: 0, skipped: 0, errors: ["already_sent_this_week"] });
+      continue;
+    }
     try {
       const { results } = await sendClinicianDigests(db, clinicDoc.id);
       const sent = results.filter((r) => r.sent).length;

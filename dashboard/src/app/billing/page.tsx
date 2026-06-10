@@ -670,7 +670,7 @@ export default function BillingPage() {
             <span>256-bit SSL encrypted</span>
           </div>
           <div className="flex items-center gap-3">
-            <a href="/terms" className="hover:text-navy transition-colors">Terms</a>
+            <a href="https://strydeos.com/terms" className="hover:text-navy transition-colors">Terms</a>
             <a href="/privacy" className="hover:text-navy transition-colors">Privacy</a>
             <span>All prices GBP · cancel anytime</span>
           </div>

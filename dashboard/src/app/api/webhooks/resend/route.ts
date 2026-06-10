@@ -19,7 +19,7 @@
  *   (all others)    → ignore, return 200
  */
 
-import * as crypto from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { withRequestLog } from "@/lib/request-logger";
@@ -27,11 +27,48 @@ import type { ResendDeliveryEvent, ResendEventType } from "@/lib/contracts";
 
 export const runtime = "nodejs";
 
+/** Reject events whose svix-timestamp is further than this from now (replay guard). */
+const TIMESTAMP_TOLERANCE_SECONDS = 5 * 60;
+
+/**
+ * Verify a Svix-style signature, the scheme Resend actually signs with:
+ * HMAC-SHA256 over `${svix-id}.${svix-timestamp}.${rawBody}` keyed by the
+ * base64 portion of the `whsec_…` secret, compared against each
+ * comma-separated `v1,<base64>` pair in the svix-signature header.
+ */
+function verifySvixSignature(rawBody: string, request: NextRequest, secret: string): boolean {
+  const svixId = request.headers.get("svix-id");
+  const svixTimestamp = request.headers.get("svix-timestamp");
+  const svixSignature = request.headers.get("svix-signature");
+  if (!svixId || !svixTimestamp || !svixSignature) return false;
+
+  const ts = parseInt(svixTimestamp, 10);
+  if (!Number.isFinite(ts)) return false;
+  if (Math.abs(Date.now() / 1000 - ts) > TIMESTAMP_TOLERANCE_SECONDS) return false;
+
+  const secretBytes = Buffer.from(
+    secret.startsWith("whsec_") ? secret.slice("whsec_".length) : secret,
+    "base64",
+  );
+  const expected = createHmac("sha256", secretBytes)
+    .update(`${svixId}.${svixTimestamp}.${rawBody}`)
+    .digest("base64");
+
+  for (const part of svixSignature.split(" ")) {
+    const [version, sig] = part.split(",");
+    if (version !== "v1" || !sig) continue;
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expected);
+    if (a.length === b.length && timingSafeEqual(a, b)) return true;
+  }
+  return false;
+}
+
 async function handler(request: NextRequest) {
-  // Shared-secret verification. Two failure modes, two policies:
+  // Signature verification. Two failure modes, two policies:
   //   - SECRET NOT CONFIGURED on our side  → 200 + structured `config_missing`
   //     so Resend doesn't retry-storm us for a deploy bug. Logged loudly.
-  //   - SECRET MISMATCH on inbound request → 401 so the caller knows their
+  //   - SIGNATURE MISMATCH on inbound request → 401 so the caller knows their
   //     signature is wrong (exfil attempt or stale rotation).
   // Read env at call time so tests and env reloads see the current value.
   const expectedSecret = process.env.RESEND_WEBHOOK_SECRET;
@@ -46,15 +83,9 @@ async function handler(request: NextRequest) {
     );
   }
 
-  const incomingSecret =
-    request.headers.get("x-resend-signature") ??
-    request.headers.get("authorization")?.replace("Bearer ", "");
+  const rawBody = await request.text();
 
-  if (
-    !incomingSecret ||
-    incomingSecret.length !== expectedSecret.length ||
-    !crypto.timingSafeEqual(Buffer.from(incomingSecret), Buffer.from(expectedSecret))
-  ) {
+  if (!verifySvixSignature(rawBody, request, expectedSecret)) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
@@ -67,7 +98,7 @@ async function handler(request: NextRequest) {
 
   let event: ResendDeliveryEvent;
   try {
-    event = (await request.json()) as ResendDeliveryEvent;
+    event = JSON.parse(rawBody) as ResendDeliveryEvent;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }

@@ -119,7 +119,9 @@ describe("POST /api/ava/post-call", () => {
     vi.clearAllMocks();
     Object.keys(writtenDocs).forEach((k) => delete writtenDocs[k]);
     clinicIdForAgent = "clinic-spires";
-    delete process.env.ELEVENLABS_WEBHOOK_SECRET;
+    // The route fails closed without a secret, so the suite runs configured;
+    // the config_missing test below deletes it explicitly.
+    process.env.ELEVENLABS_WEBHOOK_SECRET = TEST_SECRET;
   });
 
   // ── Normal path ────────────────────────────────────────────────────────────
@@ -246,14 +248,15 @@ describe("POST /api/ava/post-call", () => {
     expect(mockSet).not.toHaveBeenCalled();
   });
 
-  it("accepts request without signature when ELEVENLABS_WEBHOOK_SECRET is not set", async () => {
-    // Secret not set
+  it("fails closed (config_missing, no write) when ELEVENLABS_WEBHOOK_SECRET is not set", async () => {
+    delete process.env.ELEVENLABS_WEBHOOK_SECRET;
     const { POST } = await import("../route");
     const body = makePayload();
     const res = await POST(makeRequest(body, { noSignature: true }));
 
     expect(res.status).toBe(200);
-    expect(mockSet).toHaveBeenCalled();
+    await expect(res.json()).resolves.toMatchObject({ error: "config_missing" });
+    expect(mockSet).not.toHaveBeenCalled();
   });
 
   it("accepts request with valid HMAC signature", async () => {
@@ -297,6 +300,7 @@ describe("POST /api/ava/post-call", () => {
       new NextRequest("http://localhost/api/ava/post-call", {
         method: "POST",
         body: "not json",
+        headers: { "elevenlabs-signature": makeSignature(TEST_SECRET, "not json") },
       })
     );
     expect(res.status).toBe(400);

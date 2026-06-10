@@ -197,8 +197,11 @@ async function checkAllServices(): Promise<StatusResponse> {
     // Resend — direct ping
     pingService("resend", "https://api.resend.com", emptyHistory()),
 
-    // n8n — direct ping
-    pingService("n8n", process.env.N8N_WEBHOOK_BASE_URL || "https://n8n.strydeos.com", emptyHistory()),
+    // n8n — direct ping; the old n8n.strydeos.com fallback has no DNS, so an
+    // unconfigured env var must report not_configured rather than a fake outage.
+    process.env.N8N_WEBHOOK_BASE_URL
+      ? pingService("n8n", process.env.N8N_WEBHOOK_BASE_URL, emptyHistory())
+      : Promise.resolve({ name: "n8n", status: "not_configured" as ServiceStatus, latency: 0, checkedAt: new Date().toISOString(), uptimeHistory: [], statusSource: "static" }),
 
     // Stripe — direct ping (status.stripe.com JSON endpoint is 404; /v1/charges returns 401 when alive)
     pingService("stripe", "https://api.stripe.com/v1/charges", emptyHistory(), "GET"),
