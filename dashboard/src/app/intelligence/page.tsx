@@ -1071,7 +1071,7 @@ export default function IntelligencePage() {
             );
           })}
         </div>
-        <p className="text-[11px] text-muted mt-4 italic">Your metrics are live from clinic data. Peer benchmarks are UK private physio baselines — will refine as more practices join StrydeOS.</p>
+        <p className="text-[11px] text-muted mt-4 italic">Your metrics are live from clinic data. Peer figures are reference baselines, illustrative until enough practices join StrydeOS to aggregate live peer data.</p>
       </div>
 
       {/* Tab navigation */}
@@ -1151,7 +1151,7 @@ export default function IntelligencePage() {
                 <div className="space-y-3">
                   {revByCondition.map((c, i) => {
                     const maxRev = revByCondition[0].totalRevenuePence;
-                    const pct = (c.totalRevenuePence / maxRev) * 100;
+                    const pct = maxRev > 0 ? (c.totalRevenuePence / maxRev) * 100 : 0;
                     return (
                       <div key={c.condition}>
                         <div className="flex items-center justify-between mb-1">
