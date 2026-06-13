@@ -144,12 +144,14 @@ describe("createPMSAdapter", () => {
 // ─── Status Maps ─────────────────────────────────────────────────────────────
 
 describe("WriteUpp status map", () => {
+  // Verified against the live Open API: GET /v1/appointment-statuses.
   it("maps all expected statuses", () => {
-    expect(WRITEUPP_STATUS_MAP["Confirmed"]).toBe("scheduled");
-    expect(WRITEUPP_STATUS_MAP["Attended"]).toBe("completed");
-    expect(WRITEUPP_STATUS_MAP["Did Not Attend"]).toBe("dna");
+    expect(WRITEUPP_STATUS_MAP["Booked"]).toBe("scheduled");
+    expect(WRITEUPP_STATUS_MAP["Complete"]).toBe("completed");
+    expect(WRITEUPP_STATUS_MAP["Did not attend"]).toBe("dna");
     expect(WRITEUPP_STATUS_MAP["Cancelled"]).toBe("cancelled");
-    expect(WRITEUPP_STATUS_MAP["Late Cancellation"]).toBe("late_cancel");
+    expect(WRITEUPP_STATUS_MAP["Therapist Unwell"]).toBe("cancelled");
+    expect(WRITEUPP_STATUS_MAP["Unavailable"]).toBe("cancelled");
   });
 });
 

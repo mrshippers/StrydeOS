@@ -6,6 +6,7 @@ import { createZandaAdapter } from "./zanda/adapter";
 
 /** Allowed PMS API domains — reject anything outside this list to prevent SSRF. */
 const PMS_DOMAIN_ALLOWLIST = [
+  "openapi.writeupp.com",
   "app.writeupp.com",
   "api.writeupp.com",
   "api.cliniko.com",

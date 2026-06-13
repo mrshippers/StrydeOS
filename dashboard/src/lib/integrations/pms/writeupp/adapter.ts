@@ -1,8 +1,46 @@
-import type { PMSAdapter, PMSAppointment, PMSPatient, PMSClinician, InsuranceInfo, CreatePatientParams } from "@/types/pms";
+import type { PMSAdapter, InsuranceInfo } from "@/types/pms";
 import type { AppointmentStatus } from "@/types";
-import { writeUppFetch, testWriteUppConnection, type WriteUppConfig } from "./client";
-import { mapWriteUppAppointment, mapWriteUppClinician } from "./mappers";
-import type { WriteUppAppointmentRow, WriteUppPractitionerRow } from "./mappers";
+import {
+  writeUppFetch,
+  writeUppFetchAll,
+  testWriteUppConnection,
+  type WriteUppConfig,
+} from "./client";
+import {
+  mapWriteUppAppointment,
+  mapWriteUppClinician,
+  mapWriteUppPatient,
+} from "./mappers";
+import type {
+  WriteUppAppointmentRow,
+  WriteUppUserRow,
+  WriteUppPatientRow,
+  WriteUppLookups,
+} from "./mappers";
+
+const READ_ONLY_MESSAGE =
+  "WriteUpp Open API v1 is read-only — write operations are not supported. " +
+  "Use WriteUpp Online Booking 2.0 / Client Portal for client-initiated changes.";
+
+/** Fetch an id→name lookup from a WriteUpp reference endpoint. */
+async function fetchLookup(
+  config: WriteUppConfig,
+  path: string
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  try {
+    const rows = await writeUppFetchAll<{ id: string | number; name?: string }>(config, path);
+    for (const row of rows) {
+      if (row?.id != null && typeof row.name === "string") {
+        map.set(String(row.id), row.name);
+      }
+    }
+  } catch {
+    // Lookups are best-effort: a missing status/type name falls back to the
+    // raw value in the mapper rather than failing the whole sync.
+  }
+  return map;
+}
 
 export function createWriteUppAdapter(config: WriteUppConfig): PMSAdapter {
   return {
@@ -14,72 +52,41 @@ export function createWriteUppAdapter(config: WriteUppConfig): PMSAdapter {
 
     async getAppointments(params) {
       const { clinicianExternalId, dateFrom, dateTo } = params;
-      const path = "/appointments";
+
+      // Resolve status/type id→name lookups so canonical status mapping works.
+      const [statusById, typeById] = await Promise.all([
+        fetchLookup(config, "/appointment-statuses"),
+        fetchLookup(config, "/appointment-types"),
+      ]);
+      const lookups: WriteUppLookups = { statusById, typeById };
+
       const search = new URLSearchParams();
       search.set("from", dateFrom);
       search.set("to", dateTo);
-      if (clinicianExternalId) search.set("practitioner_id", clinicianExternalId);
-      const data = await writeUppFetch<{ data?: WriteUppAppointmentRow[]; appointments?: WriteUppAppointmentRow[] }>(
+      if (clinicianExternalId) search.set("user_id", clinicianExternalId);
+
+      const rows = await writeUppFetchAll<WriteUppAppointmentRow>(
         config,
-        `${path}?${search.toString()}`
+        `/appointments?${search.toString()}`,
+        { resourceKey: "appointments" }
       );
-      const rows = Array.isArray(data) ? data : data?.data ?? data?.appointments ?? [];
-      return (Array.isArray(rows) ? rows : []).map(mapWriteUppAppointment);
+
+      return rows.map((row) => mapWriteUppAppointment(row, lookups));
     },
 
     async getPatient(externalId: string) {
-      const data = await writeUppFetch<{
-        id: string;
-        first_name?: string;
-        last_name?: string;
-        email?: string;
-        phone?: string;
-        date_of_birth?: string;
-        insurer_name?: string;
-      }>(config, `/patients/${encodeURIComponent(externalId)}`);
-      const firstName = data?.first_name ?? (data as { firstName?: string }).firstName ?? "";
-      const lastName = data?.last_name ?? (data as { lastName?: string }).lastName ?? "";
-      return {
-        externalId: String(data?.id ?? externalId),
-        firstName,
-        lastName,
-        email: data?.email ?? (data as { email?: string }).email,
-        phone: data?.phone ?? (data as { phone?: string }).phone,
-        dob: data?.date_of_birth ?? (data as { dob?: string }).dob,
-        insurerName: data?.insurer_name ?? (data as { insurerName?: string }).insurerName,
-      };
-    },
-
-    async createAppointment(params) {
-      const body = {
-        patient_id: params.patientExternalId,
-        practitioner_id: params.clinicianExternalId,
-        start_time: params.dateTime,
-        end_time: params.endTime,
-        appointment_type: params.appointmentType,
-        notes: params.notes,
-      };
-      const data = await writeUppFetch<{ id: string }>(config, "/appointments", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-      return { externalId: String(data?.id ?? (data as { externalId?: string }).externalId ?? "") };
-    },
-
-    async updateAppointmentStatus(externalId: string, status: AppointmentStatus) {
-      await writeUppFetch(config, `/appointments/${encodeURIComponent(externalId)}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-      });
+      const data = await writeUppFetch<WriteUppPatientRow>(
+        config,
+        `/patients/${encodeURIComponent(externalId)}`
+      );
+      return mapWriteUppPatient(data, externalId);
     },
 
     async getClinicians() {
-      const data = await writeUppFetch<WriteUppPractitionerRow[] | { data?: WriteUppPractitionerRow[] }>(
-        config,
-        "/practitioners"
-      );
-      const rows = Array.isArray(data) ? data : data?.data ?? [];
-      return (Array.isArray(rows) ? rows : []).map(mapWriteUppClinician);
+      const rows = await writeUppFetchAll<WriteUppUserRow>(config, "/users", {
+        resourceKey: "users",
+      });
+      return rows.map(mapWriteUppClinician);
     },
 
     async getInsuranceInfo(patientExternalId: string): Promise<InsuranceInfo | null> {
@@ -92,49 +99,16 @@ export function createWriteUppAdapter(config: WriteUppConfig): PMSAdapter {
       }
     },
 
-    async findPatientByPhone(phone: string): Promise<string | null> {
-      try {
-        // WriteUpp supports ?search= query param for patient lookup
-        const data = await writeUppFetch<
-          | { data?: Array<{ id?: string | number }>; patients?: Array<{ id?: string | number }> }
-          | Array<{ id?: string | number }>
-        >(config, `/patients?search=${encodeURIComponent(phone)}&limit=5`);
+    // ─── Writes: unsupported by the read-only Open API ───────────────────────
+    // Implemented to satisfy the PMSAdapter contract; they fail loudly rather
+    // than POST/PATCH to endpoints that do not exist in v1.
 
-        const rows = Array.isArray(data)
-          ? data
-          : (data as { data?: Array<{ id?: string | number }> }).data ??
-            (data as { patients?: Array<{ id?: string | number }> }).patients ??
-            [];
-
-        if (rows.length > 0 && rows[0].id != null) {
-          return String(rows[0].id);
-        }
-        return null;
-      } catch {
-        return null;
-      }
+    async createAppointment(): Promise<{ externalId: string }> {
+      throw new Error(READ_ONLY_MESSAGE);
     },
 
-    async createPatient(params: CreatePatientParams): Promise<{ externalId: string }> {
-      const body: Record<string, string | undefined> = {
-        first_name: params.firstName,
-        last_name: params.lastName,
-      };
-      if (params.phone) body.phone_number = params.phone;
-      if (params.email) body.email = params.email;
-      if (params.dob) body.date_of_birth = params.dob;
-
-      const data = await writeUppFetch<{ id?: string | number; patient?: { id?: string | number } }>(
-        config,
-        "/patients",
-        { method: "POST", body: JSON.stringify(body) },
-      );
-
-      const id = data?.id ?? (data as { patient?: { id?: string | number } }).patient?.id;
-      if (!id) {
-        throw new Error("WriteUpp patient creation returned no ID");
-      }
-      return { externalId: String(id) };
+    async updateAppointmentStatus(_externalId: string, _status: AppointmentStatus): Promise<void> {
+      throw new Error(READ_ONLY_MESSAGE);
     },
   };
 }

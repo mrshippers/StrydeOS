@@ -125,12 +125,18 @@ export interface PMSIntegrationConfig {
 
 export type PMSStatusMap = Record<string, AppointmentStatus>;
 
+// Keys are WriteUpp Open API appointment-status names (GET /v1/appointment-statuses).
+// "Booked"/"Cancelled"/"Complete"/"Did not attend" are WriteUpp defaults; the
+// rest are clinic-side blocks that are not delivered patient sessions, so they
+// bucket to "cancelled" to keep them out of completed/DNA KPIs. Unknown custom
+// names fall back to "scheduled" in the mapper.
 export const WRITEUPP_STATUS_MAP: PMSStatusMap = {
-  Confirmed: "scheduled",
-  Attended: "completed",
-  "Did Not Attend": "dna",
+  Booked: "scheduled",
+  Complete: "completed",
+  "Did not attend": "dna",
   Cancelled: "cancelled",
-  "Late Cancellation": "late_cancel",
+  "Therapist Unwell": "cancelled",
+  Unavailable: "cancelled",
 };
 
 export const CLINIKO_STATUS_MAP: PMSStatusMap = {
