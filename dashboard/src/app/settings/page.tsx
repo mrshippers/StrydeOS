@@ -419,9 +419,18 @@ export default function SettingsPage() {
   }
 
   const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
+  // Per-clinician inline error for a failed role change (replaces alert()).
+  const [roleError, setRoleError] = useState<Record<string, string>>({});
   async function handleUpdateRole(clinicianId: string, role: "owner" | "admin" | "clinician") {
     if (!firebaseUser) return;
     setUpdatingRoleId(clinicianId);
+    // Clear any prior error for this row before retrying.
+    setRoleError((prev) => {
+      if (!prev[clinicianId]) return prev;
+      const next = { ...prev };
+      delete next[clinicianId];
+      return next;
+    });
     try {
       const token = await firebaseUser.getIdToken();
       const res = await fetch(`/api/clinicians/${clinicianId}/role`, {
@@ -431,11 +440,16 @@ export default function SettingsPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        alert(normalizeApiError(res.status, data?.error, "Could not change role."));
+        // Surface inline. The <select> is bound to the live clinician's authRole,
+        // so the failed optimistic choice reverts to the real value on re-render.
+        setRoleError((prev) => ({
+          ...prev,
+          [clinicianId]: normalizeApiError(res.status, data?.error, "Could not change role."),
+        }));
       }
-      // useClinicians is a live subscription — the list updates automatically.
+      // useClinicians is a live subscription — the list updates automatically on success.
     } catch {
-      alert("Network error changing role.");
+      setRoleError((prev) => ({ ...prev, [clinicianId]: "Network error changing role. Try again." }));
     } finally {
       setUpdatingRoleId(null);
     }
@@ -675,6 +689,7 @@ export default function SettingsPage() {
         canAssignOwner={canAssignOwner}
         updatingRoleId={updatingRoleId}
         handleUpdateRole={handleUpdateRole}
+        roleError={roleError}
       />
 
       <SeatLimitModal
