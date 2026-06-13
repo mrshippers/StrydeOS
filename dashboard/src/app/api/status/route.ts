@@ -172,6 +172,32 @@ function emptyHistory(): number[] {
   return [];
 }
 
+// ── Config-gated check ──
+// Only probe an integration when it is actually configured for this deployment.
+// Without its credentials a live ping is misleading (it reports the vendor's
+// public health, not whether *this* clinic instance is wired to it). Absent
+// config reports "not_configured" — the same neutral state used for halaxy/zanda
+// — and is excluded from the overall roll-up. This keeps the check cheap
+// (no fetch when unconfigured) and honest about what is genuinely connected.
+function notConfigured(name: string): ServiceCheck {
+  return {
+    name,
+    status: "not_configured",
+    latency: 0,
+    checkedAt: new Date().toISOString(),
+    uptimeHistory: [],
+    statusSource: "static",
+  };
+}
+
+function checkIfConfigured(
+  name: string,
+  isConfigured: boolean,
+  probe: () => Promise<ServiceCheck>,
+): Promise<ServiceCheck> {
+  return isConfigured ? probe() : Promise.resolve(notConfigured(name));
+}
+
 // ── Main check ──
 
 async function checkAllServices(): Promise<StatusResponse> {
@@ -188,14 +214,17 @@ async function checkAllServices(): Promise<StatusResponse> {
     // Sentry — Atlassian Statuspage
     checkStatuspage("sentry", "https://status.sentry.io", emptyHistory()),
 
-    // ElevenLabs — Atlassian Statuspage (Conversational AI voice agent)
-    checkStatuspage("elevenlabs", "https://status.elevenlabs.io", emptyHistory()),
+    // ElevenLabs — Atlassian Statuspage (Conversational AI voice agent); only when keyed
+    checkIfConfigured("elevenlabs", !!process.env.ELEVENLABS_API_KEY, () =>
+      checkStatuspage("elevenlabs", "https://status.elevenlabs.io", emptyHistory())),
 
-    // Twilio — Atlassian Statuspage (telephony + SMS)
-    checkStatuspage("twilio", "https://status.twilio.com", emptyHistory()),
+    // Twilio — Atlassian Statuspage (telephony + SMS); only when keyed
+    checkIfConfigured("twilio", !!process.env.TWILIO_ACCOUNT_SID, () =>
+      checkStatuspage("twilio", "https://status.twilio.com", emptyHistory())),
 
-    // Resend — direct ping
-    pingService("resend", "https://api.resend.com", emptyHistory()),
+    // Resend — direct ping; only when keyed
+    checkIfConfigured("resend", !!process.env.RESEND_API_KEY, () =>
+      pingService("resend", "https://api.resend.com", emptyHistory())),
 
     // n8n — direct ping; the old n8n.strydeos.com fallback has no DNS, so an
     // unconfigured env var must report not_configured rather than a fake outage.
