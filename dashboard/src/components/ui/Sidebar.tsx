@@ -23,7 +23,6 @@ import {
   CreditCard,
   HelpCircle,
   FileText,
-  Aperture,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { LogoNav, MonolithMark } from "@/components/MonolithLogo";
@@ -343,7 +342,7 @@ export default function Sidebar() {
         initial={false}
         animate={{ opacity: 1, scale: 1 }}
       >
-        {/* Aperture theme toggle */}
+        {/* Theme toggle */}
         <motion.button
           onClick={(e) => toggleTheme(e)}
           className="relative w-9 h-9 rounded-full flex items-center justify-center"
@@ -365,12 +364,10 @@ export default function Sidebar() {
             whileTap={{ rotate: 180 }}
             transition={{ type: "spring", stiffness: 300, damping: 18 }}
           >
-            <Aperture
-              size={15}
-              style={{
-                color: theme === "dark" ? "rgba(255,255,255,0.40)" : `rgba(11,37,69,0.40)`,
-                transition: "color 0.15s",
-              }}
+            <BrightnessStackToggle
+              size={16}
+              isDark={theme === "dark"}
+              className="pointer-events-none"
             />
           </motion.div>
         </motion.button>

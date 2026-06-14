@@ -16,15 +16,148 @@ import {
 } from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { getFirebaseAuth } from "@/lib/firebase";
-import { AlertCircle, Loader2, ArrowRight, Check, Building2, Shield, Eye, EyeOff, Moon, X } from "lucide-react";
+import { AlertCircle, Loader2, ArrowRight, Check, Building2, Shield, Eye, EyeOff, X } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
 import { trackCTAClick } from "@/lib/funnel-events";
 import { useTheme } from "@/components/ThemeProvider";
-import ApertureDarkModeToggle from "@/components/ui/ApertureDarkModeToggle";
+import BrightnessStackToggle from "@/components/ui/BrightnessStackToggle";
 import { GlassCard } from "@/components/ui/GlassCard";
 
 const DARK_MODE_UPDATE_KEY = "strydeos-dark-mode-v2-seen";
+
+/**
+ * ApertureGlyph — the canonical StrydeOS camera-iris, alive.
+ *
+ * A six-blade tangent-chord iris (each blade a full chord tangent to the inner
+ * opening — that's what reads as a lens iris, not a wagon wheel). Decorative
+ * only: it idles — the iris slowly breathes open and stops
+ * down on a loop, the pupil dilates anti-phase as the blades close, a blue-glow
+ * halo pulses, and two pin-stars twinkle. Purely presentational; honours
+ * reduced-motion by rendering the iris static at a mid-stop.
+ */
+function ApertureGlyph({ size = 30 }: { size?: number }) {
+  const shouldReduce = useReducedMotion();
+  const half = size / 2;
+  const outerR = half * 0.7;
+  const aperture = outerR * 0.44;
+  const strokeW = Math.max(1.3, size * 0.055);
+  const s = Math.sqrt(Math.max(0, outerR * outerR - aperture * aperture));
+  const pupilR = outerR * 0.2;
+
+  const blades = Array.from({ length: 6 }, (_, k) => {
+    const al = (k * 60) * (Math.PI / 180);
+    const tx = aperture * Math.cos(al);
+    const ty = aperture * Math.sin(al);
+    const ux = -Math.sin(al);
+    const uy = Math.cos(al);
+    return {
+      x1: half + tx + s * ux,
+      y1: half + ty + s * uy,
+      x2: half + tx - s * ux,
+      y2: half + ty - s * uy,
+    };
+  });
+
+  const centerOrigin = { transformBox: "fill-box" as const, transformOrigin: "center" };
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: "block", overflow: "visible" }}
+    >
+      <defs>
+        <radialGradient id="ag-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#4B8BF5" stopOpacity="0.75" />
+          <stop offset="55%" stopColor="#1C54F2" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#1C54F2" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="ag-pupil" cx="38%" cy="34%" r="75%">
+          <stop offset="0%" stopColor="#9CC0FF" />
+          <stop offset="40%" stopColor="#2E6BFF" />
+          <stop offset="100%" stopColor="#0B2545" />
+        </radialGradient>
+      </defs>
+
+      {/* Ambient blue-glow halo */}
+      <motion.circle
+        cx={half}
+        cy={half}
+        r={outerR * 1.45}
+        fill="url(#ag-glow)"
+        style={centerOrigin}
+        animate={shouldReduce ? undefined : { opacity: [0.3, 0.65, 0.3], scale: [0.88, 1.06, 0.88] }}
+        transition={{ duration: 4.6, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* Lens barrel */}
+      <circle
+        cx={half}
+        cy={half}
+        r={outerR}
+        fill="none"
+        stroke="rgba(75,139,245,0.55)"
+        strokeWidth={strokeW * 0.8}
+      />
+
+      {/* Iris blades — breathe open/closed with a slow mechanical twist */}
+      <motion.g
+        style={centerOrigin}
+        animate={shouldReduce ? undefined : { scale: [1, 0.82, 1], rotate: [0, 12, 0] }}
+        transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
+      >
+        {blades.map((b, i) => (
+          <line
+            key={i}
+            x1={b.x1}
+            y1={b.y1}
+            x2={b.x2}
+            y2={b.y2}
+            stroke="#4B8BF5"
+            strokeWidth={strokeW}
+            strokeLinecap="round"
+          />
+        ))}
+      </motion.g>
+
+      {/* Pupil — dilates as the iris stops down (anti-phase to the blades) */}
+      <motion.circle
+        cx={half}
+        cy={half}
+        r={pupilR}
+        fill="url(#ag-pupil)"
+        style={centerOrigin}
+        animate={shouldReduce ? undefined : { scale: [1, 1.9, 1] }}
+        transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* Twinkling pin-stars for the "night" register */}
+      {!shouldReduce && (
+        <>
+          <motion.circle
+            cx={size * 0.8}
+            cy={size * 0.2}
+            r={0.9}
+            fill="#CFE0FF"
+            animate={{ opacity: [0, 1, 0], scale: [0.6, 1, 0.6] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+          />
+          <motion.circle
+            cx={size * 0.18}
+            cy={size * 0.78}
+            r={0.7}
+            fill="#9CC0FF"
+            animate={{ opacity: [0, 1, 0], scale: [0.6, 1, 0.6] }}
+            transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+          />
+        </>
+      )}
+    </svg>
+  );
+}
 
 function DarkModeUpdateBanner() {
   const [visible, setVisible] = useState(false);
@@ -59,13 +192,17 @@ function DarkModeUpdateBanner() {
             }}
           >
             <div
-              className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "rgba(28,84,242,0.20)", border: "1px solid rgba(28,84,242,0.25)" }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+              style={{
+                background: "radial-gradient(120% 120% at 30% 20%, rgba(28,84,242,0.30) 0%, rgba(11,37,69,0.65) 70%)",
+                border: "1px solid rgba(75,139,245,0.30)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+              }}
             >
-              <Moon size={13} className="text-blue-bright" style={{ color: "#4B8BF5" }} />
+              <ApertureGlyph size={28} />
             </div>
             <div className="mr-1">
-              <p className="text-[13px] font-semibold text-navy dark:text-white leading-tight">Dark mode redesigned</p>
+              <p className="text-[13px] font-semibold text-white leading-tight">Dark mode redesigned</p>
               <p className="text-[11px] leading-tight" style={{ color: "rgba(255,255,255,0.45)" }}>
                 Better contrast, elevation &amp; legibility
               </p>
@@ -98,8 +235,8 @@ function LoginHeader({ onTryDemo }: { onTryDemo: () => Promise<void> }) {
     <header className="fixed top-0 left-0 right-0 flex items-center justify-between px-6 py-4 z-10 bg-cloud-dancer">
       <StrydeOSLogo size={34} fontSize={17} theme={theme === "dark" ? "dark" : "light"} gap={10} />
       <div className="flex items-center gap-2">
-        <ApertureDarkModeToggle
-          size={38}
+        <BrightnessStackToggle
+          size={22}
           isDark={theme === "dark"}
           onToggle={() => toggleTheme()}
           className="text-navy/50 hover:text-navy/85 dark:text-white/55 dark:hover:text-white/95 transition-colors"

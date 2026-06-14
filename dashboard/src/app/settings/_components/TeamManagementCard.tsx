@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Check, X, Loader2, CheckCircle2, ArrowRight, Trash2, ArrowUpDown } from "lucide-react";
+import { Plus, Check, X, Loader2, CheckCircle2, ArrowRight, Trash2, ArrowUpDown, AlertTriangle } from "lucide-react";
 import { brand } from "@/lib/brand";
 import { getInitials } from "@/lib/utils";
 import type { Clinician, ClinicProfile, OnboardingState } from "@/types";
@@ -47,6 +47,8 @@ interface TeamManagementCardProps {
   canAssignOwner?: boolean;
   updatingRoleId?: string | null;
   handleUpdateRole: (clinicianId: string, role: "owner" | "admin" | "clinician") => void;
+  /** Per-clinician inline error from a failed role change (replaces the old alert()). */
+  roleError?: Record<string, string>;
 }
 
 const ROLE_LABEL: Record<string, string> = { owner: "Owner", admin: "Admin", clinician: "Clinician" };
@@ -86,6 +88,7 @@ export default function TeamManagementCard({
   canAssignOwner = false,
   updatingRoleId = null,
   handleUpdateRole,
+  roleError = {},
 }: TeamManagementCardProps) {
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
@@ -399,6 +402,12 @@ export default function TeamManagementCard({
                             <Loader2 size={14} className="animate-spin text-muted" />
                           )}
                         </div>
+                      )}
+                      {roleError[c.id] && (
+                        <p className="mt-2 text-[12px] text-danger flex items-center gap-1.5">
+                          <AlertTriangle size={12} className="shrink-0" />
+                          {roleError[c.id]}
+                        </p>
                       )}
                     </div>
                   )}
