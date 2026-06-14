@@ -21,7 +21,7 @@ export default function PatientRow({
   return (
     <Link
       href={`/patients/${patient.id}`}
-      className="block rounded-xl bg-white border border-border p-4 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition-all duration-200 hover:-translate-y-0.5"
+      className="block rounded-xl bg-white surface-lit border border-border p-4 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition-all duration-200 hover:-translate-y-0.5"
     >
       <div className="flex items-start gap-3 mb-3">
         <div className="w-9 h-9 rounded-full bg-navy flex items-center justify-center text-[11px] font-bold text-navy dark:text-white shrink-0">

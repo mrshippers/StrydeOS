@@ -67,11 +67,14 @@ export async function sendClinicianDigests(
   const resend = new Resend(resendKey);
   const fromEmail = process.env.RESEND_FROM_EMAIL ?? "insights@strydeos.com";
 
-  // Week label
+  // The digest reports the last COMPLETED week. The cron fires Monday 07:30,
+  // when the current week is hours old \u2014 "latest" stats would email each
+  // clinician a near-empty week.
   const now = new Date();
   const weekStart = new Date(now);
   const dayOfWeek = weekStart.getDay();
-  weekStart.setDate(weekStart.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  weekStart.setDate(weekStart.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1) - 7);
+  const weekStartIso = weekStart.toISOString().slice(0, 10);
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 6);
   const fmt = (d: Date) =>
@@ -95,7 +98,7 @@ export async function sendClinicianDigests(
       const [statsSnap, atRiskSnap, insightSnap, positiveSnap] = await Promise.all([
         db.collection(`clinics/${clinicId}/metrics_weekly`)
           .where("clinicianId", "==", clinicianId)
-          .orderBy("weekStart", "desc")
+          .where("weekStart", "==", weekStartIso)
           .limit(1)
           .get(),
         db.collection(`clinics/${clinicId}/patients`)

@@ -65,7 +65,7 @@ export default function InsightFeed() {
 
   if (events.length === 0) {
     return (
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-8 text-center">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-8 text-center">
         <div
           className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
           style={{ background: `${brand.purple}12` }}

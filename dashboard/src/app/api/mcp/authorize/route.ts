@@ -33,7 +33,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   let parsedRedirect: URL;
   try {
     parsedRedirect = new URL(redirectUri);
-    if (!parsedRedirect.hostname.endsWith("claude.ai")) throw new Error();
+    // Exact host match — a bare endsWith("claude.ai") would accept evilclaude.ai.
+    const host = parsedRedirect.hostname;
+    if (parsedRedirect.protocol !== "https:") throw new Error();
+    if (host !== "claude.ai" && !host.endsWith(".claude.ai")) throw new Error();
   } catch {
     return NextResponse.json({ error: "invalid_redirect_uri" }, { status: 400 });
   }

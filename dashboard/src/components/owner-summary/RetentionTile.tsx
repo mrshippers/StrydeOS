@@ -28,7 +28,7 @@ export default function RetentionTile({ alerts, alertCount, loading }: Retention
     <GlassCard
       variant="hero"
       tint="pulse"
-      className="p-5 flex flex-col gap-4"
+      className="surface-emboss p-5 flex flex-col gap-4"
       style={{
         background: "var(--surface-tile)",
         minHeight: 148,

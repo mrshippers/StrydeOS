@@ -443,7 +443,7 @@ function LoginPageInner() {
         <LoginHeader onTryDemo={handleTryDemo} />
         <div className="flex-1 flex items-center justify-center pt-4">
           <div className="w-full max-w-[400px]">
-            <div className="rounded-2xl p-8 text-center bg-white border border-border shadow-[var(--shadow-elevated)]">
+            <div className="rounded-2xl p-8 text-center bg-white surface-lit border border-border shadow-[var(--shadow-elevated)]">
               <h1 className="font-display text-[24px] text-navy leading-tight mb-2">
                 No Firebase config
               </h1>

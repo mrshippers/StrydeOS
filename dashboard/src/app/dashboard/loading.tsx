@@ -6,7 +6,7 @@ const pulse = "animate-pulse bg-cloud-light dark:bg-white/5 rounded-lg";
 
 function SkeletonCard({ className = "" }: { className?: string }) {
   return (
-    <div className={`rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5 ${className}`}>
+    <div className={`rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5 ${className}`}>
       <div className={`${pulse} h-3 w-20 mb-4`} />
       <div className={`${pulse} h-10 w-24 mb-2`} />
       <div className={`${pulse} h-2.5 w-16`} />
@@ -16,7 +16,7 @@ function SkeletonCard({ className = "" }: { className?: string }) {
 
 function SkeletonMetric() {
   return (
-    <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4">
+    <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-4">
       <div className={`${pulse} h-3 w-24 mb-3`} />
       <div className={`${pulse} h-8 w-16 mb-2`} />
       <div className={`${pulse} h-[140px] w-full mt-2`} />
@@ -63,7 +63,7 @@ export default function DashboardLoading() {
       </div>
 
       {/* Clinician table */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
         <div className={`${pulse} h-4 w-40 mb-4`} />
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (

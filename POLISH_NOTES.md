@@ -86,19 +86,16 @@ authenticated surfaces. Border-radius follows the brand scale. No action needed.
 
 ## Needs a product decision (logged, not guessed)
 
-1. **Website case studies are fabricated.** "TGT Physio · Nicholas, Managing Director"
-   (TGT is the internal pre-rename codename — it was never a clinic), "Riverside
-   Physiotherapy · Sarah Mitchell", "TBSport Therapy · Tammy", plus the
-   /case-studies page's "Notting Hill physio clinic" with invented metrics
-   (1.90→2.50 follow-up, ~£14k/yr). Named people + invented numbers on a clinical
-   product is a credibility and ASA risk. Options: replace with real pilot numbers
-   framed per the brand rule ("my own private clinic in Camden, London"), or pull the
-   Results section + /case-studies page until real customer data exists. The "absolute
-   game changer" quote inside also reads as an AI tell — left untouched pending this call.
-2. **Stripe Clinic-tier Price IDs need verification.** Charging uses env-mapped Stripe
-   Price IDs, not the display constants I corrected. Confirm the Stripe Prices behind
-   `STRIPE_PRICE_{AVA,PULSE,INTELLIGENCE}_CLINIC_*` charge £199/£149/£149 — if they
-   still carry the old amounts, displayed price and charged price now disagree.
+1. ~~Website case studies~~ — **resolved 2026-06-10 by founder:** the case studies are
+   real (TGT Physiotherapy is a real clinic). No action.
+2. ~~Stripe Clinic-tier Price IDs~~ — **verified and fixed 2026-06-10.** Live audit
+   found the six Clinic prices charging the stale amounts (Ava £159, Intelligence
+   £199, Pulse £119, monthly + yearly). Created corrected Prices on the same
+   products (`price_1TgoJ*` series: £199 / £149 / £149 + 20%-off yearly), updated
+   Doppler `prd`, archived the stale `price_1TVv*` prices (zero subscriptions were
+   attached), and redeployed production so the new env is live. Dev config's
+   `STRIPE_PRICE_AVA_SETUP` was also re-pointed from a £199 price to a new £195 one.
+   Both configs now audit clean against the canonical matrix.
 3. **Annual billing 20% discount** exists in both the website calculator and
    `billing.ts` ("Annual = 20% off") but is absent from the locked pricing matrix in
    CLAUDE.md. Confirm it's sanctioned and add it to CLAUDE.md, or remove the toggle.

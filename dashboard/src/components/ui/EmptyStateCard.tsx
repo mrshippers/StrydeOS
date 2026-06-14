@@ -1,6 +1,6 @@
 "use client";
 
-import type { ElementType } from "react";
+import { isValidElement, type ElementType, type ReactNode } from "react";
 import Link from "next/link";
 import { moduleColors, hexToRgba } from "@/lib/brand";
 
@@ -18,8 +18,21 @@ const MODULE_ICON_BG: Record<string, string> = Object.fromEntries(
   MODULES.map((m) => [m, hexToRgba(moduleColors[m], 0.10)])
 );
 
+/** Render the hero: a ReactNode passes straight through; an ElementType (lucide) keeps the legacy treatment. */
+function renderHero(icon: ReactNode | ElementType, accentColor: string): ReactNode {
+  if (isValidElement(icon) || icon == null || typeof icon === "string" || typeof icon === "number" || typeof icon === "boolean") {
+    return icon as ReactNode;
+  }
+  const Icon = icon as ElementType;
+  return <Icon size={22} style={{ color: accentColor }} strokeWidth={1.5} />;
+}
+
 interface EmptyStateCardProps {
-  icon: ElementType;
+  /**
+   * Hero slot. Prefer a rendered ReactNode (an animated module mark from
+   * ModuleIcons); a lucide ElementType is still accepted for back-compat.
+   */
+  icon: ReactNode | ElementType;
   title: string;
   description: string;
   actionLabel?: string;
@@ -28,7 +41,7 @@ interface EmptyStateCardProps {
 }
 
 export default function EmptyStateCard({
-  icon: Icon,
+  icon,
   title,
   description,
   actionLabel,
@@ -49,7 +62,7 @@ export default function EmptyStateCard({
         className="w-12 h-12 rounded-[var(--radius-inner)] flex items-center justify-center mb-4 transition-transform duration-200 group-hover:scale-110"
         style={{ background: iconBg }}
       >
-        <Icon size={22} style={{ color: accentColor }} strokeWidth={1.5} />
+        {renderHero(icon, accentColor)}
       </div>
 
       <h3 className="font-display text-xl text-navy mb-2">{title}</h3>

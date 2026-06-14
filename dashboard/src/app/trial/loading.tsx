@@ -28,7 +28,7 @@ export default function TrialLoading() {
       {/* Module cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-2xl bg-white border border-border shadow-[var(--shadow-card)] p-6">
+          <div key={i} className="rounded-2xl bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
             <div className={`${pulse} h-8 w-8 rounded-lg mb-4`} />
             <div className={`${pulse} h-5 w-24 mb-2`} />
             <div className={`${pulse} h-3 w-full mb-1`} />

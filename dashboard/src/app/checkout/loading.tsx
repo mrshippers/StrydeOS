@@ -12,7 +12,7 @@ export default function CheckoutLoading() {
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl bg-white border border-border shadow-[var(--shadow-card)] p-8">
+        <div className="rounded-2xl bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-8">
           {/* Title */}
           <div className={`${pulse} h-6 w-48 mb-2`} />
           <div className={`${pulse} h-4 w-64 mb-6`} />

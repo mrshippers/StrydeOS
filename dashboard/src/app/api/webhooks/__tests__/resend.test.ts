@@ -12,6 +12,7 @@
  * We match by correlating the email_id stored in comms_log.twilioSid / resendId.
  */
 
+import { createHmac } from "crypto";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
@@ -45,17 +46,34 @@ function makeDb(commsLogEntry?: Record<string, unknown> | null) {
   return { db, updateImpl };
 }
 
-const TEST_SECRET = "test-resend-secret";
+// Svix-style secret: "whsec_" + base64 key, matching what Resend issues.
+const TEST_SECRET = `whsec_${Buffer.from("test-resend-secret").toString("base64")}`;
+
+/** Build the svix headers Resend sends, signed with `secret`. */
+function svixHeaders(rawBody: string, secret = TEST_SECRET) {
+  const svixId = "msg_test123";
+  const svixTimestamp = String(Math.floor(Date.now() / 1000));
+  const key = Buffer.from(secret.slice("whsec_".length), "base64");
+  const sig = createHmac("sha256", key)
+    .update(`${svixId}.${svixTimestamp}.${rawBody}`)
+    .digest("base64");
+  return {
+    "svix-id": svixId,
+    "svix-timestamp": svixTimestamp,
+    "svix-signature": `v1,${sig}`,
+  };
+}
 
 async function makeRequest(body: Record<string, unknown>, clinicId = "clinic-1") {
+  const rawBody = JSON.stringify(body);
   return new NextRequest(
     `http://localhost/api/webhooks/resend?clinicId=${clinicId}`,
     {
       method: "POST",
-      body: JSON.stringify(body),
+      body: rawBody,
       headers: {
         "Content-Type": "application/json",
-        "x-resend-signature": TEST_SECRET,
+        ...svixHeaders(rawBody),
       },
     },
   );
@@ -176,12 +194,13 @@ describe("POST /api/webhooks/resend", () => {
   });
 
   it("returns 400 when clinicId is missing", async () => {
+    const rawBody = JSON.stringify({ type: "email.opened", data: { email_id: "re_abc" } });
     const req = new NextRequest("http://localhost/api/webhooks/resend", {
       method: "POST",
-      body: JSON.stringify({ type: "email.opened", data: { email_id: "re_abc" } }),
+      body: rawBody,
       headers: {
         "Content-Type": "application/json",
-        "x-resend-signature": TEST_SECRET,
+        ...svixHeaders(rawBody),
       },
     });
 
@@ -191,14 +210,57 @@ describe("POST /api/webhooks/resend", () => {
   });
 
   it("returns 401 when the signature does not match the configured secret", async () => {
+    const rawBody = JSON.stringify({ type: "email.opened", data: { email_id: "re_abc" } });
+    const wrongSecret = `whsec_${Buffer.from("wrong-secret").toString("base64")}`;
+    const req = new NextRequest(
+      "http://localhost/api/webhooks/resend?clinicId=clinic-1",
+      {
+        method: "POST",
+        body: rawBody,
+        headers: {
+          "Content-Type": "application/json",
+          ...svixHeaders(rawBody, wrongSecret),
+        },
+      },
+    );
+
+    const { POST } = await import("../resend/route");
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 when svix headers are missing entirely", async () => {
     const req = new NextRequest(
       "http://localhost/api/webhooks/resend?clinicId=clinic-1",
       {
         method: "POST",
         body: JSON.stringify({ type: "email.opened", data: { email_id: "re_abc" } }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+
+    const { POST } = await import("../resend/route");
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 when the svix timestamp is stale (replay guard)", async () => {
+    const rawBody = JSON.stringify({ type: "email.opened", data: { email_id: "re_abc" } });
+    const staleTs = String(Math.floor(Date.now() / 1000) - 10 * 60);
+    const key = Buffer.from(TEST_SECRET.slice("whsec_".length), "base64");
+    const sig = createHmac("sha256", key)
+      .update(`msg_test123.${staleTs}.${rawBody}`)
+      .digest("base64");
+    const req = new NextRequest(
+      "http://localhost/api/webhooks/resend?clinicId=clinic-1",
+      {
+        method: "POST",
+        body: rawBody,
         headers: {
           "Content-Type": "application/json",
-          "x-resend-signature": "wrong-secret",
+          "svix-id": "msg_test123",
+          "svix-timestamp": staleTs,
+          "svix-signature": `v1,${sig}`,
         },
       },
     );

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
+import MonolithPulse from "@/components/ui/MonolithPulse";
 import { GlassCard } from "@/components/ui/GlassCard";
 import {
   MODULE_PRICING,
@@ -170,7 +171,7 @@ function CheckoutFooter() {
           <span>256-bit SSL encrypted</span>
         </div>
         <div className="flex items-center gap-3">
-          <a href="/terms" className="hover:text-navy transition-colors">Terms</a>
+          <a href="https://strydeos.com/terms" className="hover:text-navy transition-colors">Terms</a>
           <a href="/privacy" className="hover:text-navy transition-colors">Privacy</a>
           <span>Cancel anytime</span>
         </div>
@@ -381,7 +382,7 @@ function CheckoutInner() {
             "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)",
         }}
       >
-        <Loader2 size={24} className="animate-spin text-navy/70 dark:text-white/60" />
+        <MonolithPulse size={48} />
       </div>
     );
   }
@@ -431,7 +432,7 @@ function CheckoutInner() {
             "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)",
         }}
       >
-        <Loader2 size={24} className="animate-spin text-navy/70 dark:text-white/60" />
+        <MonolithPulse size={48} />
       </div>
     );
   }
@@ -692,7 +693,7 @@ export default function CheckoutPage() {
               "linear-gradient(135deg, #0B2545 0%, #132D5E 60%, #1C54F2 100%)",
           }}
         >
-          <Loader2 size={24} className="animate-spin text-navy/70 dark:text-white/60" />
+          <MonolithPulse size={48} />
         </div>
       }
     >

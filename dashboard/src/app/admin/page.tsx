@@ -17,7 +17,6 @@ import {
   AlertTriangle,
   Clock,
   ExternalLink,
-  Loader2,
   CheckCircle2,
   Wifi,
   WifiOff,
@@ -25,6 +24,7 @@ import {
   BookOpen,
   Activity,
 } from "lucide-react";
+import MonolithPulse from "@/components/ui/MonolithPulse";
 import type { ClinicProfile, PmsProvider, HepProvider, StripeSubscriptionStatus } from "@/types";
 
 const PMS_LABELS: Record<PmsProvider, string> = {
@@ -207,7 +207,7 @@ export default function AdminPage() {
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 size={24} className="animate-spin text-muted" />
+        <MonolithPulse />
       </div>
     );
   }
@@ -261,7 +261,7 @@ export default function AdminPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+        <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
           <div className="flex items-center gap-2 mb-2">
             <Shield size={14} className="text-blue" />
             <span className="text-[10px] font-semibold text-muted uppercase tracking-wider">Total</span>
@@ -269,7 +269,7 @@ export default function AdminPage() {
           <p className="font-display text-[28px] text-navy leading-none">{clinics.length}</p>
           <p className="text-[11px] text-muted mt-1">clinics</p>
         </div>
-        <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+        <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle2 size={14} className="text-success" />
             <span className="text-[10px] font-semibold text-muted uppercase tracking-wider">Live</span>
@@ -277,7 +277,7 @@ export default function AdminPage() {
           <p className="font-display text-[28px] text-navy leading-none">{liveCount}</p>
           <p className="text-[11px] text-muted mt-1">active</p>
         </div>
-        <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+        <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
           <div className="flex items-center gap-2 mb-2">
             <Clock size={14} className="text-blue" />
             <span className="text-[10px] font-semibold text-muted uppercase tracking-wider">Onboarding</span>
@@ -285,7 +285,7 @@ export default function AdminPage() {
           <p className="font-display text-[28px] text-navy leading-none">{onboardingCount}</p>
           <p className="text-[11px] text-muted mt-1">setting up</p>
         </div>
-        <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+        <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={14} className={staleCount > 0 ? "text-danger" : "text-muted"} />
             <span className="text-[10px] font-semibold text-muted uppercase tracking-wider">Stale Sync</span>
@@ -298,7 +298,7 @@ export default function AdminPage() {
       </div>
 
         {/* Clinics table */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] overflow-hidden">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <h3 className="font-display text-lg text-navy">All Clinics</h3>
           {impersonating && (

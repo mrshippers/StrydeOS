@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import PageHeader from "@/components/ui/PageHeader";
 import {
   Activity,
-  Loader2,
   CheckCircle2,
   AlertTriangle,
   XCircle,
@@ -19,6 +18,7 @@ import type {
   ProviderHealthStats,
   IntegrationHealthStatus,
 } from "@/app/api/admin/integration-health/route";
+import MonolithPulse from "@/components/ui/MonolithPulse";
 
 const PROVIDER_LABELS: Record<string, string> = {
   writeupp: "WriteUpp",
@@ -128,7 +128,7 @@ export default function IntegrationHealthPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 size={24} className="animate-spin text-muted" />
+        <MonolithPulse />
       </div>
     );
   }
@@ -217,7 +217,7 @@ export default function IntegrationHealthPage() {
       {!isDemo && !error && !loading && data && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
               <div className="flex items-center gap-2 mb-2">
                 <Activity size={14} className="text-blue" />
                 <span className="text-[10px] font-semibold text-muted uppercase tracking-wider">
@@ -229,7 +229,7 @@ export default function IntegrationHealthPage() {
               </p>
               <p className="text-[11px] text-muted mt-1">monitored</p>
             </div>
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 size={14} className="text-success" />
                 <span className="text-[10px] font-semibold text-muted uppercase tracking-wider">
@@ -241,7 +241,7 @@ export default function IntegrationHealthPage() {
               </p>
               <p className="text-[11px] text-muted mt-1">last {days}d</p>
             </div>
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle size={14} className="text-warn" />
                 <span className="text-[10px] font-semibold text-muted uppercase tracking-wider">
@@ -253,7 +253,7 @@ export default function IntegrationHealthPage() {
               </p>
               <p className="text-[11px] text-muted mt-1">70–95% success</p>
             </div>
-            <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-5">
+            <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
               <div className="flex items-center gap-2 mb-2">
                 <XCircle size={14} className={downCount > 0 ? "text-danger" : "text-muted"} />
                 <span className="text-[10px] font-semibold text-muted uppercase tracking-wider">
@@ -271,7 +271,7 @@ export default function IntegrationHealthPage() {
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
+          <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] overflow-hidden">
             <div className="px-6 py-4 border-b border-border">
               <h3 className="font-display text-lg text-navy">By clinic</h3>
             </div>
@@ -406,7 +406,7 @@ export default function IntegrationHealthPage() {
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
+          <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] overflow-hidden">
             <button
               onClick={() => setProviderSectionOpen(!providerSectionOpen)}
               className="w-full px-6 py-4 border-b border-border flex items-center justify-between text-left hover:bg-cloud-light/50 transition-colors"
@@ -481,7 +481,7 @@ export default function IntegrationHealthPage() {
 
       {loading && !isDemo && (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={24} className="animate-spin text-muted" />
+          <MonolithPulse />
         </div>
       )}
     </div>

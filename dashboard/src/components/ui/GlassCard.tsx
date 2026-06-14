@@ -6,7 +6,6 @@ import {
   brand,
   moduleColors,
   motion as motionTokens,
-  shadows,
   glass,
 } from "@/lib/tokens";
 import { DURATION, EASING, useDoubleRAF } from "@/lib/motion";
@@ -125,7 +124,9 @@ export function GlassCard({
         overflow: "hidden",
         borderRadius: 24,
         border: `1px solid ${borderColor}`,
-        boxShadow: hovered ? shadows.hover : shadows.rest,
+        // CSS vars, not the JS constants: the dark-mode shadow stacks live as
+        // html.dark overrides in globals.css and can only reach the card this way.
+        boxShadow: hovered ? "var(--shadow-elevated)" : "var(--shadow-card)",
         transform: mountedTransform,
         opacity: mounted ? 1 : 0,
         transition: `all ${DURATION.mount}ms ${EASING}`,

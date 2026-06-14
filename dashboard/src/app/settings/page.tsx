@@ -483,7 +483,7 @@ export default function SettingsPage() {
       <PageHeader title="Settings" subtitle={canManageTeam ? "Manage your clinic configuration, targets, and team" : "Manage your account"} />
 
       {/* Retrigger tour */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-4">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-4">
         <RetriggerTourButton />
       </div>
 
@@ -599,7 +599,7 @@ export default function SettingsPage() {
       />
 
       {/* Compatible Data Sources */}
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
         <h3 className="font-display text-lg text-navy mb-1">Compatible Data Sources</h3>
         <p className="text-xs text-muted mb-5">
           These tools enrich StrydeOS Intelligence with clinical data. They are not PMS integrations — they layer additional signals into your analytics.

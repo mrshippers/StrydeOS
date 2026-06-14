@@ -67,13 +67,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const secret = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
   const rawBody = await req.text();
 
-  // Validate signature if secret is configured
-  if (secret) {
-    const sig = req.headers.get("elevenlabs-signature") ?? "";
-    if (!sig || !verifyElevenLabsSignature(secret, rawBody, sig)) {
-      console.error("[post-call] ElevenLabs signature validation failed");
-      return new NextResponse("Forbidden", { status: 403 });
-    }
+  // Fail closed: an unset secret is a deploy bug, not an excuse to ingest
+  // unauthenticated call transcripts. 200 + config_missing suppresses
+  // ElevenLabs retry storms while the deploy is fixed (same policy as
+  // /api/webhooks/elevenlabs).
+  if (!secret) {
+    console.error(
+      "[CRITICAL] [post-call] ELEVENLABS_WEBHOOK_SECRET not configured — refusing to process. Returning 200 to suppress retries; fix the deploy.",
+    );
+    return NextResponse.json(
+      { error: "config_missing", reason: "ELEVENLABS_WEBHOOK_SECRET not configured" },
+      { status: 200 },
+    );
+  }
+
+  const sig = req.headers.get("elevenlabs-signature") ?? "";
+  if (!sig || !verifyElevenLabsSignature(secret, rawBody, sig)) {
+    console.error("[post-call] ElevenLabs signature validation failed");
+    return new NextResponse("Forbidden", { status: 403 });
   }
 
   let payload: ElevenLabsPostCallPayload;

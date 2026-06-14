@@ -144,7 +144,7 @@ function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-12 text-center">
+      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-12 text-center">
         <div className="flex justify-center mb-4">
           <div className="w-12 h-12 rounded-full bg-blue/10 flex items-center justify-center">
             <Users size={22} className="text-blue" />
@@ -208,25 +208,26 @@ function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
   ];
 
   return (
-    <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden">
+    <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="sticky top-0 z-10 bg-white">
-            <tr className="border-b border-border">
+            {/* Debossed header band — terminal-grade column labels. */}
+            <tr className="surface-well border-b border-border">
               {columns.map(({ key, label }) => (
                 <th
                   key={key}
                   onClick={() => handleSort(key)}
-                  className="text-left px-5 py-3 text-[11px] font-semibold text-muted-strong uppercase tracking-[0.08em] cursor-pointer hover:text-navy transition-colors duration-200 select-none"
+                  className={`px-5 py-3 text-[10px] font-semibold text-muted-strong uppercase tracking-[0.08em] cursor-pointer hover:text-navy transition-colors duration-200 select-none ${key === "name" ? "text-left" : "text-right"}`}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className={`flex items-center gap-1 ${key === "name" ? "" : "justify-end"}`}>
                     {label}
                     {COLUMN_TOOLTIPS[key] && <HeaderTooltip text={COLUMN_TOOLTIPS[key]} />}
                     <SortIcon col={key} sortKey={sortKey} sortAsc={sortAsc} />
                   </div>
                 </th>
               ))}
-              <th className="px-5 py-3 text-[11px] font-semibold text-muted-strong uppercase tracking-[0.08em] text-center">
+              <th className="px-5 py-3 text-[10px] font-semibold text-muted-strong uppercase tracking-[0.08em] text-center">
                 Status
               </th>
             </tr>
@@ -256,7 +257,7 @@ function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
                     if (onRowClick) onRowClick(row.clinicianId);
                     setExpandedId(expandedId === row.clinicianId ? null : row.clinicianId);
                   }}
-                  className="group border-b border-border/50 cursor-pointer transition-all duration-200 hover:bg-blue/[0.04] active:bg-blue/[0.06]"
+                  className="group border-b border-border/40 cursor-pointer transition-all duration-200 row-hover active:bg-blue/[0.06]"
                   style={{
                     height: 52,
                     // Soft amber glow from the left edge replaces the prior 3px solid rail
@@ -276,22 +277,22 @@ function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
                       </span>
                     </div>
                   </td>
-                  <td className="px-5 py-2">
+                  <td className="px-5 py-2 text-right tabular-nums">
                     <RagBadge value={formatRate(row.stats.followUpRate)} status={fuStatus} />
                   </td>
-                  <td className="px-5 py-2">
+                  <td className="px-5 py-2 text-right tabular-nums">
                     <RagBadge value={formatPercent(row.stats.treatmentCompletionRate)} status={ccStatus} />
                   </td>
-                  <td className="px-5 py-2">
+                  <td className="px-5 py-2 text-right tabular-nums">
                     <RagBadge value={formatPercent(row.stats.utilisationRate)} status={utilStatus} />
                   </td>
-                  <td className="px-5 py-2">
+                  <td className="px-5 py-2 text-right tabular-nums">
                     <RagBadge value={formatPercent(row.stats.dnaRate)} status={dnaStatus} />
                   </td>
-                  <td className="px-5 py-2 text-[14px] font-semibold text-navy tabular-nums">
+                  <td className="px-5 py-2 text-right text-[14px] font-semibold text-navy tabular-nums">
                     {row.stats.appointmentsTotal}
                   </td>
-                  <td className="px-5 py-2 text-[14px] font-semibold text-navy tabular-nums">
+                  <td className="px-5 py-2 text-right text-[14px] font-semibold text-navy tabular-nums">
                     {formatRevenue(revenuePence)}
                   </td>
                   <td className="px-5 py-2 text-center">

@@ -99,9 +99,11 @@ function useCountUp(rawTarget: string | number, duration = 800): { display: stri
 function Sparkline({ data, status }: { data: number[]; status: string }) {
   if (data.length < 2) return null;
 
+  // Declining/danger sparklines render amber, not red — red vs green alone is
+  // invisible to deuteranopic users; the chevron icons carry shape + colour.
   const lineColor =
     status === "ok"      ? brand.success :
-    status === "danger"  ? brand.danger :
+    status === "danger"  ? brand.warning :
     status === "warn"    ? brand.warning :
     brand.muted;
 
@@ -189,7 +191,7 @@ function StatCard({
           : undefined
       }
       aria-label={onClick ? (typeof label === "string" ? label : undefined) : undefined}
-      className={`stryde-fade-up group relative rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] overflow-hidden transition-all duration-300 ease-out flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring,#1C54F2)] focus-visible:ring-offset-2 ${
+      className={`stryde-fade-up group relative surface-emboss rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] overflow-hidden transition-all duration-300 ease-out flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring,#1C54F2)] focus-visible:ring-offset-2 ${
         onClick ? "cursor-pointer hover:shadow-[var(--shadow-elevated)] hover:-translate-y-1 active:scale-[0.99] active:shadow-[var(--shadow-card)]" : "hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
       }`}
       style={{ animationDelay: index !== undefined ? `${index * 80}ms` : "0ms" }}
@@ -202,20 +204,6 @@ function StatCard({
         }}
       />
 
-      {/* Glass specular — only renders on dark (navy) cards where it's visible */}
-      <div
-        aria-hidden
-        className="hidden dark:block"
-        style={{
-          position: "absolute",
-          top: 0, left: 0, right: 0,
-          height: 40,
-          background: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)",
-          pointerEvents: "none",
-          borderRadius: "inherit",
-          zIndex: 1,
-        }}
-      />
 
       {/* Status dot — top right */}
       <div

@@ -83,7 +83,7 @@ function CliniciansPage() {
 
       {/* Selected clinician detail panel — for clinician role, always show their panel */}
       {(effectiveId !== "all" && selectedClinician && latest) && (
-        <div className="rounded-[var(--radius-card)] bg-white border border-border shadow-[var(--shadow-card)] p-6 animate-fade-in">
+        <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6 animate-fade-in">
           <div className="flex items-center gap-4 mb-6">
             <div className="w-12 h-12 rounded-full bg-navy flex items-center justify-center text-sm font-bold text-navy dark:text-white">
               {getInitials(selectedClinician.name)}

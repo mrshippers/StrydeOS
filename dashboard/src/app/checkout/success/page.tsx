@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { Check, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
+import { ShieldMark } from "@/components/ui/ModuleIcons";
+import { brand } from "@/lib/brand";
 
 /**
  * /checkout/success
@@ -42,9 +44,15 @@ export default function CheckoutSuccessPage() {
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="flex flex-col items-center gap-5"
       >
-        <div className="w-16 h-16 rounded-full flex items-center justify-center bg-success shadow-[0_0_40px_rgba(5,150,105,0.4)]">
-          <Check size={28} className="text-navy dark:text-white" strokeWidth={3} />
-        </div>
+        <span
+          className="inline-flex h-16 w-16 items-center justify-center rounded-2xl"
+          style={{
+            background: `${brand.success}1F`,
+            boxShadow: `inset 0 0 0 1px ${brand.success}40, 0 0 40px rgba(5,150,105,0.4)`,
+          }}
+        >
+          <ShieldMark color={brand.success} size={32} />
+        </span>
         <div className="text-center">
           <h1 className="font-display text-[28px] text-navy dark:text-white mb-2">
             Payment confirmed
