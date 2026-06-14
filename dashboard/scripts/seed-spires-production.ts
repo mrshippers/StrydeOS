@@ -492,8 +492,8 @@ function computeMetrics(appointments: AppointmentDoc[]): MetricDoc[] {
         : 0;
 
       const hepIdx = Math.min(wi, (HEP_ARCS[cid] || []).length - 1);
-      const hepRate = (HEP_ARCS[cid] || [])[hepIdx] ?? 0.7;
-      const hepRate = Math.min(1, hepRate + 0.05);
+      const hepBase = (HEP_ARCS[cid] || [])[hepIdx] ?? 0.7;
+      const hepRate = Math.min(1, hepBase + 0.05);
 
       // HEP compliance: simulate improvement over time
       const baseTreatmentCompletion = cid === "c-joe" ? 1.0 : 0.65;
@@ -696,6 +696,7 @@ async function main() {
   initFirebaseAdmin();
   const auth = admin.auth();
   const db = admin.firestore();
+  db.settings({ ignoreUndefinedProperties: true });
   const now = new Date().toISOString();
 
   // ── 1. Ensure clinic document ─────────────────────────────────────────────
