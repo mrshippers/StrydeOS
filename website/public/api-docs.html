@@ -211,6 +211,7 @@
   .method-GET { background: #ECFDF5; color: var(--success); }
   .method-POST { background: #EFF6FF; color: var(--blue); }
   .method-PUT { background: #FFFBEB; color: #B45309; }
+  .method-PATCH { background: #F0FDFA; color: var(--teal); }
   .method-DELETE { background: #FEF2F2; color: var(--danger); }
   .card-desc {
     font-size: 14px;
@@ -497,7 +498,7 @@
 <header class="header">
   <div class="header-inner">
     <h1>Stryde<span>OS</span> API Reference</h1>
-    <p>45 endpoints &middot; Last updated 17 April 2026</p>
+    <p>84 endpoints &middot; Last updated 17 June 2026</p>
 
     <div class="view-toggle">
       <button class="view-btn active" onclick="setView('business')">API Architecture</button>
@@ -519,10 +520,10 @@
 <div id="view-business">
 
   <div class="stats-row">
-    <div class="stat-card"><div class="num">37</div><div class="label">Total Endpoints</div></div>
-    <div class="stat-card"><div class="num">6</div><div class="label">Business Areas</div></div>
-    <div class="stat-card"><div class="num">4</div><div class="label">Webhook Integrations</div></div>
-    <div class="stat-card"><div class="num">5</div><div class="label">Auth Methods</div></div>
+    <div class="stat-card"><div class="num">84</div><div class="label">Total Endpoints</div></div>
+    <div class="stat-card"><div class="num">13</div><div class="label">Business Areas</div></div>
+    <div class="stat-card"><div class="num">6</div><div class="label">Webhook Integrations</div></div>
+    <div class="stat-card"><div class="num">7</div><div class="label">Auth Methods</div></div>
   </div>
 
   <!-- Onboarding & Signup -->
@@ -535,12 +536,15 @@
       <h3>How clinics join StrydeOS</h3>
       <p>When a clinic owner signs up, the system creates their account, sets up their workspace, and starts a 30-day free trial. Behind the scenes, this involves creating a secure login (Firebase Auth), a clinic record in the database, and a billing profile with Stripe.</p>
       <p>Clinic owners can also invite their clinicians by email. Each invited clinician gets a password-reset link to set up their own login.</p>
+      <p>During setup, StrydeOS can auto-fill the clinic's Ava knowledge base from public sources (Google Places, Companies House, the clinic website), and self-heals a clinician's own record on first login so their data lands under the right clinic.</p>
       <div class="biz-who"><strong>Who uses this:</strong> Clinic owners signing up, StrydeOS admin provisioning pilot clinics manually</div>
       <div class="biz-endpoints">
         <span class="biz-endpoint">/api/clinic/signup</span>
         <span class="biz-endpoint">/api/admin/provision-clinic</span>
         <span class="biz-endpoint">/api/clinic/check-go-live</span>
         <span class="biz-endpoint">/api/clinic/resend-invite</span>
+        <span class="biz-endpoint">/api/clinic/enrich</span>
+        <span class="biz-endpoint">/api/clinic/ensure-clinician</span>
       </div>
     </div>
   </div>
@@ -554,10 +558,12 @@
     <div class="biz-card">
       <h3>Adding and managing clinicians</h3>
       <p>Clinic owners can add clinicians to their practice. The number of clinicians allowed depends on the billing tier: Solo (1), Studio (2–5), Clinic (6+). Extra seats can be purchased if you need more capacity within your tier.</p>
-      <p>Each clinician is linked to their PMS practitioner ID so their appointment data flows through automatically.</p>
+      <p>Each clinician is linked to their PMS practitioner ID so their appointment data flows through automatically. Owners and admins can change a team member's role (owner / admin / clinician) at any time, with safeguards: the last owner can't be demoted, you can't change your own role, and admins can't grant owner. Clinicians can also opt in or out of the Heidi clinical scribe individually.</p>
       <div class="biz-who"><strong>Who uses this:</strong> Clinic owners and admins managing their team</div>
       <div class="biz-endpoints">
         <span class="biz-endpoint">/api/clinicians/add</span>
+        <span class="biz-endpoint">/api/clinicians/[id]/role</span>
+        <span class="biz-endpoint">/api/clinicians/[id]/heidi</span>
         <span class="biz-endpoint">/api/billing/seats</span>
       </div>
     </div>
@@ -623,10 +629,17 @@
       <h3>How Ava handles calls and bookings</h3>
       <p>Ava is StrydeOS's AI voice receptionist, powered by ElevenLabs Conversational AI and Twilio telephony. When a patient calls, Ava answers, understands their request, and can book appointments directly into your PMS.</p>
       <p><strong>The booking flow:</strong> Patient calls → Ava converses → confirms booking details → n8n automation creates the appointment in your PMS → a copy is saved in StrydeOS for tracking. If the PMS write fails (e.g., the PMS is briefly offline), StrydeOS saves the booking locally and retries automatically.</p>
-      <p>Call data — duration, outcome (booked, cancelled, escalated, voicemail), transcripts, and sentiment — flows into the Receptionist dashboard so you can see how Ava is performing.</p>
-      <div class="biz-who"><strong>Who uses this:</strong> Automated — Ava handles calls; clinic owners view results in the dashboard</div>
+      <p>Call data — duration, outcome (booked, cancelled, escalated, voicemail), transcripts, and sentiment — flows into the Receptionist dashboard so you can see how Ava is performing. A daily digest email summarises the day's calls. Owners can pause or resume Ava in one tap (which attaches or detaches the clinic's phone number from the agent), provision a UK number, sync the knowledge base, and warm-transfer a caller to reception when needed.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Automated — Ava handles calls; clinic owners view results and control Ava from the dashboard</div>
       <div class="biz-endpoints">
         <span class="biz-endpoint">/api/ava/agent</span>
+        <span class="biz-endpoint">/api/ava/provision-number</span>
+        <span class="biz-endpoint">/api/ava/knowledge</span>
+        <span class="biz-endpoint">/api/ava/toggle</span>
+        <span class="biz-endpoint">/api/ava/tools</span>
+        <span class="biz-endpoint">/api/ava/transfer</span>
+        <span class="biz-endpoint">/api/ava/digest</span>
+        <span class="biz-endpoint">/api/ava/post-call</span>
         <span class="biz-endpoint">/api/bookings/create</span>
         <span class="biz-endpoint">/api/bookings/retry-pms</span>
         <span class="biz-endpoint">/api/webhooks/elevenlabs</span>
@@ -651,12 +664,96 @@
         <li><strong>Reactivation (180 days)</strong> — second nudge for lapsed patients</li>
         <li><strong>Insurance pre-auth</strong> — before the first session if flagged</li>
       </ul>
-      <p>When patients reply to a review prompt with an NPS score (0–10), StrydeOS automatically parses it and logs it to the Reputation dashboard. All messages are tracked: open rates, click rates, and whether the patient rebooked.</p>
+      <p>When patients reply to a review prompt with an NPS score (0–10), StrydeOS automatically parses it and logs it to the Reputation dashboard. All messages are tracked: email opens and clicks (via Resend) and SMS delivery (via Twilio) flow back as delivery webhooks, so the Pulse dashboard shows open rates, click rates, and whether the patient rebooked.</p>
       <div class="biz-who"><strong>Who uses this:</strong> Automated — triggered by patient events; clinic owners view results in Pulse dashboard</div>
       <div class="biz-endpoints">
         <span class="biz-endpoint">/api/comms/send</span>
         <span class="biz-endpoint">/api/n8n/callback</span>
         <span class="biz-endpoint">/api/webhooks/writeupp</span>
+        <span class="biz-endpoint">/api/webhooks/resend</span>
+        <span class="biz-endpoint">/api/webhooks/twilio</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insurance & Patient Intake -->
+  <div class="section" data-search="insurance intake pre-auth preauth policy insurer bupa axa address postcode consent gdpr patient form token cliniko">
+    <div class="section-title">
+      <div class="section-icon" style="background:#F0FDFA;color:var(--teal);">🛡️</div>
+      Insurance &amp; Patient Intake
+    </div>
+    <div class="biz-card">
+      <h3>Collecting insurance details safely, before the appointment</h3>
+      <p>For insured patients, StrydeOS sends a secure, single-use link asking for their insurer, policy number, and address before their first session. A daily job polls upcoming Cliniko appointments and emails the link automatically; staff can also send one on demand, or Ava can text it mid-call.</p>
+      <p>The patient form is public but token-gated — it never touches your PMS. Submissions land in a staff review queue where sensitive fields are redacted to the last four digits. <strong>Only when a staff member approves does the insurance detail get written back to the patient's PMS record.</strong> Staff can also enter pre-authorisation codes received from insurers (authorised session counts, excess, expiry).</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Patients (intake form); clinic staff (review, approve, pre-auth); automated (daily polling)</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/insurance/poll-and-send</span>
+        <span class="biz-endpoint">/api/insurance/send-one</span>
+        <span class="biz-endpoint">/api/insurance/intake-link</span>
+        <span class="biz-endpoint">/api/insurance/intakes</span>
+        <span class="biz-endpoint">/api/insurance/intakes/[id]</span>
+        <span class="biz-endpoint">/api/intake/[token]</span>
+        <span class="biz-endpoint">/api/patients/pre-auth</span>
+        <span class="biz-endpoint">/api/integrations/inbound-email/provision</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clinical Intelligence -->
+  <div class="section" data-search="intelligence insight detect anomaly digest state of clinic clinician value attribution kpi performance weekly email">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EDE9FE;color:var(--purple);">📈</div>
+      Clinical Intelligence
+    </div>
+    <div class="biz-card">
+      <h3>Turning the numbers into action</h3>
+      <p>The Intelligence module watches each clinic's KPIs and surfaces what changed and why. A daily detection pass creates insight events (drop-offs, anomalies, wins), feeds the Pulse re-engagement queue, and fires urgent alerts when something needs attention now.</p>
+      <p>Two weekly emails go out automatically: a <strong>State of the Clinic</strong> summary for owners (Sunday), and a <strong>per-clinician digest</strong> with each clinician's own stats benchmarked against the UK average — never naming or shaming, and revenue is never shown to clinicians (Monday). A separate value pass attributes outcomes back to revenue so owners can see the commercial impact of clinical work.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Automated (daily/weekly cron); owners and admins can trigger manually</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/intelligence/detect</span>
+        <span class="biz-endpoint">/api/intelligence/value</span>
+        <span class="biz-endpoint">/api/intelligence/digest</span>
+        <span class="biz-endpoint">/api/intelligence/clinician-digest</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clinical Scribe (Heidi) -->
+  <div class="section" data-search="heidi scribe notes clinical documentation integration connect sync per-clinician opt-in">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EFF6FF;color:var(--blue);">📝</div>
+      Clinical Scribe (Heidi)
+    </div>
+    <div class="biz-card">
+      <h3>Connecting the Heidi clinical scribe</h3>
+      <p>Clinics can connect Heidi Health as their clinical scribe. The clinic stores an encrypted API key, tests the connection, and runs a sync. Heidi issues a per-clinician token from each clinician's own email, so every team member opts in (or out) individually from their profile.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Owners and admins (connect); each clinician (opt in/out)</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/heidi/save-config</span>
+        <span class="biz-endpoint">/api/heidi/test-connection</span>
+        <span class="biz-endpoint">/api/heidi/sync</span>
+        <span class="biz-endpoint">/api/heidi/disconnect</span>
+        <span class="biz-endpoint">/api/clinicians/[id]/heidi</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reputation & Reviews -->
+  <div class="section" data-search="reviews google places reputation nps rating star feedback connect">
+    <div class="section-title">
+      <div class="section-icon" style="background:#FEF3C7;color:#B45309;">⭐</div>
+      Reputation &amp; Reviews
+    </div>
+    <div class="biz-card">
+      <h3>Tracking your Google reputation</h3>
+      <p>Clinics connect their Google Business profile by Place ID. StrydeOS verifies the credentials (returning the place name, rating, and review count for confirmation), then pulls reviews so rating and review-velocity sit alongside the NPS data in the Reputation dashboard. Disconnecting keeps the cached reviews so velocity history is preserved.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> Clinic owners and admins connecting their Google profile</div>
+      <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/reviews/save-config</span>
+        <span class="biz-endpoint">/api/reviews/test-connection</span>
+        <span class="biz-endpoint">/api/reviews/disconnect</span>
       </div>
     </div>
   </div>
@@ -671,12 +768,15 @@
       <h3>How your KPIs are calculated</h3>
       <p>Every day at 6:00 AM UTC, StrydeOS runs its data pipeline. This pulls the latest data from your PMS, syncs patient and appointment records, computes the seven KPI metrics (follow-up rate, HEP compliance, programme assignment, utilisation, DNA rate, revenue per session, NPS), and triggers any due communications.</p>
       <p>WriteUpp clinics also get <strong>near real-time updates</strong> — when an appointment is created or changed in WriteUpp, a webhook fires and StrydeOS re-computes within seconds.</p>
-      <p>For new clinics, a one-time <strong>90-day backfill</strong> pulls historical data so you have context from day one.</p>
+      <p>For new clinics, a one-time <strong>90-day backfill</strong> pulls historical data so you have context from day one. A second pass computes <strong>deep metrics</strong> — retention curve, cost of the empty chair, net growth, rebooking lag, discharge quality, and patient lifetime value. A daily data-health check flags any clinic whose PMS or CSV feed has gone stale, and a weekly cleanup enforces GDPR data-retention windows.</p>
       <div class="biz-who"><strong>Who uses this:</strong> Runs automatically; clinic owners or superadmins can trigger manually</div>
       <div class="biz-endpoints">
         <span class="biz-endpoint">/api/pipeline/run</span>
         <span class="biz-endpoint">/api/pipeline/backfill</span>
         <span class="biz-endpoint">/api/metrics/compute</span>
+        <span class="biz-endpoint">/api/metrics/deep</span>
+        <span class="biz-endpoint">/api/data-health/check-staleness</span>
+        <span class="biz-endpoint">/api/data-health/cleanup</span>
         <span class="biz-endpoint">/api/pms/sync</span>
       </div>
     </div>
@@ -707,20 +807,26 @@
     </div>
   </div>
 
-  <!-- Admin & Diagnostics -->
-  <div class="section" data-search="admin superadmin health diagnostics debug integration">
+  <!-- Platform Health, Auth & Admin -->
+  <div class="section" data-search="admin superadmin health diagnostics debug integration auth session login logout demo migrations mcp modules">
     <div class="section-title">
       <div class="section-icon" style="background:var(--cloud);color:var(--muted-strong);">⚙️</div>
-      Admin &amp; Diagnostics
+      Platform Health, Auth &amp; Admin
     </div>
     <div class="biz-card">
-      <h3>StrydeOS internal tools</h3>
-      <p>These endpoints are used by the StrydeOS team (superadmins) to monitor system health, diagnose integration issues, and manage clinics.</p>
-      <p>The <strong>integration health dashboard</strong> shows sync success rates across all clinics — if a PMS connection is degrading, the team can see it before the clinic owner notices.</p>
-      <div class="biz-who"><strong>Who uses this:</strong> StrydeOS superadmins only</div>
+      <h3>Sign-in, health monitoring, and internal tools</h3>
+      <p>Users sign in with Firebase, which StrydeOS exchanges for a short-lived, HMAC-signed session cookie (8-hour clinical workday). A no-login demo session is available for the public sandbox. Health endpoints report overall platform status and per-clinic module heartbeats (Ava, Intelligence, Pulse).</p>
+      <p>The StrydeOS team (superadmins) use the rest to monitor system health, run schema migrations, diagnose integration issues, and manage clinics. The <strong>integration health dashboard</strong> shows sync success rates across all clinics — if a PMS connection is degrading, the team can see it before the clinic owner notices. A secured MCP endpoint also exposes clinic operations to approved AI assistants.</p>
+      <div class="biz-who"><strong>Who uses this:</strong> All users (sign-in); StrydeOS superadmins (health, migrations, diagnostics, MCP)</div>
       <div class="biz-endpoints">
+        <span class="biz-endpoint">/api/auth/session</span>
+        <span class="biz-endpoint">/api/auth/demo</span>
+        <span class="biz-endpoint">/api/health</span>
+        <span class="biz-endpoint">/api/health/modules</span>
         <span class="biz-endpoint">/api/admin/integration-health</span>
+        <span class="biz-endpoint">/api/admin/run-migrations</span>
         <span class="biz-endpoint">/api/debug/writeupp-probe</span>
+        <span class="biz-endpoint">/api/mcp</span>
       </div>
     </div>
   </div>
@@ -732,10 +838,10 @@
 <div id="view-technical" class="hidden">
 
   <div class="stats-row">
-    <div class="stat-card"><div class="num">37</div><div class="label">Endpoints</div></div>
-    <div class="stat-card"><div class="num">24</div><div class="label">Token-Authed</div></div>
-    <div class="stat-card"><div class="num">5</div><div class="label">Webhooks</div></div>
-    <div class="stat-card"><div class="num">3</div><div class="label">Cron Jobs</div></div>
+    <div class="stat-card"><div class="num">84</div><div class="label">Endpoints</div></div>
+    <div class="stat-card"><div class="num">60</div><div class="label">Token-Authed</div></div>
+    <div class="stat-card"><div class="num">6</div><div class="label">Webhooks</div></div>
+    <div class="stat-card"><div class="num">7</div><div class="label">Cron Jobs</div></div>
   </div>
 
   <!-- ── Auth Overview ── -->
@@ -745,41 +851,51 @@
       Authentication Methods
     </div>
     <div class="biz-card">
-      <h3>Five authentication patterns</h3>
+      <h3>Seven authentication patterns</h3>
       <div style="overflow-x:auto;">
         <table style="width:100%;font-size:13px;border-collapse:collapse;margin-top:8px;">
           <thead>
             <tr style="border-bottom:2px solid var(--border);text-align:left;">
               <th style="padding:8px 12px;color:var(--muted);font-weight:600;">Method</th>
-              <th style="padding:8px 12px;color:var(--muted);font-weight:600;">Header</th>
+              <th style="padding:8px 12px;color:var(--muted);font-weight:600;">Header / Mechanism</th>
               <th style="padding:8px 12px;color:var(--muted);font-weight:600;">Used By</th>
             </tr>
           </thead>
           <tbody>
             <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:8px 12px;font-weight:500;">Firebase ID Token</td>
-              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">Authorization: Bearer &lt;idToken&gt;</td>
-              <td style="padding:8px 12px;">Dashboard users (24 endpoints)</td>
+              <td style="padding:8px 12px;font-weight:500;">Firebase Token + Session Cookie</td>
+              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">ID token &rarr; HMAC-signed session cookie (8h)</td>
+              <td style="padding:8px 12px;">Dashboard users — role-gated (~60 endpoints)</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:8px 12px;font-weight:500;">Cron Secret</td>
               <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">Authorization: Bearer &lt;CRON_SECRET&gt;</td>
-              <td style="padding:8px 12px;">Vercel Cron (pipeline/run, metrics/compute, bookings/retry-pms)</td>
+              <td style="padding:8px 12px;">Vercel Cron (7 scheduled jobs)</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:8px 12px;font-weight:500;">Webhook Secret</td>
-              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">x-webhook-secret: &lt;secret&gt;</td>
-              <td style="padding:8px 12px;">WriteUpp, n8n, Ava bookings</td>
+              <td style="padding:8px 12px;font-weight:500;">HMAC Webhook Signature</td>
+              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">x-elevenlabs-signature / svix-signature / x-twilio-signature / x-webhook-secret</td>
+              <td style="padding:8px 12px;">ElevenLabs, Resend, Twilio, WriteUpp, n8n</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:8px 12px;font-weight:500;">Stripe Signature</td>
               <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">stripe-signature: &lt;sig&gt;</td>
               <td style="padding:8px 12px;">Stripe billing webhooks</td>
             </tr>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:8px 12px;font-weight:500;">Per-Clinic Ingest Token</td>
+              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">Bearer &lt;clinic ingest token&gt; (bound to clinicId)</td>
+              <td style="padding:8px 12px;">Inbound CSV email import</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:8px 12px;font-weight:500;">MCP Bearer / OAuth (PKCE)</td>
+              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">Authorization: Bearer &lt;token&gt; (constant-time)</td>
+              <td style="padding:8px 12px;">claude.ai MCP connector (stryde-ops)</td>
+            </tr>
             <tr>
-              <td style="padding:8px 12px;font-weight:500;">ElevenLabs Signature</td>
-              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">x-elevenlabs-signature: &lt;sig&gt;</td>
-              <td style="padding:8px 12px;">ElevenLabs voice webhooks</td>
+              <td style="padding:8px 12px;font-weight:500;">Public Intake Token</td>
+              <td style="padding:8px 12px;font-family:var(--font-mono);font-size:12px;">Signed, single-use token in URL</td>
+              <td style="padding:8px 12px;">Patient insurance intake form</td>
             </tr>
           </tbody>
         </table>
@@ -2075,6 +2191,824 @@ CORS: Access-Control-Allow-Origin: *</pre></div>
     </div>
   </div>
 
+  <!-- ── Clinical Intelligence ── -->
+  <div class="section" data-search="intelligence insight detect anomaly digest state of clinic clinician value attribution kpi weekly email cron">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EDE9FE;color:var(--purple);">📈</div>
+      Clinical Intelligence
+    </div>
+
+    <div class="card" data-search="intelligence detect insight event anomaly pulse reengagement urgent">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="method-badge method-GET">GET</span><span class="card-path">/api/intelligence/detect</span></div>
+          <div class="card-desc">Daily insight-event detection across all active clinics — creates insight events, drives the Pulse re-engagement queue, sends urgent alerts, writes module heartbeat.</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron / Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">clinicId</span>: <span class="type">string</span> <span class="comment">← optional (all active clinics if omitted)</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">processedAt</span>: <span class="type">ISO</span>,
+  <span class="key">results</span>: [{ clinicId, detection, pulse,
+    reengagement, urgentEmails }] }</pre>
+          <h4 style="margin-top:12px;">Notes</h4><pre><span class="comment">Cron 06:30 daily · cron auth tried first, falls back to session+role</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="intelligence value attribution revenue summary monthly">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/intelligence/value</span></div>
+          <div class="card-desc">Value-attribution detection + monthly summary — connects clinical outcomes back to revenue. Tenant-isolated (non-superadmins process only their own clinic).</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron / Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">clinicId</span>: <span class="type">string</span> <span class="comment">← optional (own clinic unless superadmin)</span></pre>
+          <h4 style="margin-top:12px;">Rate Limit</h4><pre><span class="comment">10 / IP / 60s → 429</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">processedAt</span>: <span class="type">ISO</span>,
+  <span class="key">results</span>: [{ clinicId, detection, summary }] }</pre>
+          <h4 style="margin-top:12px;">Errors</h4><pre><span class="comment">403</span> — clinic mismatch (non-superadmin)</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="intelligence digest state of clinic weekly owner email sunday">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-GET">GET</span><span class="card-path">/api/intelligence/digest</span></div>
+          <div class="card-desc">Weekly "State of the Clinic" owner email. Deduped per clinic per week (Monday key) so cron double-fires and manual triggers can't double-send.</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron / Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request</h4><pre><span class="comment">No body</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">processedAt</span>: <span class="type">ISO</span>,
+  <span class="key">results</span>: [{ clinicId, sent: <span class="type">bool</span>,
+    error?: <span class="type">"already_sent_this_week"</span> }] }</pre>
+          <h4 style="margin-top:12px;">Notes</h4><pre><span class="comment">Cron Sun 07:00 UTC</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="intelligence clinician digest weekly per clinician monday benchmark uk avg">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-GET">GET</span><span class="card-path">/api/intelligence/clinician-digest</span></div>
+          <div class="card-desc">Per-clinician weekly digest — each clinician's own stats vs the UK average. Revenue is never included. Deduped per week.</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron / Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request</h4><pre><span class="comment">No body</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">processedAt</span>: <span class="type">ISO</span>,
+  <span class="key">results</span>: [{ clinicId, sent, skipped, errors }] }</pre>
+          <h4 style="margin-top:12px;">Notes</h4><pre><span class="comment">Cron Mon 07:30 UTC · benchmarks labelled "UK avg"</span></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Deep Metrics & Data Health ── -->
+  <div class="section" data-search="metrics deep retention ltv empty chair data health staleness cleanup gdpr retention cron">
+    <div class="section-title">
+      <div class="section-icon" style="background:#FCE7F3;color:#9D174D;">🩺</div>
+      Deep Metrics &amp; Data Health
+    </div>
+
+    <div class="card" data-search="metrics deep retention curve cost empty chair net growth rebooking lag discharge ltv">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/metrics/deep</span></div>
+          <div class="card-desc">Computes deep metrics per clinic: retention curve, cost of the empty chair, net growth, rebooking lag, discharge quality, patient LTV.</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron / Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">clinicId</span>:  <span class="type">string</span> <span class="comment">← optional (own clinic unless superadmin)</span>
+<span class="key">weekStart</span>: <span class="type">string</span> <span class="comment">← optional YYYY-MM-DD (default current Monday)</span></pre>
+          <h4 style="margin-top:12px;">Rate Limit</h4><pre><span class="comment">10 / IP / 60s → 429</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">weekStart</span>, <span class="key">processedAt</span>,
+  <span class="key">results</span>: [{ clinicId, written: <span class="type">number</span>, error? }] }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="data health staleness stale csv tm3 alert seven days">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-GET">GET</span><span class="method-badge method-POST">POST</span><span class="card-path">/api/data-health/check-staleness</span></div>
+          <div class="card-desc">Finds CSV/TM3-bridge clinics with no data sync in 7+ days and raises a deduped DATA_STALENESS_ALERT insight event (weekly dedup).</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron / Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request</h4><pre><span class="comment">No body</span></pre>
+          <h4 style="margin-top:12px;">Rate Limit</h4><pre><span class="comment">10 / IP / 60s → 429</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">checked</span>, <span class="key">alerted</span>,
+  <span class="key">results</span>: [{ clinicId, alerted, reason? }] }</pre>
+          <h4 style="margin-top:12px;">Notes</h4><pre><span class="comment">Cron 08:00 daily</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="data health cleanup gdpr retention ttl purge billing downgrade weekly">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-GET">GET</span><span class="card-path">/api/data-health/cleanup</span></div>
+          <div class="card-desc">GDPR retention sweep: deletes expired docs per TTL (2y audit, 1y comms/call/funnel, 90d integration health, 8y clinical), cascades patient deletes, downgrades clinics 14d+ past due.</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron only</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request</h4><pre><span class="comment">No body · cron secret required (no user fallback)</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">clinicsScanned</span>, <span class="key">totalDeleted</span>,
+  <span class="key">gdprHardDeleted</span>, <span class="key">billingDowngraded</span>,
+  <span class="key">collections</span>: { audit_logs, comms_log, … } }</pre>
+          <h4 style="margin-top:12px;">Notes</h4><pre><span class="comment">Cron Sun 03:00 UTC</span></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Insurance & Patient Intake ── -->
+  <div class="section" data-search="insurance intake pre-auth preauth policy insurer bupa axa address postcode consent token review approve cliniko">
+    <div class="section-title">
+      <div class="section-icon" style="background:#F0FDFA;color:var(--teal);">🛡️</div>
+      Insurance &amp; Patient Intake
+    </div>
+
+    <div class="card" data-search="insurance poll send cron cliniko upcoming appointments email link daily">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-GET">GET</span><span class="method-badge method-POST">POST</span><span class="card-path">/api/insurance/poll-and-send</span></div>
+          <div class="card-desc">Daily job — polls upcoming Cliniko appointments (3-day window), dedupes + anti-spam suppresses, creates intake links and emails patients. Max 50/clinic/run.</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron / Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request</h4><pre><span class="comment">No body · superadmin = all clinics, owner/admin = own</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">results</span>: [{ clinicId, ok, skipped?,
+    candidates?, sent?, noEmail?, suppressed?, errors? }] }</pre>
+          <h4 style="margin-top:12px;">Notes</h4><pre><span class="comment">Cron 09:00 daily · audit-logged only if sent &gt; 0</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="insurance send one manual failsafe email sms force">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/insurance/send-one</span></div>
+          <div class="card-desc">Manual failsafe — staff send an intake link to one patient (email + SMS). Anti-spam checked unless force.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">patientRef</span>:    <span class="type">string</span> <span class="required">← required</span>
+<span class="key">appointmentId</span>: <span class="type">string</span> <span class="comment">← optional</span>
+<span class="key">force</span>:         <span class="type">boolean</span> <span class="comment">← optional (bypass anti-spam)</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">url</span>, <span class="key">emailed</span>: <span class="type">bool</span>,
+  <span class="key">texted</span>: <span class="type">bool</span>, <span class="key">email</span>: <span class="type">string|null</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="insurance intake link generate token expiry insurer options">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/insurance/intake-link</span></div>
+          <div class="card-desc">Generate a patient-specific, signed intake link. Snapshots insurer options from the PMS onto the link so the public form never calls the PMS.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">patientRef</span>:    <span class="type">string</span> <span class="required">← required</span>
+<span class="key">appointmentId</span>: <span class="type">string</span> <span class="comment">← optional</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">linkId</span>, <span class="key">token</span>, <span class="key">url</span>,
+  <span class="key">expiresAt</span>: <span class="type">ISO</span>, <span class="key">insurerOptions</span>: <span class="type">string[]</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="insurance intakes list review queue pending approved rejected redacted">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-GET">GET</span><span class="card-path">/api/insurance/intakes</span></div>
+          <div class="card-desc">Staff review queue. Policy number + authorisation code are redacted to the last 4 chars in list responses.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Query</h4><pre><span class="key">status</span>: <span class="type">"pending"|"approved"|"rejected"</span> <span class="comment">← default "pending"</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">intakes</span>: [{ id, reviewStatus, patientRef,
+    policyNumber <span class="comment">(•••• last 4)</span>, insurerName, capturedAt }] }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="insurance intake approve reject pms write fallback onboarding">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-PATCH">PATCH</span><span class="card-path">/api/insurance/intakes/[id]</span></div>
+          <div class="card-desc">Approve or reject a submission. Approve is the only path that writes insurance back to the PMS.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">action</span>: <span class="type">"approve"|"reject"</span> <span class="required">← required</span>
+<span class="key">note</span>:   <span class="type">string</span> <span class="comment">← optional (rejection reason)</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">reviewStatus</span>,
+  <span class="key">result</span>?: { ok, usedFallback, onboardingTaskNeeded? } }</pre>
+          <h4 style="margin-top:12px;">Notes</h4><pre><span class="comment">Double-approve/reject blocked · audit-logged</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="intake token public patient form submit consent address policy">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-GET">GET</span><span class="method-badge method-POST">POST</span><span class="card-path">/api/intake/[token]</span></div>
+          <div class="card-desc">Public, token-gated patient form. Never writes to the PMS — submissions land in the review queue as "pending".</div>
+          <div class="card-tags"><span class="tag tag-public">Public (signed token)</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>POST Body</h4><pre><span class="key">insurerName</span>:       <span class="type">string</span>  <span class="required">← required</span>
+<span class="key">policyNumber</span>:      <span class="type">string</span>  <span class="required">← required</span>
+<span class="key">authorisationCode</span>: <span class="type">string</span>  <span class="comment">← optional</span>
+<span class="key">address</span>:           <span class="type">object</span>  <span class="comment">← optional</span>
+<span class="key">consent</span>:           <span class="type">boolean</span> <span class="required">← required</span></pre>
+          <h4 style="margin-top:12px;">Rate Limit</h4><pre><span class="comment">GET 30/min · POST 15/min</span></pre></div>
+          <div class="detail-block"><h4>GET Response</h4><pre>{ <span class="key">clinicName</span>, <span class="key">insurerOptions</span>: <span class="type">string[]</span>,
+  <span class="key">status</span>: <span class="type">"issued"|"submitted"</span>, <span class="key">consentVersion</span> }</pre>
+          <h4 style="margin-top:12px;">POST Response</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }  <span class="comment">· 409 if already submitted</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="patient pre-auth code sessions authorised excess insurer bupa axa">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/patients/pre-auth</span></div>
+          <div class="card-desc">Create or update a patient's pre-authorisation (upsert on pre-auth code). Sets insurer + insurance flag on the patient.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">patientId</span>:          <span class="type">string</span> <span class="required">← required</span>
+<span class="key">insurerName</span>:        <span class="type">string</span> <span class="required">← required</span>
+<span class="key">preAuthCode</span>:        <span class="type">string</span> <span class="required">← required</span>
+<span class="key">sessionsAuthorised</span>: <span class="type">number</span> <span class="required">← required</span>
+<span class="key">status</span>:             <span class="type">"confirmed"|"pending"|"rejected"</span> <span class="required">← required</span>
+<span class="key">expiryDate</span>:         <span class="type">string</span> <span class="comment">← optional ISO</span>
+<span class="key">excessAmountPence</span>:  <span class="type">number</span> <span class="comment">← optional</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">preAuthId</span>: <span class="type">string</span>,
+  <span class="key">message</span>: <span class="type">"Pre-auth created"|"Pre-auth updated"</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Clinical Scribe (Heidi) ── -->
+  <div class="section" data-search="heidi scribe notes clinical integration connect save config test sync disconnect per-clinician opt-in">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EFF6FF;color:var(--blue);">📝</div>
+      Clinical Scribe (Heidi)
+    </div>
+
+    <div class="card" data-search="heidi save config api key region encrypt">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/heidi/save-config</span></div>
+          <div class="card-desc">Save the clinic's Heidi API key (encrypted per clinicId). Optional test email validates the key on save.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">apiKey</span>:    <span class="type">string</span> <span class="required">← required</span>
+<span class="key">region</span>:    <span class="type">"uk"|"au"|"us"|"eu"</span> <span class="comment">← default "uk"</span>
+<span class="key">testEmail</span>: <span class="type">string</span> <span class="comment">← optional (validates key)</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="heidi test connection validate jwt email">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/heidi/test-connection</span></div>
+          <div class="card-desc">Validate a Heidi API key by JWT exchange against a clinician email.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">apiKey</span>: <span class="type">string</span> <span class="required">← required</span>
+<span class="key">email</span>:  <span class="type">string</span> <span class="required">← required</span>
+<span class="key">region</span>: <span class="type">"uk"|"au"|"us"|"eu"</span> <span class="comment">← default "uk"</span></pre></div>
+          <div class="detail-block"><h4>Response</h4><pre><span class="comment">200:</span> { <span class="key">ok</span>: <span class="type">true</span> }
+<span class="comment">401:</span> { <span class="key">error</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="heidi sync pipeline trigger">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/heidi/sync</span></div>
+          <div class="card-desc">Trigger the full Heidi sync pipeline for the clinic.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Request</h4><pre><span class="comment">No body</span></pre></div><div class="detail-block"><h4>Response</h4><pre><span class="comment">syncHeidi() result · rate-limited 10/60s</span></pre></div></div></div>
+    </div>
+
+    <div class="card" data-search="heidi disconnect clear key disable">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/heidi/disconnect</span></div>
+          <div class="card-desc">Disable Heidi and clear the stored API key. Audit-logged.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Request</h4><pre><span class="comment">No body</span></pre></div><div class="detail-block"><h4>Response</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }</pre></div></div></div>
+    </div>
+
+    <div class="card" data-search="clinician heidi opt-in per clinician enabled email self">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-PATCH">PATCH</span><span class="card-path">/api/clinicians/[id]/heidi</span></div>
+          <div class="card-desc">Per-clinician Heidi opt-in/out. A clinician can update only themselves; owner/admin can update anyone in the clinic.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">self / owner / admin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">enabled</span>: <span class="type">boolean</span> <span class="required">← required</span>
+<span class="key">email</span>:   <span class="type">string</span>  <span class="comment">← required when enabled=true</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Reputation & Reviews ── -->
+  <div class="section" data-search="reviews google places reputation rating star place id connect test disconnect">
+    <div class="section-title">
+      <div class="section-icon" style="background:#FEF3C7;color:#B45309;">⭐</div>
+      Reputation &amp; Reviews
+    </div>
+
+    <div class="card" data-search="reviews save config place id google api key">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/reviews/save-config</span></div>
+          <div class="card-desc">Save the clinic's Google Place ID (and optional API key, encrypted). Also sets the public review URL on the clinic.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">placeId</span>: <span class="type">string</span> <span class="required">← required ([A-Za-z0-9_-]{10,})</span>
+<span class="key">apiKey</span>:  <span class="type">string</span> <span class="comment">← optional (else env fallback)</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="reviews test connection google places display name rating count">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/reviews/test-connection</span></div>
+          <div class="card-desc">Verify a Place ID + key pair — returns the place name, rating, and review count for confirmation.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">placeId</span>: <span class="type">string</span> <span class="required">← required</span>
+<span class="key">apiKey</span>:  <span class="type">string</span> <span class="comment">← optional</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">displayName</span>,
+  <span class="key">totalReviews</span>, <span class="key">avgRating</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="reviews disconnect google clear keep cached velocity">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/reviews/disconnect</span></div>
+          <div class="card-desc">Remove the Google Places config. Cached reviews are kept so review-velocity history is preserved.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Request</h4><pre><span class="comment">No body</span></pre></div><div class="detail-block"><h4>Response</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }</pre></div></div></div>
+    </div>
+  </div>
+
+  <!-- ── Ava — Control & Digest ── -->
+  <div class="section" data-search="ava toggle pause resume digest post-call rotate tools webhook elevenlabs voice">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EFF6FF;color:var(--blue);">📞</div>
+      Ava — Control &amp; Digest
+    </div>
+
+    <div class="card" data-search="ava toggle pause resume attach detach phone number agent">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/ava/toggle</span></div>
+          <div class="card-desc">Pause/resume Ava by attaching or detaching the clinic phone number from the ElevenLabs agent. Paused = number has no agent, calls go unanswered.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Request</h4><pre><span class="comment">No body</span></pre></div><div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">enabled</span>: <span class="type">boolean</span> }</pre></div></div></div>
+    </div>
+
+    <div class="card" data-search="ava digest daily call summary outcomes email">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-GET">GET</span><span class="card-path">/api/ava/digest</span></div>
+          <div class="card-desc">Email a digest of the last 24h of calls, aggregated by outcome (booked / callback / escalated / info / voicemail).</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Query</h4><pre><span class="key">since</span>: <span class="type">ISO</span> <span class="comment">← optional (default 24h ago)</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">sent</span>: <span class="type">bool</span>, <span class="key">summary</span>: { booked, callbacks,
+    escalated, info, voicemail, total } }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="ava post-call elevenlabs webhook transcription transcript conversation">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/ava/post-call</span></div>
+          <div class="card-desc">ElevenLabs post-call webhook — writes the transcript + call facts. Resolves the clinic from agent_id.</div>
+          <div class="card-tags"><span class="tag tag-webhook">ElevenLabs Signature</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Body</h4><pre><span class="key">type</span>: <span class="type">"post_call_transcription"</span>
+<span class="key">data</span>: { conversation_id, agent_id,
+  transcript[], metadata, analysis }</pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">bool</span>, <span class="key">clinicId</span>: <span class="type">string|null</span>,
+  <span class="key">conversationId</span> }
+<span class="comment">Returns 200 on bad sig to suppress retries</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="ava rotate tools recreate webhook secret 401 fix">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/ava/rotate-tools</span></div>
+          <div class="card-desc">Recreate the 4 ElevenLabs tools with the live webhook secret and re-attach to the agent — fixes 401s after a secret rotation.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request</h4><pre><span class="comment">No body · rate-limited 5/60s</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">agent_id</span>, <span class="key">deleted</span>: [...], <span class="key">new_tool_ids</span>: [...],
+  <span class="key">voice_id</span>, <span class="key">message</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delivery Webhooks ── -->
+  <div class="section" data-search="webhook resend twilio delivery open click bounce sms email comms log svix">
+    <div class="section-title">
+      <div class="section-icon" style="background:#F0FDFA;color:var(--teal);">🔔</div>
+      Delivery Webhooks
+    </div>
+
+    <div class="card" data-search="resend webhook email opened clicked delivered bounced svix signature">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/webhooks/resend</span></div>
+          <div class="card-desc">Resend email events → comms_log updates (opened, clicked, delivered, bounced/complained). Svix-style HMAC, 5-min tolerance.</div>
+          <div class="card-tags"><span class="tag tag-webhook">Svix Signature</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Query / Headers</h4><pre><span class="key">clinicId</span>: <span class="type">string</span> <span class="required">← required</span>
+<span class="comment">svix-id, svix-timestamp, svix-signature</span></pre></div>
+          <div class="detail-block"><h4>Body / Response</h4><pre>{ <span class="key">type</span>: <span class="type">"email.opened"|…</span>, <span class="key">data</span>: { email_id, … } }
+<span class="comment">→ 204 No Content</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="twilio webhook sms message status delivered undelivered failed signature">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/webhooks/twilio</span></div>
+          <div class="card-desc">Twilio SMS status callbacks → comms_log delivery outcome. Validated with the Twilio signature.</div>
+          <div class="card-tags"><span class="tag tag-webhook">Twilio Signature</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Query / Form</h4><pre><span class="key">clinicId</span>: <span class="type">string</span> <span class="required">← required</span>
+<span class="key">MessageSid</span>, <span class="key">MessageStatus</span> <span class="comment">(form-encoded)</span></pre></div>
+          <div class="detail-block"><h4>Response</h4><pre><span class="comment">204 No Content · in-flight statuses ignored</span></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Roles & Clinic Setup ── -->
+  <div class="section" data-search="clinician role owner admin change rbac clinic enrich knowledge ensure self-heal first login">
+    <div class="section-title">
+      <div class="section-icon" style="background:#F0FDF4;color:var(--success);">👤</div>
+      Roles &amp; Clinic Setup
+    </div>
+
+    <div class="card" data-search="clinician role change owner admin demote last owner rbac">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-PATCH">PATCH</span><span class="card-path">/api/clinicians/[id]/role</span></div>
+          <div class="card-desc">Change a team member's role. Guards: can't self-change, admins can't grant owner, last active owner can't be demoted. Role re-verified fresh from Firestore.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">role</span>: <span class="type">"owner"|"admin"|"clinician"</span> <span class="required">← required</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">role</span>: <span class="type">string</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="clinic enrich knowledge base google places companies house website ava">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/clinic/enrich</span></div>
+          <div class="card-desc">Auto-populate the Ava knowledge base from Google Places + Companies House + the clinic website. Merges with existing (manual entries preserved).</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">website</span>: <span class="type">string</span> <span class="comment">← optional</span>
+<span class="key">country</span>: <span class="type">string</span> <span class="comment">← optional (default clinic jurisdiction / "uk")</span>
+<span class="comment">rate-limited 3 / 10min</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span>, <span class="key">entriesCount</span>, <span class="key">entries</span>: [...],
+  <span class="key">sources</span>: [...], <span class="key">resolved</span>: { places?, companiesHouse?, website? } }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="clinic ensure clinician self heal first login idempotent registered">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/clinic/ensure-clinician</span></div>
+          <div class="card-desc">Idempotent first-login self-heal — guarantees the clinician doc + link exist and flips status invited → registered.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request</h4><pre><span class="comment">No body · clinicId + uid from token</span></pre></div>
+          <div class="detail-block"><h4>Response</h4><pre>{ <span class="key">ensured</span>: <span class="type">true</span>, <span class="key">clinicianId</span>, <span class="key">created</span>? }
+<span class="comment">201 if created, 200 if existed</span></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Authentication & Sessions ── -->
+  <div class="section" data-search="auth session login logout cookie firebase id token demo sandbox">
+    <div class="section-title">
+      <div class="section-icon" style="background:#FEF3C7;color:#92400E;">🔑</div>
+      Authentication &amp; Sessions
+    </div>
+
+    <div class="card" data-search="auth session login logout firebase id token cookie hmac">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="method-badge method-DELETE">DELETE</span><span class="card-path">/api/auth/session</span></div>
+          <div class="card-desc">POST exchanges a verified Firebase ID token for an HMAC-signed, HttpOnly session cookie. DELETE clears it (logout).</div>
+          <div class="card-tags"><span class="tag tag-auth">Firebase ID Token (POST)</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>POST Body</h4><pre><span class="key">idToken</span>: <span class="type">string</span> <span class="required">← required</span>
+<span class="comment">rate-limited 10/60s · 401 if invalid</span></pre></div>
+          <div class="detail-block"><h4>Response</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }  <span class="comment">← sets/clears SESSION_COOKIE</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="auth demo sandbox no login synthetic session cookie">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/auth/demo</span></div>
+          <div class="card-desc">Issue a session cookie for the reserved demo UID (synthetic data only — never touches real Firestore).</div>
+          <div class="card-tags"><span class="tag tag-public">Public</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Request</h4><pre><span class="comment">No body · rate-limited 5/60s</span></pre></div><div class="detail-block"><h4>Response</h4><pre>{ <span class="key">ok</span>: <span class="type">true</span> }</pre></div></div></div>
+    </div>
+  </div>
+
+  <!-- ── Platform Health & Admin ── -->
+  <div class="section" data-search="health status modules heartbeat admin migrations run mcp inbound email provision allowlist ingest">
+    <div class="section-title">
+      <div class="section-icon" style="background:var(--cloud);color:var(--muted-strong);">⚙️</div>
+      Platform Health &amp; Admin
+    </div>
+
+    <div class="card" data-search="health check firebase firestore redis stripe env">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-GET">GET</span><span class="card-path">/api/health</span></div>
+          <div class="card-desc">Infra health — env vars, Firebase Admin, Firestore read, Upstash Redis, Stripe key format.</div>
+          <div class="card-tags"><span class="tag tag-cron">Cron / Superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail"><div class="detail-grid"><div class="detail-block"><h4>Request</h4><pre><span class="comment">No body</span></pre></div><div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">status</span>: <span class="type">"ok"|"degraded"|"error"</span>,
+  <span class="key">checks</span>: { … }, <span class="key">timestamp</span>: <span class="type">ISO</span> }</pre></div></div></div>
+    </div>
+
+    <div class="card" data-search="health modules heartbeat ava intelligence pulse per clinic">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-GET">GET</span><span class="card-path">/api/health/modules</span></div>
+          <div class="card-desc">Per-clinic module heartbeats (Ava / Intelligence / Pulse). Disabled modules are reported but don't affect overall status.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">owner / admin / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Query</h4><pre><span class="key">clinicId</span>: <span class="type">string</span> <span class="required">← required</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">ok</span>, <span class="key">clinicId</span>, <span class="key">status</span>: <span class="type">"ok"|"warning"|"error"</span>,
+  <span class="key">checkedAt</span>, <span class="key">modules</span>: { ava, intelligence, pulse } }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="admin run migrations schema superadmin destructive">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/admin/run-migrations</span></div>
+          <div class="card-desc">Apply schema migrations to one clinic or all clinics. Destructive — superadmin only, rate-limited.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre><span class="key">clinicId</span>: <span class="type">string</span> <span class="comment">← optional (all clinics if omitted)</span>
+<span class="comment">rate-limited 5/60s · 404 if clinic not found</span></pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">summary</span>: { clinicsProcessed, totalApplied, totalErrors },
+  <span class="key">results</span>: [{ name, version, applied[], errors[] }] }</pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="inbound email provision allowlist senders ingest csv import">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-GET">GET</span><span class="method-badge method-POST">POST</span><span class="method-badge method-DELETE">DELETE</span><span class="card-path">/api/integrations/inbound-email/provision</span></div>
+          <div class="card-desc">Manage the per-clinic inbound CSV inbox (import-{clinicId}@ingest…) and its sender allowlist (max 10). The inbound import rejects senders not on the list.</div>
+          <div class="card-tags"><span class="tag tag-auth">Token</span><span class="tag tag-role">GET: owner/admin · POST/DELETE: owner</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>POST Body</h4><pre><span class="key">action</span>: <span class="type">"add"|"remove"|"replace"</span> <span class="required">← required</span>
+<span class="key">sender</span>: <span class="type">string | string[]</span> <span class="required">← required</span>
+<span class="comment">rate-limited 20/60s · DELETE clears list (pauses ingest)</span></pre></div>
+          <div class="detail-block"><h4>Response</h4><pre>{ <span class="key">email</span>, <span class="key">allowedSenders</span>: [...],
+  <span class="key">provisioned</span>: <span class="type">bool</span>, <span class="key">domain</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MCP (claude.ai Connector) ── -->
+  <div class="section" data-search="mcp model context protocol claude bearer oauth pkce authorize token stryde-ops json-rpc">
+    <div class="section-title">
+      <div class="section-icon" style="background:#EDE9FE;color:var(--purple);">🔌</div>
+      MCP (AI Assistant Connector)
+    </div>
+
+    <div class="card" data-search="mcp json-rpc tools list call initialize bearer stryde-ops">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/mcp</span></div>
+          <div class="card-desc">JSON-RPC 2.0 HTTP transport for the stryde-ops MCP server (initialize / tools/list / tools/call / ping). Bearer auth, constant-time. GET returns 405.</div>
+          <div class="card-tags"><span class="tag tag-auth">MCP Bearer</span><span class="tag tag-role">scoped: spires / superadmin</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Request Body</h4><pre>{ <span class="key">jsonrpc</span>: <span class="type">"2.0"</span>, <span class="key">id</span>?, <span class="key">method</span>: <span class="type">string</span>, <span class="key">params</span>? }</pre></div>
+          <div class="detail-block"><h4>Response</h4><pre>{ <span class="key">jsonrpc</span>: <span class="type">"2.0"</span>, <span class="key">id</span>,
+  <span class="key">result</span>? | <span class="key">error</span>: { code, message } }</pre>
+          <h4 style="margin-top:12px;">Notes</h4><pre><span class="comment">Phase D: per-clinic scoping + full OAuth (deferred)</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="mcp authorize oauth pkce code challenge redirect claude.ai">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/mcp/authorize</span></div>
+          <div class="card-desc">OAuth 2.0 authorization endpoint (PKCE) for claude.ai connectors. Validates redirect_uri is claude.ai / *.claude.ai (https) and issues a stateless 300s code.</div>
+          <div class="card-tags"><span class="tag tag-auth">MCP Bearer (form)</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Form Fields</h4><pre><span class="key">token</span>, <span class="key">redirect_uri</span>, <span class="key">code_challenge</span>,
+<span class="key">code_challenge_method</span> <span class="comment">(S256)</span>, <span class="key">state</span></pre></div>
+          <div class="detail-block"><h4>Response</h4><pre><span class="comment">302 → redirect_uri?code=…&amp;state=…</span></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-search="mcp token oauth client credentials authorization code grant access token">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-expand">▶</div>
+        <div class="card-info">
+          <div class="card-title-row"><span class="method-badge method-POST">POST</span><span class="card-path">/api/mcp/token</span></div>
+          <div class="card-desc">OAuth 2.0 token endpoint — client_credentials or authorization_code (PKCE) grants. Returns the MCP bearer as the access token.</div>
+          <div class="card-tags"><span class="tag tag-auth">OAuth grant</span></div>
+        </div>
+      </div>
+      <div class="card-detail">
+        <div class="detail-grid">
+          <div class="detail-block"><h4>Body</h4><pre><span class="key">grant_type</span>: <span class="type">"client_credentials"|"authorization_code"</span>
+<span class="key">client_secret</span> | (<span class="key">code</span> + <span class="key">code_verifier</span>)</pre></div>
+          <div class="detail-block"><h4>Response (200)</h4><pre>{ <span class="key">access_token</span>, <span class="key">token_type</span>: <span class="type">"Bearer"</span>,
+  <span class="key">expires_in</span>: <span class="type">86400</span> }</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 </div>
 
@@ -2120,7 +3054,7 @@ CORS: Access-Control-Allow-Origin: *</pre></div>
 <!-- ════════ Footer ════════ -->
 <footer class="footer">
   StrydeOS API Reference &middot; Internal documentation &middot; Do not share externally<br>
-  Generated March 2026 &middot; 38 endpoints across 7 business domains
+  Generated June 2026 &middot; 84 endpoints across 13 product areas
 </footer>
 
 <script>
