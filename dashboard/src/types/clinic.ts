@@ -163,6 +163,21 @@ export interface ClinicProfile {
   onboardingV2?: OnboardingV2;
   billing?: BillingState;
   compliance?: ComplianceConfig;
+  /**
+   * Account-closure / full-erasure markers. Set when a clinic is terminated
+   * (e.g. contract ends, GDPR Art. 17 controller-level erasure request). Mirror
+   * the per-patient `markedForDeletion` pattern:
+   *   - terminationRequestedAt = when termination was requested
+   *   - terminationScheduledAt = terminationRequestedAt + 30-day grace period
+   * Once `terminationScheduledAt` elapses, the weekly data-health cron erases
+   * ALL clinic data (every subcollection + clinic-scoped top-level docs + Auth
+   * users) and writes a retained, PII-free tombstone to `_erasure_log`.
+   * Absence of these fields means the clinic is never a candidate for erasure.
+   */
+  terminationRequestedAt?: string | null;
+  terminationScheduledAt?: string | null;
+  terminationReason?: string | null;
+  terminatedBy?: string | null;
   trialStartedAt: string | null;
   trialModule?: string | null;
   trialTier?: string | null;
