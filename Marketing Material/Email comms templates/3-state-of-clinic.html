@@ -33,58 +33,11 @@
       <p style="margin:0 0 8px 0;font-size:18px;font-weight:700;color:#0B2545;line-height:1.4;font-family:'Outfit',Helvetica,Arial,sans-serif;">{{HEADING}}</p>
     </div>
 
-    <!-- Top actions -->
-    
-    <div style="margin-bottom:24px;">
-      <p style="margin:0 0 12px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">TOP ACTIONS THIS WEEK</p>
-      
-        <div style="margin-bottom:16px;padding:16px;border-radius:8px;border:1px solid #E2DFDA;background:#FFFFFF;">
-          <div style="margin-bottom:8px;">
-            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E8913A;margin-right:8px;vertical-align:middle;"></span>
-            <span style="font-size:14px;font-weight:600;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;vertical-align:middle;">Follow-up drop: Andrew's rebooking rate fell 18% this week</span>
-          </div>
-          <p style="margin:0 0 8px 0;font-size:13px;color:#5C6370;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">Andrew saw 33 patients this week but only 27 had follow-ups booked. The 6 missed rebookings represent approximately £540 in lost downstream revenue. His Thursday afternoon clinic had the highest drop-off rate — 3 of the 6 gaps came from that session.</p>
-          
-          <p style="margin:8px 0 0 0;font-size:12px;font-weight:600;color:#EF4444;font-family:'Outfit',Helvetica,Arial,sans-serif;">Estimated impact: ~£540</p>
-        </div>
-        <div style="margin-bottom:16px;padding:16px;border-radius:8px;border:1px solid #E2DFDA;background:#FFFFFF;">
-          <div style="margin-bottom:8px;">
-            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#F59E0B;margin-right:8px;vertical-align:middle;"></span>
-            <span style="font-size:14px;font-weight:600;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;vertical-align:middle;">DNA rate above target for 2 consecutive weeks</span>
-          </div>
-          <p style="margin:0 0 8px 0;font-size:13px;color:#5C6370;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">Clinic DNA rate is 8.2% vs 6% target.</p>
-          <div style="padding:10px 12px;border-radius:6px;background:#F2F1EE;">
-            <p style="margin:0;font-size:13px;font-weight:600;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">→ Enable SMS reminders 24hr before appointments via Pulse.</p>
-          </div>
-          
-        </div>
-    </div>
-    
+    <!-- Top actions: rendered from real ranked insight events. Empty when omitted. -->
+    {{TOP_ACTIONS}}
 
-    <!-- Quick stats -->
-    <div style="margin-bottom:16px;">
-      <p style="margin:0 0 12px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">QUICK STATS</p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-        <tr>
-          <td style="padding:12px;text-align:center;border:1px solid #E2DFDA;border-radius:6px;width:25%;">
-            <p style="margin:0;font-size:18px;font-weight:700;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">3.8</p>
-            <p style="margin:4px 0 0;font-size:11px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">Follow-up ↓ 0.4</p>
-          </td>
-          <td style="padding:12px;text-align:center;border:1px solid #E2DFDA;width:25%;">
-            <p style="margin:0;font-size:18px;font-weight:700;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">8%</p>
-            <p style="margin:4px 0 0;font-size:11px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">DNA Rate ↑ 3pp</p>
-          </td>
-          <td style="padding:12px;text-align:center;border:1px solid #E2DFDA;width:25%;">
-            <p style="margin:0;font-size:18px;font-weight:700;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">74%</p>
-            <p style="margin:4px 0 0;font-size:11px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">Utilisation ↑ 3pp</p>
-          </td>
-          <td style="padding:12px;text-align:center;border:1px solid #E2DFDA;width:25%;">
-            <p style="margin:0;font-size:18px;font-weight:700;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">68%</p>
-            <p style="margin:4px 0 0;font-size:11px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">Completion ↓ 4pp</p>
-          </td>
-        </tr>
-      </table>
-    </div>
+    <!-- Quick stats: rendered from real metrics_weekly. Empty when omitted. -->
+    {{QUICK_STATS}}
 
     <!-- CTA -->
     <div style="text-align:center;padding-top:16px;">

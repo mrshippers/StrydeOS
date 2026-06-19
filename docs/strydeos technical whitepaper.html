@@ -216,7 +216,7 @@
       to revenue outcomes &mdash; and why no one else does.
     </p>
     <div class="cover-meta">
-      <strong>Version 0.11.0</strong> &middot; April 2026 &middot; Confidential<br>
+      <strong>Version 0.12.0</strong> &middot; June 2026 &middot; Confidential<br>
       Spires Physiotherapy &middot; West Hampstead, London
     </div>
   </div>
@@ -337,10 +337,14 @@
   <li><strong>Telephony:</strong> Twilio SIP trunking with dedicated UK phone numbers per clinic</li>
   <li><strong>Conversation routing:</strong> LangGraph state machine for structured call flows</li>
   <li><strong>Warm transfers:</strong> Complaint detection &rarr; live Twilio redirect to reception via TwiML</li>
+  <li><strong>Autonomous rescheduling:</strong> Two-phase reschedule against the live PMS &mdash; Ava finds the slot, moves the booking, and confirms, with no human in the loop</li>
+  <li><strong>Real pause/resume:</strong> Toggling Ava off detaches the clinic number from the agent &mdash; a true off switch, not a silent forward</li>
+  <li><strong>Inbound-call routing:</strong> New clinic numbers route through an inbound-call proxy, so onboarding a clinic to Ava is a configuration change, not a porting project</li>
+  <li><strong>Post-call capture:</strong> ElevenLabs transcription webhook writes call facts and full transcripts back to the clinic record for review and QA</li>
   <li><strong>Phone provisioning:</strong> One-click UK number purchase + SIP trunk + agent creation</li>
   <li><strong>Knowledge base:</strong> Per-clinic CRUD editor &mdash; clinic hours, services, insurance, policies</li>
   <li><strong>PMS write-back:</strong> Appointments created via n8n automation with automatic retry on failure</li>
-  <li><strong>Guardrails:</strong> Insurance/billing advice blocked &mdash; redirects to reception</li>
+  <li><strong>Guardrails:</strong> Insurance/billing advice blocked &mdash; redirects to reception; reception numbers are read from Firestore, never from call parameters (toll-fraud safe)</li>
 </ul>
 
 <h3><span class="module-badge intel">Intelligence</span> &mdash; Clinical Performance Dashboard</h3>
@@ -381,6 +385,7 @@
   <li><strong>Lifecycle states:</strong> Active, at-risk, lapsed, discharged &mdash; with automated transitions</li>
   <li><strong>Comms sequences:</strong> Configurable multi-step campaigns triggered by lifecycle events</li>
   <li><strong>Heidi complexity layer:</strong> Clinical documentation AI enriches patient profiles with complexity signals, ICD-10 codes, and session notes</li>
+  <li><strong>Insurance &amp; intake:</strong> Token-gated patient intake form (address lookup via postcodes.io) &rarr; staff review queue &rarr; approved write-back to the PMS. A daily cron polls upcoming bookings and sends each patient a secure, clinic-branded intake link with anti-spam windowing</li>
   <li><strong>Clinician engagement:</strong> Per-clinician digest opt-outs, engagement toggles, observational notes on insights</li>
 </ul>
 
@@ -683,7 +688,7 @@ If Cliniko API fails at 10:00:
 
 <div class="stats-row">
   <div class="stat-card">
-    <div class="number">v0.11</div>
+    <div class="number">v0.12</div>
     <div class="label">Current Version</div>
   </div>
   <div class="stat-card">
@@ -706,8 +711,11 @@ If Cliniko API fails at 10:00:
     <tr><td>Intelligence (Dashboard + KPIs)</td><td>Live</td><td>Spires Physiotherapy, West Hampstead</td></tr>
     <tr><td>Ava (Voice AI + Transfers)</td><td>Live</td><td>Spires Physiotherapy</td></tr>
     <tr><td>Pulse (Retention + Comms)</td><td>Live</td><td>Spires Physiotherapy</td></tr>
+    <tr><td>Insurance &amp; Intake (under Pulse)</td><td>Live</td><td>Token-gated intake &rarr; staff review &rarr; Cliniko write-back</td></tr>
     <tr><td>Stripe Billing</td><td>Live</td><td>Checkout, portal, multi-subscription merge</td></tr>
-    <tr><td>Marketing Website</td><td>Live</td><td>strydeos.com (Next.js, all module pages)</td></tr>
+    <tr><td>Weekly + Clinician Digests</td><td>Live</td><td>Automated Sunday / Monday email cadence</td></tr>
+    <tr><td>RBAC + Alpha Security Hardening</td><td>Live</td><td>In-app role editor, per-clinic HMAC ingest, fail-closed rate limiting</td></tr>
+    <tr><td>Marketing Website</td><td>Live</td><td>strydeos.com (Next.js, all module pages, live Ava demo)</td></tr>
     <tr><td>Status Page + API Docs</td><td>Live</td><td>17 services, 42 endpoints documented</td></tr>
   </tbody>
 </table>
@@ -722,29 +730,39 @@ If Cliniko API fails at 10:00:
 <!-- ── 12. Roadmap ── -->
 <h2>12. What's Next</h2>
 
-<h3>Near-Term (Q2 2026)</h3>
+<h3>Recently Shipped (Q2 2026)</h3>
+<p>Much of the prior roadmap is now in production at Spires:</p>
 <ul>
-  <li><strong>Second clinic onboarding</strong> &mdash; prove StrydeOS works at a clinic that isn't Spires</li>
-  <li><strong>TM3 (Blue Zinc) adapter</strong> &mdash; dominant legacy UK physio PMS, critical for market access</li>
-  <li><strong>Stryde Daily Briefing</strong> &mdash; morning push: top 3 things the owner needs to know today</li>
-  <li><strong>Stryde Weekly Digest</strong> &mdash; automated Sunday email with week-over-week KPI deltas</li>
-  <li><strong>Outcome measures</strong> &mdash; NPRS, PSFS, QuickDASH, ODI, NDI (clinical-to-commercial correlation)</li>
+  <li><strong>Insurance &amp; intake module</strong> &mdash; token-gated patient intake &rarr; staff review &rarr; PMS write-back (Cliniko), with a daily automated send</li>
+  <li><strong>Weekly digests, live</strong> &mdash; automated Sunday State-of-Clinic email and Monday per-clinician digest with week-over-week KPI deltas</li>
+  <li><strong>Ava autonomy upgrade</strong> &mdash; real pause/resume (number attach/detach), inbound-call proxy routing, two-phase autonomous rescheduling, and post-call transcript capture</li>
+  <li><strong>RBAC role editor</strong> &mdash; in-app role changes with last-owner protection, enforced at all four layers</li>
+  <li><strong>Per-clinic PMS ingest + alpha security hardening</strong> &mdash; per-clinic HMAC ingest tokens, fail-closed rate limiting, atomic webhook de-duplication, dependency CVE clear-down</li>
+  <li><strong>Data-health monitoring</strong> &mdash; staleness detection and cleanup crons keep every clinic's sync honest</li>
 </ul>
 
-<h3>Mid-Term (H2 2026)</h3>
+<h3>Near-Term (H2 2026)</h3>
 <ul>
+  <li><strong>Second clinic onboarding</strong> &mdash; prove StrydeOS works at a clinic that isn't Spires</li>
+  <li><strong>TM3 (Blue Zinc) adapter</strong> &mdash; dominant legacy UK physio PMS, critical for market access (booking-tool stub exists; productionising next)</li>
+  <li><strong>Outcome measures surface</strong> &mdash; NPRS, PSFS, QuickDASH, ODI, NDI (feature flag exists, UI to build) for clinical-to-commercial correlation</li>
+  <li><strong>Physitrack partner integration</strong> &mdash; formal API partnership in active commercial discussion (June 2026). The integration is deliberately minimal: two endpoints, per-clinic OAuth, daily batch pull of exercise adherence and PROM scores, non-SaMD throughout, UK data residency end to end (controller/processor split, minimisation, pseudonymisation). The frame is two-way &mdash; StrydeOS also acts as a distribution channel into the UK private-practice market, introducing onboarding clinics not yet on Physitrack to the platform</li>
+</ul>
+
+<h3>Mid-Term</h3>
+<ul>
+  <li>PPS (Rushcliff) integration &mdash; 2,400+ UK clinics, Physio First partner</li>
   <li>White-label branding per clinic</li>
-  <li>Mobile-optimised dashboard</li>
-  <li>PPS (Rushcliff) integration &mdash; 2,400+ UK clinics</li>
   <li>WhatsApp comms channel (Business API)</li>
   <li>AI-generated clinician coaching notes</li>
+  <li>Mobile-optimised dashboard</li>
 </ul>
 
 <h3>Long-Term</h3>
 <ul>
   <li>Predictive churn model (ML on session gaps + outcome trajectories)</li>
   <li>Stryde Copilot &mdash; natural language clinic intelligence</li>
-  <li>Insurance pre-auth automation (Bupa/AXA/Vitality)</li>
+  <li>Insurance pre-auth automation (Bupa/AXA/Vitality) &mdash; builds on the intake module already live</li>
   <li>Patient self-booking widget (embeddable, writes to PMS via StrydeOS)</li>
   <li>Vertical expansion: chiropractic &rarr; medspa &rarr; dental</li>
 </ul>

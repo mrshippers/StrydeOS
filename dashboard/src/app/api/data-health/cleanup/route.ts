@@ -4,6 +4,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronRequest, handleApiError } from "@/lib/auth-guard";
 import { writeAuditLog } from "@/lib/audit-log";
 import { withRequestLog } from "@/lib/request-logger";
+import { executeClinicTerminationErasures } from "@/lib/compliance/clinic-erasure";
 
 /**
  * GET /api/data-health/cleanup
@@ -12,7 +13,7 @@ import { withRequestLog } from "@/lib/request-logger";
  * expired documents from clinic subcollections based on defined TTLs.
  *
  * Retention periods:
- *  - audit_logs:         730 days (2 years)
+ *  - audit_logs:         365 days (1 year)
  *  - comms_log:          365 days (1 year)
  *  - call_log:           365 days (1 year)
  *  - integration_health:  90 days
@@ -34,7 +35,7 @@ interface RetentionPolicy {
 }
 
 const RETENTION_POLICIES: RetentionPolicy[] = [
-  { collection: "audit_logs", dateField: "timestamp", retentionDays: 730 },
+  { collection: "audit_logs", dateField: "timestamp", retentionDays: 365 },
   { collection: "comms_log", dateField: "sentAt", retentionDays: 365 },
   { collection: "call_log", dateField: "startTimestamp", retentionDays: 365, isEpochMs: true },
   { collection: "integration_health", dateField: "timestamp", retentionDays: 90 },
@@ -452,6 +453,14 @@ async function handler(request: NextRequest) {
     Sentry.captureException(err, { tags: { source: "payment_grace_downgrade" } });
   }
 
+  // GDPR Art. 17: full-erase clinics past their 30-day termination grace period
+  let clinicErasure = { erased: 0, docsDeleted: 0, authUsersDeleted: 0, skipped: [] as string[], errors: [] as string[] };
+  try {
+    clinicErasure = await executeClinicTerminationErasures(db);
+  } catch (err) {
+    Sentry.captureException(err, { tags: { source: "clinic_termination_erasure" } });
+  }
+
   const totalDeleted = Object.values(summary).reduce((acc, s) => acc + s.deleted, 0) + dedupDeleted + gdprResult.deleted;
 
   return NextResponse.json({
@@ -465,6 +474,11 @@ async function handler(request: NextRequest) {
     gdprErrors: gdprResult.errors.length > 0 ? gdprResult.errors : undefined,
     billingDowngraded: billingResult.downgraded,
     billingErrors: billingResult.errors.length > 0 ? billingResult.errors : undefined,
+    clinicsErased: clinicErasure.erased,
+    clinicErasureDocsDeleted: clinicErasure.docsDeleted,
+    clinicErasureAuthUsersDeleted: clinicErasure.authUsersDeleted,
+    clinicErasureSkipped: clinicErasure.skipped.length > 0 ? clinicErasure.skipped : undefined,
+    clinicErasureErrors: clinicErasure.errors.length > 0 ? clinicErasure.errors : undefined,
     collections: summary,
   });
 }

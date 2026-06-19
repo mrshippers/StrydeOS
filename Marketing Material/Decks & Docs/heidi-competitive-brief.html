@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StrydeOS — Heidi Competitive Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#0B2545;--navy-mid:#132D5E;--blue:#1C54F2;--blue-bright:#2E6BFF;
+    --blue-glow:#4B8BF5;--teal:#0891B2;--cloud:#F2F1EE;--cloud-light:#F9F8F6;
+    --cloud-dark:#E8E6E0;--cream:#FAF9F7;--ink:#111827;--muted:#6B7280;
+    --border:#E2DFDA;--success:#059669;--warning:#F59E0B;--danger:#EF4444;--purple:#8B5CF6;
+    --ease:cubic-bezier(0.16,1,0.3,1);
+    --r-sm:10px;--r-md:14px;--r-lg:18px;--r-xl:24px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+
+  body{
+    font-family:'Outfit',sans-serif;color:white;line-height:1.6;
+    background:#070f1d;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  /* Atmospheric stage — fixed, parallax-feel */
+  body::before{
+    content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
+    background:
+      radial-gradient(1000px 620px at 6% -4%, rgba(28,84,242,0.22) 0%, transparent 56%),
+      radial-gradient(820px 520px at 96% 8%, rgba(75,139,245,0.12) 0%, transparent 52%),
+      radial-gradient(760px 520px at 92% 96%, rgba(139,92,246,0.14) 0%, transparent 55%),
+      radial-gradient(700px 480px at 30% 108%, rgba(8,145,178,0.10) 0%, transparent 55%),
+      linear-gradient(180deg, #0a1426 0%, #070f1d 60%, #060c18 100%);
+  }
+  /* Grain overlay */
+  body::after{
+    content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0.035;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .page{max-width:1000px;margin:0 auto;padding:56px 40px 120px}
+  .section{margin-bottom:84px}
+
+  /* Reveal-on-scroll */
+  .reveal{opacity:0;transform:translateY(34px);transition:opacity 0.9s var(--ease),transform 0.9s var(--ease)}
+  .reveal.in{opacity:1;transform:translateY(0)}
+  .reveal[data-d="1"]{transition-delay:0.07s}
+  .reveal[data-d="2"]{transition-delay:0.14s}
+  .reveal[data-d="3"]{transition-delay:0.21s}
+  .reveal[data-d="4"]{transition-delay:0.28s}
+
+  /* Page-load stagger for hero */
+  @keyframes heroUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes drawLine{from{width:0}to{width:var(--lw,100%)}}
+  @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.45)}50%{box-shadow:0 0 0 7px rgba(245,158,11,0)}}
+  @keyframes glowSweep{0%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+  @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+  .ld{opacity:0;animation:heroUp 1s var(--ease) forwards}
+  .ld[data-d="0"]{animation-delay:0.05s}
+  .ld[data-d="1"]{animation-delay:0.16s}
+  .ld[data-d="2"]{animation-delay:0.28s}
+  .ld[data-d="3"]{animation-delay:0.42s}
+  .ld[data-d="4"]{animation-delay:0.56s}
+  .ld[data-d="5"]{animation-delay:0.70s}
+
+  .section-label{font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;
+                 color:var(--blue-glow);margin-bottom:12px;display:flex;align-items:center;gap:12px}
+  .section-label::before{content:'';width:24px;height:1px;background:linear-gradient(90deg,var(--blue-glow),transparent)}
+  .section-title{font-family:'DM Serif Display',serif;font-size:38px;font-weight:400;color:white;
+                 margin-bottom:12px;line-height:1.08;letter-spacing:-0.01em}
+  .section-desc{font-size:14px;color:rgba(255,255,255,0.5);max-width:620px;margin-bottom:34px;line-height:1.6}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+  /* Glass card with specular + hover lift */
+  .card{
+    background:rgba(255,255,255,0.038);
+    border:0.5px solid rgba(255,255,255,0.10);
+    border-radius:var(--r-lg);padding:26px;position:relative;overflow:hidden;
+    backdrop-filter:blur(20px) saturate(120%);-webkit-backdrop-filter:blur(20px) saturate(120%);
+    transition:transform 0.5s var(--ease),border-color 0.5s var(--ease),background 0.5s var(--ease);
+  }
+  .card::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+                background:linear-gradient(160deg,rgba(255,255,255,0.07),transparent 42%)}
+  .card > *{position:relative}
+  .card:hover{transform:translateY(-3px);border-color:rgba(75,139,245,0.22);background:rgba(255,255,255,0.05)}
+
+  .card-accent{background:linear-gradient(150deg, rgba(28,84,242,0.13), rgba(11,37,69,0.30));
+               border:0.5px solid rgba(75,139,245,0.24)}
+  /* top sheen line on accent cards */
+  .card-accent::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+                      background:linear-gradient(90deg,transparent,rgba(75,139,245,0.6),transparent)}
+
+  hr.divider{border:none;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.10),transparent);margin:72px 0}
+  code{background:rgba(75,139,245,0.12);padding:1px 7px;border-radius:4px;font-size:12px;
+       font-family:'JetBrains Mono',monospace;color:var(--blue-glow)}
+
+  /* ── Header ──────────────────────────────────────────────── */
+  .doc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:64px;
+              padding-bottom:24px;border-bottom:0.5px solid rgba(255,255,255,0.10)}
+  .doc-meta{display:flex;align-items:center;gap:15px}
+  .doc-meta svg{animation:floatY 6s var(--ease) infinite}
+  .doc-meta-text{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.4}
+  .doc-meta-text strong{color:white;font-weight:600;display:block;font-size:13px;margin-bottom:2px}
+  .doc-badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:50px;
+         background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.12);
+         font-size:10px;font-weight:600;color:rgba(255,255,255,0.6);letter-spacing:0.08em;text-transform:uppercase;
+         backdrop-filter:blur(10px)}
+  .badge.blue{background:rgba(28,84,242,0.20);border-color:rgba(75,139,245,0.36);color:var(--blue-glow)}
+  .badge.warn{background:rgba(245,158,11,0.16);border-color:rgba(245,158,11,0.30);color:#FBBF24}
+  .badge.ok{background:rgba(5,150,105,0.20);border-color:rgba(5,150,105,0.36);color:#34D399}
+  .badge.purple{background:rgba(139,92,246,0.17);border-color:rgba(139,92,246,0.34);color:#C4B5FD}
+
+  /* ── Title ───────────────────────────────────────────────── */
+  .title-block{margin-bottom:8px}
+  .title-eyebrow{font-size:11px;font-weight:700;letter-spacing:0.26em;text-transform:uppercase;
+                 color:var(--blue-glow);margin-bottom:18px}
+  .title-display{font-family:'DM Serif Display',serif;font-size:62px;font-weight:400;line-height:0.99;
+                 color:white;letter-spacing:-0.015em;margin-bottom:22px}
+  .title-display em{font-style:italic;
+                    background:linear-gradient(120deg,var(--blue-glow),var(--purple));
+                    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .title-sub{font-size:17px;color:rgba(255,255,255,0.62);line-height:1.55;max-width:700px;font-weight:300}
+
+  /* TL;DR */
+  .tldr-card{background:linear-gradient(135deg,rgba(28,84,242,0.13),rgba(139,92,246,0.05));
+             border:0.5px solid rgba(75,139,245,0.26);border-radius:var(--r-xl);padding:36px;margin:40px 0 0;
+             position:relative;overflow:hidden;backdrop-filter:blur(24px)}
+  .tldr-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+                    background:linear-gradient(90deg,transparent,rgba(75,139,245,0.7),transparent)}
+  .tldr-label{font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;
+              color:var(--blue-glow);margin-bottom:16px}
+  .tldr-list{list-style:none;padding:0;margin:0}
+  .tldr-list li{position:relative;padding:16px 0 16px 36px;font-size:14.5px;color:rgba(255,255,255,0.85);
+                line-height:1.62;border-bottom:0.5px solid rgba(255,255,255,0.07)}
+  .tldr-list li:last-child{border-bottom:none}
+  .tldr-list li::before{content:'';position:absolute;left:0;top:25px;width:22px;height:1px;
+                        background:linear-gradient(90deg,var(--blue-glow),transparent)}
+  .tldr-list li strong{color:white;font-weight:600}
+
+  /* Stat strip */
+  .stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:13px}
+  .stat-tile{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.10);
+             border-radius:var(--r-md);padding:20px 22px;position:relative;overflow:hidden;
+             backdrop-filter:blur(16px);transition:transform 0.5s var(--ease)}
+  .stat-tile:hover{transform:translateY(-4px)}
+  .stat-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+  .stat-tile.b::before{background:linear-gradient(90deg,var(--blue),var(--blue-glow))}
+  .stat-tile.t::before{background:linear-gradient(90deg,var(--teal),#22D3EE)}
+  .stat-tile.p::before{background:linear-gradient(90deg,var(--purple),#C4B5FD)}
+  .stat-tile.w::before{background:linear-gradient(90deg,var(--warning),#FBBF24)}
+  .stat-label{font-size:10px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;
+              color:rgba(255,255,255,0.42);margin-bottom:10px}
+  .stat-val{font-family:'DM Serif Display',serif;font-size:33px;font-weight:400;line-height:1;color:white;margin-bottom:5px}
+  .stat-sub{font-size:11px;color:rgba(255,255,255,0.46);line-height:1.35}
+
+  /* Block headings */
+  h3.block{font-family:'DM Serif Display',serif;font-size:23px;font-weight:400;color:white;margin-bottom:14px;line-height:1.2}
+  h4.sub{font-size:12px;font-weight:600;color:var(--blue-glow);letter-spacing:0.1em;
+         text-transform:uppercase;margin:18px 0 12px}
+  h4.sub:first-child{margin-top:0}
+
+  p.body{font-size:14px;color:rgba(255,255,255,0.78);line-height:1.68;margin-bottom:14px}
+  p.body:last-child{margin-bottom:0}
+  p.body strong{color:white;font-weight:600}
+  p.body em{color:rgba(255,255,255,0.56);font-style:italic}
+
+  /* Comparison columns */
+  .cmp-row{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:14px}
+  .cmp-col{background:rgba(255,255,255,0.032);border:0.5px solid rgba(255,255,255,0.09);
+           border-radius:var(--r-md);padding:24px;position:relative;overflow:hidden;
+           backdrop-filter:blur(16px);transition:transform 0.5s var(--ease),border-color 0.5s var(--ease)}
+  .cmp-col:hover{transform:translateY(-3px)}
+  .cmp-col.left{border-color:rgba(28,84,242,0.22)}
+  .cmp-col.left::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;
+                        background:linear-gradient(180deg,var(--blue),var(--blue-glow))}
+  .cmp-col.right{border-color:rgba(139,92,246,0.22)}
+  .cmp-col.right::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;
+                         background:linear-gradient(180deg,var(--purple),#C4B5FD)}
+  .cmp-head{font-size:10px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;
+            color:rgba(255,255,255,0.48);margin-bottom:11px}
+  .cmp-name{font-family:'DM Serif Display',serif;font-size:21px;font-weight:400;color:white;margin-bottom:15px}
+  .cmp-line{font-size:13px;color:rgba(255,255,255,0.72);line-height:1.55;padding:9px 0;
+            border-bottom:0.5px solid rgba(255,255,255,0.06)}
+  .cmp-line:last-child{border-bottom:none}
+
+  /* Point rows */
+  .pt-row{display:flex;gap:13px;padding:11px 0;border-bottom:0.5px solid rgba(255,255,255,0.05);align-items:flex-start}
+  .pt-row:last-child{border-bottom:none}
+  .pt-icon{width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+           font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+  .pt-icon.ok{background:rgba(5,150,105,0.20);color:#34D399;border:0.5px solid rgba(5,150,105,0.40)}
+  .pt-icon.no{background:rgba(239,68,68,0.16);color:#FCA5A5;border:0.5px solid rgba(239,68,68,0.34)}
+  .pt-text{font-size:13px;color:rgba(255,255,255,0.78);line-height:1.58}
+  .pt-text strong{color:white;font-weight:600}
+
+  /* Recommendations */
+  .rec-card{background:rgba(255,255,255,0.038);border:0.5px solid rgba(255,255,255,0.10);
+            border-radius:var(--r-md);padding:24px 26px;margin-bottom:12px;display:flex;gap:20px;align-items:flex-start;
+            position:relative;overflow:hidden;backdrop-filter:blur(16px);
+            transition:transform 0.45s var(--ease),border-color 0.45s var(--ease),background 0.45s var(--ease)}
+  .rec-card:hover{transform:translateX(4px);background:rgba(28,84,242,0.07);border-color:rgba(75,139,245,0.28)}
+  .rec-card:hover .rec-num{color:white}
+  .rec-num{font-family:'DM Serif Display',serif;font-size:40px;font-weight:400;line-height:0.9;
+           color:var(--blue-glow);min-width:48px;transition:color 0.45s var(--ease)}
+  .rec-body{flex:1}
+  .rec-title{font-size:15px;font-weight:600;color:white;margin-bottom:6px;line-height:1.35}
+  .rec-text{font-size:13px;color:rgba(255,255,255,0.66);line-height:1.58}
+  .rec-text em{color:var(--blue-glow);font-style:italic}
+
+  /* Signals */
+  .signal-card{background:linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.02));
+               border:0.5px solid rgba(245,158,11,0.26);border-radius:var(--r-md);padding:20px 24px;margin-bottom:11px;
+               display:flex;gap:16px;align-items:flex-start;backdrop-filter:blur(14px)}
+  .signal-dot{width:9px;height:9px;border-radius:50%;background:var(--warning);
+              margin-top:7px;flex-shrink:0;animation:pulseDot 2.4s var(--ease) infinite}
+  .signal-text{font-size:13px;color:rgba(255,255,255,0.82);line-height:1.58}
+  .signal-text strong{color:white;font-weight:600}
+
+  /* Caveats */
+  .caveat-row{padding:14px 0;border-bottom:0.5px solid rgba(255,255,255,0.06);font-size:12.5px;
+              color:rgba(255,255,255,0.62);line-height:1.62}
+  .caveat-row:last-child{border-bottom:none}
+  .caveat-row strong{color:var(--blue-glow);font-weight:600;font-size:11px;text-transform:uppercase;
+                     letter-spacing:0.08em;display:block;margin-bottom:5px}
+
+  /* Lane map */
+  .lane-diagram{display:flex;flex-direction:column;gap:9px;margin-top:8px}
+  .lane{padding:16px 20px;border-radius:var(--r-md);display:flex;justify-content:space-between;align-items:center;
+        border:0.5px solid rgba(255,255,255,0.10);position:relative;overflow:hidden;
+        backdrop-filter:blur(14px);transition:transform 0.5s var(--ease)}
+  .lane:hover{transform:scale(1.012)}
+  .lane-stryde{background:linear-gradient(90deg, rgba(28,84,242,0.22), rgba(28,84,242,0.04))}
+  .lane-stryde::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--blue)}
+  .lane-shared{background:linear-gradient(90deg, rgba(245,158,11,0.18), rgba(245,158,11,0.03))}
+  .lane-shared::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--warning)}
+  .lane-heidi{background:linear-gradient(90deg, rgba(139,92,246,0.18), rgba(139,92,246,0.03))}
+  .lane-heidi::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--purple)}
+  /* sweep highlight on contested lane */
+  .lane-shared .sweep{position:absolute;top:0;bottom:0;width:40%;
+                      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent);
+                      animation:glowSweep 4.5s var(--ease) infinite}
+  .lane-name{font-size:13.5px;font-weight:600;color:white;margin-bottom:3px}
+  .lane-owner{font-size:11px;color:rgba(255,255,255,0.52);letter-spacing:0.03em}
+
+  /* Verdict */
+  .verdict-card{background:linear-gradient(145deg, rgba(11,37,69,0.90), rgba(19,45,94,0.80));
+                border:0.5px solid rgba(75,139,245,0.30);border-radius:var(--r-xl);padding:44px;margin-top:44px;
+                position:relative;overflow:hidden;backdrop-filter:blur(24px)}
+  .verdict-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+                        background:linear-gradient(90deg, var(--blue), var(--purple), var(--teal))}
+  .verdict-card::after{content:'';position:absolute;width:380px;height:380px;border-radius:50%;
+                       right:-120px;top:-120px;pointer-events:none;
+                       background:radial-gradient(circle,rgba(75,139,245,0.16),transparent 70%)}
+  .verdict-label{font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;
+                 color:var(--blue-glow);margin-bottom:18px}
+  .verdict-text{font-family:'DM Serif Display',serif;font-size:23px;font-weight:400;color:white;
+                line-height:1.48;letter-spacing:-0.005em}
+  .verdict-text em{font-style:italic;color:var(--blue-glow)}
+
+  /* Footer */
+  .doc-footer{margin-top:80px;padding-top:30px;border-top:0.5px solid rgba(255,255,255,0.08);
+              display:flex;justify-content:space-between;align-items:center;
+              font-size:11px;color:rgba(255,255,255,0.35);flex-wrap:wrap;gap:12px}
+  .doc-footer-meta{display:flex;gap:24px}
+
+  /* Scroll progress bar */
+  .progress{position:fixed;top:0;left:0;height:2px;z-index:50;
+            background:linear-gradient(90deg,var(--blue),var(--blue-glow),var(--purple));width:0%;
+            box-shadow:0 0 12px rgba(75,139,245,0.6)}
+
+  @media(max-width:760px){
+    .page{padding:40px 22px 80px}
+    .title-display{font-size:42px}
+    .grid-2,.cmp-row,.stat-strip{grid-template-columns:1fr}
+    .stat-strip{gap:10px}
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="page">
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="doc-header ld" data-d="0">
+    <div class="doc-meta">
+      <svg width="38" height="38" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="h-c" x1="0.1" y1="0" x2="0.85" y2="1">
+            <stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/>
+            <stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/>
+          </linearGradient>
+          <radialGradient id="h-r" cx="28%" cy="24%" r="60%">
+            <stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/>
+            <stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="100" height="100" rx="24" fill="url(#h-c)"/>
+        <rect width="100" height="100" rx="24" fill="url(#h-r)"/>
+        <rect width="100" height="100" rx="24" fill="none" stroke="rgba(122,187,255,0.3)" stroke-width="1"/>
+        <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.08"/>
+        <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.78" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.46" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.22" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="doc-meta-text">
+        <strong>StrydeOS · Internal Brief</strong>
+        Competitive intelligence · classified internal
+      </div>
+    </div>
+    <div class="doc-badges">
+      <span class="badge blue">v1.1</span>
+      <span class="badge">13 Jun 2026</span>
+    </div>
+  </div>
+
+  <!-- ═══ TITLE ═══ -->
+  <div class="title-block">
+    <div class="title-eyebrow ld" data-d="1">Competitor Teardown · 003</div>
+    <h1 class="title-display ld" data-d="2">The Heidi question.<br><em>Smaller gap than the funding suggests.</em></h1>
+    <p class="title-sub ld" data-d="3">A surface read on Heidi Health's actual architecture, the AutoMedica acquisition, and whether the lead AI healthcare company is genuinely in StrydeOS's operational lane. Spoiler: they're not. But the layer brushes against Ava.</p>
+  </div>
+
+  <div class="tldr-card ld" data-d="4">
+    <div class="tldr-label">Three things in 30 seconds</div>
+    <ul class="tldr-list">
+      <li><strong>Heidi is a frontier-model wrapper, not a model company.</strong> Multi-model on AWS Bedrock plus self-hosted EKS, MongoDB Atlas Vector Search, Claude for Evidence. The moat is distribution, brand, regulatory paperwork, eval harness — not irreplicable AI. Funding ≠ engineering lead.</li>
+      <li><strong>AutoMedica was a £0-VC two-surgeon UK regulatory acquihire.</strong> Heidi bought MHRA AI Airlock credentials and NHS-facing relationships, not a substantial tech team. Signals serious UK NHS-tier intent, not private physio ops intent.</li>
+      <li><strong>Heidi Comms brushes Ava on the surface, doesn't touch Pulse or Intelligence.</strong> No per-clinician operational KPIs, English-only, sales-only, no TM3 or WriteUpp integration. Heidi sits in the same clinic as StrydeOS, underneath the operational layer.</li>
+    </ul>
+  </div>
+
+  <div class="stat-strip ld" data-d="5">
+    <div class="stat-tile b">
+      <div class="stat-label">heidi raise</div>
+      <div class="stat-val" data-count="96.6" data-prefix="$" data-suffix="M">$96.6M</div>
+      <div class="stat-sub">$465M valuation · Series B Oct 2025</div>
+    </div>
+    <div class="stat-tile p">
+      <div class="stat-label">consults / week</div>
+      <div class="stat-val" data-count="2.5" data-suffix="M+">2.5M+</div>
+      <div class="stat-sub">across 190 countries (Mar 2026)</div>
+    </div>
+    <div class="stat-tile t">
+      <div class="stat-label">automedica</div>
+      <div class="stat-val" data-count="2" data-suffix="">2</div>
+      <div class="stat-sub">co-founders, £0 VC, 2.3yrs old at deal</div>
+    </div>
+    <div class="stat-tile w">
+      <div class="stat-label">comms overlap</div>
+      <div class="stat-val">Partial</div>
+      <div class="stat-sub">no TM3 · no WriteUpp · sales-only</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══ 01 ARCHITECTURE ═══ -->
+  <div class="section reveal">
+    <div class="section-label">01 — Architecture Truth</div>
+    <h2 class="section-title">What's actually under Heidi's bonnet</h2>
+    <p class="section-desc">Sourced from AWS re:Invent 2025 talk by senior engineer I Gede Cakramurti (via ZenML LLMOps DB), MongoDB case study, PromptHub success story, Kinde customer story, Anthropic's Claude for Healthcare announcement, and current job postings.</p>
+
+    <div class="card card-accent reveal" data-d="1" style="margin-bottom:18px">
+      <h3 class="block">No "Heidi model" — multi-model frontier wrapper</h3>
+      <p class="body">Hybrid Amazon Bedrock for immediate availability plus self-hosted models on EKS for control. Heidi Evidence is "in part built on Claude" per Heidi's 24 Feb 2026 announcement; Heidi is named on Anthropic's Claude for Healthcare partner list alongside Banner Health, Novo Nordisk, Elation Health, Viz.ai. Their Medical AI Resident told PromptHub they use it because <em>"models are added to the platform as soon as they are released."</em> Translation: model-agnostic, swap frontier models per task and region.</p>
+      <p class="body">No engineering content — re:Invent talk, MongoDB writeup, careers JDs, Anthropic case study — mentions Heidi pre-training a foundation model. JDs describe fine-tuning, RAG, eval work. Not foundation R&D.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card reveal" data-d="1">
+        <h4 class="sub">stack</h4>
+        <p class="body" style="margin-bottom:6px"><strong>Inference</strong> — AWS Bedrock + EKS self-hosted</p>
+        <p class="body" style="margin-bottom:6px"><strong>Data</strong> — MongoDB Atlas + Vector Search</p>
+        <p class="body" style="margin-bottom:6px"><strong>Auth</strong> — Kinde</p>
+        <p class="body" style="margin-bottom:6px"><strong>Backend</strong> — Python / Go</p>
+        <p class="body" style="margin-bottom:6px"><strong>Frontend</strong> — React / TypeScript</p>
+        <p class="body" style="margin-bottom:0"><strong>Region pinning</strong> — strict per-data-residency (e.g. AU = ap-southeast-2/4 only)</p>
+      </div>
+      <div class="card reveal" data-d="2">
+        <h4 class="sub">what's actually proprietary</h4>
+        <p class="body" style="margin-bottom:8px">→ Clinical eval infrastructure (clinicians-in-loop, synthetic data, LLM-as-judge)</p>
+        <p class="body" style="margin-bottom:8px">→ 200+ specialty template library (community-contributed)</p>
+        <p class="body" style="margin-bottom:8px">→ EHR push-to-chart integrations (Epic SmartSections, athenahealth Marketplace, eClinicalWorks via Vim, plus Cliniko, TM3, WriteUpp etc.)</p>
+        <p class="body" style="margin-bottom:8px">→ Regulatory paperwork: SOC2, ISO27001, <strong>ISO 42001</strong> (first AI scribe to certify), NHS DSP, HIPAA, GDPR</p>
+        <p class="body" style="margin-bottom:0">→ Heidi Remote 21g wearable mic (launched 23 Mar 2026)</p>
+      </div>
+    </div>
+
+    <div class="card reveal" data-d="2" style="margin-top:14px;background:linear-gradient(135deg,rgba(75,139,245,0.07),transparent)">
+      <h4 class="sub">honest verdict on the moat</h4>
+      <p class="body">A competent team could build a 70–80% equivalent scribe in 3–6 engineering months with Claude + clinical templates + a decent eval harness. The remaining 20–30% — edge-case clinical accuracy, template depth, EHR integrations, regulatory paperwork — is what burns 18 months and what the $96.6M pays for. Abridge, Nabla, Freed, Suki, Nuance DAX, Ambience, DeepScribe all use roughly the same pattern. The moat is brand, distribution, and integration depth, <em>not model quality</em>.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══ 02 AUTOMEDICA ═══ -->
+  <div class="section reveal">
+    <div class="section-label">02 — AutoMedica Acquisition</div>
+    <h2 class="section-title">A regulatory acquihire dressed up as strategy</h2>
+    <p class="section-desc">Companies House data (no. 15202457), automedica.ai/team, Capital Brief, MHRA AI Airlock Oct 2025 published report.</p>
+
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="card reveal" data-d="1">
+        <h4 class="sub">company facts</h4>
+        <p class="body" style="margin-bottom:8px"><strong>Incorporated</strong> — 10 Oct 2023, High Wycombe</p>
+        <p class="body" style="margin-bottom:8px"><strong>Directors</strong> — Dr Benedict Turner (CEO, vascular surgeon), Dr Henry Bergman (CTO, vascular surgeon, Imperial PhD)</p>
+        <p class="body" style="margin-bottom:8px"><strong>VC funding</strong> — <span style="color:#FCA5A5">none</span></p>
+        <p class="body" style="margin-bottom:8px"><strong>PSCs before deal</strong> — 0 active</p>
+        <p class="body" style="margin-bottom:0"><strong>Age at acquisition</strong> — ~2.3 years</p>
+      </div>
+      <div class="card reveal" data-d="2">
+        <h4 class="sub">what they shipped</h4>
+        <p class="body" style="margin-bottom:8px"><strong>SmartGuideline</strong> — RAG tool over NICE guidelines, CKS, BNF</p>
+        <p class="body" style="margin-bottom:8px">Selected for MHRA AI Airlock first cohort alongside Philips, OncoFlow, Newton's Tree</p>
+        <p class="body" style="margin-bottom:0">MHRA Oct 2025 report: hallucination errors dropped from 23 → 0 with RAG. Useful work. Not deployed at scale.</p>
+      </div>
+    </div>
+
+    <div class="card card-accent reveal" data-d="1">
+      <h4 class="sub">why heidi bought them — in order</h4>
+      <div class="pt-row">
+        <div class="pt-icon ok">1</div>
+        <div class="pt-text"><strong>MHRA AI Airlock credentials + NHS regulator relationships.</strong> Heidi's deal note: "accelerates Heidi's technical and regulatory capabilities and access to learnings from Automedica's pioneering case study in the MHRA's AI Airlock pilot." Gold for a company already deployed at Modality Partnership, Cambridge University Hospitals, NW London Acute Provider Collaborative (~2.2M pop), One LSC (~1.8M pop).</div>
+      </div>
+      <div class="pt-row">
+        <div class="pt-icon ok">2</div>
+        <div class="pt-text"><strong>Two UK clinician-technologists</strong> to lead the UK team and own Heidi Evidence rollout. Pure talent acquisition.</div>
+      </div>
+      <div class="pt-row">
+        <div class="pt-icon ok">3</div>
+        <div class="pt-text"><strong>NICE / BMJ / MIMS evidence positioning.</strong> Same sources AutoMedica built against now appear as named partners on Heidi Evidence alongside HealthPathways, EMGuidance, Vidal.</div>
+      </div>
+      <div class="pt-row">
+        <div class="pt-icon no">×</div>
+        <div class="pt-text"><strong>What it is NOT:</strong> a tech-stack absorption. Heidi was already doing RAG with MongoDB Vector Search. SmartGuideline's stack isn't exotic. Heidi Evidence runs on Claude, not on SmartGuideline.</div>
+      </div>
+    </div>
+
+    <p class="body reveal" data-d="2" style="margin-top:18px"><strong>Signal for StrydeOS:</strong> Heidi is paying real money for NHS-tier UK market entry through the regulator-aligned route. They are coming for the UK seriously — but specifically NHS, NICE pathways, MHRA class-IIa. Not private physio clinic operations. <em>Different market. Different buyer.</em></p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══ 03 COMMS vs AVA ═══ -->
+  <div class="section reveal">
+    <div class="section-label">03 — Heidi Comms vs Ava</div>
+    <h2 class="section-title">Surface overlap. Different layer.</h2>
+    <p class="section-desc">Heidi Comms launched Feb 2026. AI voice + SMS + chat for patient calls, bookings, reminders, follow-ups. Brushes Ava on the receptionist surface — but ships as a per-clinician scribe-adjacent extension.</p>
+
+    <div class="cmp-row">
+      <div class="cmp-col left reveal" data-d="1">
+        <div class="cmp-head">stryde · ava</div>
+        <div class="cmp-name">AI Voice Receptionist</div>
+        <div class="cmp-line">→ ElevenLabs + LangChain + Twilio stack</div>
+        <div class="cmp-line">→ Cliniko (live), WriteUpp (live, CSV), Physitrack roadmap, TM3 roadmap</div>
+        <div class="cmp-line">→ Plugged into Intelligence dashboard — owner sees calls in their KPIs</div>
+        <div class="cmp-line">→ Bundled with Pulse for full lifecycle retention</div>
+        <div class="cmp-line">→ £199 setup + per-clinic tiered pricing</div>
+        <div class="cmp-line">→ <strong>UK private physio first</strong> — buyer = clinic owner</div>
+      </div>
+      <div class="cmp-col right reveal" data-d="2">
+        <div class="cmp-head">heidi · comms</div>
+        <div class="cmp-name">AI Comms (Feb 2026)</div>
+        <div class="cmp-line">→ Multi-modal voice + SMS + chat, 24/7, concurrent calls</div>
+        <div class="cmp-line">→ Cliniko, BP, Medtech, MediRecords, Athena — <strong style="color:#FCA5A5">no TM3, no WriteUpp</strong></div>
+        <div class="cmp-line">→ <strong style="color:#FCA5A5">English-only</strong> ("Multilingual on roadmap" per help centre)</div>
+        <div class="cmp-line">→ Per-clinician add-on inside the scribe account</div>
+        <div class="cmp-line">→ <strong style="color:#FCA5A5">Sales-only</strong>, no self-serve trial, pricing per clinic</div>
+        <div class="cmp-line">→ <strong>Global clinician-side</strong> — buyer = the clinician</div>
+      </div>
+    </div>
+
+    <div class="card reveal" data-d="1" style="margin-top:18px">
+      <h4 class="sub">what comms is not (verified)</h4>
+      <div class="pt-row"><div class="pt-icon no">×</div><div class="pt-text">No per-clinician utilisation dashboard</div></div>
+      <div class="pt-row"><div class="pt-icon no">×</div><div class="pt-text">No DNA / no-show analytics by clinician</div></div>
+      <div class="pt-row"><div class="pt-icon no">×</div><div class="pt-text">No follow-up booking rate or lifecycle retention KPIs</div></div>
+      <div class="pt-row"><div class="pt-icon no">×</div><div class="pt-text">No HEP compliance tracking</div></div>
+      <div class="pt-row"><div class="pt-icon no">×</div><div class="pt-text">No NPS-by-clinician or revenue-per-session metrics</div></div>
+      <div class="pt-row"><div class="pt-icon no">×</div><div class="pt-text">No clinic operations analytics layer of any kind</div></div>
+    </div>
+
+    <p class="body reveal" data-d="2" style="margin-top:18px"><strong>Pulse and Intelligence have no Heidi equivalent.</strong> Heidi's customer success team uses Omni Analytics <em>internally</em> to build "time saved" dashboards to send to customers — that's CS reporting, not a self-serve product feature for clinic owners.</p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══ 04 LANE MAP ═══ -->
+  <div class="section reveal">
+    <div class="section-label">04 — Lane Map</div>
+    <h2 class="section-title">Who owns what in the clinic</h2>
+    <p class="section-desc">Heidi will end up in the same UK private physio clinic as StrydeOS — doing notes, probably handling some calls. It will not replace the operational lane unless they make a deliberate, telegraphed pivot.</p>
+
+    <div class="lane-diagram">
+      <div class="lane lane-stryde reveal" data-d="1">
+        <div><div class="lane-name">Clinic-owner operational dashboard · KPIs · retention</div>
+        <div class="lane-owner">utilisation · DNA · follow-up rate · HEP compliance · NPS · revenue/session</div></div>
+        <span class="badge blue">stryde owns</span>
+      </div>
+      <div class="lane lane-stryde reveal" data-d="1">
+        <div><div class="lane-name">Patient lifecycle retention automation</div>
+        <div class="lane-owner">Pulse — episode-tied sequences, win-back, reactivation</div></div>
+        <span class="badge blue">stryde owns</span>
+      </div>
+      <div class="lane lane-shared reveal" data-d="2">
+        <div class="sweep"></div>
+        <div><div class="lane-name">Inbound calls · bookings · reminders</div>
+        <div class="lane-owner">Ava (UK physio, PMS-integrated) ↔ Heidi Comms (global, scribe-adjacent)</div></div>
+        <span class="badge warn">contested</span>
+      </div>
+      <div class="lane lane-heidi reveal" data-d="3">
+        <div><div class="lane-name">Ambient scribing · note generation · referral letters</div>
+        <div class="lane-owner">Heidi Scribe — 2.5M+ consults/week, ISO 42001 certified</div></div>
+        <span class="badge purple">heidi owns</span>
+      </div>
+      <div class="lane lane-heidi reveal" data-d="3">
+        <div><div class="lane-name">Clinical decision support · evidence lookup</div>
+        <div class="lane-owner">Heidi Evidence — RAG over NICE / BMJ / MIMS, AutoMedica IP</div></div>
+        <span class="badge purple">heidi owns</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══ 05 RECOMMENDATIONS ═══ -->
+  <div class="section reveal">
+    <div class="section-label">05 — Recommendations</div>
+    <h2 class="section-title">Six moves</h2>
+    <p class="section-desc">Posture: treat Heidi as the dominant scribe-and-clinician-AI layer that sits underneath StrydeOS in the same clinic. Never get pulled into a note-generation arms race.</p>
+
+    <div class="rec-card reveal" data-d="1"><div class="rec-num">01</div>
+      <div class="rec-body"><div class="rec-title">Stop framing Heidi as a competitor on positioning slides</div>
+      <div class="rec-text">Frame them as a parallel product the clinic already uses. New pitch: <em>"we work above the layer Heidi serves — we don't write your notes, we tell your owner who's leaking patients and why."</em></div></div>
+    </div>
+    <div class="rec-card reveal" data-d="1"><div class="rec-num">02</div>
+      <div class="rec-body"><div class="rec-title">Make TM3 + WriteUpp integration depth a near-term moat</div>
+      <div class="rec-text">Heidi Comms doesn't integrate with either, and they are the dominant UK private physio PMSes. Bidirectional sync depth here, before Heidi gets there, is genuine defensibility.</div></div>
+    </div>
+    <div class="rec-card reveal" data-d="2"><div class="rec-num">03</div>
+      <div class="rec-body"><div class="rec-title">Own the "clinic-owner dashboard" identity hard</div>
+      <div class="rec-text">This is where Heidi structurally won't go in the next 18 months — their entire pricing and GTM is per-clinician. The per-clinician KPI angle in Intelligence is the wedge Heidi cannot replicate without breaking its own business model.</div></div>
+    </div>
+    <div class="rec-card reveal" data-d="2"><div class="rec-num">04</div>
+      <div class="rec-body"><div class="rec-title">Assume Comms reaches Ava feature parity on voice + booking within 12 months</div>
+      <div class="rec-text">Edge is not voice quality — it's PMS integration depth, lifecycle retention logic, and the fact Ava plugs into Intelligence. Sell the bundle, not the receptionist.</div></div>
+    </div>
+    <div class="rec-card reveal" data-d="3"><div class="rec-num">05</div>
+      <div class="rec-body"><div class="rec-title">Read AutoMedica correctly</div>
+      <div class="rec-text">This is Heidi getting NHS-side regulatory credibility, not entering UK private physio operational software. Two different markets, two different buyers. Don't let the deal pull StrydeOS into framing them as a UK ops competitor.</div></div>
+    </div>
+    <div class="rec-card reveal" data-d="3"><div class="rec-num">06</div>
+      <div class="rec-body"><div class="rec-title">No note-generation. Ever.</div>
+      <div class="rec-text">Notes are downstream of someone else's job. Clinics already pay Heidi or WriteUpp for that. Building it duplicates spend, blurs the operational positioning, and pulls engineering off the moat work.</div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══ 06 WATCH SIGNALS ═══ -->
+  <div class="section reveal">
+    <div class="section-label">06 — Watch Signals</div>
+    <h2 class="section-title">Two events that flip the read</h2>
+    <p class="section-desc">If either happens, immediate strategy review. Neither has happened.</p>
+
+    <div class="signal-card reveal" data-d="1">
+      <div class="signal-dot"></div>
+      <div class="signal-text"><strong>Signal A —</strong> Heidi launches a per-clinic admin pricing tier with operational analytics. Their per-clinician pricing model (rebranded Clinician plan: $150/month annual, up from $90/month) reinforces today's clinician-first GTM. Flipping to per-clinic owner-side analytics would mean breaking that model.</div>
+    </div>
+    <div class="signal-card reveal" data-d="2">
+      <div class="signal-dot"></div>
+      <div class="signal-text"><strong>Signal B —</strong> Heidi acquires a UK practice-management or physio-specific operational software company. Either would mean they're pivoting toward the practice owner — direct conflict with their own PMS integration partners (Cliniko, TM3, WriteUpp, BP, MediRecords), which they've publicly disavowed via partnership-not-replacement positioning.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ═══ 07 CAVEATS ═══ -->
+  <div class="section reveal">
+    <div class="section-label">07 — Caveats</div>
+    <h2 class="section-title">What we couldn't verify</h2>
+    <p class="section-desc">Honest limits on this read.</p>
+
+    <div class="card reveal" data-d="1">
+      <div class="caveat-row"><strong>Sales-gated surfaces</strong>Heidi keeps a lot behind sales walls. Comms specifically requires a demo to evaluate. There may be an enterprise dashboard tier we couldn't see. If it exists, it's not part of public positioning, which is what matters for buyer perception.</div>
+      <div class="caveat-row"><strong>AutoMedica headcount</strong>Companies House shows 2 directors and 0 active PSCs before the deal. Could not independently verify employees beyond the two founders. Acquisition press only names Turner; Bergman appears on AutoMedica's team page and the Companies House officer register but not in the Heidi announcement.</div>
+      <div class="caveat-row"><strong>ARR undisclosed</strong>Heidi's Series B (Oct 2025) didn't disclose revenue. $465M valuation is real (Bloomberg, Business Wire) but it's a private mark in a frothy AI healthcare market. Rock Health H1 2025: AI-enabled startups captured 62% of digital health VC ($3.95B). Don't read valuation as engineering progress.</div>
+      <div class="caveat-row"><strong>"Heidi runs on Claude"</strong>True for Heidi Evidence specifically (their own announcement + Anthropic's case study confirm). For core Scribe, the multi-model Bedrock + self-hosted EKS framing is more accurate — they use whatever frontier model works best per region and task. Model-agnostic by design.</div>
+      <div class="caveat-row"><strong>Independent benchmarking</strong>KLAS Emerging Company Spotlight 2025 is the closest to independent benchmarking. 100% surveyed customers said they'd buy again. Named ROI examples: Indiana Health Group 2,000 hours saved in 5 months; Advanced Urology 10.3x ROI in 16 weeks. Qualitative depth paywalled.</div>
+    </div>
+  </div>
+
+  <!-- ═══ VERDICT ═══ -->
+  <div class="verdict-card reveal">
+    <div class="verdict-label">Closing read · what this means for stryde</div>
+    <p class="verdict-text">Heidi is a richer, larger, faster-moving company than StrydeOS, with better distribution and bigger model spend — <em>and they are not in our lane.</em> They are in the clinician's pocket; we are on the clinic owner's dashboard. Comms will brush Ava on calls and booking, but ships as a per-clinician add-on with no operational analytics, English-only, sales-only, currently no TM3 or WriteUpp. None of that is true of Ava in UK private physio. AutoMedica tells us Heidi is serious about the UK — but the NHS-tier regulator route, not private physio operations. The right posture is to treat Heidi as the dominant scribe layer that sits underneath us in the same clinic, double down on Ava + Intelligence + Pulse as the operational layer that depends on PMSes Heidi doesn't reach, and never fight a note-generation war we neither want nor need.</p>
+  </div>
+
+  <div class="doc-footer">
+    <div>StrydeOS · Internal Brief · Heidi Competitive Read v1.1</div>
+    <div class="doc-footer-meta">
+      <span>13 Jun 2026</span>
+      <span>Classified · internal use only</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Scroll progress
+  const prog = document.getElementById('progress');
+  const onScroll = () => {
+    const h = document.documentElement;
+    const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    prog.style.width = pct + '%';
+  };
+  document.addEventListener('scroll', onScroll, {passive:true});
+
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Animated stat counters
+  const fmt = (v) => Number.isInteger(v) ? v.toString() : v.toFixed(1);
+  const animateCount = (el) => {
+    const target = parseFloat(el.dataset.count);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    const dur = 1400; const start = performance.now();
+    const step = (now) => {
+      const p = Math.min((now - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = prefix + fmt(target * eased) + suffix;
+      if (p < 1) requestAnimationFrame(step);
+      else el.textContent = prefix + fmt(target) + suffix;
+    };
+    requestAnimationFrame(step);
+  };
+  const statIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting && e.target.dataset.count){ animateCount(e.target); statIO.unobserve(e.target); } });
+  }, {threshold:0.6});
+  document.querySelectorAll('[data-count]').forEach(el => statIO.observe(el));
+</script>
+</body>
+</html>
