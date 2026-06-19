@@ -163,15 +163,21 @@ function DarkModeUpdateBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem(DARK_MODE_UPDATE_KEY)) setVisible(true);
-    } catch { /* ignore unavailable storage */ }
+    let seen = true;
+    try { seen = !!localStorage.getItem(DARK_MODE_UPDATE_KEY); } catch { /* ignore unavailable storage */ }
+    if (seen) return;
+
+    // Mark as seen the moment it first appears so returning visitors never see
+    // it again, even if they navigate away without clicking dismiss.
+    try { localStorage.setItem(DARK_MODE_UPDATE_KEY, "1"); } catch { /* ignore unavailable storage */ }
+    setVisible(true);
+
+    // One-time announcement: self-dismiss after a beat so it never lingers.
+    const timer = setTimeout(() => setVisible(false), 7000);
+    return () => clearTimeout(timer);
   }, []);
 
-  const dismiss = () => {
-    try { localStorage.setItem(DARK_MODE_UPDATE_KEY, "1"); } catch { /* ignore unavailable storage */ }
-    setVisible(false);
-  };
+  const dismiss = () => setVisible(false);
 
   return (
     <AnimatePresence>
