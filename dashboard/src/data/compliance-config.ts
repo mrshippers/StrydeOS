@@ -1,5 +1,21 @@
 import type { Jurisdiction } from "@/types";
 
+/**
+ * Personal-data-breach notification obligations by jurisdiction. Drives the
+ * breach-notification runbook (docs/security/breach-notification-runbook.md)
+ * and keeps the DPIA's timeframes machine-backed rather than prose-only.
+ */
+export interface BreachNotificationPolicy {
+  /** Supervisory authority / regulator to notify. */
+  regulator: string;
+  /** Statutory deadline to notify the regulator, in hours from awareness. */
+  regulatorDeadlineHours: number;
+  /** When affected individuals must additionally be notified directly. */
+  dataSubjectTrigger: string;
+  /** Statutory basis for the obligation. */
+  legalBasis: string;
+}
+
 export interface JurisdictionConsentConfig {
   jurisdiction: Jurisdiction;
   label: string;
@@ -10,6 +26,7 @@ export interface JurisdictionConsentConfig {
   automatedDecisionDisclosure?: string;
   crossBorderTransferNote?: string;
   baaText?: string;
+  breachNotification: BreachNotificationPolicy;
   privacyHighlights: string[];
 }
 
@@ -25,12 +42,20 @@ We process clinic and patient data on the basis of **legitimate interest** for s
 Marketing communications require your explicit consent, which you can withdraw at any time via your account settings.`,
     dataProcessingBasis: "Legitimate interest (service delivery) — GDPR Article 6(1)(f)",
     healthDataNote: "Health data is processed under GDPR Article 9(2)(h) — provision of health or social care treatment, assessment of working capacity, and management of health systems and services.",
+    breachNotification: {
+      regulator: "Information Commissioner's Office (ICO)",
+      regulatorDeadlineHours: 72,
+      dataSubjectTrigger:
+        "Affected individuals are notified without undue delay where the breach is likely to result in a high risk to their rights and freedoms (Art. 34). As processor, StrydeOS notifies the clinic (controller) without undue delay on becoming aware (Art. 33(2)).",
+      legalBasis: "UK GDPR Articles 33 & 34; Data Protection Act 2018",
+    },
     privacyHighlights: [
       "Your patient data remains under your control as the data controller",
       "StrydeOS acts as a data processor on your behalf",
       "All data is stored in the London region (europe-west2)",
       "You have the right to access, rectify, and request deletion of data at any time",
       "Data retention aligns with NHS clinical record retention guidelines (8 years post-discharge)",
+      "Personal data breaches are reportable to the ICO within 72 hours of awareness (UK GDPR Art. 33)",
     ],
   },
 
@@ -45,6 +70,13 @@ This service processes ePHI solely for the purpose of providing clinical analyti
 **Multi-factor authentication is required** for all users accessing ePHI under HIPAA compliance standards.`,
     dataProcessingBasis: "Business Associate Agreement under HIPAA Privacy Rule (45 CFR § 164.502(e))",
     healthDataNote: "All Protected Health Information (ePHI) is encrypted at rest and in transit, stored in HIPAA-compliant infrastructure (GCP us-central1), and subject to comprehensive audit logging.",
+    breachNotification: {
+      regulator: "U.S. Dept. of Health & Human Services, Office for Civil Rights (via the Covered Entity)",
+      regulatorDeadlineHours: 120, // 5 business days — BAA reporting deadline to the Covered Entity
+      dataSubjectTrigger:
+        "As Business Associate, StrydeOS reports any breach of unsecured PHI to the clinic (Covered Entity) without unreasonable delay and no later than 5 business days after discovery. The Covered Entity notifies affected individuals and HHS per 45 CFR §164.404–164.408.",
+      legalBasis: "HIPAA Breach Notification Rule, 45 CFR §164.410",
+    },
     baaText: `# Business Associate Agreement
 
 **Effective Date:** [Date of acceptance]
@@ -145,6 +177,13 @@ By proceeding, you explicitly consent to StrydeOS collecting, using, and disclos
 - Enabling AI-powered practice management functionality`,
     dataProcessingBasis: "Explicit consent under Australian Privacy Principle 3 (APP 3) — Collection of solicited personal information",
     healthDataNote: "Sensitive information (health information) is collected and handled in accordance with APP 3.3 and APP 3.4, which require explicit consent and lawful necessity.",
+    breachNotification: {
+      regulator: "Office of the Australian Information Commissioner (OAIC)",
+      regulatorDeadlineHours: 720, // 30 days to assess a suspected eligible data breach
+      dataSubjectTrigger:
+        "Eligible data breaches likely to result in serious harm are notified to the OAIC and affected individuals as soon as practicable; a suspected breach must be assessed within 30 days.",
+      legalBasis: "Privacy Act 1988 (Cth) Part IIIC — Notifiable Data Breaches scheme",
+    },
     automatedDecisionDisclosure: `### Automated Decision-Making Disclosure (APP 1.3)
 
 From December 2026, APP entities must disclose where computer programs use personal information to make automated decisions that could significantly affect individuals' rights or interests.
@@ -186,6 +225,13 @@ By proceeding, you expressly consent to StrydeOS:
 - Storing and processing this information in secure cloud infrastructure`,
     dataProcessingBasis: "Express consent under PIPEDA Principle 4.3 — Consent, and provincial health information privacy acts where applicable",
     healthDataNote: "Personal health information is processed in accordance with PIPEDA's ten fair information principles, including accountability, identifying purposes, consent, limiting collection, limiting use/disclosure/retention, accuracy, safeguards, openness, individual access, and challenging compliance.",
+    breachNotification: {
+      regulator: "Office of the Privacy Commissioner of Canada (OPC)",
+      regulatorDeadlineHours: 0, // "as soon as feasible" — no fixed hour count in statute
+      dataSubjectTrigger:
+        "Breaches of security safeguards posing a real risk of significant harm are reported to the OPC and notified to affected individuals as soon as feasible; records of all breaches are retained for 24 months.",
+      legalBasis: "PIPEDA s.10.1 — breach of security safeguards",
+    },
     crossBorderTransferNote: `### Cross-Border Data Transfer (PIPEDA Principle 4.1.3)
 
 StrydeOS stores Canadian clinic data in Google Cloud Platform's **us-central1** region (Iowa, United States). While PIPEDA does not require data residency within Canada, organizations transferring personal information outside Canada must ensure comparable protection.
