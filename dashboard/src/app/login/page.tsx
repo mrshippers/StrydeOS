@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   signInWithEmailAndPassword,
-  sendPasswordResetEmail,
   multiFactor,
   PhoneMultiFactorGenerator,
   TotpMultiFactorGenerator,
@@ -23,6 +22,7 @@ import { trackCTAClick } from "@/lib/funnel-events";
 import { useTheme } from "@/components/ThemeProvider";
 import BrightnessStackToggle from "@/components/ui/BrightnessStackToggle";
 import { GlassCard } from "@/components/ui/GlassCard";
+import ForgotPasswordDialog from "@/components/ForgotPasswordDialog";
 
 const DARK_MODE_UPDATE_KEY = "strydeos-dark-mode-v2-seen";
 
@@ -273,9 +273,7 @@ function LoginPageInner() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [rememberedEmail, setRememberedEmail] = useState<string | null>(null);
-  const [resetSent, setResetSent] = useState(false);
-  const [resetError, setResetError] = useState<string | null>(null);
-  const [resetLoading, setResetLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
   const [mfaRequired, setMfaRequired] = useState(false);
   const [mfaResolver, setMfaResolver] = useState<MultiFactorResolver | null>(null);
   const [mfaCode, setMfaCode] = useState("");
@@ -334,8 +332,7 @@ function LoginPageInner() {
   function switchMode(newMode: AuthMode) {
     setMode(newMode);
     setError(null);
-    setResetSent(false);
-    setResetError(null);
+    setForgotOpen(false);
   }
 
   async function handleSignup(e: React.FormEvent) {
@@ -516,39 +513,6 @@ function LoginPageInner() {
     }
   }
 
-  async function handleForgotPassword(e: React.MouseEvent) {
-    e.preventDefault();
-    setError(null);
-    setResetError(null);
-    setResetSent(false);
-    const trimmed = email.trim();
-    if (!trimmed || !trimmed.includes("@")) {
-      setResetError("Enter your email above, then click Forgot password.");
-      return;
-    }
-    const auth = getFirebaseAuth();
-    if (!auth) {
-      setResetError("Sign-in is not configured.");
-      return;
-    }
-    setResetLoading(true);
-    try {
-      await sendPasswordResetEmail(auth, trimmed);
-      setResetSent(true);
-    } catch (err: unknown) {
-      const code = err instanceof Error && "code" in err ? (err as { code: string }).code : "";
-      if (code === "auth/user-not-found") {
-        setResetError("No account found with that email.");
-      } else if (code === "auth/invalid-email") {
-        setResetError("Please enter a valid email address.");
-      } else {
-        setResetError(err instanceof Error ? err.message : "Could not send reset email. Try again.");
-      }
-    } finally {
-      setResetLoading(false);
-    }
-  }
-
   if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-cloud-dancer">
@@ -622,6 +586,11 @@ function LoginPageInner() {
           transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
         >
           <LoginHeader onTryDemo={handleTryDemo} />
+          <ForgotPasswordDialog
+            open={forgotOpen}
+            onClose={() => setForgotOpen(false)}
+            initialEmail={email}
+          />
           <div className="flex-1 flex items-center justify-center pt-4">
             <div className="w-full max-w-[400px]">
               <motion.div
@@ -769,7 +738,7 @@ function LoginPageInner() {
                           <input
                             type="email"
                             value={email}
-                            onChange={(e) => { setEmail(e.target.value); setResetError(null); setResetSent(false); }}
+                            onChange={(e) => setEmail(e.target.value)}
                             required
                             autoFocus={!isReturning}
                             autoComplete="email"
@@ -785,18 +754,17 @@ function LoginPageInner() {
                             </label>
                             <button
                               type="button"
-                              onClick={handleForgotPassword}
-                              disabled={resetLoading}
-                              className="text-[11px] font-semibold text-blue hover:underline disabled:opacity-50"
+                              onClick={() => setForgotOpen(true)}
+                              className="text-[11px] font-semibold text-blue hover:underline"
                             >
-                              {resetLoading ? "Sending…" : "Forgot password?"}
+                              Forgot password?
                             </button>
                           </div>
                           <div className="relative">
                             <input
                               type={showPassword ? "text" : "password"}
                               value={password}
-                              onChange={(e) => { setPassword(e.target.value); setResetError(null); setResetSent(false); }}
+                              onChange={(e) => setPassword(e.target.value)}
                               required
                               autoFocus={isReturning}
                               autoComplete="current-password"
@@ -813,18 +781,6 @@ function LoginPageInner() {
                             </button>
                           </div>
                         </div>
-
-                        {resetSent && (
-                          <div className="p-3.5 rounded-xl bg-success/10 border border-success/20 text-[13px] text-success">
-                            Check your email for a link to reset your password.
-                          </div>
-                        )}
-                        {resetError && (
-                          <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-danger/10 border border-danger/20">
-                            <AlertCircle size={14} className="text-danger mt-0.5 shrink-0" />
-                            <p className="text-[13px] text-danger">{resetError}</p>
-                          </div>
-                        )}
 
                         <label className="flex items-center gap-2.5 cursor-pointer select-none group -mt-1">
                           <span className="relative flex items-center justify-center">

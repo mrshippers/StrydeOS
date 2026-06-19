@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrydeOS x Physitrack - Partnership Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep:#06182e;
+    --navy:#0b2545;
+    --navy-mid:#132d5e;
+    --blue:#1c54f2;
+    --blue-bright:#2e6bff;
+    --blue-glow:#4b8bf5;
+    --teal:#0891b2;
+    --teal-glow:#22d3ee;
+    --purple:#8b5cf6;
+    --purple-glow:#a78bfa;
+    --ink:#eef2f8;
+    --muted:#8ea0b8;
+    --muted-dim:#5d6f87;
+    --line:rgba(255,255,255,.08);
+    --line-strong:rgba(255,255,255,.14);
+    --glass:rgba(255,255,255,.035);
+    --glass-hi:rgba(255,255,255,.055);
+    --success:#34d399;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{font-size:15px}
+  body{
+    font-family:'Outfit',sans-serif;
+    background:var(--navy-deep);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.45;
+  }
+  .page{
+    width:210mm;
+    min-height:297mm;
+    margin:0 auto;
+    position:relative;
+    overflow:hidden;
+    background:
+      radial-gradient(120% 80% at 8% -8%, rgba(46,107,255,.20) 0%, rgba(46,107,255,0) 42%),
+      radial-gradient(90% 70% at 108% 8%, rgba(8,145,178,.16) 0%, rgba(8,145,178,0) 46%),
+      linear-gradient(168deg, var(--navy) 0%, var(--navy-deep) 62%, #04101f 100%);
+    padding:13mm 13mm 11mm;
+    display:flex;
+    flex-direction:column;
+    gap:6.5mm;
+  }
+  /* hairline texture */
+  .page::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:34px 34px;
+    -webkit-mask-image:radial-gradient(120% 90% at 50% 0%,#000 0%,transparent 78%);
+            mask-image:radial-gradient(120% 90% at 50% 0%,#000 0%,transparent 78%);
+    opacity:.5;
+  }
+  .page>*{position:relative;z-index:1}
+
+  /* ---- header ---- */
+  header{display:flex;justify-content:space-between;align-items:flex-start}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand svg{width:42px;height:42px;filter:drop-shadow(0 4px 14px rgba(28,84,242,.45))}
+  .wordmark{font-weight:600;font-size:1.32rem;letter-spacing:-.01em}
+  .wordmark b{font-weight:700}
+  .wordmark .os{color:var(--blue-glow)}
+  .tagline{font-size:.66rem;color:var(--muted);letter-spacing:.16em;text-transform:uppercase;margin-top:2px}
+  .meta{text-align:right;font-size:.66rem;color:var(--muted);letter-spacing:.05em;line-height:1.7}
+  .meta .pill{
+    display:inline-block;margin-bottom:6px;
+    font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.12em;
+    color:var(--teal-glow);border:1px solid rgba(34,211,238,.32);
+    padding:4px 10px;border-radius:50px;background:rgba(8,145,178,.10);text-transform:uppercase;
+  }
+
+  /* ---- hero ---- */
+  .hero{border-top:1px solid var(--line-strong);padding-top:6mm}
+  .hero .kicker{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.26em;text-transform:uppercase;color:var(--blue-glow);margin-bottom:9px}
+  .hero h1{font-family:'DM Serif Display',serif;font-weight:400;font-size:2.42rem;line-height:1.07;letter-spacing:-.01em}
+  .hero h1 .em{font-style:italic;color:var(--blue-glow)}
+  .hero p{margin-top:11px;max-width:165mm;color:var(--muted);font-size:.93rem;line-height:1.55}
+  .hero p strong{color:var(--ink);font-weight:500}
+
+  /* ---- value triad ---- */
+  .triad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .vcard{
+    background:var(--glass);border:1px solid var(--line);border-radius:16px;
+    padding:14px 15px 15px;position:relative;overflow:hidden;
+  }
+  .vcard::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent)}
+  .vcard .n{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--accent);letter-spacing:.1em}
+  .vcard h3{font-size:.96rem;font-weight:600;margin:8px 0 5px;letter-spacing:-.01em}
+  .vcard p{font-size:.76rem;color:var(--muted);line-height:1.5}
+  .vcard.a{--accent:var(--blue-glow)}
+  .vcard.b{--accent:var(--teal-glow)}
+  .vcard.c{--accent:var(--purple-glow)}
+
+  /* ---- proof bar ---- */
+  .proof{
+    display:grid;grid-template-columns:1.5fr 1px 1fr 1px 1fr;align-items:center;gap:0;
+    background:linear-gradient(100deg,rgba(8,145,178,.14),rgba(28,84,242,.10));
+    border:1px solid rgba(34,211,238,.22);border-radius:16px;padding:15px 20px;
+  }
+  .proof .sep{width:1px;height:42px;background:var(--line-strong);justify-self:center}
+  .proof .lead{font-size:.82rem;color:var(--ink);line-height:1.45;padding-right:16px}
+  .proof .lead b{color:var(--teal-glow);font-weight:600}
+  .stat{text-align:center;padding:0 8px}
+  .stat .big{font-family:'DM Serif Display',serif;font-size:2.05rem;line-height:1;color:#fff}
+  .stat .big .unit{font-size:1.1rem;color:var(--teal-glow)}
+  .stat .lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:6px}
+
+  /* ---- architecture / data map ---- */
+  .section-h{display:flex;align-items:center;gap:12px;margin-bottom:1px}
+  .section-h h2{font-family:'DM Serif Display',serif;font-weight:400;font-size:1.18rem;letter-spacing:.01em}
+  .section-h .rule{flex:1;height:1px;background:var(--line)}
+  .section-h .tag{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted-dim);letter-spacing:.14em;text-transform:uppercase}
+
+  .map{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px}
+  .mcard{background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:13px 15px}
+  .mcard .head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .mcard .dot{width:7px;height:7px;border-radius:50%}
+  .mcard .head h4{font-size:.74rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+  .mcard .head .badge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:.54rem;letter-spacing:.08em;padding:2px 7px;border-radius:50px;text-transform:uppercase}
+  .read .dot{background:var(--teal-glow)} .read .badge{color:var(--teal-glow);border:1px solid rgba(34,211,238,.3);background:rgba(8,145,178,.1)}
+  .write .dot{background:var(--blue-glow)} .write .badge{color:var(--blue-glow);border:1px solid rgba(75,139,245,.3);background:rgba(28,84,242,.1)}
+  .row{display:flex;align-items:baseline;gap:9px;padding:4.5px 0;border-top:1px dashed var(--line)}
+  .row:first-of-type{border-top:none}
+  .row .ep{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--ink);white-space:nowrap}
+  .row .ds{font-size:.7rem;color:var(--muted);margin-left:auto;text-align:right}
+
+  .pipe{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}
+  .pcard{background:var(--glass-hi);border:1px solid var(--line);border-radius:14px;padding:12px 15px;display:flex;gap:12px;align-items:flex-start}
+  .pcard .ic{font-family:'JetBrains Mono',monospace;font-size:.95rem;color:var(--blue-glow);margin-top:1px}
+  .pcard h4{font-size:.78rem;font-weight:600;margin-bottom:3px}
+  .pcard p{font-size:.7rem;color:var(--muted);line-height:1.45}
+  .pcard p code{font-family:'JetBrains Mono',monospace;color:var(--teal-glow);font-size:.66rem}
+
+  /* ---- ask + footer ---- */
+  .ask{background:linear-gradient(100deg,rgba(28,84,242,.16),rgba(8,145,178,.06));border:1px solid var(--line-strong);border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:18px}
+  .ask .lab{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--blue-glow);writing-mode:vertical-rl;transform:rotate(180deg);align-self:stretch;display:flex;align-items:center;border-right:1px solid var(--line);padding-right:14px}
+  .ask ol{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;flex:1}
+  .ask li{font-size:.77rem;color:var(--ink);position:relative;padding-left:24px;line-height:1.4}
+  .ask li b{display:block;font-size:.62rem;font-family:'JetBrains Mono',monospace;color:var(--teal-glow);letter-spacing:.06em;margin-bottom:2px}
+  .ask li .num{position:absolute;left:0;top:-1px;font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--blue-glow);line-height:1}
+  .ask li span.t{color:var(--muted);font-size:.72rem}
+
+  footer{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--line-strong);padding-top:5mm}
+  footer .who b{font-weight:600;font-size:.86rem}
+  footer .who span{display:block;font-size:.7rem;color:var(--muted);margin-top:2px}
+  footer .web{text-align:right;font-size:.7rem;color:var(--muted);line-height:1.7}
+  footer .web .url{color:var(--blue-glow);font-weight:500;font-size:.82rem}
+
+  @media print{
+    @page{size:A4;margin:0}
+    html,body{background:var(--navy-deep)}
+    .page{margin:0;box-shadow:none}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="StrydeOS">
+        <defs>
+          <linearGradient id="cont" x1="0.1" y1="0" x2="0.85" y2="1"><stop offset="0%" stop-color="#2E6BFF" stop-opacity="0.58"/><stop offset="100%" stop-color="#091D3E" stop-opacity="0.72"/></linearGradient>
+          <radialGradient id="rad" cx="28%" cy="24%" r="60%"><stop offset="0%" stop-color="#6AABFF" stop-opacity="0.42"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0"/></radialGradient>
+          <linearGradient id="topface" x1="0.05" y1="1" x2="0.35" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0.55"/><stop offset="100%" stop-color="white" stop-opacity="0.97"/></linearGradient>
+          <linearGradient id="rim" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="white" stop-opacity="0"/><stop offset="28%" stop-color="white" stop-opacity="0.60"/><stop offset="65%" stop-color="white" stop-opacity="0.12"/><stop offset="100%" stop-color="white" stop-opacity="0"/></linearGradient>
+          <linearGradient id="border" x1="0.1" y1="0" x2="0.4" y2="1"><stop offset="0%" stop-color="#7ABBFF" stop-opacity="0.65"/><stop offset="100%" stop-color="#1C54F2" stop-opacity="0.06"/></linearGradient>
+          <clipPath id="pc"><rect x="35" y="20" width="22" height="60" rx="5"/></clipPath>
+          <clipPath id="ac"><polygon points="35,52 57,40 57,20 35,20"/></clipPath>
+        </defs>
+        <rect width="100" height="100" rx="24" fill="url(#cont)"/>
+        <rect width="100" height="100" rx="24" fill="url(#rad)"/>
+        <rect width="100" height="100" rx="24" fill="none" stroke="url(#border)" stroke-width="1.2"/>
+        <path d="M 17 21 Q 50 12 83 21" stroke="url(#rim)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fill-opacity="0.07"/>
+        <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fill-opacity="0.10"/>
+        <g clip-path="url(#pc)">
+          <polyline points="32,80 46,72 60,80" stroke="white" stroke-opacity="0.20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <polyline points="32,72 46,64 60,72" stroke="white" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <polyline points="32,64 46,56 60,64" stroke="white" stroke-opacity="0.72" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </g>
+        <rect x="35" y="20" width="22" height="60" rx="5" fill="url(#topface)" clip-path="url(#ac)"/>
+        <line x1="33" y1="52" x2="59" y2="39" stroke="white" stroke-width="1.2" stroke-opacity="0.55" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="wordmark"><b>Stryde</b><span class="os">OS</span></div>
+        <div class="tagline">The Clinic OS for private practice</div>
+      </div>
+    </div>
+    <div class="meta">
+      <span class="pill">Partnership Brief</span><br>
+      Prepared for Physitrack<br>
+      Kamil Wyszynski &middot; Sven Ehlers<br>
+      17 June 2026
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="kicker">StrydeOS &times; Physitrack</div>
+    <h1>We surface your engine.<br>We don't <span class="em">replace</span> it.</h1>
+    <p>StrydeOS is the operating layer above the PMS for UK private physiotherapy. We do not build exercise content, telehealth, or triage. <strong>We pull Physitrack adherence and outcomes into one clinic view, and trigger programme assignment automatically off PMS events</strong> so clinicians stop double-keying and patients stop falling through the gaps. Every clinic connects its own paid Physitrack account. The net effect for Physitrack: more programmes assigned, deeper utilisation, stickier accounts.</p>
+  </div>
+
+  <div class="triad">
+    <div class="vcard a">
+      <div class="n">01 / DISTRIBUTION</div>
+      <h3>A channel, not a reseller</h3>
+      <p>Every clinic we onboard authorises its own Physitrack subscription. Clinics not yet on Physitrack are net-new seats we route to you.</p>
+    </div>
+    <div class="vcard b">
+      <div class="n">02 / UTILISATION</div>
+      <h3>We drive programmes assigned</h3>
+      <p>Our entire reason to exist is lifting HEP compliance. A higher assignment rate is, directly, more Physitrack programmes prescribed per clinic.</p>
+    </div>
+    <div class="vcard c">
+      <div class="n">03 / RETENTION</div>
+      <h3>Stickier clinic accounts</h3>
+      <p>When Physitrack data is wired into the owner's KPI view, it becomes load-bearing. Embedded data is the deepest churn moat there is.</p>
+    </div>
+  </div>
+
+  <div class="proof">
+    <div class="lead">We dogfood at <b>Spires Physiotherapy</b>, West Hampstead, on Physitrack + WriteUpp. These are our live numbers, and the gap we close is the volume you gain.</div>
+    <div class="sep"></div>
+    <div class="stat">
+      <div class="big">35<span class="unit">%</span></div>
+      <div class="lbl">Programme assignment rate today</div>
+    </div>
+    <div class="sep"></div>
+    <div class="stat">
+      <div class="big">2.4<span class="unit">&times;</span></div>
+      <div class="lbl">Follow-up rate &middot; the lever</div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-h"><h2>Integration surface</h2><div class="rule"></div><span class="tag">adapter live in code</span></div>
+    <div class="map">
+      <div class="mcard read">
+        <div class="head"><span class="dot"></span><h4>Read &middot; today</h4><span class="badge">Live adapter</span></div>
+        <div class="row"><span class="ep">getProgrammes()</span><span class="ds">programmes, exercise count, completion %</span></div>
+        <div class="row"><span class="ep">getAdherence()</span><span class="ds">adherence %, sessions, last session</span></div>
+        <div class="row"><span class="ep">getPromResults()</span><span class="ds">validated PROM scores over time</span></div>
+        <div class="row"><span class="ep">getPatients()</span><span class="ds">client roster for matching</span></div>
+      </div>
+      <div class="mcard write">
+        <div class="head"><span class="dot"></span><h4>Write &middot; next</h4><span class="badge">Partnership unlocks</span></div>
+        <div class="row"><span class="ep">assignProgramme()</span><span class="ds">assign a template on a PMS event</span></div>
+        <div class="row"><span class="ep">webhook: assignment</span><span class="ds">react to clinician actions</span></div>
+        <div class="row"><span class="ep">webhook: adherence</span><span class="ds">trigger Pulse re-engagement</span></div>
+        <div class="row"><span class="ep">webhook: completion</span><span class="ds">close the outcome loop</span></div>
+      </div>
+    </div>
+    <div class="pipe">
+      <div class="pcard"><div class="ic">[ ]</div><div><h4>Per-clinic authorisation</h4><p>Each clinic authorises its own account. <code>No shared master key.</code> Happy to start on token auth and graduate to OAuth.</p></div></div>
+      <div class="pcard"><div class="ic">&lt;/&gt;</div><div><h4>EU-resident, read-only mirror</h4><p>Data held in <code>EU (Ireland)</code>, encrypted, minimal PII, clinic owns its data, DPA in place. Event-driven, rate-limit friendly.</p></div></div>
+    </div>
+  </div>
+
+  <div class="ask">
+    <div class="lab">The Ask</div>
+    <ol>
+      <li><span class="num">1</span><b>API ACCESS</b>Sandbox credentials now, under your API Usage Agreement.</li>
+      <li><span class="num">2</span><b>ONE-CLINIC PILOT</b>Prove the loop on Spires, then roll to the StrydeOS base.</li>
+      <li><span class="num">3</span><b>PARTNER PATH</b>A commercial model that rewards the seats we bring.</li>
+    </ol>
+  </div>
+
+  <footer>
+    <div class="who">
+      <b>Jamal Adu</b>
+      <span>Founder, StrydeOS &middot; Owner, Spires Physiotherapy &middot; West Hampstead, London</span>
+    </div>
+    <div class="web">
+      <span class="url">strydeos.com</span><br>
+      jamal@strydeos.com
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

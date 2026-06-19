@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import { MonolithMark } from "@/components/MonolithLogo";
 
 const PUBLIC_PATHS = ["/login", "/trial", "/onboarding", "/intake"];
 const MFA_EXEMPT_PATHS = ["/login", "/mfa-setup"];
@@ -46,11 +47,24 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (loading || (!user && !isPublicPath)) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-cloud-dancer">
-        <Loader2 size={28} className="animate-spin text-navy/30" />
-        <p className="text-sm text-navy/40">
-          {loading ? "Loading…" : "Redirecting to sign in…"}
-        </p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-cloud-dancer px-6">
+        <div className="flex flex-col items-center gap-5 animate-fade-in">
+          <div className="monolith-pulse">
+            <MonolithMark size={56} />
+          </div>
+          <div className="flex flex-col items-center gap-2.5">
+            <span
+              className="text-[19px] font-bold tracking-[-0.02em] text-navy"
+              style={{ fontFamily: "'Outfit', sans-serif" }}
+            >
+              Stryde<span className="text-blue dark:text-blue-glow">OS</span>
+            </span>
+            <div className="flex items-center gap-2 text-[13px] text-muted">
+              <Loader2 size={13} className="animate-spin" />
+              <span>{loading ? "Loading your workspace…" : "Redirecting to sign in…"}</span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

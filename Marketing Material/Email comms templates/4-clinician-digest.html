@@ -32,52 +32,14 @@
     <p style="margin:0;font-size:15px;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">Hi {{CLINICIAN_NAME}},</p>
     <p style="margin:8px 0 0;font-size:13px;color:#5C6370;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">{{CONTENT}}</p>
 
-    <!-- Stats -->
-    
-    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-      
-    <tr>
-      <td style="padding:8px 0;font-size:13px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">Follow-up rate</td>
-      <td style="padding:8px 12px;font-size:14px;font-weight:700;color:#0B2545;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">3.4</td>
-      <td style="padding:8px 12px;font-size:12px;color:#5C6370;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">target: 4.0</td>
-      <td style="padding:8px 0;font-size:12px;color:#5C6370;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">UK avg: 4.0–5.5</td>
-    </tr>
-      <tr><td colspan="4" style="padding:0;border-bottom:1px solid #F2F1EE;"></td></tr>
-      
-    <tr>
-      <td style="padding:8px 0;font-size:13px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">HEP compliance</td>
-      <td style="padding:8px 12px;font-size:14px;font-weight:700;color:#0B2545;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">82%</td>
-      <td style="padding:8px 12px;font-size:12px;color:#5C6370;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">target: 85%</td>
-      <td style="padding:8px 0;font-size:12px;color:#5C6370;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">UK avg: 70–85%</td>
-    </tr>
-      <tr><td colspan="4" style="padding:0;border-bottom:1px solid #F2F1EE;"></td></tr>
-      
-    <tr>
-      <td style="padding:8px 0;font-size:13px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">Utilisation</td>
-      <td style="padding:8px 12px;font-size:14px;font-weight:700;color:#0B2545;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">78%</td>
-      <td style="padding:8px 12px;font-size:12px;color:#5C6370;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">target: 75%</td>
-      <td style="padding:8px 0;font-size:12px;color:#5C6370;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">UK avg: ~72%</td>
-    </tr>
-      <tr><td colspan="4" style="padding:0;border-bottom:1px solid #F2F1EE;"></td></tr>
-      
-    <tr>
-      <td style="padding:8px 0;font-size:13px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">DNA rate</td>
-      <td style="padding:8px 12px;font-size:14px;font-weight:700;color:#0B2545;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">5%</td>
-      <td style="padding:8px 12px;font-size:12px;color:#5C6370;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">target: ≤6%</td>
-      <td style="padding:8px 0;font-size:12px;color:#5C6370;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">UK avg: ≤6%</td>
-    </tr>
-    </table>
+    <!-- Stats: rendered from this clinician's real metrics_weekly vs targets. Empty when omitted. -->
+    {{STATS_TABLE}}
 
-    <!-- Focus -->
-    <div style="margin:16px 0;padding:14px 16px;border-radius:8px;background:#F0FDFA;border:1px solid rgba(8,145,178,0.2);">
-        <p style="margin:0;font-size:13px;font-weight:600;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">This week's focus</p>
-        <p style="margin:4px 0 0;font-size:13px;color:#5C6370;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">Your Thursday afternoon clinic had the most rebooking gaps this week — 3 of 6 missed follow-ups came from that session.</p>
-      </div>
+    <!-- Focus: this clinician's real coaching focus for the week. Empty when omitted. -->
+    {{FOCUS_BLOCK}}
 
-    <!-- Win -->
-    <div style="margin:16px 0;padding:14px 16px;border-radius:8px;background:#F0FDF4;border:1px solid rgba(5,150,105,0.2);">
-        <p style="margin:0;font-size:13px;color:#059669;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">✓ HEP compliance is at 82%, up from 76% last week. Keep it going.</p>
-      </div>
+    <!-- Win: this clinician's real win for the week. Empty when omitted. -->
+    {{WIN_BLOCK}}
 
     <!-- CTA -->
     <div style="padding-top:8px;">

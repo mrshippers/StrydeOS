@@ -15,17 +15,19 @@ import type { InsightEvent } from "../src/types/insight-events";
 
 // ── Mock data ──────────────────────────────────────────────────
 
+// SAMPLE DATA ONLY — illustrative, fictional clinician. Never use a real
+// colleague's name or real performance figures in template fixtures.
 const mockEvent: InsightEvent = {
   id: "evt_001",
   type: "REVENUE_LEAK_DETECTED",
   severity: "critical",
-  title: "Follow-up drop: Andrew's rebooking rate fell 18% this week",
-  description: "Andrew's follow-up rate dropped from 4.2 to 3.4 — 6 initial assessments had no follow-up booked within 7 days.",
-  ownerNarrative: "Andrew saw 33 patients this week but only 27 had follow-ups booked. The 6 missed rebookings represent approximately £540 in lost downstream revenue. His Thursday afternoon clinic had the highest drop-off rate — 3 of the 6 gaps came from that session.",
-  suggestedAction: "Review Andrew's Thursday afternoon caseload and discuss rebooking workflow.",
+  title: "Follow-up drop: a clinician's rebooking rate fell this week",
+  description: "Sample clinician's follow-up rate dropped week on week — initial assessments with no follow-up booked within 7 days.",
+  ownerNarrative: "Sample figures for layout only. The live digest renders each clinician's real rebooking gaps and downstream revenue impact from metrics_weekly — nothing here is hardcoded.",
+  suggestedAction: "Review the flagged clinic session and discuss rebooking workflow.",
   revenueImpact: 540,
-  clinicianId: "andrew_001",
-  clinicianName: "Andrew",
+  clinicianId: "sample_001",
+  clinicianName: "Sample Clinician",
   detectedAt: new Date().toISOString(),
 };
 
@@ -34,11 +36,11 @@ const mockWarning: InsightEvent = {
   type: "DNA_SPIKE",
   severity: "warning",
   title: "DNA rate above target for 2 consecutive weeks",
-  description: "Clinic DNA rate is 8.2% vs 6% target.",
+  description: "Clinic DNA rate is above the 6% target (sample value).",
   ownerNarrative: null,
   suggestedAction: "Enable SMS reminders 24hr before appointments via Pulse.",
-  clinicianId: "max_001",
-  clinicianName: "Max",
+  clinicianId: "sample_002",
+  clinicianName: "Sample Clinician",
   detectedAt: new Date().toISOString(),
 };
 
@@ -76,7 +78,7 @@ const templates = [
   {
     name: "Clinician Weekly Digest",
     html: buildClinicianDigestEmail({
-      firstName: "Andrew",
+      firstName: "Sample",
       clinicName: "Spires Physiotherapy",
       weekLabel: "7 Apr 2026",
       stats: {
