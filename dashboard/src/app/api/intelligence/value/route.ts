@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
-  verifyApiRequest,
-  verifyCronRequest,
   handleApiError,
-  requireRole,
+  ApiAuthError,
 } from "@/lib/auth-guard";
+import { withCronOrUser } from "@/lib/with-cron-or-user";
 import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { detectValueEvents } from "@/lib/intelligence/detect-value-events";
 import { computeValueSummary } from "@/lib/intelligence/compute-value-summary";
@@ -30,29 +29,24 @@ async function handler(request: NextRequest) {
   }
 
   try {
-    const isCron = request.headers.get("authorization")?.startsWith("Bearer ");
-    let userClinicId: string | undefined;
-
-    if (isCron) {
-      try {
-        verifyCronRequest(request);
-      } catch {
-        const user = await verifyApiRequest(request);
-        requireRole(user, ["owner", "admin", "superadmin"]);
-        userClinicId = user.clinicId;
-      }
-    } else {
-      const user = await verifyApiRequest(request);
-      requireRole(user, ["owner", "admin", "superadmin"]);
-      userClinicId = user.clinicId;
+    // Auth: cron secret verified first (constant-time); falls through to user auth.
+    const auth = await withCronOrUser(request, {
+      allowedRoles: ["owner", "admin", "superadmin"],
+    });
+    if (!auth.ok) {
+      return handleApiError(new ApiAuthError(auth.message, auth.status));
     }
+
+    const isCron = auth.mode === "cron";
+    const userClinicId = isCron ? undefined : auth.user.clinicId;
+    const isSuperadmin = !isCron && auth.user.role === "superadmin";
 
     const db = getAdminDb();
     const body = await request.json().catch(() => ({}));
     const targetClinicId = (body.clinicId as string | undefined) ?? userClinicId;
 
-    // Tenant isolation: non-superadmin users can only process their own clinic
-    if (targetClinicId && userClinicId && targetClinicId !== userClinicId) {
+    // Tenant isolation: non-superadmin, non-cron users can only process their own clinic
+    if (!isCron && !isSuperadmin && targetClinicId && userClinicId && targetClinicId !== userClinicId) {
       return NextResponse.json({ error: "Forbidden: clinic mismatch" }, { status: 403 });
     }
 

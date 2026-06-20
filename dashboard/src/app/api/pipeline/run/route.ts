@@ -2,12 +2,12 @@ import * as Sentry from "@sentry/nextjs";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
-  verifyApiRequest,
   verifyCronRequest,
-  handleApiError,
-  requireRole,
   requireClinic,
+  handleApiError,
+  ApiAuthError,
 } from "@/lib/auth-guard";
+import { withCronOrUser } from "@/lib/with-cron-or-user";
 import { runPipeline } from "@/lib/pipeline/run-pipeline";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
 import { withRequestLog } from "@/lib/request-logger";
@@ -22,30 +22,28 @@ import { withRequestLog } from "@/lib/request-logger";
  */
 
 async function executePipeline(request: NextRequest, isCronGet = false) {
+  // GET handler (isCronGet=true) already verified cron before calling here.
+  // POST handler uses withCronOrUser for consolidated cron-vs-user authz.
   let userId = "cron";
   let userEmail = "cron@system";
   let userClinicId: string | undefined;
   let isSuperadmin = false;
+  let isCron = isCronGet;
 
-  const isCron = isCronGet || request.headers.get("authorization")?.startsWith("Bearer ");
-  if (isCron) {
-    try {
-      verifyCronRequest(request);
-    } catch {
-      const user = await verifyApiRequest(request);
-      requireRole(user, ["owner", "admin", "superadmin"]);
-      userId = user.uid;
-      userEmail = user.email;
-      userClinicId = user.clinicId;
-      isSuperadmin = user.role === "superadmin";
+  if (!isCronGet) {
+    const auth = await withCronOrUser(request, {
+      allowedRoles: ["owner", "admin", "superadmin"],
+    });
+    if (!auth.ok) {
+      throw new ApiAuthError(auth.message, auth.status);
     }
-  } else {
-    const user = await verifyApiRequest(request);
-    requireRole(user, ["owner", "admin", "superadmin"]);
-    userId = user.uid;
-    userEmail = user.email;
-    userClinicId = user.clinicId;
-    isSuperadmin = user.role === "superadmin";
+    isCron = auth.mode === "cron";
+    if (auth.mode === "user") {
+      userId = auth.user.uid;
+      userEmail = auth.user.email;
+      userClinicId = auth.user.clinicId;
+      isSuperadmin = auth.user.role === "superadmin";
+    }
   }
 
   const db = getAdminDb();

@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
-  verifyApiRequest,
-  verifyCronRequest,
   handleApiError,
-  requireRole,
-  requireClinic,
+  ApiAuthError,
 } from "@/lib/auth-guard";
-import type { VerifiedUser } from "@/lib/auth-guard";
+import { withCronOrUser } from "@/lib/with-cron-or-user";
 import { runPipeline } from "@/lib/pipeline/run-pipeline";
 import { withRequestLog } from "@/lib/request-logger";
 
@@ -21,31 +18,29 @@ import { withRequestLog } from "@/lib/request-logger";
  */
 async function handler(request: NextRequest) {
   try {
-    let authenticatedUser: VerifiedUser | null = null;
-    let isCronAuth = false;
-
-    const isCron = request.headers.get("authorization")?.startsWith("Bearer ");
-    if (isCron) {
-      try {
-        verifyCronRequest(request);
-        isCronAuth = true;
-      } catch {
-        authenticatedUser = await verifyApiRequest(request);
-        requireRole(authenticatedUser, ["owner", "admin", "superadmin"]);
-      }
-    } else {
-      authenticatedUser = await verifyApiRequest(request);
-      requireRole(authenticatedUser, ["owner", "admin", "superadmin"]);
+    // Auth: cron secret verified first (constant-time); falls through to user auth.
+    const auth = await withCronOrUser(request, {
+      allowedRoles: ["owner", "admin", "superadmin"],
+    });
+    if (!auth.ok) {
+      return handleApiError(new ApiAuthError(auth.message, auth.status));
     }
+
+    const isCron = auth.mode === "cron";
+    const authenticatedUser = auth.mode === "user" ? auth.user : null;
 
     const db = getAdminDb();
     const body = await request.json().catch(() => ({}));
     const targetClinicId = body.clinicId as string | undefined;
 
     if (targetClinicId) {
-      // Tenant isolation: non-superadmin, non-cron users can only target their own clinic
-      if (authenticatedUser && !isCronAuth) {
-        requireClinic(authenticatedUser, targetClinicId);
+      // Tenant isolation: non-superadmin, non-cron users can only target their own clinic.
+      // requireClinic is called via withCronOrUser only when targetClinicId is known at
+      // auth time. Here the clinicId comes from the body, so we check inline.
+      if (!isCron && authenticatedUser && authenticatedUser.role !== "superadmin") {
+        if (authenticatedUser.clinicId !== targetClinicId) {
+          return NextResponse.json({ error: "Access denied for this clinic" }, { status: 403 });
+        }
       }
       const result = await runPipeline(db, targetClinicId, { backfill: true });
       return NextResponse.json(result);

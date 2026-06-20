@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
-  verifyApiRequest,
-  verifyCronRequest,
-  requireRole,
   requireClinic,
   handleApiError,
+  ApiAuthError,
 } from "@/lib/auth-guard";
 import type { VerifiedUser } from "@/lib/auth-guard";
+import { withCronOrUser } from "@/lib/with-cron-or-user";
 import { detectInsightEvents } from "@/lib/intelligence/detect-insight-events";
 import { sendUrgentAlerts } from "@/lib/intelligence/notify-owner";
 import { enrichEventsWithNarratives } from "@/lib/intelligence/enrich-narratives";
@@ -30,31 +29,19 @@ import type { InsightEvent } from "@/types/insight-events";
  */
 async function handler(request: NextRequest) {
   try {
-    let userId = "cron";
-    let userClinicId: string | undefined;
-    let isSuperadmin = false;
-
-    const isCron =
-      request.method === "GET" ||
-      request.headers.get("authorization")?.startsWith("Bearer ");
-
-    if (isCron) {
-      try {
-        verifyCronRequest(request);
-      } catch {
-        const user = await verifyApiRequest(request);
-        requireRole(user, ["owner", "admin", "superadmin"]);
-        userId = user.uid;
-        userClinicId = user.clinicId;
-        isSuperadmin = user.role === "superadmin";
-      }
-    } else {
-      const user = await verifyApiRequest(request);
-      requireRole(user, ["owner", "admin", "superadmin"]);
-      userId = user.uid;
-      userClinicId = user.clinicId;
-      isSuperadmin = user.role === "superadmin";
+    // Auth: cron secret verified first (constant-time); falls through to user auth.
+    // GET requests from Vercel cron carry the CRON_SECRET Bearer token.
+    const auth = await withCronOrUser(request, {
+      allowedRoles: ["owner", "admin", "superadmin"],
+    });
+    if (!auth.ok) {
+      return handleApiError(new ApiAuthError(auth.message, auth.status));
     }
+
+    const isCron = auth.mode === "cron";
+    const userId = isCron ? "cron" : auth.user.uid;
+    const userClinicId = isCron ? undefined : auth.user.clinicId;
+    const isSuperadmin = !isCron && auth.user.role === "superadmin";
 
     const db = getAdminDb();
     const body = request.method === "GET" ? {} : await request.json().catch(() => ({}));

@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
-import {
-  verifyCronRequest,
-  verifyApiRequest,
-  requireRole,
-} from "@/lib/auth-guard";
+import { ApiAuthError, handleApiError } from "@/lib/auth-guard";
+import { withCronOrUser } from "@/lib/with-cron-or-user";
 import { sendClinicianDigests } from "@/lib/intelligence/send-clinician-digests";
 import { withRequestLog } from "@/lib/request-logger";
 
@@ -28,14 +25,17 @@ function currentWeekKey(): string {
 async function handler(request: NextRequest) {
   // Cron processes every active clinic. A signed-in owner/admin can trigger a
   // re-send, but only for their own clinic — never the whole tenant base.
-  let scopeClinicId: string | null = null;
+  const auth = await withCronOrUser(request, {
+    allowedRoles: ["owner", "admin", "superadmin"],
+  });
+  if (!auth.ok) {
+    return handleApiError(new ApiAuthError(auth.message, auth.status));
+  }
 
-  try {
-    verifyCronRequest(request);
-  } catch {
-    const user = await verifyApiRequest(request);
-    requireRole(user, ["owner", "admin", "superadmin"]);
-    if (user.role !== "superadmin") scopeClinicId = user.clinicId;
+  // Cron scope = null (all clinics). User scope = own clinic unless superadmin.
+  let scopeClinicId: string | null = null;
+  if (auth.mode === "user" && auth.user.role !== "superadmin") {
+    scopeClinicId = auth.user.clinicId ?? null;
   }
 
   const db = getAdminDb();
