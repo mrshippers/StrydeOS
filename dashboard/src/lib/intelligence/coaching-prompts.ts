@@ -159,7 +159,7 @@ Data:
 - Clinician: {clinicianName}
 - Clinic: {clinicName}
 
-Generate narratives. For the owner, connect clinical improvement to retention ("patients who improve are 2.4x more likely to complete their full treatment"). For the clinician, celebrate the clinical win — name the patient, name what improved.`,
+Generate narratives. For the owner, connect clinical improvement to retention - highlight that consistent outcome tracking makes quality visible and supports patient follow-through. For the clinician, celebrate the clinical win - name the patient, name what improved.`,
 
   AVA_CALL_BOOKED: `Ava (the AI voice receptionist) successfully booked an appointment from an inbound call.
 

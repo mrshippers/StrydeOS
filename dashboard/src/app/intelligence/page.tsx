@@ -1391,7 +1391,7 @@ export default function IntelligencePage() {
                 </span>
               </div>
             )}
-            {/* Correlation insight */}
+            {/* Outcome tracking prompt */}
             <div className="rounded-[var(--radius-card)] border border-purple/20 bg-purple/5 p-5">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-xl bg-purple/10 flex items-center justify-center shrink-0">
@@ -1400,8 +1400,7 @@ export default function IntelligencePage() {
                 <div>
                   <h4 className="text-sm font-semibold text-navy mb-1">Clinical outcomes correlate with revenue</h4>
                   <p className="text-xs text-muted leading-relaxed">
-                    Patients who improve <span className="font-semibold text-navy">≥3 points on NPRS</span> are <span className="font-semibold text-success">2.4×</span> more likely to complete their full treatment and <span className="font-semibold text-success">1.8×</span> more likely to leave a Google review.
-                    Tracking outcomes turns clinical quality into a measurable revenue signal.
+                    Tracking validated outcome measures (NPRS, PSFS) connects clinical quality to retention and revenue. Record scores consistently to surface your clinic&apos;s own patterns over time.
                   </p>
                 </div>
               </div>
