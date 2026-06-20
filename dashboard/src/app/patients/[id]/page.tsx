@@ -1,17 +1,22 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useMemo } from "react";
 import Link from "next/link";
 import StatCard from "@/components/ui/StatCard";
 
-import { useAuth } from "@/hooks/useAuth";
-import { useDemoPatients } from "@/hooks/useDemoData";
+import { usePatients } from "@/hooks/usePatients";
+import { useCommsLog } from "@/hooks/useCommsLog";
 import { useClinicians } from "@/hooks/useClinicians";
-import { getDemoCommsLog } from "@/hooks/useDemoComms";
+import { LifecycleStateBadge } from "@/components/pulse/LifecycleStateBadge";
+import { RiskScoreBadge } from "@/components/pulse/RiskScoreBadge";
+import { RiskFactorPanel } from "@/components/pulse/RiskFactorPanel";
+import type { Patient } from "@/types";
+import type { CommsLogEntry } from "@/types";
 import { getInitials, daysSince, formatPercent } from "@/lib/utils";
 import {
   ArrowLeft,
   Calendar,
+  CalendarClock,
   Activity,
   Mail,
   MessageSquare,
@@ -20,173 +25,152 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
+  Star,
+  RotateCcw,
+  Inbox,
 } from "lucide-react";
+
+// ─── Timeline model ───────────────────────────────────────────────────────────
+// Every event is derived from a REAL data point on the patient record or a real
+// comms_log entry. Nothing is fabricated — no invented NPRS scores, no fake
+// session notes. Undated facts (HEP linked, insured) live in the stat row, not
+// the timeline, so the timeline only ever shows things that genuinely happened
+// on a known date.
 
 interface TimelineEvent {
   id: string;
-  type: "session" | "comms" | "outcome" | "hep" | "insurance";
   date: string;
   title: string;
   detail: string;
   icon: React.ElementType;
   color: string;
-  aiSummary?: string;
 }
 
-function buildTimeline(patientId: string): TimelineEvent[] {
+const SEQ_LABEL = (s: string) =>
+  s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+function buildTimeline(patient: Patient, comms: CommsLogEntry[]): TimelineEvent[] {
   const events: TimelineEvent[] = [];
-  const commsLog = getDemoCommsLog().filter((c) => c.patientId === patientId);
 
-  events.push({
-    id: "s1",
-    type: "session",
-    date: "2026-02-17",
-    title: "Session completed",
-    detail: "Follow-up session. NPRS 3/10 (was 5/10). Progressing well.",
-    icon: CheckCircle,
-    color: "#059669",
-  });
-
-  events.push({
-    id: "h1",
-    type: "hep",
-    date: "2026-02-17",
-    title: "HEP programme updated",
-    detail: "6 exercises assigned. Phase 2 - strengthening.",
-    icon: Clipboard,
-    color: "#1C54F2",
-  });
-
-  events.push({
-    id: "o1",
-    type: "outcome",
-    date: "2026-02-17",
-    title: "NPRS recorded",
-    detail: "Score: 3/10 (improved from 5/10 at initial assessment)",
-    icon: Activity,
-    color: "#8B5CF6",
-  });
-
-  for (const c of commsLog) {
+  if (patient.nextSessionDate) {
     events.push({
-      id: c.id,
-      type: "comms",
-      date: c.sentAt.split("T")[0],
-      title: `${c.sequenceType.replace(/_/g, " ")} sent`,
-      detail: `Via ${c.channel.toUpperCase()}${c.openedAt ? " — opened" : ""}${c.outcome === "booked" ? " — patient rebooked" : ""}${c.outcome === "responded" && c.npsScore != null ? ` — NPS: ${c.npsScore}/10` : ""}`,
-      icon: c.channel === "sms" ? MessageSquare : Mail,
+      id: "next-session",
+      date: patient.nextSessionDate,
+      title: "Next session booked",
+      detail: "Upcoming appointment in the diary.",
+      icon: CalendarClock,
+      color: "#1C54F2",
+    });
+  }
+
+  if (patient.lastSessionDate) {
+    events.push({
+      id: "last-session",
+      date: patient.lastSessionDate,
+      title: "Last session attended",
+      detail: `Session ${patient.sessionCount} of ${patient.treatmentLength}.`,
+      icon: CheckCircle,
+      color: "#059669",
+    });
+  }
+
+  if (patient.lifecycleUpdatedAt && patient.lifecycleState) {
+    events.push({
+      id: "lifecycle",
+      date: patient.lifecycleUpdatedAt,
+      title: `Lifecycle → ${patient.lifecycleState.replace(/_/g, " ").toLowerCase()}`,
+      detail: "Risk engine reclassified this patient on the last pipeline run.",
+      icon: Activity,
       color: "#0891B2",
     });
   }
 
-  events.push({
-    id: "s0",
-    type: "session",
-    date: "2026-02-10",
-    title: "Session completed",
-    detail: "Follow-up. Manual therapy + exercise review. Progressing.",
-    icon: CheckCircle,
-    color: "#059669",
-  });
+  for (const c of comms) {
+    const parts: string[] = [`Via ${c.channel.toUpperCase()}`];
+    if (c.stepNumber) parts.push(`step ${c.stepNumber}`);
+    if (c.openedAt) parts.push("opened");
+    if (c.outcome === "booked") parts.push("patient rebooked");
+    else if (c.outcome === "responded") parts.push("patient replied");
+    else if (c.outcome === "unsubscribed") parts.push("opted out");
+    else if (c.outcome === "send_failed") parts.push("delivery failed");
+    if (c.outcome === "responded" && c.npsScore != null) parts.push(`NPS ${c.npsScore}/10`);
 
-  events.push({
-    id: "ia",
-    type: "session",
-    date: "2026-02-03",
-    title: "Initial assessment",
-    detail: "Low back pain. NPRS 5/10. 6-session treatment planned.",
-    icon: Calendar,
-    color: "#1C54F2",
-  });
-
-  return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-}
-
-// ─── Timeline card with optional AI summary expansion ─────────────────────────
-
-function TimelineCard({ timeline }: { timeline: TimelineEvent[] }) {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-
-  function toggle(id: string) {
-    setExpanded((prev: Set<string>) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
+    events.push({
+      id: c.id,
+      date: c.sentAt,
+      title: `${SEQ_LABEL(c.sequenceType)} sent`,
+      detail: parts.join(" · "),
+      icon: c.outcome === "responded" && c.npsScore != null
+        ? Star
+        : c.channel === "sms"
+          ? MessageSquare
+          : Mail,
+      color: c.outcome === "send_failed" ? "#DC2626" : "#0891B2",
     });
   }
 
+  return events.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+}
+
+// ─── Timeline card ────────────────────────────────────────────────────────────
+
+function TimelineCard({ timeline }: { timeline: TimelineEvent[] }) {
   return (
     <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
       <h3 className="font-display text-lg text-navy mb-4">Activity Timeline</h3>
-      <div className="relative">
-        <div className="absolute left-[15px] top-0 bottom-0 w-px bg-border" />
-        <div className="space-y-5">
-          {timeline.map((event) => {
-            const Icon = event.icon;
-            const isOpen = expanded.has(event.id);
-            return (
-              <div key={event.id} className="flex gap-4 relative">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 relative z-10"
-                  style={{ background: `${event.color}15` }}
-                >
-                  <Icon size={14} style={{ color: event.color }} />
-                </div>
-                <div className="flex-1 pb-1">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-sm font-semibold text-navy">{event.title}</span>
-                    <span className="text-[10px] text-muted flex items-center gap-1">
-                      <Clock size={9} />
-                      {daysSince(event.date)}d ago
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted leading-relaxed">{event.detail}</p>
 
-                  {event.aiSummary && (
-                    <div className="mt-2">
-                      <button
-                        onClick={() => toggle(event.id)}
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full transition-colors"
-                        style={{
-                          background: "rgba(139,92,246,0.08)",
-                          color: "#8B5CF6",
-                        }}
-                      >
-                        <Sparkles size={9} />
-                        AI summary
-                        {isOpen
-                          ? <ChevronUp size={9} />
-                          : <ChevronDown size={9} />}
-                      </button>
-                      {isOpen && (
-                        <p
-                          className="mt-1.5 text-xs leading-relaxed pl-1 border-l-2"
-                          style={{
-                            color: "#5C6370",
-                            borderColor: "rgba(139,92,246,0.3)",
-                          }}
-                        >
-                          {event.aiSummary}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+      {timeline.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <div className="w-11 h-11 rounded-full bg-cloud-dark/60 flex items-center justify-center mb-3">
+            <Inbox size={18} className="text-muted" />
+          </div>
+          <p className="text-sm font-medium text-navy">No activity yet</p>
+          <p className="text-xs text-muted mt-1 max-w-xs">
+            Sessions, lifecycle changes and Pulse comms will appear here as soon
+            as they happen for this patient.
+          </p>
         </div>
-      </div>
+      ) : (
+        <div className="relative">
+          <div className="absolute left-[15px] top-1 bottom-1 w-px bg-gradient-to-b from-teal/40 via-border to-transparent" />
+          <div className="space-y-5">
+            {timeline.map((event, i) => {
+              const Icon = event.icon;
+              return (
+                <div
+                  key={event.id}
+                  className="flex gap-4 relative animate-fade-in"
+                  style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 relative z-10 ring-4 ring-white"
+                    style={{ background: `${event.color}15` }}
+                  >
+                    <Icon size={14} style={{ color: event.color }} />
+                  </div>
+                  <div className="flex-1 pb-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                      <span className="text-sm font-semibold text-navy">{event.title}</span>
+                      <span className="text-[10px] text-muted flex items-center gap-1">
+                        <Clock size={9} />
+                        {daysSince(event.date)}d ago
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted leading-relaxed">{event.detail}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PatientDetailPage({
   params,
@@ -194,26 +178,57 @@ export default function PatientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { user } = useAuth();
-  const patients = useDemoPatients();
+  const { patients, loading } = usePatients();
+  const { commsLog } = useCommsLog();
   const { clinicians } = useClinicians();
-  // Patient detail is a demo-only surface for now — real clinics must never see sample records
-  const patient = user?.uid === "demo" ? patients.find((p) => p.id === id) : undefined;
-  const clinician = clinicians.find((c) => c.id === patient?.clinicianId);
-  const timeline = useMemo(() => buildTimeline(id), [id]);
 
+  const patient = useMemo(() => patients.find((p) => p.id === id), [patients, id]);
+  const clinician = clinicians.find((c) => c.id === patient?.clinicianId);
+  const patientComms = useMemo(
+    () => commsLog.filter((c) => c.patientId === id),
+    [commsLog, id],
+  );
+  const timeline = useMemo(
+    () => (patient ? buildTimeline(patient, patientComms) : []),
+    [patient, patientComms],
+  );
+
+  // ── Loading skeleton ────────────────────────────────────────────────────────
+  if (loading && !patient) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-4 w-28 bg-cloud-dark/60 rounded" />
+        <div className="h-28 bg-cloud-dark/40 rounded-[var(--radius-card)]" />
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-24 bg-cloud-dark/40 rounded-[var(--radius-card)]" />
+          ))}
+        </div>
+        <div className="h-64 bg-cloud-dark/40 rounded-[var(--radius-card)]" />
+      </div>
+    );
+  }
+
+  // ── Not found ────────────────────────────────────────────────────────────────
   if (!patient) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-muted">Patient not found</p>
-        <Link href="/continuity" className="text-blue text-sm mt-2 inline-block">
-          Back to Pulse
+      <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+        <div className="w-12 h-12 rounded-full bg-cloud-dark/60 flex items-center justify-center mb-4">
+          <AlertTriangle size={20} className="text-muted" />
+        </div>
+        <p className="text-navy font-medium">Patient not found</p>
+        <p className="text-xs text-muted mt-1 max-w-xs">
+          This patient is not in your caseload, or the record no longer exists.
+        </p>
+        <Link href="/continuity" className="text-teal text-sm mt-3 inline-flex items-center gap-1.5">
+          <ArrowLeft size={13} /> Back to Pulse
         </Link>
       </div>
     );
   }
 
   const progress = Math.round((patient.sessionCount / patient.treatmentLength) * 100);
+  const lastGap = patient.lastSessionDate ? daysSince(patient.lastSessionDate) : null;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -226,14 +241,25 @@ export default function PatientDetailPage({
       </Link>
 
       {/* Patient header */}
-      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-full bg-navy flex items-center justify-center text-lg font-bold text-white shrink-0">
+      <div className="relative rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6 overflow-hidden">
+        {/* Pulse-teal atmosphere */}
+        <div
+          className="pointer-events-none absolute -top-16 -right-12 w-56 h-56 rounded-full opacity-[0.07]"
+          style={{ background: "radial-gradient(circle, #0891B2 0%, transparent 70%)" }}
+        />
+        <div className="flex items-start gap-4 relative">
+          <div className="w-14 h-14 rounded-full bg-navy flex items-center justify-center text-lg font-bold text-white shrink-0 ring-2 ring-teal/20">
             {getInitials(patient.name)}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="font-display text-2xl text-navy">{patient.name}</h1>
-            <div className="flex items-center gap-3 mt-1 flex-wrap">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="font-display text-2xl text-navy">{patient.name}</h1>
+              {patient.lifecycleState && <LifecycleStateBadge state={patient.lifecycleState} />}
+              {typeof patient.riskScore === "number" && (
+                <RiskScoreBadge score={patient.riskScore} size="sm" />
+              )}
+            </div>
+            <div className="flex items-center gap-3 mt-1.5 flex-wrap">
               {clinician && (
                 <span className="text-sm text-muted">
                   Treating clinician: <span className="font-medium text-navy">{clinician.name}</span>
@@ -272,9 +298,9 @@ export default function PatientDetailPage({
         />
         <StatCard
           label="Last Session"
-          value={patient.lastSessionDate ? `${daysSince(patient.lastSessionDate)}d` : "—"}
+          value={lastGap != null ? `${lastGap}d` : "—"}
           unit="ago"
-          status={patient.lastSessionDate && daysSince(patient.lastSessionDate) > 14 ? "danger" : "ok"}
+          status={lastGap != null && lastGap > 14 ? "danger" : "ok"}
         />
         <StatCard
           label="Next Session"
@@ -295,34 +321,72 @@ export default function PatientDetailPage({
         />
       </div>
 
-      {/* Course progress bar */}
-      <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-navy">Treatment Progress</h3>
-          <span className="text-sm font-bold text-navy">{progress}%</span>
+      {/* Two-column: risk composite + course progress */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Risk composite */}
+        <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-sm font-semibold text-navy">Dropout Risk</h3>
+            {typeof patient.riskScore === "number"
+              ? <RiskScoreBadge score={patient.riskScore} />
+              : <span className="text-[10px] text-muted">Not scored yet</span>}
+          </div>
+          {patient.riskFactors ? (
+            <RiskFactorPanel factors={patient.riskFactors} />
+          ) : (
+            <p className="text-xs text-muted mt-2">
+              Risk factors populate on the next pipeline run once this patient has
+              attendance and HEP signals.
+            </p>
+          )}
         </div>
-        <div className="h-3 bg-cloud-dark rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{
-              width: `${progress}%`,
-              background: progress >= 80 ? "#059669" : progress >= 50 ? "#1C54F2" : "#F59E0B",
-            }}
-          />
-        </div>
-        <div className="flex justify-between mt-2">
-          {Array.from({ length: patient.treatmentLength }, (_, i) => (
+
+        {/* Course progress */}
+        <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-5">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-navy">Treatment Progress</h3>
+            <span className="text-sm font-bold text-navy">{progress}%</span>
+          </div>
+          <div className="h-3 bg-cloud-dark rounded-full overflow-hidden">
             <div
-              key={i}
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                i < patient.sessionCount
-                  ? "bg-success text-white"
-                  : "bg-cloud-dark text-muted"
-              }`}
-            >
-              {i + 1}
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${progress}%`,
+                background: progress >= 80 ? "#059669" : progress >= 50 ? "#1C54F2" : "#F59E0B",
+              }}
+            />
+          </div>
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {Array.from({ length: patient.treatmentLength }, (_, i) => (
+              <div
+                key={i}
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  i < patient.sessionCount
+                    ? "bg-success text-white"
+                    : "bg-cloud-dark text-muted"
+                }`}
+              >
+                {i + 1}
+              </div>
+            ))}
+          </div>
+          {patient.hepProgramId && (
+            <div className="flex items-center gap-1.5 mt-4 text-[11px] text-muted">
+              <Clipboard size={12} className="text-blue" />
+              HEP programme linked
             </div>
-          ))}
+          )}
+          {patient.nextSessionDate ? (
+            <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-muted">
+              <Calendar size={12} className="text-success" />
+              Next session in {daysSince(patient.nextSessionDate)} days
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-warn">
+              <RotateCcw size={12} />
+              No next session booked
+            </div>
+          )}
         </div>
       </div>
 
