@@ -1,5 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { InsightEvent } from "@/types/insight-events";
+
+// Module-scope mock: intercepted by vitest hoisting, so it fires even for
+// dynamic import("resend") calls inside notify-owner.ts.
+const mockEmailSend = vi.fn(async () => ({ data: { id: "email-123" }, error: null }));
+vi.mock("resend", () => {
+  class Resend {
+    emails = { send: mockEmailSend };
+    constructor(_key: string) {}
+  }
+  return { Resend };
+});
+
 import { notifyOwnerInApp, sendUrgentAlerts, sendWeeklyDigest } from "../notify-owner";
 
 function makeEvent(overrides: Partial<InsightEvent> = {}): InsightEvent {
@@ -95,7 +107,7 @@ describe("notifyOwnerInApp", () => {
 
 describe("sendUrgentAlerts", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    mockEmailSend.mockClear();
     delete process.env.RESEND_API_KEY;
   });
 
@@ -150,6 +162,7 @@ describe("sendUrgentAlerts", () => {
 
 describe("sendWeeklyDigest", () => {
   beforeEach(() => {
+    mockEmailSend.mockClear();
     delete process.env.RESEND_API_KEY;
   });
 
@@ -184,28 +197,24 @@ describe("sendWeeklyDigest", () => {
     expect((result as any).result).toBe("no_data");
   });
 
-  // P0-12: real data with zero alerts should still send the reassuring message
-  it("[P0-12] sends reassuring email when stats exist but no events (zero alerts on real data)", async () => {
+  // P0-12: real data with zero alerts MUST dispatch the reassuring digest email.
+  // The module-scope vi.mock("resend") intercepts the dynamic import("resend")
+  // inside sendWeeklyDigest, so mockEmailSend is observable here.
+  it("[P0-12] sends reassuring email exactly once when stats exist but no events (zero alerts on real data)", async () => {
     const statsDoc = makeStatsDoc();
     const db = makeMockDb({ statsDocs: [statsDoc], eventDocs: [] });
     process.env.RESEND_API_KEY = "re_test_123";
 
-    const sendMock = vi.fn(async () => ({ data: { id: "email-123" }, error: null }));
-    vi.doMock("resend", () => ({
-      Resend: vi.fn(() => ({ emails: { send: sendMock } })),
-    }));
+    const result = await sendWeeklyDigest(db as any, "clinic-1");
 
-    // Without actual Resend mock wired up the send path will throw; we test
-    // the gate logic only: with real stats + no API key the gate passes (no no_data).
-    // Use a separate path: no RESEND_API_KEY to keep it unit-level, but confirm
-    // result is NOT no_data.
-    delete process.env.RESEND_API_KEY;
-    const db2 = makeMockDb({ statsDocs: [statsDoc], eventDocs: [] });
-    const result = await sendWeeklyDigest(db2 as any, "clinic-1");
-
-    // Gate passed (real stats present) -> proceeds to send path -> no API key -> sent:false
-    // but result must NOT be no_data
-    expect(result.sent).toBe(false);
+    // The no_data guard must NOT fire (currentStats is present)
     expect((result as any).result).not.toBe("no_data");
+    // The send path must be reached and the digest email dispatched exactly once
+    expect(result.sent).toBe(true);
+    expect(mockEmailSend).toHaveBeenCalledTimes(1);
+    expect(mockEmailSend.mock.calls[0][0]).toMatchObject({
+      to: "jamal@spires.com",
+      subject: expect.stringContaining("Your clinic this week"),
+    });
   });
 });
