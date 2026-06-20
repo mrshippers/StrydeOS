@@ -9,8 +9,31 @@ interface DetectionResult {
   errors: string[];
 }
 
-// Firestore document shape — superset of fields we access
+// Firestore document shape -- superset of fields we access
 type FsDoc = Record<string, unknown> & { id: string };
+
+// ── Sample-size fairness thresholds (P0-7) ───────────────────────────────────
+// A clinician with fewer than MIN_COMPLETED_APPTS appointments in the current
+// week-window does not have enough data to generate a statistically meaningful
+// per-clinician insight. Below this threshold we suppress named events rather
+// than risk surfacing invented underperformance.
+//
+// Choice: 8 completed appointments (about 1.5 per weekday). This is the lower
+// bound at which a single-week rate has enough signal to be directionally
+// reliable. It also aligns with what compute-weekly.ts uses for
+// statisticallyRepresentative (>= 5 appointments there; we use a slightly
+// higher bar here because we are NAMING a clinician to their employer).
+//
+// MIN_UNIQUE_PATIENTS: secondary guard -- named events also require at least
+// this many distinct patients in the window to avoid 1-patient artefacts.
+export const MIN_COMPLETED_APPTS = 8;
+export const MIN_UNIQUE_PATIENTS = 5;
+
+// Outlier detection for REVENUE_LEAK_DETECTED (P0-8).
+// A clinician's dropout rate must exceed the clinic mean by this multiplier
+// before they are named in the event. Without a clear outlier the event
+// reports cohort-level only.
+const DROPOUT_RATE_OUTLIER_FACTOR = 1.5;
 
 /**
  * Detect insight events for a single clinic.
@@ -60,7 +83,7 @@ export async function detectInsightEvents(
     name: d.data().name as string,
   }));
 
-  // Load active (non-discharged) patients only — discharged patients are skipped by all checks
+  // Load active (non-discharged) patients only -- discharged patients are skipped by all checks
   const patientsSnap = await db
     .collection(`clinics/${clinicId}/patients`)
     .where("discharged", "==", false)
@@ -118,8 +141,16 @@ export async function detectInsightEvents(
     const current = clinicianMetrics[0]; // most recent (desc order)
     const previous = clinicianMetrics.length > 1 ? clinicianMetrics[1] : null;
 
+    // P0-7: sample-size gate. We check BOTH the raw appointment count and the
+    // statisticallyRepresentative flag set by compute-weekly.ts. Either failing
+    // is sufficient to suppress the named event.
+    const currentAppts = Number(current.appointmentsTotal ?? 0);
+    const isStatRep = current.statisticallyRepresentative !== false; // undefined = not set, treat as pass
+    const hasSufficientSample =
+      currentAppts >= MIN_COMPLETED_APPTS && isStatRep;
+
     // 1. CLINICIAN_FOLLOWUP_DROP
-    if (previous) {
+    if (previous && hasSufficientSample) {
       const curRate = Number(current.followUpRate ?? 0);
       const prevRate = Number(previous.followUpRate ?? 0);
       if (prevRate > 0) {
@@ -134,9 +165,11 @@ export async function detectInsightEvents(
             title: `${clinician.name}'s follow-up rate dropped ${Math.round(drop * 100)}% this week (from ${prevRate.toFixed(1)} to ${curRate.toFixed(1)})`,
             description: `Week-on-week decline exceeds your ${Math.round(config.followUpDropThreshold * 100)}% threshold. This could indicate scheduling gaps or discharge decisions changing.`,
             suggestedAction: `Review ${clinician.name}'s schedule for this week. Check if recent discharges were premature or if patients are being lost between sessions.`,
-            observationalNote: `This is an observation, not a judgement. There may be good clinical reasons — e.g. a run of single-session cases or planned discharges. Worth a conversation.`,
+            observationalNote: `This is an observation, not a judgement. There may be good clinical reasons -- e.g. a run of single-session cases or planned discharges. Worth a conversation.`,
             actionTarget: "owner",
             createdAt: new Date().toISOString(),
+            sampleSize: currentAppts,
+            timeframe: "Last 7 days",
             metadata: { currentRate: curRate, previousRate: prevRate, dropPercent: Math.round(drop * 100) },
           });
         }
@@ -144,10 +177,18 @@ export async function detectInsightEvents(
     }
 
     // 2. HIGH_DNA_STREAK
-    const clinicianDNAs = recentAppointments.filter(
-      (a) => a.clinicianId === clinician.id && a.status === "dna"
+    // Guard: total recent appointments for this clinician must meet the minimum
+    // to avoid naming someone with only 3 appointments all of which were DNAs.
+    const clinicianRecentAppts = recentAppointments.filter(
+      (a) => a.clinicianId === clinician.id
     );
-    if (clinicianDNAs.length >= config.dnaStreakThreshold) {
+    const clinicianDNAs = clinicianRecentAppts.filter((a) => a.status === "dna");
+
+    if (
+      hasSufficientSample &&
+      clinicianRecentAppts.length >= MIN_COMPLETED_APPTS &&
+      clinicianDNAs.length >= config.dnaStreakThreshold
+    ) {
       newEvents.push({
         type: "HIGH_DNA_STREAK",
         clinicId,
@@ -156,16 +197,18 @@ export async function detectInsightEvents(
         severity: clinicianDNAs.length >= 5 ? "critical" : "warning",
         title: `${clinician.name} had ${clinicianDNAs.length} DNAs in the last 14 days`,
         description: `${clinicianDNAs.length} no-shows in a rolling 14-day window exceeds your threshold of ${config.dnaStreakThreshold}. Pattern may indicate reminder gaps or scheduling friction.`,
-        suggestedAction: `Check if SMS reminders are being sent to ${clinician.name}'s patients. Review the specific time slots — DNAs often cluster around early morning or late afternoon.`,
+        suggestedAction: `Check if SMS reminders are being sent to ${clinician.name}'s patients. Review the specific time slots -- DNAs often cluster around early morning or late afternoon.`,
         observationalNote: `DNAs are rarely the clinician's fault. This is flagged so you can check whether reminders are firing and whether specific slots are problematic.`,
         actionTarget: "owner",
         createdAt: new Date().toISOString(),
+        sampleSize: clinicianRecentAppts.length,
+        timeframe: "Last 14 days",
         metadata: { dnaCount: clinicianDNAs.length, period: "14d" },
       });
     }
 
     // 3. UTILISATION_BELOW_TARGET
-    if (clinicianMetrics.length >= 2) {
+    if (clinicianMetrics.length >= 2 && hasSufficientSample) {
       const recentTwo = clinicianMetrics.slice(0, 2);
       const bothBelow = recentTwo.every(
         (m) => Number(m.utilisationRate ?? 0) < config.utilisationFloor
@@ -183,27 +226,33 @@ export async function detectInsightEvents(
           suggestedAction: `Review ${clinician.name}'s availability against demand. Consider adjusting their schedule or running a reactivation campaign for lapsed patients.`,
           actionTarget: "owner",
           createdAt: new Date().toISOString(),
+          sampleSize: currentAppts,
+          timeframe: "Last 2 weeks",
           metadata: { currentUtilisation: curUtil, threshold: config.utilisationFloor },
         });
       }
     }
 
     // 4. TREATMENT_COMPLETION_WIN (positive)
-    const curCompletion = Number(current.treatmentCompletionRate ?? current.courseCompletionRate ?? 0);
-    if (curCompletion >= config.treatmentCompletionCelebrate) {
-      newEvents.push({
-        type: "TREATMENT_COMPLETION_WIN",
-        clinicId,
-        clinicianId: clinician.id,
-        clinicianName: clinician.name,
-        severity: "positive",
-        title: `${clinician.name} hit ${Math.round(curCompletion * 100)}% treatment completion this week`,
-        description: `Treatment completion above ${Math.round(config.treatmentCompletionCelebrate * 100)}% means patients are completing their treatment plans. Great clinical outcomes and revenue retention.`,
-        suggestedAction: `Acknowledge ${clinician.name}'s performance. Consider what's working well in their approach that could be shared across the team.`,
-        actionTarget: "owner",
-        createdAt: new Date().toISOString(),
-        metadata: { completionRate: curCompletion },
-      });
+    if (hasSufficientSample) {
+      const curCompletion = Number(current.treatmentCompletionRate ?? current.courseCompletionRate ?? 0);
+      if (curCompletion >= config.treatmentCompletionCelebrate) {
+        newEvents.push({
+          type: "TREATMENT_COMPLETION_WIN",
+          clinicId,
+          clinicianId: clinician.id,
+          clinicianName: clinician.name,
+          severity: "positive",
+          title: `${clinician.name} hit ${Math.round(curCompletion * 100)}% treatment completion this week`,
+          description: `Treatment completion above ${Math.round(config.treatmentCompletionCelebrate * 100)}% means patients are completing their treatment plans. Great clinical outcomes and revenue retention.`,
+          suggestedAction: `Acknowledge ${clinician.name}'s performance. Consider what's working well in their approach that could be shared across the team.`,
+          actionTarget: "owner",
+          createdAt: new Date().toISOString(),
+          sampleSize: currentAppts,
+          timeframe: "Last 7 days",
+          metadata: { completionRate: curCompletion },
+        });
+      }
     }
   }
 
@@ -219,17 +268,22 @@ export async function detectInsightEvents(
         type: "HEP_COMPLIANCE_LOW",
         clinicId,
         severity: hepRate < 0.30 ? "critical" : "warning",
-        title: `Clinic-wide HEP compliance is at ${Math.round(hepRate * 100)}% — below your ${Math.round(config.hepComplianceFloor * 100)}% target`,
+        title: `Clinic-wide HEP compliance is at ${Math.round(hepRate * 100)}% -- below your ${Math.round(config.hepComplianceFloor * 100)}% target`,
         description: `Fewer than half of patients are being assigned exercise programmes. This impacts outcomes, treatment duration, and patient satisfaction.`,
         suggestedAction: `Review which clinicians are consistently assigning HEP. Set a team-wide goal and discuss during your next clinical meeting.`,
         actionTarget: "owner",
         createdAt: new Date().toISOString(),
+        sampleSize: Number(latestAll.appointmentsTotal ?? 0) || null,
+        timeframe: "Last 7 days",
         metadata: { hepRate, threshold: config.hepComplianceFloor },
       });
     }
   }
 
-  // 6. REVENUE_LEAK_DETECTED
+  // 6. REVENUE_LEAK_DETECTED (P0-8: rate-normalised clinician naming)
+  //
+  // All active non-discharged patients who started treatment and have no future
+  // booking are considered "mid-programme dropouts".
   const midProgrammeDropouts = patients.filter((p) => {
     if (p.discharged) return false;
     if (!p.lastSessionDate) return false;
@@ -254,38 +308,87 @@ export async function detectInsightEvents(
     const leakedRounded = Math.floor(totalLeaked); // round DOWN (conservative)
 
     if (leakedRounded > 0) {
-      // Group by clinician for the title
-      const byClinician = new Map<string, number>();
-      for (const p of midProgrammeDropouts) {
+      // P0-8: Compute per-clinician dropout RATE, not raw count.
+      // Caseload = all mid-programme patients (dropout + active) for each clinician.
+      // Dropout rate = dropouts / caseload for each clinician.
+      // Only name a clinician when their rate is a genuine outlier vs the clinic mean.
+
+      // Build caseload denominator: all active mid-programme patients per clinician
+      // (those who started and have not completed; includes both dropouts and non-dropouts)
+      const midProgrammeAll = patients.filter((p) => {
+        if (p.discharged) return false;
+        if (!p.lastSessionDate) return false;
+        const sc = Number(p.sessionCount ?? 0);
+        return sc >= 1 && sc < config.maxProgrammeLength;
+      });
+
+      const caseloadByClinician = new Map<string, number>();
+      for (const p of midProgrammeAll) {
         const cId = p.clinicianId as string;
-        byClinician.set(cId, (byClinician.get(cId) ?? 0) + 1);
+        if (!cId) continue;
+        caseloadByClinician.set(cId, (caseloadByClinician.get(cId) ?? 0) + 1);
       }
 
-      // Find clinician name for the largest group
-      let topClinicianName = "your clinicians";
-      let topCount = 0;
-      for (const [cId, count] of byClinician) {
-        if (count > topCount) {
-          topCount = count;
+      const dropoutsByClinician = new Map<string, number>();
+      for (const p of midProgrammeDropouts) {
+        const cId = p.clinicianId as string;
+        if (!cId) continue;
+        dropoutsByClinician.set(cId, (dropoutsByClinician.get(cId) ?? 0) + 1);
+      }
+
+      // Clinic-level rate: total dropouts / total mid-programme caseload
+      const totalCaseload = Array.from(caseloadByClinician.values()).reduce((s, n) => s + n, 0);
+      const clinicDropoutRate = totalCaseload > 0
+        ? midProgrammeDropouts.length / totalCaseload
+        : 0;
+
+      // Find a rate-outlier: a clinician whose individual dropout rate is
+      // DROPOUT_RATE_OUTLIER_FACTOR times the clinic mean AND exceeds it by an
+      // absolute threshold (> clinic rate alone is not enough for very small rates).
+      let outlierName: string | undefined;
+      let bestOutlierRate = 0;
+
+      for (const [cId, dropoutCount] of dropoutsByClinician) {
+        const caseload = caseloadByClinician.get(cId) ?? 0;
+        if (caseload < MIN_UNIQUE_PATIENTS) continue; // too small a caseload to call
+        const clinicianRate = dropoutCount / caseload;
+        const isOutlier =
+          clinicDropoutRate > 0
+            ? clinicianRate >= clinicDropoutRate * DROPOUT_RATE_OUTLIER_FACTOR
+            : false;
+        if (isOutlier && clinicianRate > bestOutlierRate) {
+          bestOutlierRate = clinicianRate;
           const c = clinicians.find((cl) => cl.id === cId);
-          if (c) topClinicianName = c.name;
+          if (c) outlierName = c.name;
         }
       }
+
+      // Compose the description. When an outlier is identified, name them and
+      // state the assumption. When no outlier, report cohort-level only.
+      const dropoutRatePct = Math.round(clinicDropoutRate * 100);
+      const description = outlierName
+        ? `${outlierName}'s mid-programme dropout rate is notably above the clinic average (${dropoutRatePct}%). These figures are estimated based on ${config.maxProgrammeLength}-session programme value at £${config.revenuePerSession}/session.`
+        : `${midProgrammeDropouts.length} mid-programme patients across the clinic have not rebooked within ${config.dropoutRiskDays} days. Estimated based on ${config.maxProgrammeLength}-session programme value at £${config.revenuePerSession}/session -- individual sessions may vary.`;
 
       newEvents.push({
         type: "REVENUE_LEAK_DETECTED",
         clinicId,
         severity: leakedRounded > 500 ? "critical" : "warning",
-        title: `${midProgrammeDropouts.length} mid-programme patients didn't rebook this week — roughly £${leakedRounded.toLocaleString()} in estimated leaked revenue`,
-        description: `${topClinicianName} has the most (${topCount}) patients who started treatment but haven't booked their next session within ${config.dropoutRiskDays} days.`,
+        title: `${midProgrammeDropouts.length} mid-programme patients didn't rebook this week -- roughly £${leakedRounded.toLocaleString()} in estimated leaked revenue`,
+        description,
         suggestedAction: `Review the patient board in Pulse for churn-risk patients. Consider enabling the rebooking prompt sequence to automate follow-up.`,
         actionTarget: "owner",
         revenueImpact: leakedRounded,
         createdAt: new Date().toISOString(),
+        sampleSize: midProgrammeDropouts.length,
+        timeframe: `Last ${config.dropoutRiskDays} days`,
         metadata: {
           dropoutCount: midProgrammeDropouts.length,
           leakedRevenue: leakedRounded,
-          byClinician: Object.fromEntries(byClinician),
+          clinicDropoutRate: Math.round(clinicDropoutRate * 1000) / 1000,
+          outlierClinician: outlierName ?? null,
+          byClinician: Object.fromEntries(dropoutsByClinician),
+          caseloadByClinician: Object.fromEntries(caseloadByClinician),
         },
       });
     }
@@ -322,6 +425,8 @@ export async function detectInsightEvents(
       suggestedAction: `Send a rebooking nudge via Pulse or contact the patient directly.`,
       actionTarget: "patient",
       createdAt: new Date().toISOString(),
+      sampleSize: sessionCount,
+      timeframe: `${daysSince} days since last session`,
       metadata: {
         daysSinceLastSession: daysSince,
         sessionCount,
@@ -343,7 +448,7 @@ export async function detectInsightEvents(
     );
     if (alreadyAlerted) continue;
 
-    // Resolve treating clinician — prefer clinicianId written to review by callback,
+    // Resolve treating clinician -- prefer clinicianId written to review by callback,
     // fall back to patient record lookup (patient may be discharged and excluded from
     // the active patients query, so the review field is the reliable source).
     const patientId = (review.patientId as string) ?? undefined;
@@ -370,13 +475,15 @@ export async function detectInsightEvents(
       clinicianName: detractorClinicianName,
       patientId,
       severity: "critical",
-      title: `NPS detractor alert — patient scored ${rating}/10${clinicianContext}`,
-      description: `A patient responded with a score of ${rating} to your NPS survey. Detractor scores (≤6) need fast human follow-up to understand the issue and prevent churn or negative reviews.`,
+      title: `NPS detractor alert -- patient scored ${rating}/10${clinicianContext}`,
+      description: `A patient responded with a score of ${rating} to your NPS survey. Detractor scores (<=6) need fast human follow-up to understand the issue and prevent churn or negative reviews.`,
       suggestedAction: detractorClinicianName
         ? `Reach out to the patient within 24 hours. A personal call from ${detractorClinicianName} or the clinic owner is most effective.`
         : `Reach out to the patient within 24 hours. A personal call from the clinic owner or their treating clinician is most effective.`,
       actionTarget: "patient",
       createdAt: new Date().toISOString(),
+      sampleSize: null,
+      timeframe: null,
       metadata: {
         reviewId: review.id,
         npsScore: rating,
