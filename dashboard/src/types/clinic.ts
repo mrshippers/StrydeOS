@@ -22,6 +22,12 @@ export interface FeatureFlags {
   clinicianNavSimplified?: boolean;
   /** Fix 8: Mobile-optimised clinician experience. Default true. */
   clinicianMobileOptimised?: boolean;
+  /**
+   * P0-2: Show the Benchmark Comparison card on the Intelligence page.
+   * Default FALSE - card uses static peer baselines with no real multi-clinic
+   * aggregation behind them. Opt-in only once live peer data exists.
+   */
+  peerBenchmarkCard?: boolean;
 }
 
 export type StripeSubscriptionStatus =

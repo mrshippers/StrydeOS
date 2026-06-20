@@ -1053,13 +1053,15 @@ export default function IntelligencePage() {
         </div>
       </div>
 
-      {/* Benchmark comparison */}
+      {/* Benchmark comparison - P0-2: gated behind peerBenchmarkCard flag (default OFF).
+          No real multi-clinic aggregation exists, so the card must not render for
+          real clinics unless explicitly opted in via featureFlags.peerBenchmarkCard. */}
+      {user?.clinicProfile?.featureFlags?.peerBenchmarkCard && (
       <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
         <div className="flex items-center gap-2 mb-1">
           <BarChart2 size={16} className="text-purple" />
           <h3 className="font-display text-lg text-navy">Benchmark Comparison</h3>
         </div>
-        <p className="text-xs text-muted mb-5">Your clinic vs. similar UK private physio practices (3–5 clinicians) · anonymised aggregate data</p>
         <div className="space-y-4">
           {benchmarks.map((b) => {
             // NPS benchmark "You:" value reads from the canonical kpis/* projection (P0-10).
@@ -1084,20 +1086,18 @@ export default function IntelligencePage() {
             const peerPct = b.higherIsBetter
               ? Math.min(100, (b.peerMedian / b.peerTop25) * 100)
               : 50;
-            const beating = hasData && (b.higherIsBetter ? effectiveYourValue > b.peerMedian : effectiveYourValue < b.peerMedian);
+            const aboveMedian = hasData && (b.higherIsBetter ? effectiveYourValue > b.peerMedian : effectiveYourValue < b.peerMedian);
             return (
               <div key={b.metric}>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-sm font-medium text-navy">{b.metric}</span>
                   <div className="flex items-center gap-3 text-xs">
-                    {/* Deuteranopia-safe: blue = beating peers, amber = lagging,
-                        chevron glyph pairs shape with colour. */}
-                    <span className={`inline-flex items-center gap-0.5 font-bold ${!hasData ? "text-muted" : beating ? "text-blue" : "text-warn"}`}>
-                      {hasData && (beating ? <ChevronUp size={12} strokeWidth={2.5} /> : <ChevronDown size={12} strokeWidth={2.5} />)}
+                    <span className={`inline-flex items-center gap-0.5 font-bold ${!hasData ? "text-muted" : aboveMedian ? "text-blue" : "text-warn"}`}>
+                      {hasData && (aboveMedian ? <ChevronUp size={12} strokeWidth={2.5} /> : <ChevronDown size={12} strokeWidth={2.5} />)}
                       You: {hasData ? formatVal(effectiveYourValue) : "—"}
                     </span>
-                    <span className="text-muted">Peers: {formatVal(b.peerMedian)}</span>
-                    <span className="text-muted">Top 25%: {formatVal(b.peerTop25)}</span>
+                    <span className="text-muted">Ref median: {formatVal(b.peerMedian)}</span>
+                    <span className="text-muted">Ref top 25%: {formatVal(b.peerTop25)}</span>
                   </div>
                 </div>
                 <div className="relative h-2.5 bg-cloud-dark rounded-full overflow-hidden">
@@ -1109,7 +1109,7 @@ export default function IntelligencePage() {
                     className="absolute left-0 top-0 h-full rounded-full transition-all duration-700"
                     style={{
                       width: `${yourPct}%`,
-                      background: beating ? brand.blue : brand.warning,
+                      background: aboveMedian ? brand.blue : brand.warning,
                     }}
                   />
                 </div>
@@ -1117,8 +1117,9 @@ export default function IntelligencePage() {
             );
           })}
         </div>
-        <p className="text-[11px] text-muted mt-4 italic">Your metrics are live from clinic data. Peer figures are reference baselines, illustrative until enough practices join StrydeOS to aggregate live peer data.</p>
+        <p className="text-[11px] text-muted mt-4 italic">Reference targets are UK private physio baselines, not aggregated peer data from live clinics.</p>
       </div>
+      )}
 
       {/* Tab navigation */}
       <div role="tablist" aria-label="Intelligence views" className="relative flex items-center gap-1 bg-cloud-light rounded-xl p-1 border border-border overflow-x-auto">
