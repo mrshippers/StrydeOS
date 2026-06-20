@@ -759,6 +759,133 @@ describe("P0-7/P0-8 fairness: two-week detectors require EACH week to be sample-
   });
 });
 
+// ── P0-7/P0-8 fix pass 2: CLINICIAN_FOLLOWUP_DROP previous-week gate ─────────
+//
+// CLINICIAN_FOLLOWUP_DROP uses prevRate (the previous week's followUpRate) in
+// the emitted event title. If the previous week's sample is unsound the
+// prevRate baseline is noise, so naming the clinician on it is unfair.
+// Gate: previous week must also independently satisfy MIN_COMPLETED_APPTS AND
+// statisticallyRepresentative !== false before the event is emitted.
+
+describe("P0-7/P0-8 fix pass 2: CLINICIAN_FOLLOWUP_DROP suppressed when previous week is unsound", () => {
+  it("suppresses CLINICIAN_FOLLOWUP_DROP when previous week is sub-threshold (low count)", async () => {
+    // Current week: 12 appts, statRep=true -- sound.
+    // Previous week: 3 appts, statRep=false -- unsound baseline.
+    // followUpRate drops enough to otherwise fire (3.0 -> 1.0 = 66% drop).
+    // Expected: event NOT emitted because prevRate baseline is unsound.
+    const db = makeMockDb({
+      clinicians: [{ id: "c1", name: "Alice" }],
+      metrics: [
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-09",
+          followUpRate: 1.0,
+          appointmentsTotal: 12,
+          statisticallyRepresentative: true,
+        }),
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-02",
+          followUpRate: 3.0,
+          appointmentsTotal: 3,           // sub-threshold previous week
+          statisticallyRepresentative: false,
+        }),
+      ],
+    });
+
+    await detectInsightEvents(db as any, "clinic-test");
+
+    const writtenTypes = (db._written as Record<string, unknown>[]).map((e) => e.type);
+    expect(writtenTypes).not.toContain("CLINICIAN_FOLLOWUP_DROP");
+  });
+
+  it("suppresses CLINICIAN_FOLLOWUP_DROP when previous week has statisticallyRepresentative=false despite sufficient count", async () => {
+    // Current week sound; previous week has count above threshold but statRep=false.
+    const db = makeMockDb({
+      clinicians: [{ id: "c1", name: "Alice" }],
+      metrics: [
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-09",
+          followUpRate: 1.0,
+          appointmentsTotal: 12,
+          statisticallyRepresentative: true,
+        }),
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-02",
+          followUpRate: 3.0,
+          appointmentsTotal: 10,          // above MIN_COMPLETED_APPTS
+          statisticallyRepresentative: false, // but flag says not representative
+        }),
+      ],
+    });
+
+    await detectInsightEvents(db as any, "clinic-test");
+
+    const writtenTypes = (db._written as Record<string, unknown>[]).map((e) => e.type);
+    expect(writtenTypes).not.toContain("CLINICIAN_FOLLOWUP_DROP");
+  });
+
+  it("emits CLINICIAN_FOLLOWUP_DROP when BOTH current and previous weeks are sample-sound", async () => {
+    // Both weeks sound; drop 66% (3.0 -> 1.0) exceeds default 10% threshold.
+    const db = makeMockDb({
+      clinicians: [{ id: "c1", name: "Alice" }],
+      metrics: [
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-09",
+          followUpRate: 1.0,
+          appointmentsTotal: 12,
+          statisticallyRepresentative: true,
+        }),
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-02",
+          followUpRate: 3.0,
+          appointmentsTotal: 10,
+          statisticallyRepresentative: true,
+        }),
+      ],
+    });
+
+    await detectInsightEvents(db as any, "clinic-test");
+
+    const writtenTypes = (db._written as Record<string, unknown>[]).map((e) => e.type);
+    expect(writtenTypes).toContain("CLINICIAN_FOLLOWUP_DROP");
+  });
+
+  it("sampleSize on CLINICIAN_FOLLOWUP_DROP reflects the smaller of the two weeks when both are sound", async () => {
+    // Current: 12 appts. Previous: 10 appts. Smaller = 10.
+    const db = makeMockDb({
+      clinicians: [{ id: "c1", name: "Alice" }],
+      metrics: [
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-09",
+          followUpRate: 1.0,
+          appointmentsTotal: 12,
+          statisticallyRepresentative: true,
+        }),
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-02",
+          followUpRate: 3.0,
+          appointmentsTotal: 10,
+          statisticallyRepresentative: true,
+        }),
+      ],
+    });
+
+    await detectInsightEvents(db as any, "clinic-test");
+
+    const event = (db._written as Record<string, unknown>[]).find((e) => e.type === "CLINICIAN_FOLLOWUP_DROP");
+    expect(event).toBeDefined();
+    // sampleSize must be the smaller of the two weeks (10), not the current week only (12)
+    expect(event!.sampleSize).toBe(10);
+  });
+});
+
 // ── P0-8: phantom "undefined" clinician bucket in REVENUE_LEAK ───────────────
 
 describe("P0-8: phantom undefined clinicianId guard in REVENUE_LEAK_DETECTED", () => {

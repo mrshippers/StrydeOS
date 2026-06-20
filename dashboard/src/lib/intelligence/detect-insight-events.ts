@@ -150,28 +150,42 @@ export async function detectInsightEvents(
       currentAppts >= MIN_COMPLETED_APPTS && isStatRep;
 
     // 1. CLINICIAN_FOLLOWUP_DROP
+    // Fairness gate (fix pass 2): the event title quotes prevRate verbatim, so
+    // the previous week must independently satisfy the sample-size gate before
+    // we can name the clinician. Mirrors the per-week pattern on UTILISATION.
     if (previous && hasSufficientSample) {
-      const curRate = Number(current.followUpRate ?? 0);
-      const prevRate = Number(previous.followUpRate ?? 0);
-      if (prevRate > 0) {
-        const drop = (prevRate - curRate) / prevRate;
-        if (drop >= config.followUpDropThreshold) {
-          newEvents.push({
-            type: "CLINICIAN_FOLLOWUP_DROP",
-            clinicId,
-            clinicianId: clinician.id,
-            clinicianName: clinician.name,
-            severity: drop >= 0.20 ? "critical" : "warning",
-            title: `${clinician.name}'s follow-up rate dropped ${Math.round(drop * 100)}% this week (from ${prevRate.toFixed(1)} to ${curRate.toFixed(1)})`,
-            description: `Week-on-week decline exceeds your ${Math.round(config.followUpDropThreshold * 100)}% threshold. This could indicate scheduling gaps or discharge decisions changing.`,
-            suggestedAction: `Review ${clinician.name}'s schedule for this week. Check if recent discharges were premature or if patients are being lost between sessions.`,
-            observationalNote: `This is an observation, not a judgement. There may be good clinical reasons -- e.g. a run of single-session cases or planned discharges. Worth a conversation.`,
-            actionTarget: "owner",
-            createdAt: new Date().toISOString(),
-            sampleSize: currentAppts,
-            timeframe: "Last 7 days",
-            metadata: { currentRate: curRate, previousRate: prevRate, dropPercent: Math.round(drop * 100) },
-          });
+      const prevAppts = Number(previous.appointmentsTotal ?? 0);
+      const prevIsStatRep = previous.statisticallyRepresentative !== false;
+      const previousWeekSufficient =
+        prevAppts >= MIN_COMPLETED_APPTS && prevIsStatRep;
+
+      if (previousWeekSufficient) {
+        const curRate = Number(current.followUpRate ?? 0);
+        const prevRate = Number(previous.followUpRate ?? 0);
+        if (prevRate > 0) {
+          const drop = (prevRate - curRate) / prevRate;
+          if (drop >= config.followUpDropThreshold) {
+            // sampleSize: use the smaller of the two weeks so the recorded
+            // count represents the weakest link in the two-week comparison,
+            // not just the (potentially larger) current week.
+            const minAppts = Math.min(currentAppts, prevAppts);
+            newEvents.push({
+              type: "CLINICIAN_FOLLOWUP_DROP",
+              clinicId,
+              clinicianId: clinician.id,
+              clinicianName: clinician.name,
+              severity: drop >= 0.20 ? "critical" : "warning",
+              title: `${clinician.name}'s follow-up rate dropped ${Math.round(drop * 100)}% this week (from ${prevRate.toFixed(1)} to ${curRate.toFixed(1)})`,
+              description: `Week-on-week decline exceeds your ${Math.round(config.followUpDropThreshold * 100)}% threshold. This could indicate scheduling gaps or discharge decisions changing.`,
+              suggestedAction: `Review ${clinician.name}'s schedule for this week. Check if recent discharges were premature or if patients are being lost between sessions.`,
+              observationalNote: `This is an observation, not a judgement. There may be good clinical reasons -- e.g. a run of single-session cases or planned discharges. Worth a conversation.`,
+              actionTarget: "owner",
+              createdAt: new Date().toISOString(),
+              sampleSize: minAppts,
+              timeframe: "Last 7 days",
+              metadata: { currentRate: curRate, previousRate: prevRate, dropPercent: Math.round(drop * 100) },
+            });
+          }
         }
       }
     }
