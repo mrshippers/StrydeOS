@@ -7,6 +7,7 @@ import {
 } from "@/lib/auth-guard";
 import type { VerifiedUser } from "@/lib/auth-guard";
 import { withCronOrUser } from "@/lib/with-cron-or-user";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { detectInsightEvents } from "@/lib/intelligence/detect-insight-events";
 import { sendUrgentAlerts } from "@/lib/intelligence/notify-owner";
 import { enrichEventsWithNarratives } from "@/lib/intelligence/enrich-narratives";
@@ -39,6 +40,24 @@ async function handler(request: NextRequest) {
     }
 
     const isCron = auth.mode === "cron";
+
+    // Rate limit: 5 requests per IP per 60 seconds. Heavy route - triggers LLM
+    // narrative enrichment + email alerts + Firestore writes per clinic.
+    // Cron is exempt: it runs on a verified schedule, not an untrusted IP.
+    if (!isCron) {
+      const { limited, remaining } = await checkRateLimitAsync(request, {
+        limit: 5,
+        windowMs: 60_000,
+        failClosed: true,
+      });
+      if (limited) {
+        return NextResponse.json(
+          { error: "Too many requests. Please try again later." },
+          { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+        );
+      }
+    }
+
     const userId = isCron ? "cron" : auth.user.uid;
     const userClinicId = isCron ? undefined : auth.user.clinicId;
     const isSuperadmin = !isCron && auth.user.role === "superadmin";

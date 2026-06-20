@@ -28,6 +28,12 @@ vi.mock("@/lib/with-cron-or-user", () => ({
   withCronOrUser: (...args: unknown[]) => mockWithCronOrUser(...args),
 }));
 
+// ── checkRateLimitAsync mock (allow-through by default) ───────────────────────
+
+vi.mock("@/lib/rate-limit", () => ({
+  checkRateLimitAsync: vi.fn().mockResolvedValue({ limited: false, remaining: 2 }),
+}));
+
 // ── auth-guard mock ───────────────────────────────────────────────────────────
 
 vi.mock("@/lib/auth-guard", async (importOriginal) => {

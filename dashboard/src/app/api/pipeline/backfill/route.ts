@@ -5,8 +5,10 @@ import {
   ApiAuthError,
 } from "@/lib/auth-guard";
 import { withCronOrUser } from "@/lib/with-cron-or-user";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { runPipeline } from "@/lib/pipeline/run-pipeline";
 import { withRequestLog } from "@/lib/request-logger";
+import { BACKFILL_CONCURRENCY, BACKFILL_MAX_CLINICS } from "./backfill-limits";
 
 /**
  * POST /api/pipeline/backfill
@@ -16,6 +18,7 @@ import { withRequestLog } from "@/lib/request-logger";
  *
  * Body (optional): { clinicId?: string }
  */
+
 async function handler(request: NextRequest) {
   try {
     // Auth: cron secret verified first (constant-time); falls through to user auth.
@@ -27,6 +30,23 @@ async function handler(request: NextRequest) {
     }
 
     const isCron = auth.mode === "cron";
+
+    // Rate limit: 2 requests per IP per 300 seconds. Backfill is the most
+    // expensive route - each clinic run re-processes up to 13 weeks of history.
+    // Cron is exempt: it runs on a verified schedule, not an untrusted IP.
+    if (!isCron) {
+      const { limited, remaining } = await checkRateLimitAsync(request, {
+        limit: 2,
+        windowMs: 300_000,
+        failClosed: true,
+      });
+      if (limited) {
+        return NextResponse.json(
+          { error: "Too many requests. Please try again later." },
+          { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+        );
+      }
+    }
     const authenticatedUser = auth.mode === "user" ? auth.user : null;
 
     const db = getAdminDb();
@@ -58,11 +78,26 @@ async function handler(request: NextRequest) {
     }
 
     const clinicsSnap = await db.collection("clinics").get();
-    const results = [];
-    for (const clinicDoc of clinicsSnap.docs) {
-      const result = await runPipeline(db, clinicDoc.id, { backfill: true });
-      results.push(result);
+    // Respect the hard ceiling to prevent runaway cost on large tenant bases.
+    const allClinicIds = clinicsSnap.docs.slice(0, BACKFILL_MAX_CLINICS).map((d) => d.id);
+
+    const settled: PromiseSettledResult<Awaited<ReturnType<typeof runPipeline>>>[] = [];
+    for (let i = 0; i < allClinicIds.length; i += BACKFILL_CONCURRENCY) {
+      const chunk = allClinicIds.slice(i, i + BACKFILL_CONCURRENCY);
+      const chunkResults = await Promise.allSettled(
+        chunk.map((id) => runPipeline(db, id, { backfill: true }))
+      );
+      settled.push(...chunkResults);
     }
+
+    const results = settled.map((s, idx) => {
+      if (s.status === "fulfilled") return s.value;
+      return {
+        clinicId: allClinicIds[idx],
+        ok: false,
+        error: s.reason instanceof Error ? s.reason.message : "Backfill failed",
+      };
+    });
 
     return NextResponse.json({ results });
   } catch (e) {

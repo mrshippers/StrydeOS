@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { ApiAuthError, handleApiError } from "@/lib/auth-guard";
 import { withCronOrUser } from "@/lib/with-cron-or-user";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { sendWeeklyDigest } from "@/lib/intelligence/notify-owner";
 import { withRequestLog } from "@/lib/request-logger";
 
@@ -27,6 +28,23 @@ async function handler(request: NextRequest) {
   });
   if (!auth.ok) {
     return handleApiError(new ApiAuthError(auth.message, auth.status));
+  }
+
+  // Rate limit: 3 requests per IP per 300 seconds. Digest triggers per-clinic
+  // email sends - unthrottled user calls would flood owners with duplicate emails.
+  // Cron is exempt: it runs on a verified schedule, not an untrusted IP.
+  if (auth.mode !== "cron") {
+    const { limited, remaining } = await checkRateLimitAsync(request, {
+      limit: 3,
+      windowMs: 300_000,
+      failClosed: true,
+    });
+    if (limited) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+      );
+    }
   }
 
   // Cron scope = null (all clinics). User scope = own clinic unless superadmin.

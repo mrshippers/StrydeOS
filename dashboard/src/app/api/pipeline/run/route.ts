@@ -8,6 +8,7 @@ import {
   ApiAuthError,
 } from "@/lib/auth-guard";
 import { withCronOrUser } from "@/lib/with-cron-or-user";
+import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { runPipeline } from "@/lib/pipeline/run-pipeline";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
 import { withRequestLog } from "@/lib/request-logger";
@@ -43,6 +44,23 @@ async function executePipeline(request: NextRequest, isCronGet = false) {
       userEmail = auth.user.email;
       userClinicId = auth.user.clinicId;
       isSuperadmin = auth.user.role === "superadmin";
+    }
+  }
+
+  // Rate limit: 10 requests per IP per 60 seconds. Pipeline is a heavy write
+  // operation - unbounded calls would exhaust Firestore quota and PMS API limits.
+  // Cron is exempt: it runs on a verified schedule, not an untrusted IP.
+  if (!isCron) {
+    const { limited, remaining } = await checkRateLimitAsync(request, {
+      limit: 10,
+      windowMs: 60_000,
+      failClosed: true,
+    });
+    if (limited) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "X-RateLimit-Remaining": String(remaining) } }
+      );
     }
   }
 

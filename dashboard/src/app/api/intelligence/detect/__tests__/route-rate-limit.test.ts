@@ -1,13 +1,11 @@
 /**
- * Tests for POST /api/intelligence/detect (P0-14 explicit authz guard)
+ * P0-15: Rate limit tests for POST /api/intelligence/detect
  *
  * Covers:
- *   - Non-superadmin user with no clinicId is rejected 400 (never reaches all-clinics)
- *   - Non-superadmin user WITH a clinicId processes only their own clinic
- *   - Cron auth still reaches all-clinics processing
- *   - Superadmin still reaches all-clinics processing
+ *   - User over budget is rejected 429 (failClosed = true)
+ *   - Cron is exempt from rate limiting
  *
- * Run: npx vitest run src/app/api/intelligence/detect/__tests__/route.test.ts
+ * Run: npx vitest run src/app/api/intelligence/detect/__tests__/route-rate-limit.test.ts
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -27,21 +25,21 @@ vi.mock("@/lib/with-cron-or-user", () => ({
   withCronOrUser: (...args: unknown[]) => mockWithCronOrUser(...args),
 }));
 
-// ── checkRateLimitAsync mock (allow-through by default) ───────────────────────
+// ── checkRateLimitAsync mock ──────────────────────────────────────────────────
+
+const mockCheckRateLimitAsync = vi.fn();
 
 vi.mock("@/lib/rate-limit", () => ({
-  checkRateLimitAsync: vi.fn().mockResolvedValue({ limited: false, remaining: 5 }),
+  checkRateLimitAsync: (...args: unknown[]) => mockCheckRateLimitAsync(...args),
 }));
 
 // ── auth-guard mocks ──────────────────────────────────────────────────────────
-
-const mockRequireClinic = vi.fn();
 
 vi.mock("@/lib/auth-guard", async (importOriginal) => {
   const orig = await importOriginal<typeof import("@/lib/auth-guard")>();
   return {
     ...orig,
-    requireClinic: (...args: unknown[]) => mockRequireClinic(...args),
+    requireClinic: vi.fn(),
     handleApiError: (err: unknown) => {
       const e = err as { statusCode?: number; message?: string };
       const status = e.statusCode ?? 500;
@@ -55,9 +53,6 @@ vi.mock("@/lib/auth-guard", async (importOriginal) => {
 
 // ── firebase-admin mock ───────────────────────────────────────────────────────
 
-const mockGetDocs = vi.fn();
-
-// Build a chainable query stub that supports where/orderBy/limit/get
 function makeQueryStub(getFn: () => Promise<{ docs: unknown[] }>) {
   const stub: Record<string, unknown> = {};
   stub.where = () => makeQueryStub(getFn);
@@ -67,15 +62,15 @@ function makeQueryStub(getFn: () => Promise<{ docs: unknown[] }>) {
   return stub;
 }
 
+const mockGetDocs = vi.fn().mockResolvedValue({ docs: [] });
+
 vi.mock("@/lib/firebase-admin", () => ({
   getAdminDb: () => ({
-    collection: () => ({
-      ...makeQueryStub(mockGetDocs),
-    }),
+    collection: () => ({ ...makeQueryStub(mockGetDocs) }),
   }),
 }));
 
-// ── intelligence lib mocks (prevent deep execution) ──────────────────────────
+// ── intelligence lib mocks ────────────────────────────────────────────────────
 
 vi.mock("@/lib/intelligence/detect-insight-events", () => ({
   detectInsightEvents: vi.fn().mockResolvedValue({
@@ -114,60 +109,61 @@ function makeRequest() {
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
-describe("POST /api/intelligence/detect - P0-14 authz guard", () => {
+describe("POST /api/intelligence/detect - P0-15 rate limiting", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireClinic.mockReturnValue(undefined);
-    // Default Firestore all-clinics query returns empty set
     mockGetDocs.mockResolvedValue({ docs: [] });
   });
 
-  // 1. P0-14: non-superadmin user with no clinicId must be rejected 400 before
-  //    reaching the all-clinics branch. This is the core finding.
-  it("rejects 400 for non-superadmin user with no clinicId (never reaches all-clinics)", async () => {
+  it("returns 429 when user is over the rate limit (failClosed)", async () => {
     mockWithCronOrUser.mockResolvedValueOnce({
       ok: true,
       mode: "user",
-      user: { uid: "uid-1", email: "owner@clinic.com", clinicId: undefined, role: "owner" },
+      user: { uid: "uid-1", email: "owner@clinic.com", clinicId: "clinic-abc", role: "owner" },
     });
+    mockCheckRateLimitAsync.mockResolvedValueOnce({ limited: true, remaining: 0 });
 
     const { POST } = await import("../route");
     const res = await POST(makeRequest());
     const body = await res.json();
 
-    expect(res.status).toBe(400);
-    expect(body.error).toBe("No clinic associated");
-    // All-clinics query must not have been called
+    expect(res.status).toBe(429);
+    expect(body.error).toMatch(/too many requests/i);
+    // Must not have attempted any Firestore queries
     expect(mockGetDocs).not.toHaveBeenCalled();
   });
 
-  // 2. Non-superadmin user WITH a clinicId processes only their own clinic (not all clinics)
-  //    The route queries per-clinic subcollections - mockGetDocs will be called for those.
-  //    The critical assertion is that the all-clinics collection query (where status in [...])
-  //    only executes for cron/superadmin. We verify the response is 200 and the result
-  //    contains the user's own clinic, not a cross-tenant sweep.
-  it("processes only own clinic for non-superadmin user with a clinicId", async () => {
+  it("includes X-RateLimit-Remaining header on 429", async () => {
+    mockWithCronOrUser.mockResolvedValueOnce({
+      ok: true,
+      mode: "user",
+      user: { uid: "uid-1", email: "owner@clinic.com", clinicId: "clinic-abc", role: "owner" },
+    });
+    mockCheckRateLimitAsync.mockResolvedValueOnce({ limited: true, remaining: 0 });
+
+    const { POST } = await import("../route");
+    const res = await POST(makeRequest());
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get("X-RateLimit-Remaining")).toBe("0");
+  });
+
+  it("allows user through when under the rate limit", async () => {
     mockWithCronOrUser.mockResolvedValueOnce({
       ok: true,
       mode: "user",
       user: { uid: "uid-2", email: "owner@clinic.com", clinicId: "clinic-abc", role: "owner" },
     });
-    // Per-clinic insight_events query returns empty set
+    mockCheckRateLimitAsync.mockResolvedValueOnce({ limited: false, remaining: 4 });
     mockGetDocs.mockResolvedValue({ docs: [] });
 
     const { POST } = await import("../route");
     const res = await POST(makeRequest());
-    const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.ok).toBe(true);
-    // Result should contain only the user's own clinic, not a multi-clinic sweep
-    expect(body.results).toHaveLength(1);
-    expect(body.results[0].clinicId).toBe("clinic-abc");
   });
 
-  // 3. Cron auth reaches all-clinics processing (no regression)
-  it("reaches all-clinics processing for cron auth", async () => {
+  it("does not call checkRateLimitAsync for cron requests", async () => {
     mockWithCronOrUser.mockResolvedValueOnce({
       ok: true,
       mode: "cron",
@@ -176,43 +172,9 @@ describe("POST /api/intelligence/detect - P0-14 authz guard", () => {
 
     const { POST } = await import("../route");
     const res = await POST(makeRequest());
-    const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.ok).toBe(true);
-    expect(mockGetDocs).toHaveBeenCalledOnce();
-  });
-
-  // 4. Superadmin reaches all-clinics processing (no regression)
-  it("reaches all-clinics processing for superadmin user", async () => {
-    mockWithCronOrUser.mockResolvedValueOnce({
-      ok: true,
-      mode: "user",
-      user: { uid: "uid-super", email: "super@strydeos.com", clinicId: "any", role: "superadmin" },
-    });
-    mockGetDocs.mockResolvedValueOnce({ docs: [] });
-
-    const { POST } = await import("../route");
-    const res = await POST(makeRequest());
-    const body = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(body.ok).toBe(true);
-    expect(mockGetDocs).toHaveBeenCalledOnce();
-  });
-
-  // 5. Auth failure is correctly rejected
-  it("rejects when withCronOrUser returns not-ok", async () => {
-    mockWithCronOrUser.mockResolvedValueOnce({
-      ok: false,
-      status: 401,
-      message: "Authentication failed",
-    });
-
-    const { POST } = await import("../route");
-    const res = await POST(makeRequest());
-
-    expect(res.status).toBe(401);
-    expect(mockGetDocs).not.toHaveBeenCalled();
+    // Rate limiter must NOT have been called for cron
+    expect(mockCheckRateLimitAsync).not.toHaveBeenCalled();
   });
 });
