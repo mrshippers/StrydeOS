@@ -106,11 +106,15 @@ export async function sendUrgentAlerts(
 /**
  * Send the weekly State of the Clinic digest email.
  * Called by the /api/intelligence/digest cron route.
+ *
+ * Returns result: 'no_data' (and sent: false) when neither a metrics_weekly
+ * row nor any insight events exist for the period. A clinic with no computed
+ * data must never receive a falsely-reassuring "all within target" email.
  */
 export async function sendWeeklyDigest(
   db: Firestore,
   clinicId: string
-): Promise<{ sent: boolean; error?: string }> {
+): Promise<{ sent: boolean; result?: "no_data"; error?: string }> {
   // Check comms consent
   const clinicDoc = await db.doc(`clinics/${clinicId}`).get();
   if (!clinicDoc.exists) return { sent: false, error: "Clinic not found" };
@@ -155,6 +159,14 @@ export async function sendWeeklyDigest(
   const statsDocs = statsSnap.docs.map((d) => d.data() as Record<string, unknown>);
   const currentStats = statsDocs[0] ?? null;
   const previousStats = statsDocs[1] ?? null;
+
+  // P0-12: skip silently when the pipeline has produced no data for this clinic.
+  // "No data" = no metrics_weekly row AND no insight events for the period.
+  // Distinguishes from "real data with zero alerts" (currentStats present, events empty)
+  // which legitimately sends the "within target" reassurance.
+  if (currentStats == null && events.length === 0) {
+    return { sent: false, result: "no_data" };
+  }
 
   // Build email
   const resendKey = process.env.RESEND_API_KEY;
