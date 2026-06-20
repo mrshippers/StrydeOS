@@ -22,8 +22,6 @@ import { DURATION, EASING, useMorphValue } from "@/lib/motion";
 import { Zap, ArrowRight } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 
-const FALLBACK_RECOVERY = 65;
-
 function timeAgo(iso: string): string {
   const t = new Date(iso).getTime();
   if (!Number.isFinite(t)) return "";
@@ -76,7 +74,7 @@ function Sparkline({ counts }: { counts: number[] }) {
 }
 
 export default function EventsActionedByPulseTile() {
-  const { count, recoveredPounds, dailyCounts, breakdown, latest, loading } =
+  const { count, recoveredPounds, revenueLabel, dailyCounts, breakdown, latest, loading } =
     useEventsActionedByPulse();
 
   const morphRecovered = useMorphValue(recoveredPounds);
@@ -87,8 +85,7 @@ export default function EventsActionedByPulseTile() {
   if (loading) return null;
 
   const hasData = count > 0;
-  const rebookRecovery = breakdown.rebooks * FALLBACK_RECOVERY;
-  const retentionRecovery = breakdown.retention * FALLBACK_RECOVERY;
+  const showRevenue = revenueLabel !== "count-only";
 
   return (
     <GlassCard
@@ -120,12 +117,21 @@ export default function EventsActionedByPulseTile() {
       </header>
 
       <div className="flex flex-col gap-1">
-        <p
-          className="font-display text-[40px] leading-none tabular-nums text-navy dark:text-white"
-          style={{ opacity: valOpacity, transition: `opacity ${valDur}ms ${EASING}` }}
-        >
-          £{morphRecovered.value.toLocaleString("en-GB")}
-        </p>
+        {showRevenue ? (
+          <p
+            className="font-display text-[40px] leading-none tabular-nums text-navy dark:text-white"
+            style={{ opacity: valOpacity, transition: `opacity ${valDur}ms ${EASING}` }}
+          >
+            £{morphRecovered.value.toLocaleString("en-GB")}
+          </p>
+        ) : (
+          <p
+            className="font-display text-[40px] leading-none tabular-nums text-navy dark:text-white"
+            style={{ opacity: valOpacity, transition: `opacity ${valDur}ms ${EASING}` }}
+          >
+            {morphCount.value}
+          </p>
+        )}
         <p
           className="text-[12px] text-navy/70 dark:text-white/55 tracking-wide"
           style={{
@@ -133,7 +139,11 @@ export default function EventsActionedByPulseTile() {
             transition: `opacity ${valDur}ms ${EASING} ${DURATION.subtitleDelay}ms`,
           }}
         >
-          recovered by Pulse this week
+          {showRevenue
+            ? revenueLabel === "estimated"
+              ? "estimated recovery by Pulse this week"
+              : "recovered by Pulse this week"
+            : "actions by Pulse this week"}
         </p>
       </div>
 
@@ -159,18 +169,12 @@ export default function EventsActionedByPulseTile() {
               <span className="text-navy/80 dark:text-white/70">
                 {breakdown.rebooks} rebook nudge{breakdown.rebooks === 1 ? "" : "s"}
               </span>
-              <span className="tabular-nums text-navy/90 dark:text-white/85 font-semibold">
-                £{rebookRecovery.toLocaleString("en-GB")}
-              </span>
             </div>
           )}
           {breakdown.retention > 0 && (
             <div className="flex items-center justify-between text-[12px]">
               <span className="text-navy/80 dark:text-white/70">
                 {breakdown.retention} retention save{breakdown.retention === 1 ? "" : "s"}
-              </span>
-              <span className="tabular-nums text-navy/90 dark:text-white/85 font-semibold">
-                £{retentionRecovery.toLocaleString("en-GB")}
               </span>
             </div>
           )}

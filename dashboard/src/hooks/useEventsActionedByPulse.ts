@@ -6,9 +6,7 @@ import {
   subscribeEventsActionedByPulse,
   type PulseActionedEvent,
 } from "@/lib/queries";
-
-/** Fallback £ recovered per action when an event has no `revenueImpact` set. */
-const FALLBACK_RECOVERY_PER_EVENT = 65;
+import { sumPulseRevenue, type PulseRevenueLabel } from "@/lib/intelligence/sum-pulse-revenue";
 
 const REBOOK_TYPES = new Set([
   "PATIENT_DROPOUT_RISK",
@@ -23,13 +21,19 @@ const RETENTION_TYPES = new Set([
 export interface UseEventsActionedByPulseResult {
   /** Total count of Pulse-actioned events in the last 7 days. */
   count: number;
-  /** Recovered revenue in £ (whole pounds, rounded). */
+  /** Recovered revenue in whole pounds (0 when label is "count-only"). */
   recoveredPounds: number;
-  /** Daily counts, 7-element array oldest→newest for the sparkline. */
+  /**
+   * "measured"  - all events had a real revenueImpact
+   * "estimated" - at least one event used the clinic session price as fallback
+   * "count-only"- no real values and no clinic session price configured
+   */
+  revenueLabel: PulseRevenueLabel;
+  /** Daily counts, 7-element array oldest to newest for the sparkline. */
   dailyCounts: number[];
   /** Breakdown of actions by type group. */
   breakdown: { rebooks: number; retention: number; others: number };
-  /** Most-recent action, if any — for the "Last action: …" tail. */
+  /** Most-recent action, if any - for the "Last action: ..." tail. */
   latest: PulseActionedEvent | null;
   loading: boolean;
 }
@@ -38,6 +42,14 @@ export function useEventsActionedByPulse(): UseEventsActionedByPulseResult {
   const { user } = useAuth();
   const clinicId = user?.clinicId ?? null;
   const isDemo = user?.uid === "demo";
+
+  // Clinic-configured session price in pounds, used as fallback when an event
+  // has no revenueImpact. Null when not configured -- tile shows count only.
+  const avgSessionPounds =
+    user?.clinicProfile?.sessionPricePence != null &&
+    user.clinicProfile.sessionPricePence > 0
+      ? Math.round(user.clinicProfile.sessionPricePence / 100)
+      : null;
 
   const [events, setEvents] = useState<PulseActionedEvent[]>([]);
   const [ready, setReady] = useState(false);
@@ -68,15 +80,12 @@ export function useEventsActionedByPulse(): UseEventsActionedByPulseResult {
   return useMemo(() => {
     const count = events.length;
 
-    const recoveredPounds = Math.round(
-      events.reduce(
-        (sum, e) =>
-          sum + (e.revenueImpact > 0 ? e.revenueImpact : FALLBACK_RECOVERY_PER_EVENT),
-        0
-      )
+    const { pounds: recoveredPounds, label: revenueLabel } = sumPulseRevenue(
+      events,
+      avgSessionPounds
     );
 
-    // Daily counts: 7 buckets oldest→newest, today is last.
+    // Daily counts: 7 buckets oldest to newest, today is last.
     const dailyCounts = new Array<number>(7).fill(0);
     const todayMidnight = new Date();
     todayMidnight.setHours(0, 0, 0, 0);
@@ -102,10 +111,11 @@ export function useEventsActionedByPulse(): UseEventsActionedByPulseResult {
     return {
       count,
       recoveredPounds,
+      revenueLabel,
       dailyCounts,
       breakdown: { rebooks, retention, others },
       latest,
       loading: !ready,
     };
-  }, [events, ready]);
+  }, [events, ready, avgSessionPounds]);
 }
