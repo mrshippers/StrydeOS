@@ -49,13 +49,17 @@ interface TimelineEvent {
 const SEQ_LABEL = (s: string) =>
   s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+// daysSince() expects a date-only string (it appends "T00:00:00"); comms_log and
+// lifecycle timestamps are full ISO, so normalise everything to YYYY-MM-DD.
+const dateOnly = (s: string) => s.split("T")[0];
+
 function buildTimeline(patient: Patient, comms: CommsLogEntry[]): TimelineEvent[] {
   const events: TimelineEvent[] = [];
 
   if (patient.nextSessionDate) {
     events.push({
       id: "next-session",
-      date: patient.nextSessionDate,
+      date: dateOnly(patient.nextSessionDate),
       title: "Next session booked",
       detail: "Upcoming appointment in the diary.",
       icon: CalendarClock,
@@ -66,7 +70,7 @@ function buildTimeline(patient: Patient, comms: CommsLogEntry[]): TimelineEvent[
   if (patient.lastSessionDate) {
     events.push({
       id: "last-session",
-      date: patient.lastSessionDate,
+      date: dateOnly(patient.lastSessionDate),
       title: "Last session attended",
       detail: `Session ${patient.sessionCount} of ${patient.treatmentLength}.`,
       icon: CheckCircle,
@@ -77,7 +81,7 @@ function buildTimeline(patient: Patient, comms: CommsLogEntry[]): TimelineEvent[
   if (patient.lifecycleUpdatedAt && patient.lifecycleState) {
     events.push({
       id: "lifecycle",
-      date: patient.lifecycleUpdatedAt,
+      date: dateOnly(patient.lifecycleUpdatedAt),
       title: `Lifecycle → ${patient.lifecycleState.replace(/_/g, " ").toLowerCase()}`,
       detail: "Risk engine reclassified this patient on the last pipeline run.",
       icon: Activity,
@@ -97,7 +101,7 @@ function buildTimeline(patient: Patient, comms: CommsLogEntry[]): TimelineEvent[
 
     events.push({
       id: c.id,
-      date: c.sentAt,
+      date: dateOnly(c.sentAt),
       title: `${SEQ_LABEL(c.sequenceType)} sent`,
       detail: parts.join(" · "),
       icon: c.outcome === "responded" && c.npsScore != null
