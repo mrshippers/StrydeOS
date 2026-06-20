@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { InsightEvent } from "@/types/insight-events";
 
 // Mock the ai-sdk before importing the module under test
@@ -215,5 +215,48 @@ describe("generateCoachingNarrative", () => {
 
     expect(result).toEqual({ ownerNarrative: "", clinicianNarrative: "" });
     expect(mockedGenerateText).not.toHaveBeenCalled();
+  });
+
+  describe("real-timer path via fake timers", () => {
+    // This suite exercises the AbortController+setTimeout path directly.
+    // generateText is wired to the abortSignal so the timer abort propagates,
+    // proving that: (a) the call times out after LLM_TIMEOUT_MS, (b) it
+    // retries once, and (c) on a second hang it falls back with timedOut=true.
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("times out after LLM_TIMEOUT_MS, retries once, then returns deterministic fallback", async () => {
+      vi.useFakeTimers();
+
+      // Each call hangs until the abortSignal fires, then rejects with AbortError.
+      // This mirrors how the real AI SDK behaves when an AbortController fires.
+      mockedGenerateText.mockImplementation(({ abortSignal }: { abortSignal?: AbortSignal }) =>
+        new Promise<never>((_, reject) => {
+          if (abortSignal) {
+            abortSignal.addEventListener("abort", () => {
+              reject(new DOMException("Aborted", "AbortError"));
+            });
+          }
+        })
+      );
+
+      // Start the call without awaiting so we can advance fake timers.
+      const resultPromise = generateCoachingNarrative(makeEvent(), makeContext());
+
+      // Advance past LLM_TIMEOUT_MS for the first attempt + flush microtasks,
+      // then advance again for the retry attempt.
+      await vi.advanceTimersByTimeAsync(LLM_TIMEOUT_MS + 10);
+      await vi.advanceTimersByTimeAsync(LLM_TIMEOUT_MS + 10);
+
+      const result = await resultPromise;
+
+      // Both attempts were made before giving up.
+      expect(mockedGenerateText).toHaveBeenCalledTimes(2);
+      // Deterministic fallback path returned.
+      expect(result.ownerNarrative).toBe("");
+      expect(result.clinicianNarrative).toBe("");
+      expect(result.timedOut).toBe(true);
+    });
   });
 });

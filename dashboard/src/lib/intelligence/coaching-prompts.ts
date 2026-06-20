@@ -319,20 +319,18 @@ class LlmTimeoutError extends Error {
 }
 
 /**
- * Wrap a generateText call with an AbortController timeout.
- * Throws LlmTimeoutError if the call exceeds LLM_TIMEOUT_MS.
+ * Wrap a generateText call with an AbortController timer.
+ * After LLM_TIMEOUT_MS the controller aborts the request and
+ * LlmTimeoutError is thrown. Any AbortError seen here is unambiguously
+ * ours because no parent signal is forwarded.
  */
 async function generateWithTimeout(
   model: ReturnType<typeof gateway>,
   system: string,
-  prompt: string,
-  signal?: AbortSignal
+  prompt: string
 ): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
-  // Propagate external abort (e.g. Vercel cron limit) to this controller too.
-  const onParentAbort = () => controller.abort();
-  signal?.addEventListener("abort", onParentAbort);
   try {
     const { text } = await generateText({
       model,
@@ -344,7 +342,7 @@ async function generateWithTimeout(
     });
     return text;
   } catch (err) {
-    // AbortError from the controller always means our timer fired.
+    // AbortError here is always our timer - no parent signal is wired.
     const isAbort =
       (err instanceof Error && err.name === "AbortError") ||
       controller.signal.aborted;
@@ -352,7 +350,6 @@ async function generateWithTimeout(
     throw err;
   } finally {
     clearTimeout(timer);
-    signal?.removeEventListener("abort", onParentAbort);
   }
 }
 
