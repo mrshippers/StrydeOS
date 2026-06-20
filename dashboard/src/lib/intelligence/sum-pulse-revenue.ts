@@ -53,10 +53,15 @@ export function sumPulseRevenue(
     }
   }
 
-  if (noFallbackAvailable) {
+  // "count-only" only when there is NO real revenue basis at all (total is 0
+  // because no event had revenueImpact AND no avgSessionPounds fallback).
+  if (total === 0 && noFallbackAvailable) {
     return { pounds: 0, label: "count-only" };
   }
 
-  const label: PulseRevenueLabel = usedFallback ? "estimated" : "measured";
+  // If any event was skipped (no real value, no fallback), the figure is partial
+  // -- treat the same as having used a fallback: label as "estimated".
+  const label: PulseRevenueLabel =
+    usedFallback || noFallbackAvailable ? "estimated" : "measured";
   return { pounds: Math.round(total), label };
 }

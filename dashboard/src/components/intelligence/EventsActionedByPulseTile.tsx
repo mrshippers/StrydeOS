@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Pulse Impact (7d) — the ROI translation of cross-module Pulse activity.
+ * Pulse Impact (7d) - the ROI translation of cross-module Pulse activity.
  *
  * Owners pay for outcomes, not event counts. This tile sums what Pulse
  * actually recovered for them this week (from `revenueImpact` on each

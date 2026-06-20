@@ -21,7 +21,7 @@ type MinEvent = { revenueImpact: number };
 
 describe("sumPulseRevenue", () => {
   it("returns 0 pounds and 'measured' for an empty event list", () => {
-    const result = sumPulseRevenue([], 65);
+    const result = sumPulseRevenue([], 75);
     expect(result.pounds).toBe(0);
     expect(result.label).toBe("measured");
   });
@@ -79,7 +79,7 @@ describe("sumPulseRevenue", () => {
       { revenueImpact: 10.6 },
       { revenueImpact: 20.3 },
     ];
-    const result = sumPulseRevenue(events, 65);
+    const result = sumPulseRevenue(events, 75);
     expect(result.pounds).toBe(31);
     expect(result.label).toBe("measured");
   });
@@ -89,5 +89,36 @@ describe("sumPulseRevenue", () => {
     const result = sumPulseRevenue(events, 60);
     expect(result.pounds).toBe(60);
     expect(result.label).toBe("estimated");
+  });
+
+  it("preserves real partial sum and labels 'estimated' when some events lack revenueImpact and fallback is null", () => {
+    // P0-3 regression: prior code discarded the 100 real pounds when noFallbackAvailable was set
+    const events: MinEvent[] = [
+      { revenueImpact: 100 },
+      { revenueImpact: 0 },
+    ];
+    const result = sumPulseRevenue(events, null);
+    expect(result.pounds).toBe(100);
+    expect(result.label).toBe("estimated");
+  });
+
+  it("labels 'count-only' only when ALL events lack revenueImpact AND fallback is null", () => {
+    const events: MinEvent[] = [
+      { revenueImpact: 0 },
+      { revenueImpact: 0 },
+    ];
+    const result = sumPulseRevenue(events, null);
+    expect(result.pounds).toBe(0);
+    expect(result.label).toBe("count-only");
+  });
+
+  it("labels 'measured' when every event has real revenueImpact (no fallback used, none skipped)", () => {
+    const events: MinEvent[] = [
+      { revenueImpact: 50 },
+      { revenueImpact: 75 },
+    ];
+    const result = sumPulseRevenue(events, null);
+    expect(result.pounds).toBe(125);
+    expect(result.label).toBe("measured");
   });
 });
