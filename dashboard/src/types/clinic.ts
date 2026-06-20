@@ -53,6 +53,28 @@ export interface ClinicTargets {
   treatmentCompletionTarget: number;
   /** Available appointment slots per clinician per week (default: 40 = 8/day × 5 days). */
   weeklyCapacitySlots?: number;
+  /**
+   * Clinic's target revenue per session in pence.
+   * When unset, compute-kpis falls back to the labelled reference target
+   * (UK PPB 2026 median, 6800p / £68). The fallback is always surfaced as
+   * "reference target", never presented as the clinic's own benchmark.
+   */
+  revenuePerSessionPence?: number;
+  /**
+   * Clinic's target NPS score (0-100 scale).
+   * When unset, falls back to the labelled reference target.
+   */
+  npsTarget?: number;
+  /**
+   * Clinic's target Google review conversion rate (reviews per appointment, 0-1).
+   * When unset, falls back to the labelled reference target.
+   */
+  reviewConversionTarget?: number;
+  /**
+   * Clinic's target average star rating (1-5 scale).
+   * When unset, falls back to the labelled reference target.
+   */
+  averageStarRatingTarget?: number;
 }
 
 export interface BrandConfig {

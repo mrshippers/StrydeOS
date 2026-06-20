@@ -117,10 +117,14 @@ export interface ComputeStateDoc {
   lastRunSource: "pipeline" | "manual" | "cron";
 }
 
-/** KPI IDs that come from per-clinic targets rather than hardcoded defaults. */
+/** KPI IDs that come from per-clinic targets, mapped to their ClinicTargets key. */
 export const TARGET_KEYS: Partial<Record<KpiId, keyof import("./index").ClinicTargets>> = {
   "follow-up-rate": "followUpRate",
   "hep-compliance": "hepRate",
   utilisation: "utilisationRate",
   "dna-rate": "dnaRate",
+  "revenue-per-session": "revenuePerSessionPence",
+  nps: "npsTarget",
+  "google-review-conversion": "reviewConversionTarget",
+  "average-star-rating": "averageStarRatingTarget",
 };

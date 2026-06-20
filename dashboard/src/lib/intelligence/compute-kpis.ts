@@ -37,7 +37,33 @@ export interface ComputeKpisResult {
   dataQualityIssues: DataQualityIssue[];
 }
 
-// ─── Hardcoded RAG thresholds (not peer benchmarks — operational thresholds) ─
+// ─── Reference targets (external benchmarks — NOT the clinic's own goals) ────
+// Used ONLY when the clinic has not configured a target for a given KPI.
+// Always surfaced with the label "reference target" so they are never
+// mistaken for the clinic's own benchmark.
+
+export const REFERENCE_TARGETS = {
+  /** UK PPB 2026 median: £68/session = 6800p. Sourced externally. */
+  revenuePerSessionPence: 6800,
+  /** Conservative service-industry NPS reference point. */
+  npsTarget: 50,
+  /** Industry reference: ~5 Google reviews per 100 appointments. */
+  reviewConversionTarget: 0.05,
+  /** Star-rating reference for private healthcare. */
+  averageStarRatingTarget: 4.5,
+  /** Follow-up rate reference (sessions per initial assessment). */
+  followUpRate: 4.0,
+  /** HEP compliance reference ratio. */
+  hepRate: 0.85,
+  /** Utilisation reference ratio. */
+  utilisationRate: 0.75,
+  /** DNA rate reference ratio (lower is better). */
+  dnaRate: 0.06,
+  /** Label for display — always "reference target", never "peer/median data". */
+  _label: "reference target" as const,
+} as const;
+
+// ─── RAG thresholds (operational — not peer benchmarks) ──────────────────────
 // These mirror the RAG logic already in the clinician table (CliniciansTable.tsx)
 // and in `clinical-benchmarks.ts`. Kept co-located with the KPI IDs for clarity.
 
@@ -45,8 +71,6 @@ interface KpiConfig {
   id: KpiId;
   higherIsBetter: boolean;
   thresholds: KpiThresholds;
-  /** Where to read the target from `clinicData.targets`, or a hardcoded fallback. */
-  targetFrom: (t: Partial<ClinicTargets> | undefined) => number;
 }
 
 const KPI_CONFIG: Record<KpiId, KpiConfig> = {
@@ -54,52 +78,91 @@ const KPI_CONFIG: Record<KpiId, KpiConfig> = {
     id: "follow-up-rate",
     higherIsBetter: true,
     thresholds: { ok: 4.0, warn: 3.0 },
-    targetFrom: (t) => t?.followUpRate ?? 4.0,
   },
   "hep-compliance": {
     id: "hep-compliance",
     higherIsBetter: true,
     thresholds: { ok: 0.85, warn: 0.65 },
-    targetFrom: (t) => t?.hepRate ?? 0.85,
   },
   utilisation: {
     id: "utilisation",
     higherIsBetter: true,
     thresholds: { ok: 0.75, warn: 0.65 },
-    targetFrom: (t) => t?.utilisationRate ?? 0.75,
   },
   "dna-rate": {
     id: "dna-rate",
     higherIsBetter: false,
     thresholds: { ok: 0.06, warn: 0.10 },
-    targetFrom: (t) => t?.dnaRate ?? 0.06,
   },
   "revenue-per-session": {
     id: "revenue-per-session",
     higherIsBetter: true,
     thresholds: { ok: 6800, warn: 5500 },
-    // No configurable target today — uses UK PPB 2026 median (£68 = 6800p) as target.
-    targetFrom: () => 6800,
   },
   nps: {
     id: "nps",
     higherIsBetter: true,
     thresholds: { ok: 70, warn: 40 },
-    targetFrom: () => 50,
   },
   "google-review-conversion": {
     id: "google-review-conversion",
     higherIsBetter: true,
     thresholds: { ok: 0.05, warn: 0.02 },
-    targetFrom: () => 0.05,
   },
   "average-star-rating": {
     id: "average-star-rating",
     higherIsBetter: true,
     thresholds: { ok: 4.5, warn: 4.0 },
-    targetFrom: () => 4.5,
   },
 };
+
+/**
+ * Resolve the target value for a KPI from clinic config.
+ * Falls back to the labelled REFERENCE_TARGETS constant when the clinic has
+ * not configured the target. The fallback is never presented silently as the
+ * clinic's own benchmark — callers should surface REFERENCE_TARGETS._label
+ * alongside any fallback value.
+ *
+ * Exported for unit testing.
+ */
+export function resolveKpiTarget(
+  kpiId: KpiId,
+  targets: Partial<ClinicTargets> | undefined
+): number {
+  switch (kpiId) {
+    case "revenue-per-session":
+      return targets?.revenuePerSessionPence ?? REFERENCE_TARGETS.revenuePerSessionPence;
+    case "nps":
+      return targets?.npsTarget ?? REFERENCE_TARGETS.npsTarget;
+    case "google-review-conversion":
+      return targets?.reviewConversionTarget ?? REFERENCE_TARGETS.reviewConversionTarget;
+    case "average-star-rating":
+      return targets?.averageStarRatingTarget ?? REFERENCE_TARGETS.averageStarRatingTarget;
+    case "follow-up-rate":
+      return targets?.followUpRate ?? REFERENCE_TARGETS.followUpRate;
+    case "hep-compliance": {
+      const raw = targets?.hepRate;
+      // Normalise percent-scaled values (e.g. 85 stored as 85 not 0.85).
+      if (typeof raw === "number") {
+        return raw > 1 ? raw / 100 : raw;
+      }
+      return REFERENCE_TARGETS.hepRate;
+    }
+    case "utilisation":
+      return targets?.utilisationRate ?? REFERENCE_TARGETS.utilisationRate;
+    case "dna-rate":
+      return targets?.dnaRate ?? REFERENCE_TARGETS.dnaRate;
+  }
+}
+
+/**
+ * Evaluate the RAG status for a KPI value against its operational thresholds.
+ *
+ * Exported for unit testing.
+ */
+export function evaluateKpiStatus(kpiId: KpiId, value: number): KpiStatus {
+  return evaluateStatus(value, KPI_CONFIG[kpiId]);
+}
 
 // ─── Main Entry Point ────────────────────────────────────────────────────────
 
@@ -141,7 +204,8 @@ export async function computeKPIs(
   // Load clinic doc for targets.
   const clinicDoc = await db.doc(`clinics/${clinicId}`).get();
   const clinicData = clinicDoc.data() ?? {};
-  const targets = normaliseTargets(clinicData.targets as Partial<ClinicTargets> | undefined);
+  // resolveKpiTarget handles per-KPI normalisation (e.g. hepRate percent vs ratio).
+  const targets = (clinicData.targets ?? {}) as Partial<ClinicTargets>;
 
   // Load reviews (last 200 — scoped to what we need for NPS + review-per-session calc).
   const reviewsSnap = await db
@@ -205,7 +269,7 @@ export async function computeKPIs(
       continue;
     }
 
-    const target = config.targetFrom(targets);
+    const target = resolveKpiTarget(kpiId, targets);
     const status = evaluateStatus(value, config);
 
     const doc: KpiDoc = {
@@ -299,21 +363,6 @@ async function maybeEmitEvent(
   };
   await eventsRef.add(event);
   return true;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Coerce potentially-percent-scaled targets into 0..1 unit-consistent values. */
-function normaliseTargets(
-  raw: Partial<ClinicTargets> | undefined
-): Partial<ClinicTargets> {
-  if (!raw) return {};
-  const out: Partial<ClinicTargets> = { ...raw };
-  // `hepRate` is sometimes stored as 85 (percent) vs 0.85 (ratio) — normalise.
-  if (typeof out.hepRate === "number" && out.hepRate > 1) {
-    out.hepRate = out.hepRate / 100;
-  }
-  return out;
 }
 
 /**
