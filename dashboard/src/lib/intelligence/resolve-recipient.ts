@@ -10,6 +10,10 @@
  *
  * When a valid-format address fails the membership check the event is recorded
  * as a security drift event in audit_logs before returning invalid.
+ *
+ * When the Firestore users query itself errors (e.g. missing composite index)
+ * the function fails CLOSED (blocks send) and records the failure as a drift
+ * event so it is observable. It does NOT propagate the error to callers.
  */
 
 import type { Firestore } from "firebase-admin/firestore";
@@ -45,11 +49,13 @@ const ROLE_PREFIXES = [
  * @param email - Raw email string from Firestore clinic/clinician doc
  * @param clinicId - The clinic context for the outbound email
  * @param db - Firestore admin instance
+ * @param emailType - The type of email being sent (stored in the drift audit entry)
  */
 export async function resolveRecipient(
   email: string,
   clinicId: string,
-  db: Firestore
+  db: Firestore,
+  emailType?: string
 ): Promise<ResolveRecipientResult> {
   // 1. Format check
   if (!EMAIL_REGEX.test(email)) {
@@ -65,19 +71,33 @@ export async function resolveRecipient(
 
   // 3. Clinic membership check (multi-tenant isolation)
   // Query: users where clinicId == this clinic AND email == this address
-  const snap = await db
-    .collection("users")
-    .where("clinicId", "==", clinicId)
-    .where("email", "==", email)
-    .limit(1)
-    .get();
+  let snap: { empty: boolean; docs: Array<{ id: string }> };
+  try {
+    snap = await db
+      .collection("users")
+      .where("clinicId", "==", clinicId)
+      .where("email", "==", email)
+      .limit(1)
+      .get();
+  } catch (queryErr) {
+    // Fail CLOSED: block the send and record it as a drift/security audit event
+    // so a missing composite index or transient Firestore error is observable.
+    const reason = `Lookup failed: ${queryErr instanceof Error ? queryErr.message : String(queryErr)}`;
+    await recordDrift(db, clinicId, email, reason, emailType);
+    return {
+      valid: false,
+      reason,
+      isDrift: true,
+    };
+  }
 
   if (snap.empty) {
     // Valid-format address that is not a member of this clinic: security drift event
-    await recordDrift(db, clinicId, email);
+    const reason = `Recipient not found in clinic ${clinicId}`;
+    await recordDrift(db, clinicId, email, reason, emailType);
     return {
       valid: false,
-      reason: `Recipient not found in clinic ${clinicId}`,
+      reason,
       isDrift: true,
     };
   }
@@ -88,9 +108,15 @@ export async function resolveRecipient(
 
 // ─── Internal ────────────────────────────────────────────────────────────────
 
-async function recordDrift(db: Firestore, clinicId: string, recipient: string): Promise<void> {
+async function recordDrift(
+  db: Firestore,
+  clinicId: string,
+  recipient: string,
+  reason: string,
+  emailType?: string
+): Promise<void> {
   try {
-    const entry = {
+    const entry: Record<string, unknown> = {
       userId: "system:intelligence",
       userEmail: "intelligence@strydeos.com",
       action: "write",
@@ -101,6 +127,8 @@ async function recordDrift(db: Firestore, clinicId: string, recipient: string): 
         security: true,
         recipient,
         clinicId,
+        reason,
+        ...(emailType !== undefined ? { emailType } : {}),
       },
     };
 
@@ -110,7 +138,7 @@ async function recordDrift(db: Firestore, clinicId: string, recipient: string): 
       .collection("audit_logs")
       .add(entry);
   } catch (err) {
-    // Audit failures must never suppress the security signal — log and continue
+    // Audit failures must never suppress the security signal -- log and continue
     console.error("[resolve-recipient] drift audit write failed", err);
   }
 }

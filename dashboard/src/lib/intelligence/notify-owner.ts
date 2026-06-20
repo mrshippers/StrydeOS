@@ -63,28 +63,16 @@ export async function sendUrgentAlerts(
 
   const clinicName = (clinicData.name as string) ?? "Your Clinic";
 
-  // P0-13: validate and clinic-bind the owner recipient before sending
-  const recipientResult = await resolveRecipient(ownerEmail, clinicId, db);
+  // P0-13: validate and clinic-bind the owner recipient before sending.
+  // emailType is passed so recordDrift inside resolveRecipient writes a single
+  // fully-annotated audit entry -- callers must NOT double-write on the drift branch.
+  const recipientResult = await resolveRecipient(ownerEmail, clinicId, db, "urgent_alert");
   if (!recipientResult.valid) {
     if (recipientResult.isDrift) {
       console.error(`[notify-owner] SECURITY: owner email drift detected for clinic ${clinicId}: ${ownerEmail}`);
     } else {
       console.warn(`[notify-owner] Skipping urgent alert for clinic ${clinicId}: ${recipientResult.reason}`);
     }
-    await writeAuditLog(db, clinicId, {
-      userId: "system:intelligence",
-      userEmail: "intelligence@strydeos.com",
-      action: "write",
-      resource: "email_send",
-      metadata: {
-        event: recipientResult.isDrift ? "recipient_drift" : "recipient_invalid",
-        security: recipientResult.isDrift === true,
-        recipient: ownerEmail,
-        clinicId,
-        reason: recipientResult.reason,
-        emailType: "urgent_alert",
-      },
-    });
     return { sent: 0, errors: [`Recipient validation failed: ${recipientResult.reason}`] };
   }
 
@@ -175,28 +163,16 @@ export async function sendWeeklyDigest(
 
   const clinicName = (clinicData.name as string) ?? "Your Clinic";
 
-  // P0-13: validate and clinic-bind the owner recipient before sending
-  const recipientResult = await resolveRecipient(ownerEmail, clinicId, db);
+  // P0-13: validate and clinic-bind the owner recipient before sending.
+  // emailType is passed so recordDrift inside resolveRecipient writes a single
+  // fully-annotated audit entry -- callers must NOT double-write on the drift branch.
+  const recipientResult = await resolveRecipient(ownerEmail, clinicId, db, "weekly_digest");
   if (!recipientResult.valid) {
     if (recipientResult.isDrift) {
       console.error(`[notify-owner] SECURITY: owner email drift for clinic ${clinicId}: ${ownerEmail}`);
     } else {
       console.warn(`[notify-owner] Weekly digest skipped for clinic ${clinicId}: ${recipientResult.reason}`);
     }
-    await writeAuditLog(db, clinicId, {
-      userId: "system:intelligence",
-      userEmail: "intelligence@strydeos.com",
-      action: "write",
-      resource: "email_send",
-      metadata: {
-        event: recipientResult.isDrift ? "recipient_drift" : "recipient_invalid",
-        security: recipientResult.isDrift === true,
-        recipient: ownerEmail,
-        clinicId,
-        reason: recipientResult.reason,
-        emailType: "weekly_digest",
-      },
-    });
     return { sent: false, error: `Recipient validation failed: ${recipientResult.reason}` };
   }
 

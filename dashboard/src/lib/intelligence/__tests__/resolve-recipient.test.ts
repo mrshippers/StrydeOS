@@ -14,12 +14,18 @@ import { resolveRecipient } from "../resolve-recipient";
 /**
  * Build a mock Firestore db that returns user docs matching the supplied
  * email/clinicId pair. Pass empty docs array to simulate "not found".
+ * Pass queryError to make the users query throw (simulates missing index).
  */
 function makeMockDb(opts: {
   userDocs?: Array<{ uid: string; email: string; clinicId: string }>;
   auditAddFn?: ReturnType<typeof vi.fn>;
+  queryError?: Error;
 } = {}) {
-  const { userDocs = [], auditAddFn = vi.fn().mockResolvedValue({ id: "audit-1" }) } = opts;
+  const {
+    userDocs = [],
+    auditAddFn = vi.fn().mockResolvedValue({ id: "audit-1" }),
+    queryError,
+  } = opts;
 
   // Convert user docs to the shape Firestore returns
   const queryDocs = userDocs.map((u) => ({
@@ -31,7 +37,9 @@ function makeMockDb(opts: {
 
   // Nested chain: db.collection('users').where('clinicId', '==', c).where('email', '==', e).limit(1).get()
   // and: db.collection('clinics').doc(clinicId).collection('audit_logs').add(entry)
-  const limitGetFn = vi.fn().mockResolvedValue({ docs: queryDocs, empty: queryDocs.length === 0 });
+  const limitGetFn = queryError
+    ? vi.fn().mockRejectedValue(queryError)
+    : vi.fn().mockResolvedValue({ docs: queryDocs, empty: queryDocs.length === 0 });
   const limitFn = vi.fn(() => ({ get: limitGetFn }));
   const where2Fn = vi.fn(() => ({ limit: limitFn }));
   const where1Fn = vi.fn(() => ({ where: where2Fn }));
@@ -39,7 +47,6 @@ function makeMockDb(opts: {
   // clinic doc chain for audit_logs
   const auditCollFn = vi.fn(() => ({ add: auditAddMock }));
   const clinicDocFn = vi.fn(() => ({ collection: auditCollFn }));
-  const clinicsCollFn = vi.fn(() => ({ doc: clinicDocFn }));
 
   const collectionFn = vi.fn((name: string) => {
     if (name === "users") return { where: where1Fn };
@@ -203,5 +210,84 @@ describe("resolveRecipient — multi-tenant isolation", () => {
     if (!resultB.valid) {
       expect(resultB.isDrift).toBe(true);
     }
+  });
+});
+
+describe("resolveRecipient — query error (fail-closed)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns valid:false + isDrift:true when the Firestore query throws", async () => {
+    const fsError = new Error("9 FAILED_PRECONDITION: The query requires a composite index");
+    const auditAddFn = vi.fn().mockResolvedValue({ id: "audit-err-1" });
+    const { db } = makeMockDb({ queryError: fsError, auditAddFn });
+
+    const result = await resolveRecipient("physio@spires.com", "clinic-1", db);
+
+    expect(result.valid).toBe(false);
+    const invalid = result as { valid: false; reason: string; isDrift?: boolean };
+    expect(invalid.isDrift).toBe(true);
+    expect(invalid.reason).toMatch(/Lookup failed/i);
+  });
+
+  it("records exactly ONE drift audit entry when the query throws", async () => {
+    const fsError = new Error("9 FAILED_PRECONDITION: The query requires a composite index");
+    const auditAddFn = vi.fn().mockResolvedValue({ id: "audit-err-1" });
+    const { db } = makeMockDb({ queryError: fsError, auditAddFn });
+
+    await resolveRecipient("physio@spires.com", "clinic-1", db);
+
+    expect(auditAddFn).toHaveBeenCalledTimes(1);
+    const written = auditAddFn.mock.calls[0][0];
+    expect(written.metadata?.event).toBe("recipient_drift");
+    expect(written.metadata?.security).toBe(true);
+    expect(written.metadata?.clinicId).toBe("clinic-1");
+    expect(written.metadata?.reason).toMatch(/FAILED_PRECONDITION|Lookup failed/i);
+  });
+
+  it("includes emailType in the drift audit entry when provided on query error", async () => {
+    const fsError = new Error("9 FAILED_PRECONDITION: missing index");
+    const auditAddFn = vi.fn().mockResolvedValue({ id: "audit-err-2" });
+    const { db } = makeMockDb({ queryError: fsError, auditAddFn });
+
+    await resolveRecipient("physio@spires.com", "clinic-1", db, "weekly_digest");
+
+    expect(auditAddFn).toHaveBeenCalledTimes(1);
+    const written = auditAddFn.mock.calls[0][0];
+    expect(written.metadata?.emailType).toBe("weekly_digest");
+  });
+
+  it("includes emailType in the drift audit entry on a not-found drift", async () => {
+    const auditAddFn = vi.fn().mockResolvedValue({ id: "audit-drift-2" });
+    const { db } = makeMockDb({ userDocs: [], auditAddFn });
+
+    await resolveRecipient("ghost@clinic.com", "clinic-1", db, "clinician_digest");
+
+    expect(auditAddFn).toHaveBeenCalledTimes(1);
+    const written = auditAddFn.mock.calls[0][0];
+    expect(written.metadata?.emailType).toBe("clinician_digest");
+  });
+});
+
+describe("resolveRecipient — single audit entry per drift (dedup)", () => {
+  it("writes exactly ONE audit entry when email is not found in clinic", async () => {
+    const auditAddFn = vi.fn().mockResolvedValue({ id: "audit-1" });
+    const { db } = makeMockDb({ userDocs: [], auditAddFn });
+
+    await resolveRecipient("ghost@clinic.com", "clinic-1", db, "urgent_alert");
+
+    // resolveRecipient writes the single drift entry; callers must not duplicate it
+    expect(auditAddFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("writes exactly ONE audit entry when the query throws", async () => {
+    const fsError = new Error("9 FAILED_PRECONDITION: needs index");
+    const auditAddFn = vi.fn().mockResolvedValue({ id: "audit-2" });
+    const { db } = makeMockDb({ queryError: fsError, auditAddFn });
+
+    await resolveRecipient("physio@spires.com", "clinic-1", db, "urgent_alert");
+
+    expect(auditAddFn).toHaveBeenCalledTimes(1);
   });
 });

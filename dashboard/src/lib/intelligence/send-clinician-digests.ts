@@ -95,29 +95,16 @@ export async function sendClinicianDigests(
       continue;
     }
 
-    // P0-13: validate and clinic-bind the clinician recipient before sending
-    const recipientResult = await resolveRecipient(email, clinicId, db);
+    // P0-13: validate and clinic-bind the clinician recipient before sending.
+    // emailType is passed so recordDrift inside resolveRecipient writes a single
+    // fully-annotated audit entry -- callers must NOT double-write on the drift branch.
+    const recipientResult = await resolveRecipient(email, clinicId, db, "clinician_digest");
     if (!recipientResult.valid) {
       if (recipientResult.isDrift) {
         console.error(`[sendClinicianDigests] SECURITY: clinician email drift for clinic ${clinicId}, clinician ${clinicianId}: ${email}`);
       } else {
         console.warn(`[sendClinicianDigests] Skipping digest for clinician ${clinicianId}: ${recipientResult.reason}`);
       }
-      await writeAuditLog(db, clinicId, {
-        userId: "system:intelligence",
-        userEmail: "intelligence@strydeos.com",
-        action: "write",
-        resource: "email_send",
-        metadata: {
-          event: recipientResult.isDrift ? "recipient_drift" : "recipient_invalid",
-          security: recipientResult.isDrift === true,
-          recipient: email,
-          clinicId,
-          clinicianId,
-          reason: recipientResult.reason,
-          emailType: "clinician_digest",
-        },
-      });
       results.push({ clinicianId, clinicianName, sent: false, error: `recipient_validation_failed: ${recipientResult.reason}` });
       continue;
     }
