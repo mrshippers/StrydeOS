@@ -200,6 +200,90 @@ describe("generateCoachingNarrative", () => {
     expect(mockedGenerateText).toHaveBeenCalledTimes(1);
   });
 
+  // ── Real detector metadata shape tests (Finding 1 regression guard) ────────
+  //
+  // These tests use the exact metadata shapes that detect-insight-events.ts
+  // emits, verifying that enrichment is NOT skipped and the interpolated
+  // prompt contains the real values. Prior to the fix the detector emitted
+  // `dropPercent` (not `dropPct`) and `currentUtilisation`/`threshold`
+  // (not `utilisation`/`weeksBelow`), causing detectMissingPlaceholders to
+  // always flag them missing and silently skip LLM enrichment for both types.
+
+  it("CLINICIAN_FOLLOWUP_DROP: does NOT skip LLM when metadata uses real detector keys", async () => {
+    mockedGenerateText.mockResolvedValue({
+      text: "OWNER: Drop detected.\nCLINICIAN: Some patients haven't rebooked.",
+    } as never);
+
+    // Exact shape emitted by detect-insight-events.ts after the fix
+    const event = makeEvent({
+      type: "CLINICIAN_FOLLOWUP_DROP",
+      metadata: { currentRate: 0.55, previousRate: 0.70, dropPct: 21 },
+    });
+
+    const result = await generateCoachingNarrative(event, makeContext());
+
+    // LLM must have been called (enrichment NOT skipped)
+    expect(mockedGenerateText).toHaveBeenCalledOnce();
+    expect(result.ownerNarrative).toBe("Drop detected.");
+
+    // Prompt must contain the interpolated real values
+    const prompt = (mockedGenerateText.mock.calls[0][0] as Record<string, unknown>).prompt as string;
+    expect(prompt).toContain("0.55");
+    expect(prompt).toContain("0.7");
+    expect(prompt).toContain("21");
+  });
+
+  it("CLINICIAN_FOLLOWUP_DROP: skips LLM when old mismatched key (dropPercent) is used instead of dropPct", async () => {
+    // Demonstrates the original bug: detector wrote dropPercent, not dropPct.
+    // detectMissingPlaceholders saw {dropPct} missing and returned empty narratives.
+    const event = makeEvent({
+      type: "CLINICIAN_FOLLOWUP_DROP",
+      metadata: { currentRate: 0.55, previousRate: 0.70, dropPercent: 21 },
+    });
+
+    const result = await generateCoachingNarrative(event, makeContext());
+
+    // Enrichment IS skipped when the old wrong key is present
+    expect(mockedGenerateText).not.toHaveBeenCalled();
+    expect(result).toEqual({ ownerNarrative: "", clinicianNarrative: "" });
+  });
+
+  it("UTILISATION_BELOW_TARGET: does NOT skip LLM when metadata uses real detector keys", async () => {
+    mockedGenerateText.mockResolvedValue({
+      text: "OWNER: Utilisation low.\nCLINICIAN: Open slots available.",
+    } as never);
+
+    // Exact shape emitted by detect-insight-events.ts after the fix:
+    // utilisation = Math.round(curUtil * 100), weeksBelow = 2
+    const event = makeEvent({
+      type: "UTILISATION_BELOW_TARGET",
+      metadata: { utilisation: 62, weeksBelow: 2 },
+    });
+
+    const result = await generateCoachingNarrative(event, makeContext());
+
+    expect(mockedGenerateText).toHaveBeenCalledOnce();
+    expect(result.ownerNarrative).toBe("Utilisation low.");
+
+    const prompt = (mockedGenerateText.mock.calls[0][0] as Record<string, unknown>).prompt as string;
+    expect(prompt).toContain("62");
+    expect(prompt).toContain("2");
+  });
+
+  it("UTILISATION_BELOW_TARGET: skips LLM when old mismatched keys (currentUtilisation/threshold) are used", async () => {
+    // Demonstrates the original bug: detector wrote currentUtilisation and threshold.
+    // utilisation and weeksBelow were both missing -> enrichment always skipped.
+    const event = makeEvent({
+      type: "UTILISATION_BELOW_TARGET",
+      metadata: { currentUtilisation: 0.62, threshold: 0.7 },
+    });
+
+    const result = await generateCoachingNarrative(event, makeContext());
+
+    expect(mockedGenerateText).not.toHaveBeenCalled();
+    expect(result).toEqual({ ownerNarrative: "", clinicianNarrative: "" });
+  });
+
   it("skips LLM call when revenueImpact is undefined for REVENUE_LEAK_DETECTED", async () => {
     // Finding 1: revenueImpact ?? 0 bypass fix.
     // A REVENUE_LEAK_DETECTED event with no revenueImpact must NOT call the

@@ -284,10 +284,12 @@ export async function runPipeline(
       durationMs: Date.now() - kpiStart,
     });
     // Never throw — capture to computeState so operators see the failure.
+    // NOTE: completedAt is intentionally omitted here so a failed KPI compute
+    // does NOT advance lastFullRecomputeAt. The freshness gate must not treat
+    // a failed pipeline run as a fresh one.
     await writeComputeState(db, clinicId, {
       status: "failed",
       lastError: message,
-      completedAt: new Date().toISOString(),
       durationMs: Date.now() - kpiStart,
       source: "pipeline",
     });

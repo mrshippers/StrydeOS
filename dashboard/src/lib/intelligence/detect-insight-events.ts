@@ -186,7 +186,7 @@ export async function detectInsightEvents(
               createdAt: new Date().toISOString(),
               sampleSize: minAppts,
               timeframe: "Last 7 days",
-              metadata: { currentRate: curRate, previousRate: prevRate, dropPercent: Math.round(drop * 100) },
+              metadata: { currentRate: curRate, previousRate: prevRate, dropPct: Math.round(drop * 100) },
             });
           }
         }
@@ -255,7 +255,7 @@ export async function detectInsightEvents(
           createdAt: new Date().toISOString(),
           sampleSize: currentAppts,
           timeframe: "Last 2 weeks",
-          metadata: { currentUtilisation: curUtil, threshold: config.utilisationFloor },
+          metadata: { utilisation: Math.round(curUtil * 100), weeksBelow: 2 },
         });
       }
     }

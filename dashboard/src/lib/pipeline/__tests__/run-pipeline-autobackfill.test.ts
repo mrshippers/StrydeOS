@@ -215,3 +215,50 @@ describe("runPipeline auto-backfill detection", () => {
     expect(INCREMENTAL_WEEKS).toBeLessThan(BACKFILL_WEEKS);
   });
 });
+
+// ── Finding 2 regression guard: failed KPI compute must NOT advance lastFullRecomputeAt ──
+
+describe("runPipeline compute-kpis failure path", () => {
+  it("F2: does NOT include completedAt in writeComputeState when compute-kpis throws", async () => {
+    // compute-kpis throws -> the failure catch block must call writeComputeState
+    // WITHOUT completedAt so lastFullRecomputeAt is not advanced.
+    // A successful run later writes completedAt via the normal final path.
+    mockComputeKPIs.mockRejectedValue(new Error("KPI compute exploded"));
+
+    const { runPipeline } = await import("../run-pipeline");
+    await runPipeline(makeMockDb() as never, "clinic-spires");
+
+    // Find the call made from inside the catch block (status: "failed")
+    const failedCall = mockWriteComputeState.mock.calls.find(
+      ([, , update]: [unknown, unknown, Record<string, unknown>]) =>
+        (update as Record<string, unknown>).status === "failed"
+    );
+
+    expect(failedCall).toBeDefined();
+    const failedUpdate = failedCall![2] as Record<string, unknown>;
+    // completedAt must NOT be present - presence would advance lastFullRecomputeAt
+    expect(failedUpdate).not.toHaveProperty("completedAt");
+    // lastError must be present so the operator can see what failed
+    expect(failedUpdate.lastError).toContain("KPI compute exploded");
+  });
+
+  it("F2: includes completedAt in writeComputeState only on successful run", async () => {
+    // Successful run must still write completedAt via the final writeComputeState call
+    mockComputeKPIs.mockResolvedValue({ written: 1, lastComputedKpis: ["followUpRate"], dataQualityIssues: [] });
+
+    const { runPipeline } = await import("../run-pipeline");
+    await runPipeline(makeMockDb() as never, "clinic-spires");
+
+    // The final writeComputeState call (status: "ok" or "degraded") must carry completedAt
+    const okCall = mockWriteComputeState.mock.calls.find(
+      ([, , update]: [unknown, unknown, Record<string, unknown>]) =>
+        (update as Record<string, unknown>).status === "ok" ||
+        (update as Record<string, unknown>).status === "degraded"
+    );
+
+    expect(okCall).toBeDefined();
+    const okUpdate = okCall![2] as Record<string, unknown>;
+    expect(okUpdate).toHaveProperty("completedAt");
+    expect(typeof okUpdate.completedAt).toBe("string");
+  });
+});

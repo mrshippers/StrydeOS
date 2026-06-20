@@ -211,7 +211,7 @@ function OutcomeScoreEntry({
                     step={0.1}
                     value={scores[m.key] ?? ""}
                     onChange={(e) => setScores((s) => ({ ...s, [m.key]: e.target.value }))}
-                    placeholder="—"
+                    placeholder="-"
                     className="w-20 px-2 py-1.5 rounded-lg border border-border bg-white text-sm text-navy focus:outline-none focus:ring-2 focus:ring-blue/30 text-center"
                   />
                   <span className="text-[11px] text-muted">/ {m.max}</span>

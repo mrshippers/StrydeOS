@@ -75,7 +75,7 @@ function buildBody(data: AvaDigestData): string {
     });
     const duration = c.durationSeconds > 0
       ? `${Math.floor(c.durationSeconds / 60)}m ${c.durationSeconds % 60}s`
-      : "—";
+      : "-";
     const maskedPhone = c.callerPhone.length >= 4
       ? `••• ${c.callerPhone.slice(-4)}`
       : c.callerPhone;
