@@ -574,7 +574,7 @@ html.dark .text-navy {
   color: #FFFFFF !important;
 }
 
-html.dark [class*="text-navy\\/"] {
+html.dark [class*="text-navy/"] {
   color: rgba(255, 255, 255, 0.60) !important;
 }
 
