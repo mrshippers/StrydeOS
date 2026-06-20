@@ -46,6 +46,17 @@ async function handler(request: NextRequest) {
       return NextResponse.json(result);
     }
 
+    // P0-14: explicit guard - a non-superadmin, non-cron user must never reach
+    // the all-clinics branch. Mirror the explicit guard in pipeline/run/route.ts
+    // so isolation does not rest on an implicit invariant.
+    if (!isCron && authenticatedUser && authenticatedUser.role !== "superadmin") {
+      if (!authenticatedUser.clinicId) {
+        return NextResponse.json({ error: "No clinic associated" }, { status: 400 });
+      }
+      const result = await runPipeline(db, authenticatedUser.clinicId, { backfill: true });
+      return NextResponse.json(result);
+    }
+
     const clinicsSnap = await db.collection("clinics").get();
     const results = [];
     for (const clinicDoc of clinicsSnap.docs) {

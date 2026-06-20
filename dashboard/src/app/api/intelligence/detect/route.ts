@@ -131,6 +131,22 @@ async function handler(request: NextRequest) {
       // Specific clinic (superadmin or cron with target)
       await processClinic(targetClinicId);
     } else {
+      // P0-14: explicit guard - a non-superadmin, non-cron user must never reach
+      // the all-clinics branch. The implicit invariant (verifyApiRequest always
+      // resolves a clinicId for non-superadmin) is not sufficient - make it
+      // explicit so isolation does not rest on an assumption.
+      if (!isSuperadmin && userId !== "cron") {
+        if (!userClinicId) {
+          return NextResponse.json({ error: "No clinic associated" }, { status: 400 });
+        }
+        // Route to the user's own clinic only
+        await processClinic(userClinicId);
+        return NextResponse.json({
+          ok: true,
+          processedAt: new Date().toISOString(),
+          results,
+        });
+      }
       // All clinics (cron or superadmin without target)
       const clinicsSnap = await db
         .collection("clinics")
