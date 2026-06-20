@@ -16,6 +16,8 @@ export interface WeeklyStats {
   initialAssessments: number;
   followUps: number;
   npsScore?: number | null;
+  /** Average star rating from non-nps_sms reviews (1-5 scale). Separate from npsScore. */
+  avgStarRating?: number | null;
   reviewCount?: number;
   avgRating?: number | null;
   reviewVelocity?: number;

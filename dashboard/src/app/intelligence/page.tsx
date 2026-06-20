@@ -24,6 +24,7 @@ import { useClinicians } from "@/hooks/useClinicians";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
 import { useIntelligenceData } from "@/hooks/useIntelligenceData";
 import { useKpis } from "@/hooks/useKpis";
+import { getDemoNps } from "@/hooks/useDemoIntelligence";
 import { usePatients } from "@/hooks/usePatients";
 import { useValueLedger } from "@/hooks/useValueLedger";
 import { recordOutcomeScores } from "@/lib/queries";
@@ -746,8 +747,25 @@ export default function IntelligencePage() {
   // NPS and average star rating are read from the canonical kpis/* projection.
   // This is the single source of truth (P0-10, P0-11).
   const { kpis: projectedKpis } = useKpis();
-  const npsKpi = projectedKpis["nps"] ?? null;
+  const npsKpiReal = projectedKpis["nps"] ?? null;
   const starKpi = projectedKpis["average-star-rating"] ?? null;
+  // For demo users, useKpis() returns {} (no Firestore subscription for demo uid).
+  // Restore illustrative NPS from getDemoNps() — demo-only, real clinics see null (empty state).
+  const demoNps = usedDemo ? getDemoNps() : null;
+  const npsKpi = npsKpiReal ?? (demoNps
+    ? {
+        value: demoNps.score,
+        status: "ok" as const,
+        trend: demoNps.trend.map((t) => t.score),
+        kpiId: "nps" as const,
+        target: 50,
+        threshold: { ok: 70, warn: 40 },
+        higherIsBetter: true,
+        computedAt: new Date().toISOString(),
+        sourceDocId: "demo",
+        window: { type: "weekly" as const, weekStart: "2026-02-17" },
+      }
+    : null);
   // Derive NPS display values from the projected KPI doc.
   // The projection stores the computed score; promoter/passive/detractor breakdowns
   // are not stored in kpis/* (those are detail-level) - show them from reviews via
@@ -1047,7 +1065,11 @@ export default function IntelligencePage() {
             const effectiveYourValue = b.metric === "NPS Score" && npsKpi
               ? npsScore
               : b.yourValue;
-            const hasData = effectiveYourValue > 0;
+            // hasData: NPS can be negative (e.g. -10 is a real score, not "no data").
+            // Show a real NPS value even if negative; only hide when truly absent.
+            const hasData = b.metric === "NPS Score"
+              ? npsKpi !== null
+              : effectiveYourValue > 0;
             const formatVal = (v: number) =>
               b.unit === "percent" ? `${Math.round(v * 100)}%` :
               b.unit === "pence" ? `£${(v / 100).toFixed(0)}` :

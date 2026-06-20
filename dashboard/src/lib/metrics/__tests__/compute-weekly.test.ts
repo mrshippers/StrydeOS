@@ -232,11 +232,10 @@ describe("aggregateWeek", () => {
     expect(result.revenuePerSessionPence).toBe(0);
   });
 
-  it("should calculate NPS score correctly from mixed platforms", () => {
-    // Given: 2 nps_sms (9, 3) + 2 google (5, 2) = 4 total
-    // nps_sms: 9=promoter, 3=detractor
-    // google: 5=promoter, 2=detractor
-    // promoters=2, detractors=2, NPS = (2-2)/4 * 100 = 0
+  it("should calculate NPS score from nps_sms only, ignoring star reviews (P0-11)", () => {
+    // Given: 1 nps_sms promoter (9) + 1 nps_sms detractor (3) + 2 google star reviews
+    // nps_sms only: promoters=1, detractors=1, total=2 -> NPS=(1-1)/2*100=0
+    // Star reviews (5 and 2) must NOT affect npsScore
     const appointments = [mockAppointment()];
     const patients = [mockPatient()];
     const reviews = [
@@ -250,8 +249,70 @@ describe("aggregateWeek", () => {
     // When aggregating
     const result = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, reviews);
 
-    // Then NPS should be 0
+    // Then NPS should reflect nps_sms only (0), not star reviews
     expect(result.npsScore).toBe(0);
+  });
+
+  it("npsScore is null when only star reviews exist, not null when nps_sms present (P0-11)", () => {
+    // Given: only google star reviews (no nps_sms)
+    const appointments = [mockAppointment()];
+    const patients = [mockPatient()];
+    const starOnlyReviews = [
+      mockReview({ rating: 5, platform: "google", date: "2026-03-16" }),
+      mockReview({ rating: 4, platform: "google", date: "2026-03-17" }),
+    ];
+    const targets = { followUpRate: 4.0, hepRate: 0.95 };
+
+    // When aggregating with star-only reviews
+    const starResult = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, starOnlyReviews);
+
+    // Then npsScore must be null (no nps_sms data), not a derived value from stars
+    expect(starResult.npsScore).toBeNull();
+
+    // But avgStarRating should reflect the star reviews
+    expect(starResult.avgStarRating).toBeCloseTo(4.5, 1);
+  });
+
+  it("npsScore promoter-only = 100, detractor-only = -100 from nps_sms (P0-11)", () => {
+    const appointments = [mockAppointment()];
+    const patients = [mockPatient()];
+    const targets = { followUpRate: 4.0, hepRate: 0.95 };
+
+    // All promoters (9-10)
+    const promoterReviews = [
+      mockReview({ rating: 10, platform: "nps_sms", date: "2026-03-16" }),
+      mockReview({ rating: 9, platform: "nps_sms", date: "2026-03-17" }),
+    ];
+    const promoterResult = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, promoterReviews);
+    expect(promoterResult.npsScore).toBe(100);
+
+    // All detractors (0-6)
+    const detractorReviews = [
+      mockReview({ rating: 6, platform: "nps_sms", date: "2026-03-16" }),
+      mockReview({ rating: 0, platform: "nps_sms", date: "2026-03-17" }),
+    ];
+    const detractorResult = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, detractorReviews);
+    expect(detractorResult.npsScore).toBe(-100);
+  });
+
+  it("avgStarRating reflects non-nps_sms reviews; npsScore reflects nps_sms only (P0-11)", () => {
+    // Given: 2 nps_sms (10, 10 = NPS 100) + 2 google (3, 3 = avg 3.0)
+    // npsScore must be 100 (nps_sms only)
+    // avgStarRating must be 3.0 (star reviews only)
+    const appointments = [mockAppointment()];
+    const patients = [mockPatient()];
+    const reviews = [
+      mockReview({ rating: 10, platform: "nps_sms", date: "2026-03-16" }),
+      mockReview({ rating: 10, platform: "nps_sms", date: "2026-03-17" }),
+      mockReview({ rating: 3, platform: "google", date: "2026-03-18" }),
+      mockReview({ rating: 3, platform: "google", date: "2026-03-19" }),
+    ];
+    const targets = { followUpRate: 4.0, hepRate: 0.95 };
+
+    const result = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, reviews);
+
+    expect(result.npsScore).toBe(100);
+    expect(result.avgStarRating).toBeCloseTo(3.0, 1);
   });
 
   it("should calculate utilisationRate as booked slots / estimated capacity", () => {

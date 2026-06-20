@@ -231,27 +231,32 @@ export function aggregateWeek(
       ? weekReviews.reduce((s, r) => s + r.rating, 0) / reviewCount
       : undefined;
 
-  // NPS score: separate nps_sms (0–10 scale) from platform reviews (1–5 stars)
-  // nps_sms: 9-10 promoter, 7-8 passive, 0-6 detractor
-  // Platform: 5-star promoter, 4-star passive, 1-3 star detractor
-  // Formula: (promoters - detractors) / total * 100
-  let npsScore: number | undefined;
-  if (reviewCount > 0) {
+  // NPS score: ONLY from true 0-10 nps_sms responses (P0-11).
+  // Standard NPS: promoters=9-10, passives=7-8, detractors=0-6.
+  // Formula: (promoters - detractors) / total_nps_sms * 100
+  // Returns null when no nps_sms reviews exist (absence-of-data, not zero).
+  const npsSmsReviews = weekReviews.filter((r) => r.platform === "nps_sms");
+  let npsScore: number | null = null;
+  if (npsSmsReviews.length > 0) {
     let promoters = 0;
     let detractors = 0;
-    for (const r of weekReviews) {
-      if (r.platform === "nps_sms") {
-        if (r.rating >= 9) promoters++;
-        else if (r.rating <= 6) detractors++;
-      } else {
-        if (r.rating >= 5) promoters++;
-        else if (r.rating <= 3) detractors++;
-      }
+    for (const r of npsSmsReviews) {
+      if (r.rating >= 9) promoters++;
+      else if (r.rating <= 6) detractors++;
+      // 7-8 = passives: neither promoter nor detractor
     }
     npsScore = Math.round(
-      ((promoters - detractors) / reviewCount) * 100
+      ((promoters - detractors) / npsSmsReviews.length) * 100
     );
   }
+
+  // Average star rating: ONLY from non-nps_sms reviews (1-5 scale, P0-11).
+  // Kept separate from npsScore — different scale, different metric.
+  const starReviews = weekReviews.filter((r) => r.platform !== "nps_sms");
+  const avgStarRating: number | null =
+    starReviews.length > 0
+      ? Math.round((starReviews.reduce((s, r) => s + r.rating, 0) / starReviews.length) * 10) / 10
+      : null;
 
   // Utilisation: booked slots (completed + DNA) ÷ available capacity
   // Uses clinic-configured weeklyCapacitySlots (default 40 = 8/day × 5 days)
@@ -290,7 +295,8 @@ export function aggregateWeek(
     appointmentsTotal: total,
     initialAssessments,
     followUps,
-    npsScore: npsScore ?? null,
+    npsScore,
+    avgStarRating,
     reviewCount,
     avgRating: avgRating ?? null,
     reviewVelocity: reviewCount - priorWeekReviewCount,
