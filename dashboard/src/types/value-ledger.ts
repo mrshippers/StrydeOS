@@ -106,9 +106,10 @@ export interface ValueSummary {
   intelligence: ModuleValueSummary;
 
   // ROI calculation (vs subscription cost)
-  subscriptionCostPence: number;    // Monthly cost in pence (e.g. 39900 = £399 Clinic Full Stack)
-  roiMultiple: number;              // totalValuePence / subscriptionCostPence
-  netValuePence: number;            // totalValuePence - subscriptionCostPence
+  // null when the clinic's billing record carries no resolvable price - suppress display instead of fabricating.
+  subscriptionCostPence: number | null;
+  roiMultiple: number | null;       // totalValuePence / subscriptionCostPence; null when price unresolvable
+  netValuePence: number | null;     // totalValuePence - subscriptionCostPence; null when price unresolvable
 
   // Headline stats for quick rendering
   patientsReengaged: number;        // Pulse dropout recoveries

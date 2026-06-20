@@ -29,8 +29,8 @@ export interface ValueLedgerData {
 
   // Derived convenience values
   totalValueThisMonth: number;     // Pence
-  roiMultiple: number;             // e.g. 3.2 = 3.2× subscription cost
-  netValueThisMonth: number;       // Pence (total - subscription)
+  roiMultiple: number | null;      // null when subscription price unresolvable (suppress display)
+  netValueThisMonth: number | null; // null when subscription price unresolvable
   moduleBreakdown: {
     module: ValueModule;
     label: string;
@@ -114,8 +114,9 @@ export function useValueLedger(selectedClinician: string): ValueLedgerData {
   // Derive values
   const derived = useMemo(() => {
     const totalValueThisMonth = summary?.totalValuePence ?? 0;
-    const roiMultiple = summary?.roiMultiple ?? 0;
-    const netValueThisMonth = summary?.netValuePence ?? 0;
+    // Preserve null to allow the UI to suppress the ROI badge when price is unknown.
+    const roiMultiple = summary?.roiMultiple ?? null;
+    const netValueThisMonth = summary?.netValuePence ?? null;
 
     const moduleBreakdown: ValueLedgerData["moduleBreakdown"] = (
       ["ava", "pulse", "intelligence"] as ValueModule[]

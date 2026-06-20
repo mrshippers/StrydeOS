@@ -365,7 +365,7 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
     );
   }
 
-  const isPositiveRoi = netValueThisMonth > 0;
+  const isPositiveRoi = netValueThisMonth != null && netValueThisMonth > 0;
 
   return (
     <div className="space-y-6">
@@ -379,32 +379,38 @@ function ValueTabContent({ valueLedger }: { valueLedger: ReturnType<typeof useVa
             </h2>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <span
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold"
-              style={{
-                background: isPositiveRoi ? `${brand.success}12` : `${brand.danger}12`,
-                color: isPositiveRoi ? brand.success : brand.danger,
-              }}
-            >
-              <TrendingUp size={14} />
-              {roiMultiple.toFixed(1)}&times; your subscription
-            </span>
-            <span
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold"
-              style={{
-                background: isPositiveRoi ? `${brand.success}08` : `${brand.danger}08`,
-                color: isPositiveRoi ? brand.success : brand.danger,
-              }}
-            >
-              {isPositiveRoi ? "+" : ""}{formatPence(netValueThisMonth)} net value
-            </span>
+            {roiMultiple != null && (
+              <span
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold"
+                style={{
+                  background: isPositiveRoi ? `${brand.success}12` : `${brand.danger}12`,
+                  color: isPositiveRoi ? brand.success : brand.danger,
+                }}
+              >
+                <TrendingUp size={14} />
+                {roiMultiple.toFixed(1)}&times; your subscription
+              </span>
+            )}
+            {netValueThisMonth != null && (
+              <span
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold"
+                style={{
+                  background: isPositiveRoi ? `${brand.success}08` : `${brand.danger}08`,
+                  color: isPositiveRoi ? brand.success : brand.danger,
+                }}
+              >
+                {isPositiveRoi ? "+" : ""}{formatPence(netValueThisMonth)} net value
+              </span>
+            )}
           </div>
         </div>
         {summary && (
           <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 pt-4 border-t border-border">
             <span className="text-xs text-muted">{summary.totalEvents} events</span>
             <span className="text-xs text-muted">High-confidence: {formatPence(summary.highConfidenceValuePence)}</span>
-            <span className="text-xs text-muted">Subscription: {formatPence(summary.subscriptionCostPence)}/mo</span>
+            {summary.subscriptionCostPence != null && (
+              <span className="text-xs text-muted">Subscription: {formatPence(summary.subscriptionCostPence)}/mo</span>
+            )}
           </div>
         )}
       </div>

@@ -15,6 +15,8 @@ import type {
   ValueModule,
   ValueEventType,
 } from "@/types/value-ledger";
+import { MODULE_PRICING, TIER_KEYS } from "@/lib/billing";
+import type { TierKey } from "@/lib/billing";
 
 // ─── Compute Monthly Summary ─────────────────────────────────────────────────
 
@@ -42,10 +44,12 @@ export async function computeValueSummary(
     (d) => ({ id: d.id, ...d.data() }) as ValueEvent
   );
 
-  // Load subscription cost from clinic profile
+  // Resolve subscription cost from clinic billing record.
+  // Priority: (1) billing.monthlyPricePence (direct), (2) billing.tier via pricing matrix.
+  // Returns null when neither is available - never default to a hardcoded price (P0-5).
   const clinicDoc = await db.doc(`clinics/${clinicId}`).get();
   const clinicData = clinicDoc.data();
-  const subscriptionCostPence = clinicData?.billing?.monthlyPricePence || 29900; // Default £299 (Full Stack Studio)
+  const subscriptionCostPence = resolveSubscriptionCost(clinicData?.billing);
 
   // Build per-module summaries
   const ava = buildModuleSummary("ava", events);
@@ -87,8 +91,8 @@ export async function computeValueSummary(
     pulse,
     intelligence,
     subscriptionCostPence,
-    roiMultiple: subscriptionCostPence > 0 ? totalValuePence / subscriptionCostPence : 0,
-    netValuePence: totalValuePence - subscriptionCostPence,
+    roiMultiple: subscriptionCostPence != null ? totalValuePence / subscriptionCostPence : null,
+    netValuePence: subscriptionCostPence != null ? totalValuePence - subscriptionCostPence : null,
     patientsReengaged,
     callsHandled,
     bookingsFromAva,
@@ -141,9 +145,11 @@ export async function computeQuarterlyValueSummary(
     (s, m) => s + m.highConfidenceValuePence, 0
   );
   const totalEvents = monthlySummaries.reduce((s, m) => s + m.totalEvents, 0);
-  const subscriptionCostPence = monthlySummaries.reduce(
-    (s, m) => s + m.subscriptionCostPence, 0
-  );
+  // Quarterly cost is null if any monthly cost is null (unresolved price means unresolvable quarter).
+  const hasNullCost = monthlySummaries.some((m) => m.subscriptionCostPence == null);
+  const subscriptionCostPence: number | null = hasNullCost
+    ? null
+    : monthlySummaries.reduce((s, m) => s + (m.subscriptionCostPence as number), 0);
 
   const summary: ValueSummary = {
     id: periodKey,
@@ -158,8 +164,8 @@ export async function computeQuarterlyValueSummary(
     pulse: mergeModuleSummaries("pulse", monthlySummaries.map((m) => m.pulse)),
     intelligence: mergeModuleSummaries("intelligence", monthlySummaries.map((m) => m.intelligence)),
     subscriptionCostPence,
-    roiMultiple: subscriptionCostPence > 0 ? totalValuePence / subscriptionCostPence : 0,
-    netValuePence: totalValuePence - subscriptionCostPence,
+    roiMultiple: subscriptionCostPence != null ? totalValuePence / subscriptionCostPence : null,
+    netValuePence: subscriptionCostPence != null ? totalValuePence - subscriptionCostPence : null,
     patientsReengaged: monthlySummaries.reduce((s, m) => s + m.patientsReengaged, 0),
     callsHandled: monthlySummaries.reduce((s, m) => s + m.callsHandled, 0),
     bookingsFromAva: monthlySummaries.reduce((s, m) => s + m.bookingsFromAva, 0),
@@ -256,4 +262,35 @@ function mergeModuleSummaries(
     topEventType: topType,
     topEventTypeCount: topCount,
   };
+}
+
+// ─── Subscription Cost Resolution ────────────────────────────────────────────
+
+/**
+ * Resolve the clinic's monthly subscription cost in pence.
+ *
+ * Resolution order (P0-5):
+ *  1. billing.monthlyPricePence  — direct value written by billing webhook.
+ *  2. billing.tier               — use MODULE_PRICING.fullstack[tier].month
+ *     (Full Stack is the product sold at all tiers; individual-module billing
+ *      is not yet written to this field).
+ *  3. null                       — price unresolvable; caller must suppress
+ *     ROI multiple rather than showing a fabricated figure.
+ */
+function resolveSubscriptionCost(billing: Record<string, unknown> | undefined): number | null {
+  if (!billing) return null;
+
+  // Direct price takes precedence.
+  const direct = billing.monthlyPricePence;
+  if (typeof direct === "number" && Number.isFinite(direct) && direct > 0) {
+    return direct;
+  }
+
+  // Fall back to tier matrix (Full Stack monthly price).
+  const tier = billing.tier;
+  if (typeof tier === "string" && TIER_KEYS.includes(tier as TierKey)) {
+    return MODULE_PRICING.fullstack[tier as TierKey].month;
+  }
+
+  return null;
 }
