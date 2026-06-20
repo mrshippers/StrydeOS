@@ -1,63 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
 // ─── Env ─────────────────────────────────────────────────────────────────────
 
 const TEST_SECRET = "test-webhook-secret";
 
-// ─── Firestore mock ───────────────────────────────────────────────────────────
+// ─── Canonical handler mock ────────────────────────────────────────────────────
+//
+// /api/ava/post-call is now a THIN DELEGATE: it verifies the inbound signature,
+// normalises the post_call_transcription shape, re-signs, and forwards to the
+// canonical /api/webhooks/elevenlabs handler. These tests assert the delegate's
+// own behaviour (verify / normalise / forward) and capture what it forwards —
+// the canonical handler's write logic is covered by its own test.
 
-const writtenDocs: Record<string, unknown> = {};
-
-const mockSet = vi.fn(async (data: Record<string, unknown>) => {
-  Object.assign(writtenDocs, data);
+const canonicalPost = vi.fn(async (req: NextRequest) => {
+  // Echo back the forwarded body so the test can assert the normalisation.
+  const forwardedBody = await req.text();
+  return NextResponse.json({ ok: true, forwarded: JSON.parse(forwardedBody) }, { status: 200 });
 });
 
-function makeClinicQuerySnap(clinicId: string | null) {
-  if (!clinicId) return { empty: true, docs: [] };
-  return {
-    empty: false,
-    docs: [{ id: clinicId }],
-  };
-}
-
-let clinicIdForAgent: string | null = "clinic-spires";
-
-const mockDb = {
-  collection: vi.fn((name: string) => {
-    if (name === "clinics") {
-      return {
-        where: vi.fn(() => ({
-          limit: vi.fn(() => ({
-            get: vi.fn(async () => makeClinicQuerySnap(clinicIdForAgent)),
-          })),
-        })),
-        doc: vi.fn(() => ({
-          collection: vi.fn(() => ({
-            doc: vi.fn(() => ({ set: mockSet })),
-          })),
-        })),
-      };
-    }
-    return {};
-  }),
-};
-
-vi.mock("@/lib/firebase-admin", () => ({
-  getAdminDb: () => mockDb,
-}));
-
-vi.mock("firebase-admin/firestore", () => ({
-  FieldValue: {
-    serverTimestamp: () => "__SERVER_TIMESTAMP__",
-  },
+vi.mock("@/app/api/webhooks/elevenlabs/route", () => ({
+  POST: (req: NextRequest) => canonicalPost(req),
 }));
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/** Fresh timestamp so the verifier's +/-5min replay window accepts the sig. */
 function makeSignature(secret: string, rawBody: string): string {
-  const timestamp = "1700000000";
+  const timestamp = Math.floor(Date.now() / 1000).toString();
   const hmac = crypto.createHmac("sha256", secret).update(`${timestamp}.${rawBody}`).digest("hex");
   return `t=${timestamp},v0=${hmac}`;
 }
@@ -72,7 +43,7 @@ function makeRequest(
   if (!opts.noSignature && (opts.secret || process.env.ELEVENLABS_WEBHOOK_SECRET)) {
     const secret = opts.secret ?? process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
     if (opts.badSignature) {
-      headers["elevenlabs-signature"] = "t=1700000000,v0=deadbeef";
+      headers["elevenlabs-signature"] = `t=${Math.floor(Date.now() / 1000)},v0=deadbeef`;
     } else {
       headers["elevenlabs-signature"] = makeSignature(secret, rawBody);
     }
@@ -114,164 +85,82 @@ function makePayload(overrides: Record<string, unknown> = {}) {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe("POST /api/ava/post-call", () => {
+describe("POST /api/ava/post-call (delegate)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    Object.keys(writtenDocs).forEach((k) => delete writtenDocs[k]);
-    clinicIdForAgent = "clinic-spires";
-    // The route fails closed without a secret, so the suite runs configured;
-    // the config_missing test below deletes it explicitly.
+    // Reset modules so verify-signature re-captures the env below. Without this,
+    // the config_missing test's resetModules leaves an empty-secret module
+    // cached for later tests.
+    vi.resetModules();
     process.env.ELEVENLABS_WEBHOOK_SECRET = TEST_SECRET;
   });
 
-  // ── Normal path ────────────────────────────────────────────────────────────
+  // ── Forwarding / normalisation ─────────────────────────────────────────────
 
-  it("writes voiceInteraction for a completed call with full transcript", async () => {
+  it("forwards a post_call_transcription to the canonical handler as conversation.ended", async () => {
     const { POST } = await import("../route");
-    const body = makePayload();
-    const res = await POST(makeRequest(body));
+    const res = await POST(makeRequest(makePayload()));
 
     expect(res.status).toBe(200);
+    expect(canonicalPost).toHaveBeenCalledTimes(1);
+
+    // The delegate must forward a re-signed request with a valid fresh signature.
+    const [forwardedReq] = canonicalPost.mock.calls[0] as [NextRequest];
+    expect(forwardedReq.headers.get("elevenlabs-signature")).toMatch(/^t=\d+,v0=[0-9a-f]+$/);
+
     const json = await res.json();
-    expect(json.ok).toBe(true);
-    expect(json.clinicId).toBe("clinic-spires");
-    expect(json.conversationId).toBe("conv_test123");
-    expect(mockSet).toHaveBeenCalled();
+    expect(json.forwarded.event).toBe("conversation.ended");
+    expect(json.forwarded.conversation_id).toBe("conv_test123");
+    expect(json.forwarded.agent_id).toBe("agent_spires");
+    expect(json.forwarded.caller_phone).toBe("+447700900001");
+    expect(json.forwarded.call_duration).toBe(45);
+    expect(json.forwarded.summary).toBe("Caller requested appointment booking.");
+    // Transcript turns are flattened into a single string.
+    expect(String(json.forwarded.transcript)).toContain("Ava: Hello, Spires Physiotherapy.");
+    expect(String(json.forwarded.transcript)).toContain("Caller: Hi, I need to book an appointment.");
   });
 
-  // ── Edge case A: caller hangs up immediately ───────────────────────────────
-
-  it("A: writes doc when caller hangs up (empty transcript, status failed)", async () => {
+  it("does NOT write a divergent voiceInteractions collection (split-brain closed)", async () => {
+    // The delegate imports no Firestore client of its own — it only forwards.
+    // A successful forward + zero direct writes proves the split brain is gone.
     const { POST } = await import("../route");
-    const body = makePayload({
-      status: "failed",
-      transcript: [],
-      metadata: {
-        start_time_unix_secs: 1700000000,
-        call_duration_secs: 2,
-        termination_reason: "user_hangup",
-        phone_call: { caller_id: "+447700900001" },
-      },
-      analysis: null,
-    });
-
-    const res = await POST(makeRequest(body));
-
+    const res = await POST(makeRequest(makePayload()));
     expect(res.status).toBe(200);
-    expect(mockSet).toHaveBeenCalled();
-
-    const [docData] = mockSet.mock.calls[0] as [Record<string, unknown>];
-    expect(docData.callStatus).toBe("failed");
-    expect(docData.transcript).toBeNull();
-    expect(docData.callSuccessful).toBe(false);
-    expect(docData.durationSeconds).toBe(2);
-    expect(docData.disconnectionReason).toBe("user_hangup");
-  });
-
-  it("A: writes doc when analysis field is completely absent", async () => {
-    const { POST } = await import("../route");
-    const body = makePayload({ analysis: undefined });
-    // Remove analysis key entirely from data
-    delete (body.data as Record<string, unknown>).analysis;
-
-    const res = await POST(makeRequest(body));
-
-    expect(res.status).toBe(200);
-    expect(mockSet).toHaveBeenCalled();
-    const [docData] = mockSet.mock.calls[0] as [Record<string, unknown>];
-    expect(docData.callSuccessful).toBe(false);
-    expect(docData.callSummary).toBeNull();
-  });
-
-  it("A: writes doc when call duration is zero (immediate hangup)", async () => {
-    const { POST } = await import("../route");
-    const body = makePayload({
-      status: "interrupted",
-      transcript: [],
-      metadata: {
-        start_time_unix_secs: 1700000000,
-        call_duration_secs: 0,
-        termination_reason: "user_hangup",
-        phone_call: null,
-      },
-      analysis: null,
-    });
-
-    const res = await POST(makeRequest(body));
-
-    expect(res.status).toBe(200);
-    expect(mockSet).toHaveBeenCalled();
-    const [docData] = mockSet.mock.calls[0] as [Record<string, unknown>];
-    expect(docData.callStatus).toBe("interrupted");
-    expect(docData.durationSeconds).toBe(0);
-    expect(docData.callerPhone).toBeNull();
-    expect(docData.endTimestamp).toBeNull();
-  });
-
-  it("A: writes doc when phone_call metadata is null (no caller ID available)", async () => {
-    const { POST } = await import("../route");
-    const body = makePayload({
-      metadata: {
-        start_time_unix_secs: 1700000000,
-        call_duration_secs: 3,
-        termination_reason: "user_hangup",
-        phone_call: null,
-      },
-    });
-
-    const res = await POST(makeRequest(body));
-
-    expect(res.status).toBe(200);
-    const [docData] = mockSet.mock.calls[0] as [Record<string, unknown>];
-    expect(docData.callerPhone).toBeNull();
+    expect(canonicalPost).toHaveBeenCalledTimes(1);
   });
 
   // ── HMAC validation ────────────────────────────────────────────────────────
 
-  it("rejects with 403 when HMAC signature is invalid", async () => {
-    process.env.ELEVENLABS_WEBHOOK_SECRET = TEST_SECRET;
+  it("rejects with 403 when HMAC signature is invalid (no forward)", async () => {
     const { POST } = await import("../route");
-    const body = makePayload();
-    const res = await POST(makeRequest(body, { badSignature: true }));
+    const res = await POST(makeRequest(makePayload(), { badSignature: true }));
 
     expect(res.status).toBe(403);
-    expect(mockSet).not.toHaveBeenCalled();
+    expect(canonicalPost).not.toHaveBeenCalled();
   });
 
   it("rejects with 403 when signature header is missing and secret is configured", async () => {
-    process.env.ELEVENLABS_WEBHOOK_SECRET = TEST_SECRET;
     const { POST } = await import("../route");
-    const body = makePayload();
-    const res = await POST(makeRequest(body, { noSignature: true }));
+    const res = await POST(makeRequest(makePayload(), { noSignature: true }));
 
     expect(res.status).toBe(403);
-    expect(mockSet).not.toHaveBeenCalled();
+    expect(canonicalPost).not.toHaveBeenCalled();
   });
 
-  it("fails closed (config_missing, no write) when ELEVENLABS_WEBHOOK_SECRET is not set", async () => {
+  it("fails closed (config_missing, no forward) when ELEVENLABS_WEBHOOK_SECRET is not set", async () => {
     delete process.env.ELEVENLABS_WEBHOOK_SECRET;
+    vi.resetModules();
     const { POST } = await import("../route");
-    const body = makePayload();
-    const res = await POST(makeRequest(body, { noSignature: true }));
+    const res = await POST(makeRequest(makePayload(), { noSignature: true }));
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ error: "config_missing" });
-    expect(mockSet).not.toHaveBeenCalled();
-  });
-
-  it("accepts request with valid HMAC signature", async () => {
-    process.env.ELEVENLABS_WEBHOOK_SECRET = TEST_SECRET;
-    const { POST } = await import("../route");
-    const body = makePayload();
-    const res = await POST(makeRequest(body, { secret: TEST_SECRET }));
-
-    expect(res.status).toBe(200);
-    expect(mockSet).toHaveBeenCalled();
+    expect(canonicalPost).not.toHaveBeenCalled();
   });
 
   // ── Event type filter ──────────────────────────────────────────────────────
 
-  it("skips non-post_call_transcription events without writing to Firestore", async () => {
+  it("skips non-post_call_transcription events without forwarding", async () => {
     const { POST } = await import("../route");
     const body = { type: "agent_response", data: { conversation_id: "conv_x", agent_id: "agent_x" } };
     const res = await POST(makeRequest(body));
@@ -279,7 +168,7 @@ describe("POST /api/ava/post-call", () => {
 
     expect(res.status).toBe(200);
     expect(json.skipped).toBe(true);
-    expect(mockSet).not.toHaveBeenCalled();
+    expect(canonicalPost).not.toHaveBeenCalled();
   });
 
   // ── Missing required fields ────────────────────────────────────────────────
@@ -291,7 +180,7 @@ describe("POST /api/ava/post-call", () => {
     const res = await POST(makeRequest(body));
 
     expect(res.status).toBe(400);
-    expect(mockSet).not.toHaveBeenCalled();
+    expect(canonicalPost).not.toHaveBeenCalled();
   });
 
   it("returns 400 when body is not valid JSON", async () => {
@@ -304,21 +193,6 @@ describe("POST /api/ava/post-call", () => {
       })
     );
     expect(res.status).toBe(400);
-    expect(mockSet).not.toHaveBeenCalled();
-  });
-
-  // ── Clinic resolution ──────────────────────────────────────────────────────
-
-  it("returns ok:true with clinicId:null if no clinic has this agent_id", async () => {
-    clinicIdForAgent = null;
-    const { POST } = await import("../route");
-    const body = makePayload();
-    const res = await POST(makeRequest(body));
-    const json = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(json.ok).toBe(true);
-    expect(json.clinicId).toBeNull();
-    expect(mockSet).not.toHaveBeenCalled();
+    expect(canonicalPost).not.toHaveBeenCalled();
   });
 });

@@ -1,37 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
 import crypto from "crypto";
+import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
+import { POST as canonicalPostCall } from "@/app/api/webhooks/elevenlabs/route";
 
 export const runtime = "nodejs";
 
-// ElevenLabs signs post-call webhooks with HMAC-SHA256 using the webhook secret.
-// Header: ElevenLabs-Signature: t=<timestamp>,v0=<hmac>
-function verifyElevenLabsSignature(
-  secret: string,
-  rawBody: string,
-  signatureHeader: string
-): boolean {
-  try {
-    const parts = Object.fromEntries(
-      signatureHeader.split(",").map((p) => p.split("=") as [string, string])
-    );
-    const timestamp = parts["t"];
-    const received = parts["v0"];
-    if (!timestamp || !received) return false;
-    const payload = `${timestamp}.${rawBody}`;
-    const expected = crypto
-      .createHmac("sha256", secret)
-      .update(payload)
-      .digest("hex");
-    return crypto.timingSafeEqual(
-      Buffer.from(received, "hex"),
-      Buffer.from(expected, "hex")
-    );
-  } catch {
-    return false;
-  }
-}
+/**
+ * Thin delegate → /api/webhooks/elevenlabs (the CANONICAL Ava post-call
+ * handler).
+ *
+ * This route used to write its own `voiceInteractions` collection with
+ * outcome:null and emit NO cross-module events. That created a split brain: if
+ * ElevenLabs was pointed here instead of /api/webhooks/elevenlabs, Digest /
+ * Pulse / Intelligence went dark because the canonical call_log / call_facts /
+ * insight_events writes never happened.
+ *
+ * It now keeps zero write logic of its own. It verifies the inbound signature
+ * (shared verifier, incl. replay-window check), normalises the
+ * `post_call_transcription` shape into the canonical flat
+ * `ElevenLabsWebhookPayload`, re-signs, and forwards to the canonical handler
+ * so there is exactly one place that writes call data and fires side effects.
+ * Prefer registering /api/webhooks/elevenlabs directly; this path is retained
+ * only for backward compatibility with any agent still pointed here.
+ */
 
 interface ElevenLabsTranscriptTurn {
   role: "agent" | "user";
@@ -63,15 +54,24 @@ interface ElevenLabsPostCallPayload {
   };
 }
 
+/** Build a valid `t=<ts>,v0=<hex>` ElevenLabs signature header for `body`. */
+function signCanonicalBody(secret: string, body: string): string {
+  const ts = Math.floor(Date.now() / 1000).toString();
+  const hmac = crypto
+    .createHmac("sha256", secret)
+    .update(`${ts}.${body}`)
+    .digest("hex");
+  return `t=${ts},v0=${hmac}`;
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const secret = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
   const rawBody = await req.text();
 
   // Fail closed: an unset secret is a deploy bug, not an excuse to ingest
   // unauthenticated call transcripts. 200 + config_missing suppresses
-  // ElevenLabs retry storms while the deploy is fixed (same policy as
-  // /api/webhooks/elevenlabs).
-  if (!secret) {
+  // ElevenLabs retry storms while the deploy is fixed (same policy as the
+  // canonical handler).
+  if (!isWebhookSecretConfigured()) {
     console.error(
       "[CRITICAL] [post-call] ELEVENLABS_WEBHOOK_SECRET not configured — refusing to process. Returning 200 to suppress retries; fix the deploy.",
     );
@@ -81,8 +81,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const sig = req.headers.get("elevenlabs-signature") ?? "";
-  if (!sig || !verifyElevenLabsSignature(secret, rawBody, sig)) {
+  const sig = req.headers.get("elevenlabs-signature");
+  if (!(await verifyElevenLabsSignature(rawBody, sig))) {
     console.error("[post-call] ElevenLabs signature validation failed");
     return new NextResponse("Forbidden", { status: 403 });
   }
@@ -94,7 +94,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return new NextResponse("Bad Request", { status: 400 });
   }
 
-  // Only handle post_call_transcription events
+  // Only post_call_transcription carries the terminal transcript. Anything else
+  // is acked and dropped — the canonical handler owns the live-event lifecycle.
   if (payload.type !== "post_call_transcription") {
     return NextResponse.json({ ok: true, skipped: true });
   }
@@ -103,95 +104,43 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     payload.data ?? {};
 
   if (!conversation_id || !agent_id) {
-    return new NextResponse("Missing conversation_id or agent_id", {
-      status: 400,
-    });
+    return new NextResponse("Missing conversation_id or agent_id", { status: 400 });
   }
 
-  const db = getAdminDb();
-
-  // Resolve clinicId from agent_id stored in clinics/{id}.ava.agent_id
-  let clinicId: string | null = null;
-  try {
-    const snap = await db
-      .collection("clinics")
-      .where("ava.agent_id", "==", agent_id)
-      .limit(1)
-      .get();
-    if (!snap.empty) clinicId = snap.docs[0].id;
-  } catch (err) {
-    console.error("[post-call] Firestore clinic lookup failed:", err);
-  }
-
-  if (!clinicId) {
-    // Log but don't fail — agent may not be registered yet
-    console.warn(
-      `[post-call] No clinic found for agent_id ${agent_id}, conversation ${conversation_id}`
-    );
-    return NextResponse.json({ ok: true, clinicId: null });
-  }
-
-  const callerPhone =
-    metadata?.phone_call?.caller_id ?? null;
-  const durationSecs = metadata?.call_duration_secs ?? null;
-  const startTimestamp = metadata?.start_time_unix_secs
-    ? metadata.start_time_unix_secs * 1000
-    : null;
-  const endTimestamp =
-    startTimestamp && durationSecs
-      ? startTimestamp + durationSecs * 1000
-      : null;
-
-  const callSuccessfulRaw = analysis?.call_successful;
-  const callSuccessful =
-    callSuccessfulRaw === "success" ||
-    callSuccessfulRaw === true ||
-    callSuccessfulRaw === "true";
-
+  // Normalise the post_call_transcription shape into the canonical flat
+  // ElevenLabsWebhookPayload. We map it to `conversation.ended` with a summary
+  // so the canonical handler runs the full classify → write → notify pipeline.
   const flatTranscript = (transcript ?? [])
     .map((t) => `${t.role === "agent" ? "Ava" : "Caller"}: ${t.message}`)
     .join("\n");
 
-  const doc = {
-    callId: conversation_id,
-    agentId: agent_id,
-    callType: "phone_call" as const,
-    callStatus: status === "done" ? "completed" : status,
-    callerPhone,
-    toNumber: null,
-    patientId: null,
-    reasonForCall: null,
-    outcome: null,
-    urgency: null,
-    callSummary: analysis?.transcript_summary ?? null,
-    userSentiment: null,
-    callSuccessful,
-    inVoicemail: false,
-    transcript: flatTranscript || null,
-    transcriptUrl: null,
-    recordingUrl: null,
-    durationSeconds: durationSecs,
-    startTimestamp,
-    endTimestamp,
-    disconnectionReason: metadata?.termination_reason ?? null,
-    callbackType: null,
-    actionedAt: null,
-    actionedBy: null,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
+  const canonicalPayload = {
+    event: "conversation.ended" as const,
+    conversation_id,
+    agent_id,
+    status: status === "done" ? "completed" : status,
+    caller_phone: metadata?.phone_call?.caller_id ?? undefined,
+    transcript: flatTranscript || undefined,
+    summary: analysis?.transcript_summary ?? (flatTranscript || ""),
+    call_duration: metadata?.call_duration_secs ?? undefined,
+    timestamp: metadata?.start_time_unix_secs ?? undefined,
   };
 
-  try {
-    await db
-      .collection("clinics")
-      .doc(clinicId)
-      .collection("voiceInteractions")
-      .doc(conversation_id)
-      .set(doc, { merge: true });
-  } catch (err) {
-    console.error("[post-call] Firestore write failed:", err);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+  // Re-sign with our own freshly-stamped timestamp so the canonical handler's
+  // signature + replay-window check passes on the forwarded request.
+  const canonicalBody = JSON.stringify(canonicalPayload);
+  const secret = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
+  const forwarded = new NextRequest(
+    new URL("/api/webhooks/elevenlabs", req.url),
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "elevenlabs-signature": signCanonicalBody(secret, canonicalBody),
+      },
+      body: canonicalBody,
+    },
+  );
 
-  return NextResponse.json({ ok: true, clinicId, conversationId: conversation_id });
+  return canonicalPostCall(forwarded);
 }

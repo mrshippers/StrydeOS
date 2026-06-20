@@ -13,12 +13,14 @@ second resolver here using the same pattern.
 """
 
 import contextvars
-import os
+import logging
 from typing import Optional
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
 
 current_clinic_id: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
     "current_clinic_id", default=None
@@ -35,6 +37,12 @@ class TenantResolverMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         if request.url.path not in _WEBHOOK_PATHS:
+            return await call_next(request)
+
+        # patient_confirmed webhooks resume an existing session by session_id and carry
+        # no clinic_id (the clinic was already validated on the call_started leg). Don't
+        # demand a clinic_id for them, otherwise legitimate confirmations are rejected.
+        if request.query_params.get("webhook_type") == "patient_confirmed":
             return await call_next(request)
 
         clinic_id = request.query_params.get("clinic_id")
@@ -64,6 +72,7 @@ async def _clinic_exists(clinic_id: str) -> bool:
         doc = await db.collection("clinics").document(clinic_id).get()
         return doc.exists
     except Exception:
-        # Fail open on Firestore connection errors to avoid blocking legitimate calls.
-        # Sentry will capture the exception; ops can tighten to fail-closed once stable.
-        return True
+        # Fail CLOSED on Firestore errors: an infra fault must never grant access to
+        # an unknown clinic. Sentry captures the exception; the caller is rejected.
+        logger.exception("Firestore lookup failed for clinic_id=%s; failing closed", clinic_id)
+        return False

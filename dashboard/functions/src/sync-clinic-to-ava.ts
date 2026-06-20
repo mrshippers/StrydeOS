@@ -19,6 +19,18 @@ interface KnowledgeEntry {
   title: string;
   content: string;
   updatedAt: string;
+  /** Review state. Absent = legacy entry, treated as approved. */
+  status?: "draft" | "approved" | "archived";
+}
+
+// DUPLICATED PREDICATE — keep in exact sync with filterLiveEntries in
+// dashboard/src/lib/ava/ava-knowledge.ts. The functions package builds from a
+// separate root and cannot import from src/. Only approved (or legacy,
+// status-absent) entries are ever compiled into the live ElevenLabs payload;
+// drafts and archived entries are gated out.
+// FOLLOW-UP: extract a shared module so this predicate lives in one place.
+function filterLiveEntries(entries: KnowledgeEntry[]): KnowledgeEntry[] {
+  return entries.filter((e) => e.status === undefined || e.status === "approved");
 }
 
 interface SyncLogEntry {
@@ -180,7 +192,11 @@ async function syncClinicToAvaCore(clinicId: string, apiKey: string): Promise<Sy
 
   if (!ava["agent_id"]) throw new Error("No ElevenLabs agent configured — create agent first");
 
-  const entries: KnowledgeEntry[] = (ava["knowledge"] as KnowledgeEntry[]) ?? [];
+  // Gate the draft/approval state machine BEFORE any compilation. Only approved
+  // (or legacy, status-absent) knowledge is ever compiled into the live agent
+  // payload — drafts and archived entries must never reach a patient call.
+  const allEntries: KnowledgeEntry[] = (ava["knowledge"] as KnowledgeEntry[]) ?? [];
+  const entries: KnowledgeEntry[] = filterLiveEntries(allEntries);
   const agentId = ava["agent_id"] as string;
   const avaConfig = (ava["config"] as Record<string, string> | undefined) ?? {};
   const avaHours = ava["hours"] as HoursConfig | undefined;

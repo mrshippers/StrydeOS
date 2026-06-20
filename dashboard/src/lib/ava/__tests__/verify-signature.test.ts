@@ -12,7 +12,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const TEST_SECRET = "test-elevenlabs-secret-abc123";
-const TS = "1700000000";
+// Fresh timestamp (current second) — the verifier now enforces a +/-5min replay
+// window, so a hardcoded 2023 timestamp would be rejected as stale. Tests that
+// specifically exercise the window pin their own timestamps.
+const TS = Math.floor(Date.now() / 1000).toString();
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -179,7 +182,43 @@ describe("verifyElevenLabsSignature", () => {
     });
   });
 
-  // ── 6. Missing secret configuration ───────────────────────────────────────
+  // ── 6. Replay / timestamp freshness window (P0-10) ─────────────────────────
+
+  describe("replay window", () => {
+    it("rejects a validly-signed but stale timestamp (> 5 min old)", async () => {
+      const staleTs = (Math.floor(Date.now() / 1000) - 600).toString(); // 10 min ago
+      const header = await signHeader(BODY, TEST_SECRET, staleTs);
+      // HMAC is correct for this payload, but the timestamp is outside the window.
+      expect(await verifyElevenLabsSignature(BODY, header)).toBe(false);
+    });
+
+    it("rejects a validly-signed future timestamp (> 5 min ahead)", async () => {
+      const futureTs = (Math.floor(Date.now() / 1000) + 600).toString();
+      const header = await signHeader(BODY, TEST_SECRET, futureTs);
+      expect(await verifyElevenLabsSignature(BODY, header)).toBe(false);
+    });
+
+    it("accepts a fresh timestamp within the window", async () => {
+      const freshTs = (Math.floor(Date.now() / 1000) - 30).toString(); // 30s ago
+      const header = await signHeader(BODY, TEST_SECRET, freshTs);
+      expect(await verifyElevenLabsSignature(BODY, header)).toBe(true);
+    });
+
+    it("honours an explicit larger maxAgeSeconds override", async () => {
+      const staleTs = (Math.floor(Date.now() / 1000) - 600).toString(); // 10 min ago
+      const header = await signHeader(BODY, TEST_SECRET, staleTs);
+      // Default window rejects; an explicit 1200s window accepts the same sig.
+      expect(await verifyElevenLabsSignature(BODY, header)).toBe(false);
+      expect(await verifyElevenLabsSignature(BODY, header, 1200)).toBe(true);
+    });
+
+    it("rejects a non-numeric timestamp", async () => {
+      const hex = await hmacHex(`notanumber.${BODY}`);
+      expect(await verifyElevenLabsSignature(BODY, `t=notanumber,v0=${hex}`)).toBe(false);
+    });
+  });
+
+  // ── 7. Missing secret configuration ───────────────────────────────────────
 
   describe("missing webhook secret", () => {
     it("returns false when ELEVENLABS_WEBHOOK_SECRET is empty", async () => {

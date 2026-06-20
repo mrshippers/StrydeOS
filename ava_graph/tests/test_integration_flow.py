@@ -62,6 +62,7 @@ def test_complete_booking_flow_with_checkpoint(
     mock_cliniko_booking,
     mock_twilio_sms,
     mock_openai_llm,
+    bypass_elevenlabs_auth,
 ):
     """
     Test complete booking flow: call_started → interrupt → patient_confirmed → complete.
@@ -167,7 +168,7 @@ def test_complete_booking_flow_with_checkpoint(
 
 @patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic")
 @patch("ava_graph.graph.nodes.check_availability.get_cliniko_availability", new_callable=AsyncMock)
-def test_booking_flow_with_patient_rejection(mock_cliniko_avail, mock_openai):
+def test_booking_flow_with_patient_rejection(mock_cliniko_avail, mock_openai, bypass_elevenlabs_auth):
     """
     Test that patient rejection routes back to propose_slot (up to max retries).
 
@@ -234,7 +235,7 @@ def test_booking_flow_with_patient_rejection(mock_cliniko_avail, mock_openai):
 @patch("ava_graph.graph.nodes.confirm_booking.book_cliniko_appointment", new_callable=AsyncMock)
 @patch("ava_graph.graph.nodes.check_availability.get_cliniko_availability", new_callable=AsyncMock)
 def test_booking_flow_with_max_retries_exceeded(
-    mock_cliniko_avail, mock_cliniko_book, mock_openai
+    mock_cliniko_avail, mock_cliniko_book, mock_openai, bypass_elevenlabs_auth
 ):
     """
     Test that booking flow gracefully terminates after max retries.
@@ -335,7 +336,7 @@ def test_booking_flow_missing_clinic_id():
     assert response.status_code == 400
 
 
-def test_booking_flow_missing_pms_type():
+def test_booking_flow_missing_pms_type(bypass_elevenlabs_auth):
     """
     Test that booking flow fails gracefully when pms_type not provided.
 
@@ -362,7 +363,7 @@ def test_booking_flow_missing_pms_type():
 
 @patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic")
 @patch("ava_graph.graph.nodes.check_availability.get_cliniko_availability", new_callable=AsyncMock)
-def test_booking_flow_phone_normalization(mock_cliniko_avail, mock_openai):
+def test_booking_flow_phone_normalization(mock_cliniko_avail, mock_openai, bypass_elevenlabs_auth):
     """
     Test that phone numbers are normalized correctly during workflow.
 
@@ -397,16 +398,28 @@ def test_booking_flow_phone_normalization(mock_cliniko_avail, mock_openai):
 
 @patch("ava_graph.graph.nodes.propose_slot.ChatAnthropic")
 @patch("ava_graph.graph.nodes.check_availability.get_cliniko_availability", new_callable=AsyncMock)
-def test_booking_flow_with_multiple_clinics_isolated(mock_cliniko_avail, mock_openai):
+def test_booking_flow_with_multiple_clinics_isolated(
+    mock_cliniko_avail, mock_openai, fake_firestore, bypass_elevenlabs_auth
+):
     """
-    Test that booking flow correctly isolates data per clinic_id (multi-tenancy).
+    Prove booking flow isolates data per clinic_id (multi-tenancy).
 
     Scenario:
-    1. Call 1: clinic_A, patient John
-    2. Call 2: clinic_B, patient Jane
+    1. Call 1: clinic_a, patient John
+    2. Call 2: clinic_b, patient Jane
 
-    Verify: Sessions remain isolated
+    Isolation is proven, not just asserted on status: each session's persisted
+    checkpoint must contain ONLY its own clinic_id and patient, and neither session
+    may leak the other clinic's identifier or patient into its state.
     """
+    # Both clinics must exist for the fail-closed tenant resolver to admit them.
+    fake_firestore.seed_clinic(
+        "clinic_a", pms_config={"provider": "cliniko", "apiKey": "key-a", "baseUrl": ""}
+    )
+    fake_firestore.seed_clinic(
+        "clinic_b", pms_config={"provider": "cliniko", "apiKey": "key-b", "baseUrl": ""}
+    )
+
     mock_cliniko_avail.return_value = ["2026-03-16T14:00:00"]
 
     mock_response = MagicMock()
@@ -417,7 +430,7 @@ def test_booking_flow_with_multiple_clinics_isolated(mock_cliniko_avail, mock_op
 
     client = TestClient(app)
 
-    # Call 1: clinic_A
+    # Call 1: clinic_a
     payload_a = {
         "call_id": "call_clinic_a",
         "patient_name": "John",
@@ -430,9 +443,9 @@ def test_booking_flow_with_multiple_clinics_isolated(mock_cliniko_avail, mock_op
         "/api/webhook/ava?webhook_type=call_started&clinic_id=clinic_a&pms_type=cliniko",
         json=payload_a,
     )
-    assert response_a.status_code == 200
+    assert response_a.status_code == 200, response_a.text
 
-    # Call 2: clinic_B
+    # Call 2: clinic_b
     payload_b = {
         "call_id": "call_clinic_b",
         "patient_name": "Jane",
@@ -445,9 +458,8 @@ def test_booking_flow_with_multiple_clinics_isolated(mock_cliniko_avail, mock_op
         "/api/webhook/ava?webhook_type=call_started&clinic_id=clinic_b&pms_type=cliniko",
         json=payload_b,
     )
-    assert response_b.status_code == 200
+    assert response_b.status_code == 200, response_b.text
 
-    # Verify both returned successfully and are isolated
     data_a = response_a.json()
     data_b = response_b.json()
 
@@ -455,3 +467,24 @@ def test_booking_flow_with_multiple_clinics_isolated(mock_cliniko_avail, mock_op
     assert data_b["session_id"] == "call_clinic_b"
     assert data_a["status"] == "awaiting_confirmation"
     assert data_b["status"] == "awaiting_confirmation"
+
+    # ── PROVE isolation at the checkpoint level ──────────────────────────────
+    # The graph persists per-session state keyed by thread_id (== session_id) in the
+    # shared module-level MemorySaver. Read each session's state back and assert no
+    # cross-tenant bleed: clinic_a's session holds clinic_a/John only, clinic_b's
+    # holds clinic_b/Jane only.
+    from ava_graph.graph.builder import build_ava_graph
+
+    graph = build_ava_graph()
+    state_a = graph.get_state({"configurable": {"thread_id": "call_clinic_a"}}).values
+    state_b = graph.get_state({"configurable": {"thread_id": "call_clinic_b"}}).values
+
+    assert state_a["clinic_id"] == "clinic_a"
+    assert state_a["patient_name"] == "John"
+    assert state_a["clinic_id"] != "clinic_b"
+    assert state_a["patient_name"] != "Jane"
+
+    assert state_b["clinic_id"] == "clinic_b"
+    assert state_b["patient_name"] == "Jane"
+    assert state_b["clinic_id"] != "clinic_a"
+    assert state_b["patient_name"] != "John"

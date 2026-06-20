@@ -57,6 +57,8 @@ interface FakeDocRef {
   path: string;
   set: (data: Record<string, unknown>, opts?: { merge?: boolean }) => Promise<void>;
   update: (data: Record<string, unknown>) => Promise<void>;
+  /** Atomic create — throws { code: 6 } (ALREADY_EXISTS) if the doc exists. */
+  create: (data: Record<string, unknown>) => Promise<void>;
   get: () => Promise<{ exists: boolean; data: () => Record<string, unknown> | undefined }>;
 }
 
@@ -91,6 +93,13 @@ function makeFakeDb() {
       update: async (data) => {
         const existing = docs.get(path)?.data ?? {};
         docs.set(path, { ref: makeDocRef(path), data: { ...existing, ...data } });
+      },
+      create: async (data) => {
+        if (docs.has(path)) {
+          // Mirror Firestore's ALREADY_EXISTS gRPC code 6.
+          throw Object.assign(new Error("ALREADY_EXISTS"), { code: 6 });
+        }
+        docs.set(path, { ref: makeDocRef(path), data });
       },
       get: async () => {
         const rec = docs.get(path);
@@ -219,5 +228,57 @@ describe("POST /api/webhooks/elevenlabs — conversation.ended", () => {
     expect(metadata.callerPhone).toBe("+447700900001");
     expect(metadata.callbackType).toBe("general");
     expect(metadata.callDurationSeconds).toBe(47);
+
+    // P0-11: the human-readable `description` must NOT leak the caller phone —
+    // the number lives only in the structured metadata.callerPhone field.
+    expect(insight?.data.description).toBe("Ava: callback requested");
+    expect(String(insight?.data.description)).not.toContain("+447700900001");
+
+    // P0-11: call_log carries a purgeAfter TTL stamp for scheduled erasure.
+    expect(typeof callLog?.data.purgeAfter).toBe("number");
+    expect(callLog?.data.purgeAfter as number).toBeGreaterThan(Date.now());
+  });
+
+  it("de-duplicates a replayed conversation.ended: SMS + insight side effects fire only once (P0-10)", async () => {
+    const { db, docs } = makeFakeDb();
+
+    await db.collection("clinics").doc("clinic-spires").set({
+      name: "Spires Physiotherapy",
+      ava: { agent_id: "agent-abc" },
+    });
+
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const { sendCallbackNotification } = await import("@/lib/ava/notify-callback");
+    const { POST } = await import("../elevenlabs/route");
+
+    const body = {
+      event: "conversation.ended",
+      conversation_id: "conv-replay",
+      agent_id: "agent-abc",
+      summary: "I need someone to call me back",
+      caller_phone: "+447700900002",
+      call_duration: 30,
+      reason_for_call: "callback",
+      timestamp: Math.floor(Date.now() / 1000),
+    };
+
+    // First delivery: side effects fire, claim doc written.
+    const res1 = await POST(makeRequest(body));
+    expect(res1.status).toBe(200);
+    const claim = docs.get(
+      "clinics/clinic-spires/_ava_processed_events/conv-replay__conversation.ended",
+    );
+    expect(claim).toBeDefined();
+    expect(vi.mocked(sendCallbackNotification)).toHaveBeenCalledTimes(1);
+
+    // Replay the exact same event: must short-circuit as deduplicated and NOT
+    // re-fire the callback SMS.
+    const res2 = await POST(makeRequest(body));
+    expect(res2.status).toBe(200);
+    const json2 = await res2.json();
+    expect(json2.deduplicated).toBe(true);
+    expect(vi.mocked(sendCallbackNotification)).toHaveBeenCalledTimes(1);
   });
 });

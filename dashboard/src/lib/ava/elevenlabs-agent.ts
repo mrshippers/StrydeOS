@@ -10,6 +10,27 @@
 
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
 
+/**
+ * Canonical Ava voice profile — the single source of truth for TTS delivery,
+ * the same way brand colours live in one place. Apply this on EVERY agent
+ * create AND update path so every caller (provision, rotate, knowledge sync)
+ * inherits identical, consistent delivery call-to-call.
+ *
+ * Clinically-warm defaults:
+ *  - stability 0.6        — steady, reassuring delivery without sounding flat
+ *  - similarity_boost 0.85 — stays close to the chosen clinical voice
+ *  - style 0.0            — no exaggeration; neutral, professional tone
+ *  - use_speaker_boost true — clearer presence over the phone line
+ *
+ * Tune these here and nowhere else.
+ */
+export const AVA_VOICE_SETTINGS = {
+  stability: 0.6,
+  similarity_boost: 0.85,
+  style: 0.0,
+  use_speaker_boost: true,
+} as const;
+
 export interface AvaAgentConfig {
   clinicName: string;
   systemPrompt: string;
@@ -219,9 +240,13 @@ export async function updateAvaAgent(
         prompt: promptPatch,
         language: "en",
       },
-      ...(config.voiceId !== undefined
-        ? { tts: { voice_id: config.voiceId } }
-        : {}),
+      // Re-apply the canonical voice profile on every update so delivery never
+      // drifts away from AVA_VOICE_SETTINGS, regardless of whether the caller
+      // is changing the voice_id.
+      tts: {
+        ...(config.voiceId !== undefined ? { voice_id: config.voiceId } : {}),
+        ...AVA_VOICE_SETTINGS,
+      },
     };
   }
 
@@ -378,6 +403,7 @@ function buildAgentPayload(config: AvaAgentConfig, toolIds: string[]) {
       },
       tts: {
         voice_id: config.voiceId,
+        ...AVA_VOICE_SETTINGS,
       },
     },
   };

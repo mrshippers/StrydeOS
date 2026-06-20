@@ -20,7 +20,8 @@ interface UseAvaKnowledgeResult {
   syncLog: SyncLogEntry[];
   error: string | null;
   addEntry: (category: KnowledgeCategory, title: string, content: string) => Promise<void>;
-  updateEntry: (id: string, updates: Partial<Pick<KnowledgeEntry, "title" | "content">>) => void;
+  updateEntry: (id: string, updates: Partial<Pick<KnowledgeEntry, "title" | "content" | "status">>) => void;
+  approveAllDrafts: () => Promise<void>;
   removeEntry: (id: string) => Promise<void>;
   saveEntries: () => Promise<void>;
   syncToAgent: () => Promise<{ success: boolean; error?: string }>;
@@ -166,7 +167,7 @@ export function useAvaKnowledge(clinicId: string | undefined): UseAvaKnowledgeRe
   );
 
   const updateEntry = useCallback(
-    (id: string, updates: Partial<Pick<KnowledgeEntry, "title" | "content">>) => {
+    (id: string, updates: Partial<Pick<KnowledgeEntry, "title" | "content" | "status">>) => {
       const updated = entries.map((e) =>
         e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } : e
       );
@@ -175,6 +176,20 @@ export function useAvaKnowledge(clinicId: string | undefined): UseAvaKnowledgeRe
     },
     [entries, debouncedSave]
   );
+
+  // Approve every draft in one pass (the onboarding review gate): flips
+  // status draft -> approved so filterLiveEntries lets them reach the live
+  // Ava agent on the next sync. Persists immediately, not debounced.
+  const approveAllDrafts = useCallback(async () => {
+    const stamp = new Date().toISOString();
+    const updated = entries.map((e) =>
+      e.status === "draft"
+        ? { ...e, status: "approved" as const, updatedAt: stamp }
+        : e
+    );
+    setEntries(updated);
+    await persistToFirestore(updated);
+  }, [entries, persistToFirestore]);
 
   const removeEntry = useCallback(
     async (id: string) => {
@@ -241,6 +256,7 @@ export function useAvaKnowledge(clinicId: string | undefined): UseAvaKnowledgeRe
     error,
     addEntry,
     updateEntry,
+    approveAllDrafts,
     removeEntry,
     saveEntries,
     syncToAgent,

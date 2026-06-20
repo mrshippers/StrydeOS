@@ -83,10 +83,13 @@ async function handler(req: NextRequest) {
       explicitWebsite: body.website?.trim() || undefined,
     });
 
-    // Merge: keep manual entries, drop prior auto entries, add new auto entries
+    // Merge: keep manual entries, drop prior AI entries (auto + ai_generated),
+    // add the freshly synthesised ones
     const existingKnowledge: KnowledgeEntry[] =
       Array.isArray(clinicData.ava?.knowledge) ? clinicData.ava.knowledge : [];
-    const manualKept = existingKnowledge.filter((e) => e.source !== "auto");
+    const manualKept = existingKnowledge.filter(
+      (e) => e.source !== "auto" && e.source !== "ai_generated",
+    );
     const merged: KnowledgeEntry[] = [...manualKept, ...result.entries];
 
     const now = new Date().toISOString();

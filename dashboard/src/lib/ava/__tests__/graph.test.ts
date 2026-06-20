@@ -16,6 +16,13 @@ const HAS_API_KEY = !!process.env.ANTHROPIC_API_KEY;
 const describeIntegration = HAS_API_KEY ? describe : describe.skip;
 import { processCallerInput, type AvaAction, type CallMeta } from "../graph";
 
+// NOTE: the safety-critical guardrail routing (emergency / mental-health /
+// insurance / GDPR / excess) is now asserted OFFLINE — and therefore in CI —
+// in graph-guardrails.test.ts via evaluateGuardrailRouting. That file is NOT
+// excluded by vitest.config (this file is, because it makes paid LLM calls).
+// The suites below are the richer, LLM-backed second layer; they only run when
+// RUN_LLM_TESTS=1 with a funded ANTHROPIC_API_KEY.
+
 const SPIRES_META: CallMeta = {
   clinicId: "spires-001",
   clinicName: "Spires Physiotherapy",

@@ -5,6 +5,7 @@ import { writeModuleHealth } from "@/lib/module-health";
 import type { AvaAction } from "@/lib/ava/graph";
 import { sendCallbackNotification, sendBookingAcknowledgement } from "@/lib/ava/notify-callback";
 import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
+import { claimAvaWebhookEvent } from "@/lib/ava/processed-events";
 import {
   CONTRACTS_SCHEMA_VERSION,
   asClinicId,
@@ -25,6 +26,16 @@ import type { InsightEvent, InsightSeverity } from "@/types/insight-events";
 
 export const runtime = "nodejs";
 
+// ─── CANONICAL Ava post-call handler ────────────────────────────────────────
+// This route is the single source of truth for Ava call ingestion. It owns the
+// canonical collection set:
+//   - clinics/{id}/call_log      (full call record)
+//   - clinics/{id}/call_facts    (Intelligence KPI fact stream)
+//   - clinics/{id}/insight_events (Pulse / Intelligence cross-module bus)
+// Register THIS URL (/api/webhooks/elevenlabs) as the ElevenLabs post-call
+// webhook. /api/ava/post-call is a thin delegate that forwards here so a
+// mis-registered URL cannot silently dark Digest/Pulse/Intelligence by writing
+// to a divergent `voiceInteractions` collection.
 async function handler(req: NextRequest) {
   const db = getAdminDb();
 
@@ -90,7 +101,18 @@ async function handler(req: NextRequest) {
       .collection("call_log")
       .doc(conversationId);
 
-    const callData: AvaCallLogEntry = {
+    // Retention (GDPR): the call_log doc carries verbatim transcript + caller
+    // phone. Stamp a `purgeAfter` epoch-ms TTL so the data-health/cleanup cron
+    // can hard-delete it once the window elapses. Configurable via env; default
+    // 365 days (matches the existing call_log retention policy in
+    // data-health/cleanup). Whole-clinic erasure (clinic-erasure.ts) already
+    // sweeps this collection via listCollections() on termination.
+    const transcriptRetentionDays = (() => {
+      const raw = Number(process.env.AVA_TRANSCRIPT_RETENTION_DAYS);
+      return Number.isFinite(raw) && raw > 0 ? raw : 365;
+    })();
+
+    const callData: AvaCallLogEntry & { purgeAfter: number } = {
       agentId,
       conversationId,
       event: payload.event,
@@ -101,6 +123,7 @@ async function handler(req: NextRequest) {
       reasonForCall: payload.reason_for_call || null,
       durationSeconds: payload.call_duration || null,
       startTimestamp: payload.timestamp ? payload.timestamp * 1000 : Date.now(),
+      purgeAfter: Date.now() + transcriptRetentionDays * 86400000,
       updatedAt: new Date().toISOString(),
     };
 
@@ -177,6 +200,30 @@ async function handler(req: NextRequest) {
         graphMetadata: Object.keys(graphMetadata).length > 0 ? graphMetadata : null,
       });
 
+      // ─── Replay / retry guard ──────────────────────────────────────────────
+      // The call_log/call_facts writes are idempotent (deterministic ids +
+      // set/merge), but the SMS + insight side effects below are NOT — a replay
+      // or an ElevenLabs at-least-once retry would re-text the patient and
+      // re-fire booking events. Atomically claim this (conversationId, event)
+      // before any side effect; only the first caller proceeds. Failures here
+      // bubble to the outer catch → 500 → ElevenLabs retries (safe: claim is
+      // atomic, so the retry that wins is the only one that runs side effects).
+      const firstDelivery = await claimAvaWebhookEvent(
+        db,
+        clinicId,
+        conversationId,
+        payload.event,
+      );
+      if (!firstDelivery) {
+        await writeModuleHealth(db, clinicId, {
+          module: "ava",
+          status: "ok",
+          counts: { processed: 1, succeeded: 0, failed: 0, skipped: 1 },
+          diagnostics: { lastEvent: payload.event, conversationId, deduplicated: true },
+        });
+        return NextResponse.json({ ok: true, deduplicated: true }, { status: 200 });
+      }
+
       // Booking acknowledgement SMS to patient
       if (outcome === "booked" && payload.caller_phone) {
         sendBookingAcknowledgement({
@@ -244,9 +291,12 @@ async function handler(req: NextRequest) {
           const callDurationSeconds =
             typeof payload.call_duration === "number" ? payload.call_duration : null;
 
-          const description = callerPhone
-            ? `${title} (caller ${callerPhone})`
-            : title;
+          // Do NOT embed callerPhone in this free-text field: `description` is
+          // surfaced in owner-facing UI and copied into logs/Sentry, and a phone
+          // number in a free-text string evades the key-name PII scrubber
+          // (sentry-scrub.ts redacts the structured `callerPhone` field, not an
+          // interpolated substring). The number lives in metadata.callerPhone.
+          const description = title;
 
           const metadata: AvaInsightEventMetadata = {
             conversationId,

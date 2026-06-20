@@ -2,27 +2,57 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, requireRole, ApiAuthError } from "@/lib/auth-guard";
-import { purchaseUkNumber } from "@/lib/twilio";
+import { purchaseUkNumber, getTwilio } from "@/lib/twilio";
 import { withRequestLog } from "@/lib/request-logger";
 import { createAvaTools, createAvaAgent } from "@/lib/ava/elevenlabs-agent";
 
 /**
  * POST /api/ava/provision-number
  *
- * Provisions a dedicated Twilio phone number for the clinic's Ava instance:
- * 1. Buys a UK number (near clinic locality if possible)
- * 2. Creates ElevenLabs agent if one doesn't exist yet
- * 3. Wires the number's voiceUrl to ElevenLabs' native Twilio handler
- *    (https://api.elevenlabs.io/twilio/inbound-call)
- * 4. Imports the number into ElevenLabs via POST /v1/convai/phone-numbers/create-twilio
- *    and stores the returned phone_number_id as ava.phone_number_id in Firestore
- * 5. Stores the number + agent ID in Firestore
- * 6. Returns the provisioned number
+ * Provisions a dedicated Twilio phone number for the clinic's Ava instance
+ * under the single proxy-first topology:
+ * 1. Creates the ElevenLabs agent if one doesn't exist yet
+ * 2. Buys a UK number (near clinic locality if possible) with its voiceUrl
+ *    pointed at /api/ava/inbound-call — every call routes through our proxy,
+ *    which enforces pause and multi-tenant routing before reaching ElevenLabs
+ * 3. Persists the purchased phoneSid to Firestore IMMEDIATELY (so a later
+ *    failure can roll the number back instead of orphaning a billed number)
+ * 4. Stores the number + agent ID; the clinic starts PAUSED (ava.enabled =
+ *    false) until an owner toggles Ava on
+ *
+ * There is deliberately NO native ElevenLabs phone-number import here. That
+ * second inbound path competed with the proxy and made the pause toggle
+ * control the wrong route. The proxy + voiceUrl is the only inbound topology.
+ *
+ * Rollback: any failure after purchase deletes the Twilio number before the
+ * provisioning lock is cleared, so the flow is safe to retry.
  *
  * Requires: owner / admin / superadmin role.
  */
 
 const db = getAdminDb();
+
+/**
+ * Best-effort rollback of a purchased Twilio number. Releasing the number
+ * stops the recurring charge. Failures are logged, never thrown — rollback
+ * must not mask the original provisioning error that triggered it.
+ *
+ * Cross-file follow-up: a reusable releaseUkNumber() belongs in @/lib/twilio
+ * alongside purchaseUkNumber(); inlined here to stay within scope.
+ */
+async function releaseTwilioNumber(phoneSid: string): Promise<void> {
+  if (!phoneSid) return;
+  try {
+    const tw = getTwilio();
+    await tw.incomingPhoneNumbers(phoneSid).remove();
+    console.warn(`[Ava provision-number] rolled back Twilio number ${phoneSid}`);
+  } catch (err) {
+    console.error(
+      `[Ava provision-number] FAILED to roll back Twilio number ${phoneSid} (manual release needed):`,
+      err instanceof Error ? err.message : String(err)
+    );
+  }
+}
 
 async function handler(req: NextRequest) {
   // Strict rate limit — this costs money
@@ -146,8 +176,8 @@ async function handler(req: NextRequest) {
     }
 
     // 2. Buy a UK number, wiring its voiceUrl to our inbound-call proxy so
-    //    multi-tenant routing, red-flag triggers, and LangGraph 2-tier routing
-    //    all run before the call reaches ElevenLabs.
+    //    multi-tenant routing, the pause toggle, red-flag triggers, and
+    //    LangGraph 2-tier routing all run before the call reaches ElevenLabs.
     const appUrlForWebhook = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrlForWebhook) {
       throw new Error("NEXT_PUBLIC_APP_URL is not configured");
@@ -155,60 +185,49 @@ async function handler(req: NextRequest) {
     const voiceUrl = `${appUrlForWebhook}/api/ava/inbound-call?clinicId=${clinicId}`;
     const { phoneNumber, phoneSid } = await purchaseUkNumber({ locality, voiceUrl });
 
-    // 3. Register the Twilio number with ElevenLabs to get a phone_number_id.
-    //    toggle/route.ts reads ava.phone_number_id — without this step the toggle
-    //    always returns "No phone number provisioned" because it looks for the ElevenLabs
-    //    ID, not the Twilio SID.
-    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-    if (!ELEVENLABS_API_KEY) {
-      throw new Error("ELEVENLABS_API_KEY is not configured");
+    // 3. Persist the purchased SID IMMEDIATELY. The number is billed the moment
+    //    it is bought; recording the SID before any further step means a crash
+    //    here still leaves a paper trail to release or reuse it, and a retry
+    //    can detect the half-finished provision instead of buying a second one.
+    try {
+      await db.collection("clinics").doc(clinicId).update({
+        "ava.twilioPhoneSid": phoneSid,
+        "ava.config.phone": phoneNumber,
+      });
+    } catch (persistErr) {
+      // If we cannot even record the SID, roll the number back before bailing.
+      await releaseTwilioNumber(phoneSid);
+      throw persistErr;
     }
 
-    const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
-    const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-      throw new Error("TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN is not configured");
+    // 4. Finalise. Any failure from here deletes the just-purchased Twilio
+    //    number so a retry starts clean (no orphaned billed number).
+    try {
+      const now = new Date().toISOString();
+      await db.collection("clinics").doc(clinicId).update({
+        "ava.config.phone": phoneNumber,
+        "ava.agent_id": agentId,
+        "ava.toolIds": toolIds ?? [],
+        "ava.provider": "elevenlabs",
+        "ava.twilioPhoneSid": phoneSid,
+        // Clinic starts PAUSED. The owner flips ava.enabled via /api/ava/toggle,
+        // which is the single source of truth the inbound proxy reads.
+        "ava.enabled": false,
+        "ava.provisionedAt": now,
+        "ava.provisioningInProgress": false,
+        "ava.provisioningLockAt": null,
+        updatedAt: now,
+      });
+    } catch (finaliseErr) {
+      await releaseTwilioNumber(phoneSid);
+      // Wipe the half-written number fields so a retry is not blocked by the
+      // "already has a provisioned number" guard.
+      await db.collection("clinics").doc(clinicId).update({
+        "ava.config.phone": null,
+        "ava.twilioPhoneSid": null,
+      }).catch(() => { /* best-effort */ });
+      throw finaliseErr;
     }
-
-    const elPhoneRes = await fetch("https://api.elevenlabs.io/v1/convai/phone-numbers/create-twilio", {
-      method: "POST",
-      headers: { "xi-api-key": ELEVENLABS_API_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phone_number: phoneNumber,
-        sid: phoneSid,
-        account_sid: TWILIO_ACCOUNT_SID,
-        auth_token: TWILIO_AUTH_TOKEN,
-        label: `${clinicData.name || "Clinic"} - Ava`,
-      }),
-    });
-
-    if (!elPhoneRes.ok) {
-      const body = await elPhoneRes.text();
-      throw new Error(`ElevenLabs phone number import failed (${elPhoneRes.status}): ${body}`);
-    }
-
-    const elPhoneData = await elPhoneRes.json();
-    const elevenLabsPhoneNumberId = elPhoneData.phone_number_id as string;
-
-    if (!elevenLabsPhoneNumberId) {
-      throw new Error("ElevenLabs phone number import returned no phone_number_id");
-    }
-
-    // 4. Persist to Firestore — store both the Twilio SID and the ElevenLabs
-    //    phone_number_id so toggle/route.ts can attach/detach the agent.
-    const now = new Date().toISOString();
-    await db.collection("clinics").doc(clinicId).update({
-      "ava.config.phone": phoneNumber,
-      "ava.agent_id": agentId,
-      "ava.toolIds": toolIds ?? [],
-      "ava.provider": "elevenlabs",
-      "ava.twilioPhoneSid": phoneSid,
-      "ava.phone_number_id": elevenLabsPhoneNumberId,
-      "ava.provisionedAt": now,
-      "ava.provisioningInProgress": false,
-      "ava.provisioningLockAt": null,
-      updatedAt: now,
-    });
 
     return NextResponse.json({
       phone: phoneNumber,

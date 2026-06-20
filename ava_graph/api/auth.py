@@ -3,9 +3,16 @@
 Traffic sources:
 - /api/webhook/ava  — ElevenLabs (Twilio routes through n8n → ElevenLabs → here).
                       Uses verify_elevenlabs_secret.
-- /api/tools/execute — dashboard internal. Uses verify_elevenlabs_secret as a shared
-                      internal secret until Firebase Auth ID-token check is wired.
-- Future /voice /sms /status-callback — direct Twilio. Use verify_twilio_signature.
+- /api/tools/execute: dashboard/Cloud Run internal. Uses verify_internal_secret
+                      (dedicated AVA_INTERNAL_SECRET shared header). The body-supplied
+                      api_key is ignored; credentials are resolved server-side from the
+                      authenticated clinic record.
+- Future /voice /sms /status-callback: direct Twilio. Use verify_twilio_signature.
+
+Secret hygiene: ELEVENLABS_WEBHOOK_SECRET authenticates ElevenLabs-signed webhooks
+ONLY. The internal tool endpoint has its own dedicated secret (AVA_INTERNAL_SECRET)
+so a leak of one does not grant the other. Previously the ElevenLabs secret was
+triple-purposed as the internal shared secret; that conflation is now removed.
 """
 
 import hashlib
@@ -17,6 +24,7 @@ from twilio.request_validator import RequestValidator
 
 _twilio_validator = RequestValidator(os.environ.get("TWILIO_AUTH_TOKEN", ""))
 _elevenlabs_secret = os.environ.get("ELEVENLABS_WEBHOOK_SECRET", "")
+_internal_secret = os.environ.get("AVA_INTERNAL_SECRET", "")
 
 
 async def verify_twilio_signature(request: Request) -> None:
@@ -66,3 +74,30 @@ async def verify_elevenlabs_secret(request: Request) -> None:
 
     if not hmac.compare_digest(expected, signature):
         raise HTTPException(status_code=403, detail="Invalid ElevenLabs signature")
+
+
+async def verify_internal_secret(request: Request) -> None:
+    """
+    Authenticate internal callers (dashboard / Cloud Run) of /api/tools/execute.
+
+    Requires a dedicated shared secret in the X-Internal-Secret header, compared
+    constant-time against AVA_INTERNAL_SECRET. Reject with 401 if missing, 403 if
+    mismatched, 500 if the server is not configured (fail closed, never allow an
+    unconfigured server to accept unauthenticated tool calls).
+
+    TODO: layer a Google-signed ID-token check (verify audience + issuer for the
+    Cloud Run service identity) on top of the shared secret once the dashboard's
+    service account is wired. Until then the shared secret is the sole gate.
+    """
+    if not _internal_secret:
+        raise HTTPException(
+            status_code=500,
+            detail="AVA_INTERNAL_SECRET not configured",
+        )
+
+    provided = request.headers.get("X-Internal-Secret", "")
+    if not provided:
+        raise HTTPException(status_code=401, detail="Missing X-Internal-Secret")
+
+    if not hmac.compare_digest(provided, _internal_secret):
+        raise HTTPException(status_code=403, detail="Invalid internal secret")
