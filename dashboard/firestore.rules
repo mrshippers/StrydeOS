@@ -117,6 +117,18 @@ service cloud.firestore {
         allow create, delete: if false;
       }
 
+      // KPI Read Model — projected by computeKPIs() pipeline via Admin SDK; readable by clinic members
+      match /kpis/{kpiId} {
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
+      // Compute State — pipeline idempotency / last-run sentinel; readable by owners/admins, written by server cron
+      match /computeState/{docId} {
+        allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow write: if false;
+      }
+
       // Milestones — first-run unlock events; owners/admins can read and update, written by server pipeline
       match /milestones/{milestoneId} {
         allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
