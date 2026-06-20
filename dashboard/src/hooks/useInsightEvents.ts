@@ -55,7 +55,7 @@ const DEMO_INSIGHT_EVENTS: InsightEvent[] = [
     suggestedAction: "Check if Sam had cancellations or schedule gaps this week. Consider a brief 1:1 to discuss rebooking patterns.",
     actionTarget: "owner",
     createdAt: new Date(Date.now() - 3600_000).toISOString(),
-    metadata: { clinicianName: "Sam Okoro", previousRate: 3.1, currentRate: 2.7, dropPercent: 14 },
+    metadata: { clinicianName: "Sam Okoro", previousRate: 3.1, currentRate: 2.7, dropPct: 14 },
   },
   {
     id: "demo-evt-3",
