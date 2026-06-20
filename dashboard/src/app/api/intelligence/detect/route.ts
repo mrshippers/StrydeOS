@@ -91,8 +91,9 @@ async function handler(request: NextRequest) {
         ...(d.data() as Omit<InsightEvent, "id">),
       }));
 
-      // 2b. Enrich events with AI coaching narratives (non-blocking)
-      await enrichEventsWithNarratives(db, clinicId, newEvents);
+      // 2b. Enrich events with AI coaching narratives (non-blocking).
+      // Result carries processed/skipped/timeout counts for observability.
+      const enrichment = await enrichEventsWithNarratives(db, clinicId, newEvents);
 
       // 3. Pulse consumer for patient-actionable events
       const pulse = await consumeInsightEvents(db, clinicId, newEvents);
@@ -134,6 +135,9 @@ async function handler(request: NextRequest) {
           eventsCreated: detection.eventsCreated,
           pulseActioned: pulse.actioned,
           urgentEmailsSent: urgentEmails.sent,
+          narrativesEnriched: enrichment.enriched,
+          narrativesSkipped: enrichment.skipped,
+          narrativeLlmTimeouts: enrichment.llmTimeouts,
         },
       });
     }
@@ -204,3 +208,10 @@ async function handler(request: NextRequest) {
 
 export const GET = withRequestLog(handler);
 export const POST = withRequestLog(handler);
+
+/**
+ * Allow Vercel serverless functions up to 300 seconds for cron runs.
+ * Without this, the default 10-second timeout silently truncates the
+ * per-clinic loop when LLM enrichment runs for a large clinic base.
+ */
+export const maxDuration = 300;

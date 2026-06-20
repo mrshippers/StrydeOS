@@ -10,7 +10,7 @@ vi.mock("@ai-sdk/gateway", () => ({
   gateway: vi.fn(() => "mock-model"),
 }));
 
-import { generateCoachingNarrative } from "../coaching-prompts";
+import { generateCoachingNarrative, LLM_TIMEOUT_MS } from "../coaching-prompts";
 import type { CoachingContext } from "../coaching-prompts";
 import { generateText } from "ai";
 
@@ -155,6 +155,49 @@ describe("generateCoachingNarrative", () => {
 
     const prompt = (mockedGenerateText.mock.calls[0][0] as Record<string, unknown>).prompt as string;
     expect(prompt).toContain("Max");
+  });
+
+  it("LLM_TIMEOUT_MS constant is exported and positive", () => {
+    expect(typeof LLM_TIMEOUT_MS).toBe("number");
+    expect(LLM_TIMEOUT_MS).toBeGreaterThan(0);
+  });
+
+  it("retries once on AbortError and succeeds on second attempt", async () => {
+    // First call: simulate the AbortController firing (AbortError)
+    const abortError = new DOMException("Aborted", "AbortError");
+    mockedGenerateText
+      .mockRejectedValueOnce(abortError)
+      .mockResolvedValueOnce({
+        text: "OWNER: Retry succeeded.\nCLINICIAN: All good.",
+      } as never);
+
+    const result = await generateCoachingNarrative(makeEvent(), makeContext());
+
+    expect(mockedGenerateText).toHaveBeenCalledTimes(2);
+    expect(result.ownerNarrative).toBe("Retry succeeded.");
+    expect(result.timedOut).toBeUndefined();
+  });
+
+  it("returns empty narratives with timedOut=true when both attempts time out", async () => {
+    const abortError = new DOMException("Aborted", "AbortError");
+    mockedGenerateText.mockRejectedValue(abortError);
+
+    const result = await generateCoachingNarrative(makeEvent(), makeContext());
+
+    expect(mockedGenerateText).toHaveBeenCalledTimes(2);
+    expect(result.ownerNarrative).toBe("");
+    expect(result.clinicianNarrative).toBe("");
+    expect(result.timedOut).toBe(true);
+  });
+
+  it("does not mask non-timeout errors (surfaces them to caller)", async () => {
+    mockedGenerateText.mockRejectedValue(new Error("Network error"));
+
+    await expect(
+      generateCoachingNarrative(makeEvent(), makeContext())
+    ).rejects.toThrow("Network error");
+    // Only one attempt (not two) because it is not an AbortError
+    expect(mockedGenerateText).toHaveBeenCalledTimes(1);
   });
 
   it("skips LLM call when revenueImpact is undefined for REVENUE_LEAK_DETECTED", async () => {

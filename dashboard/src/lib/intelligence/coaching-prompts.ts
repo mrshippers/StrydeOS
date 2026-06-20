@@ -305,12 +305,63 @@ function parseNarratives(text: string): CoachingNarrative {
   };
 }
 
+// ── Timeout / retry constants ────────────────────────────────────────────────
+
+/** How long a single LLM call may run before it is aborted (ms). */
+export const LLM_TIMEOUT_MS = 15_000;
+
+/** Sentinel thrown internally when an LLM call times out. */
+class LlmTimeoutError extends Error {
+  constructor() {
+    super("LLM call timed out");
+    this.name = "LlmTimeoutError";
+  }
+}
+
+/**
+ * Wrap a generateText call with an AbortController timeout.
+ * Throws LlmTimeoutError if the call exceeds LLM_TIMEOUT_MS.
+ */
+async function generateWithTimeout(
+  model: ReturnType<typeof gateway>,
+  system: string,
+  prompt: string,
+  signal?: AbortSignal
+): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
+  // Propagate external abort (e.g. Vercel cron limit) to this controller too.
+  const onParentAbort = () => controller.abort();
+  signal?.addEventListener("abort", onParentAbort);
+  try {
+    const { text } = await generateText({
+      model,
+      system,
+      prompt,
+      maxOutputTokens: 400,
+      temperature: 0.3,
+      abortSignal: controller.signal,
+    });
+    return text;
+  } catch (err) {
+    // AbortError from the controller always means our timer fired.
+    const isAbort =
+      (err instanceof Error && err.name === "AbortError") ||
+      controller.signal.aborted;
+    if (isAbort) throw new LlmTimeoutError();
+    throw err;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", onParentAbort);
+  }
+}
+
 // ── Main generation function ─────────────────────────────────────────────────
 
 export async function generateCoachingNarrative(
   event: InsightEvent,
   ctx: CoachingContext
-): Promise<CoachingNarrative> {
+): Promise<CoachingNarrative & { timedOut?: boolean }> {
   const promptTemplate = EVENT_PROMPTS[event.type];
   if (!promptTemplate) {
     return {
@@ -345,15 +396,30 @@ export async function generateCoachingNarrative(
     };
   }
 
-  const userPrompt = interpolate(promptTemplate, event, ctx);
+  const model = gateway("anthropic/claude-haiku-4.5");
+  const systemPrompt = SYSTEM_PROMPT;
+  const userPrompt = `${interpolate(promptTemplate, event, ctx)}\n\nRespond in exactly this format:\nOWNER: <owner narrative>\nCLINICIAN: <clinician narrative>`;
 
-  const { text } = await generateText({
-    model: gateway("anthropic/claude-haiku-4.5"),
-    system: SYSTEM_PROMPT,
-    prompt: `${userPrompt}\n\nRespond in exactly this format:\nOWNER: <owner narrative>\nCLINICIAN: <clinician narrative>`,
-    maxOutputTokens: 400,
-    temperature: 0.3,
-  });
+  // Attempt 1
+  try {
+    const text = await generateWithTimeout(model, systemPrompt, userPrompt);
+    return parseNarratives(text);
+  } catch (firstErr) {
+    if (!(firstErr instanceof LlmTimeoutError)) throw firstErr;
+  }
 
-  return parseNarratives(text);
+  // Retry once on timeout
+  try {
+    const text = await generateWithTimeout(model, systemPrompt, userPrompt);
+    return parseNarratives(text);
+  } catch (retryErr) {
+    if (!(retryErr instanceof LlmTimeoutError)) throw retryErr;
+    // Both attempts timed out - fall back to deterministic description.
+    // Callers should continue the loop; timedOut=true signals the fallback path.
+    return {
+      ownerNarrative: "",
+      clinicianNarrative: "",
+      timedOut: true,
+    };
+  }
 }

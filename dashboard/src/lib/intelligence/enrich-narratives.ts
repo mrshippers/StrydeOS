@@ -24,17 +24,18 @@ export async function enrichEventsWithNarratives(
   db: Firestore,
   clinicId: string,
   events: InsightEvent[]
-): Promise<{ enriched: number; skipped: number; errors: string[] }> {
+): Promise<{ enriched: number; skipped: number; errors: string[]; llmTimeouts: number }> {
   const errors: string[] = [];
   let enriched = 0;
   let skipped = 0;
+  let llmTimeouts = 0;
 
-  if (events.length === 0) return { enriched: 0, skipped: 0, errors: [] };
+  if (events.length === 0) return { enriched: 0, skipped: 0, errors: [], llmTimeouts: 0 };
 
   // Load clinic context once for all events
   const clinicDoc = await db.doc(`clinics/${clinicId}`).get();
   if (!clinicDoc.exists) {
-    return { enriched: 0, skipped: events.length, errors: ["Clinic not found"] };
+    return { enriched: 0, skipped: events.length, errors: ["Clinic not found"], llmTimeouts: 0 };
   }
 
   const clinicData = clinicDoc.data()!;
@@ -57,7 +58,7 @@ export async function enrichEventsWithNarratives(
           "Skipped coaching narrative enrichment - clinics/{clinicId}.sessionPricePence is not configured",
       },
     ]);
-    return { enriched: 0, skipped: events.length, errors: [] };
+    return { enriched: 0, skipped: events.length, errors: [], llmTimeouts: 0 };
   }
   const revenuePerSession = Math.round(sessionPricePence / 100);
 
@@ -78,6 +79,14 @@ export async function enrichEventsWithNarratives(
       };
 
       const narrative = await generateCoachingNarrative(event, ctx);
+
+      // Track LLM timeouts (both attempts exhausted): the event falls back to
+      // its deterministic title/description and the loop continues uninterrupted.
+      if (narrative.timedOut) {
+        llmTimeouts++;
+        skipped++;
+        continue;
+      }
 
       // ── Numeric guard ────────────────────────────────────────────────────
       // Verify every £/%/x-multiple in the generated narrative was explicitly
@@ -136,18 +145,24 @@ export async function enrichEventsWithNarratives(
     }
   }
 
-  // Persist the last enrichment error (if any) to computeState so it surfaces
-  // to operators instead of disappearing into the server logs.
-  if (errors.length > 0) {
+  // Persist the last enrichment error (if any) plus LLM timeout count to
+  // computeState so operators can see truncation risk from the dashboard.
+  if (errors.length > 0 || llmTimeouts > 0) {
     try {
+      const lastError =
+        errors.length > 0
+          ? `enrich-narratives: ${errors[errors.length - 1]}`
+          : llmTimeouts > 0
+            ? `enrich-narratives: ${llmTimeouts} LLM call(s) timed out; events fell back to deterministic description`
+            : null;
       await writeComputeState(db, clinicId, {
         status: "degraded",
-        lastError: `enrich-narratives: ${errors[errors.length - 1]}`,
+        ...(lastError ? { lastError } : {}),
       });
     } catch {
       // computeState is best-effort - don't fail enrichment on write failures.
     }
   }
 
-  return { enriched, skipped, errors };
+  return { enriched, skipped, errors, llmTimeouts };
 }

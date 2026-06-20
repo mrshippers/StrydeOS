@@ -86,7 +86,7 @@ vi.mock("@/lib/intelligence/notify-owner", () => ({
 }));
 
 vi.mock("@/lib/intelligence/enrich-narratives", () => ({
-  enrichEventsWithNarratives: vi.fn().mockResolvedValue(undefined),
+  enrichEventsWithNarratives: vi.fn().mockResolvedValue({ enriched: 0, skipped: 0, errors: [], llmTimeouts: 0 }),
 }));
 
 vi.mock("@/lib/pulse/insight-event-consumer", () => ({
