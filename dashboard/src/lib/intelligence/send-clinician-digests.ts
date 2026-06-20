@@ -9,6 +9,8 @@
 import type { Firestore } from "firebase-admin/firestore";
 import { buildClinicianDigestEmail, buildClinicianDigestText } from "./emails/clinician-digest";
 import type { ClinicianDigestData } from "./emails/clinician-digest";
+import { resolveRecipient } from "./resolve-recipient";
+import { writeAuditLog } from "@/lib/audit-log";
 
 interface DigestResult {
   clinicianId: string;
@@ -90,6 +92,33 @@ export async function sendClinicianDigests(
 
     if (!email || digestOptOut) {
       results.push({ clinicianId, clinicianName, sent: false, error: digestOptOut ? "opted_out" : "no_email" });
+      continue;
+    }
+
+    // P0-13: validate and clinic-bind the clinician recipient before sending
+    const recipientResult = await resolveRecipient(email, clinicId, db);
+    if (!recipientResult.valid) {
+      if (recipientResult.isDrift) {
+        console.error(`[sendClinicianDigests] SECURITY: clinician email drift for clinic ${clinicId}, clinician ${clinicianId}: ${email}`);
+      } else {
+        console.warn(`[sendClinicianDigests] Skipping digest for clinician ${clinicianId}: ${recipientResult.reason}`);
+      }
+      await writeAuditLog(db, clinicId, {
+        userId: "system:intelligence",
+        userEmail: "intelligence@strydeos.com",
+        action: "write",
+        resource: "email_send",
+        metadata: {
+          event: recipientResult.isDrift ? "recipient_drift" : "recipient_invalid",
+          security: recipientResult.isDrift === true,
+          recipient: email,
+          clinicId,
+          clinicianId,
+          reason: recipientResult.reason,
+          emailType: "clinician_digest",
+        },
+      });
+      results.push({ clinicianId, clinicianName, sent: false, error: `recipient_validation_failed: ${recipientResult.reason}` });
       continue;
     }
 
@@ -175,10 +204,26 @@ export async function sendClinicianDigests(
 
       await resend.emails.send({
         from: `StrydeOS <${fromEmail}>`,
-        to: email,
+        to: recipientResult.email,
         subject: `Your week at ${clinicName} \u2014 ${weekLabel}`,
         html,
         text,
+      });
+
+      // Audit the send
+      await writeAuditLog(db, clinicId, {
+        userId: "system:intelligence",
+        userEmail: "intelligence@strydeos.com",
+        action: "write",
+        resource: "email_send",
+        metadata: {
+          event: "digest_sent",
+          emailType: "clinician_digest",
+          recipient: recipientResult.email,
+          recipientUid: recipientResult.uid,
+          clinicId,
+          clinicianId,
+        },
       });
 
       results.push({ clinicianId, clinicianName, sent: true });

@@ -51,6 +51,11 @@ function makeMockDb(opts: {
   ownerEmail?: string;
   statsDocs?: ReturnType<typeof makeStatsDoc>[];
   eventDocs?: { id: string; data: () => Record<string, unknown> }[];
+  /**
+   * P0-13: controls whether resolveRecipient finds the owner in the users
+   * collection for this clinic. Defaults to true (valid recipient).
+   */
+  ownerValid?: boolean;
 } = {}) {
   const {
     clinicExists = true,
@@ -58,10 +63,43 @@ function makeMockDb(opts: {
     ownerEmail = "jamal@spires.com",
     statsDocs = [],
     eventDocs = [],
+    ownerValid = true,
   } = opts;
 
+  // User doc returned by the users collection query (P0-13 clinic binding)
+  const userDocs = ownerValid
+    ? [{ id: "user-owner-1", data: () => ({ email: ownerEmail, clinicId: "clinic-1" }) }]
+    : [];
+
+  // audit_logs add mock shared across chains
+  const auditAddFn = vi.fn().mockResolvedValue({ id: "audit-1" });
+
+  // users collection query chain: .where(clinicId).where(email).limit(1).get()
+  const usersLimitGetFn = vi.fn().mockResolvedValue({ docs: userDocs, empty: userDocs.length === 0 });
+  const usersLimitFn = vi.fn(() => ({ get: usersLimitGetFn }));
+  const usersWhere2Fn = vi.fn(() => ({ limit: usersLimitFn }));
+  const usersWhere1Fn = vi.fn(() => ({ where: usersWhere2Fn }));
+
+  // clinic insight_events / metrics_weekly / audit_logs chains
+  const clinicSubcollFn = vi.fn((subcoll: string) => {
+    if (subcoll === "audit_logs") return { add: auditAddFn };
+    return {
+      where: vi.fn(() => ({
+        orderBy: vi.fn(() => ({
+          get: vi.fn(async () => ({ docs: eventDocs })),
+          limit: vi.fn(() => ({
+            get: vi.fn(async () => ({ docs: statsDocs })),
+          })),
+        })),
+        limit: vi.fn(() => ({
+          get: vi.fn(async () => ({ docs: [] })),
+        })),
+      })),
+    };
+  });
+
   return {
-    doc: vi.fn(() => ({
+    doc: vi.fn((path: string) => ({
       get: vi.fn(async () => ({
         exists: clinicExists,
         data: () => ({
@@ -71,22 +109,30 @@ function makeMockDb(opts: {
         }),
       })),
       update: vi.fn(async () => {}),
+      // clinic doc used by audit chain: db.collection("clinics").doc(id).collection("audit_logs")
+      collection: clinicSubcollFn,
     })),
-    collection: vi.fn((path: string) => ({
-      where: vi.fn(() => ({
-        orderBy: vi.fn(() => ({
-          // events query: collection(...).where(...).orderBy(...).get()
-          get: vi.fn(async () => ({ docs: eventDocs })),
+    collection: vi.fn((name: string) => {
+      if (name === "users") return { where: usersWhere1Fn };
+      // "clinics" is accessed via db.doc() in notify-owner, but also via
+      // db.collection("clinics").doc() in writeAuditLog
+      return {
+        doc: vi.fn(() => ({
+          collection: clinicSubcollFn,
+        })),
+        where: vi.fn(() => ({
+          orderBy: vi.fn(() => ({
+            get: vi.fn(async () => ({ docs: eventDocs })),
+            limit: vi.fn(() => ({
+              get: vi.fn(async () => ({ docs: statsDocs })),
+            })),
+          })),
           limit: vi.fn(() => ({
-            // stats query: collection(...).where(...).orderBy(...).limit(2).get()
-            get: vi.fn(async () => ({ docs: statsDocs })),
+            get: vi.fn(async () => ({ docs: [] })),
           })),
         })),
-        limit: vi.fn(() => ({
-          get: vi.fn(async () => ({ docs: [] })),
-        })),
-      })),
-    })),
+      };
+    }),
   };
 }
 

@@ -3,6 +3,8 @@ import type { InsightEvent } from "@/types/insight-events";
 import { rankEvents } from "./rank-events";
 import { buildStateOfClinicEmail, buildStateOfClinicText } from "./emails/state-of-clinic";
 import { buildUrgentAlertEmail, buildUrgentAlertText } from "./emails/urgent-alert";
+import { resolveRecipient } from "./resolve-recipient";
+import { writeAuditLog } from "@/lib/audit-log";
 
 /**
  * Route insight events to notification channels.
@@ -61,6 +63,31 @@ export async function sendUrgentAlerts(
 
   const clinicName = (clinicData.name as string) ?? "Your Clinic";
 
+  // P0-13: validate and clinic-bind the owner recipient before sending
+  const recipientResult = await resolveRecipient(ownerEmail, clinicId, db);
+  if (!recipientResult.valid) {
+    if (recipientResult.isDrift) {
+      console.error(`[notify-owner] SECURITY: owner email drift detected for clinic ${clinicId}: ${ownerEmail}`);
+    } else {
+      console.warn(`[notify-owner] Skipping urgent alert for clinic ${clinicId}: ${recipientResult.reason}`);
+    }
+    await writeAuditLog(db, clinicId, {
+      userId: "system:intelligence",
+      userEmail: "intelligence@strydeos.com",
+      action: "write",
+      resource: "email_send",
+      metadata: {
+        event: recipientResult.isDrift ? "recipient_drift" : "recipient_invalid",
+        security: recipientResult.isDrift === true,
+        recipient: ownerEmail,
+        clinicId,
+        reason: recipientResult.reason,
+        emailType: "urgent_alert",
+      },
+    });
+    return { sent: 0, errors: [`Recipient validation failed: ${recipientResult.reason}`] };
+  }
+
   // Only attempt email if Resend API key is configured
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
@@ -79,10 +106,27 @@ export async function sendUrgentAlerts(
 
       await resend.emails.send({
         from: `StrydeOS Intelligence <${fromEmail}>`,
-        to: ownerEmail,
+        to: recipientResult.email,
         subject: `⚠️ ${event.title} — ${clinicName}`,
         html,
         text,
+      });
+
+      // Audit the send
+      await writeAuditLog(db, clinicId, {
+        userId: "system:intelligence",
+        userEmail: "intelligence@strydeos.com",
+        action: "write",
+        resource: "email_send",
+        metadata: {
+          event: "digest_sent",
+          emailType: "urgent_alert",
+          recipient: recipientResult.email,
+          recipientUid: recipientResult.uid,
+          clinicId,
+          insightEventType: event.type,
+          insightEventId: event.id,
+        },
       });
 
       // Update lastNotifiedAt
@@ -130,6 +174,31 @@ export async function sendWeeklyDigest(
   if (!ownerEmail) return { sent: false, error: "No owner email" };
 
   const clinicName = (clinicData.name as string) ?? "Your Clinic";
+
+  // P0-13: validate and clinic-bind the owner recipient before sending
+  const recipientResult = await resolveRecipient(ownerEmail, clinicId, db);
+  if (!recipientResult.valid) {
+    if (recipientResult.isDrift) {
+      console.error(`[notify-owner] SECURITY: owner email drift for clinic ${clinicId}: ${ownerEmail}`);
+    } else {
+      console.warn(`[notify-owner] Weekly digest skipped for clinic ${clinicId}: ${recipientResult.reason}`);
+    }
+    await writeAuditLog(db, clinicId, {
+      userId: "system:intelligence",
+      userEmail: "intelligence@strydeos.com",
+      action: "write",
+      resource: "email_send",
+      metadata: {
+        event: recipientResult.isDrift ? "recipient_drift" : "recipient_invalid",
+        security: recipientResult.isDrift === true,
+        recipient: ownerEmail,
+        clinicId,
+        reason: recipientResult.reason,
+        emailType: "weekly_digest",
+      },
+    });
+    return { sent: false, error: `Recipient validation failed: ${recipientResult.reason}` };
+  }
 
   // Load events from the past 7 days
   const sevenDaysAgo = new Date();
@@ -207,10 +276,25 @@ export async function sendWeeklyDigest(
 
     await resend.emails.send({
       from: `StrydeOS Intelligence <${fromEmail}>`,
-      to: ownerEmail,
+      to: recipientResult.email,
       subject: `Your clinic this week — ${clinicName}`,
       html,
       text,
+    });
+
+    // Audit the send
+    await writeAuditLog(db, clinicId, {
+      userId: "system:intelligence",
+      userEmail: "intelligence@strydeos.com",
+      action: "write",
+      resource: "email_send",
+      metadata: {
+        event: "digest_sent",
+        emailType: "weekly_digest",
+        recipient: recipientResult.email,
+        recipientUid: recipientResult.uid,
+        clinicId,
+      },
     });
 
     return { sent: true };
