@@ -208,12 +208,22 @@ export async function detectInsightEvents(
     }
 
     // 3. UTILISATION_BELOW_TARGET
+    // Fairness gate: for a two-week consecutive assertion we require EACH week
+    // used in that assertion to independently meet the sample-size gate (count
+    // threshold AND statisticallyRepresentative !== false). If the previous week
+    // is not evidentially sound we suppress the named event.
     if (clinicianMetrics.length >= 2 && hasSufficientSample) {
+      const prev = clinicianMetrics[1]!;
+      const prevAppts = Number(prev.appointmentsTotal ?? 0);
+      const prevIsStatRep = prev.statisticallyRepresentative !== false;
+      const previousWeekSufficient =
+        prevAppts >= MIN_COMPLETED_APPTS && prevIsStatRep;
+
       const recentTwo = clinicianMetrics.slice(0, 2);
       const bothBelow = recentTwo.every(
         (m) => Number(m.utilisationRate ?? 0) < config.utilisationFloor
       );
-      if (bothBelow) {
+      if (bothBelow && previousWeekSufficient) {
         const curUtil = Number(current.utilisationRate ?? 0);
         newEvents.push({
           type: "UTILISATION_BELOW_TARGET",
@@ -322,17 +332,26 @@ export async function detectInsightEvents(
         return sc >= 1 && sc < config.maxProgrammeLength;
       });
 
+      // Guard: skip patients whose clinicianId is absent, null, or the literal
+      // strings "undefined"/"null" produced by bad coercion. Without this a
+      // phantom "undefined" bucket forms in the map and can distort rate maths.
+      const isValidClinicianId = (v: unknown): v is string =>
+        typeof v === "string" &&
+        v.length > 0 &&
+        v !== "undefined" &&
+        v !== "null";
+
       const caseloadByClinician = new Map<string, number>();
       for (const p of midProgrammeAll) {
-        const cId = p.clinicianId as string;
-        if (!cId) continue;
+        const cId = p.clinicianId;
+        if (!isValidClinicianId(cId)) continue;
         caseloadByClinician.set(cId, (caseloadByClinician.get(cId) ?? 0) + 1);
       }
 
       const dropoutsByClinician = new Map<string, number>();
       for (const p of midProgrammeDropouts) {
-        const cId = p.clinicianId as string;
-        if (!cId) continue;
+        const cId = p.clinicianId;
+        if (!isValidClinicianId(cId)) continue;
         dropoutsByClinician.set(cId, (dropoutsByClinician.get(cId) ?? 0) + 1);
       }
 

@@ -668,3 +668,155 @@ describe("P0-8: REVENUE_LEAK_DETECTED names rate-outlier, not highest-volume cli
     expect(typeof event!.timeframe).toBe("string");
   });
 });
+
+// ── P0-7/P0-8 fairness: per-week sample gate on two-week detectors ────────────
+
+describe("P0-7/P0-8 fairness: two-week detectors require EACH week to be sample-sound", () => {
+  it("suppresses UTILISATION_BELOW_TARGET when previous week is sub-threshold (low count)", async () => {
+    // Current week is sound (12 appts, statRep=true).
+    // Previous week is unsound (3 appts, statRep=false).
+    // Two-week assertion requires BOTH weeks to be evidentially sound.
+    const db = makeMockDb({
+      clinicians: [{ id: "c1", name: "Alice" }],
+      metrics: [
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-09",
+          utilisationRate: 0.50,
+          appointmentsTotal: 12,
+          statisticallyRepresentative: true,
+        }),
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-02",
+          utilisationRate: 0.50,
+          appointmentsTotal: 3,          // sub-threshold
+          statisticallyRepresentative: false,
+        }),
+      ],
+    });
+
+    await detectInsightEvents(db as any, "clinic-test");
+
+    const writtenTypes = (db._written as Record<string, unknown>[]).map((e) => e.type);
+    expect(writtenTypes).not.toContain("UTILISATION_BELOW_TARGET");
+  });
+
+  it("suppresses UTILISATION_BELOW_TARGET when previous week has statisticallyRepresentative=false despite sufficient count", async () => {
+    // Current week: sound. Previous week: count above threshold but statRep explicitly false.
+    const db = makeMockDb({
+      clinicians: [{ id: "c1", name: "Alice" }],
+      metrics: [
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-09",
+          utilisationRate: 0.50,
+          appointmentsTotal: 12,
+          statisticallyRepresentative: true,
+        }),
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-02",
+          utilisationRate: 0.50,
+          appointmentsTotal: 10,         // above MIN_COMPLETED_APPTS
+          statisticallyRepresentative: false, // but flag says not representative
+        }),
+      ],
+    });
+
+    await detectInsightEvents(db as any, "clinic-test");
+
+    const writtenTypes = (db._written as Record<string, unknown>[]).map((e) => e.type);
+    expect(writtenTypes).not.toContain("UTILISATION_BELOW_TARGET");
+  });
+
+  it("emits UTILISATION_BELOW_TARGET when BOTH weeks are sample-sound", async () => {
+    // Both weeks: count above threshold and statRep=true.
+    const db = makeMockDb({
+      clinicians: [{ id: "c1", name: "Alice" }],
+      metrics: [
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-09",
+          utilisationRate: 0.50,
+          appointmentsTotal: 12,
+          statisticallyRepresentative: true,
+        }),
+        makeMetric({
+          clinicianId: "c1",
+          weekStart: "2026-06-02",
+          utilisationRate: 0.50,
+          appointmentsTotal: 10,
+          statisticallyRepresentative: true,
+        }),
+      ],
+    });
+
+    await detectInsightEvents(db as any, "clinic-test");
+
+    const writtenTypes = (db._written as Record<string, unknown>[]).map((e) => e.type);
+    expect(writtenTypes).toContain("UTILISATION_BELOW_TARGET");
+  });
+});
+
+// ── P0-8: phantom "undefined" clinician bucket in REVENUE_LEAK ───────────────
+
+describe("P0-8: phantom undefined clinicianId guard in REVENUE_LEAK_DETECTED", () => {
+  it("does not create a phantom clinician bucket when clinicianId is undefined", async () => {
+    // Patient whose clinicianId is JS undefined (will arrive as null/undefined from Firestore)
+    const lastSession = new Date();
+    lastSession.setDate(lastSession.getDate() - 10);
+    const patients = [
+      {
+        id: "p-no-clinician",
+        clinicianId: undefined,
+        discharged: false,
+        lastSessionDate: lastSession.toISOString(),
+        sessionCount: 3,
+        nextSessionDate: null,
+      },
+    ];
+
+    const db = makeMockDb({ patients });
+    await detectInsightEvents(db as any, "clinic-test");
+
+    const event = (db._written as Record<string, unknown>[]).find((e) => e.type === "REVENUE_LEAK_DETECTED");
+    if (event) {
+      const meta = event.metadata as Record<string, unknown>;
+      const caseloadMap = meta.caseloadByClinician as Record<string, unknown> ?? {};
+      const dropoutMap = meta.byClinician as Record<string, unknown> ?? {};
+      // "undefined" and "null" must not be keys
+      expect(Object.keys(caseloadMap)).not.toContain("undefined");
+      expect(Object.keys(caseloadMap)).not.toContain("null");
+      expect(Object.keys(dropoutMap)).not.toContain("undefined");
+      expect(Object.keys(dropoutMap)).not.toContain("null");
+    }
+  });
+
+  it("does not create a phantom clinician bucket when clinicianId is the string 'undefined'", async () => {
+    const lastSession = new Date();
+    lastSession.setDate(lastSession.getDate() - 10);
+    const patients = [
+      {
+        id: "p-string-undefined",
+        clinicianId: "undefined",  // literal string "undefined" from bad coercion
+        discharged: false,
+        lastSessionDate: lastSession.toISOString(),
+        sessionCount: 3,
+        nextSessionDate: null,
+      },
+    ];
+
+    const db = makeMockDb({ patients });
+    await detectInsightEvents(db as any, "clinic-test");
+
+    const event = (db._written as Record<string, unknown>[]).find((e) => e.type === "REVENUE_LEAK_DETECTED");
+    if (event) {
+      const meta = event.metadata as Record<string, unknown>;
+      const caseloadMap = meta.caseloadByClinician as Record<string, unknown> ?? {};
+      const dropoutMap = meta.byClinician as Record<string, unknown> ?? {};
+      expect(Object.keys(caseloadMap)).not.toContain("undefined");
+      expect(Object.keys(dropoutMap)).not.toContain("undefined");
+    }
+  });
+});
