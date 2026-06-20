@@ -53,8 +53,9 @@ function formatValue(kpiId: KpiId, value: number): string {
   }
 }
 
-function formatTarget(kpiId: KpiId, target: number): string {
-  return `target ${formatValue(kpiId, target)}`;
+function formatTarget(kpiId: KpiId, target: number, targetIsReference?: boolean): string {
+  const prefix = targetIsReference ? "ref. target" : "target";
+  return `${prefix} ${formatValue(kpiId, target)}`;
 }
 
 function formatRelativeTime(iso: string): string {
@@ -128,7 +129,7 @@ function KpiTile({ kpi }: { kpi: KpiDoc }) {
         {formatValue(kpi.kpiId, kpi.value)}
       </p>
       <p className="text-[10px] text-muted mt-0.5 tabular-nums">
-        {formatTarget(kpi.kpiId, kpi.target)}
+        {formatTarget(kpi.kpiId, kpi.target, kpi.targetIsReference)}
       </p>
     </div>
   );

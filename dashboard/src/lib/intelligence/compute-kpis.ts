@@ -129,29 +129,74 @@ export function resolveKpiTarget(
   kpiId: KpiId,
   targets: Partial<ClinicTargets> | undefined
 ): number {
+  return resolveKpiTargetWithFlag(kpiId, targets).target;
+}
+
+/**
+ * Resolve the target value for a KPI from clinic config, also returning a flag
+ * indicating whether the value came from the REFERENCE_TARGETS fallback.
+ *
+ * `targetIsReference` is true when the clinic has NOT configured the target;
+ * the UI must render a qualifier (e.g. "ref. target") to prevent a clinic owner
+ * from reading an external reference benchmark as their own goal.
+ *
+ * Exported for unit testing.
+ */
+export function resolveKpiTargetWithFlag(
+  kpiId: KpiId,
+  targets: Partial<ClinicTargets> | undefined
+): { target: number; targetIsReference: boolean } {
   switch (kpiId) {
-    case "revenue-per-session":
-      return targets?.revenuePerSessionPence ?? REFERENCE_TARGETS.revenuePerSessionPence;
-    case "nps":
-      return targets?.npsTarget ?? REFERENCE_TARGETS.npsTarget;
-    case "google-review-conversion":
-      return targets?.reviewConversionTarget ?? REFERENCE_TARGETS.reviewConversionTarget;
-    case "average-star-rating":
-      return targets?.averageStarRatingTarget ?? REFERENCE_TARGETS.averageStarRatingTarget;
-    case "follow-up-rate":
-      return targets?.followUpRate ?? REFERENCE_TARGETS.followUpRate;
+    case "revenue-per-session": {
+      const clinic = targets?.revenuePerSessionPence;
+      return clinic != null
+        ? { target: clinic, targetIsReference: false }
+        : { target: REFERENCE_TARGETS.revenuePerSessionPence, targetIsReference: true };
+    }
+    case "nps": {
+      const clinic = targets?.npsTarget;
+      return clinic != null
+        ? { target: clinic, targetIsReference: false }
+        : { target: REFERENCE_TARGETS.npsTarget, targetIsReference: true };
+    }
+    case "google-review-conversion": {
+      const clinic = targets?.reviewConversionTarget;
+      return clinic != null
+        ? { target: clinic, targetIsReference: false }
+        : { target: REFERENCE_TARGETS.reviewConversionTarget, targetIsReference: true };
+    }
+    case "average-star-rating": {
+      const clinic = targets?.averageStarRatingTarget;
+      return clinic != null
+        ? { target: clinic, targetIsReference: false }
+        : { target: REFERENCE_TARGETS.averageStarRatingTarget, targetIsReference: true };
+    }
+    case "follow-up-rate": {
+      const clinic = targets?.followUpRate;
+      return clinic != null
+        ? { target: clinic, targetIsReference: false }
+        : { target: REFERENCE_TARGETS.followUpRate, targetIsReference: true };
+    }
     case "hep-compliance": {
       const raw = targets?.hepRate;
-      // Normalise percent-scaled values (e.g. 85 stored as 85 not 0.85).
       if (typeof raw === "number") {
-        return raw > 1 ? raw / 100 : raw;
+        // Normalise percent-scaled values (e.g. 85 stored as 85 not 0.85).
+        return { target: raw > 1 ? raw / 100 : raw, targetIsReference: false };
       }
-      return REFERENCE_TARGETS.hepRate;
+      return { target: REFERENCE_TARGETS.hepRate, targetIsReference: true };
     }
-    case "utilisation":
-      return targets?.utilisationRate ?? REFERENCE_TARGETS.utilisationRate;
-    case "dna-rate":
-      return targets?.dnaRate ?? REFERENCE_TARGETS.dnaRate;
+    case "utilisation": {
+      const clinic = targets?.utilisationRate;
+      return clinic != null
+        ? { target: clinic, targetIsReference: false }
+        : { target: REFERENCE_TARGETS.utilisationRate, targetIsReference: true };
+    }
+    case "dna-rate": {
+      const clinic = targets?.dnaRate;
+      return clinic != null
+        ? { target: clinic, targetIsReference: false }
+        : { target: REFERENCE_TARGETS.dnaRate, targetIsReference: true };
+    }
   }
 }
 
@@ -269,13 +314,14 @@ export async function computeKPIs(
       continue;
     }
 
-    const target = resolveKpiTarget(kpiId, targets);
+    const { target, targetIsReference } = resolveKpiTargetWithFlag(kpiId, targets);
     const status = evaluateStatus(value, config);
 
     const doc: KpiDoc = {
       kpiId,
       value,
       target,
+      targetIsReference,
       status,
       trend: trends[kpiId] ?? [],
       window: { type: "weekly", weekStart: current.weekStart },

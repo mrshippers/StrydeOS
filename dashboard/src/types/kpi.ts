@@ -64,6 +64,13 @@ export interface KpiDoc {
   computedAt: string;
   /** The `metrics_weekly` doc ID this was projected from. */
   sourceDocId?: string;
+  /**
+   * True when `target` came from the REFERENCE_TARGETS fallback rather than the
+   * clinic's own configured benchmark. UI must surface a qualifier (e.g. "ref.
+   * target") when this is true so a clinic owner never reads a reference value
+   * as their own goal.
+   */
+  targetIsReference?: boolean;
 }
 
 // ─── Events ──────────────────────────────────────────────────────────────────

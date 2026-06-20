@@ -163,3 +163,46 @@ describe("evaluateKpiStatus - dna-rate boundaries (lower is better)", () => {
     expect(evaluateKpiStatus("dna-rate", 0.20)).toBe("danger");
   });
 });
+
+// ─── targetIsReference flag ───────────────────────────────────────────────────
+
+import { resolveKpiTargetWithFlag } from "../compute-kpis";
+
+describe("resolveKpiTargetWithFlag - targetIsReference flag", () => {
+  it("sets targetIsReference=false when clinic has revenue-per-session target", () => {
+    const targets: Partial<ClinicTargets> = { revenuePerSessionPence: 7500 };
+    const result = resolveKpiTargetWithFlag("revenue-per-session", targets);
+    expect(result.target).toBe(7500);
+    expect(result.targetIsReference).toBe(false);
+  });
+
+  it("sets targetIsReference=true when revenue-per-session falls back to reference", () => {
+    const result = resolveKpiTargetWithFlag("revenue-per-session", {});
+    expect(result.target).toBe(REFERENCE_TARGETS.revenuePerSessionPence);
+    expect(result.targetIsReference).toBe(true);
+  });
+
+  it("sets targetIsReference=true when targets is undefined", () => {
+    const result = resolveKpiTargetWithFlag("nps", undefined);
+    expect(result.target).toBe(REFERENCE_TARGETS.npsTarget);
+    expect(result.targetIsReference).toBe(true);
+  });
+
+  it("sets targetIsReference=false when clinic has nps target", () => {
+    const targets: Partial<ClinicTargets> = { npsTarget: 65 };
+    const result = resolveKpiTargetWithFlag("nps", targets);
+    expect(result.target).toBe(65);
+    expect(result.targetIsReference).toBe(false);
+  });
+
+  it("sets targetIsReference=true for dna-rate reference fallback", () => {
+    const result = resolveKpiTargetWithFlag("dna-rate", {});
+    expect(result.targetIsReference).toBe(true);
+  });
+
+  it("sets targetIsReference=false when clinic has dna-rate target", () => {
+    const targets: Partial<ClinicTargets> = { dnaRate: 0.04 };
+    const result = resolveKpiTargetWithFlag("dna-rate", targets);
+    expect(result.targetIsReference).toBe(false);
+  });
+});

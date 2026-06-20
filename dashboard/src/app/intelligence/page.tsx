@@ -25,6 +25,7 @@ import { useWeeklyStats } from "@/hooks/useWeeklyStats";
 import { useIntelligenceData } from "@/hooks/useIntelligenceData";
 import { useKpis } from "@/hooks/useKpis";
 import { getDemoNps } from "@/hooks/useDemoIntelligence";
+import { REFERENCE_TARGETS } from "@/lib/intelligence/compute-kpis";
 import { usePatients } from "@/hooks/usePatients";
 import { useValueLedger } from "@/hooks/useValueLedger";
 import { recordOutcomeScores } from "@/lib/queries";
@@ -758,7 +759,7 @@ export default function IntelligencePage() {
         status: "ok" as const,
         trend: demoNps.trend.map((t) => t.score),
         kpiId: "nps" as const,
-        target: 50,
+        target: REFERENCE_TARGETS.npsTarget,
         threshold: { ok: 70, warn: 40 },
         higherIsBetter: true,
         computedAt: new Date().toISOString(),
