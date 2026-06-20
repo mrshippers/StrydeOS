@@ -123,9 +123,10 @@ service cloud.firestore {
         allow write: if false;
       }
 
-      // Compute State — pipeline idempotency / last-run sentinel; readable by owners/admins, written by server cron
+      // Compute State — pipeline idempotency / last-run sentinel; readable by all clinic members (clinicians need
+      // it for the KpiProjectionStrip freshness signal via subscribeComputeState), written by server cron only
       match /computeState/{docId} {
-        allow read: if isClinicOwnerOrAdmin(clinicId) || isSuperAdmin();
+        allow read: if isClinicMember(clinicId) || isSuperAdmin();
         allow write: if false;
       }
 
