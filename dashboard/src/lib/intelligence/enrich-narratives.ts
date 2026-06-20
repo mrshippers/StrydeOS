@@ -11,7 +11,7 @@ import { appendDataQualityIssues, writeComputeState } from "./compute-state";
  * Enrich newly detected insight events with AI-generated coaching narratives.
  *
  * Runs sequentially (not parallel) to respect API rate limits.
- * Failures are logged but never block the pipeline — events remain
+ * Failures are logged but never block the pipeline - events remain
  * valid with their original static title/description as fallback.
  *
  * After generation, EVERY narrative passes through the numeric guard:
@@ -42,7 +42,7 @@ export async function enrichEventsWithNarratives(
 
   // INTELLIGENCE_AUDIT.md issue 4: canonical session price lives on the clinic
   // root document. Using settings.insightConfig.revenuePerSession produced
-  // narratives that disagreed with insight detection. No hardcoded £65 fallback —
+  // narratives that disagreed with insight detection. No hardcoded £65 fallback -
   // skip enrichment if unconfigured.
   const sessionPricePence = clinicData.sessionPricePence as number | undefined;
   if (
@@ -54,7 +54,7 @@ export async function enrichEventsWithNarratives(
       {
         code: "NARRATIVE_SKIPPED",
         message:
-          "Skipped coaching narrative enrichment — clinics/{clinicId}.sessionPricePence is not configured",
+          "Skipped coaching narrative enrichment - clinics/{clinicId}.sessionPricePence is not configured",
       },
     ]);
     return { enriched: 0, skipped: events.length, errors: [] };
@@ -91,7 +91,7 @@ export async function enrichEventsWithNarratives(
         const ownerGuard = guardNarrative(guardedOwner, event, revenuePerSession);
         if (!ownerGuard.accepted) {
           errors.push(
-            `${event.type}: owner narrative rejected — fabricated numbers: ${ownerGuard.fabricatedNumbers.join(", ")}`
+            `${event.type}: owner narrative rejected - fabricated numbers: ${ownerGuard.fabricatedNumbers.join(", ")}`
           );
           guardedOwner = "";
         }
@@ -101,7 +101,7 @@ export async function enrichEventsWithNarratives(
         const clinicianGuard = guardNarrative(guardedClinician, event, revenuePerSession);
         if (!clinicianGuard.accepted) {
           errors.push(
-            `${event.type}: clinician narrative rejected — fabricated numbers: ${clinicianGuard.fabricatedNumbers.join(", ")}`
+            `${event.type}: clinician narrative rejected - fabricated numbers: ${clinicianGuard.fabricatedNumbers.join(", ")}`
           );
           guardedClinician = "";
         }
@@ -128,7 +128,7 @@ export async function enrichEventsWithNarratives(
         skipped++;
       }
     } catch (err) {
-      // Never block the pipeline — capture the error into computeState so
+      // Never block the pipeline - capture the error into computeState so
       // operators can see it from the dashboard (INTELLIGENCE_AUDIT.md issue 9).
       const msg = err instanceof Error ? err.message : String(err);
       errors.push(`${event.type}: ${msg}`);
@@ -145,7 +145,7 @@ export async function enrichEventsWithNarratives(
         lastError: `enrich-narratives: ${errors[errors.length - 1]}`,
       });
     } catch {
-      // computeState is best-effort — don't fail enrichment on write failures.
+      // computeState is best-effort - don't fail enrichment on write failures.
     }
   }
 

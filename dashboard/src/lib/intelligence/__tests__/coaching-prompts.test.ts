@@ -79,7 +79,7 @@ describe("generateCoachingNarrative", () => {
 
   it("falls back to full text as ownerNarrative when format is unexpected", async () => {
     mockedGenerateText.mockResolvedValue({
-      text: "Something went wrong with the format — here is plain text.",
+      text: "Something went wrong with the format - here is plain text.",
     } as never);
 
     const result = await generateCoachingNarrative(
@@ -89,7 +89,7 @@ describe("generateCoachingNarrative", () => {
 
     // parseNarratives falls back: ownerNarrative = full text, clinicianNarrative = ""
     expect(result.ownerNarrative).toBe(
-      "Something went wrong with the format — here is plain text."
+      "Something went wrong with the format - here is plain text."
     );
     expect(result.clinicianNarrative).toBe("");
   });
@@ -155,5 +155,22 @@ describe("generateCoachingNarrative", () => {
 
     const prompt = (mockedGenerateText.mock.calls[0][0] as Record<string, unknown>).prompt as string;
     expect(prompt).toContain("Max");
+  });
+
+  it("skips LLM call when revenueImpact is undefined for REVENUE_LEAK_DETECTED", async () => {
+    // Finding 1: revenueImpact ?? 0 bypass fix.
+    // A REVENUE_LEAK_DETECTED event with no revenueImpact must NOT call the
+    // model (the old ?? 0 fallback caused detectMissingPlaceholders to see
+    // a finite 0 and let the prompt through, shipping "£0 revenue at risk").
+    const event = makeEvent({
+      type: "REVENUE_LEAK_DETECTED",
+      revenueImpact: undefined,
+      metadata: { patientCount: "3" },
+    });
+
+    const result = await generateCoachingNarrative(event, makeContext());
+
+    expect(result).toEqual({ ownerNarrative: "", clinicianNarrative: "" });
+    expect(mockedGenerateText).not.toHaveBeenCalled();
   });
 });

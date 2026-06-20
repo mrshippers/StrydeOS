@@ -31,17 +31,17 @@ const SYSTEM_PROMPT = `You are the coaching voice inside StrydeOS, a clinical pe
 
 You translate raw performance data into two narratives:
 
-1. OWNER NARRATIVE — for the clinic owner/manager.
+1. OWNER NARRATIVE - for the clinic owner/manager.
    - Business-framed. Reference revenue impact using ONLY the figures provided to you.
    - Be specific: name the clinician, name the patients, reference the time period.
    - End with one concrete action the owner can take TODAY.
    - Keep under 120 words.
 
-2. CLINICIAN NARRATIVE — for the clinician whose data this concerns.
+2. CLINICIAN NARRATIVE - for the clinician whose data this concerns.
    - Clinically framed. Never use "conversion rate", "revenue", "KPI", or business jargon.
    - Frame as supportive, never punitive. You're a colleague, not a manager.
    - Reference patients by context, not metrics. "A few of your patients from last week haven't rebooked" not "your follow-up rate dropped 15%."
-   - When something is going well, name what's working in clinical terms: "your Tuesday morning patients tend to complete their full treatment — something about that slot works well."
+   - When something is going well, name what's working in clinical terms: "your Tuesday morning patients tend to complete their full treatment - something about that slot works well."
    - End with a gentle, optional next step. "Might be worth a quick check-in" not "you must review."
    - Keep under 100 words.
 
@@ -82,7 +82,7 @@ Data:
 - Clinic: {clinicName}
 
 Use the figures above verbatim. Do not introduce any other numbers.
-Generate narratives. For the owner, mention slot waste. For the clinician, frame as concern for patient welfare ("a few patients have missed their appointments — worth checking they're OK").`,
+Generate narratives. For the owner, mention slot waste. For the clinician, frame as concern for patient welfare ("a few patients have missed their appointments - worth checking they're OK").`,
 
   HEP_COMPLIANCE_LOW: `Clinic-wide home exercise programme compliance is below target.
 
@@ -102,7 +102,7 @@ Data:
 - Clinic: {clinicName}
 
 Use the figures above verbatim. Do not introduce any other numbers.
-Generate narratives. For the owner, frame as available capacity. For the clinician, frame as availability ("you've got some open slots this week — let reception know if you want them filled or kept for admin time").`,
+Generate narratives. For the owner, frame as available capacity. For the clinician, frame as availability ("you've got some open slots this week - let reception know if you want them filled or kept for admin time").`,
 
   REVENUE_LEAK_DETECTED: `Patients are dropping out mid-programme, representing lost follow-up revenue.
 
@@ -112,8 +112,8 @@ Data:
 - Clinic: {clinicName}
 - Clinician (if specific): {clinicianName}
 
-The figure £{revenueImpact} is the computed revenue impact — echo it exactly. Do not alter, round, or introduce any other monetary figure.
-Generate narratives. For the owner, reference the provided £{revenueImpact} figure and suggest reviewing the patients. For the clinician, frame around patient continuity ("a few patients haven't returned to finish their treatment — they might benefit from a follow-up call").`,
+The figure £{revenueImpact} is the computed revenue impact - echo it exactly. Do not alter, round, or introduce any other monetary figure.
+Generate narratives. For the owner, reference the provided £{revenueImpact} figure and suggest reviewing the patients. For the clinician, frame around patient continuity ("a few patients haven't returned to finish their treatment - they might benefit from a follow-up call").`,
 
   TREATMENT_COMPLETION_WIN: `Positive event: a clinician achieved excellent treatment completion rates.
 
@@ -146,7 +146,7 @@ Data:
 - Clinic: {clinicName}
 
 Use the figures above verbatim. Do not introduce any other numbers.
-Generate narratives. For the owner, flag as reputation risk and suggest direct outreach. For the clinician, frame gently ("one of your patients gave lower feedback than usual — sometimes a follow-up call makes all the difference").`,
+Generate narratives. For the owner, flag as reputation risk and suggest direct outreach. For the clinician, frame gently ("one of your patients gave lower feedback than usual - sometimes a follow-up call makes all the difference").`,
 
   DATA_STALENESS_ALERT: `The clinic's data hasn't been updated recently (CSV-bridge clinics).
 
@@ -155,9 +155,9 @@ Data:
 - Clinic: {clinicName}
 
 Use the figures above verbatim. Do not introduce any other numbers.
-Generate a short owner-only narrative. Set the clinician narrative to an empty string — this is an admin issue, not clinical.`,
+Generate a short owner-only narrative. Set the clinician narrative to an empty string - this is an admin issue, not clinical.`,
 
-  FOLLOWUP_REVENUE_DROP: `Follow-up appointment revenue dropped significantly week-on-week — indicating fewer patients returning for session 2+.
+  FOLLOWUP_REVENUE_DROP: `Follow-up appointment revenue dropped significantly week-on-week, indicating fewer patients returning for session 2+.
 
 Data:
 - This week's follow-up revenue: £{thisWeekFollowUpRevenue}
@@ -165,8 +165,8 @@ Data:
 - Drop: {dropPct}%
 - Clinic: {clinicName}
 
-The monetary and percentage figures above are computed values — echo them exactly. Do not introduce any benchmark statistics or other numbers not listed here.
-Generate narratives. For the owner, frame the revenue drop using only the provided figures. For the clinician, frame around patient continuity ("fewer patients came back for their next session this week — worth checking if any need a follow-up call").`,
+The monetary and percentage figures above are computed values - echo them exactly. Do not introduce any benchmark statistics or other numbers not listed here.
+Generate narratives. For the owner, frame the revenue drop using only the provided figures. For the clinician, frame around patient continuity ("fewer patients came back for their next session this week - worth checking if any need a follow-up call").`,
 
   OUTCOME_IMPROVEMENT: `Positive event: a patient showed clinically meaningful improvement on a validated outcome measure.
 
@@ -191,7 +191,7 @@ Data:
 - Clinic: {clinicName}
 
 Do not introduce any revenue estimates or other numbers not listed above.
-Generate narratives. For the owner, frame as a captured booking that would otherwise have been a missed call. For the clinician, keep it light — a heads-up that a new booking is on their diary.`,
+Generate narratives. For the owner, frame as a captured booking that would otherwise have been a missed call. For the clinician, keep it light - a heads-up that a new booking is on their diary.`,
 
   AVA_CALL_ESCALATED: `Ava handed an inbound call to a human because it could not handle the request safely (clinical complexity, complaint, urgent symptom, or unclear intent).
 
@@ -201,7 +201,7 @@ Data:
 - Clinic: {clinicName}
 
 Do not introduce any numbers not listed above.
-Generate narratives. For the owner, frame as a guardrail working as intended — flag whether this category of call is becoming frequent enough to warrant a template response. For the clinician, surface only if they need to follow up.`,
+Generate narratives. For the owner, frame as a guardrail working as intended - flag whether this category of call is becoming frequent enough to warrant a template response. For the clinician, surface only if they need to follow up.`,
 
   AVA_CALLBACK_REQUESTED: `Ava captured a callback request from a caller who couldn't book directly (out-of-hours, missing info, or caller preference).
 
@@ -226,9 +226,11 @@ const REQUIRED_NUMERIC_PLACEHOLDERS: Partial<Record<InsightEventType, string[]>>
   HIGH_DNA_STREAK: ["dnaCount"],
   HEP_COMPLIANCE_LOW: ["hepRate"],
   UTILISATION_BELOW_TARGET: ["utilisation", "weeksBelow"],
+  TREATMENT_COMPLETION_WIN: ["completionRate"],
   FOLLOWUP_REVENUE_DROP: ["thisWeekFollowUpRevenue", "lastWeekFollowUpRevenue", "dropPct"],
   OUTCOME_IMPROVEMENT: ["previousScore", "currentScore", "scoreChange", "mcid"],
   PATIENT_DROPOUT_RISK: ["daysSinceVisit", "sessionsCompleted", "treatmentLength"],
+  NPS_DETRACTOR_ALERT: ["npsScore"],
 };
 
 // ── Detect missing / non-finite placeholders ──────────────────────────────────
@@ -252,7 +254,7 @@ export function detectMissingPlaceholders(
     // If the value looks like a number, verify it is finite
     const n = typeof value === "number" ? value : parseFloat(String(value));
     if (!isNaN(n) && !Number.isFinite(n)) {
-      // Infinite value — treat as missing
+      // Infinite value - treat as missing
       missing.push(key);
     }
     if (typeof value === "number" && isNaN(value)) {
@@ -276,7 +278,7 @@ function interpolate(
     clinicianName: ctx.clinicianName ?? event.clinicianName ?? "a clinician",
     patientName: ctx.patientName ?? event.patientName ?? "a patient",
     revenuePerSession: String(ctx.revenuePerSession),
-    revenueImpact: String(event.revenueImpact ?? 0),
+    ...(event.revenueImpact != null ? { revenueImpact: String(event.revenueImpact) } : {}),
     ...Object.fromEntries(
       Object.entries({ ...event.metadata, ...ctx.metadata }).map(([k, v]) => [
         k,
@@ -323,7 +325,7 @@ export async function generateCoachingNarrative(
     clinicianName: ctx.clinicianName ?? event.clinicianName ?? "a clinician",
     patientName: ctx.patientName ?? event.patientName ?? "a patient",
     revenuePerSession: ctx.revenuePerSession,
-    revenueImpact: event.revenueImpact ?? 0,
+    ...(event.revenueImpact != null ? { revenueImpact: event.revenueImpact } : {}),
     ...event.metadata,
     ...ctx.metadata,
   };
