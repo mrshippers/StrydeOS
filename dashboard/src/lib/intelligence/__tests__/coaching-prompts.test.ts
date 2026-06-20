@@ -113,8 +113,11 @@ describe("generateCoachingNarrative", () => {
     // User prompt should have interpolated values
     const prompt = callArgs.prompt as string;
     expect(prompt).toContain("Andrew");
-    expect(prompt).toContain("65");
     expect(prompt).toContain("Spires Physiotherapy");
+    // revenuePerSession is NOT in the CLINICIAN_FOLLOWUP_DROP prompt template
+    // because the LLM is no longer asked to estimate revenue from that figure.
+    // Revenue figures are injected only where the event already carries a
+    // computed revenueImpact (e.g. REVENUE_LEAK_DETECTED).
 
     // Should request the OWNER/CLINICIAN format
     expect(prompt).toContain("OWNER:");

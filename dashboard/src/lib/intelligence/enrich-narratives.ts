@@ -4,6 +4,7 @@ import {
   generateCoachingNarrative,
   type CoachingContext,
 } from "./coaching-prompts";
+import { guardNarrative } from "./narrative-guard";
 import { appendDataQualityIssues, writeComputeState } from "./compute-state";
 
 /**
@@ -12,6 +13,12 @@ import { appendDataQualityIssues, writeComputeState } from "./compute-state";
  * Runs sequentially (not parallel) to respect API rate limits.
  * Failures are logged but never block the pipeline — events remain
  * valid with their original static title/description as fallback.
+ *
+ * After generation, EVERY narrative passes through the numeric guard:
+ * if it contains any currency/percentage/x-multiple not present in the
+ * event metadata the model was given, it is rejected and the event falls
+ * back to its deterministic description. This prevents fabricated figures
+ * from reaching clinic owner inboxes.
  */
 export async function enrichEventsWithNarratives(
   db: Firestore,
@@ -72,19 +79,48 @@ export async function enrichEventsWithNarratives(
 
       const narrative = await generateCoachingNarrative(event, ctx);
 
+      // ── Numeric guard ────────────────────────────────────────────────────
+      // Verify every £/%/x-multiple in the generated narrative was explicitly
+      // given to the model. If any fabricated figure is detected, reject the
+      // narrative and fall back to the deterministic event description so no
+      // invented figure ever reaches an email.
+      let guardedOwner = narrative.ownerNarrative;
+      let guardedClinician = narrative.clinicianNarrative;
+
+      if (guardedOwner) {
+        const ownerGuard = guardNarrative(guardedOwner, event, revenuePerSession);
+        if (!ownerGuard.accepted) {
+          errors.push(
+            `${event.type}: owner narrative rejected — fabricated numbers: ${ownerGuard.fabricatedNumbers.join(", ")}`
+          );
+          guardedOwner = "";
+        }
+      }
+
+      if (guardedClinician) {
+        const clinicianGuard = guardNarrative(guardedClinician, event, revenuePerSession);
+        if (!clinicianGuard.accepted) {
+          errors.push(
+            `${event.type}: clinician narrative rejected — fabricated numbers: ${clinicianGuard.fabricatedNumbers.join(", ")}`
+          );
+          guardedClinician = "";
+        }
+      }
+      // ── End guard ────────────────────────────────────────────────────────
+
       // Write narratives back to the event document
-      if (event.id && (narrative.ownerNarrative || narrative.clinicianNarrative)) {
+      if (event.id && (guardedOwner || guardedClinician)) {
         await db
           .doc(`clinics/${clinicId}/insight_events/${event.id}`)
           .update({
-            ownerNarrative: narrative.ownerNarrative || null,
-            clinicianNarrative: narrative.clinicianNarrative || null,
+            ownerNarrative: guardedOwner || null,
+            clinicianNarrative: guardedClinician || null,
             narrativeGeneratedAt: new Date().toISOString(),
           });
 
         // Also update the in-memory event for downstream consumers
-        event.ownerNarrative = narrative.ownerNarrative || null;
-        event.clinicianNarrative = narrative.clinicianNarrative || null;
+        event.ownerNarrative = guardedOwner || null;
+        event.clinicianNarrative = guardedClinician || null;
         event.narrativeGeneratedAt = new Date().toISOString();
 
         enriched++;
