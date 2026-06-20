@@ -30,6 +30,10 @@ import type {
 import type { InsightEvent } from "@/types/insight-events";
 import { loadSessionRate } from "./load-session-rate";
 import { appendDataQualityIssues } from "./compute-state";
+import {
+  toFollowUpBookingCount,
+  computeFollowUpValuePence,
+} from "./follow-up-value";
 
 // ─── Result ──────────────────────────────────────────────────────────────────
 
@@ -608,36 +612,46 @@ async function detectMetricImprovements(
     utilisationRate: avg(baseline.map((s) => s.utilisationRate)),
   };
 
-  // Follow-up rate improvement → direct revenue
-  // Only fire if: (a) meaningful delta, (b) not already fired this quarter
-  const fuDelta = avgRecent.followUpRate - avgBaseline.followUpRate;
-  if (fuDelta > 0.3 && !alreadyFiredMetrics.has("followUpRate")) {
-    // Raised threshold to 0.3 (from 0.2) — needs to be a genuine shift, not noise
-    const weeklyIAs = avg(recent.map((s) => s.initialAssessments));
-    const weeklyRevGainPence = Math.round(fuDelta * weeklyIAs * sessionRate);
-    const annualGainPence = weeklyRevGainPence * 52;
+  // Follow-up bookings improvement → direct revenue (P0-9 fix)
+  // Unit contract: followUps is a COUNT of follow-up appointments, not a ratio.
+  // returningPatientsDelta = avg(recent followUps) - avg(baseline followUps) = extra patients/wk.
+  // Value = returningPatientsDelta * sessionRate (count x rate).
+  // NEVER multiply a ratio delta (sessions-per-patient) by a volume as a probability.
+  // Only fire if: (a) meaningful increase in booked follow-ups, (b) not already fired this quarter
+  const avgRecentFollowUps = avg(recent.map((s) => s.followUps));
+  const avgBaselineFollowUps = avg(baseline.map((s) => s.followUps));
+  const returningPatientsDelta = avgRecentFollowUps - avgBaselineFollowUps;
+  const fuRateDelta = avgRecent.followUpRate - avgBaseline.followUpRate;
+  if (fuRateDelta > 0.3 && !alreadyFiredMetrics.has("followUpRate")) {
+    // Raised threshold to 0.3 (from 0.2) on the ratio - needs a genuine shift, not noise
+    const returningPatients = toFollowUpBookingCount(returningPatientsDelta);
+    const weeklyRevGainPence = computeFollowUpValuePence(returningPatients, sessionRate);
+    if (weeklyRevGainPence !== null) {
+      const annualGainPence = weeklyRevGainPence * 52;
 
-    events.push({
-      clinicId,
-      module: "intelligence",
-      type: "INTEL_METRIC_IMPROVEMENT",
-      confidence: "low",
-      valuePence: weeklyRevGainPence,
-      valueCalculation: `Follow-up rate improved by ${fuDelta.toFixed(1)} (${avgBaseline.followUpRate.toFixed(1)} → ${avgRecent.followUpRate.toFixed(1)}). +${fuDelta.toFixed(1)} × ${weeklyIAs.toFixed(0)} IAs/wk × £${(sessionRate / 100).toFixed(0)} = £${(weeklyRevGainPence / 100).toFixed(0)}/wk (£${(annualGainPence / 100).toFixed(0)}/yr)`,
-      title: "Follow-up rate improved since using Intelligence",
-      description: `Clinic-wide follow-up rate rose from ${avgBaseline.followUpRate.toFixed(1)} to ${avgRecent.followUpRate.toFixed(1)} over the last 4 weeks vs prior baseline.`,
-      triggeredAt: now,
-      attributedAt: now,
-      createdAt: now,
-      metadata: {
-        metric: "followUpRate",
-        baselineValue: avgBaseline.followUpRate,
-        recentValue: avgRecent.followUpRate,
-        delta: fuDelta,
-        annualImpactPence: annualGainPence,
-        quarterFired: quarterStart,
-      },
-    });
+      events.push({
+        clinicId,
+        module: "intelligence",
+        type: "INTEL_METRIC_IMPROVEMENT",
+        confidence: "low",
+        valuePence: weeklyRevGainPence,
+        valueCalculation: `Follow-up rate improved (${avgBaseline.followUpRate.toFixed(1)} -> ${avgRecent.followUpRate.toFixed(1)} sessions/patient). +${Math.round(returningPatientsDelta)} additional follow-ups/wk x £${(sessionRate / 100).toFixed(0)} = £${(weeklyRevGainPence / 100).toFixed(0)}/wk (£${(annualGainPence / 100).toFixed(0)}/yr)`,
+        title: "Follow-up rate improved since using Intelligence",
+        description: `Clinic-wide follow-up rate rose from ${avgBaseline.followUpRate.toFixed(1)} to ${avgRecent.followUpRate.toFixed(1)} over the last 4 weeks vs prior baseline.`,
+        triggeredAt: now,
+        attributedAt: now,
+        createdAt: now,
+        metadata: {
+          metric: "followUpRate",
+          baselineValue: avgBaseline.followUpRate,
+          recentValue: avgRecent.followUpRate,
+          delta: fuRateDelta,
+          returningPatientsDelta: Math.round(returningPatientsDelta),
+          annualImpactPence: annualGainPence,
+          quarterFired: quarterStart,
+        },
+      });
+    }
   }
 
   // DNA rate improvement → slots recovered
