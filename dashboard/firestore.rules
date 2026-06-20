@@ -117,13 +117,13 @@ service cloud.firestore {
         allow create, delete: if false;
       }
 
-      // KPI Read Model — projected by computeKPIs() pipeline via Admin SDK; readable by clinic members
+      // KPI Read Model - projected by computeKPIs() pipeline via Admin SDK; readable by clinic members
       match /kpis/{kpiId} {
         allow read: if isClinicMember(clinicId) || isSuperAdmin();
         allow write: if false;
       }
 
-      // Compute State — pipeline idempotency / last-run sentinel; readable by all clinic members (clinicians need
+      // Compute State - pipeline idempotency / last-run sentinel; readable by all clinic members (clinicians need
       // it for the KpiProjectionStrip freshness signal via subscribeComputeState), written by server cron only
       match /computeState/{docId} {
         allow read: if isClinicMember(clinicId) || isSuperAdmin();
