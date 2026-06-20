@@ -11,6 +11,7 @@ import { buildClinicianDigestEmail, buildClinicianDigestText } from "./emails/cl
 import type { ClinicianDigestData } from "./emails/clinician-digest";
 import { resolveRecipient } from "./resolve-recipient";
 import { writeAuditLog } from "@/lib/audit-log";
+import { sanitiseSubject } from "./sanitise-subject";
 
 interface DigestResult {
   clinicianId: string;
@@ -192,7 +193,7 @@ export async function sendClinicianDigests(
       await resend.emails.send({
         from: `StrydeOS <${fromEmail}>`,
         to: recipientResult.email,
-        subject: `Your week at ${clinicName} \u2014 ${weekLabel}`,
+        subject: sanitiseSubject(`Your week at ${clinicName} - ${weekLabel}`),
         html,
         text,
       });

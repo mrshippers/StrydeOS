@@ -5,6 +5,7 @@ import { buildStateOfClinicEmail, buildStateOfClinicText } from "./emails/state-
 import { buildUrgentAlertEmail, buildUrgentAlertText } from "./emails/urgent-alert";
 import { resolveRecipient } from "./resolve-recipient";
 import { writeAuditLog } from "@/lib/audit-log";
+import { sanitiseSubject } from "./sanitise-subject";
 
 /**
  * Route insight events to notification channels.
@@ -95,7 +96,7 @@ export async function sendUrgentAlerts(
       await resend.emails.send({
         from: `StrydeOS Intelligence <${fromEmail}>`,
         to: recipientResult.email,
-        subject: `⚠️ ${event.title} — ${clinicName}`,
+        subject: sanitiseSubject(`⚠️ ${event.title} - ${clinicName}`),
         html,
         text,
       });
@@ -253,7 +254,7 @@ export async function sendWeeklyDigest(
     await resend.emails.send({
       from: `StrydeOS Intelligence <${fromEmail}>`,
       to: recipientResult.email,
-      subject: `Your clinic this week — ${clinicName}`,
+      subject: sanitiseSubject(`Your clinic this week - ${clinicName}`),
       html,
       text,
     });

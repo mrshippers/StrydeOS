@@ -1,5 +1,6 @@
 import { wrapEmailLayout, escHtml, textFooter } from "./layout";
 import { getResend } from "@/lib/resend";
+import { sanitiseSubject } from "@/lib/intelligence/sanitise-subject";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.strydeos.com";
 
@@ -127,7 +128,7 @@ export function buildAvaDigestEmail(data: AvaDigestData): { html: string; text: 
 
   const { summary } = data;
   const text = [
-    `Ava Daily Digest — ${data.clinicName}`,
+    `Ava Daily Digest - ${data.clinicName}`,
     data.dateRange,
     "",
     `Booked: ${summary.booked}  |  Callbacks: ${summary.callbacks}  |  Escalated: ${summary.escalated}  |  Info: ${summary.info}  |  Voicemail: ${summary.voicemail}`,
@@ -154,7 +155,7 @@ export async function sendAvaDigestEmail(to: string, data: AvaDigestData): Promi
   await resend.emails.send({
     from: "Ava at StrydeOS <ava@notifications.strydeos.com>",
     to,
-    subject: `Ava digest — ${data.clinicName} · ${data.dateRange}`,
+    subject: sanitiseSubject(`Ava digest - ${data.clinicName} - ${data.dateRange}`),
     html,
     text,
   });
