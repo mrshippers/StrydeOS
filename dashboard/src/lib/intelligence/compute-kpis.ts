@@ -5,11 +5,14 @@
  * `reviews` and projects them into a read-optimised `kpis/*` collection that
  * the dashboard subscribes to.
  *
- * This is a LAYER on top of `metrics_weekly` — not a replacement. All weekly
+ * This is a LAYER on top of `metrics_weekly` - not a replacement. All weekly
  * number generation stays in `compute-weekly.ts`.
  *
  * On threshold crossings (status === 'danger'), emits dedupe-safe events to
  * `events/*` for downstream consumers (Pulse sequences, digest email, etc.).
+ *
+ * P0-10: NPS is computed ONLY from true 0-10 nps_sms responses.
+ * P0-11: 1-5 star sentiment is a SEPARATE average-star-rating metric.
  */
 
 import type { Firestore } from "firebase-admin/firestore";
@@ -90,6 +93,12 @@ const KPI_CONFIG: Record<KpiId, KpiConfig> = {
     thresholds: { ok: 0.05, warn: 0.02 },
     targetFrom: () => 0.05,
   },
+  "average-star-rating": {
+    id: "average-star-rating",
+    higherIsBetter: true,
+    thresholds: { ok: 4.5, warn: 4.0 },
+    targetFrom: () => 4.5,
+  },
 };
 
 // ─── Main Entry Point ────────────────────────────────────────────────────────
@@ -145,6 +154,8 @@ export async function computeKPIs(
   );
 
   // Compute each KPI value.
+  // P0-10: NPS uses ONLY nps_sms 0-10 responses via computeRollingNpsOnly.
+  // P0-11: Star sentiment uses ONLY non-nps_sms reviews via computeRollingAverageStarRating.
   const kpiValues: Record<KpiId, number | null> = {
     "follow-up-rate": current.followUpRate ?? null,
     "hep-compliance":
@@ -154,8 +165,9 @@ export async function computeKPIs(
     utilisation: current.utilisationRate ?? null,
     "dna-rate": current.dnaRate ?? null,
     "revenue-per-session": current.revenuePerSessionPence ?? null,
-    nps: computeRollingNps(reviews, 90),
+    nps: computeRollingNpsOnly(reviews, 90),
     "google-review-conversion": computeReviewConversion(reviews, allStats, 90),
+    "average-star-rating": computeRollingAverageStarRating(reviews, 90),
   };
 
   // Build trend arrays (one per KPI, newest-first among prior weeks).
@@ -168,9 +180,10 @@ export async function computeKPIs(
     "dna-rate": priorWeeks.map((w) => w.dnaRate ?? 0),
     "revenue-per-session": priorWeeks.map((w) => w.revenuePerSessionPence ?? 0),
     nps: priorWeeks.map((w) => (w.npsScore as number | undefined) ?? 0),
-    // Review conversion doesn't have a clean per-week projection from metrics_weekly —
-    // leave trend empty for this KPI until a dedicated trend rollup exists.
+    // Review conversion and average-star-rating don't have clean per-week projections
+    // from metrics_weekly - leave trends empty until a dedicated trend rollup exists.
     "google-review-conversion": [],
+    "average-star-rating": [],
   };
 
   // Project each KPI + collect threshold events.
@@ -305,28 +318,51 @@ function normaliseTargets(
 
 /**
  * Compute NPS from the last N days of `reviews`.
- * Mirrors the logic in `useIntelligenceData.deriveNps` — 0-10 scale for nps_sms,
- * 1-5 star scale for platform reviews.
+ *
+ * P0-10: Uses ONLY true 0-10 nps_sms responses. Standard NPS categories:
+ *   promoters  = 9-10
+ *   passives   = 7-8
+ *   detractors = 0-6
+ *
+ * Returns null when no nps_sms reviews exist in the window (not zero - null
+ * signals "no data" so callers can show an empty state rather than a false 0).
+ *
+ * Exported for unit testing.
  */
-function computeRollingNps(reviews: Review[], windowDays: number): number | null {
-  const cutoff = new Date(Date.now() - windowDays * 86400_000).toISOString();
-  const windowed = reviews.filter((r) => r.date >= cutoff);
+export function computeRollingNpsOnly(reviews: Review[], windowDays: number): number | null {
+  const cutoff = new Date(Date.now() - windowDays * 86400_000).toISOString().slice(0, 10);
+  const windowed = reviews.filter((r) => r.platform === "nps_sms" && r.date >= cutoff);
   if (windowed.length === 0) return null;
 
   let promoters = 0;
   let detractors = 0;
 
   for (const r of windowed) {
-    if (r.platform === "nps_sms") {
-      if (r.rating >= 9) promoters++;
-      else if (r.rating <= 6) detractors++;
-    } else {
-      if (r.rating >= 5) promoters++;
-      else if (r.rating <= 3) detractors++;
-    }
+    if (r.rating >= 9) promoters++;
+    else if (r.rating <= 6) detractors++;
+    // 7-8 = passives: neither promoter nor detractor
   }
 
   return Math.round(((promoters - detractors) / windowed.length) * 100);
+}
+
+/**
+ * Compute average star rating from the last N days of platform reviews (1-5 scale).
+ *
+ * P0-11: Excludes nps_sms responses (0-10 scale) - those are a different metric.
+ * Only google / trustpilot / etc. platform reviews with 1-5 star ratings count.
+ *
+ * Returns null when no star reviews exist in the window.
+ *
+ * Exported for unit testing.
+ */
+export function computeRollingAverageStarRating(reviews: Review[], windowDays: number): number | null {
+  const cutoff = new Date(Date.now() - windowDays * 86400_000).toISOString().slice(0, 10);
+  const windowed = reviews.filter((r) => r.platform !== "nps_sms" && r.date >= cutoff);
+  if (windowed.length === 0) return null;
+
+  const sum = windowed.reduce((acc, r) => acc + r.rating, 0);
+  return Math.round((sum / windowed.length) * 10) / 10;
 }
 
 /**

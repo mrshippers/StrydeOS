@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, orderBy, limit, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import type { WeeklyStats } from "@/types";
@@ -17,9 +17,9 @@ export interface WeeklyTrendData {
  * `clinics/{clinicId}/metrics_weekly`, ordered oldest-first so
  * sparklines read left (past) → right (present).
  *
- * Note: metrics_weekly docs are per-clinician. This hook aggregates
- * across all clinicians by taking a simple mean per week bucket,
- * giving a clinic-level view suitable for trend strips.
+ * Reads ONLY the pre-aggregated clinicianId === "all" docs written by the
+ * compute pipeline. This avoids client-side re-aggregation across per-clinician
+ * rows, which produced different values than the canonical server-side aggregate.
  */
 export function useWeeklyTrend(weeksBack = 12): WeeklyTrendData {
   const { user } = useAuth();
@@ -48,9 +48,14 @@ export function useWeeklyTrend(weeksBack = 12): WeeklyTrendData {
     async function fetch() {
       try {
         const col = collection(db!, "clinics", clinicId!, "metrics_weekly");
-        // Pull more docs than needed so we can aggregate across clinicians.
-        // weeksBack * 6 clinicians is a safe upper bound for most practices.
-        const q = query(col, orderBy("weekStart", "desc"), limit(weeksBack * 8));
+        // Read only the pre-aggregated "all" docs - the compute pipeline writes
+        // one canonical clinic-level aggregate per week under clinicianId === "all".
+        const q = query(
+          col,
+          where("clinicianId", "==", "all"),
+          orderBy("weekStart", "desc"),
+          limit(weeksBack)
+        );
         const snap = await getDocs(q);
 
         if (cancelled) return;
@@ -61,44 +66,10 @@ export function useWeeklyTrend(weeksBack = 12): WeeklyTrendData {
           return;
         }
 
-        // Group docs by weekStart, average numeric KPIs across clinicians.
-        const byWeek: Record<string, WeeklyStats[]> = {};
-        snap.docs.forEach((d) => {
-          const s = { id: d.id, ...d.data() } as WeeklyStats;
-          if (!byWeek[s.weekStart]) byWeek[s.weekStart] = [];
-          byWeek[s.weekStart].push(s);
-        });
-
-        const aggregated: WeeklyStats[] = Object.entries(byWeek)
-          .sort(([a], [b]) => a.localeCompare(b)) // oldest first
-          .slice(-weeksBack)
-          .map(([weekStart, rows]) => {
-            const mean = <K extends keyof WeeklyStats>(key: K): number => {
-              const vals = rows
-                .map((r) => r[key] as number)
-                .filter((v) => typeof v === "number" && !isNaN(v));
-              if (vals.length === 0) return 0;
-              return vals.reduce((s, v) => s + v, 0) / vals.length;
-            };
-            return {
-              id: weekStart,
-              clinicianId: "clinic",
-              clinicianName: "Clinic",
-              weekStart,
-              followUpRate: mean("followUpRate"),
-              followUpTarget: mean("followUpTarget"),
-              hepComplianceRate: mean("hepComplianceRate"),
-              hepRate: mean("hepRate"),
-              hepTarget: mean("hepTarget"),
-              utilisationRate: mean("utilisationRate"),
-              dnaRate: mean("dnaRate"),
-              treatmentCompletionRate: mean("treatmentCompletionRate"),
-              revenuePerSessionPence: mean("revenuePerSessionPence"),
-              appointmentsTotal: rows.reduce((s, r) => s + (r.appointmentsTotal ?? 0), 0),
-              initialAssessments: rows.reduce((s, r) => s + (r.initialAssessments ?? 0), 0),
-              followUps: rows.reduce((s, r) => s + (r.followUps ?? 0), 0),
-            } satisfies WeeklyStats;
-          });
+        // Sort oldest-first for sparklines (left = past, right = present).
+        const aggregated: WeeklyStats[] = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() } as WeeklyStats))
+          .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
 
         setWeeks(aggregated);
         setLoading(false);

@@ -16,7 +16,8 @@ export type KpiId =
   | "dna-rate"
   | "revenue-per-session"
   | "nps"
-  | "google-review-conversion";
+  | "google-review-conversion"
+  | "average-star-rating";
 
 export const KPI_IDS: readonly KpiId[] = [
   "follow-up-rate",
@@ -26,6 +27,7 @@ export const KPI_IDS: readonly KpiId[] = [
   "revenue-per-session",
   "nps",
   "google-review-conversion",
+  "average-star-rating",
 ] as const;
 
 export type KpiStatus = "ok" | "warn" | "danger";

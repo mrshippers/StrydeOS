@@ -20,7 +20,6 @@ import {
   getDemoDnaBySlot,
   getDemoReferralSources,
   getDemoOutcomeTrends,
-  getDemoNps,
   getDemoReviewVelocity,
   getDemoClinicianKpis,
   getDemoBenchmarks,
@@ -30,7 +29,6 @@ import {
   type DnaBySlot,
   type ReferralSource,
   type OutcomeTrend,
-  type NpsData,
   type ReviewVelocity,
   type ClinicianKpiRow,
   type BenchmarkComparison,
@@ -270,71 +268,6 @@ function deriveOutcomeTrends(outcomeScores: OutcomeScore[]): OutcomeTrend[] {
   return trends;
 }
 
-function deriveNps(reviews: Review[], allStats: WeeklyStats[]): NpsData {
-  if (reviews.length === 0) {
-    return { score: 0, promoters: 0, passives: 0, detractors: 0, totalResponses: 0, trend: [] };
-  }
-
-  // Separate direct NPS SMS responses (0–10 scale) from platform reviews (1–5 star scale)
-  const npsDirectResponses = reviews.filter((r) => r.platform === "nps_sms");
-  const platformReviews    = reviews.filter((r) => r.platform !== "nps_sms");
-
-  let promoters = 0, passives = 0, detractors = 0;
-
-  // Direct NPS responses use the standard NPS scale (0–10)
-  for (const r of npsDirectResponses) {
-    if (r.rating >= 9) promoters++;
-    else if (r.rating >= 7) passives++;
-    else detractors++;
-  }
-
-  // Platform reviews (Google, Trustpilot) use star ratings (1–5) mapped to NPS categories
-  for (const r of platformReviews) {
-    if (r.rating >= 5) promoters++;
-    else if (r.rating === 4) passives++;
-    else detractors++;
-  }
-
-  const total = reviews.length;
-  const score = Math.round(((promoters - detractors) / total) * 100);
-
-  // Monthly trend: prefer direct NPS responses, fall back to metrics_weekly npsScore
-  const monthMap = new Map<string, { total: number; count: number; hasDirect: boolean }>();
-
-  // First pass: direct NPS responses grouped by month
-  for (const r of npsDirectResponses) {
-    const month = r.date.slice(0, 7); // YYYY-MM
-    const ex = monthMap.get(month);
-    // Convert 0–10 NPS score to an NPS-like composite: ((score / 10) * 200) - 100 maps 0→-100, 10→100
-    const npsLike = Math.round(((r.rating / 10) * 200) - 100);
-    if (ex) { ex.total += npsLike; ex.count++; ex.hasDirect = true; }
-    else monthMap.set(month, { total: npsLike, count: 1, hasDirect: true });
-  }
-
-  // Second pass: metrics_weekly npsScore for months without direct NPS data
-  for (const stat of allStats) {
-    if (stat.clinicianId !== "all" || !stat.npsScore) continue;
-    const month = stat.weekStart.slice(0, 7); // YYYY-MM
-    const ex = monthMap.get(month);
-    const npsLike = Math.round(((stat.npsScore) - 3) * 50); // convert avg rating (1–5) → NPS-like
-    if (ex) {
-      // Only merge metrics_weekly if no direct NPS data exists for this month
-      if (!ex.hasDirect) { ex.total += npsLike; ex.count++; }
-    } else {
-      monthMap.set(month, { total: npsLike, count: 1, hasDirect: false });
-    }
-  }
-
-  const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const trend = Array.from(monthMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([ym, { total, count }]) => ({
-      month: MONTH_SHORT[parseInt(ym.slice(5, 7), 10) - 1] ?? ym,
-      score: Math.round(total / count),
-    }));
-
-  return { score, promoters, passives, detractors, totalResponses: total, trend };
-}
 
 function deriveReviewVelocity(reviews: Review[]): ReviewVelocity {
   if (reviews.length === 0) {
@@ -428,49 +361,6 @@ function deriveClinicianKpis(allStats: WeeklyStats[], patients: Patient[]): Clin
   });
 }
 
-// ─── Benchmarks from real data ──────────────────────────────────────────────
-
-function deriveBenchmarks(
-  allStats: WeeklyStats[],
-  clinicianKpis: ClinicianKpiRow[],
-  nps: NpsData,
-  avgRevPerSessionPence: number,
-): BenchmarkComparison[] {
-  // Compute clinic-wide "You:" values from real data
-  // Latest "all" stat for utilisation & DNA
-  const latestAll = [...allStats]
-    .filter((s) => s.clinicianId === "all")
-    .sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0];
-
-  // Rebook rate = weighted average across clinicians (or from latest "all" stat)
-  const yourRebook = clinicianKpis.length > 0
-    ? clinicianKpis.reduce((sum, c) => sum + c.rebookRate, 0) / clinicianKpis.length
-    : latestAll?.followUpRate ?? 0;
-
-  const yourDna = latestAll?.dnaRate ?? (
-    clinicianKpis.length > 0
-      ? clinicianKpis.reduce((sum, c) => sum + c.dnaRate, 0) / clinicianKpis.length
-      : 0
-  );
-
-  const yourUtilisation = latestAll?.utilisationRate ?? (
-    clinicianKpis.length > 0
-      ? clinicianKpis.reduce((sum, c) => sum + c.utilisationRate, 0) / clinicianKpis.length
-      : 0
-  );
-
-  const yourNps = nps.totalResponses > 0 ? nps.score : 0;
-  const yourRps = avgRevPerSessionPence > 0 ? avgRevPerSessionPence : 0;
-
-  // Peer baselines are static until multi-clinic aggregation is built
-  return [
-    { metric: "Rebook Rate", yourValue: Math.round(yourRebook * 10) / 10, peerMedian: 2.2, peerTop25: 3.5, unit: "ratio", higherIsBetter: true },
-    { metric: "DNA Rate", yourValue: Math.round(yourDna * 100) / 100, peerMedian: 0.08, peerTop25: 0.04, unit: "percent", higherIsBetter: false },
-    { metric: "Utilisation", yourValue: Math.round(yourUtilisation * 100) / 100, peerMedian: 0.74, peerTop25: 0.90, unit: "percent", higherIsBetter: true },
-    { metric: "NPS Score", yourValue: yourNps, peerMedian: 58, peerTop25: 78, unit: "number", higherIsBetter: true },
-    { metric: "Rev / Session", yourValue: yourRps, peerMedian: 7500, peerTop25: 9000, unit: "pence", higherIsBetter: true },
-  ];
-}
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
@@ -481,7 +371,6 @@ export interface IntelligenceData {
   dnaBySlot: DnaBySlot[];
   referrals: ReferralSource[];
   outcomeTrends: OutcomeTrend[];
-  nps: NpsData;
   reviewVelocity: ReviewVelocity;
   clinicianKpis: ClinicianKpiRow[];
   benchmarks: BenchmarkComparison[];
@@ -646,7 +535,6 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     dnaBySlot: getDemoDnaBySlot(),
     referrals: getDemoReferralSources(),
     outcomeTrends: getDemoOutcomeTrends(),
-    nps: getDemoNps(),
     reviewVelocity: getDemoReviewVelocity(),
     clinicianKpis: getDemoClinicianKpis(),
     benchmarks: getDemoBenchmarks(),
@@ -663,12 +551,10 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
 
     // Still loading — return empty skeleton state (never flash demo data for real users)
     if (loading) {
-      const emptyNps = { score: 0, promoters: 0, passives: 0, detractors: 0, totalResponses: 0, trend: [] };
       return {
         revByClinician: [], revByCondition: [],
         dnaByDay: [], dnaBySlot: [],
         referrals: [], outcomeTrends: [],
-        nps: emptyNps,
         reviewVelocity: { platform: "Google", totalReviews: 0, avgRating: 0, monthlyVelocity: [] },
         clinicianKpis: [], benchmarks: [],
         loading: true, usedDemo: false,
@@ -679,14 +565,12 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
 
     // Firestore error — return empty data + error, never demo
     if (firestoreError) {
-      const emptyNps = { score: 0, promoters: 0, passives: 0, detractors: 0, totalResponses: 0, trend: [] };
       return {
         revByClinician: [], revByCondition: [],
         dnaByDay: [], dnaBySlot: [],
         referrals: [], outcomeTrends: [],
-        nps: emptyNps,
         reviewVelocity: { platform: "Google", totalReviews: 0, avgRating: 0, monthlyVelocity: [] },
-        clinicianKpis: [], benchmarks: deriveBenchmarks([], [], emptyNps, 0),
+        clinicianKpis: [], benchmarks: [],
         loading: false, usedDemo: false,
         outcomesDemoFallback: false, reputationDemoFallback: false,
         error: firestoreError,
@@ -709,7 +593,6 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
     );
     const referrals = deriveReferrals(patients, avgRevPerSession);
     const outcomeTrends = deriveOutcomeTrends(outcomeScores);
-    const nps = deriveNps(reviews, allStats);
     const reviewVelocityRaw = deriveReviewVelocity(reviews);
     // Google Places API only returns up to 5 review bodies per request, so the
     // cached review count massively understates reality. When we have the
@@ -724,7 +607,20 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
         }
       : reviewVelocityRaw;
     const clinicianKpis = deriveClinicianKpis(flatPerClinicianStats, patients);
-    const benchmarks = deriveBenchmarks(allStats, clinicianKpis, nps, avgRevPerSession);
+
+    // Benchmarks: "You:" values derived from the canonical kpis/* projection
+    // (written by compute-kpis.ts). Peer baselines are static until multi-clinic
+    // aggregation is built. NPS sourced from kpis/nps, not a client-side recompute.
+    const latestKpiAll = allStats
+      .filter((s) => s.clinicianId === "all")
+      .sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0];
+    const benchmarks: BenchmarkComparison[] = [
+      { metric: "Rebook Rate", yourValue: Math.round((latestKpiAll?.followUpRate ?? 0) * 10) / 10, peerMedian: 2.2, peerTop25: 3.5, unit: "ratio", higherIsBetter: true },
+      { metric: "DNA Rate", yourValue: Math.round((latestKpiAll?.dnaRate ?? 0) * 100) / 100, peerMedian: 0.08, peerTop25: 0.04, unit: "percent", higherIsBetter: false },
+      { metric: "Utilisation", yourValue: Math.round((latestKpiAll?.utilisationRate ?? 0) * 100) / 100, peerMedian: 0.74, peerTop25: 0.90, unit: "percent", higherIsBetter: true },
+      { metric: "NPS Score", yourValue: 0, peerMedian: 58, peerTop25: 78, unit: "number", higherIsBetter: true },
+      { metric: "Rev / Session", yourValue: avgRevPerSession > 0 ? avgRevPerSession : 0, peerMedian: 7500, peerTop25: 9000, unit: "pence", higherIsBetter: true },
+    ];
 
     // INTELLIGENCE_AUDIT.md issue 5: expose empty-state flags for the page to
     // render its own empty state. Do NOT substitute demo data for real clinics
@@ -740,8 +636,7 @@ export function useIntelligenceData(selectedClinician: string): IntelligenceData
       dnaByDay,
       dnaBySlot,
       referrals,
-      outcomeTrends, // empty array for real clinics with no outcome_scores — no demo substitute
-      nps,
+      outcomeTrends, // empty array for real clinics with no outcome_scores - no demo substitute
       reviewVelocity,
       clinicianKpis,
       benchmarks,

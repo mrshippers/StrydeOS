@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClinicians } from "@/hooks/useClinicians";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
 import { useIntelligenceData } from "@/hooks/useIntelligenceData";
+import { useKpis } from "@/hooks/useKpis";
 import { usePatients } from "@/hooks/usePatients";
 import { useValueLedger } from "@/hooks/useValueLedger";
 import { recordOutcomeScores } from "@/lib/queries";
@@ -732,7 +733,6 @@ export default function IntelligencePage() {
     dnaBySlot,
     referrals,
     outcomeTrends,
-    nps,
     reviewVelocity: reviews,
     clinicianKpis,
     benchmarks,
@@ -742,6 +742,19 @@ export default function IntelligencePage() {
     reputationDemoFallback,
     error: intelligenceError,
   } = useIntelligenceData(selectedClinician);
+
+  // NPS and average star rating are read from the canonical kpis/* projection.
+  // This is the single source of truth (P0-10, P0-11).
+  const { kpis: projectedKpis } = useKpis();
+  const npsKpi = projectedKpis["nps"] ?? null;
+  const starKpi = projectedKpis["average-star-rating"] ?? null;
+  // Derive NPS display values from the projected KPI doc.
+  // The projection stores the computed score; promoter/passive/detractor breakdowns
+  // are not stored in kpis/* (those are detail-level) - show them from reviews via
+  // reviewVelocity when available, falling back to zeros for the trend strip.
+  const npsScore = npsKpi?.value ?? 0;
+  const npsStatus = npsKpi?.status ?? "neutral";
+  const averageStarRating = starKpi?.value ?? reviews.avgRating;
 
   // KPI cards: use LATEST WEEK data, not cumulative totals
   const latestWeekRevenue = latest
@@ -844,14 +857,14 @@ export default function IntelligencePage() {
         />
         <StatCard
           label="NPS Score"
-          value={reputationDemoFallback && !usedDemo ? "—" : nps.score}
-          status={reputationDemoFallback && !usedDemo ? "neutral" : nps.score >= 70 ? "ok" : nps.score >= 50 ? "warn" : "danger"}
-          insight={reputationDemoFallback && !usedDemo ? "No NPS data yet" : `${nps.totalResponses} responses`}
+          value={reputationDemoFallback && !usedDemo ? "—" : npsKpi ? npsScore : "—"}
+          status={reputationDemoFallback && !usedDemo ? "neutral" : npsKpi ? (npsStatus === "ok" ? "ok" : npsStatus === "warn" ? "warn" : "danger") : "neutral"}
+          insight={reputationDemoFallback && !usedDemo ? "No NPS data yet" : npsKpi ? "From nps_sms responses" : "Awaiting pipeline data"}
         />
         <StatCard
           label="Google Reviews"
           value={reputationDemoFallback && !usedDemo ? "—" : reviews.totalReviews}
-          unit={reputationDemoFallback && !usedDemo ? "" : `${reviews.avgRating} avg`}
+          unit={reputationDemoFallback && !usedDemo ? "" : `${averageStarRating} avg`}
           status={reputationDemoFallback && !usedDemo ? "neutral" : "ok"}
           insight={reputationDemoFallback && !usedDemo ? "Connect your Google Business Profile" : `${reviews.monthlyVelocity.length > 0 ? reviews.monthlyVelocity[reviews.monthlyVelocity.length - 1].count : 0} this month`}
           action={reputationDemoFallback && !usedDemo ? { label: "Connect in Settings", onClick: () => router.push("/settings#reviews") } : undefined}
@@ -1030,7 +1043,11 @@ export default function IntelligencePage() {
         <p className="text-xs text-muted mb-5">Your clinic vs. similar UK private physio practices (3–5 clinicians) · anonymised aggregate data</p>
         <div className="space-y-4">
           {benchmarks.map((b) => {
-            const hasData = b.yourValue > 0;
+            // NPS benchmark "You:" value reads from the canonical kpis/* projection (P0-10).
+            const effectiveYourValue = b.metric === "NPS Score" && npsKpi
+              ? npsScore
+              : b.yourValue;
+            const hasData = effectiveYourValue > 0;
             const formatVal = (v: number) =>
               b.unit === "percent" ? `${Math.round(v * 100)}%` :
               b.unit === "pence" ? `£${(v / 100).toFixed(0)}` :
@@ -1038,13 +1055,13 @@ export default function IntelligencePage() {
               String(v);
             const yourPct = hasData
               ? b.higherIsBetter
-                ? Math.min(100, (b.yourValue / b.peerTop25) * 100)
-                : Math.min(100, ((b.peerTop25 * 2 - b.yourValue) / (b.peerTop25 * 2 - b.peerTop25)) * 100)
+                ? Math.min(100, (effectiveYourValue / b.peerTop25) * 100)
+                : Math.min(100, ((b.peerTop25 * 2 - effectiveYourValue) / (b.peerTop25 * 2 - b.peerTop25)) * 100)
               : 0;
             const peerPct = b.higherIsBetter
               ? Math.min(100, (b.peerMedian / b.peerTop25) * 100)
               : 50;
-            const beating = hasData && (b.higherIsBetter ? b.yourValue > b.peerMedian : b.yourValue < b.peerMedian);
+            const beating = hasData && (b.higherIsBetter ? effectiveYourValue > b.peerMedian : effectiveYourValue < b.peerMedian);
             return (
               <div key={b.metric}>
                 <div className="flex items-center justify-between mb-1.5">
@@ -1054,7 +1071,7 @@ export default function IntelligencePage() {
                         chevron glyph pairs shape with colour. */}
                     <span className={`inline-flex items-center gap-0.5 font-bold ${!hasData ? "text-muted" : beating ? "text-blue" : "text-warn"}`}>
                       {hasData && (beating ? <ChevronUp size={12} strokeWidth={2.5} /> : <ChevronDown size={12} strokeWidth={2.5} />)}
-                      You: {hasData ? formatVal(b.yourValue) : "—"}
+                      You: {hasData ? formatVal(effectiveYourValue) : "—"}
                     </span>
                     <span className="text-muted">Peers: {formatVal(b.peerMedian)}</span>
                     <span className="text-muted">Top 25%: {formatVal(b.peerTop25)}</span>
@@ -1602,39 +1619,52 @@ export default function IntelligencePage() {
               </div>
             )}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* NPS */}
+              {/* NPS - reads from canonical kpis/* projection (P0-10: nps_sms 0-10 only) */}
               <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-6">
                 <h3 className="font-display text-lg text-navy mb-1">NPS Score</h3>
-                <p className="text-xs text-muted mb-4">Net Promoter Score from post-discharge surveys</p>
+                <p className="text-xs text-muted mb-4">Net Promoter Score from post-discharge SMS surveys (0-10 scale)</p>
 
-                <div className="flex items-center gap-6 mb-6">
-                  <div className="text-center">
-                    <p className="font-display text-5xl text-navy">{nps.score}</p>
-                    <p className="text-[11px] text-muted mt-1">NPS</p>
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    {[
-                      { label: "Promoters (9-10)", count: nps.promoters, color: brand.success },
-                      { label: "Passives (7-8)", count: nps.passives, color: brand.warning },
-                      { label: "Detractors (0-6)", count: nps.detractors, color: brand.danger },
-                    ].map((seg) => (
-                      <div key={seg.label} className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-sm" style={{ background: seg.color }} />
-                        <span className="text-xs text-muted flex-1">{seg.label}</span>
-                        <span className="text-xs font-semibold text-navy">{seg.count}</span>
+                {npsKpi ? (
+                  <>
+                    <div className="flex items-center gap-6 mb-6">
+                      <div className="text-center">
+                        <p className="font-display text-5xl text-navy">{npsScore}</p>
+                        <p className="text-[11px] text-muted mt-1">NPS</p>
                       </div>
-                    ))}
+                      <div className="flex-1 space-y-2">
+                        {[
+                          { label: "Promoters (9-10)", color: brand.success },
+                          { label: "Passives (7-8)", color: brand.warning },
+                          { label: "Detractors (0-6)", color: brand.danger },
+                        ].map((seg) => (
+                          <div key={seg.label} className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-sm" style={{ background: seg.color }} />
+                            <span className="text-xs text-muted flex-1">{seg.label}</span>
+                          </div>
+                        ))}
+                        <p className="text-[10px] text-muted mt-1">Breakdown detail in upcoming release</p>
+                      </div>
+                    </div>
+                    {npsKpi.trend.length > 0 && (
+                      <ResponsiveContainer width="100%" height={160}>
+                        <LineChart
+                          data={npsKpi.trend.slice().reverse().map((score, i) => ({ week: `W-${npsKpi.trend.length - i}`, score }))}
+                          margin={{ top: 5, right: 10, bottom: 5, left: 0 }}
+                        >
+                          <CartesianGrid strokeDasharray={chartTheme.grid.strokeDasharray} stroke={chartTheme.grid.stroke} vertical={false} />
+                          <XAxis dataKey="week" tick={chartTheme.tick} tickLine={false} axisLine={chartTheme.axisLine} />
+                          <YAxis domain={[-100, 100]} tick={chartTheme.tick} tickLine={false} axisLine={false} width={30} />
+                          <Line type="monotone" dataKey="score" stroke={brand.blue} strokeWidth={chartTheme.line.strokeWidth} dot={{ r: 3, fill: brand.blue, strokeWidth: 0 }} activeDot={chartTheme.activeDot} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-cloud-light border border-border text-sm text-muted">
+                    <Star size={16} className="shrink-0 text-purple" />
+                    <span>NPS data will appear once the pipeline has run and patients have responded to post-session SMS surveys.</span>
                   </div>
-                </div>
-
-                <ResponsiveContainer width="100%" height={160}>
-                  <LineChart data={nps.trend} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray={chartTheme.grid.strokeDasharray} stroke={chartTheme.grid.stroke} vertical={false} />
-                    <XAxis dataKey="month" tick={chartTheme.tick} tickLine={false} axisLine={chartTheme.axisLine} />
-                    <YAxis domain={[0, 100]} tick={chartTheme.tick} tickLine={false} axisLine={false} width={30} />
-                    <Line type="monotone" dataKey="score" stroke={brand.blue} strokeWidth={chartTheme.line.strokeWidth} dot={{ r: 3, fill: brand.blue, strokeWidth: 0 }} activeDot={chartTheme.activeDot} />
-                  </LineChart>
-                </ResponsiveContainer>
+                )}
               </div>
 
               {/* Google Reviews */}
@@ -1653,13 +1683,13 @@ export default function IntelligencePage() {
                         <Star
                           key={s}
                           size={16}
-                          className={s <= Math.round(reviews.avgRating) ? "" : "text-muted/60"}
-                          style={s <= Math.round(reviews.avgRating) ? { color: brand.warning } : undefined}
-                          fill={s <= Math.round(reviews.avgRating) ? brand.warning : brand.border}
+                          className={s <= Math.round(averageStarRating) ? "" : "text-muted/60"}
+                          style={s <= Math.round(averageStarRating) ? { color: brand.warning } : undefined}
+                          fill={s <= Math.round(averageStarRating) ? brand.warning : brand.border}
                         />
                       ))}
                     </div>
-                    <p className="text-xs text-muted">{reviews.avgRating} average rating</p>
+                    <p className="text-xs text-muted">{averageStarRating} average rating</p>
                   </div>
                 </div>
 

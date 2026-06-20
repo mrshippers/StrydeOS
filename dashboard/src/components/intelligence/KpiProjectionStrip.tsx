@@ -24,6 +24,7 @@ const KPI_LABELS: Record<KpiId, string> = {
   "revenue-per-session": "Rev / session",
   nps: "NPS",
   "google-review-conversion": "Review conversion",
+  "average-star-rating": "Star rating",
 };
 
 const STATUS_COLORS: Record<KpiDoc["status"], { bg: string; fg: string; Icon: typeof CheckCircle2 }> = {
@@ -45,6 +46,8 @@ function formatValue(kpiId: KpiId, value: number): string {
     case "dna-rate":
     case "google-review-conversion":
       return `${Math.round(value * 100)}%`;
+    case "average-star-rating":
+      return `${value.toFixed(1)} / 5`;
     default:
       return String(value);
   }
