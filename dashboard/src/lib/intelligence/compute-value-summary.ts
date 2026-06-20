@@ -270,11 +270,11 @@ function mergeModuleSummaries(
  * Resolve the clinic's monthly subscription cost in pence.
  *
  * Resolution order (P0-5):
- *  1. billing.monthlyPricePence  — direct value written by billing webhook.
- *  2. billing.tier               — use MODULE_PRICING.fullstack[tier].month
+ *  1. billing.monthlyPricePence  - direct value written by billing webhook.
+ *  2. billing.tier               - use MODULE_PRICING.fullstack[tier].month
  *     (Full Stack is the product sold at all tiers; individual-module billing
  *      is not yet written to this field).
- *  3. null                       — price unresolvable; caller must suppress
+ *  3. null                       - price unresolvable; caller must suppress
  *     ROI multiple rather than showing a fabricated figure.
  */
 function resolveSubscriptionCost(billing: Record<string, unknown> | undefined): number | null {
