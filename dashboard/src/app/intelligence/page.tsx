@@ -929,6 +929,15 @@ export default function IntelligencePage() {
                   <Fragment key={c.clinicianId}>
                     <tr
                       onClick={() => toggleClinician(c.clinicianId)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleClinician(c.clinicianId);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
                       className={`border-b border-border/40 cursor-pointer transition-colors ${isExpanded ? "bg-cloud-light/50" : "row-hover"}`}
                     >
                       <td className="py-4 px-5">
@@ -1126,6 +1135,7 @@ export default function IntelligencePage() {
         {TABS.filter(t => t.id !== "outcomes" || user?.clinicProfile?.featureFlags?.outcomeTracking).map(({ id, label, icon: Icon }) => (
           <button
             key={id}
+            id={`tab-${id}`}
             role="tab"
             aria-selected={activeTab === id}
             aria-controls={`tabpanel-${id}`}
@@ -1143,7 +1153,12 @@ export default function IntelligencePage() {
       </div>
 
       {/* Tab content */}
-      <div className="animate-fade-in">
+      <div
+        role="tabpanel"
+        id={`tabpanel-${activeTab}`}
+        aria-labelledby={`tab-${activeTab}`}
+        className="animate-fade-in"
+      >
         {activeTab === "insights" && (
           <InsightFeed />
         )}
