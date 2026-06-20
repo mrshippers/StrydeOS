@@ -57,6 +57,13 @@ vi.mock("@/lib/auth-guard", async (importOriginal) => {
 
 const mockGetDocs = vi.fn();
 
+// computeState doc mock - returns today's date by default so gate passes
+const mockComputeStateGet = vi.fn().mockResolvedValue({
+  exists: true,
+  data: () => ({ lastFullRecomputeAt: new Date().toISOString() }),
+});
+const mockComputeStateSet = vi.fn().mockResolvedValue(undefined);
+
 // Build a chainable query stub that supports where/orderBy/limit/get
 function makeQueryStub(getFn: () => Promise<{ docs: unknown[] }>) {
   const stub: Record<string, unknown> = {};
@@ -72,6 +79,10 @@ vi.mock("@/lib/firebase-admin", () => ({
     collection: () => ({
       ...makeQueryStub(mockGetDocs),
     }),
+    doc: () => ({
+      get: mockComputeStateGet,
+      set: mockComputeStateSet,
+    }),
   }),
 }));
 
@@ -83,6 +94,7 @@ vi.mock("@/lib/intelligence/detect-insight-events", () => ({
     eventsCreated: 0,
     eventsSkipped: 0,
     errors: [],
+    createdEvents: [],
   }),
 }));
 
@@ -120,6 +132,12 @@ describe("POST /api/intelligence/detect - P0-14 authz guard", () => {
     mockRequireClinic.mockReturnValue(undefined);
     // Default Firestore all-clinics query returns empty set
     mockGetDocs.mockResolvedValue({ docs: [] });
+    // Default: computeState shows today's pipeline run (gate passes)
+    mockComputeStateGet.mockResolvedValue({
+      exists: true,
+      data: () => ({ lastFullRecomputeAt: new Date().toISOString() }),
+    });
+    mockComputeStateSet.mockResolvedValue(undefined);
   });
 
   // 1. P0-14: non-superadmin user with no clinicId must be rejected 400 before
@@ -183,13 +201,17 @@ describe("POST /api/intelligence/detect - P0-14 authz guard", () => {
     expect(mockGetDocs).toHaveBeenCalledOnce();
   });
 
-  // 4. Superadmin reaches all-clinics processing (no regression)
+  // 4. Superadmin reaches all-clinics processing (no regression).
+  //    Superadmin must have no clinicId in the request body to trigger the all-clinics branch.
+  //    The assertion is that the clinics collection is queried (mockGetDocs called once).
   it("reaches all-clinics processing for superadmin user", async () => {
     mockWithCronOrUser.mockResolvedValueOnce({
       ok: true,
       mode: "user",
-      user: { uid: "uid-super", email: "super@strydeos.com", clinicId: "any", role: "superadmin" },
+      // clinicId: undefined ensures targetClinicId is undefined -> all-clinics branch
+      user: { uid: "uid-super", email: "super@strydeos.com", clinicId: undefined, role: "superadmin" },
     });
+    // The all-clinics query returns an empty set
     mockGetDocs.mockResolvedValueOnce({ docs: [] });
 
     const { POST } = await import("../route");
@@ -198,6 +220,7 @@ describe("POST /api/intelligence/detect - P0-14 authz guard", () => {
 
     expect(res.status).toBe(200);
     expect(body.ok).toBe(true);
+    // The all-clinics collection query must have been reached
     expect(mockGetDocs).toHaveBeenCalledOnce();
   });
 

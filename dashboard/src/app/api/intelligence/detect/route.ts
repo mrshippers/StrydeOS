@@ -72,24 +72,55 @@ async function handler(request: NextRequest) {
       pulse: Awaited<ReturnType<typeof consumeInsightEvents>>;
       reengagement: Awaited<ReturnType<typeof trackReengagement>>;
       urgentEmails: { sent: number; errors: string[] };
+      skippedStaleMetrics?: boolean;
     }> = [];
 
-    async function processClinic(clinicId: string) {
+    async function processClinic(clinicId: string): Promise<{
+      detection: Awaited<ReturnType<typeof detectInsightEvents>>;
+      pulse: Awaited<ReturnType<typeof consumeInsightEvents>>;
+      reengagement: Awaited<ReturnType<typeof trackReengagement>>;
+      urgentEmails: { sent: number; errors: string[] };
+      skippedStaleMetrics?: boolean;
+    }> {
+      // P0-17: Gate on pipeline completion. Detect must only run on fresh metrics.
+      // Read computeState.lastFullRecomputeAt and skip if absent or not from today (UTC).
+      const computeStateSnap = await db
+        .doc(`clinics/${clinicId}/computeState/current`)
+        .get();
+      const lastFullRecomputeAt = computeStateSnap.exists
+        ? (computeStateSnap.data()?.lastFullRecomputeAt as string | null | undefined)
+        : null;
+
+      const todayUtc = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      const isFromToday =
+        typeof lastFullRecomputeAt === "string" &&
+        lastFullRecomputeAt.slice(0, 10) === todayUtc;
+
+      if (!isFromToday) {
+        // Record skip into computeState so operators can see why detect was skipped.
+        try {
+          await db.doc(`clinics/${clinicId}/computeState/current`).set(
+            { detectSkippedAt: new Date().toISOString(), detectSkipReason: "stale_metrics" },
+            { merge: true }
+          );
+        } catch {
+          // non-critical
+        }
+        return {
+          detection: { clinicId, eventsCreated: 0, eventsSkipped: 0, errors: [], createdEvents: [] },
+          pulse: { actioned: 0, skipped: 0, errors: [] },
+          reengagement: { resolved: 0, milestoneWritten: false, errors: [] },
+          urgentEmails: { sent: 0, errors: [] },
+          skippedStaleMetrics: true,
+        };
+      }
+
       // 1. Detect events
       const detection = await detectInsightEvents(db, clinicId);
 
-      // 2. Load newly created events for downstream processing
-      const newEventsSnap = await db
-        .collection(`clinics/${clinicId}/insight_events`)
-        .where("createdAt", ">=", new Date(Date.now() - 60000).toISOString())
-        .orderBy("createdAt", "desc")
-        .limit(50)
-        .get();
-
-      const newEvents: InsightEvent[] = newEventsSnap.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as Omit<InsightEvent, "id">),
-      }));
+      // 2. Use in-memory created events returned directly by detectInsightEvents.
+      // Replaces the fragile 60s/limit-50 time-window re-query which could drop events.
+      const newEvents: InsightEvent[] = detection.createdEvents;
 
       // 2b. Enrich events with AI coaching narratives (non-blocking).
       // Result carries processed/skipped/timeout counts for observability.
@@ -103,8 +134,6 @@ async function handler(request: NextRequest) {
 
       // 5. Send urgent email alerts
       const urgentEmails = await sendUrgentAlerts(db, clinicId, newEvents);
-
-      results.push({ clinicId, detection, pulse, reengagement, urgentEmails });
 
       // Heartbeat into the unified module-health surface read by /api/health.
       // Fire-and-forget, never blocks.
@@ -140,6 +169,8 @@ async function handler(request: NextRequest) {
           narrativeLlmTimeouts: enrichment.llmTimeouts,
         },
       });
+
+      return { detection, pulse, reengagement, urgentEmails };
     }
 
     if (targetClinicId && !isSuperadmin && userId !== "cron") {
@@ -149,10 +180,12 @@ async function handler(request: NextRequest) {
         targetClinicId,
       );
       // Single clinic (authenticated user)
-      await processClinic(targetClinicId);
+      const r = await processClinic(targetClinicId);
+      results.push({ clinicId: targetClinicId, ...r });
     } else if (targetClinicId) {
       // Specific clinic (superadmin or cron with target)
-      await processClinic(targetClinicId);
+      const r = await processClinic(targetClinicId);
+      results.push({ clinicId: targetClinicId, ...r });
     } else {
       // P0-14: explicit guard - a non-superadmin, non-cron user must never reach
       // the all-clinics branch. The implicit invariant (verifyApiRequest always
@@ -163,7 +196,8 @@ async function handler(request: NextRequest) {
           return NextResponse.json({ error: "No clinic associated" }, { status: 400 });
         }
         // Route to the user's own clinic only
-        await processClinic(userClinicId);
+        const r = await processClinic(userClinicId);
+        results.push({ clinicId: userClinicId, ...r });
         return NextResponse.json({
           ok: true,
           processedAt: new Date().toISOString(),
@@ -178,7 +212,8 @@ async function handler(request: NextRequest) {
 
       for (const clinicDoc of clinicsSnap.docs) {
         try {
-          await processClinic(clinicDoc.id);
+          const r = await processClinic(clinicDoc.id);
+          results.push({ clinicId: clinicDoc.id, ...r });
         } catch (err) {
           results.push({
             clinicId: clinicDoc.id,
@@ -187,6 +222,7 @@ async function handler(request: NextRequest) {
               eventsCreated: 0,
               eventsSkipped: 0,
               errors: [err instanceof Error ? err.message : String(err)],
+              createdEvents: [],
             },
             pulse: { actioned: 0, skipped: 0, errors: [] },
             reengagement: { resolved: 0, milestoneWritten: false, errors: [] },

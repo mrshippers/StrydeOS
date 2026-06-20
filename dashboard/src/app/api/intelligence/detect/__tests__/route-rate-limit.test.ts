@@ -64,9 +64,19 @@ function makeQueryStub(getFn: () => Promise<{ docs: unknown[] }>) {
 
 const mockGetDocs = vi.fn().mockResolvedValue({ docs: [] });
 
+// computeState doc mock: returns today's timestamp so the P0-17 gate passes
+const mockComputeStateGet = vi.fn().mockResolvedValue({
+  exists: true,
+  data: () => ({ lastFullRecomputeAt: new Date().toISOString() }),
+});
+
 vi.mock("@/lib/firebase-admin", () => ({
   getAdminDb: () => ({
     collection: () => ({ ...makeQueryStub(mockGetDocs) }),
+    doc: () => ({
+      get: mockComputeStateGet,
+      set: vi.fn().mockResolvedValue(undefined),
+    }),
   }),
 }));
 
@@ -78,6 +88,7 @@ vi.mock("@/lib/intelligence/detect-insight-events", () => ({
     eventsCreated: 0,
     eventsSkipped: 0,
     errors: [],
+    createdEvents: [],
   }),
 }));
 
@@ -113,6 +124,11 @@ describe("POST /api/intelligence/detect - P0-15 rate limiting", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetDocs.mockResolvedValue({ docs: [] });
+    // Gate passes by default: pipeline ran today
+    mockComputeStateGet.mockResolvedValue({
+      exists: true,
+      data: () => ({ lastFullRecomputeAt: new Date().toISOString() }),
+    });
   });
 
   it("returns 429 when user is over the rate limit (failClosed)", async () => {

@@ -2,11 +2,13 @@ import type { Firestore } from "firebase-admin/firestore";
 import type { InsightEvent, InsightConfig } from "@/types/insight-events";
 import { DEFAULT_INSIGHT_CONFIG, OWNER_EVENTS } from "@/types/insight-events";
 
-interface DetectionResult {
+export interface DetectionResult {
   clinicId: string;
   eventsCreated: number;
   eventsSkipped: number;
   errors: string[];
+  /** Created event documents, returned in-memory for immediate downstream use. */
+  createdEvents: InsightEvent[];
 }
 
 // Firestore document shape -- superset of fields we access
@@ -49,6 +51,7 @@ export async function detectInsightEvents(
     eventsCreated: 0,
     eventsSkipped: 0,
     errors: [],
+    createdEvents: [],
   };
 
   // Load config (or defaults)
@@ -551,7 +554,7 @@ export async function detectInsightEvents(
     }
 
     try {
-      await eventsRef.add({
+      const docData = {
         ...event,
         readAt: null,
         dismissedAt: null,
@@ -559,8 +562,10 @@ export async function detectInsightEvents(
         resolvedAt: null,
         resolution: null,
         lastNotifiedAt: new Date().toISOString(),
-      });
+      };
+      const docRef = await eventsRef.add(docData);
       result.eventsCreated++;
+      result.createdEvents.push({ id: docRef.id, ...(docData as Omit<InsightEvent, "id">) });
     } catch (err) {
       result.errors.push(
         `Failed to write ${event.type}: ${err instanceof Error ? err.message : String(err)}`
