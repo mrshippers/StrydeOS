@@ -161,6 +161,15 @@ function StatCard({
   const dotStyle = STATUS_COLORS[status] ?? STATUS_COLORS.neutral;
   const { display: animatedValue, ref: countRef } = useCountUp(value);
 
+  // Scale the display value down as it gets longer so text values ("confirmed",
+  // "not required") don't overflow the card the way short numbers ("33%") don't.
+  const valueLen = String(value).length;
+  const valueSizeClass =
+    valueLen <= 4 ? "text-[44px]" :
+    valueLen <= 6 ? "text-[34px]" :
+    valueLen <= 9 ? "text-[26px]" :
+    "text-[20px]";
+
   const TrendIcon = trend === "up"
     ? ChevronUp
     : trend === "down"
@@ -226,9 +235,9 @@ function StatCard({
           )}
         </div>
 
-        <div className="flex items-end justify-between mb-1">
-          <div className="flex items-baseline gap-2">
-            <span ref={countRef as React.RefObject<HTMLSpanElement>} className="font-display text-[44px] text-navy leading-none tabular-nums">
+        <div className="flex items-end justify-between mb-1 gap-2">
+          <div className="flex items-baseline gap-2 min-w-0">
+            <span ref={countRef as React.RefObject<HTMLSpanElement>} className={`font-display ${valueSizeClass} text-navy leading-none tabular-nums break-words min-w-0`}>
               {animatedValue}
             </span>
             {unit && (

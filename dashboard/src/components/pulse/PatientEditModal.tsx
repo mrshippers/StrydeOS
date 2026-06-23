@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type FC } from "react";
+import { useRef, useState, type FC } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X } from "lucide-react";
+import { X, AlertTriangle } from "lucide-react";
 import type { Patient, Clinician } from "@/types";
 import { updatePatient } from "@/lib/queries";
+import { isPatientStale } from "@/lib/pulse/patient-edit-guard";
 import { useToast } from "@/components/ui/Toast";
 import { brand } from "@/lib/brand";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -20,6 +21,14 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
 
+  // Capture the record version this editor opened against. The `patient` prop
+  // stays live (the board subscribes via onSnapshot), so if a PMS sync or
+  // another user writes to this patient while the modal is open, the live
+  // updatedAt diverges from this baseline and a blind Save would clobber the
+  // fresher server data. See lib/pulse/patient-edit-guard.
+  const openedUpdatedAt = useRef(patient.updatedAt);
+  const stale = isPatientStale(openedUpdatedAt.current, patient.updatedAt);
+
   const [name, setName] = useState(patient.name);
   const [email, setEmail] = useState(patient.contact.email ?? "");
   const [phone, setPhone] = useState(patient.contact.phone ?? "");
@@ -29,7 +38,25 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
   const [lastSessionDate, setLastSessionDate] = useState(patient.lastSessionDate ?? "");
   const [nextSessionDate, setNextSessionDate] = useState(patient.nextSessionDate ?? "");
 
+  // Pull the fresher server values into the editor and re-baseline, so the
+  // user can re-apply their intent against current data instead of clobbering it.
+  function reloadFromLive() {
+    setName(patient.name);
+    setEmail(patient.contact.email ?? "");
+    setPhone(patient.contact.phone ?? "");
+    setSessionCount(patient.sessionCount);
+    setTreatmentLength(patient.treatmentLength);
+    setClinicianId(patient.clinicianId);
+    setLastSessionDate(patient.lastSessionDate ?? "");
+    setNextSessionDate(patient.nextSessionDate ?? "");
+    openedUpdatedAt.current = patient.updatedAt;
+  }
+
   async function handleSave() {
+    if (stale) {
+      toast("This patient changed since you opened it — reload before saving", "error");
+      return;
+    }
     setSaving(true);
     try {
       await updatePatient(clinicId, patient.id, {
@@ -95,6 +122,25 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
 
           {/* Form */}
           <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+            {/* Stale-data guard banner */}
+            {stale && (
+              <div className="flex items-start gap-2.5 rounded-[8px] border border-warn/30 bg-warn/10 p-3">
+                <AlertTriangle size={15} className="text-warn shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-navy">This patient changed while you were editing</p>
+                  <p className="text-[11px] text-muted mt-0.5">
+                    A PMS sync or another user updated this record. Saving now would overwrite the newer data.
+                  </p>
+                  <button
+                    onClick={reloadFromLive}
+                    className="mt-1.5 text-[11px] font-semibold text-teal hover:underline"
+                  >
+                    Reload latest values
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Name */}
             <div>
               <label className={labelClass}>Full Name</label>
@@ -194,7 +240,7 @@ export const PatientEditModal: FC<Props> = ({ patient, clinicianMap, clinicId, o
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving || !name.trim()}
+                disabled={saving || !name.trim() || stale}
                 className="btn-primary btn-primary-teal"
                 style={{ padding: "8px 16px" }}
               >
