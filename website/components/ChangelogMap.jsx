@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useId, useCallback } from 'react';
 
 /* ─────────────────────────────────────────────────────────────────────────
    ChangelogMap
@@ -96,7 +96,8 @@ const STATIONS_RAW = [
   { id:'v123',  v:'v1.2.3', date:'24 Mar', cat:'platform', title:'In-app changelog',  desc:"What shipped, when, for whom. Every user sees it once. Then it's gone.",              ring:4, angle:175 },
   { id:'v124',  v:'v1.2.4', date:'28 Mar', cat:'platform', title:'Clinician layer',   desc:"Observational notes. Clinicians see what's relevant. Owners see everything.",         ring:4, angle:148 },
   { id:'v144',  v:'v1.4.4', date:'12 Apr', cat:'platform', title:'Security hardening sweep', desc:'Demo-bypass patch. Webhook fail-safe. Cross-clinic isolation proven. 606 tests green.', ring:5, angle:148 },
-  { id:'v146',  v:'v1.4.6', date:'12 May', cat:'platform', title:'Pricing refresh',         desc:'Clinic tier rebalanced — Intelligence £199, Ava £159, Pulse £119. Setup fee Ava-only, never on Full Stack. Maths in every brief verifiable by an owner.', ring:5, angle:165 },
+  { id:'v146',  v:'v1.4.6', date:'12 May', cat:'platform', title:'Pricing refresh',         desc:'Clinic tier rebalanced. Intelligence £149, Ava £199, Pulse £149. Setup fee Ava-only, never on Full Stack. Maths in every brief verifiable by an owner.', ring:5, angle:165 },
+  { id:'v147',  v:'v1.4.7', date:'23 Jun', cat:'platform', title:'Data-protection controls', desc:'GDPR Article 17 clinic-level erasure with a 30-day grace, a 72-hour UK breach-notification runbook, and 12-month audit-log retention. Responsible disclosure published at /.well-known/security.txt.', ring:5, angle:200 },
 
   // ── PULSE (230°–310°) — existing 4 + 2 new ───────────────────────
   { id:'v112',  v:'v1.1.2', date:'18 Feb', cat:'pulse', title:'Opt-outs honoured',    desc:'Patient communication preferences enforced across every sequence.',                   ring:2, angle:270 },
@@ -134,7 +135,7 @@ const LINES_RAW = [
   // Platform — three arms converging on the logo
   { cat:'platform', ids:['v090', 'v091', 'v092', 'EDGE:200'], delay:0.5 },
   { cat:'platform', ids:['EDGE:168', 'v101', 'v111', 'v122', 'v124', 'v144'], delay:0.55 },
-  { cat:'platform', ids:['EDGE:205', 'v102', 'v120', 'v121', 'v123'], delay:0.65 },
+  { cat:'platform', ids:['EDGE:205', 'v102', 'v120', 'v121', 'v123', 'v146', 'v147'], delay:0.65 },
   { cat:'platform', ids:['v090',     'r150p'], delay:0.75, roadmap:true },
 
   // Pulse
@@ -174,9 +175,10 @@ const PATHS = LINES_RAW
   .filter(Boolean);
 
 /* ─── MonolithMark (self-contained inline SVG) ────────────────────────── */
-let _mmSeq = 0;
 const MonolithMark = ({ size = 46 }) => {
-  const uid = ++_mmSeq;
+  // useId is stable across re-renders and SSR-safe; strip colons so the value
+  // is a valid CSS selector / url(#…) fragment.
+  const uid = useId().replace(/:/g, '');
   const ids = {
     c: `clm-c-${uid}`, r: `clm-r-${uid}`, t: `clm-t-${uid}`,
     m: `clm-m-${uid}`, b: `clm-b-${uid}`, p: `clm-p-${uid}`, a: `clm-a-${uid}`,
@@ -227,7 +229,7 @@ const MonolithMark = ({ size = 46 }) => {
 };
 
 /* ─── Station ────────────────────────────────────────────────────────── */
-const Station = ({ station: s, idx, viewportRef, darkMode }) => {
+const Station = ({ station: s, idx, applyHighlight, pinnedRef }) => {
   const a = s.angle % 360;
 
   // Label side based on angle
@@ -244,8 +246,8 @@ const Station = ({ station: s, idx, viewportRef, darkMode }) => {
   else if (a >= 140 && a < 220)  popStyle = { top: 'calc(100% + 18px)', left: '50%', marginLeft: -130 };
   else                           popStyle = { right: 'calc(100% + 18px)', top: '50%', marginTop: -52 };
 
-  const onEnter = () => viewportRef.current?.classList.add(`cl-hl-${s.cat}`);
-  const onLeave = () => viewportRef.current?.classList.remove(`cl-hl-${s.cat}`);
+  const onEnter = () => applyHighlight(s.cat);
+  const onLeave = () => applyHighlight(pinnedRef.current);
 
   return (
     <div
@@ -320,6 +322,23 @@ const Particles = () => {
 export default function ChangelogMap({ darkMode = false }) {
   const viewportRef = useRef(null);
   const svgRef = useRef(null);
+  const pinnedRef = useRef(null);
+  const [pinned, setPinned] = useState(null);
+
+  // Persistent category filter (honours the "click a category to filter" hint).
+  // Hover applies a transient highlight; on mouse-leave we fall back to the
+  // pinned category so a click-to-filter survives subsequent hovers.
+  const applyHighlight = useCallback((cat) => {
+    const vp = viewportRef.current;
+    if (!vp) return;
+    ['ava', 'intel', 'platform', 'pulse'].forEach((c) => vp.classList.remove(`cl-hl-${c}`));
+    if (cat) vp.classList.add(`cl-hl-${cat}`);
+  }, []);
+
+  useEffect(() => {
+    pinnedRef.current = pinned;
+    applyHighlight(pinned);
+  }, [pinned, applyHighlight]);
 
   // Set --cl-len on line paths before first paint — prevents animation jitter
   useLayoutEffect(() => {
@@ -486,15 +505,18 @@ export default function ChangelogMap({ darkMode = false }) {
         {/* Legend */}
         <div className="cl-legend">
           {['ava','intel','platform','pulse'].map(cat => (
-            <div
+            <button
               key={cat}
-              className="cl-legend-item"
-              onMouseEnter={() => viewportRef.current?.classList.add(`cl-hl-${cat}`)}
-              onMouseLeave={() => viewportRef.current?.classList.remove(`cl-hl-${cat}`)}
+              type="button"
+              className={`cl-legend-item${pinned === cat ? ' cl-legend-active' : ''}`}
+              aria-pressed={pinned === cat}
+              onMouseEnter={() => applyHighlight(cat)}
+              onMouseLeave={() => applyHighlight(pinnedRef.current)}
+              onClick={() => setPinned(p => (p === cat ? null : cat))}
             >
               <span className="cl-legend-swatch" style={{ background: CAT_COLORS[cat] }} />
               {CAT_LABELS[cat]}
-            </div>
+            </button>
           ))}
           <div className="cl-legend-item cl-legend-roadmap">
             <span className="cl-legend-swatch cl-legend-swatch-dashed" />
@@ -580,8 +602,8 @@ export default function ChangelogMap({ darkMode = false }) {
                 key={s.id}
                 station={s}
                 idx={idx}
-                viewportRef={viewportRef}
-                darkMode={darkMode}
+                applyHighlight={applyHighlight}
+                pinnedRef={pinnedRef}
               />
             ))}
 
@@ -629,7 +651,7 @@ export default function ChangelogMap({ darkMode = false }) {
           color: darkMode ? 'rgba(255,255,255,0.32)' : 'rgba(17,24,39,0.4)',
           letterSpacing: '0.02em',
         }}>
-          Hover a station for detail · Click a line to filter
+          Hover a station for detail · Click a category to filter
         </div>
       </div>
     </section>
@@ -704,8 +726,19 @@ const ScopedStyles = ({ darkMode }) => {
       letter-spacing: 0.08em; text-transform: uppercase;
       cursor: pointer; color: var(--cl-text-dim);
       transition: color 0.2s;
+      /* button reset — keeps the control visually identical to the old div */
+      background: none; border: 0; padding: 0; margin: 0;
+      font-family: inherit; line-height: inherit;
     }
-    .cl-legend-item:hover { color: var(--cl-legend-hover); }
+    .cl-legend-item:hover,
+    .cl-legend-item.cl-legend-active { color: var(--cl-legend-hover); }
+    .cl-legend-item.cl-legend-active .cl-legend-swatch {
+      box-shadow: 0 0 0 2px currentColor;
+    }
+    .cl-legend-item:focus-visible {
+      outline: 2px solid var(--cl-legend-hover);
+      outline-offset: 4px; border-radius: 4px;
+    }
     .cl-legend-swatch { width: 22px; height: 3px; border-radius: 2px; }
     .cl-legend-swatch-dashed {
       background: transparent !important;
