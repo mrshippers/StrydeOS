@@ -289,6 +289,9 @@ export const clinikoPoll = onMessagePublished(
     region: REGION,
     timeoutSeconds: 120,
     memory: "256MiB",
+    // gen-1 parity: serialise polls so two overlapping invocations can't both
+    // hit Cliniko and trip its per-key 429 rate limit.
+    concurrency: 1,
   },
   async (event) => {
     const db = admin.firestore();
