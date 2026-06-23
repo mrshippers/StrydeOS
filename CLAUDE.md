@@ -92,7 +92,7 @@ Module-boundary check runs as part of pre-commit. Don't bypass with `--no-verify
 
 Three MCP servers live in this repo (see `dashboard/src/mcp/README.md`):
 
-1. **`stryde-ops`** (`dashboard/src/mcp/`, TypeScript) — inbound, founder-local. 11 tools over clinic data + Ava control. Two transports share one registry: **stdio** (`npm run mcp:stdio`, for Claude Code) and **HTTP** at `portal.strydeos.com/api/mcp` (claude.ai custom integration). ⚠ The HTTP transport hardcodes scope to `CLINIC_ID=spires` + `MCP_ROLE=superadmin` — **anyone holding `MCP_BEARER_SECRET` has founder-equivalent access**. Per-clinic scoping + full OAuth is Phase D (deferred); OAuth client_credentials + Authorization Code/PKCE endpoints exist for the claude.ai flow.
+1. **`stryde-ops`** (`dashboard/src/mcp/`, TypeScript) — inbound, founder-local. 11 tools over clinic data + Ava control. Two transports share one registry: **stdio** (`npm run mcp:stdio`, for Claude Code) and **HTTP** at `portal.strydeos.com/api/mcp` (claude.ai custom integration). ⚠ The HTTP transport scopes to `CLINIC_ID` (default **`clinic-spires`** — the real Spires Firestore doc id, NOT `spires`; see "Canonical clinic id" under Architecture → Data) + `MCP_ROLE=superadmin` — **anyone holding `MCP_BEARER_SECRET` has founder-equivalent access**. Per-clinic scoping + full OAuth is Phase D (deferred); OAuth client_credentials + Authorization Code/PKCE endpoints exist for the claude.ai flow.
 2. **`ava-pms-tools`** (`ava_graph/mcp_server.py`, Python FastMCP) — outbound; Ava's live-call PMS booking tools (cliniko / writeupp / tm3 / jane).
 3. **`strydeOS`** (`scripts/strydeOS_mcp.py`, Python FastMCP) — reference server for marketing/sales drafting: `get_pricing_tiers`, `get_pilot_metrics`, `get_pms_capability`. Treat as the canonical machine-readable pricing/capability source — keep it in sync with this file.
 
@@ -337,6 +337,7 @@ Irreversible = multi-tenant data modelling, real-time listener architecture, com
 ### Data
 - Firestore region: `europe-west2` (London) — never change
 - `clinicId` partitioning is the multi-tenant isolation strategy — respect it in every query
+- **Canonical clinic id (Spires): `clinic-spires`.** The live Spires data lives at `clinics/clinic-spires/*` and every real user's `users/{uid}.clinicId` is `clinic-spires`. There is NO `clinics/spires` doc — a bare `spires` id reads an empty/non-existent clinic and silently returns 0 rows (this bit the ops MCP). Never hardcode `spires`; resolve `clinicId` from the authenticated user, or default any clinic-scoped tooling/env (`CLINIC_ID`) to `clinic-spires`.
 - Metrics are computed and cached in `metrics_weekly` — don't re-derive from raw collections unless building a backfill
 
 ### Auth & RBAC
