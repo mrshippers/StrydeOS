@@ -80,7 +80,7 @@ const STATIONS_RAW = [
   // ── INTELLIGENCE (50°–130°) ─────────────────────────────────────────
   { id:'v113',  v:'v1.1.3', date:'25 Feb', cat:'intel', title:'Weekly digest',        desc:'Same signal. Less noise. Your Monday is now 30 seconds shorter.',                     ring:2, angle:65  },
   { id:'v124i', v:'v1.2.4', date:'28 Mar', cat:'intel', title:'Clinician scorecards', desc:'Rebooking rate, course length, DNA rate. Per-clinician. Coaching-ready.',             ring:3, angle:80  },
-  { id:'v131',  v:'v1.3.1', date:'3 Apr',  cat:'intel', title:'Benchmarks',           desc:'Your KPIs against real clinic data. Know where you stand — not just how you feel.',   ring:4, angle:90  },
+  { id:'v131',  v:'v1.3.1', date:'3 Apr',  cat:'intel', title:'Benchmarks',           desc:'Your KPIs against real clinic data. Know where you stand, not just how you feel.',   ring:4, angle:90  },
   { id:'v133i', v:'v1.3.3', date:'6 Apr',  cat:'intel', title:'Revenue forecasting',  desc:'30/60/90-day projections from pipeline, rebooking, and seasonal patterns.',           ring:5, angle:75  },
 
   // ── PLATFORM (140°–220°) ────────────────────────────────────────────
@@ -91,7 +91,7 @@ const STATIONS_RAW = [
   { id:'v102',  v:'v1.0.2', date:'21 Jan', cat:'platform', title:'ROI calculator',    desc:'Corrected a bug where the numbers were too generous. We prefer conservative.',        ring:1, angle:205 },
   { id:'v111',  v:'v1.1.1', date:'10 Feb', cat:'platform', title:'Dark mode',         desc:'Because 11pm exists.',                                                                 ring:2, angle:188 },
   { id:'v120',  v:'v1.2.0', date:'8 Mar',  cat:'platform', title:'Terms updated',     desc:'Tighter data handling. Multi-region compliance language.',                            ring:2, angle:152 },
-  { id:'v121',  v:'v1.2.1', date:'14 Mar', cat:'platform', title:'Sync reliability',  desc:'Patient data refreshed on every PMS run. The 30-minute idle bug — gone.',             ring:3, angle:165 },
+  { id:'v121',  v:'v1.2.1', date:'14 Mar', cat:'platform', title:'Sync reliability',  desc:'Patient data refreshed on every PMS run. The 30-minute idle bug is gone.',             ring:3, angle:165 },
   { id:'v122',  v:'v1.2.2', date:'19 Mar', cat:'platform', title:'Session security',  desc:'Remember Me toggle. HMAC-signed cookies. 8hr clinical workday TTL.',                  ring:3, angle:145 },
   { id:'v123',  v:'v1.2.3', date:'24 Mar', cat:'platform', title:'In-app changelog',  desc:"What shipped, when, for whom. Every user sees it once. Then it's gone.",              ring:4, angle:175 },
   { id:'v124',  v:'v1.2.4', date:'28 Mar', cat:'platform', title:'Clinician layer',   desc:"Observational notes. Clinicians see what's relevant. Owners see everything.",         ring:4, angle:148 },
@@ -108,9 +108,9 @@ const STATIONS_RAW = [
   { id:'v142p', v:'v1.4.2', date:'10 Apr', cat:'pulse', title:'Dropout risk scoring', desc:'Flags patients trending toward drop-off before they disappear. Triggers Pulse outreach automatically.', ring:5, angle:260 },
 
   // ── ROADMAP (ring 6, dashed) ────────────────────────────────────────
-  { id:'r150a',  v:'v1.5.0', date:'Next', cat:'ava',      title:'Multi-language voice', desc:'Polish, Hindi, Arabic first — based on Spires patient mix. The clinic speaks; Ava answers in kind.', ring:6, angle:355, roadmap:true },
+  { id:'r150a',  v:'v1.5.0', date:'Next', cat:'ava',      title:'Multi-language voice', desc:'Polish, Hindi, Arabic first, based on Spires patient mix. The clinic speaks; Ava answers in kind.', ring:6, angle:355, roadmap:true },
   { id:'r150i',  v:'v1.5.0', date:'Next', cat:'intel',    title:'Outcome measures',      desc:'NPRS, PSFS, QuickDASH, ODI, NDI. Clinical-to-commercial correlation finally measurable.',           ring:6, angle:85,  roadmap:true },
-  { id:'r150p',  v:'v1.5.0', date:'Next', cat:'platform', title:'TM3 integration',       desc:'Blue Zinc TM3 — the dominant legacy UK physio PMS. Filling the biggest blind spot.',                ring:6, angle:195, roadmap:true },
+  { id:'r150p',  v:'v1.5.0', date:'Next', cat:'platform', title:'TM3 integration',       desc:'Blue Zinc TM3, the dominant legacy UK physio PMS. Filling the biggest blind spot.',                ring:6, angle:195, roadmap:true },
   { id:'r150pu', v:'v1.5.0', date:'Next', cat:'pulse',    title:'Review attribution',    desc:'Track which Pulse sequence converted to a Google review. Close the loop on reputation.',           ring:6, angle:268, roadmap:true },
 ];
 
