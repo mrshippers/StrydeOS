@@ -29,6 +29,11 @@ const PROTOCOL_VERSION = "2024-11-05";
 const MCP_CLINIC_ID = (process.env.CLINIC_ID || "clinic-spires").trim();
 const HARDCODED_ROLE = "superadmin" as const;
 
+// Public origin the connector is reachable at. Icons must be absolute URLs.
+const MCP_PUBLIC_ORIGIN = (
+  process.env.APP_URL?.trim() || "https://portal.strydeos.com"
+).replace(/\/$/, "");
+
 interface JsonRpcRequest {
   jsonrpc: "2.0";
   id?: string | number | null;
@@ -92,7 +97,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return rpcResult(id, {
         protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: {} },
-        serverInfo: { name: "stryde-ops", version: "0.1.0" },
+        // `icons` is the MCP-spec field clients (incl. claude.ai) read to show
+        // a connector logo (Implementation.icons, MCP 2025-xx schema). Point it
+        // at the portal's canonical StrydeOS monolith mark, served as PNG at
+        // /icon (32x32) and /apple-icon (180x180). PNG is universally supported.
+        serverInfo: {
+          name: "stryde-ops",
+          title: "StrydeOS Ops",
+          version: "0.1.0",
+          description:
+            "StrydeOS clinic operations — appointments, KPIs, Pulse cohorts, Ava calls and integration health.",
+          websiteUrl: MCP_PUBLIC_ORIGIN,
+          icons: [
+            {
+              src: `${MCP_PUBLIC_ORIGIN}/icon`,
+              mimeType: "image/png",
+              sizes: ["32x32"],
+            },
+            {
+              src: `${MCP_PUBLIC_ORIGIN}/apple-icon`,
+              mimeType: "image/png",
+              sizes: ["180x180"],
+            },
+          ],
+        },
       });
 
     case "notifications/initialized":

@@ -14,7 +14,7 @@ export type Input = z.infer<typeof inputSchema>;
 
 interface ApptRow {
   id: string;
-  startTime: string | null;
+  dateTime: string | null;
   clinicianId: string | null;
   patientId: string | null;
   appointmentType: string | null;
@@ -36,8 +36,8 @@ export async function run(ctx: ToolContext, input: Input): Promise<ToolResult<Da
   const cutoffISO = new Date(Date.now() - input.days_back * 86_400_000).toISOString();
   let query = ctx.db
     .collection(`clinics/${ctx.clinicId}/appointments`)
-    .where("startTime", ">=", cutoffISO)
-    .orderBy("startTime", "desc")
+    .where("dateTime", ">=", cutoffISO)
+    .orderBy("dateTime", "desc")
     .limit(input.limit + 1);
 
   if (input.cursor) {
@@ -58,7 +58,7 @@ export async function run(ctx: ToolContext, input: Input): Promise<ToolResult<Da
     const x = d.data() as Record<string, unknown>;
     return {
       id: d.id,
-      startTime: (x.startTime as string | undefined) ?? null,
+      dateTime: (x.dateTime as string | undefined) ?? null,
       clinicianId: (x.clinicianId as string | undefined) ?? null,
       patientId: (x.patientId as string | undefined) ?? null,
       appointmentType: (x.appointmentType as string | undefined) ?? null,

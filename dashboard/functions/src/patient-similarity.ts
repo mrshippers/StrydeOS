@@ -28,8 +28,12 @@ interface SimilarPatient {
 
 interface AppointmentDoc {
   patientId?: string;
+  // Canonical shape (written by cliniko-poll + pipeline). appointmentTypeId is
+  // still carried by the poll for the cohort vector; dateTime is the canonical
+  // start-time field (formerly startsAt).
   appointmentTypeId?: string;
-  startsAt?: string;
+  appointmentType?: string;
+  dateTime?: string;
   status?: string;
 }
 
@@ -70,11 +74,13 @@ function buildFeatureVector(
   let recentVisit = false;
 
   for (const apt of appointments) {
-    const typeId = apt.appointmentTypeId ?? "unknown";
-    appointmentTypeCounts[typeId] = (appointmentTypeCounts[typeId] ?? 0) + 1;
+    // Prefer the raw Cliniko type id (most granular); fall back to the
+    // canonical enum, then "unknown".
+    const typeKey = apt.appointmentTypeId ?? apt.appointmentType ?? "unknown";
+    appointmentTypeCounts[typeKey] = (appointmentTypeCounts[typeKey] ?? 0) + 1;
 
-    if (apt.startsAt) {
-      const startsMs = new Date(apt.startsAt).getTime();
+    if (apt.dateTime) {
+      const startsMs = new Date(apt.dateTime).getTime();
       if (nowMs - startsMs <= ninetyDaysMs) recentVisit = true;
     }
   }

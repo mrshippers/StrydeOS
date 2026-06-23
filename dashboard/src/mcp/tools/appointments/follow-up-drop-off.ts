@@ -32,18 +32,18 @@ export async function run(ctx: ToolContext, input: Input): Promise<ToolResult<Da
 
   const apptSnap = await ctx.db
     .collection(`clinics/${ctx.clinicId}/appointments`)
-    .where("startTime", ">=", windowStart)
-    .orderBy("startTime", "asc")
+    .where("dateTime", ">=", windowStart)
+    .orderBy("dateTime", "asc")
     .get();
 
-  type Appt = { id: string; startTime: string; clinicianId?: string; patientId?: string; appointmentType?: string };
+  type Appt = { id: string; dateTime: string; clinicianId?: string; patientId?: string; appointmentType?: string };
   const appts: Appt[] = apptSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Appt, "id">) }));
 
   // Group follow-ups by patientId for fast lookup.
   const followUpsByPatient = new Map<string, number[]>();
   for (const a of appts) {
-    if (a.appointmentType === "follow_up" && a.patientId && a.startTime) {
-      const t = Date.parse(a.startTime);
+    if (a.appointmentType === "follow_up" && a.patientId && a.dateTime) {
+      const t = Date.parse(a.dateTime);
       if (!Number.isFinite(t)) continue;
       const arr = followUpsByPatient.get(a.patientId) ?? [];
       arr.push(t);
@@ -58,8 +58,8 @@ export async function run(ctx: ToolContext, input: Input): Promise<ToolResult<Da
   let totalWithFollowUp = 0;
 
   for (const init of initials) {
-    if (!init.patientId || !init.startTime) continue;
-    const t0 = Date.parse(init.startTime);
+    if (!init.patientId || !init.dateTime) continue;
+    const t0 = Date.parse(init.dateTime);
     if (!Number.isFinite(t0)) continue;
     totalInitials++;
 

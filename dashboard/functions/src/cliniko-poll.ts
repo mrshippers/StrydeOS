@@ -52,6 +52,8 @@ interface ClinikoAppointment {
   starts_at: string;
   ends_at: string;
   cancelled_at: string | null;
+  did_not_arrive?: boolean;
+  patient_arrived?: boolean;
   updated_at: string;
   patient?: { links?: { self?: string } };
   practitioner?: { links?: { self?: string } };
@@ -64,15 +66,46 @@ interface ClinikoPageResponse {
   links?: { next?: string };
 }
 
+interface ClinikoAppointmentTypeRow {
+  id: number | string;
+  name?: string;
+}
+
+interface ClinikoAppointmentTypesResponse {
+  appointment_types: ClinikoAppointmentTypeRow[];
+  links?: { next?: string };
+}
+
+// Canonical Appointment shape (mirrors dashboard/src/types/appointment.ts).
+// The KPI pipeline, dashboard reads and seed scripts all read these field
+// names. The poll must emit the same shape or the data is invisible to them.
+type CanonicalStatus =
+  | "scheduled"
+  | "completed"
+  | "dna"
+  | "cancelled"
+  | "late_cancel";
+type CanonicalAppointmentType =
+  | "initial_assessment"
+  | "follow_up"
+  | "review"
+  | "discharge";
+
 interface FirestoreAppointment {
+  patientId: string;
+  clinicianId: string;
+  dateTime: string;
+  endTime: string;
+  status: CanonicalStatus;
+  appointmentType: CanonicalAppointmentType;
+  isInitialAssessment: boolean;
+  source: "pms_sync";
   pmsExternalId: string;
   pmsType: "cliniko";
-  status: "cancelled" | "scheduled";
-  startsAt: string;
-  endsAt: string;
-  patientId: string;
-  practitionerId: string;
+  // Carried for downstream Cloud Functions (insurance-route, patient-similarity)
+  // that key off the raw Cliniko type id + resolved name.
   appointmentTypeId: string;
+  appointmentTypeName: string | null;
   updatedAt: string;
   syncedAt: string;
 }
@@ -89,19 +122,117 @@ function buildBasicAuthHeader(apiKey: string): string {
   return `Basic ${encoded}`;
 }
 
-function mapClinikoAppointment(apt: ClinikoAppointment): FirestoreAppointment {
+/**
+ * Derive canonical appointment status from Cliniko's boolean flags.
+ * Mirrors dashboard/src/lib/integrations/pms/cliniko/mappers.ts deriveClinikoStatus.
+ */
+function deriveClinikoStatus(apt: ClinikoAppointment): CanonicalStatus {
+  if (apt.cancelled_at) return "cancelled";
+  if (apt.patient_arrived) return "completed";
+  if (apt.did_not_arrive) return "dna";
+  return "scheduled";
+}
+
+/**
+ * Classify a Cliniko appointment-type NAME into the canonical enum.
+ *
+ * MUST stay in lock-step with the canonical source of these rules:
+ *   dashboard/src/lib/integrations/pms/cliniko/classify-appointment-type.ts
+ * (tested in that module's __tests__). This package is isolated and cannot
+ * import from src/, so the rules are replicated verbatim here.
+ *
+ * Follow-up / review / discharge are checked before initial so e.g.
+ * "Bupa Follow-up Review" never mis-classifies as initial.
+ */
+function classifyAppointmentTypeName(
+  typeName: string | null | undefined
+): { appointmentType: CanonicalAppointmentType; isInitialAssessment: boolean } {
+  const lower = (typeName ?? "").trim().toLowerCase();
+
+  if (/discharge|final session/.test(lower)) {
+    return { appointmentType: "discharge", isInitialAssessment: false };
+  }
+  if (/follow[\s-]?up|subsequent|treatment/.test(lower)) {
+    return { appointmentType: "follow_up", isInitialAssessment: false };
+  }
+  if (/review|progress/.test(lower)) {
+    return { appointmentType: "review", isInitialAssessment: false };
+  }
+  if (/initial|assessment|new patient|consultation/.test(lower)) {
+    return { appointmentType: "initial_assessment", isInitialAssessment: true };
+  }
+  // Unknown name → treat as a follow-up (the conservative non-initial default,
+  // matching the pipeline's classifyAppointmentType fallback for repeat visits).
+  return { appointmentType: "follow_up", isInitialAssessment: false };
+}
+
+function mapClinikoAppointment(
+  apt: ClinikoAppointment,
+  typeNames: Map<string, string>
+): FirestoreAppointment {
+  const appointmentTypeId = extractIdFromSelfLink(apt.appointment_type?.links?.self);
+  const appointmentTypeName = appointmentTypeId
+    ? typeNames.get(appointmentTypeId) ?? null
+    : null;
+  const { appointmentType, isInitialAssessment } =
+    classifyAppointmentTypeName(appointmentTypeName);
+  const now = new Date().toISOString();
+
   return {
+    patientId: extractIdFromSelfLink(apt.patient?.links?.self),
+    clinicianId: extractIdFromSelfLink(apt.practitioner?.links?.self),
+    dateTime: apt.starts_at,
+    endTime: apt.ends_at,
+    status: deriveClinikoStatus(apt),
+    appointmentType,
+    isInitialAssessment,
+    source: "pms_sync",
     pmsExternalId: String(apt.id),
     pmsType: "cliniko",
-    status: apt.cancelled_at ? "cancelled" : "scheduled",
-    startsAt: apt.starts_at,
-    endsAt: apt.ends_at,
-    patientId: extractIdFromSelfLink(apt.patient?.links?.self),
-    practitionerId: extractIdFromSelfLink(apt.practitioner?.links?.self),
-    appointmentTypeId: extractIdFromSelfLink(apt.appointment_type?.links?.self),
+    appointmentTypeId,
+    appointmentTypeName,
     updatedAt: apt.updated_at,
-    syncedAt: new Date().toISOString(),
+    syncedAt: now,
   };
+}
+
+/**
+ * Fetch all Cliniko appointment types once per poll and build an id → name map.
+ * Mirrors the dashboard adapter (clinikoFetchAll + buildAppointmentTypeNameMap).
+ * On failure the map is empty — appointments still sync, names just stay absent.
+ */
+async function fetchAppointmentTypeNameMap(
+  baseUrl: string,
+  authHeader: string
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const normalizedBase = baseUrl.replace(/\/$/, "");
+  let nextUrl: string | null = `${normalizedBase}/appointment_types?per_page=100`;
+  let page = 0;
+
+  while (nextUrl && page < 100) {
+    const res = await fetch(nextUrl, {
+      headers: {
+        Authorization: authHeader,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": "StrydeOS/1.0",
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`Cliniko appointment_types error: ${res.status}`);
+    }
+    const body = (await res.json()) as ClinikoAppointmentTypesResponse;
+    for (const row of body.appointment_types ?? []) {
+      if (row?.id != null && typeof row.name === "string") {
+        map.set(String(row.id), row.name);
+      }
+    }
+    nextUrl = body.links?.next ?? null;
+    page++;
+  }
+
+  return map;
 }
 
 async function fetchAppointmentPage(
@@ -273,6 +404,20 @@ export const clinikoPoll = functionsV1
       return;
     }
 
+    // Resolve appointment-type NAMES once per poll (one paginated GET, never
+    // per-appointment) so the canonical appointmentType enum can be derived.
+    // On failure we still upsert — names just stay absent and types fall back.
+    let typeNames: Map<string, string>;
+    try {
+      typeNames = await fetchAppointmentTypeNameMap(baseUrl, authHeader);
+    } catch (err) {
+      console.warn(
+        `[clinikoPoll] Failed to fetch appointment_types for clinic ${clinicId}; proceeding without names:`,
+        err
+      );
+      typeNames = new Map();
+    }
+
     // Upsert appointments to Firestore in batches of 500
     const appointmentsCol = db
       .collection("clinics")
@@ -285,8 +430,10 @@ export const clinikoPoll = functionsV1
       const chunk = appointments.slice(i, i + BATCH_SIZE);
 
       for (const apt of chunk) {
-        const mapped = mapClinikoAppointment(apt);
+        const mapped = mapClinikoAppointment(apt, typeNames);
         const docRef = appointmentsCol.doc(mapped.pmsExternalId);
+        // merge preserves fields written by later stages (hepAssigned,
+        // insuranceRoute, patientSummary) and the pipeline's createdAt.
         batch.set(docRef, mapped, { merge: true });
       }
 

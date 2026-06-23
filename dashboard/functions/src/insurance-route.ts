@@ -27,6 +27,10 @@ interface InsuranceRoute {
 }
 
 interface AppointmentDoc {
+  // The resolved appointment-type NAME (e.g. "Bupa Initial Appointment") is the
+  // signal that carries the insurer. The poll now resolves and stores it; the
+  // numeric appointmentTypeId never contained an insurer keyword.
+  appointmentTypeName?: string;
   appointmentTypeId?: string;
   notes?: string;
   tags?: string | string[];
@@ -55,9 +59,9 @@ function matchPathway(text: string): InsurancePathway | null {
 function classifyAppointment(data: AppointmentDoc): InsuranceRoute {
   const routedAt = new Date().toISOString();
 
-  // High-confidence: appointmentTypeId contains an insurer name
-  if (data.appointmentTypeId) {
-    const match = matchPathway(data.appointmentTypeId);
+  // High-confidence: the appointment-type NAME contains an insurer name
+  if (data.appointmentTypeName) {
+    const match = matchPathway(data.appointmentTypeName);
     if (match) {
       return { pathway: match, confidence: "high", routedAt };
     }

@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
  * and authorization endpoint before initiating the OAuth flow.
  */
 export async function GET() {
-  const base = process.env.APP_URL?.trim() || "https://portal.strydeos.com";
+  const base = (process.env.APP_URL?.trim() || "https://portal.strydeos.com").replace(/\/$/, "");
   return NextResponse.json({
     issuer: base,
     authorization_endpoint: `${base}/authorize`,
@@ -19,5 +19,8 @@ export async function GET() {
     code_challenge_methods_supported: ["S256"],
     response_types_supported: ["code", "token"],
     scopes_supported: [],
+    // Canonical StrydeOS monolith mark, for clients that render a logo on the
+    // OAuth consent screen. Same PNG the portal serves at /icon.
+    logo_uri: `${base}/icon`,
   });
 }
