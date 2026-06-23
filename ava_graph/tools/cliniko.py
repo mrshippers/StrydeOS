@@ -18,6 +18,8 @@ from typing import Dict, List, Tuple
 
 import httpx
 
+from ava_graph.tools._http import request_with_retry
+
 logger = logging.getLogger(__name__)
 
 _DEFAULT_BASE_URL = "https://api.au1.cliniko.com/v1"
@@ -103,9 +105,12 @@ async def get_cliniko_availability(
 
     async with _make_client(api_key, base_url) as client:
         try:
-            response = await client.get(
-                f"/businesses/{clinic_id}/available_appointments",
-                params={"from": start_date, "to": end_date, "duration": duration_minutes},
+            response = await request_with_retry(
+                lambda: client.get(
+                    f"/businesses/{clinic_id}/available_appointments",
+                    params={"from": start_date, "to": end_date, "duration": duration_minutes},
+                ),
+                idempotent=True,
             )
             response.raise_for_status()
             data = response.json()
@@ -164,7 +169,12 @@ async def book_cliniko_appointment(
 
     async with _make_client(api_key, base_url) as client:
         try:
-            response = await client.post("/appointments", json=payload)
+            # Booking is a write: only 429/connect errors retry (never a read
+            # timeout or 5xx) so a possibly-created appointment is never repeated.
+            response = await request_with_retry(
+                lambda: client.post("/appointments", json=payload),
+                idempotent=False,
+            )
             response.raise_for_status()
             data = response.json()
         except httpx.HTTPError as e:

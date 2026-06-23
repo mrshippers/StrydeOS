@@ -11,6 +11,45 @@ const elevenLabsApiKey = defineSecret("ELEVENLABS_API_KEY");
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
 const REGION = "europe-west2";
 
+// ─── ElevenLabs request hardening ───────────────────────────────────────────
+// The KB sync previously fired all existing-doc DELETEs at once via
+// Promise.allSettled and had no retry on the POST/PATCH calls, so a 429 (or a
+// transient 5xx) failed the sync. Route every call through a retry that honours
+// Retry-After, and run the DELETEs in small throttled batches instead of one
+// burst.
+const EL_MAX_RETRIES = 3;
+const EL_RETRY_STATUSES = new Set([429, 500, 502, 503, 504]);
+const EL_DELETE_BATCH_SIZE = 4;
+
+function elSleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function elParseRetryAfter(res: Response): number | null {
+  const header = res.headers.get("Retry-After");
+  if (!header) return null;
+  const seconds = Number(header);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const when = Date.parse(header);
+  if (!Number.isNaN(when)) return Math.max(0, when - Date.now());
+  return null;
+}
+
+async function elevenLabsFetch(url: string, init: RequestInit): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, init);
+    if (EL_RETRY_STATUSES.has(res.status) && attempt < EL_MAX_RETRIES) {
+      const retryAfter = elParseRetryAfter(res);
+      const backoff =
+        retryAfter ?? Math.min(8_000, 500 * 2 ** attempt) + Math.floor(Math.random() * 250);
+      await res.text().catch(() => "");
+      await elSleep(backoff);
+      continue;
+    }
+    return res;
+  }
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface KnowledgeEntry {
@@ -234,16 +273,20 @@ async function syncClinicToAvaCore(clinicId: string, apiKey: string): Promise<Sy
   const now = new Date().toISOString();
 
   try {
-    // Clear existing KB documents
+    // Clear existing KB documents — throttled batches (not one big burst) so a
+    // clinic with many docs can't spike ElevenLabs into a 429.
     const existingDocIds: string[] = (ava["elevenLabsKbDocIds"] as string[]) ?? [];
-    await Promise.allSettled(
-      existingDocIds.map((docId) =>
-        fetch(`${ELEVENLABS_API_URL}/convai/agents/${agentId}/knowledge-base/${docId}`, {
-          method: "DELETE",
-          headers: { "xi-api-key": apiKey },
-        })
-      )
-    );
+    for (let i = 0; i < existingDocIds.length; i += EL_DELETE_BATCH_SIZE) {
+      const batch = existingDocIds.slice(i, i + EL_DELETE_BATCH_SIZE);
+      await Promise.allSettled(
+        batch.map((docId) =>
+          elevenLabsFetch(
+            `${ELEVENLABS_API_URL}/convai/agents/${agentId}/knowledge-base/${docId}`,
+            { method: "DELETE", headers: { "xi-api-key": apiKey } }
+          )
+        )
+      );
+    }
 
     // Upload per-category knowledge chunks
     const newDocIds: string[] = [];
@@ -252,7 +295,7 @@ async function syncClinicToAvaCore(clinicId: string, apiKey: string): Promise<Sy
       if (catEntries.length === 0) continue;
 
       const content = catEntries.map((e) => `${e.title}: ${e.content}`).join("\n\n");
-      const res = await fetch(
+      const res = await elevenLabsFetch(
         `${ELEVENLABS_API_URL}/convai/agents/${agentId}/add-to-knowledge-base`,
         {
           method: "POST",
@@ -270,7 +313,7 @@ async function syncClinicToAvaCore(clinicId: string, apiKey: string): Promise<Sy
     }
 
     // PATCH agent system prompt
-    const patchRes = await fetch(`${ELEVENLABS_API_URL}/convai/agents/${agentId}`, {
+    const patchRes = await elevenLabsFetch(`${ELEVENLABS_API_URL}/convai/agents/${agentId}`, {
       method: "PATCH",
       headers: { "xi-api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({ system_prompt: systemPrompt }),
@@ -309,7 +352,7 @@ async function syncClinicToAvaCore(clinicId: string, apiKey: string): Promise<Sy
       : "";
     const fullPrompt = systemPrompt + sections;
 
-    const fallbackRes = await fetch(`${ELEVENLABS_API_URL}/convai/agents/${agentId}`, {
+    const fallbackRes = await elevenLabsFetch(`${ELEVENLABS_API_URL}/convai/agents/${agentId}`, {
       method: "PATCH",
       headers: { "xi-api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({ system_prompt: fullPrompt }),
