@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import * as functionsV1 from "firebase-functions/v1";
+import { onMessagePublished } from "firebase-functions/v2/pubsub";
 
 if (admin.apps.length === 0) {
   admin.initializeApp();
@@ -89,21 +89,24 @@ function classifyAppointment(data: AppointmentDoc): InsuranceRoute {
 
 // ─── Pub/Sub triggered function ───────────────────────────────────────────────
 
-export const insuranceRoute = functionsV1
-  .region(REGION)
-  .runWith({ timeoutSeconds: 60, memory: "256MB" })
-  .pubsub.topic("insurance-route-request")
-  .onPublish(async (message) => {
+export const insuranceRoute = onMessagePublished(
+  {
+    topic: "insurance-route-request",
+    region: REGION,
+    timeoutSeconds: 60,
+    memory: "256MiB",
+  },
+  async (event) => {
     const db = admin.firestore();
 
     let clinicId: string;
     let appointmentId: string;
     try {
-      const parsed = message.json as { clinicId?: string; appointmentId?: string };
+      const parsed = event.data.message.json as { clinicId?: string; appointmentId?: string };
       clinicId = parsed.clinicId ?? "";
       appointmentId = parsed.appointmentId ?? "";
     } catch {
-      console.error("[insuranceRoute] Failed to parse Pub/Sub message:", message.data);
+      console.error("[insuranceRoute] Failed to parse Pub/Sub message:", event.data.message.data);
       return;
     }
 
@@ -134,4 +137,5 @@ export const insuranceRoute = functionsV1
     console.log(
       `[insuranceRoute] Clinic ${clinicId} appt ${appointmentId} → pathway=${route.pathway} confidence=${route.confidence}`
     );
-  });
+  }
+);

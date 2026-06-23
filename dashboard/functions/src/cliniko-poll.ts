@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import * as functionsV1 from "firebase-functions/v1";
+import { onMessagePublished } from "firebase-functions/v2/pubsub";
 
 if (admin.apps.length === 0) {
   admin.initializeApp();
@@ -283,19 +283,22 @@ async function fetchAllAppointmentsSince(
 
 // ─── Pub/Sub triggered function ───────────────────────────────────────────────
 
-export const clinikoPoll = functionsV1
-  .region(REGION)
-  .runWith({ timeoutSeconds: 120, memory: "256MB" })
-  .pubsub.topic("cliniko-poll")
-  .onPublish(async (message) => {
+export const clinikoPoll = onMessagePublished(
+  {
+    topic: "cliniko-poll",
+    region: REGION,
+    timeoutSeconds: 120,
+    memory: "256MiB",
+  },
+  async (event) => {
     const db = admin.firestore();
 
     let clinicId: string;
     try {
-      const parsed = message.json as { clinicId?: string };
+      const parsed = event.data.message.json as { clinicId?: string };
       clinicId = parsed.clinicId ?? "";
     } catch {
-      console.error("[clinikoPoll] Failed to parse Pub/Sub message:", message.data);
+      console.error("[clinikoPoll] Failed to parse Pub/Sub message:", event.data.message.data);
       return;
     }
 

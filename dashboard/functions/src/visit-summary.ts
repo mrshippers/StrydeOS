@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import * as functionsV1 from "firebase-functions/v1";
+import { onMessagePublished } from "firebase-functions/v2/pubsub";
 
 if (admin.apps.length === 0) {
   admin.initializeApp();
@@ -102,21 +102,24 @@ async function generateVisitSummary(apt: AppointmentDoc): Promise<string> {
 
 // ─── Pub/Sub triggered function ───────────────────────────────────────────────
 
-export const visitSummary = functionsV1
-  .region(REGION)
-  .runWith({ timeoutSeconds: 120, memory: "256MB" })
-  .pubsub.topic("visit-summary-request")
-  .onPublish(async (message) => {
+export const visitSummary = onMessagePublished(
+  {
+    topic: "visit-summary-request",
+    region: REGION,
+    timeoutSeconds: 120,
+    memory: "256MiB",
+  },
+  async (event) => {
     const db = admin.firestore();
 
     let clinicId: string;
     let appointmentId: string;
     try {
-      const parsed = message.json as Partial<VisitSummaryMessage>;
+      const parsed = event.data.message.json as Partial<VisitSummaryMessage>;
       clinicId = parsed.clinicId ?? "";
       appointmentId = parsed.appointmentId ?? "";
     } catch {
-      console.error("[visitSummary] Failed to parse Pub/Sub message:", message.data);
+      console.error("[visitSummary] Failed to parse Pub/Sub message:", event.data.message.data);
       return;
     }
 
@@ -157,4 +160,5 @@ export const visitSummary = functionsV1
     console.log(
       `[visitSummary] Summary written for appointment ${appointmentId} (clinic ${clinicId})`
     );
-  });
+  }
+);

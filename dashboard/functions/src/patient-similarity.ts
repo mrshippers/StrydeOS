@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import * as functionsV1 from "firebase-functions/v1";
+import { onMessagePublished } from "firebase-functions/v2/pubsub";
 
 if (admin.apps.length === 0) {
   admin.initializeApp();
@@ -94,11 +94,14 @@ function buildFeatureVector(
 
 // ─── Pub/Sub triggered function ───────────────────────────────────────────────
 
-export const patientSimilarity = functionsV1
-  .region(REGION)
-  .runWith({ timeoutSeconds: 120, memory: "512MB" })
-  .pubsub.topic("patient-similarity-request")
-  .onPublish(async (message) => {
+export const patientSimilarity = onMessagePublished(
+  {
+    topic: "patient-similarity-request",
+    region: REGION,
+    timeoutSeconds: 120,
+    memory: "512MiB",
+  },
+  async (event) => {
     const db = admin.firestore();
 
     let clinicId: string;
@@ -106,12 +109,12 @@ export const patientSimilarity = functionsV1
     let limit: number;
 
     try {
-      const parsed = message.json as SimilarityRequestPayload;
+      const parsed = event.data.message.json as SimilarityRequestPayload;
       clinicId = parsed.clinicId ?? "";
       patientId = parsed.patientId ?? "";
       limit = parsed.limit ?? 5;
     } catch {
-      console.error("[patientSimilarity] Failed to parse Pub/Sub message:", message.data);
+      console.error("[patientSimilarity] Failed to parse Pub/Sub message:", event.data.message.data);
       return;
     }
 
@@ -189,4 +192,5 @@ export const patientSimilarity = functionsV1
     console.log(
       `[patientSimilarity] Wrote ${topN.length} similar patients for patient ${patientId} in clinic ${clinicId}`
     );
-  });
+  }
+);
