@@ -107,3 +107,52 @@ export async function buildClinicianMap(
   }
   return map;
 }
+
+/**
+ * Reconcile which clinicians are "seats" for the clinic. A StrydeOS seat is a
+ * clinician doc referenced by a `users.clinicianId` (i.e. someone with an
+ * account). PMS sync imports every practitioner on the connected account, which
+ * for a multi-branch PMS pulls clinicians from other branches who have no
+ * StrydeOS account — they must stay in the data (for attribution) but be hidden
+ * and excluded from seat/tier counts. We model that as `active = isSeat`.
+ *
+ * Returns the seat clinician ids so callers can gate patient visibility too.
+ */
+export async function reconcileClinicianSeats(
+  db: Firestore,
+  clinicId: string
+): Promise<{ seatIds: string[]; activated: number; deactivated: number }> {
+  const usersSnap = await db
+    .collection("users")
+    .where("clinicId", "==", clinicId)
+    .get();
+  const seatIds = new Set<string>();
+  for (const u of usersSnap.docs) {
+    const cid = u.data().clinicianId as string | undefined;
+    if (cid) seatIds.add(cid);
+  }
+
+  const cliniciansSnap = await db
+    .collection("clinics")
+    .doc(clinicId)
+    .collection("clinicians")
+    .get();
+
+  const now = new Date().toISOString();
+  const batch = db.batch();
+  let activated = 0;
+  let deactivated = 0;
+  for (const doc of cliniciansSnap.docs) {
+    const isSeat = seatIds.has(doc.id);
+    const wasActive = doc.data().active === true;
+    if (isSeat && !wasActive) {
+      batch.update(doc.ref, { active: true, updatedAt: now });
+      activated++;
+    } else if (!isSeat && wasActive) {
+      batch.update(doc.ref, { active: false, updatedAt: now });
+      deactivated++;
+    }
+  }
+  if (activated || deactivated) await batch.commit();
+  return { seatIds: [...seatIds], activated, deactivated };
+}

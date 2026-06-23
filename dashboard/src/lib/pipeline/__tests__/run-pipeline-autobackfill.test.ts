@@ -25,6 +25,7 @@ const mockDecryptCredential = vi.fn();
 vi.mock("../sync-clinicians", () => ({
   syncClinicians: (...args: unknown[]) => mockSyncClinicians(...args),
   buildClinicianMap: (...args: unknown[]) => mockBuildClinicianMap(...args),
+  reconcileClinicianSeats: vi.fn().mockResolvedValue({ seatIds: [], activated: 0, deactivated: 0 }),
 }));
 vi.mock("../sync-appointments", () => ({
   syncAppointments: (...args: unknown[]) => mockSyncAppointments(...args),
@@ -136,6 +137,7 @@ vi.mock("@/lib/integrations/pms/factory", () => ({
     getAppointments: vi.fn().mockResolvedValue([]),
     getPatient: vi.fn().mockResolvedValue({ firstName: "Joe", lastName: "Bloggs" }),
   })),
+  detectPmsProviderMismatch: vi.fn(() => null),
 }));
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
