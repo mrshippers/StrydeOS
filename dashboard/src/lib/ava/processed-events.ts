@@ -11,8 +11,10 @@
  * Mechanism mirrors the canonical WriteUpp pattern: an atomic Firestore
  * `create()` on a per-clinic dedup doc. `create()` throws ALREADY_EXISTS
  * (gRPC code 6) if a concurrent or retried invocation already claimed the
- * event, so only the first caller proceeds to the SMS/booking work. The
- * `purgeAfter` TTL is swept by the data-health/cleanup cron.
+ * event, so only the first caller proceeds to the SMS/booking work. These docs
+ * are swept on a 7-day `processedAt` retention by the data-health/cleanup cron
+ * (the `purgeAfter` field below is a redundant epoch-ms marker for any future
+ * native-TTL policy).
  */
 
 const DEDUP_TTL_DAYS = 7; // matches the ElevenLabs retry window with headroom
