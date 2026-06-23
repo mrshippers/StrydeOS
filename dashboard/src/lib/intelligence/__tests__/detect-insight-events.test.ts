@@ -431,7 +431,8 @@ describe("P0-7: severity boundaries", () => {
     const lastSession = new Date();
     lastSession.setDate(lastSession.getDate() - 20); // 20 days ago
     const patients = [makeDropoutPatient({ lastSessionDate: lastSession.toISOString() })];
-    const db = makeMockDb({ patients });
+    // Patient's clinician must be a seat (active) for the dropout event to fire.
+    const db = makeMockDb({ patients, clinicians: [{ id: "c1", name: "Alice" }] });
 
     await detectInsightEvents(db as any, "clinic-test");
 

@@ -7,11 +7,11 @@
   "crons": [
     {
       "path": "/api/pipeline/run",
-      "schedule": "0 * * * *"
+      "schedule": "*/30 * * * *"
     },
     {
       "path": "/api/intelligence/detect",
-      "schedule": "30 * * * *"
+      "schedule": "15,45 * * * *"
     },
     {
       "path": "/api/intelligence/digest",
