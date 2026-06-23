@@ -180,31 +180,35 @@ function ContinuityPage() {
         </GlassCard>
       )}
 
-      {/* Comms summary stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Sent"
-          value={commsStats.totalSent}
-          unit="messages"
-          status="neutral"
-        />
-        <StatCard
-          label="Open Rate"
-          value={formatPercent(commsStats.openRate)}
-          status={commsStats.openRate >= 0.7 ? "ok" : commsStats.openRate >= 0.5 ? "warn" : "danger"}
-        />
-        <StatCard
-          label="Click Rate"
-          value={formatPercent(commsStats.clickRate)}
-          status={commsStats.clickRate >= 0.5 ? "ok" : commsStats.clickRate >= 0.3 ? "warn" : "danger"}
-        />
-        <StatCard
-          label="Rebook Conv."
-          value={formatPercent(commsStats.conversionToRebook)}
-          status={commsStats.conversionToRebook >= 0.08 ? "ok" : "warn"}
-          insight="From rebooking prompts"
-        />
-      </div>
+      {/* Comms summary stats — only once messages have actually been sent.
+          Before that, rates would read a misleading red 0%; the setup banner
+          above communicates the empty state instead. */}
+      {(commsStats.totalSent > 0 || commsIsDemo) && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Total Sent"
+            value={commsStats.totalSent}
+            unit="messages"
+            status="neutral"
+          />
+          <StatCard
+            label="Open Rate"
+            value={formatPercent(commsStats.openRate)}
+            status={commsStats.openRate >= 0.7 ? "ok" : commsStats.openRate >= 0.5 ? "warn" : "danger"}
+          />
+          <StatCard
+            label="Click Rate"
+            value={formatPercent(commsStats.clickRate)}
+            status={commsStats.clickRate >= 0.5 ? "ok" : commsStats.clickRate >= 0.3 ? "warn" : "danger"}
+          />
+          <StatCard
+            label="Rebook Conv."
+            value={formatPercent(commsStats.conversionToRebook)}
+            status={commsStats.conversionToRebook >= 0.08 ? "ok" : "warn"}
+            insight="From rebooking prompts"
+          />
+        </div>
+      )}
 
       {/* View tabs */}
       <div className="flex items-center justify-between gap-3">

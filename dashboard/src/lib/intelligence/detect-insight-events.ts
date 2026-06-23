@@ -432,9 +432,15 @@ export async function detectInsightEvents(
 
   // ── Patient-actionable events ────────────────────────────────────────────
 
+  // Seat gate: `clinicians` is loaded active-only (== StrydeOS seats), so a
+  // patient whose primary clinician isn't a seat belongs to another branch /
+  // non-account practitioner and must not generate insights for this clinic.
+  const seatClinicianIds = new Set(clinicians.map((c) => c.id));
+
   // 7. PATIENT_DROPOUT_RISK
   for (const patient of patients) {
     if (patient.discharged) continue;
+    if (!seatClinicianIds.has(patient.clinicianId as string)) continue;
     if (!patient.lastSessionDate) continue;
     const sessionCount = Number(patient.sessionCount ?? 0);
     if (sessionCount < 1) continue;

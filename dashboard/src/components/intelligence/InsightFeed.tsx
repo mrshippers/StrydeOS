@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Lightbulb, CheckCheck, TrendingDown } from "lucide-react";
 import { brand } from "@/lib/brand";
 import { useInsightEvents } from "@/hooks/useInsightEvents";
+import { useClinicians } from "@/hooks/useClinicians";
 import { DURATION, EASING, useMorphValue } from "@/lib/motion";
 import InsightEventCard from "./InsightEventCard";
 import ErrorBanner from "@/components/ui/ErrorBanner";
@@ -16,8 +17,21 @@ import ErrorBanner from "@/components/ui/ErrorBanner";
  */
 export default function InsightFeed() {
   const router = useRouter();
-  const { events, activeEvents, markAsRead, loading, error } = useInsightEvents();
+  const { events: rawEvents, activeEvents: rawActiveEvents, markAsRead, loading, error } = useInsightEvents();
+  const { clinicians } = useClinicians();
   const [showDismissed, setShowDismissed] = useState(false);
+
+  // Seat gate: only surface events for active clinicians (StrydeOS seats) plus
+  // clinic-level events (no clinicianId). Non-seat / other-branch practitioners'
+  // events stay out of view. Falls back to showing all while the roster loads.
+  const seatIds = useMemo(() => new Set(clinicians.map((c) => c.id)), [clinicians]);
+  const isSeatEvent = useMemo(
+    () => (e: { clinicianId?: string }) =>
+      !e.clinicianId || seatIds.size === 0 || seatIds.has(e.clinicianId),
+    [seatIds]
+  );
+  const events = useMemo(() => rawEvents.filter(isSeatEvent), [rawEvents, isSeatEvent]);
+  const activeEvents = useMemo(() => rawActiveEvents.filter(isSeatEvent), [rawActiveEvents, isSeatEvent]);
 
   const sortedActive = useMemo(
     () =>

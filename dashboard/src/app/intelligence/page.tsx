@@ -21,6 +21,8 @@ import StatCard from "@/components/ui/StatCard";
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useClinicians } from "@/hooks/useClinicians";
+import { useConnections } from "@/hooks/useConnections";
+import EnrichmentDrawer from "@/components/intelligence/EnrichmentDrawer";
 import { useWeeklyStats } from "@/hooks/useWeeklyStats";
 import { useIntelligenceData } from "@/hooks/useIntelligenceData";
 import { useKpis } from "@/hooks/useKpis";
@@ -683,6 +685,7 @@ export default function IntelligencePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshResult, setRefreshResult] = useState<string | null>(null);
   const { clinicians } = useClinicians();
+  const { connected: connections } = useConnections();
   const { stats, usedDemo: weeklyUsedDemo, error: weeklyError } = useWeeklyStats(selectedClinician);
   const latest = stats.length > 0 ? stats[stats.length - 1] : null;
   const { patients } = usePatients();
@@ -811,38 +814,33 @@ export default function IntelligencePage() {
         accentColor={brand.purple}
       />
 
-      {/* Data freshness bar */}
-      {(() => {
-        const computedDate = latest?.computedAt ? new Date(latest.computedAt) : null;
-        const daysSinceSync = computedDate ? Math.floor((Date.now() - computedDate.getTime()) / 86400000) : null;
-        const isStale = daysSinceSync != null && daysSinceSync > 7;
-        return (
-      <div className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border text-sm ${isStale ? "bg-amber-50 border-amber-200" : "bg-cloud-light border-border"}`}>
-        <span className={isStale ? "text-amber-700" : "text-muted"}>
-          {isStale && <AlertTriangle size={14} className="inline mr-1.5 -mt-0.5 text-amber-500" />}
-          {computedDate
-            ? `Last synced: ${computedDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} at ${computedDate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}${isStale ? ` (${daysSinceSync} days ago — data is stale)` : ""}`
-            : "No data synced yet — hit Refresh Data to pull from your PMS"}
-          {latest?.weekStart && <span className={`ml-2 ${isStale ? "text-amber-500" : "text-muted/60"}`}>· Week of {latest.weekStart}</span>}
-        </span>
-        <div className="flex items-center gap-2">
-          {refreshResult && (
-            <span className={`text-xs ${refreshResult.startsWith("Data synced") ? "text-emerald-600" : "text-red-500"}`}>
-              {refreshResult}
-            </span>
-          )}
-          <button
-            onClick={handleRefreshData}
-            disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple/10 text-purple text-xs font-medium hover:bg-purple/20 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
-            {refreshing ? "Syncing…" : "Refresh Data"}
-          </button>
-        </div>
+      {/* Compact refresh + live status (auto-syncs every 30 min; manual on demand) */}
+      <div className="flex items-center justify-end gap-2">
+        {refreshResult && (
+          <span className={`text-xs ${refreshResult.startsWith("Data synced") ? "text-emerald-600" : "text-red-500"}`}>
+            {refreshResult}
+          </span>
+        )}
+        <button
+          onClick={handleRefreshData}
+          disabled={refreshing}
+          title={
+            latest?.computedAt
+              ? `Live · last synced ${new Date(latest.computedAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`
+              : "Live · awaiting first sync"
+          }
+          className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[13px] font-semibold text-white transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+          style={{ background: "linear-gradient(135deg,#2E6BFF,#1C54F2)", boxShadow: "0 2px 8px rgba(28,84,242,0.3)" }}
+        >
+          <span className="relative flex h-2 w-2" aria-hidden>
+            {!refreshing && (
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
+            )}
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+          </span>
+          {refreshing ? "Syncing…" : "Refresh"}
+        </button>
       </div>
-        );
-      })()}
 
       {(intelligenceError || weeklyError) && (
         <ErrorBanner
@@ -860,8 +858,10 @@ export default function IntelligencePage() {
           Intelligence (event emitter) and Pulse (event consumer). */}
       <EventsActionedByPulseTile />
 
-      {/* Summary stat cards */}
-      <div className="relative grid grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Summary stat cards — NPS only shows when it's actually set up for this
+          clinic (else it lives in the enrichment drawer as a soft CTA). Grid
+          reflows so there's no empty cell. */}
+      <div className={`relative grid grid-cols-2 ${(connections.nps || usedDemo) ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-4`}>
         {/* Ambient radial glow — purple wash behind Intelligence stats */}
         <div
           className="ambient-glow -z-10"
@@ -884,12 +884,14 @@ export default function IntelligencePage() {
           value={formatPence(avgRevPerSession)}
           status={avgRevPerSession >= 7500 ? "ok" : "warn"}
         />
-        <StatCard
-          label="NPS Score"
-          value={reputationDemoFallback && !usedDemo ? "—" : npsKpi ? npsScore : "—"}
-          status={reputationDemoFallback && !usedDemo ? "neutral" : npsKpi ? (npsStatus === "ok" ? "ok" : npsStatus === "warn" ? "warn" : "danger") : "neutral"}
-          insight={reputationDemoFallback && !usedDemo ? "No NPS data yet" : npsKpi ? "From nps_sms responses" : "Awaiting pipeline data"}
-        />
+        {(connections.nps || usedDemo) && (
+          <StatCard
+            label="NPS Score"
+            value={reputationDemoFallback && !usedDemo ? "—" : npsKpi ? npsScore : "—"}
+            status={reputationDemoFallback && !usedDemo ? "neutral" : npsKpi ? (npsStatus === "ok" ? "ok" : npsStatus === "warn" ? "warn" : "danger") : "neutral"}
+            insight={reputationDemoFallback && !usedDemo ? "No NPS data yet" : npsKpi ? "From nps_sms responses" : "Awaiting pipeline data"}
+          />
+        )}
         <StatCard
           label="Google Reviews"
           value={reputationDemoFallback && !usedDemo ? "—" : reviews.totalReviews}
@@ -1761,6 +1763,8 @@ export default function IntelligencePage() {
           </div>
         )}
       </div>
+
+      <EnrichmentDrawer />
     </div>
   );
 }
