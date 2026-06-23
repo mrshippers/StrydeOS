@@ -26,7 +26,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const PROTOCOL_VERSION = "2024-11-05";
-const HARDCODED_CLINIC_ID = "spires";
+const MCP_CLINIC_ID = (process.env.CLINIC_ID || "clinic-spires").trim();
 const HARDCODED_ROLE = "superadmin" as const;
 
 interface JsonRpcRequest {
@@ -59,7 +59,7 @@ function verifyBearer(request: NextRequest): boolean {
 
 function buildContext(): ToolContext {
   return {
-    clinicId: HARDCODED_CLINIC_ID,
+    clinicId: MCP_CLINIC_ID,
     role: HARDCODED_ROLE,
     db: getAdminDb(),
     env: {

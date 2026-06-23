@@ -2,7 +2,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import type { ToolContext, Role } from "./types";
 import { ALL_ROLES } from "./types";
 
-const DEFAULT_CLINIC_ID = "spires";
+const DEFAULT_CLINIC_ID = "clinic-spires";
 const DEFAULT_ROLE: Role = "superadmin";
 
 export function resolveStdioContext(): ToolContext {
