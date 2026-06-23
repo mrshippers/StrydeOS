@@ -119,7 +119,8 @@ export interface InsightEvent {
 // ── Threshold Config (per-clinic) ─────────────────────────
 
 export interface InsightConfig {
-  dropoutRiskDays: number;            // default: 7
+  dropoutRiskDays: number;            // default: 7  — lower bound: flag once a patient is this many days without a rebooking
+  dropoutRiskMaxDays: number;         // default: 30 — upper bound: ignore lapses older than this (historical import noise, not actionable)
   followUpDropThreshold: number;      // default: 0.10 (10% week-on-week drop)
   dnaStreakThreshold: number;         // default: 3
   hepComplianceFloor: number;        // default: 0.50
@@ -147,6 +148,7 @@ export interface InsightEngineMilestone {
 
 export const DEFAULT_INSIGHT_CONFIG: InsightConfig = {
   dropoutRiskDays: 7,
+  dropoutRiskMaxDays: 30,
   followUpDropThreshold: 0.10,
   dnaStreakThreshold: 3,
   hepComplianceFloor: 0.50,
