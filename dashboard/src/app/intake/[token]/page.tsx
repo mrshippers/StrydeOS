@@ -15,10 +15,13 @@ import { ShieldCheck, Loader2, AlertCircle, Lock, MapPin, Search } from "lucide-
 import { brand } from "@/lib/brand";
 import MonolithPulse from "@/components/ui/MonolithPulse";
 import { DocumentMark } from "@/components/ui/ModuleIcons";
+import { INSURERS } from "@/lib/insurance/appointment-classifier";
 
 interface IntakeMeta {
   clinicName: string;
   insurerOptions: string[];
+  /** Insurer derived from the booked appointment type; when set the field locks. */
+  derivedInsurer: string | null;
   status: "issued" | "submitted";
   consentVersion: string;
 }
@@ -34,6 +37,10 @@ export default function InsuranceIntakePage() {
   const [loadError, setLoadError] = useState<string>("");
 
   const [insurerName, setInsurerName] = useState("");
+  // Insurer-mismatch safety net: when the insurer is locked from the booking,
+  // the patient can flag a different insurer without overwriting the derived one.
+  const [claimingMismatch, setClaimingMismatch] = useState(false);
+  const [patientClaimedInsurer, setPatientClaimedInsurer] = useState("");
   const [policyNumber, setPolicyNumber] = useState("");
   const [scheme, setScheme] = useState("");
   const [authorisationCode, setAuthorisationCode] = useState("");
@@ -93,6 +100,8 @@ export default function InsuranceIntakePage() {
         }
         const data: IntakeMeta = await res.json();
         setMeta(data);
+        // Insurer is derived from the booked appointment type — pre-fill + lock it.
+        if (data.derivedInsurer) setInsurerName(data.derivedInsurer);
         setPhase(data.status === "submitted" ? "submitted" : "form");
       } catch {
         setLoadError("Something went wrong loading this form. Please try again.");
@@ -111,6 +120,12 @@ export default function InsuranceIntakePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           insurerName,
+          // Only sent when the patient flagged a mismatch on a locked insurer;
+          // the server keeps the derived insurer authoritative and raises a flag.
+          patientClaimedInsurer:
+            meta?.derivedInsurer && claimingMismatch && patientClaimedInsurer
+              ? patientClaimedInsurer
+              : undefined,
           policyNumber,
           scheme: scheme || undefined,
           authorisationCode: authorisationCode || undefined,
@@ -143,6 +158,7 @@ export default function InsuranceIntakePage() {
   }
 
   const hasOptions = (meta?.insurerOptions?.length ?? 0) > 0;
+  const insurerLocked = Boolean(meta?.derivedInsurer);
 
   return (
     <div className="min-h-screen bg-cloud-dancer flex flex-col items-center px-5 py-10">
@@ -207,7 +223,50 @@ export default function InsuranceIntakePage() {
             )}
 
             <Field label="Insurer" required>
-              {hasOptions ? (
+              {insurerLocked ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2 form-input bg-cloud-light text-navy" aria-readonly>
+                    <span className="font-semibold">{meta!.derivedInsurer}</span>
+                    <span className="flex items-center gap-1 text-xs text-muted">
+                      <Lock size={12} /> From your booking
+                    </span>
+                  </div>
+                  {!claimingMismatch ? (
+                    <button
+                      type="button"
+                      onClick={() => setClaimingMismatch(true)}
+                      className="text-xs font-medium text-blue hover:underline"
+                    >
+                      Not your insurer?
+                    </button>
+                  ) : (
+                    <div className="rounded-xl bg-amber-500/5 border border-amber-500/20 p-3 space-y-2">
+                      <p className="text-xs text-amber-700">
+                        Your booking is recorded under <span className="font-semibold">{meta!.derivedInsurer}</span>.
+                        Tell us your actual insurer and the clinic will check it before your appointment.
+                      </p>
+                      <select
+                        value={patientClaimedInsurer}
+                        onChange={(e) => setPatientClaimedInsurer(e.target.value)}
+                        className="form-input"
+                        aria-label="Your actual insurer"
+                      >
+                        <option value="">Select your insurer</option>
+                        {INSURERS.map((opt) => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => { setClaimingMismatch(false); setPatientClaimedInsurer(""); }}
+                        className="text-xs font-medium text-muted hover:text-navy hover:underline"
+                      >
+                        Cancel — my booking insurer is correct
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : hasOptions ? (
                 <select
                   value={insurerName}
                   onChange={(e) => setInsurerName(e.target.value)}

@@ -197,6 +197,10 @@ describe("writeInsuranceToCliniko", () => {
     expect(captured[0].body).toContain("post_code");
     expect(captured[0].body).toContain("NW6 1AB");
     expect(captured[0].body).toContain("address_1");
+    // Round-trip alignment: insurer is written to concession_type (the field
+    // getPatient reads back from), not only the summary string.
+    expect(captured[0].body).toContain("concession_type");
+    expect(JSON.parse(captured[0].body).concession_type).toBe("Bupa");
   });
 
   it("flags an onboarding task when no insurance form is configured (still writes the summary)", async () => {

@@ -18,6 +18,12 @@ export interface CreateIntakeLinkParams {
   appointmentId?: string | null;
   /** Discovered insurer options (may be empty — resolved to the default UK list). */
   insurerOptions: string[];
+  /**
+   * Insurer derived from the booked appointment type (insurance-intake gate).
+   * When set, the form pre-fills and LOCKS the insurer instead of asking the
+   * patient to pick one. Null/undefined → patient selects from insurerOptions.
+   */
+  derivedInsurer?: string | null;
   fallbackToInvoiceExtraInfo?: boolean;
   createdBy: string;
   /** Injected for testability; pass Date.now() at the call site. */
@@ -34,6 +40,8 @@ export interface IntakeLinkResult {
   slug: string;
   expiresAt: string;
   insurerOptions: string[];
+  /** Insurer derived from the appointment type, echoed back (null when none). */
+  derivedInsurer: string | null;
 }
 
 /** Short, URL-safe slug for shareable links (no lookalike-confusing chars). */
@@ -52,12 +60,14 @@ export async function createIntakeLink(
 ): Promise<IntakeLinkResult> {
   const exp = params.nowMs + LINK_TTL_MS;
   const insurerOptions = resolveInsurerOptions(params.insurerOptions);
+  const derivedInsurer = params.derivedInsurer?.trim() || null;
 
   const ref = db.collection("clinics").doc(clinicId).collection(INTAKE_LINKS).doc();
   await ref.set({
     patientRef: params.patientRef,
     appointmentId: params.appointmentId ?? null,
     insurerOptions,
+    derivedInsurer,
     fallbackToInvoiceExtraInfo: params.fallbackToInvoiceExtraInfo ?? true,
     consentVersion: INTAKE_CONSENT_VERSION,
     status: "issued",
@@ -89,5 +99,6 @@ export async function createIntakeLink(
     slug,
     expiresAt,
     insurerOptions,
+    derivedInsurer,
   };
 }

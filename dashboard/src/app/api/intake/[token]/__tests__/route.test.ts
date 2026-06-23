@@ -120,4 +120,55 @@ describe("POST /api/intake/[token]", () => {
     const res = await POST(req({ insurerName: "Bupa", policyNumber: "AB123456", consent: true }), ctx);
     expect(res.status).toBe(409);
   });
+
+  describe("derived insurer + wrong-insurer safety net", () => {
+    beforeEach(() => {
+      // Lock the insurer to the one derived from the booked appointment type.
+      seed["clinics/clinic-1/insurance_intake_links/link-9"]!.derivedInsurer = "Bupa";
+    });
+
+    it("keeps the derived insurer authoritative even if the body claims another", async () => {
+      // Body insurerName is ignored in favour of the locked derived value.
+      const res = await POST(req({
+        insurerName: "AXA", policyNumber: "AB123456", consent: true,
+        addressLine1: "1 High Street", town: "London", postcode: "NW6 1AB",
+      }), ctx);
+      expect(res.status).toBe(200);
+      const intakeSet = sets.find((s) => s.path.includes("insurance_intakes"));
+      expect(intakeSet!.data.insurerName).toBe("Bupa");
+    });
+
+    it("flags a mismatch and stores both insurers when the patient claims a different one", async () => {
+      const res = await POST(req({
+        insurerName: "Bupa", patientClaimedInsurer: "AXA", policyNumber: "AB123456", consent: true,
+        addressLine1: "1 High Street", town: "London", postcode: "NW6 1AB",
+      }), ctx);
+      expect(res.status).toBe(200);
+      const intakeSet = sets.find((s) => s.path.includes("insurance_intakes"));
+      expect(intakeSet!.data.insurerName).toBe("Bupa"); // authoritative
+      expect(intakeSet!.data.insurerMismatch).toBe(true);
+      expect(intakeSet!.data.claimedInsurer).toBe("AXA");
+    });
+
+    it("does NOT flag when the claimed insurer matches the derived one", async () => {
+      const res = await POST(req({
+        insurerName: "Bupa", patientClaimedInsurer: "bupa", policyNumber: "AB123456", consent: true,
+        addressLine1: "1 High Street", town: "London", postcode: "NW6 1AB",
+      }), ctx);
+      expect(res.status).toBe(200);
+      const intakeSet = sets.find((s) => s.path.includes("insurance_intakes"));
+      expect(intakeSet!.data.insurerMismatch).toBeUndefined();
+      expect(intakeSet!.data.claimedInsurer).toBeUndefined();
+    });
+
+    it("does NOT flag when no claim is supplied", async () => {
+      const res = await POST(req({
+        insurerName: "Bupa", policyNumber: "AB123456", consent: true,
+        addressLine1: "1 High Street", town: "London", postcode: "NW6 1AB",
+      }), ctx);
+      expect(res.status).toBe(200);
+      const intakeSet = sets.find((s) => s.path.includes("insurance_intakes"));
+      expect(intakeSet!.data.insurerMismatch).toBeUndefined();
+    });
+  });
 });

@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import {
   ShieldCheck, Loader2, CheckCircle2, XCircle, Clock, FileText, Mic, Upload, AlertCircle,
-  Plus, Link2, Copy,
+  Plus, Link2, Copy, AlertTriangle,
 } from "lucide-react";
 import { brand } from "@/lib/brand";
 import MonolithPulse from "@/components/ui/MonolithPulse";
@@ -33,6 +33,10 @@ interface IntakeRow {
   readBackConfirmed?: boolean;
   capturedAt: string;
   reviewStatus: Status;
+  /** Patient flagged a different insurer than the one derived from the booking. */
+  insurerMismatch?: boolean;
+  /** What the patient said their insurer is, when it differs from the authoritative one. */
+  claimedInsurer?: string;
 }
 
 const SOURCE_ICON = { form: FileText, voice: Mic, csv: Upload } as const;
@@ -189,7 +193,22 @@ export default function InsuranceReviewPage() {
                           {row.readBackConfirmed ? "read-back ✓" : "read-back unconfirmed"}
                         </span>
                       )}
+                      {row.insurerMismatch && (
+                        <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 font-medium">
+                          <AlertTriangle size={12} /> Insurer mismatch
+                        </span>
+                      )}
                     </div>
+                    {row.insurerMismatch && (
+                      <div className="mb-2 flex items-start gap-2 rounded-lg bg-amber-500/5 border border-amber-500/20 px-3 py-2">
+                        <AlertTriangle size={14} className="text-amber-600 mt-0.5 shrink-0" />
+                        <p className="text-xs text-amber-700">
+                          Insurer mismatch — booked under <span className="font-semibold">{row.insurerName}</span>, patient says{" "}
+                          <span className="font-semibold">{row.claimedInsurer ?? "a different insurer"}</span>.
+                          Confirm the Cliniko appointment type before approving.
+                        </p>
+                      </div>
+                    )}
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted">
                       <span>Policy <span className="font-mono text-navy">{row.policyNumber}</span></span>
                       {row.scheme && <span>Scheme <span className="text-navy">{row.scheme}</span></span>}

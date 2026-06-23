@@ -1,8 +1,16 @@
 import type { PMSAdapter, InsuranceInfo } from "@/types/pms";
 import type { AppointmentStatus } from "@/types";
 import { clinikoFetch, clinikoFetchAll, testClinikoConnection, type ClinikoConfig } from "./client";
-import { mapClinikoAppointment, mapClinikoClinician } from "./mappers";
-import type { ClinikoAppointmentRow, ClinikoPractitionerRow } from "./mappers";
+import {
+  mapClinikoAppointment,
+  mapClinikoClinician,
+  buildAppointmentTypeNameMap,
+} from "./mappers";
+import type {
+  ClinikoAppointmentRow,
+  ClinikoPractitionerRow,
+  ClinikoAppointmentTypeRow,
+} from "./mappers";
 import { discoverClinikoInsuranceFields, writeInsuranceToCliniko } from "./insurance";
 import type { InsuranceFieldMap, InsuranceRecord } from "@/lib/insurance/types";
 
@@ -37,8 +45,23 @@ export function createClinikoAdapter(config: ClinikoConfig): PMSAdapter {
         path,
         "individual_appointments"
       );
-      
-      return rows.map(mapClinikoAppointment);
+
+      // Resolve appointment-type NAMES once per poll (one GET, never per-appt).
+      // The name drives the insurance-intake gate + insurer derivation. If the
+      // lookup fails we still return the appointments (names just stay absent).
+      let typeNames: Map<string, string> | undefined;
+      try {
+        const typeRows = await clinikoFetchAll<ClinikoAppointmentTypeRow>(
+          config,
+          "/appointment_types?per_page=100",
+          "appointment_types"
+        );
+        typeNames = buildAppointmentTypeNameMap(typeRows);
+      } catch {
+        typeNames = undefined;
+      }
+
+      return rows.map((row) => mapClinikoAppointment(row, typeNames));
     },
 
     async getPatient(externalId: string) {

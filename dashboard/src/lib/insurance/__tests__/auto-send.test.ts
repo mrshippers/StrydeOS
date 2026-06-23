@@ -5,15 +5,39 @@ const NOW = Date.parse("2026-06-08T09:00:00.000Z");
 const inDays = (d: number) => new Date(NOW + d * 86400000).toISOString();
 
 function appt(over: Partial<IntakeAppointment> = {}): IntakeAppointment {
-  return { externalId: "a1", patientExternalId: "p1", dateTime: inDays(1), status: "scheduled", ...over };
+  return {
+    externalId: "a1",
+    patientExternalId: "p1",
+    dateTime: inDays(1),
+    status: "scheduled",
+    appointmentTypeName: "Bupa Initial Appointment",
+    ...over,
+  };
 }
 
 describe("selectAppointmentsForIntake", () => {
   const opts = { nowMs: NOW, windowDays: 3 };
 
-  it("selects an upcoming appointment within the window", () => {
+  it("selects an upcoming insurance appointment and carries the derived insurer", () => {
     const out = selectAppointmentsForIntake([appt()], new Set(), opts);
-    expect(out).toEqual([{ appointmentId: "a1", patientRef: "p1", dateTime: inDays(1) }]);
+    expect(out).toEqual([{ appointmentId: "a1", patientRef: "p1", dateTime: inDays(1), insurer: "Bupa" }]);
+  });
+
+  it("only sends for INSURANCE appointment types (gate)", () => {
+    // Self-pay / generic types get no intake.
+    expect(selectAppointmentsForIntake([appt({ appointmentTypeName: "1. Initial Appointment" })], new Set(), opts)).toEqual([]);
+    expect(selectAppointmentsForIntake([appt({ appointmentTypeName: "Video Consultation" })], new Set(), opts)).toEqual([]);
+    // Missing type name fails safe → no intake.
+    expect(selectAppointmentsForIntake([appt({ appointmentTypeName: undefined })], new Set(), opts)).toEqual([]);
+  });
+
+  it("derives the insurer per appointment type", () => {
+    const out = selectAppointmentsForIntake(
+      [appt({ appointmentTypeName: "AXA Follow up" })],
+      new Set(),
+      opts,
+    );
+    expect(out[0].insurer).toBe("AXA");
   });
 
   it("skips appointments in the past", () => {
@@ -46,7 +70,7 @@ describe("selectAppointmentsForIntake", () => {
   it("skips malformed appointments", () => {
     const out = selectAppointmentsForIntake(
       [
-        appt({ externalId: "", }),
+        appt({ externalId: "" }),
         appt({ patientExternalId: "" }),
         appt({ dateTime: "" }),
         appt({ externalId: "ok", patientExternalId: "p9", dateTime: inDays(1) }),
@@ -54,6 +78,6 @@ describe("selectAppointmentsForIntake", () => {
       new Set(),
       opts,
     );
-    expect(out).toEqual([{ appointmentId: "ok", patientRef: "p9", dateTime: inDays(1) }]);
+    expect(out).toEqual([{ appointmentId: "ok", patientRef: "p9", dateTime: inDays(1), insurer: "Bupa" }]);
   });
 });

@@ -68,9 +68,37 @@ function deriveClinikoStatus(row: ClinikoAppointmentRow): string {
   return "scheduled"; // default to booked/scheduled
 }
 
-export function mapClinikoAppointment(row: ClinikoAppointmentRow): PMSAppointment {
+export interface ClinikoAppointmentTypeRow {
+  id: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
+/** Build an appointment-type id → name lookup from /appointment_types rows. */
+export function buildAppointmentTypeNameMap(
+  rows: ClinikoAppointmentTypeRow[],
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const r of rows) {
+    if (r?.id != null && typeof r.name === "string") {
+      map.set(String(r.id), r.name);
+    }
+  }
+  return map;
+}
+
+/**
+ * @param typeNames Optional id → name lookup (one /appointment_types fetch per
+ *   poll run). When supplied, the appointment-type NAME is resolved so the
+ *   insurance-intake gate can classify it; otherwise only the id is carried.
+ */
+export function mapClinikoAppointment(
+  row: ClinikoAppointmentRow,
+  typeNames?: Map<string, string>,
+): PMSAppointment {
   const status = deriveClinikoStatus(row);
-  
+  const appointmentType = extractIdFromUrl(row.appointment_type?.links?.self);
+
   return {
     externalId: String(row.id),
     patientExternalId: extractIdFromUrl(row.patient?.links?.self),
@@ -78,7 +106,8 @@ export function mapClinikoAppointment(row: ClinikoAppointmentRow): PMSAppointmen
     dateTime: row.starts_at ?? new Date().toISOString(),
     endTime: row.ends_at ?? new Date().toISOString(),
     status,
-    appointmentType: extractIdFromUrl(row.appointment_type?.links?.self),
+    appointmentType,
+    appointmentTypeName: appointmentType ? typeNames?.get(appointmentType) : undefined,
     notes: row.notes as string | undefined,
     revenueAmountPence: undefined, // Cliniko stores revenue on invoices, not appointments
   };

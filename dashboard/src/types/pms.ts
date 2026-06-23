@@ -14,7 +14,15 @@ export interface PMSAppointment {
   dateTime: string;
   endTime: string;
   status: string;
+  /** Provider appointment-type id (Cliniko: extracted from the type link). */
   appointmentType?: string;
+  /**
+   * Human-readable appointment-type name (e.g. "Bupa Initial Appointment").
+   * Resolved per poll-run from the provider's appointment-type list; drives the
+   * insurance-intake gate + insurer derivation. May be undefined when the
+   * provider does not expose / could not resolve the name.
+   */
+  appointmentTypeName?: string;
   notes?: string;
   revenueAmountPence?: number;
 }

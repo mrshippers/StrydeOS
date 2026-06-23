@@ -18,6 +18,7 @@ import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
 import { verifyIntakeToken } from "@/lib/insurance/intake-token";
 import { validateInsuranceSubmission } from "@/lib/insurance/validate";
 import { normaliseFormSubmission } from "@/lib/insurance/normalise";
+import { evaluateInsurerClaim } from "@/lib/insurance/appointment-classifier";
 import { redactRecordForLog } from "@/lib/insurance/redact";
 import type { RawFormSubmission } from "@/lib/insurance/types";
 
@@ -28,6 +29,8 @@ interface LinkDoc {
   patientRef: string;
   appointmentId: string | null;
   insurerOptions: string[];
+  /** Insurer derived from the booked appointment type; locks the form field. */
+  derivedInsurer?: string | null;
   consentVersion?: string;
   status: "issued" | "submitted";
   intakeId?: string;
@@ -66,6 +69,9 @@ async function getHandler(
     return NextResponse.json({
       clinicName,
       insurerOptions: link.insurerOptions ?? [],
+      // When the insurer was derived from the booked appointment type, the form
+      // shows it read-only (the patient does not pick their insurer).
+      derivedInsurer: link.derivedInsurer ?? null,
       status: link.status,
       consentVersion: link.consentVersion ?? "intake-v1",
     });
@@ -94,7 +100,17 @@ async function postHandler(
     }
 
     const body = (await request.json().catch(() => ({}))) as RawFormSubmission;
-    const validation = validateInsuranceSubmission(body, { insurerOptions: link.insurerOptions });
+
+    // When the insurer was derived from the booked appointment type it is the
+    // authoritative value and the form field is locked — never trust a
+    // client-supplied insurer over it (prevents spoofing the locked field).
+    if (link.derivedInsurer) {
+      body.insurerName = link.derivedInsurer;
+    }
+
+    // Validate against the derived insurer when present, else the discovered list.
+    const insurerOptions = link.derivedInsurer ? [link.derivedInsurer] : link.insurerOptions;
+    const validation = validateInsuranceSubmission(body, { insurerOptions });
     if (!validation.ok) {
       return NextResponse.json({ error: "Validation failed", errors: validation.errors }, { status: 400 });
     }
@@ -106,6 +122,17 @@ async function postHandler(
       capturedBy: "patient",
       consentVersion: link.consentVersion ?? "intake-v1",
     });
+
+    // Insurer-mismatch safety net: when the insurer is locked (derived from the
+    // booked appointment type) the patient may FLAG a different insurer. We keep
+    // the derived value authoritative and only raise a flag for staff to resolve.
+    if (link.derivedInsurer) {
+      const claim = evaluateInsurerClaim(link.derivedInsurer, body.patientClaimedInsurer);
+      if (claim.insurerMismatch) {
+        record.insurerMismatch = true;
+        record.claimedInsurer = claim.claimedInsurer;
+      }
+    }
 
     const intakeRef = db
       .collection("clinics").doc(payload.clinicId)
@@ -125,7 +152,12 @@ async function postHandler(
       action: "write",
       resource: "insurance_intake",
       resourceId: intakeRef.id,
-      metadata: { source: "form", insurerName: safe.insurerName, policyNumber: safe.policyNumber },
+      metadata: {
+        source: "form",
+        insurerName: safe.insurerName,
+        policyNumber: safe.policyNumber,
+        ...(record.insurerMismatch ? { insurerMismatch: true, claimedInsurer: record.claimedInsurer } : {}),
+      },
       ip: extractIpFromRequest(request),
     });
 

@@ -45,4 +45,12 @@ describe("createClinikoAdapter.getPatient phone extraction", () => {
     const p = await adapter.getPatient("123");
     expect(p.phone).toBeUndefined();
   });
+
+  it("reads the insurer back from concession_type (round-trips writeInsurance)", async () => {
+    // writeInsuranceToCliniko writes the insurer to concession_type; getPatient
+    // reads it back from the same field, so a write→read returns the insurer.
+    clinikoFetch.mockResolvedValue({ id: "123", concession_type: "Bupa" });
+    const p = await adapter.getPatient("123");
+    expect(p.insurerName).toBe("Bupa");
+  });
 });

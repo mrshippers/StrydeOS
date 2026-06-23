@@ -139,9 +139,15 @@ export async function writeInsuranceToCliniko(
   const usedFallback = fieldMap.fallbackToInvoiceExtraInfo;
 
   // Patient profile patch: insurance summary + any confirmed address fields.
+  //
+  // Round-trip alignment: getPatient() reads the insurer back from
+  // `concession_type`, so we write the canonical insurer name there as well as
+  // the human-readable summary into `invoice_extra_information`. Without this,
+  // a write→read would lose the insurer (the summary string is not parsed back).
   const patch: Record<string, string> = {
     invoice_extra_information: buildInsuranceSummary(record),
   };
+  if (record.insurerName) patch.concession_type = record.insurerName;
   if (record.addressLine1) patch.address_1 = record.addressLine1;
   if (record.addressLine2) patch.address_2 = record.addressLine2;
   if (record.town) patch.city = record.town;

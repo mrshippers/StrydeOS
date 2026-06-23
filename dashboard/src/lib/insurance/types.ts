@@ -60,6 +60,17 @@ export interface InsuranceRecord {
   reviewStatus: InsuranceReviewStatus;
   audit: InsuranceAuditEntry[];
 
+  // ─── Insurer-mismatch safety net (derived insurer is authoritative) ──────────
+  /**
+   * True when the patient flagged a different insurer than the one derived from
+   * their booked appointment type. `insurerName` STAYS the authoritative derived
+   * value; `claimedInsurer` records what the patient said. Staff arbitrate (correct
+   * the Cliniko appointment type/insurer) before approving — never auto-resolved.
+   */
+  insurerMismatch?: boolean;
+  /** What the patient claimed their insurer is, when it differs from the derived value. */
+  claimedInsurer?: string;
+
   // ─── Patient address (captured/confirmed on the form; written back to PMS) ───
   addressLine1?: string;
   addressLine2?: string;
@@ -72,6 +83,13 @@ export interface InsuranceRecord {
 /** Raw payload from the patient-facing typed form. */
 export interface RawFormSubmission {
   insurerName: string;
+  /**
+   * Optional: the insurer the patient says they actually have, used only when
+   * the form's insurer is locked (derived from the booked appointment type) and
+   * the patient flags a mismatch via "Not your insurer?". Never overwrites the
+   * authoritative derived insurer — it raises a staff review flag instead.
+   */
+  patientClaimedInsurer?: string;
   scheme?: string;
   policyNumber: string;
   authorisationCode?: string;

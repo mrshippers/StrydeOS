@@ -93,7 +93,13 @@ async function processClinic(
   });
 
   const candidates = selectAppointmentsForIntake(
-    appts.map((a) => ({ externalId: a.externalId, patientExternalId: a.patientExternalId, dateTime: a.dateTime, status: a.status })),
+    appts.map((a) => ({
+      externalId: a.externalId,
+      patientExternalId: a.patientExternalId,
+      dateTime: a.dateTime,
+      status: a.status,
+      appointmentTypeName: a.appointmentTypeName,
+    })),
     linked,
     { nowMs: now, windowDays: WINDOW_DAYS },
   ).slice(0, MAX_SENDS_PER_CLINIC);
@@ -119,6 +125,7 @@ async function processClinic(
         patientRef: c.patientRef,
         appointmentId: c.appointmentId,
         insurerOptions: fieldMap?.insurerOptions ?? [],
+        derivedInsurer: c.insurer,
         fallbackToInvoiceExtraInfo: fieldMap?.fallbackToInvoiceExtraInfo ?? true,
         createdBy: "auto-send",
         nowMs: Date.now(),

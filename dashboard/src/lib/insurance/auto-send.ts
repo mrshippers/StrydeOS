@@ -5,19 +5,30 @@
  * already have an intake link, decide which patients to send a fresh link to.
  * Windowed (only appointments starting soon), idempotent (skip already-linked),
  * and deduped to one link per patient per run. `nowMs` is injected for testability.
+ *
+ * Gating rule (founder-confirmed): the intake is ONLY sent when the booked
+ * appointment is an INSURANCE appointment type. The insurer is derived from the
+ * appointment-type NAME (see appointment-classifier). Self-pay / generic types
+ * get no intake, and the derived insurer is carried forward onto the candidate.
  */
+
+import { classifyAppointmentType } from "./appointment-classifier";
 
 export interface IntakeAppointment {
   externalId: string;
   patientExternalId: string;
   dateTime: string;
   status?: string;
+  /** Human-readable appointment-type name; gates intake + derives the insurer. */
+  appointmentTypeName?: string;
 }
 
 export interface IntakeCandidate {
   appointmentId: string;
   patientRef: string;
   dateTime: string;
+  /** Insurer derived from the appointment type — pre-filled (locked) on the form. */
+  insurer: string;
 }
 
 const SKIP_STATUSES = new Set(["cancelled", "dna", "late_cancel"]);
@@ -36,13 +47,18 @@ export function selectAppointmentsForIntake(
     if (a.status && SKIP_STATUSES.has(a.status)) continue;
     if (alreadyLinkedApptIds.has(a.externalId)) continue;
 
+    // Gate: only insurance appointment types get an intake. Derive the insurer
+    // from the type name; non-insurance / unknown types are skipped entirely.
+    const { insurer, isInsurance } = classifyAppointmentType(a.appointmentTypeName);
+    if (!isInsurance || !insurer) continue;
+
     const t = Date.parse(a.dateTime);
     if (Number.isNaN(t) || t < opts.nowMs || t > horizon) continue;
 
     if (seenPatients.has(a.patientExternalId)) continue;
     seenPatients.add(a.patientExternalId);
 
-    out.push({ appointmentId: a.externalId, patientRef: a.patientExternalId, dateTime: a.dateTime });
+    out.push({ appointmentId: a.externalId, patientRef: a.patientExternalId, dateTime: a.dateTime, insurer });
   }
   return out;
 }
