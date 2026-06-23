@@ -21,6 +21,9 @@ import { executeClinicTerminationErasures } from "@/lib/compliance/clinic-erasur
  *  - appointments:      2920 days (8 years — UK clinical records guidance)
  *  - clinical_notes:    2920 days (8 years — UK clinical records guidance)
  *  - outcome_scores:    2920 days (8 years — UK clinical records guidance)
+ *  - _ava_processed_events: 7 days (Ava webhook dedup — provider retry window)
+ *  - _ava_booking_claims:   7 days (Ava booking idempotency — clears dangling
+ *                           pending claims so a genuine rebook is never blocked)
  *
  * Also enforces billing grace period: clinics past_due for >14 days
  * are downgraded to free tier with all features disabled.
@@ -45,6 +48,12 @@ const RETENTION_POLICIES: RetentionPolicy[] = [
   { collection: "appointments", dateField: "date", retentionDays: 2920 },
   { collection: "clinical_notes", dateField: "createdAt", retentionDays: 2920 },
   { collection: "outcome_scores", dateField: "recordedAt", retentionDays: 2920 },
+  // Ava idempotency dedup docs — short-lived, only need to outlive the provider
+  // retry window. Sweeping _ava_booking_claims by createdAt clears both stale
+  // pending claims (crash between claim and settle/release) and old settled
+  // claims, so a leftover claim can never permanently block a real rebook.
+  { collection: "_ava_processed_events", dateField: "processedAt", retentionDays: 7 },
+  { collection: "_ava_booking_claims", dateField: "createdAt", retentionDays: 7 },
 ];
 
 const BATCH_LIMIT = 500;

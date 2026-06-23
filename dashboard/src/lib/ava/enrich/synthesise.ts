@@ -5,7 +5,9 @@
  * Contract:
  * - Never throws. On any failure (LLM error, malformed JSON, schema rejection)
  *   returns [] and the orchestrator proceeds without auto-entries.
- * - Every emitted entry has source: "auto" and a validated category.
+ * - Every emitted entry is born as a draft (status: "draft", source:
+ *   "ai_generated") with a validated category, so synthesised facts never reach
+ *   the live Ava agent without explicit human approval.
  * - Entries are deduped within the same category by lower-cased title.
  */
 
@@ -13,6 +15,7 @@ import { generateText } from "ai";
 import { gateway } from "@ai-sdk/gateway";
 import {
   CATEGORY_ORDER,
+  newEntryDefaults,
   type KnowledgeCategory,
   type KnowledgeConfidence,
   type KnowledgeEntry,
@@ -119,14 +122,17 @@ export async function synthesiseKnowledge(input: SynthesiseInput): Promise<Knowl
     if (seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
 
+    // AI-synthesised entries are born as drafts via the canonical constructor,
+    // so they land in the review queue and are gated out of the live Ava agent
+    // until a human approves them (filterLiveEntries excludes status === "draft").
     out.push({
       id: `auto-${category}-${randomSuffix()}`,
       category: category as KnowledgeCategory,
       title,
       content,
       updatedAt: now,
-      source: "auto",
       confidence,
+      ...newEntryDefaults("ai_generated"),
     });
   }
 

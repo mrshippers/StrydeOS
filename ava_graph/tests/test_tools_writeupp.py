@@ -24,6 +24,20 @@ FAKE_API_KEY = "test_key_abc"
 FAKE_BASE_URL = "https://test.writeupp.example"
 
 
+def _next_monday() -> datetime:
+    """A Monday strictly in the future, at midnight.
+
+    Production filters out past slots via datetime.now(), so availability tests
+    that assert slots > 0 must anchor on a future weekday rather than a fixed
+    calendar date (which silently rots into the past and produces zero slots).
+    """
+    today = datetime.now()
+    days_until_monday = (7 - today.weekday()) % 7 or 7
+    return (today + timedelta(days=days_until_monday)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+
+
 # ─── _make_client guard tests (Bug 2) ────────────────────────────────────────
 
 def test_make_client_raises_on_empty_api_key():
@@ -48,7 +62,7 @@ def test_make_client_returns_client_with_valid_key():
 
 def test_compute_free_slots_returns_slots_within_clinic_hours():
     """Free slots should fall between 09:00 and 17:00 Mon-Fri."""
-    from_dt = datetime(2026, 4, 21, 0, 0)  # Monday
+    from_dt = _next_monday()
     to_dt = from_dt + timedelta(days=1)
     slots = _compute_free_slots([], from_dt, to_dt, 60)
     assert len(slots) > 0
@@ -103,7 +117,7 @@ async def test_get_writeupp_availability_returns_free_slots():
     with patch("ava_graph.tools.writeupp._make_client", return_value=mock_client):
         slots = await get_writeupp_availability(
             clinic_id="clinic_001",
-            start_date="2026-04-21",
+            start_date=_next_monday().strftime("%Y-%m-%d"),
             duration_minutes=60,
             api_key=FAKE_API_KEY,
             base_url=FAKE_BASE_URL,

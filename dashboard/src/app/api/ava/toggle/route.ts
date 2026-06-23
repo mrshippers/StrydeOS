@@ -1,22 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyApiRequest, requireRole, handleApiError } from "@/lib/auth-guard";
-import { setPhoneNumberAgent } from "@/lib/ava/elevenlabs-agent";
 import { withRequestLog } from "@/lib/request-logger";
 
 /**
  * POST /api/ava/toggle
  *
- * Flips Ava's active/paused state and makes it real by attaching or detaching
- * the clinic's phone number from the ElevenLabs agent.
+ * Flips Ava's active/paused state by flipping the single `ava.enabled` flag on
+ * the clinic doc. That flag is the ONE source of truth for routing:
+ * /api/ava/inbound-call reads it on every inbound call and returns the
+ * voicemail flow when it is false, so the toggle genuinely turns Ava off.
  *
- * Active:  phone number linked to agent  -> calls route to Ava
- * Paused:  phone number has no agent_id  -> calls go unanswered / Twilio default
+ * Active:  ava.enabled = true   -> inbound proxy dials Ava (SIP)
+ * Paused:  ava.enabled = false  -> inbound proxy returns voicemail TwiML
+ *
+ * Note: we deliberately do NOT detach the ElevenLabs agent from the number as
+ * the off switch. Under the proxy-first topology that detach controlled the
+ * wrong path (the native import) and left the proxy still dialing, so a paused
+ * clinic was not actually off. Pause now lives entirely in this flag.
  *
  * Requires: owner / admin / superadmin role.
  */
-
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY ?? "";
 
 async function handler(req: NextRequest): Promise<NextResponse> {
   try {
@@ -26,10 +30,6 @@ async function handler(req: NextRequest): Promise<NextResponse> {
     const clinicId = user.clinicId;
     if (!clinicId) {
       return NextResponse.json({ error: "No clinic associated with user" }, { status: 400 });
-    }
-
-    if (!ELEVENLABS_API_KEY) {
-      return NextResponse.json({ error: "ELEVENLABS_API_KEY not configured" }, { status: 500 });
     }
 
     const db = getAdminDb();
@@ -46,24 +46,13 @@ async function handler(req: NextRequest): Promise<NextResponse> {
     const newEnabled = !currentlyEnabled;
 
     const agentId: string | undefined = ava.agent_id;
-    const phoneNumberId: string | undefined = ava.phone_number_id;
-
     if (!agentId) {
       return NextResponse.json({ error: "No ElevenLabs agent configured for this clinic" }, { status: 400 });
     }
 
-    if (!phoneNumberId) {
-      return NextResponse.json({ error: "No phone number provisioned for this clinic" }, { status: 400 });
-    }
-
-    // Sync to ElevenLabs: attach agent when activating, detach when pausing
-    await setPhoneNumberAgent(
-      ELEVENLABS_API_KEY,
-      phoneNumberId,
-      newEnabled ? agentId : null,
-    );
-
-    // Persist the new state to Firestore
+    // Persist the new state to Firestore. The inbound proxy reads this flag, so
+    // the toggle is effective the moment this write lands — no ElevenLabs call
+    // is needed to make pause real.
     await clinicRef.update({
       "ava.enabled": newEnabled,
       updatedAt: new Date().toISOString(),

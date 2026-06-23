@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from ava_graph.api.auth import verify_elevenlabs_secret
+from ava_graph.api.auth import verify_elevenlabs_secret, verify_internal_secret
 from ava_graph.api.rate_limit import limiter
 from ava_graph.graph.state import AvaState
 
@@ -355,14 +355,64 @@ class ToolExecuteRequest(BaseModel):
     """Request model for direct PMS tool execution (bypasses graph for live calls).
 
     Mirrors TS `AvaEngineRequest` in dashboard/src/lib/contracts/index.ts §6.
+
+    SECURITY: `api_key`, `pms_type`, and `base_url` in the body are accepted for
+    wire-compatibility with the existing dashboard proxy but are NOT trusted. The
+    server resolves the real PMS credentials from the authenticated clinic's
+    Firestore `integrations_config/pms` record. A body-supplied api_key can never
+    be used to book against a clinic.
     """
 
     tool_name: str = Field(..., description="Tool to call: check_availability | book_appointment")
     tool_input: Dict[str, Any] = Field(..., description="Tool-specific parameters")
     clinic_id: str = Field(..., description="Clinic ID for multi-tenancy")
-    pms_type: str = Field(..., description="PMS: writeupp | cliniko | jane | tm3")
-    api_key: str = Field(..., description="Per-clinic PMS API key")
-    base_url: str = Field(default="", description="PMS base URL override (empty = use default)")
+    # pms_type / api_key / base_url stay required for wire-parity with the TS
+    # AvaEngineRequest contract (dashboard/src/lib/contracts/index.ts §6), but their
+    # VALUES are ignored: the handler resolves real credentials server-side. A caller
+    # cannot influence which key is used by setting these.
+    pms_type: str = Field(..., description="IGNORED for auth: resolved server-side from clinic record")
+    api_key: str = Field(..., description="IGNORED: never trusted; resolved server-side from clinic record")
+    base_url: str = Field(default="", description="IGNORED: resolved server-side from clinic record")
+
+
+async def _resolve_clinic_pms_credentials(clinic_id: str) -> Dict[str, str]:
+    """
+    Resolve PMS credentials for a clinic SERVER-SIDE from Firestore.
+
+    Reads clinics/{clinic_id}/integrations_config/pms, the same server-only doc the
+    dashboard writes via /api/pms/save-config. Returns the trusted api_key, pms_type
+    (provider), and base_url. Never trusts caller-supplied values.
+
+    Raises 404 if the clinic has no configured PMS, 503 on Firestore failure
+    (fail closed, never proceed with empty or guessed credentials).
+    """
+    try:
+        from ava_graph.config import get_firestore_db
+
+        db = get_firestore_db()
+        doc = await (
+            db.collection("clinics")
+            .document(clinic_id)
+            .collection("integrations_config")
+            .document("pms")
+            .get()
+        )
+    except Exception as e:
+        logger.error("Firestore credential lookup failed for clinic=%s: %s", clinic_id, e)
+        raise HTTPException(status_code=503, detail="Credential store unavailable")
+
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Clinic has no configured PMS integration")
+
+    config = doc.to_dict() or {}
+    api_key = (config.get("apiKey") or "").strip()
+    pms_type = (config.get("provider") or "").strip()
+    base_url = (config.get("baseUrl") or "").strip()
+
+    if not api_key or not pms_type:
+        raise HTTPException(status_code=404, detail="Clinic PMS integration is incomplete")
+
+    return {"api_key": api_key, "pms_type": pms_type, "base_url": base_url}
 
 
 class ToolExecuteResponse(BaseModel):
@@ -376,7 +426,11 @@ class ToolExecuteResponse(BaseModel):
     slots: Optional[List[str]] = Field(default=None, description="ISO datetime strings (check_availability only)")
 
 
-@router.post("/tools/execute", response_model=ToolExecuteResponse)
+@router.post(
+    "/tools/execute",
+    response_model=ToolExecuteResponse,
+    dependencies=[Depends(verify_internal_secret)],
+)
 @limiter.limit("120/minute")
 async def execute_tool(request: Request, body: ToolExecuteRequest) -> ToolExecuteResponse:
     """
@@ -385,8 +439,12 @@ async def execute_tool(request: Request, body: ToolExecuteRequest) -> ToolExecut
     Used by the dashboard to proxy live ElevenLabs tool calls to the Python service.
     Supports check_availability and book_appointment for all integrated PMS systems.
 
+    AUTH: gated by verify_internal_secret (shared AVA_INTERNAL_SECRET header). The
+    PMS credentials (api_key / pms_type / base_url) are resolved SERVER-SIDE from the
+    clinic's Firestore record; the matching body fields are ignored entirely.
+
     Args:
-        body: Tool name, input params, clinic config, and PMS credentials
+        body: Tool name, input params, and clinic_id. Credential fields are ignored.
 
     Returns:
         ToolExecuteResponse with human-readable result and optional booking_id / slots
@@ -396,7 +454,11 @@ async def execute_tool(request: Request, body: ToolExecuteRequest) -> ToolExecut
     from ava_graph.tools.jane import get_jane_availability, book_jane_appointment
     from ava_graph.tools.tm3 import get_tm3_availability, book_tm3_appointment
 
-    pms = body.pms_type.lower()
+    # Resolve trusted credentials server-side; never trust body-supplied api_key.
+    creds = await _resolve_clinic_pms_credentials(body.clinic_id)
+    api_key = creds["api_key"]
+    base_url = creds["base_url"]
+    pms = creds["pms_type"].lower()
     tool = body.tool_name
 
     logger.info(
@@ -414,8 +476,8 @@ async def execute_tool(request: Request, body: ToolExecuteRequest) -> ToolExecut
                     clinic_id=body.clinic_id,
                     start_date=start_date,
                     duration_minutes=duration,
-                    api_key=body.api_key,
-                    base_url=body.base_url,
+                    api_key=api_key,
+                    base_url=base_url,
                     days_ahead=days_ahead,
                 )
             elif pms == "cliniko":
@@ -424,23 +486,23 @@ async def execute_tool(request: Request, body: ToolExecuteRequest) -> ToolExecut
                     start_date=start_date,
                     duration_minutes=duration,
                     days_ahead=days_ahead,
-                    api_key=body.api_key,
-                    base_url=body.base_url,
+                    api_key=api_key,
+                    base_url=base_url,
                 )
             elif pms == "jane":
                 slots = await get_jane_availability(
                     clinic_id=body.clinic_id,
                     start_date=start_date,
                     duration_minutes=duration,
-                    api_key=body.api_key,
-                    base_url=body.base_url,
+                    api_key=api_key,
+                    base_url=base_url,
                 )
             elif pms == "tm3":
                 slots = await get_tm3_availability(
                     clinic_id=body.clinic_id,
                     start_date=start_date,
                     duration_minutes=duration,
-                    api_key=body.api_key,
+                    api_key=api_key,
                 )
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown pms_type: {pms}")
@@ -476,8 +538,8 @@ async def execute_tool(request: Request, body: ToolExecuteRequest) -> ToolExecut
                     patient_phone=patient_phone,
                     service_type=service_type,
                     slot=slot,
-                    api_key=body.api_key,
-                    base_url=body.base_url,
+                    api_key=api_key,
+                    base_url=base_url,
                 )
             elif pms == "cliniko":
                 booking_id = await book_cliniko_appointment(
@@ -486,8 +548,8 @@ async def execute_tool(request: Request, body: ToolExecuteRequest) -> ToolExecut
                     patient_phone=patient_phone,
                     service_type=service_type,
                     slot=slot,
-                    api_key=body.api_key,
-                    base_url=body.base_url,
+                    api_key=api_key,
+                    base_url=base_url,
                 )
             elif pms == "jane":
                 booking_id = await book_jane_appointment(
@@ -496,8 +558,8 @@ async def execute_tool(request: Request, body: ToolExecuteRequest) -> ToolExecut
                     patient_phone=patient_phone,
                     service_type=service_type,
                     slot=slot,
-                    api_key=body.api_key,
-                    base_url=body.base_url,
+                    api_key=api_key,
+                    base_url=base_url,
                 )
             elif pms == "tm3":
                 booking_id = await book_tm3_appointment(
@@ -506,7 +568,7 @@ async def execute_tool(request: Request, body: ToolExecuteRequest) -> ToolExecut
                     patient_phone=patient_phone,
                     service_type=service_type,
                     slot=slot,
-                    api_key=body.api_key,
+                    api_key=api_key,
                     patient_email=patient_email,
                 )
             else:

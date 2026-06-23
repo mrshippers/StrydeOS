@@ -31,7 +31,13 @@ import { getClinicBranding } from "@/lib/comms/clinic-branding";
 // send HMAC signatures — that's only for conversation event webhooks).
 const TOOLS_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
 import { withRequestLog } from "@/lib/request-logger";
-import { proxyToEngine } from "@/lib/ava/engine-proxy";
+import {
+  proxyToEngine,
+  bookingClaimKey,
+  claimBooking,
+  settleBooking,
+  releaseBooking,
+} from "@/lib/ava/engine-proxy";
 import { computeFreeSlots } from "@/lib/ava/compute-free-slots";
 import type { HoursConfig } from "@/lib/ava/compute-free-slots";
 import { handleNoPmsToolCall } from "@/lib/ava/no-pms-handler";
@@ -271,6 +277,27 @@ async function handleBookAppointment(
     }
   }
 
+  // ── Booking idempotency claim ─────────────────────────────────────────────
+  // Atomically claim this booking BEFORE the PMS write so a retried webhook (or
+  // a slow engine that the TS path raced past) can't double-book. Key off the
+  // normalised slot instant + caller so the engine and TS paths share one claim.
+  // We claim here, after the patient/clinician resolution above, but before any
+  // PMS or Firestore write — the write side is what we must not duplicate.
+  const claimKey = bookingClaimKey({
+    conversationId,
+    slot: dt.toISOString(),
+    callerPhone: normalizedPhone,
+  });
+  if (claimKey) {
+    const claim = await claimBooking(db, clinicId, claimKey);
+    if (!claim.claimed) {
+      return (
+        claim.priorResult ??
+        "I've got that booking going through for you now — you'll receive a confirmation text shortly."
+      );
+    }
+  }
+
   // Write to PMS
   try {
     const pmsResult = await adapter.createAppointment({
@@ -366,9 +393,24 @@ async function handleBookAppointment(
     const opener = isReturningPatient
       ? "Welcome back — I've got you booked in"
       : "All sorted — I've set you up and booked you in";
-    return `${opener} for ${dateStr} at ${timeStr} with ${resolvedClinicianName}. That's a ${durationMinutes}-minute ${appointmentType === "initial_assessment" ? "initial assessment" : "follow-up"}. You'll receive a confirmation text shortly.`;
+    const confirmation = `${opener} for ${dateStr} at ${timeStr} with ${resolvedClinicianName}. That's a ${durationMinutes}-minute ${appointmentType === "initial_assessment" ? "initial assessment" : "follow-up"}. You'll receive a confirmation text shortly.`;
+
+    // Settle the idempotency claim with the confirmation so a duplicate retry
+    // replays this exact line instead of booking a second appointment.
+    if (claimKey) {
+      await settleBooking(db, clinicId, claimKey, confirmation, {
+        bookingId: pmsResult.externalId ?? firestoreDocId,
+        path: "ts",
+      });
+    }
+    return confirmation;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    // PMS write failed — release the claim so a genuine retry can book rather
+    // than being permanently blocked by a dead claim.
+    if (claimKey) {
+      await releaseBooking(db, clinicId, claimKey);
+    }
     // Log the failure but give Ava a graceful script
     if (conversationId) {
       const now = new Date().toISOString();
@@ -743,6 +785,39 @@ async function handler(req: NextRequest) {
     // failure (timeout, engine down, validation error).
     const engineUrl = process.env.AVA_ENGINE_URL;
     if (engineUrl) {
+      // Booking idempotency for the engine path. A retried webhook, or a slow
+      // engine that the TS path already raced past, must not create a second
+      // appointment. Claim the same key the TS-fallback path uses BEFORE the
+      // engine writes; if the claim is already taken, replay the prior result.
+      const isBooking = tool_name === "book_appointment";
+      const claimKey = isBooking
+        ? bookingClaimKey({
+            conversationId: conversation_id ?? "",
+            slot: (toolInput.slot_datetime as string) ?? "",
+            callerPhone:
+              ((toolInput.patient_phone as string) ?? caller_phone ?? "").trim(),
+          })
+        : null;
+
+      let claimedHere = false;
+      if (claimKey) {
+        const claim = await claimBooking(db, clinicId, claimKey);
+        if (!claim.claimed) {
+          // Duplicate booking attempt — return the prior confirmation rather
+          // than booking again. If the first attempt is still in flight
+          // (priorResult null), give a safe holding line; do NOT write.
+          return NextResponse.json(
+            {
+              response:
+                claim.priorResult ??
+                "I've got that booking going through for you now — you'll receive a confirmation text shortly.",
+            },
+            { status: 200 },
+          );
+        }
+        claimedHere = true;
+      }
+
       const engineResult = await proxyToEngine(engineUrl, {
         tool_name,
         tool_input: toolInput,
@@ -753,7 +828,19 @@ async function handler(req: NextRequest) {
       });
 
       if (engineResult !== null) {
+        if (claimedHere && claimKey) {
+          await settleBooking(db, clinicId, claimKey, engineResult.result, {
+            bookingId: engineResult.booking_id ?? null,
+            path: "engine",
+          });
+        }
         return NextResponse.json({ response: engineResult.result }, { status: 200 });
+      }
+      // Engine returned null (timeout/down/error). Release our claim so the TS
+      // fallback below can re-claim and book — otherwise the dead claim would
+      // block the only path that can still serve this caller.
+      if (claimedHere && claimKey) {
+        await releaseBooking(db, clinicId, claimKey);
       }
       // null → fall through to TypeScript PMS handlers below
     }

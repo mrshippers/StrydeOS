@@ -46,7 +46,7 @@ export default function EnrichmentReview({
   onRunEnrichment,
   enrichmentError,
 }: EnrichmentReviewProps) {
-  const { entries, loading, updateEntry, removeEntry, addEntry, saving } =
+  const { entries, loading, updateEntry, approveAllDrafts, removeEntry, addEntry, saving } =
     useAvaKnowledge(clinicId);
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -55,6 +55,7 @@ export default function EnrichmentReview({
   const [addingCategory, setAddingCategory] = useState<KnowledgeCategory | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
+  const [approving, setApproving] = useState(false);
 
   const entriesByCategory = useMemo(() => {
     const map = new Map<KnowledgeCategory, KnowledgeEntry[]>();
@@ -68,7 +69,12 @@ export default function EnrichmentReview({
   }, [entries]);
 
   const totalEntries = entries.length;
-  const autoEntries = entries.filter((e) => e.source === "auto").length;
+  const autoEntries = entries.filter(
+    (e) => e.source === "auto" || e.source === "ai_generated",
+  ).length;
+  // Drafts (AI-synthesised, unapproved) are gated out of the live agent until
+  // a human signs them off here. This is the P0-3 approval gate.
+  const draftCount = entries.filter((e) => e.status === "draft").length;
 
   function beginEdit(entry: KnowledgeEntry) {
     setEditingId(entry.id);
@@ -187,6 +193,31 @@ export default function EnrichmentReview({
         </div>
       )}
 
+      {draftCount > 0 && (
+        <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-blue/5 border border-blue/20">
+          <p className="text-[12px] text-navy">
+            <span className="font-semibold">{draftCount}</span>{" "}
+            auto-filled {draftCount === 1 ? "entry" : "entries"} need your sign-off
+            before Ava will say {draftCount === 1 ? "it" : "them"} on a call.
+          </p>
+          <button
+            type="button"
+            onClick={async () => {
+              setApproving(true);
+              try {
+                await approveAllDrafts();
+              } finally {
+                setApproving(false);
+              }
+            }}
+            disabled={approving || saving}
+            className="shrink-0 text-[11px] font-semibold text-white bg-blue px-3 py-1.5 rounded-lg hover:opacity-90 disabled:opacity-50"
+          >
+            {approving ? "Approving..." : "Approve all and make Ava live"}
+          </button>
+        </div>
+      )}
+
       {hasAnything &&
         CATEGORY_ORDER.map((cat) => {
           const catEntries = entriesByCategory.get(cat) ?? [];
@@ -247,7 +278,11 @@ export default function EnrichmentReview({
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="text-sm font-semibold text-navy">{entry.title}</p>
-                            {entry.source === "auto" && (
+                            {entry.status === "draft" ? (
+                              <span className="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-blue/10 text-blue">
+                                Needs review
+                              </span>
+                            ) : entry.source === "auto" || entry.source === "ai_generated" ? (
                               <span
                                 className={`text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${
                                   entry.confidence === "high"
@@ -259,7 +294,7 @@ export default function EnrichmentReview({
                               >
                                 Auto
                               </span>
-                            )}
+                            ) : null}
                           </div>
                           <p className="text-[12px] text-muted leading-relaxed">{entry.content}</p>
                         </div>

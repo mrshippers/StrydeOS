@@ -338,6 +338,30 @@ function ReceptionistContent() {
         hero={<AvaOrb size={56} />}
       />
 
+      {/* Sample-data banner — fabricated demo calls must never read as real clinic
+          figures. Shown whenever the call log falls back to demo data (no live
+          calls / Ava not yet handling calls for this clinic). */}
+      {isDemo && (
+        <GlassCard variant="standard" tint="ava" className="p-4 flex items-start gap-3 border border-blue/20 bg-blue/5">
+          <div className="w-8 h-8 rounded-lg bg-blue/10 flex items-center justify-center shrink-0">
+            <BarChart3 size={16} className="text-blue" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-navy">Sample data</p>
+              <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-blue/10 text-blue">
+                Illustrative
+              </span>
+            </div>
+            <p className="text-xs text-muted mt-0.5 max-w-xl">
+              Ava has not handled any live calls for this clinic yet, so the calls,
+              outcomes, and revenue below are an example of what you will see once
+              Ava is answering. None of these figures reflect real activity.
+            </p>
+          </div>
+        </GlassCard>
+      )}
+
       {callsError && <ErrorBanner message={callsError} onRetry={() => router.refresh()} />}
       {/* Active call indicator */}
       {activeCall && (
@@ -400,9 +424,9 @@ function ReceptionistContent() {
               status="neutral"
             />
             <StatCard
-              label="Revenue Captured"
+              label={isDemo ? "Revenue Captured (sample)" : "Revenue Captured"}
               value={`£${revenueCaptured}`}
-              unit={`est. from ${booked} bookings`}
+              unit={isDemo ? "sample figure" : `est. from ${booked} bookings`}
               status={booked > 0 ? "ok" : "neutral"}
               insight={`£${avgAppointmentValue} avg session value`}
             />

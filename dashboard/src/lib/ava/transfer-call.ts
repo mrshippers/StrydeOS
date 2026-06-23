@@ -22,6 +22,15 @@ interface TransferRequest {
   callerPhone: string;
   conversationId: string;
   reason: string;
+  /**
+   * Explicit Twilio Call SID for the live call to redirect. When present, we
+   * redirect THIS exact SID — no heuristic. ElevenLabs forwards the call sid on
+   * the transfer tool invocation; threading it through is the only safe way to
+   * pick the right call under concurrency. The heuristic below is a fallback
+   * for legacy callers that don't carry a sid, and only fires when exactly one
+   * in-progress call exists.
+   */
+  callSid?: string;
 }
 
 /**
@@ -57,10 +66,20 @@ export async function transferCallToReception(
     const startHour: number = avaAttrib.receptionStartHour ?? DEFAULT_AVA_ATTRIBUTION_CONFIG.receptionStartHour;
     const endHour: number = avaAttrib.receptionEndHour ?? DEFAULT_AVA_ATTRIBUTION_CONFIG.receptionEndHour;
 
-    const nowInClinicTz = new Date(
-      new Date().toLocaleString("en-GB", { timeZone: timezone })
-    );
-    const currentHour = nowInClinicTz.getHours() + nowInClinicTz.getMinutes() / 60;
+    // Derive the clinic-local hour via Intl parts. The previous approach
+    // (new Date(toLocaleString("en-GB"))) produced an Invalid Date — en-GB
+    // formats DD/MM/YYYY which V8 can't parse back, so getHours() was NaN and
+    // every transfer fell through to out_of_hours and never connected.
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: timezone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(new Date());
+    const hourPart = Number(parts.find((p) => p.type === "hour")?.value ?? "NaN");
+    const minutePart = Number(parts.find((p) => p.type === "minute")?.value ?? "NaN");
+    // Intl can emit "24" for midnight under hour12:false — normalise to 0.
+    const currentHour = (hourPart % 24) + minutePart / 60;
     const isWithinHours = currentHour >= startHour && currentHour < endHour;
 
     if (!isWithinHours) {
@@ -75,30 +94,48 @@ export async function transferCallToReception(
       return { success: false, error: "No Ava phone number found" };
     }
 
-    // 2. Find the active call on Ava's number from this caller.
-    // Primary: match by from+to. Fallback: match any in-progress call to avaPhone
-    // — needed when CLI is withheld on UK SIP trunks (caller number not forwarded).
-    let activeCalls = await tw.calls.list({
-      to: avaPhone,
-      from: req.callerPhone,
-      status: "in-progress",
-      limit: 1,
-    });
+    // 2. Determine which exact call to redirect.
+    //
+    // Preferred: an explicit Call SID threaded from the ElevenLabs transfer tool
+    // invocation. Under concurrency (two callers on the Ava number at once) this
+    // is the ONLY safe selector — a heuristic can grab the wrong patient's call
+    // and transfer them to reception mid-sentence.
+    let callSid: string;
 
-    if (!activeCalls.length) {
-      // Withheld CLI fallback — find any in-progress call to the Ava number
-      activeCalls = await tw.calls.list({
+    if (req.callSid) {
+      callSid = req.callSid;
+    } else {
+      // Legacy fallback (no sid threaded). Prefer an exact from+to match.
+      let activeCalls = await tw.calls.list({
         to: avaPhone,
+        from: req.callerPhone,
         status: "in-progress",
-        limit: 1,
+        limit: 2,
       });
-    }
 
-    if (!activeCalls.length) {
-      return { success: false, error: "No active call found for transfer" };
-    }
+      // Withheld CLI (UK SIP trunks don't forward caller number): we can't match
+      // by `from`, so look at all in-progress calls to the Ava number. Only
+      // transfer when there is EXACTLY ONE — with zero we have nothing to
+      // transfer, and with two or more we cannot tell which caller asked, so we
+      // must NOT guess and risk transferring the wrong patient.
+      if (!activeCalls.length) {
+        activeCalls = await tw.calls.list({
+          to: avaPhone,
+          status: "in-progress",
+          limit: 2,
+        });
+      }
 
-    const callSid = activeCalls[0].sid;
+      if (!activeCalls.length) {
+        return { success: false, error: "No active call found for transfer" };
+      }
+      if (activeCalls.length > 1) {
+        // Ambiguous — refuse rather than transfer a random caller.
+        return { success: false, error: "ambiguous_call:no_call_sid" };
+      }
+
+      callSid = activeCalls[0].sid;
+    }
 
     // 3. Build the TwiML URL that will handle the transfer
     //    We use our own endpoint so we control the experience

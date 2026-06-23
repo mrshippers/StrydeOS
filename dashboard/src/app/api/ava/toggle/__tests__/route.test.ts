@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-// ─── Env ─────────────────────────────────────────────────────────────────────
-
-process.env.ELEVENLABS_API_KEY = "el-test-key";
-
 // ─── Firestore mock ───────────────────────────────────────────────────────────
 
 const firestoreStore: Record<string, Record<string, unknown>> = {};
@@ -56,14 +52,6 @@ vi.mock("@/lib/auth-guard", async (importOriginal) => {
   };
 });
 
-// ─── ElevenLabs mock ──────────────────────────────────────────────────────────
-
-const mockSetPhoneNumberAgent = vi.fn();
-
-vi.mock("@/lib/ava/elevenlabs-agent", () => ({
-  setPhoneNumberAgent: (...args: unknown[]) => mockSetPhoneNumberAgent(...args),
-}));
-
 // ─── request-logger passthrough ───────────────────────────────────────────────
 
 vi.mock("@/lib/request-logger", () => ({
@@ -81,6 +69,10 @@ function seedClinic(clinicId: string, avaData: Record<string, unknown>) {
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
+//
+// Proxy-first topology: the toggle flips ONLY ava.enabled. The inbound proxy
+// (/api/ava/inbound-call) reads that flag and returns voicemail when false, so
+// no ElevenLabs detach is involved in pausing.
 
 describe("POST /api/ava/toggle", () => {
   beforeEach(() => {
@@ -88,7 +80,6 @@ describe("POST /api/ava/toggle", () => {
     Object.keys(firestoreStore).forEach((k) => delete firestoreStore[k]);
     updateCalls.length = 0;
 
-    mockSetPhoneNumberAgent.mockResolvedValue(undefined);
     mockVerifyApiRequest.mockResolvedValue({
       uid: "user1",
       email: "owner@spires.com",
@@ -98,11 +89,10 @@ describe("POST /api/ava/toggle", () => {
     mockRequireRole.mockReturnValue(undefined);
   });
 
-  it("activates Ava: attaches agent to phone number and sets enabled=true", async () => {
+  it("activates Ava: sets enabled=true via the single flag", async () => {
     seedClinic("clinic-spires", {
       enabled: false,
       agent_id: "agent_abc",
-      phone_number_id: "phnum_xyz",
     });
 
     const { POST } = await import("../route");
@@ -112,17 +102,14 @@ describe("POST /api/ava/toggle", () => {
     expect(res.status).toBe(200);
     expect(body.enabled).toBe(true);
 
-    expect(mockSetPhoneNumberAgent).toHaveBeenCalledWith("el-test-key", "phnum_xyz", "agent_abc");
-
     const update = updateCalls.find((u) => u.path === "clinics/clinic-spires");
     expect(update?.data["ava.enabled"]).toBe(true);
   });
 
-  it("pauses Ava: detaches agent (null) from phone number and sets enabled=false", async () => {
+  it("pauses Ava: sets enabled=false via the single flag", async () => {
     seedClinic("clinic-spires", {
       enabled: true,
       agent_id: "agent_abc",
-      phone_number_id: "phnum_xyz",
     });
 
     const { POST } = await import("../route");
@@ -132,8 +119,6 @@ describe("POST /api/ava/toggle", () => {
     expect(res.status).toBe(200);
     expect(body.enabled).toBe(false);
 
-    expect(mockSetPhoneNumberAgent).toHaveBeenCalledWith("el-test-key", "phnum_xyz", null);
-
     const update = updateCalls.find((u) => u.path === "clinics/clinic-spires");
     expect(update?.data["ava.enabled"]).toBe(false);
   });
@@ -141,7 +126,6 @@ describe("POST /api/ava/toggle", () => {
   it("returns 400 if no agent_id configured", async () => {
     seedClinic("clinic-spires", {
       enabled: false,
-      phone_number_id: "phnum_xyz",
     });
 
     const { POST } = await import("../route");
@@ -149,21 +133,21 @@ describe("POST /api/ava/toggle", () => {
 
     expect(res.status).toBe(400);
     expect((await res.json()).error).toMatch(/agent/i);
-    expect(mockSetPhoneNumberAgent).not.toHaveBeenCalled();
   });
 
-  it("returns 400 if no phone_number_id configured", async () => {
+  it("toggles without a phone_number_id (no ElevenLabs detach needed)", async () => {
     seedClinic("clinic-spires", {
       enabled: false,
       agent_id: "agent_abc",
+      // phone_number_id intentionally absent — proxy-first pause does not need it
     });
 
     const { POST } = await import("../route");
     const res = await POST(makeRequest());
+    const body = await res.json();
 
-    expect(res.status).toBe(400);
-    expect((await res.json()).error).toMatch(/phone/i);
-    expect(mockSetPhoneNumberAgent).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(body.enabled).toBe(true);
   });
 
   it("returns 404 if clinic not found", async () => {
@@ -173,30 +157,11 @@ describe("POST /api/ava/toggle", () => {
     const res = await POST(makeRequest());
 
     expect(res.status).toBe(404);
-    expect(mockSetPhoneNumberAgent).not.toHaveBeenCalled();
-  });
-
-  it("does not update Firestore if ElevenLabs call fails", async () => {
-    seedClinic("clinic-spires", {
-      enabled: false,
-      agent_id: "agent_abc",
-      phone_number_id: "phnum_xyz",
-    });
-    mockSetPhoneNumberAgent.mockRejectedValueOnce(
-      new Error("ElevenLabs phone number update failed (500): server error")
-    );
-
-    const { POST } = await import("../route");
-    const res = await POST(makeRequest());
-
-    expect(res.status).toBe(500);
-    expect(updateCalls).toHaveLength(0);
   });
 
   it("treats missing ava.enabled (undefined) as false and activates on toggle", async () => {
     seedClinic("clinic-spires", {
       agent_id: "agent_abc",
-      phone_number_id: "phnum_xyz",
       // enabled intentionally absent
     });
 
@@ -205,6 +170,5 @@ describe("POST /api/ava/toggle", () => {
     const body = await res.json();
 
     expect(body.enabled).toBe(true);
-    expect(mockSetPhoneNumberAgent).toHaveBeenCalledWith("el-test-key", "phnum_xyz", "agent_abc");
   });
 });

@@ -259,7 +259,7 @@ function isValidIntent(s: string): s is AvaIntent {
 // This runs AFTER routing and BEFORE any action node.
 // It checks for hard-stop conditions that override all other logic.
 
-function guardrailGate(
+export function guardrailGate(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
   const flags: Partial<GuardrailFlags> = {};
@@ -271,13 +271,17 @@ function guardrailGate(
     /bladder\s*(control|loss|can.?t\s*(hold|control))/,
     /bowel\s*(control|loss|can.?t\s*(hold|control))/,
     /both\s*legs?\s*(weak|numb|can.?t\s*(feel|move))/,
+    // Reversed phrasing: "I can't feel both my legs", "can't move both legs"
+    /can.?t\s*(feel|move)\s*(both|my)\s*(my\s*)?legs?/,
     /worst\s*headache/,
     /thunderclap/,
     /chest\s*pain/,
     /can.?t\s*breathe/,
     /bone\s*(sticking|poking)\s*out/,
-    /face\s*(droop|drooping)/,
-    /can.?t\s*(lift|move|raise)\s*(my\s*)?(arm|hand)/,
+    // "face is drooping", "face has dropped", "face drooping on one side"
+    /face\s*(is\s*|has\s*)?(droop|drooping|dropped|drooped)/,
+    // Allow any possessive/article before arm/hand: "can't lift his arm", "can't raise the arm"
+    /can.?t\s*(lift|move|raise)\s*(my|his|her|their|the|your\s*)?\s*(arm|hand)/,
     /slurred?\s*speech/,
     /stroke/,
   ];
@@ -890,7 +894,7 @@ function routeAfterIntentRouter(state: typeof AvaState.State): string {
 
 // ─── Routing Logic ──────────────────────────────────────────────────────────
 
-function routeAfterGuardrails(
+export function routeAfterGuardrails(
   state: typeof AvaState.State
 ): string {
   const g = state.guardrails;
@@ -952,6 +956,47 @@ function routeAfterGuardrails(
     default:
       return "fallback";
   }
+}
+
+// ─── Offline guardrail evaluation (no LLM) ──────────────────────────────────
+//
+// guardrailGate + routeAfterGuardrails are deterministic, LLM-free decision
+// logic. This convenience composes them so the safety-critical routing for a
+// given utterance can be unit-tested offline (no ANTHROPIC_API_KEY needed),
+// which is exactly the CI condition. The full graph still runs the LLM router
+// at runtime; this exposes only the hard-gate decision for testing/assertions.
+
+export interface GuardrailEvaluation {
+  /** Guardrail flags raised by pattern matching on the utterance */
+  flags: GuardrailFlags;
+  /** The node the guardrail router would send this call to */
+  route: string;
+}
+
+/**
+ * Runs the deterministic guardrail gate + routing for a single utterance.
+ * Pass the (optional) pre-classified intent — defaults to "unknown" so the
+ * hard gates (emergency / mental health / insurance / GDPR / excess) are
+ * exercised independently of any LLM classification.
+ *
+ * No LLM call. Safe to run in CI without an API key.
+ */
+export function evaluateGuardrailRouting(
+  callerInput: string,
+  intent: AvaIntent = "unknown",
+): GuardrailEvaluation {
+  // guardrailGate only reads callerInput; it always returns a fully-populated
+  // guardrails object, so an empty seed is sufficient here.
+  const gated = guardrailGate({ callerInput } as typeof AvaState.State);
+  const flags = gated.guardrails as GuardrailFlags;
+
+  const route = routeAfterGuardrails({
+    callerInput,
+    intent,
+    guardrails: flags,
+  } as typeof AvaState.State);
+
+  return { flags, route };
 }
 
 // ─── Build Graph ────────────────────────────────────────────────────────────

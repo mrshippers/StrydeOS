@@ -38,6 +38,19 @@ async function handler(req: NextRequest) {
     const agentId = body.agent_id;
     const conversationId = body.conversation_id;
     const callerPhone = body.caller_phone ?? "";
+    // Twilio Call SID for the live call. Threading this through is the only safe
+    // way to pick the right call under concurrency (withheld CLI can't be matched
+    // by caller number). ElevenLabs surfaces it under a few names depending on
+    // how the call var is wired into the tool — accept the common aliases, plus
+    // a nested call_sid (e.g. under conversation_initiation / metadata).
+    const callSid =
+      body.call_sid ??
+      body.callSid ??
+      body.twilio_call_sid ??
+      body.call?.sid ??
+      body.metadata?.call_sid ??
+      body.conversation_initiation_client_data?.dynamic_variables?.call_sid ??
+      "";
 
     if (!agentId) {
       return NextResponse.json(
@@ -69,6 +82,7 @@ async function handler(req: NextRequest) {
       callerPhone,
       conversationId: conversationId || "",
       reason: "complaint",
+      callSid: callSid || undefined,
     });
 
     if (!result.success) {
@@ -80,6 +94,19 @@ async function handler(req: NextRequest) {
         return NextResponse.json(
           {
             result: `out_of_hours. Reception is open ${startStr} to ${endStr}. Do NOT attempt transfer. Instead say: "The team are away from the phones at the moment — our reception is open ${startStr} to ${endStr}. Can I take your name and number and have someone call you back first thing?" Then take their details.`,
+          },
+          { status: 200 }
+        );
+      }
+
+      // Ambiguous call (multiple in-progress, no Call SID threaded) — refuse to
+      // guess and risk transferring the wrong patient. Give Ava a safe callback
+      // script instead of attempting a transfer.
+      if (result.error?.startsWith("ambiguous_call:")) {
+        return NextResponse.json(
+          {
+            result:
+              'I can\'t safely connect you to reception this second. Do NOT attempt transfer. Instead say: "Let me take your name and number and have reception call you straight back." Then take their details.',
           },
           { status: 200 }
         );

@@ -20,7 +20,7 @@ def _mock_llm(content="I have Tuesday at 2pm, does that work for you?"):
     "ava_graph.graph.nodes.check_availability.get_cliniko_availability",
     new_callable=AsyncMock,
 )
-def test_webhook_call_started(mock_avail, mock_llm_cls):
+def test_webhook_call_started(mock_avail, mock_llm_cls, bypass_elevenlabs_auth):
     """Test webhook_type=call_started creates session and returns at interrupt point."""
     mock_avail.return_value = ["2026-04-21T14:00:00", "2026-04-21T15:00:00"]
     mock_llm_cls.side_effect = None
@@ -54,7 +54,7 @@ def test_webhook_call_started(mock_avail, mock_llm_cls):
     "ava_graph.graph.nodes.check_availability.get_cliniko_availability",
     new_callable=AsyncMock,
 )
-def test_webhook_patient_confirmed(mock_avail, mock_llm_cls, mock_book, mock_sms):
+def test_webhook_patient_confirmed(mock_avail, mock_llm_cls, mock_book, mock_sms, bypass_elevenlabs_auth):
     """Test webhook_type=patient_confirmed resumes graph from checkpoint."""
     mock_avail.return_value = ["2026-04-21T14:00:00"]
     mock_book.return_value = "booking_12345"
@@ -100,7 +100,7 @@ def test_webhook_patient_confirmed(mock_avail, mock_llm_cls, mock_book, mock_sms
     assert data["end_conversation"] is True  # Booking confirmed, end call
 
 
-def test_webhook_missing_required_params_call_started():
+def test_webhook_missing_required_params_call_started(bypass_elevenlabs_auth):
     """Test 400 Bad Request when required params missing for call_started."""
     client = TestClient(app)
     payload = {
@@ -115,7 +115,7 @@ def test_webhook_missing_required_params_call_started():
     assert response.status_code == 400
 
 
-def test_webhook_missing_required_params_patient_confirmed():
+def test_webhook_missing_required_params_patient_confirmed(bypass_elevenlabs_auth):
     """Test 400 Bad Request when required params missing for patient_confirmed."""
     client = TestClient(app)
     payload = {
@@ -129,7 +129,7 @@ def test_webhook_missing_required_params_patient_confirmed():
     assert response.status_code == 400
 
 
-def test_webhook_invalid_webhook_type():
+def test_webhook_invalid_webhook_type(bypass_elevenlabs_auth):
     """Test 400 Bad Request for invalid webhook_type."""
     client = TestClient(app)
     payload = {

@@ -17,6 +17,7 @@ vi.mock("@ai-sdk/gateway", () => ({
 }));
 
 import { synthesiseKnowledge } from "../synthesise";
+import { compileKnowledgeChunks, filterLiveEntries } from "../../ava-knowledge";
 import { generateText } from "ai";
 import type { PlacesResult, CompaniesHouseResult, WebsiteResult } from "../sources";
 
@@ -72,7 +73,7 @@ describe("synthesiseKnowledge", () => {
     expect(mockedGenerateText).not.toHaveBeenCalled();
   });
 
-  it("calls Haiku and returns validated KnowledgeEntry[] with source=auto", async () => {
+  it("calls Haiku and returns validated KnowledgeEntry[] born as drafts (P0-3)", async () => {
     mockedGenerateText.mockResolvedValueOnce({
       text: buildLlmJson([
         {
@@ -105,12 +106,60 @@ describe("synthesiseKnowledge", () => {
 
     expect(entries).toHaveLength(3);
     entries.forEach((e) => {
-      expect(e.source).toBe("auto");
+      // P0-3: every AI-synthesised entry is born as a draft, explicitly stamped,
+      // so it is gated out of the live agent until a human approves it. Source is
+      // ai_generated so the review queue can distinguish it from manual entries.
+      expect(e.status).toBe("draft");
+      expect(e.source).toBe("ai_generated");
       expect(e.id).toBeDefined();
       expect(e.updatedAt).toBeDefined();
     });
     expect(entries.find((e) => e.category === "pricing")?.content).toContain("£75");
     expect(entries.find((e) => e.category === "location")?.content).toContain("Mill Lane");
+
+    // Drafts must be invisible to the live-sync compilation path.
+    expect(filterLiveEntries(entries)).toHaveLength(0);
+    expect(compileKnowledgeChunks(entries)).toHaveLength(0);
+  });
+
+  it("synthesised drafts never appear in the synced payload, approved siblings do (P0-3/P0-4)", async () => {
+    mockedGenerateText.mockResolvedValueOnce({
+      text: buildLlmJson([
+        {
+          category: "pricing",
+          title: "Shockwave Therapy",
+          content: "£90 per session (AI-synthesised, unverified).",
+          confidence: "medium",
+        },
+      ]),
+    } as Awaited<ReturnType<typeof generateText>>);
+
+    const synthesised = await synthesiseKnowledge({
+      clinicName: "Spires Physiotherapy",
+      places: spiresPlaces,
+      companiesHouse: null,
+      website: spiresWebsite,
+    });
+
+    // A human-approved entry sitting alongside the AI draft.
+    const approved = {
+      id: "manual-1",
+      category: "pricing" as const,
+      title: "Initial Assessment",
+      content: "£75 for a 45-minute initial assessment.",
+      updatedAt: "2026-05-20T09:00:00.000Z",
+      status: "approved" as const,
+      source: "manual" as const,
+    };
+
+    // This mirrors what the Cloud Function compiles into the live ElevenLabs
+    // payload: only filterLiveEntries-passing entries reach the agent.
+    const chunks = compileKnowledgeChunks([approved, ...synthesised]);
+    const pricing = chunks.find((c) => c.name === "Pricing");
+
+    expect(pricing).toBeDefined();
+    expect(pricing!.content).toContain("Initial Assessment");
+    expect(pricing!.content).not.toContain("Shockwave Therapy");
   });
 
   it("drops entries with invalid category", async () => {

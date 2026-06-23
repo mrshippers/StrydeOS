@@ -14,7 +14,7 @@ const C = {
   ink: "#111827", muted: "#6B7280", success: "#059669", border: "#E2DFDA",
 };
 
-/* ── Monolith Mark (canonical — unique IDs per instance) ── */
+/* ── Monolith Mark (canonical - unique IDs per instance) ── */
 let _mmId = 0;
 const _uid = (p) => `${p}-${++_mmId}`;
 
@@ -77,11 +77,11 @@ const MonolithMark = ({ size = 44 }) => {
   );
 };
 
-/* ── Compare modal data (canonical pricing from module-page) ── */
+/* ── Compare modal data (canonical pricing - matches ModulePricingBanner.jsx + CLAUDE.md locked tiers) ── */
 const tierPrices = {
   solo:   { intelligence: 69,  ava: 99,  pulse: 79,  full: 199 },
   studio: { intelligence: 99,  ava: 149, pulse: 99,  full: 299 },
-  clinic: { intelligence: 199, ava: 159, pulse: 119, full: 399 },
+  clinic: { intelligence: 149, ava: 199, pulse: 149, full: 399 }, // canonical Clinic row: Intelligence 149 / Ava 199 / Pulse 149
 };
 const tierLabels = { solo: "Solo (1)", studio: "Studio (2\u20135)", clinic: "Clinic (6+)" };
 
@@ -301,7 +301,7 @@ export default function AvaPage() {
           padding: "100px 24px 120px",
           background: darkMode
             ? `linear-gradient(180deg, ${C.navy} 0%, ${C.navyMid} 50%, ${C.navy} 100%)`
-            : `linear-gradient(180deg, ${C.cloudDancer} 0%, #D5D1CA 35%, #C4BFB6 50%, #D5D1CA 65%, ${C.cloudDancer} 100%)`,
+            : `linear-gradient(180deg, ${C.cloudDancer} 0%, #DBE4F5 35%, #C9D7F2 50%, #DBE4F5 65%, ${C.cloudDancer} 100%)`,
           transition: "background 0.3s",
         }}>
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -384,7 +384,7 @@ export default function AvaPage() {
                     <div key={mod} style={{ textAlign: "center", fontSize: 14 }}>
                       {f[mod]
                         ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3 3 5-5" stroke={C.success} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        : <span style={{ color: darkMode ? "rgba(255,255,255,0.15)" : "#d0cdc7" }}>&mdash;</span>
+                        : <span style={{ color: darkMode ? "rgba(255,255,255,0.15)" : "#9AA7BE" }}>-</span>
                       }
                     </div>
                   ))}
