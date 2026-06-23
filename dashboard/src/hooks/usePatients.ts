@@ -3,11 +3,13 @@
 import { useEffect, useState, useMemo } from "react";
 import { subscribePatients } from "@/lib/queries";
 import { useAuth } from "@/hooks/useAuth";
+import { useClinicians } from "@/hooks/useClinicians";
 import { useDemoPatients } from "./useDemoData";
 import type { Patient, LifecycleState } from "@/types";
 
 export function usePatients(clinicianId?: string) {
   const { user } = useAuth();
+  const { clinicians } = useClinicians();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,6 +19,15 @@ export function usePatients(clinicianId?: string) {
   const clinicId = user?.clinicId ?? null;
   const userRole = user?.role ?? "clinician";
   const userClinicianId = user?.clinicianId ?? null;
+
+  // Seat clinician ids = active clinicians (useClinicians already filters to
+  // active, which the pipeline keeps == account-holding seats). Used to gate the
+  // clinic-wide view to seat patients only; other-branch PMS patients stay in
+  // the data but never surface. Joined as a stable string for effect deps.
+  const seatIdsKey = useMemo(
+    () => clinicians.map((c) => c.id).sort().join(","),
+    [clinicians]
+  );
 
   // Resolve the effective clinicianId filter:
   // - If an explicit clinicianId is passed (e.g. from a dropdown), use it (unless "all")
@@ -44,6 +55,7 @@ export function usePatients(clinicianId?: string) {
       return () => {};
     }
 
+    const seatClinicianIds = seatIdsKey ? seatIdsKey.split(",") : [];
     const unsubscribe = subscribePatients(
       clinicId,
       effectiveClinicianId,
@@ -66,11 +78,12 @@ export function usePatients(clinicianId?: string) {
         setError("Failed to load patients.");
         setPatients([]);
         setLoading(false);
-      }
+      },
+      seatClinicianIds
     );
 
     return () => unsubscribe();
-  }, [clinicId, effectiveClinicianId, demoPatients, isDemo]);
+  }, [clinicId, effectiveClinicianId, demoPatients, isDemo, seatIdsKey]);
 
   const active = useMemo(
     () =>

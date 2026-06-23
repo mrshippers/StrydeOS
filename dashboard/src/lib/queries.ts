@@ -141,7 +141,8 @@ export function subscribePatients(
   clinicId: string | null,
   clinicianId: string | null,
   callback: (data: Patient[]) => void,
-  onError: (err: Error) => void
+  onError: (err: Error) => void,
+  seatClinicianIds?: string[] | null
 ): Unsubscribe {
   if (!db || !clinicId) {
     callback([]);
@@ -154,6 +155,11 @@ export function subscribePatients(
     // in the patient's caseload (every clinician who has seen them). The primary
     // clinician is always in their own caseload, so "own patients" still resolve.
     constraints.push(where("caseload", "array-contains", clinicianId));
+  } else if (seatClinicianIds && seatClinicianIds.length > 0) {
+    // Clinic-wide view (owner/admin/superadmin): gate to patients whose primary
+    // clinician is a seat. PMS practitioners from other branches stay in the
+    // data but their patients never surface here. Firestore `in` caps at 30.
+    constraints.push(where("clinicianId", "in", seatClinicianIds.slice(0, 30)));
   }
   constraints.push(limit(500));
 

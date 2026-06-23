@@ -3,7 +3,7 @@ import type { PMSIntegrationConfig } from "@/types/pms";
 import type { HEPIntegrationConfig } from "@/lib/integrations/hep/types";
 import { createPMSAdapter, detectPmsProviderMismatch } from "@/lib/integrations/pms/factory";
 import { createHEPAdapter } from "@/lib/integrations/hep/factory";
-import { syncClinicians, buildClinicianMap } from "./sync-clinicians";
+import { syncClinicians, buildClinicianMap, reconcileClinicianSeats } from "./sync-clinicians";
 import { syncAppointments } from "./sync-appointments";
 import { syncPatients } from "./sync-patients";
 import { syncHep } from "./sync-hep";
@@ -115,6 +115,19 @@ export async function runPipeline(
 
   const clinicianMap = await buildClinicianMap(db, clinicId);
 
+  // Reconcile seats: only clinicians with a StrydeOS account (referenced by a
+  // users.clinicianId) are active/shown/counted. PMS practitioners from other
+  // branches stay in the data (attribution) but are deactivated, so they don't
+  // bloat the clinician table or the tier seat count.
+  const seatResult = await reconcileClinicianSeats(db, clinicId);
+  stages.push({
+    stage: "reconcile-seats",
+    ok: true,
+    count: seatResult.seatIds.length,
+    errors: [],
+    durationMs: 0,
+  });
+
   // ── Stage 2: Sync Appointments ───────────────────────────────────────────
   const s2 = await syncAppointments(
     db,
@@ -183,7 +196,20 @@ export async function runPipeline(
   stages.push(s5);
 
   // ── Stage 5b: Trigger Comms Sequences via n8n ────────────────────────────
+  // Auto-send is gated on an explicit operational switch (commsAutoSend),
+  // SEPARATE from the Pulse module entitlement (featureFlags.continuity). A
+  // clinic can have Pulse on (board + manual Re-engage buttons) while the
+  // pipeline never contacts patients on its own. Default off — opt in only.
   const commsStart = Date.now();
+  if (clinicData?.commsAutoSend !== true) {
+    stages.push({
+      stage: "trigger-comms",
+      ok: true,
+      count: 0,
+      errors: ["Auto-send disabled (commsAutoSend off) — manual sends only"],
+      durationMs: Date.now() - commsStart,
+    });
+  } else {
   try {
     const commsResult = await triggerCommsSequences(db, clinicId);
     stages.push({
@@ -204,6 +230,7 @@ export async function runPipeline(
       errors: [err instanceof Error ? err.message : String(err)],
       durationMs: Date.now() - commsStart,
     });
+  }
   }
 
   // ── Stage 5c: Revenue Attribution ────────────────────────────────────────
