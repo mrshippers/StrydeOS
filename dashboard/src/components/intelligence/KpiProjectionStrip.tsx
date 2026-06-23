@@ -11,10 +11,21 @@
  */
 
 import { useKpis } from "@/hooks/useKpis";
+import { useConnections } from "@/hooks/useConnections";
 import { brand } from "@/lib/brand";
 import { KPI_IDS, type KpiDoc, type KpiId } from "@/types/kpi";
 import { AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
+
+// KPIs whose data comes from an enrichable source — hidden until that source is
+// connected (else they read as fabricated, e.g. NPS 100 with no NPS set up).
+// PMS-derived KPIs (follow-up, utilisation, dna, revenue) have no entry = always shown.
+const KPI_REQUIRES_CONNECTION: Partial<Record<KpiId, string>> = {
+  nps: "nps",
+  "hep-compliance": "hep",
+  "google-review-conversion": "reviews",
+  "average-star-rating": "reviews",
+};
 
 const KPI_LABELS: Record<KpiId, string> = {
   "follow-up-rate": "Follow-up rate",
@@ -73,8 +84,15 @@ function formatRelativeTime(iso: string): string {
 
 export default function KpiProjectionStrip() {
   const { kpis, computeState } = useKpis();
+  const { connected } = useConnections();
 
-  const hasAny = KPI_IDS.some((id) => kpis[id] != null);
+  // Only show KPIs whose source is connected (PMS KPIs always qualify).
+  const visibleKpiIds = KPI_IDS.filter((id) => {
+    const req = KPI_REQUIRES_CONNECTION[id];
+    return !req || connected[req];
+  });
+
+  const hasAny = visibleKpiIds.some((id) => kpis[id] != null);
   if (!hasAny) return null;
 
   const health = computeState?.schedulerHealth ?? "ok";
@@ -102,7 +120,7 @@ export default function KpiProjectionStrip() {
         <HealthBadge health={health} />
       </header>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {KPI_IDS.map((id) => {
+        {visibleKpiIds.map((id) => {
           const kpi = kpis[id];
           if (!kpi) return <KpiTilePlaceholder key={id} kpiId={id} />;
           return <KpiTile key={id} kpi={kpi} />;
