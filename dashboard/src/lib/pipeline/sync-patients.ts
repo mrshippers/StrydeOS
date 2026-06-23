@@ -2,7 +2,11 @@ import type { Firestore } from "firebase-admin/firestore";
 import type { PMSAdapter } from "@/types/pms";
 import type { StageResult } from "./types";
 
-const CONCURRENCY = 10;
+// Cliniko's client now paces + retries every request process-wide, but keep the
+// fan-out modest too: this caps how many getPatient calls queue behind the
+// throttle at once (sockets + memory), and bounds pressure if the throttle
+// interval is later relaxed via env.
+const CONCURRENCY = 4;
 
 /**
  * The patient's caseload — every distinct clinician who has seen them, with the

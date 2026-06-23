@@ -16,6 +16,59 @@ export interface ClinikoConfig {
 /** Shard regions to probe during connection test (fallback only) */
 const SHARD_PROBES = ["uk1", "uk2", "uk3", "au1", "au2", "us1"];
 
+// ── Rate limiting + retry ──────────────────────────────────────────────────
+// Cliniko caps each API key at ~200 requests/minute and returns 429 with a
+// `Retry-After` header when exceeded. The pipeline fans out (syncPatients runs
+// getPatient 10-at-a-time, paginated sweeps walk many pages), so without pacing
+// a single run bursts past the cap and 429s in production.
+//
+// Two layers, both process-wide so every clinikoFetch caller shares them:
+//  1. A min-interval gate that spaces out request *starts* (serialised through
+//     a promise chain — concurrent callers queue instead of bursting).
+//  2. Retry on 429/503 that honours Retry-After, else exponential backoff with
+//     jitter, capped at MAX_RETRIES.
+// Tunable via env without a redeploy of logic.
+const MIN_REQUEST_INTERVAL_MS = Number(
+  process.env.CLINIKO_MIN_REQUEST_INTERVAL_MS ?? 350
+);
+const MAX_RETRIES = Number(process.env.CLINIKO_MAX_RETRIES ?? 4);
+const MAX_BACKOFF_MS = 16_000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+let lastRequestStartedAt = 0;
+let throttleChain: Promise<void> = Promise.resolve();
+
+/**
+ * Enforce a minimum gap between request starts, process-wide. Callers append to
+ * a single promise chain so 10 concurrent getPatient calls queue and drip out
+ * one MIN_REQUEST_INTERVAL_MS apart instead of hitting Cliniko all at once.
+ */
+function throttle(): Promise<void> {
+  const next = throttleChain.then(async () => {
+    const elapsed = Date.now() - lastRequestStartedAt;
+    const wait = MIN_REQUEST_INTERVAL_MS - elapsed;
+    if (wait > 0) await sleep(wait);
+    lastRequestStartedAt = Date.now();
+  });
+  // Keep the chain alive even if a turn rejects, so one failure can't wedge it.
+  throttleChain = next.catch(() => {});
+  return next;
+}
+
+/** Parse a Retry-After header (delta-seconds or HTTP-date) into ms, or null. */
+function parseRetryAfter(res: Response): number | null {
+  const header = res.headers.get("Retry-After");
+  if (!header) return null;
+  const seconds = Number(header);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const when = Date.parse(header);
+  if (!Number.isNaN(when)) return Math.max(0, when - Date.now());
+  return null;
+}
+
 /**
  * Extract the shard from a Cliniko API key.
  * Keys optionally end with `-{shard}` e.g. `...xyz-uk3`.
@@ -36,32 +89,52 @@ export async function clinikoFetch<T>(
   
   // Cliniko uses HTTP Basic auth with API key as username, "x" as password
   const authString = Buffer.from(`${config.apiKey}:x`).toString("base64");
-  
-  const res = await fetch(url, {
-    ...options,
-    signal: options.signal ?? AbortSignal.timeout(15_000),
-    headers: {
-      Authorization: `Basic ${authString}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      "User-Agent": "StrydeOS/1.0",
-      ...options.headers,
-    },
-  });
 
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    let hint = "";
-    if (res.status === 401) hint = " (invalid API key — regenerate in Cliniko Settings → API Keys)";
-    if (res.status === 404) hint = ` (endpoint not found at ${url})`;
-    if (res.status === 403) hint = " (forbidden — ensure the API key has full access)";
-    if (res.status === 429) hint = " (rate limit exceeded — retry after delay)";
-    throw new Error(`Cliniko API ${res.status}${hint}: ${body || res.statusText}`);
+  // Retry loop: on 429/503 honour Retry-After (else exponential backoff with
+  // jitter) and try again, up to MAX_RETRIES. Every attempt passes through the
+  // throttle gate first so retries don't themselves stampede the API.
+  for (let attempt = 0; ; attempt++) {
+    await throttle();
+
+    const res = await fetch(url, {
+      ...options,
+      signal: options.signal ?? AbortSignal.timeout(15_000),
+      headers: {
+        Authorization: `Basic ${authString}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "User-Agent": "StrydeOS/1.0",
+        ...options.headers,
+      },
+    });
+
+    // Transient — back off and retry rather than failing the whole sync.
+    if ((res.status === 429 || res.status === 503) && attempt < MAX_RETRIES) {
+      const retryAfter = parseRetryAfter(res);
+      const backoff =
+        retryAfter ??
+        Math.min(MAX_BACKOFF_MS, 500 * 2 ** attempt) +
+          Math.floor(Math.random() * 250);
+      // Drain the body so the socket can be reused.
+      await res.text().catch(() => "");
+      await sleep(backoff);
+      continue;
+    }
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      let hint = "";
+      if (res.status === 401) hint = " (invalid API key — regenerate in Cliniko Settings → API Keys)";
+      if (res.status === 404) hint = ` (endpoint not found at ${url})`;
+      if (res.status === 403) hint = " (forbidden — ensure the API key has full access)";
+      if (res.status === 429) hint = " (rate limit exceeded — retried and still throttled)";
+      throw new Error(`Cliniko API ${res.status}${hint}: ${body || res.statusText}`);
+    }
+
+    const text = await res.text();
+    if (!text) return {} as T;
+    return JSON.parse(text) as T;
   }
-
-  const text = await res.text();
-  if (!text) return {} as T;
-  return JSON.parse(text) as T;
 }
 
 /**
