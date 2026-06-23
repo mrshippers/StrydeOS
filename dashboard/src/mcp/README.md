@@ -18,7 +18,7 @@ The server reads `dashboard/.env.local` for Firebase admin credentials and resol
 
 | Env var | Default | Purpose |
 |---|---|---|
-| `CLINIC_ID` | `spires` | Which clinic the tools scope to |
+| `CLINIC_ID` | `clinic-spires` | Which clinic the tools scope to (real Spires Firestore doc id is `clinic-spires`, NOT `spires`) |
 | `MCP_ROLE` | `superadmin` | Role gate (clinician / admin / owner / superadmin) |
 | `ELEVENLABS_API_KEY` | unset | Required for any Ava transcript / agent fetch tool |
 
@@ -33,7 +33,7 @@ Add this to `~/.claude.json` under `mcpServers`:
   "args": ["run", "--silent", "mcp:stdio"],
   "cwd": "/Users/joa/Desktop/StrydeOS/dashboard",
   "env": {
-    "CLINIC_ID": "spires",
+    "CLINIC_ID": "clinic-spires",
     "MCP_ROLE": "superadmin"
   }
 }
@@ -63,7 +63,7 @@ In claude.ai, go to Settings -> Integrations -> Add custom integration:
 - **URL:** `https://portal.strydeos.com/api/mcp`
 - **Auth headers:** `Authorization: Bearer <value of MCP_BEARER_SECRET>`
 
-The HTTP transport hardcodes the scope to `CLINIC_ID=spires`, `MCP_ROLE=superadmin`. Anyone with the secret has founder-equivalent access. Treat the secret like a production credential — Doppler-managed, never in chat or commits.
+The HTTP transport scopes to `CLINIC_ID` (default `clinic-spires` — the real Spires Firestore doc), `MCP_ROLE=superadmin`. The default lives in `context.ts` / `route.ts`; override with the `CLINIC_ID` env var. The earlier `spires` default pointed at a non-existent doc and made every tool read 0 rows. Anyone with the secret has founder-equivalent access. Treat the secret like a production credential — Doppler-managed, never in chat or commits.
 
 Promote to OAuth + per-clinic scoping before exposing to anyone other than yourself. Tracked under "Phase D" in [NOTES.md](./NOTES.md).
 

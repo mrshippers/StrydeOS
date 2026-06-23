@@ -745,6 +745,16 @@ export default function IntelligencePage() {
     error: intelligenceError,
   } = useIntelligenceData(selectedClinician);
 
+  // Clinician Performance dedup: metrics_weekly retains rows for legacy seed records,
+  // deactivated clinicians and test accounts, which surface as duplicate/junk rows.
+  // Join to the active clinician roster so only real, active clinicians render.
+  // Fall back to the raw list while the roster is still loading (size 0) so the table
+  // never blanks mid-load, and keep demo data untouched.
+  const activeClinicianIds = new Set(clinicians.filter((c) => c.active).map((c) => c.id));
+  const visibleClinicianKpis = (usedDemo || activeClinicianIds.size === 0)
+    ? clinicianKpis
+    : clinicianKpis.filter((c) => activeClinicianIds.has(c.clinicianId));
+
   // NPS and average star rating are read from the canonical kpis/* projection.
   // This is the single source of truth (P0-10, P0-11).
   const { kpis: projectedKpis } = useKpis();
@@ -916,14 +926,14 @@ export default function IntelligencePage() {
               </tr>
             </thead>
             <tbody>
-              {clinicianKpis.length === 0 && (
+              {visibleClinicianKpis.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-sm text-muted">
                     Per-clinician performance data will appear once metrics are computed from appointment records.
                   </td>
                 </tr>
               )}
-              {clinicianKpis.map((c) => {
+              {visibleClinicianKpis.map((c) => {
                 const isExpanded = expandedClinician === c.clinicianId;
                 return (
                   <Fragment key={c.clinicianId}>
@@ -1473,7 +1483,7 @@ export default function IntelligencePage() {
               <h3 className="font-display text-lg text-navy mb-1">Average Improvement by Clinician</h3>
               <p className="text-xs text-muted mb-4">NPRS change (lower = better) and PSFS change (higher = better) averaged across completed treatments</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {(clinicianKpis.length > 0 ? clinicianKpis.slice(0, 3).map((k, i) => ({
+                {(visibleClinicianKpis.length > 0 ? visibleClinicianKpis.slice(0, 3).map((k, i) => ({
                   name: k.clinicianName,
                   nprsChange: null as number | null,
                   psfsChange: null as number | null,

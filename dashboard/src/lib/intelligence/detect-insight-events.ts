@@ -445,6 +445,14 @@ export async function detectInsightEvents(
       (Date.now() - new Date(patient.lastSessionDate as string).getTime()) / 86400000
     );
     if (daysSince <= config.dropoutRiskDays) continue;
+    // Upper bound: a lapse older than dropoutRiskMaxDays is historical import noise,
+    // not a freshly-actionable rebooking. Without this, a clinic onboarding years of
+    // PMS history gets flooded with "hasn't rebooked in 200+ days" nudges. Only flag
+    // patients who drifted within the recent window so the queue stays actionable.
+    if (config.dropoutRiskMaxDays > 0 && daysSince > config.dropoutRiskMaxDays) {
+      result.eventsSkipped++;
+      continue;
+    }
 
     const clinicianName = clinicians.find((c) => c.id === patient.clinicianId)?.name ?? "Unknown";
 
