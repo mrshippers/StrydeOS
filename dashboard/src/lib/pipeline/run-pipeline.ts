@@ -1,7 +1,7 @@
 import type { Firestore } from "firebase-admin/firestore";
 import type { PMSIntegrationConfig } from "@/types/pms";
 import type { HEPIntegrationConfig } from "@/lib/integrations/hep/types";
-import { createPMSAdapter } from "@/lib/integrations/pms/factory";
+import { createPMSAdapter, detectPmsProviderMismatch } from "@/lib/integrations/pms/factory";
 import { createHEPAdapter } from "@/lib/integrations/hep/factory";
 import { syncClinicians, buildClinicianMap } from "./sync-clinicians";
 import { syncAppointments } from "./sync-appointments";
@@ -81,6 +81,29 @@ export async function runPipeline(
         },
       ],
     };
+  }
+
+  // Guardrail: the configured provider must match the endpoint its baseUrl
+  // points at. A drift here (e.g. provider left as "writeupp" after a Cliniko
+  // migration updated baseUrl + apiKey) silently sends the new key to the old
+  // client and 401s, which reads as "frozen data" rather than a config error.
+  // Fail loud with an actionable message and surface it on the PMS config doc.
+  const providerMismatch = detectPmsProviderMismatch(pmsConfig);
+  if (providerMismatch) {
+    const stage: StageResult = {
+      stage: "pms-config",
+      ok: false,
+      count: 0,
+      errors: [providerMismatch],
+      durationMs: 0,
+    };
+    stages.push(stage);
+    await logIntegrationHealth(db, clinicId, pmsConfig.provider, "pms", stage);
+    await configBase.doc(PMS_DOC_ID).set(
+      { lastSyncStatus: "error", syncErrors: [providerMismatch], lastSyncAt: new Date().toISOString() },
+      { merge: true }
+    );
+    return { clinicId, ok: false, startedAt, completedAt: new Date().toISOString(), stages };
   }
 
   const pmsAdapter = createPMSAdapter(pmsConfig);
