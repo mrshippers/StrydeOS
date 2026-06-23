@@ -12,6 +12,8 @@ from typing import Dict, List, Tuple
 
 import httpx
 
+from ava_graph.tools._http import request_with_retry
+
 logger = logging.getLogger(__name__)
 
 _DEFAULT_BASE_URL = "https://app.writeupp.com/api/v1"
@@ -138,12 +140,15 @@ async def get_writeupp_availability(
 
     async with _make_client(api_key, base_url) as client:
         try:
-            response = await client.get(
-                "/appointments",
-                params={
-                    "from": from_dt.isoformat(),
-                    "to": to_dt.isoformat(),
-                },
+            response = await request_with_retry(
+                lambda: client.get(
+                    "/appointments",
+                    params={
+                        "from": from_dt.isoformat(),
+                        "to": to_dt.isoformat(),
+                    },
+                ),
+                idempotent=True,
             )
             response.raise_for_status()
             data = response.json()
@@ -208,7 +213,12 @@ async def book_writeupp_appointment(
 
     async with _make_client(api_key, base_url) as client:
         try:
-            response = await client.post("/appointments", json=payload)
+            # Booking is a write: only 429/connect errors retry (never a read
+            # timeout or 5xx) so a possibly-created appointment is never repeated.
+            response = await request_with_retry(
+                lambda: client.post("/appointments", json=payload),
+                idempotent=False,
+            )
             response.raise_for_status()
             data = response.json()
         except httpx.HTTPError as e:
