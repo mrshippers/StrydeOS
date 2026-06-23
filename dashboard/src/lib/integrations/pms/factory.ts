@@ -1,4 +1,5 @@
 import type { PMSAdapter, PMSAppointment, PMSIntegrationConfig } from "@/types/pms";
+import type { PmsProvider } from "@/types";
 import { createWriteUppAdapter } from "./writeupp/adapter";
 import { createClinikoAdapter } from "./cliniko/adapter";
 import { createHalaxyAdapter } from "./halaxy/adapter";
@@ -102,6 +103,33 @@ function withValidation(adapter: PMSAdapter, provider: string): PMSAdapter {
       return result;
     },
   };
+}
+
+/**
+ * Map a configured PMS baseUrl to the provider its host actually points at.
+ * Returns null for unknown hosts (we don't block on what we can't recognise).
+ */
+export function expectedProviderFromBaseUrl(baseUrl: string | undefined): PmsProvider | null {
+  const host = (baseUrl || "").toLowerCase();
+  if (!host) return null;
+  if (host.includes("cliniko")) return "cliniko";
+  if (host.includes("writeupp") || host.includes("openclaw")) return "writeupp";
+  if (host.includes("halaxy")) return "halaxy";
+  if (host.includes("powerdiary") || host.includes("zanda")) return "powerdiary";
+  return null;
+}
+
+/**
+ * Returns an actionable error string if `provider` disagrees with the endpoint
+ * its `baseUrl` points at, else null. This catches the silent drift where a PMS
+ * migration updates baseUrl + apiKey but leaves the old provider (e.g. Cliniko
+ * key + baseUrl with provider still "writeupp") — which routes the new key to
+ * the wrong client and 401s, reading as "frozen data" rather than misconfig.
+ */
+export function detectPmsProviderMismatch(config: PMSIntegrationConfig): string | null {
+  const expected = expectedProviderFromBaseUrl(config.baseUrl);
+  if (!expected || expected === config.provider) return null;
+  return `PMS misconfigured: provider is "${config.provider}" but the saved endpoint (${config.baseUrl}) is ${expected}. The sync would send your ${expected} key to the ${config.provider} API and fail with a 401. Reconnect the PMS under Settings, Integrations to fix.`;
 }
 
 export function createPMSAdapter(config: PMSIntegrationConfig): PMSAdapter {
