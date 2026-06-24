@@ -6,7 +6,7 @@ import {
 } from "./coaching-prompts";
 import { guardNarrative } from "./narrative-guard";
 import { appendDataQualityIssues, writeComputeState } from "./compute-state";
-import { stripDashes } from "./sanitise-subject";
+import { stripDashes } from "@/lib/utils";
 
 /**
  * Enrich newly detected insight events with AI-generated coaching narratives.

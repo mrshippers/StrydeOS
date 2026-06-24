@@ -1,4 +1,5 @@
 import type { SequenceType, CommsChannel } from "./index";
+import { stripDashes } from "@/lib/utils";
 
 export interface CommsSequenceConfig {
   type: SequenceType;
@@ -401,18 +402,17 @@ export function resolveTemplate(
   templateKey: string,
   tone: ToneModifier = "standard"
 ): string {
-  // Try tone-specific variant first (e.g. "rebooking_step1_supportive")
+  // Tone-specific variant first ("rebooking_step1_supportive"), then standard,
+  // then base key, then a generic fallback. Every resolved message passes
+  // stripDashes so no em dash or double hyphen ever reaches a patient.
   const toneKey = `${templateKey}_${tone}`;
-  if (SMS_TEMPLATES[toneKey]) return SMS_TEMPLATES[toneKey];
-
-  // Fall back to standard variant
   const standardKey = `${templateKey}_standard`;
-  if (SMS_TEMPLATES[standardKey]) return SMS_TEMPLATES[standardKey];
-
-  // Fall back to base key (review templates don't have tone variants)
-  if (SMS_TEMPLATES[templateKey]) return SMS_TEMPLATES[templateKey];
-
-  return `Hi [Name], this is a reminder from [ClinicName].`;
+  const raw =
+    SMS_TEMPLATES[toneKey] ??
+    SMS_TEMPLATES[standardKey] ??
+    SMS_TEMPLATES[templateKey] ??
+    `Hi [Name], this is a reminder from [ClinicName].`;
+  return stripDashes(raw);
 }
 
 // Extended n8n payload — adds step tracking fields

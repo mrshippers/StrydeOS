@@ -163,6 +163,21 @@ export function formatDaysAgo(dateStr: string | null | undefined, fallback = "")
   return Number.isFinite(n) ? `${n}d ago` : fallback;
 }
 
+/**
+ * Strip em/en dashes and double-hyphens used as sentence dashes from prose
+ * output, replacing them with a comma so running text still reads naturally.
+ * Brand rule: no em dashes or double hyphens in any shipped copy. Single
+ * hyphens in compounds ("check-in", "mid-programme") are left untouched.
+ */
+const PROSE_DASH_RE = /\s*(?:--|[–—])\s*/g;
+export function stripDashes(text: string): string {
+  return text
+    .replace(PROSE_DASH_RE, ", ")
+    .replace(/,\s*,/g, ",")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 export function getInitials(name: string): string {
   return name
     .split(" ")

@@ -30,17 +30,3 @@ const CONTROL_RE = /[\x00-\x1f\x7f]/g;
 export function sanitiseSubject(subject: string): string {
   return subject.replace(DASH_RE, "-").replace(CONTROL_RE, "");
 }
-
-/**
- * Sanitise prose bodies (coaching narratives, etc.) to the no-dash brand rule.
- * Em/en dashes and double-hyphens used as sentence dashes become a comma, which
- * reads naturally in running text. Single hyphens in compounds are untouched.
- */
-const PROSE_DASH_RE = /\s*(?:--|[–—])\s*/g;
-export function stripDashes(text: string): string {
-  return text
-    .replace(PROSE_DASH_RE, ", ")
-    .replace(/,\s*,/g, ",")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}

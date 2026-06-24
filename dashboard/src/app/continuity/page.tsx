@@ -154,7 +154,7 @@ function ContinuityPage() {
       />
 
       {/* Error banners */}
-      {patientsError && <ErrorBanner message="Patient data couldn't load — some cards may be incomplete." onRetry={() => router.refresh()} />}
+      {patientsError && <ErrorBanner message="Patient data couldn't load. Some cards may be incomplete." onRetry={() => router.refresh()} />}
       {commsError && <ErrorBanner message="Comms data unavailable right now." onRetry={() => router.refresh()} />}
 
       {/* Setup banner — shown when no comms have been sent yet (real user only) */}
@@ -165,7 +165,7 @@ function ContinuityPage() {
               <Zap size={14} className="text-teal" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-navy mb-1">Pulse is ready — no messages sent yet</p>
+              <p className="text-sm font-semibold text-navy mb-1">Pulse is ready, no messages sent yet</p>
               <p className="text-xs text-muted">
                 Patient data is live from your PMS. To start sending automated SMS and email sequences (rebooking prompts, HEP reminders, reactivation nudges),
                 toggle them on in the <button onClick={() => setActiveView("sequences")} className="text-teal font-semibold hover:underline">Comms Sequences</button> tab.
