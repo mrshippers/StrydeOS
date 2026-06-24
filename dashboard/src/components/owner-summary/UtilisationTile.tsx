@@ -3,7 +3,7 @@
 import { GlassCard } from "@/components/ui/GlassCard";
 import { brand } from "@/lib/brand";
 import { DURATION, EASING } from "@/lib/motion";
-import { BarChart2 } from "lucide-react";
+import { BarChart2, ArrowUpRight } from "lucide-react";
 
 interface ClinicianUtilisationRow {
   clinicianId: string;
@@ -34,6 +34,7 @@ export default function UtilisationTile({ rows, loading }: UtilisationTileProps)
         <span className="text-[11px] font-semibold tracking-widest uppercase text-navy/55 dark:text-white/40">
           Utilisation
         </span>
+        <ArrowUpRight size={14} className="ml-auto opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 text-navy/40 dark:text-white/40" />
       </div>
 
       {loading ? (

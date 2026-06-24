@@ -189,19 +189,27 @@ export default function DashboardPage() {
 
       {/* Four-tile grid — 2x2 at lg, single row only on xl+ (avoids narrow Utilisation crush) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <RevenueTile
-          revenueMtdPence={revenueMtdPence}
-          periodLabel={periodConfig.revenueLabel}
-          loading={loading}
-        />
-        <TodayTile
-          todayTotal={todayTotal}
-          todayDnas={todayDnas}
-          periodLabel={periodConfig.appointmentLabel}
-          loading={loading}
-        />
-        <RetentionTile alerts={retentionAlerts} alertCount={retentionAlertCount} loading={loading} />
-        <UtilisationTile rows={clinicianUtilisation} loading={loading} />
+        <Link href="/intelligence" aria-label="Open Intelligence" className="group block rounded-[24px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple/40">
+          <RevenueTile
+            revenueMtdPence={revenueMtdPence}
+            periodLabel={periodConfig.revenueLabel}
+            loading={loading}
+          />
+        </Link>
+        <Link href="/continuity" aria-label="Open Pulse" className="group block rounded-[24px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40">
+          <TodayTile
+            todayTotal={todayTotal}
+            todayDnas={todayDnas}
+            periodLabel={periodConfig.appointmentLabel}
+            loading={loading}
+          />
+        </Link>
+        <Link href="/continuity" aria-label="Open Pulse retention" className="group block rounded-[24px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40">
+          <RetentionTile alerts={retentionAlerts} alertCount={retentionAlertCount} loading={loading} />
+        </Link>
+        <Link href="/receptionist" aria-label="Open Ava" className="group block rounded-[24px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40">
+          <UtilisationTile rows={clinicianUtilisation} loading={loading} />
+        </Link>
       </div>
 
       {/* Operational row: cross-module activity (left) + actionable insights (right) */}

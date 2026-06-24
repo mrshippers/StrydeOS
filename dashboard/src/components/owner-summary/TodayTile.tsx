@@ -3,7 +3,7 @@
 import { GlassCard } from "@/components/ui/GlassCard";
 import { brand } from "@/lib/brand";
 import { DURATION, EASING, useMorphValue } from "@/lib/motion";
-import { Calendar } from "lucide-react";
+import { Calendar, ArrowUpRight } from "lucide-react";
 
 interface TodayTileProps {
   todayTotal: number;
@@ -40,6 +40,7 @@ export default function TodayTile({
         <span className="text-[11px] font-semibold tracking-widest uppercase text-navy/55 dark:text-white/40">
           Schedule
         </span>
+        <ArrowUpRight size={14} className="ml-auto opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 text-navy/40 dark:text-white/40" />
       </div>
 
       {loading ? (
