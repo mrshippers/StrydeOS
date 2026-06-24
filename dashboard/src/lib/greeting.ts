@@ -1,5 +1,5 @@
 import type { WeeklyStats, Patient, Clinician } from "@/types";
-import { formatRate, formatPence } from "@/lib/utils";
+import { formatRate, formatPence, stripDashes } from "@/lib/utils";
 
 // ─── Data contract ──────────────────────────────────────────────────────────
 
@@ -347,7 +347,7 @@ export function getTimeGreeting(firstName?: string): string {
     phrase = phrase.replace(/\{name\}/g, firstName);
   }
 
-  return phrase;
+  return stripDashes(phrase);
 }
 
 // ─── Session-persistent greeting ────────────────────────────────────────────
@@ -402,7 +402,7 @@ export function getGreeting(
   const day = new Date().toLocaleDateString("en-GB", { weekday: "long" });
   const subtext = selectSubtext(data, day);
 
-  return { greeting, subtext };
+  return { greeting: stripDashes(greeting), subtext: stripDashes(subtext) };
 }
 
 export { SESSION_GREETED_KEY };

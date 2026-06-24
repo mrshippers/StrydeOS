@@ -25,11 +25,11 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: {
-    default: "StrydeOS — Clinical Performance Dashboard",
-    template: "%s — StrydeOS",
+    default: "StrydeOS: Clinical Performance Dashboard",
+    template: "%s · StrydeOS",
   },
   description:
-    "The operational interface for StrydeOS — the clinical performance platform for private physiotherapy practices.",
+    "The operational interface for StrydeOS, the clinical performance platform for private physiotherapy practices.",
   icons: {
     icon: [
       { url: '/icon', type: 'image/png', sizes: '32x32' },
@@ -39,15 +39,15 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "StrydeOS — Clinical Performance Dashboard",
-    description: "The operational interface for StrydeOS — the clinical performance platform for private physiotherapy practices.",
+    title: "StrydeOS: Clinical Performance Dashboard",
+    description: "The operational interface for StrydeOS, the clinical performance platform for private physiotherapy practices.",
     siteName: "StrydeOS",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "StrydeOS — Clinical Performance Dashboard",
-    description: "The operational interface for StrydeOS — the clinical performance platform for private physiotherapy practices.",
+    title: "StrydeOS: Clinical Performance Dashboard",
+    description: "The operational interface for StrydeOS, the clinical performance platform for private physiotherapy practices.",
   },
 };
 
