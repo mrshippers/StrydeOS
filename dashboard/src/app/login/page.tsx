@@ -909,13 +909,24 @@ function LoginPageInner() {
                 </GlassCard>
               </motion.div>
 
-              <motion.p
-                className="text-center text-[11px] text-muted mt-6"
+              <motion.footer
+                className="mt-6 flex flex-col items-center gap-2 text-center"
                 {...fadeUp}
                 transition={{ duration: 0.4, delay: stagger * 2, ease: [0.2, 0.8, 0.2, 1] }}
               >
-                StrydeOS — Clinical Performance Platform
-              </motion.p>
+                <nav className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted" aria-label="Legal">
+                  <a href="https://strydeos.com/privacy" target="_blank" rel="noreferrer" className="hover:text-navy transition-colors">Privacy</a>
+                  <span aria-hidden="true" className="text-muted/50">·</span>
+                  <a href="https://strydeos.com/terms" target="_blank" rel="noreferrer" className="hover:text-navy transition-colors">Terms</a>
+                  <span aria-hidden="true" className="text-muted/50">·</span>
+                  <a href="https://strydeos.com/security" target="_blank" rel="noreferrer" className="hover:text-navy transition-colors">Security</a>
+                  <span aria-hidden="true" className="text-muted/50">·</span>
+                  <a href="mailto:hello@strydeos.com" className="hover:text-navy transition-colors">Support</a>
+                </nav>
+                <p className="text-[11px] text-muted">
+                  © 2026 StrydeOS Ltd · Registered in England &amp; Wales
+                </p>
+              </motion.footer>
             </div>
           </div>
         </motion.div>
