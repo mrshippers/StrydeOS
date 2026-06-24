@@ -78,7 +78,7 @@ const PROMPT_RULES: PromptRule[] = [
     id: "CHURN_CLUSTER",
     condition: (d) => !!d.latest && churnCount(d) >= 5,
     template: (d) =>
-      `${churnCount(d)} patients at churn risk \u2014 roughly ${formatPence(churnRevenue(d))} in open treatment value.`,
+      `${churnCount(d)} patients at churn risk, roughly ${formatPence(churnRevenue(d))} in open treatment value.`,
   },
 
   // ── Week-on-week trend signals ────────────────────────────────────────────

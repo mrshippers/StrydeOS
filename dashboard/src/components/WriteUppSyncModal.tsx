@@ -87,7 +87,7 @@ export default function WriteUppSyncModal() {
   } else if (dataMode === "sample") {
     statusLine = "You\u2019re currently viewing sample data, not your real clinic.";
   } else {
-    statusLine = `Last import was ${daysSince} day${daysSince !== 1 ? "s" : ""} ago \u2014 your KPIs may be out of date.`;
+    statusLine = `Last import was ${daysSince} day${daysSince !== 1 ? "s" : ""} ago. Your KPIs may be out of date.`;
   }
 
   return (

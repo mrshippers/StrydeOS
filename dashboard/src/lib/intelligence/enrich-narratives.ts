@@ -6,6 +6,7 @@ import {
 } from "./coaching-prompts";
 import { guardNarrative } from "./narrative-guard";
 import { appendDataQualityIssues, writeComputeState } from "./compute-state";
+import { stripDashes } from "./sanitise-subject";
 
 /**
  * Enrich newly detected insight events with AI-generated coaching narratives.
@@ -117,19 +118,22 @@ export async function enrichEventsWithNarratives(
       }
       // ── End guard ────────────────────────────────────────────────────────
 
-      // Write narratives back to the event document
+      // Write narratives back to the event document. Strip any em/en dashes or
+      // double-hyphens the model produced (brand rule: none in shipped output).
       if (event.id && (guardedOwner || guardedClinician)) {
+        const cleanOwner = guardedOwner ? stripDashes(guardedOwner) : "";
+        const cleanClinician = guardedClinician ? stripDashes(guardedClinician) : "";
         await db
           .doc(`clinics/${clinicId}/insight_events/${event.id}`)
           .update({
-            ownerNarrative: guardedOwner || null,
-            clinicianNarrative: guardedClinician || null,
+            ownerNarrative: cleanOwner || null,
+            clinicianNarrative: cleanClinician || null,
             narrativeGeneratedAt: new Date().toISOString(),
           });
 
         // Also update the in-memory event for downstream consumers
-        event.ownerNarrative = guardedOwner || null;
-        event.clinicianNarrative = guardedClinician || null;
+        event.ownerNarrative = cleanOwner || null;
+        event.clinicianNarrative = cleanClinician || null;
         event.narrativeGeneratedAt = new Date().toISOString();
 
         enriched++;
