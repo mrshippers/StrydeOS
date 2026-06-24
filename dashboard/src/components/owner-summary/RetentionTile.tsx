@@ -3,7 +3,7 @@
 import { GlassCard } from "@/components/ui/GlassCard";
 import { brand } from "@/lib/brand";
 import { DURATION, EASING, useMorphValue } from "@/lib/motion";
-import { UserMinus, CheckCircle } from "lucide-react";
+import { UserMinus, CheckCircle, ArrowUpRight } from "lucide-react";
 
 interface RetentionAlert {
   id: string;
@@ -39,6 +39,7 @@ export default function RetentionTile({ alerts, alertCount, loading }: Retention
         <span className="text-[11px] font-semibold tracking-widest uppercase text-navy/55 dark:text-white/40">
           Retention
         </span>
+        <ArrowUpRight size={14} className="ml-auto opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 text-navy/40 dark:text-white/40" />
       </div>
 
       {loading ? (
