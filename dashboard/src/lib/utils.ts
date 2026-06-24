@@ -147,10 +147,20 @@ export function computeAlerts(stats: WeeklyStats): {
   return alerts;
 }
 
-export function daysSince(dateStr: string): number {
-  const d = new Date(dateStr + "T00:00:00");
-  const now = new Date();
-  return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+export function daysSince(dateStr: string | null | undefined): number {
+  if (!dateStr) return NaN;
+  // Date-only strings ("YYYY-MM-DD") anchor to local midnight; full timestamps
+  // parse as-is. Invalid/missing input yields NaN — callers MUST guard before
+  // rendering (use formatDaysAgo or Number.isFinite) so no card shows "NaN".
+  const iso = dateStr.length <= 10 ? `${dateStr}T00:00:00` : dateStr;
+  const t = new Date(iso).getTime();
+  return Number.isNaN(t) ? NaN : Math.floor((Date.now() - t) / (1000 * 60 * 60 * 24));
+}
+
+/** "Xd ago" when the date is valid; `fallback` (default "") when missing/invalid. Never renders NaN. */
+export function formatDaysAgo(dateStr: string | null | undefined, fallback = ""): string {
+  const n = daysSince(dateStr);
+  return Number.isFinite(n) ? `${n}d ago` : fallback;
 }
 
 export function getInitials(name: string): string {

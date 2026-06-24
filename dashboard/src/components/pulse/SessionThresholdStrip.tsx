@@ -32,7 +32,7 @@ export const SessionThresholdStrip: FC<Props> = ({
       <div className="space-y-2">
         {onboarding.map((p) => {
           const clinician = clinicianMap[p.clinicianId];
-          const lastSeen = p.lastSessionDate ? daysSince(p.lastSessionDate) : null;
+          const lastSeen = daysSince(p.lastSessionDate);
           return (
             <div key={p.id} className="flex items-center justify-between gap-3 py-1.5">
               <div className="flex items-center gap-2.5 min-w-0">
@@ -44,7 +44,7 @@ export const SessionThresholdStrip: FC<Props> = ({
                   <p className="text-[11px] text-muted">
                     Session {p.sessionCount} of {p.treatmentLength}
                     {clinician ? ` · ${clinician.name}` : ""}
-                    {lastSeen !== null ? ` · Last seen ${lastSeen}d ago` : ""}
+                    {Number.isFinite(lastSeen) ? ` · Last seen ${lastSeen}d ago` : ""}
                   </p>
                 </div>
               </div>

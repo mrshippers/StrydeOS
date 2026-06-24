@@ -16,7 +16,7 @@ export default function PatientRow({
   onSendReminder,
 }: PatientRowProps) {
   const progress = Math.round((patient.sessionCount / patient.treatmentLength) * 100);
-  const daysSinceLast = patient.lastSessionDate ? daysSince(patient.lastSessionDate) : 0;
+  const daysSinceLast = daysSince(patient.lastSessionDate);
 
   return (
     <Link
@@ -37,7 +37,7 @@ export default function PatientRow({
         </div>
         {patient.churnRisk && (
           <span className="text-[10px] font-semibold bg-warn/10 text-warn px-2 py-0.5 rounded-full border border-warn/20 shrink-0">
-            No rebook · {daysSinceLast}d
+            No rebook{Number.isFinite(daysSinceLast) ? ` · ${daysSinceLast}d` : ""}
           </span>
         )}
       </div>
@@ -62,7 +62,7 @@ export default function PatientRow({
 
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-muted">
-          Last session: {daysSinceLast}d ago
+          Last session: {Number.isFinite(daysSinceLast) ? `${daysSinceLast}d ago` : "not recorded"}
         </span>
         {onSendReminder && !patient.discharged && (
           <button

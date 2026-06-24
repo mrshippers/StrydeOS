@@ -29,6 +29,7 @@ const SEVERITY_CONFIG: Record<
 function timeAgo(dateStr: string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
+  if (!Number.isFinite(then)) return "";
   const diffMs = now - then;
   const mins = Math.floor(diffMs / 60000);
   if (mins < 1) return "Just now";
