@@ -19,7 +19,7 @@ import { PatientBoard } from "@/components/pulse/PatientBoard";
 import { SequenceCard } from "@/components/pulse/SequenceCard";
 import { CustomisePanel } from "@/components/pulse/CustomisePanel";
 import { GlassCard } from "@/components/ui/GlassCard";
-import SendInsuranceFormButton from "@/components/insurance/SendInsuranceFormButton";
+import InsurancePanel from "@/components/insurance/InsurancePanel";
 import { formatPercent, daysSince } from "@/lib/utils";
 import {
   Users,
@@ -32,6 +32,7 @@ import {
   Smartphone,
   SlidersHorizontal,
   Search,
+  ShieldCheck,
 } from "lucide-react";
 import { resolveTemplate, DEFAULT_SEQUENCE_DEFINITIONS } from "@/types/comms";
 import type { CommsChannel } from "@/types";
@@ -53,7 +54,7 @@ const SEQUENCE_PREVIEWS: Record<string, { channel: CommsChannel; subject?: strin
     }),
   );
 
-type View = "patients" | "sequences" | "log";
+type View = "patients" | "sequences" | "log" | "insurance";
 
 export default function ContinuityPageWrapper() {
   return (
@@ -152,11 +153,6 @@ function ContinuityPage() {
         accentColor="#0891B2"
       />
 
-      {/* Manual failsafe — send the insurance intake form to a patient */}
-      <div className="flex justify-end -mt-2">
-        <SendInsuranceFormButton />
-      </div>
-
       {/* Error banners */}
       {patientsError && <ErrorBanner message="Patient data couldn't load — some cards may be incomplete." onRetry={() => router.refresh()} />}
       {commsError && <ErrorBanner message="Comms data unavailable right now." onRetry={() => router.refresh()} />}
@@ -217,6 +213,7 @@ function ContinuityPage() {
             { id: "patients" as const, label: "Patient Board", icon: Users },
             { id: "sequences" as const, label: "Comms Sequences", icon: Zap },
             { id: "log" as const, label: "Send Log", icon: Send },
+            { id: "insurance" as const, label: "Insurance", icon: ShieldCheck },
           ]).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -418,6 +415,8 @@ function ContinuityPage() {
           </GlassCard>
         </div>
       )}
+
+      {activeView === "insurance" && <InsurancePanel />}
 
       {preferences && (
         <CustomisePanel

@@ -47,12 +47,15 @@ function fallbackTargets(cp: ClinicProfile | null) {
   };
 }
 
+type SettingsTab = "account" | "clinic" | "integrations" | "team";
+
 export default function SettingsPage() {
   const { user, firebaseUser, refreshClinicProfile } = useAuth();
   const { clinicians } = useClinicians();
   const { toast } = useToast();
 
   const cp = user?.clinicProfile ?? null;
+  const [activeTab, setActiveTab] = useState<SettingsTab>("account");
 
 
   // Clinic-level Heidi integration status — gates the per-clinician opt-in
@@ -492,10 +495,40 @@ export default function SettingsPage() {
     }
   }
 
+  const SETTINGS_TABS: { id: SettingsTab; label: string }[] = canManageTeam
+    ? [
+        { id: "account", label: "Account" },
+        { id: "clinic", label: "Clinic" },
+        { id: "integrations", label: "Integrations" },
+        { id: "team", label: "Team" },
+      ]
+    : [{ id: "account", label: "Account" }];
+
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="Settings" subtitle={canManageTeam ? "Manage your clinic configuration, targets, and team" : "Manage your account"} />
 
+      {/* Horizontal section tabs (hidden when a clinician only has Account) */}
+      {SETTINGS_TABS.length > 1 && (
+        <div className="flex items-center gap-1 bg-cloud-light rounded-xl p-1 border border-border w-full overflow-x-auto">
+          {SETTINGS_TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`flex-1 min-w-fit px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeTab === t.id
+                  ? "bg-white text-navy shadow-[var(--shadow-card)] button-highlight"
+                  : "text-muted hover:text-navy"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ─── Account tab ─────────────────────────────────────────── */}
+      {activeTab === "account" && (<>
       {/* Retrigger tour */}
       <div className="rounded-[var(--radius-card)] bg-white surface-lit border border-border shadow-[var(--shadow-card)] p-4">
         <RetriggerTourButton />
@@ -505,6 +538,7 @@ export default function SettingsPage() {
 
       {/* Security: Password + MFA */}
       <SecurityCard />
+      </>)}
 
       {/* Unsaved changes dialog */}
       <AnimatePresence>
@@ -555,7 +589,8 @@ export default function SettingsPage() {
         )}
       </AnimatePresence>
 
-      {canManageTeam && showOnboarding && (
+      {/* ─── Clinic tab ──────────────────────────────────────────── */}
+      {activeTab === "clinic" && canManageTeam && showOnboarding && (
         <OnboardingChecklist
           pmsConnected={onboarding.pmsConnected}
           cliniciansConfirmed={onboarding.cliniciansConfirmed}
@@ -563,7 +598,7 @@ export default function SettingsPage() {
         />
       )}
 
-      {canManageTeam && (<>
+      {activeTab === "clinic" && canManageTeam && (<>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ClinicDetailsCard
           clinicName={clinicName} setClinicName={setClinicName}
@@ -596,8 +631,8 @@ export default function SettingsPage() {
       </div>
       </>)}
 
-      {/* ─── Owner/Admin-only sections ────────────────────────────── */}
-      {canManageTeam && (<>
+      {/* ─── Integrations tab ────────────────────────────────────── */}
+      {activeTab === "integrations" && canManageTeam && (<>
 
       <PmsIntegrationCard cp={cp} />
 
@@ -652,8 +687,10 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      </>)}
 
-      {/* Clinic Management */}
+      {/* ─── Team tab ────────────────────────────────────────────── */}
+      {activeTab === "team" && canManageTeam && (
       <TeamManagementCard
         clinicProfile={cp}
         clinicians={clinicians}
@@ -691,20 +728,22 @@ export default function SettingsPage() {
         handleUpdateRole={handleUpdateRole}
         roleError={roleError}
       />
+      )}
 
-      <SeatLimitModal
-        open={seatModalOpen}
-        seatInfo={seatLimitInfo}
-        pending={seatLimitPending}
-        canBuy={
-          !!seatLimitInfo?.canPurchaseSeat &&
-          (user?.role === "owner" || user?.role === "admin" || user?.role === "superadmin")
-        }
-        onPurchaseSeat={handlePurchaseExtraSeat}
-        onClose={() => setSeatModalOpen(false)}
-      />
-
-      </>)}
+      {/* Seat-limit modal — overlay, always mounted for owner/admin */}
+      {canManageTeam && (
+        <SeatLimitModal
+          open={seatModalOpen}
+          seatInfo={seatLimitInfo}
+          pending={seatLimitPending}
+          canBuy={
+            !!seatLimitInfo?.canPurchaseSeat &&
+            (user?.role === "owner" || user?.role === "admin" || user?.role === "superadmin")
+          }
+          onPurchaseSeat={handlePurchaseExtraSeat}
+          onClose={() => setSeatModalOpen(false)}
+        />
+      )}
       {/* ─── End owner/admin-only sections ──────────────────────────── */}
     </div>
   );
