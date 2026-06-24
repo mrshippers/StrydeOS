@@ -134,7 +134,7 @@ export default function ForgotPasswordDialog({ open, onClose, initialEmail = "" 
             {!sent ? (
               <>
                 <div className="mb-6 text-center">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue/10">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue/10 ring-1 ring-blue/20">
                     <KeyRound size={22} className="text-blue" />
                   </div>
                   <h2 className="font-display text-[24px] leading-tight text-navy">Reset your password</h2>
@@ -215,7 +215,7 @@ export default function ForgotPasswordDialog({ open, onClose, initialEmail = "" 
                 <h2 className="font-display text-[24px] leading-tight text-navy">Check your inbox</h2>
                 <p className="mx-auto mt-1.5 max-w-[300px] text-sm text-navy/60">
                   A secure link to reset your password is on its way to{" "}
-                  <span className="font-semibold text-navy">{email.trim()}</span>. It can take a minute — remember to check spam.
+                  <span className="font-semibold text-navy">{email.trim()}</span>. It can take a minute. Remember to check spam.
                 </p>
                 <button
                   type="button"
