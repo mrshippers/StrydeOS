@@ -20,7 +20,7 @@ import { SequenceCard } from "@/components/pulse/SequenceCard";
 import { CustomisePanel } from "@/components/pulse/CustomisePanel";
 import { GlassCard } from "@/components/ui/GlassCard";
 import InsurancePanel from "@/components/insurance/InsurancePanel";
-import { formatPercent, daysSince } from "@/lib/utils";
+import { formatPercent, formatDaysAgo } from "@/lib/utils";
 import {
   Users,
   Mail,
@@ -362,8 +362,7 @@ function ContinuityPage() {
                   )}
                   {commsLog.map((entry) => {
                     const patient = patientMap[entry.patientId];
-                    const sentDate = new Date(entry.sentAt);
-                    const daysAgo = daysSince(sentDate.toISOString().split("T")[0]);
+                    const daysAgo = formatDaysAgo(entry.sentAt, "unknown");
                     return (
                       <tr key={entry.id} className="border-b border-border/50 hover:bg-cloud-light/30 transition-colors">
                         <td className="py-3 px-4 font-medium text-navy">{patient?.name ?? entry.patientId}</td>
@@ -383,7 +382,7 @@ function ContinuityPage() {
                             {entry.channel.toUpperCase()}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-xs text-muted">{daysAgo}d ago</td>
+                        <td className="py-3 px-4 text-xs text-muted">{daysAgo}</td>
                         <td className="py-3 px-4">
                           {entry.openedAt ? (
                             <Eye size={14} className="text-success" />

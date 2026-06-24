@@ -12,7 +12,7 @@ import { RiskScoreBadge } from "@/components/pulse/RiskScoreBadge";
 import { RiskFactorPanel } from "@/components/pulse/RiskFactorPanel";
 import type { Patient } from "@/types";
 import type { CommsLogEntry } from "@/types";
-import { getInitials, daysSince, formatPercent } from "@/lib/utils";
+import { getInitials, daysSince, formatPercent, formatDaysAgo } from "@/lib/utils";
 import {
   ArrowLeft,
   Calendar,
@@ -159,7 +159,7 @@ function TimelineCard({ timeline }: { timeline: TimelineEvent[] }) {
                       <span className="text-sm font-semibold text-navy">{event.title}</span>
                       <span className="text-[10px] text-muted flex items-center gap-1">
                         <Clock size={9} />
-                        {daysSince(event.date)}d ago
+                        {formatDaysAgo(event.date, "recently")}
                       </span>
                     </div>
                     <p className="text-xs text-muted leading-relaxed">{event.detail}</p>
@@ -232,7 +232,8 @@ export default function PatientDetailPage({
   }
 
   const progress = Math.round((patient.sessionCount / patient.treatmentLength) * 100);
-  const lastGap = patient.lastSessionDate ? daysSince(patient.lastSessionDate) : null;
+  const lastGap = daysSince(patient.lastSessionDate);
+  const nextGap = daysSince(patient.nextSessionDate);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -302,15 +303,15 @@ export default function PatientDetailPage({
         />
         <StatCard
           label="Last Session"
-          value={lastGap != null ? `${lastGap}d` : "—"}
+          value={Number.isFinite(lastGap) ? `${lastGap}d` : "n/a"}
           unit="ago"
-          status={lastGap != null && lastGap > 14 ? "danger" : "ok"}
+          status={Number.isFinite(lastGap) && lastGap > 14 ? "danger" : "ok"}
         />
         <StatCard
           label="Next Session"
-          value={patient.nextSessionDate ? `${daysSince(patient.nextSessionDate)}d` : "None"}
-          unit={patient.nextSessionDate ? "" : "booked"}
-          status={patient.nextSessionDate ? "ok" : "warn"}
+          value={Number.isFinite(nextGap) ? `${nextGap}d` : "None"}
+          unit={Number.isFinite(nextGap) ? "" : "booked"}
+          status={Number.isFinite(nextGap) ? "ok" : "warn"}
         />
         <StatCard
           label="Pre-Auth"
@@ -380,10 +381,10 @@ export default function PatientDetailPage({
               HEP programme linked
             </div>
           )}
-          {patient.nextSessionDate ? (
+          {Number.isFinite(nextGap) ? (
             <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-muted">
               <Calendar size={12} className="text-success" />
-              Next session in {daysSince(patient.nextSessionDate)} days
+              Next session in {nextGap} days
             </div>
           ) : (
             <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-warn">

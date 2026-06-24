@@ -181,7 +181,7 @@ export async function detectInsightEvents(
               title: `${clinician.name}'s follow-up rate dropped ${Math.round(drop * 100)}% this week (from ${prevRate.toFixed(1)} to ${curRate.toFixed(1)})`,
               description: `Week-on-week decline exceeds your ${Math.round(config.followUpDropThreshold * 100)}% threshold. This could indicate scheduling gaps or discharge decisions changing.`,
               suggestedAction: `Review ${clinician.name}'s schedule for this week. Check if recent discharges were premature or if patients are being lost between sessions.`,
-              observationalNote: `This is an observation, not a judgement. There may be good clinical reasons -- e.g. a run of single-session cases or planned discharges. Worth a conversation.`,
+              observationalNote: `This is an observation, not a judgement. There may be good clinical reasons, e.g. a run of single-session cases or planned discharges. Worth a conversation.`,
               actionTarget: "owner",
               createdAt: new Date().toISOString(),
               sampleSize: minAppts,
@@ -214,7 +214,7 @@ export async function detectInsightEvents(
         severity: clinicianDNAs.length >= 5 ? "critical" : "warning",
         title: `${clinician.name} had ${clinicianDNAs.length} DNAs in the last 14 days`,
         description: `${clinicianDNAs.length} no-shows in a rolling 14-day window exceeds your threshold of ${config.dnaStreakThreshold}. Pattern may indicate reminder gaps or scheduling friction.`,
-        suggestedAction: `Check if SMS reminders are being sent to ${clinician.name}'s patients. Review the specific time slots -- DNAs often cluster around early morning or late afternoon.`,
+        suggestedAction: `Check if SMS reminders are being sent to ${clinician.name}'s patients. Review the specific time slots. DNAs often cluster around early morning or late afternoon.`,
         observationalNote: `DNAs are rarely the clinician's fault. This is flagged so you can check whether reminders are firing and whether specific slots are problematic.`,
         actionTarget: "owner",
         createdAt: new Date().toISOString(),
@@ -295,7 +295,7 @@ export async function detectInsightEvents(
         type: "HEP_COMPLIANCE_LOW",
         clinicId,
         severity: hepRate < 0.30 ? "critical" : "warning",
-        title: `Clinic-wide HEP compliance is at ${Math.round(hepRate * 100)}% -- below your ${Math.round(config.hepComplianceFloor * 100)}% target`,
+        title: `Clinic-wide HEP compliance is at ${Math.round(hepRate * 100)}%, below your ${Math.round(config.hepComplianceFloor * 100)}% target`,
         description: `Fewer than half of patients are being assigned exercise programmes. This impacts outcomes, treatment duration, and patient satisfaction.`,
         suggestedAction: `Review which clinicians are consistently assigning HEP. Set a team-wide goal and discuss during your next clinical meeting.`,
         actionTarget: "owner",
@@ -404,13 +404,13 @@ export async function detectInsightEvents(
       const dropoutRatePct = Math.round(clinicDropoutRate * 100);
       const description = outlierName
         ? `${outlierName}'s mid-programme dropout rate is notably above the clinic average (${dropoutRatePct}%). These figures are estimated based on ${config.maxProgrammeLength}-session programme value at £${config.revenuePerSession}/session.`
-        : `${midProgrammeDropouts.length} mid-programme patients across the clinic have not rebooked within ${config.dropoutRiskDays} days. Estimated based on ${config.maxProgrammeLength}-session programme value at £${config.revenuePerSession}/session -- individual sessions may vary.`;
+        : `${midProgrammeDropouts.length} mid-programme patients across the clinic have not rebooked within ${config.dropoutRiskDays} days. Estimated based on ${config.maxProgrammeLength}-session programme value at £${config.revenuePerSession}/session. Individual sessions may vary.`;
 
       newEvents.push({
         type: "REVENUE_LEAK_DETECTED",
         clinicId,
         severity: leakedRounded > 500 ? "critical" : "warning",
-        title: `${midProgrammeDropouts.length} mid-programme patients didn't rebook this week -- roughly £${leakedRounded.toLocaleString()} in estimated leaked revenue`,
+        title: `${midProgrammeDropouts.length} mid-programme patients didn't rebook this week, roughly £${leakedRounded.toLocaleString()} in estimated leaked revenue`,
         description,
         suggestedAction: `Review the patient board in Pulse for churn-risk patients. Consider enabling the rebooking prompt sequence to automate follow-up.`,
         actionTarget: "owner",
@@ -525,7 +525,7 @@ export async function detectInsightEvents(
       clinicianName: detractorClinicianName,
       patientId,
       severity: "critical",
-      title: `NPS detractor alert -- patient scored ${rating}/10${clinicianContext}`,
+      title: `NPS detractor alert: patient scored ${rating}/10${clinicianContext}`,
       description: `A patient responded with a score of ${rating} to your NPS survey. Detractor scores (<=6) need fast human follow-up to understand the issue and prevent churn or negative reviews.`,
       suggestedAction: detractorClinicianName
         ? `Reach out to the patient within 24 hours. A personal call from ${detractorClinicianName} or the clinic owner is most effective.`

@@ -133,9 +133,10 @@ export function useOwnerSummary(period: OwnerSummaryPeriod = "30d"): OwnerSummar
     .map((p): RetentionAlert => ({
       id: p.id,
       name: p.name,
-      daysSinceLastSession: p.lastSessionDate
-        ? Math.floor((Date.now() - new Date(p.lastSessionDate).getTime()) / 86400000)
-        : 999,
+      daysSinceLastSession: (() => {
+        const t = p.lastSessionDate ? new Date(p.lastSessionDate).getTime() : NaN;
+        return Number.isFinite(t) ? Math.floor((Date.now() - t) / 86400000) : 999;
+      })(),
     }))
     .sort((a, b) => b.daysSinceLastSession - a.daysSinceLastSession);
 
