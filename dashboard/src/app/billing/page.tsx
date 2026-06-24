@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Check,
   Lock,
@@ -33,6 +34,13 @@ import {
   type BillingInterval,
 } from "@/lib/billing";
 import type { StripeSubscriptionStatus } from "@/types";
+
+// Active module cards link through to their module surface.
+const MODULE_ROUTE: Record<ModuleKey, string> = {
+  intelligence: "/intelligence",
+  ava: "/receptionist",
+  pulse: "/continuity",
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -202,6 +210,14 @@ function ModuleCard({ moduleKey, isActive, isLoading, tier, interval, canManage,
         <div className="mt-auto text-[11px] text-muted">
           Billing controlled by clinic owner. Ask them to enable {name}.
         </div>
+      ) : isActive ? (
+        <Link
+          href={MODULE_ROUTE[moduleKey]}
+          className="mt-auto inline-flex items-center justify-center gap-1.5 text-[13px] font-semibold transition-opacity opacity-80 hover:opacity-100"
+          style={{ color }}
+        >
+          View module <ArrowRight size={13} />
+        </Link>
       ) : null}
     </GlassCard>
   );
@@ -281,51 +297,6 @@ function FullStackCard({ tier, interval, allActive, isLoading, isDemo, onActivat
           <Check size={16} strokeWidth={2.5} /> All modules active
         </div>
       )}
-    </GlassCard>
-  );
-}
-
-// ─── Insurance & Intake add-on ──────────────────────────────────────────────────
-
-function InsuranceAddonCard({ isDemo }: { isDemo: boolean }) {
-  const contactHref =
-    "mailto:jamal@strydeos.com?subject=" +
-    encodeURIComponent("StrydeOS Insurance & Intake add-on") +
-    "&body=" +
-    encodeURIComponent("I'd like to add the Insurance & Intake module to our StrydeOS account.");
-
-  return (
-    <GlassCard variant="standard" tint="neutral" className="p-6 mt-4">
-      <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl z-[2] bg-teal" />
-
-      <div className="flex items-start justify-between gap-6 mt-1">
-        <div>
-          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded mb-3 bg-cloud-dark text-navy">
-            <Lock size={9} strokeWidth={2.5} /> Add-on
-          </div>
-          <h3 className="text-[20px] text-navy font-display font-normal mb-1">Insurance &amp; Intake</h3>
-          <p className="text-[13px] text-muted mb-4 max-w-md">
-            Collect patient insurance, pre-authorisation and confirmed address before the
-            appointment — written straight back to your PMS. Delivered under Pulse.
-          </p>
-          <div className="flex items-center gap-1.5 text-[12px] font-semibold text-muted-strong">
-            <div className="w-2 h-2 rounded-full bg-teal" />
-            Managed onboarding
-          </div>
-        </div>
-
-        <div className="text-right shrink-0">
-          <div className="text-[22px] font-light text-navy font-display">Contact us</div>
-          <div className="text-[11px] text-muted mt-1">Tailored to your clinic</div>
-        </div>
-      </div>
-
-      <a
-        href={isDemo ? "/login" : contactHref}
-        className="btn-primary btn-primary-teal mt-5 w-full justify-center"
-      >
-        Contact us <ArrowRight size={14} />
-      </a>
     </GlassCard>
   );
 }
@@ -596,9 +567,6 @@ export default function BillingPage() {
         isDemo={isDemo}
         onActivate={() => handleActivate("fullstack")}
       />
-
-      {/* Insurance & Intake — in-house add-on, contact-us pricing */}
-      <InsuranceAddonCard isDemo={isDemo} />
 
       {/* Clinician seats — only for real, paying clinics (not demo) */}
       {!isDemo && hasActiveSubscription && canManageBilling && (() => {
