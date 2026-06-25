@@ -57,13 +57,14 @@ describe("aggregateWeek", () => {
    * This test file assumes aggregateWeek is exported (currently it's not — that's the fix)
    */
 
-  it("should calculate followUpRate as total appointments / unique patients", () => {
-    // Given 3 completed sessions with 1 unique patient
+  it("should calculate followUpRate as follow-ups ÷ initial assessments (canonical)", () => {
+    // Given 1 initial assessment + 3 follow-ups (follow_up/review) completed
     // Expected followUpRate = 3 / 1 = 3.0
     const appointments = [
-      mockAppointment({ patientId: "patient-1" }),
-      mockAppointment({ patientId: "patient-1", dateTime: "2026-03-17T10:00:00Z" }),
-      mockAppointment({ patientId: "patient-1", dateTime: "2026-03-18T10:00:00Z" }),
+      mockAppointment({ appointmentType: "initial_assessment", patientId: "patient-1" }),
+      mockAppointment({ appointmentType: "follow_up", patientId: "patient-1", dateTime: "2026-03-17T10:00:00Z" }),
+      mockAppointment({ appointmentType: "follow_up", patientId: "patient-2", dateTime: "2026-03-18T10:00:00Z" }),
+      mockAppointment({ appointmentType: "review", patientId: "patient-3", dateTime: "2026-03-19T10:00:00Z" }),
     ];
     const patients = [mockPatient()];
     const reviews = [];
@@ -72,17 +73,17 @@ describe("aggregateWeek", () => {
     // When aggregating the week
     const result = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, reviews);
 
-    // Then followUpRate should be 3.0
+    // Then followUpRate should be follow-ups (3) ÷ initial assessments (1) = 3.0
     expect(result.followUpRate).toBe(3.0);
   });
 
   it("should only count completed appointments in followUpRate", () => {
-    // Given 2 completed + 1 cancelled
-    // Expected: only 2 completed count
+    // Given 1 completed IA + 1 completed follow-up + 1 cancelled follow-up
+    // Expected: only completed count → followUps=1, IAs=1 → 1.0
     const appointments = [
-      mockAppointment({ status: "completed", patientId: "patient-1" }),
-      mockAppointment({ status: "completed", patientId: "patient-1", dateTime: "2026-03-17T10:00:00Z" }),
-      mockAppointment({ status: "cancelled", patientId: "patient-1", dateTime: "2026-03-18T10:00:00Z" }),
+      mockAppointment({ status: "completed", appointmentType: "initial_assessment", patientId: "patient-1" }),
+      mockAppointment({ status: "completed", appointmentType: "follow_up", patientId: "patient-1", dateTime: "2026-03-17T10:00:00Z" }),
+      mockAppointment({ status: "cancelled", appointmentType: "follow_up", patientId: "patient-1", dateTime: "2026-03-18T10:00:00Z" }),
     ];
     const patients = [mockPatient()];
     const reviews = [];
@@ -91,9 +92,9 @@ describe("aggregateWeek", () => {
     // When aggregating
     const result = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, reviews);
 
-    // Then only 2 completed should count
+    // Then only the 2 completed should count, follow-ups(1) ÷ IAs(1) = 1.0
     expect(result.appointmentsTotal).toBe(2);
-    expect(result.followUpRate).toBe(2.0);
+    expect(result.followUpRate).toBe(1.0);
   });
 
   it("should calculate hepComplianceRate as appointments with HEP assigned / total completed", () => {
@@ -315,38 +316,34 @@ describe("aggregateWeek", () => {
     expect(result.avgStarRating).toBeCloseTo(3.0, 1);
   });
 
-  it("should calculate utilisationRate as booked slots / estimated capacity", () => {
-    // Given: 3 completed + 1 DNA = 4 booked slots
-    // 1 clinician × 40 capacity = 40 slots
-    // Expected utilisationRate = 4/40 = 0.1
-    const appointments = [
-      mockAppointment({ status: "completed" }),
-      mockAppointment({ status: "completed", dateTime: "2026-03-17T10:00:00Z" }),
-      mockAppointment({ status: "completed", dateTime: "2026-03-18T10:00:00Z" }),
-      mockAppointment({ status: "dna", dateTime: "2026-03-19T10:00:00Z" }),
-    ];
-    const patients = [mockPatient()];
-    const reviews = [];
-    const targets = { followUpRate: 4.0, hepRate: 0.95 };
-
-    // When aggregating with default capacity 40
-    const result = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, reviews, 5000, 40);
-
-    // Then utilisationRate should be 0.1
-    expect(result.utilisationRate).toBe(0.1);
-  });
-
-  it("should cap utilisationRate at 1.0 even if booked > capacity", () => {
-    // Given: 50 appointments, 40 capacity
-    // Expected utilisationRate = min(1, 50/40) = 1.0
-    const appointments = Array.from({ length: 50 }, (_, i) =>
-      mockAppointment({ status: "completed", dateTime: new Date(new Date("2026-03-16").getTime() + i * 3600000).toISOString() })
+  it("should calculate utilisationRate as booked slots ÷ available diary slots (one-day 90% example)", () => {
+    // Given: 9 completed appointments on a single day; that day's diary offers 10 slots.
+    // workedClinicianDays = 1, booked = 9, available = 1 × 10 = 10 → 0.9 (the canonical example).
+    const appointments = Array.from({ length: 9 }, (_, i) =>
+      mockAppointment({ status: "completed", dateTime: `2026-03-16T${String(9 + i).padStart(2, "0")}:00:00Z` })
     );
     const patients = [mockPatient()];
     const reviews = [];
     const targets = { followUpRate: 4.0, hepRate: 0.95 };
 
-    // When aggregating
+    // 8th arg is slotsPerDay (diary slots per working day) = 10
+    const result = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, reviews, 5000, 10);
+
+    // Then utilisationRate should be 9 / 10 = 0.9
+    expect(result.utilisationRate).toBe(0.9);
+  });
+
+  it("should cap utilisationRate at 1.0 even if booked > available", () => {
+    // Given: 50 completed on a single day with only 40 diary slots that day.
+    // booked = 50, available = 1 × 40 = 40 → min(1, 50/40) = 1.0
+    const appointments = Array.from({ length: 50 }, (_, i) =>
+      mockAppointment({ status: "completed", dateTime: `2026-03-16T10:${String(i % 60).padStart(2, "0")}:00Z` })
+    );
+    const patients = [mockPatient()];
+    const reviews = [];
+    const targets = { followUpRate: 4.0, hepRate: 0.95 };
+
+    // When aggregating (slotsPerDay = 40)
     const result = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, reviews, 5000, 40);
 
     // Then utilisationRate should be capped at 1.0

@@ -44,6 +44,24 @@ function getTimeSlot(dateTime: string): string {
   return "evening";
 }
 
+/**
+ * Number of bookable slots in a single working day, derived from the clinic's
+ * working-hours window and the configured slot length. This is the same diary
+ * model Ava uses to derive free slots for booking (no PMS exposes a free-slot
+ * endpoint), so utilisation and Ava's availability agree on what a "slot" is.
+ * Defaults: 09:00–18:00, 45-minute slots → 12 slots/day.
+ */
+function slotsPerWorkingDay(
+  hours: { start?: string; end?: string } | undefined,
+  slotMinutes: number,
+): number {
+  const [sH = 9, sM = 0] = (hours?.start ?? "09:00").split(":").map(Number);
+  const [eH = 18, eM = 0] = (hours?.end ?? "18:00").split(":").map(Number);
+  const windowMins = (eH * 60 + eM) - (sH * 60 + sM);
+  if (windowMins <= 0 || slotMinutes <= 0) return 0;
+  return Math.floor(windowMins / slotMinutes);
+}
+
 interface AppointmentLike {
   clinicianId: string;
   patientId?: string;
@@ -128,7 +146,7 @@ export function aggregateWeek(
   patients: PatientLike[],
   reviews: ReviewLike[],
   sessionPricePence: number = 0,
-  weeklyCapacitySlots: number = 40,
+  slotsPerDay: number = 12,
   callFacts: CallFactLike[] = [],
 ): Omit<WeeklyStats, "id"> {
   const completed = appointments.filter((a) => a.status === "completed");
@@ -146,12 +164,15 @@ export function aggregateWeek(
     (a) => a.appointmentType === "follow_up" || a.appointmentType === "review"
   ).length;
 
-  const uniquePatients = new Set(
-    completed.map((a) => a.patientId).filter(Boolean)
-  ).size;
-  // Follow-up rate: total completed sessions ÷ unique patients seen this week
-  // This gives sessions-per-patient which is what the dashboard displays
-  const followUpRate = uniquePatients > 0 ? total / uniquePatients : 0;
+  // Follow-up rate (canonical, CLAUDE.md "KPI Metrics — Confirmed from Spires"):
+  // follow-ups booked ÷ initial assessments. followUps and initialAssessments are
+  // already counted above from appointmentType. The previous code divided total
+  // sessions by unique patients (sessions-per-patient), which read ~1.0 ("full")
+  // for every clinician whose patients were each seen once — the bug being fixed.
+  // Weeks with no initial assessment have an undefined ratio; we report 0 and rely
+  // on statisticallyRepresentative/caveatNote to flag low-volume weeks. The smooth
+  // rolling-90-day figure is computed in the KPI layer (compute-kpis).
+  const followUpRate = initialAssessments > 0 ? followUps / initialAssessments : 0;
 
   const hepRate = total > 0 ? withHep / total : 0;
   const hepComplianceRate = hepRate;
@@ -258,15 +279,25 @@ export function aggregateWeek(
       ? Math.round((starReviews.reduce((s, r) => s + r.rating, 0) / starReviews.length) * 10) / 10
       : null;
 
-  // Utilisation: booked slots (completed + DNA) ÷ available capacity
-  // Uses clinic-configured weeklyCapacitySlots (default 40 = 8/day × 5 days)
+  // Utilisation (canonical, CLAUDE.md): booked slots ÷ available slots in the diary.
+  // No PMS exposes a free-slot endpoint, so available slots are derived the same way
+  // Ava derives them for booking: the working-hours window split into fixed-length
+  // slots, counted only for (clinician, day) pairs that were actually worked. A
+  // clinician who opens their diary one day is measured against that one day's slots,
+  // not a phantom full week — so a 1-day, 10-slot diary with 9 booked reads 90%, not
+  // 9/40. The previous flat `clinicians × 40` capacity was the bug.
+  // Limitation (flagged in findings.md): with no roster feed, "days worked" is proxied
+  // by days that have at least one completed/DNA appointment, so an entirely empty
+  // available day does not drag utilisation down.
   const bookedSlots = total + dnaCount;
-  const activeClinicians = clinicianId === "all"
-    ? new Set(appointments.map((a) => a.clinicianId)).size || 1
-    : 1;
-  const estimatedCapacity = activeClinicians * weeklyCapacitySlots;
-  const utilisationRate = estimatedCapacity > 0
-    ? Math.min(1, bookedSlots / estimatedCapacity)
+  const workedClinicianDays = new Set(
+    appointments
+      .filter((a) => a.status === "completed" || a.status === "dna")
+      .map((a) => `${a.clinicianId ?? clinicianId}__${a.dateTime.slice(0, 10)}`)
+  ).size;
+  const availableSlots = workedClinicianDays * slotsPerDay;
+  const utilisationRate = availableSlots > 0
+    ? Math.min(1, bookedSlots / availableSlots)
     : 0;
 
   // Voice-channel KPIs from /clinics/{id}/call_facts. Voice activity is
@@ -320,7 +351,12 @@ export async function computeWeeklyMetricsForClinic(
   if (!clinicDoc.exists) return { written: 0 };
   const clinicData = clinicDoc.data();
   const sessionPricePence: number = clinicData?.sessionPricePence ?? 0;
-  const weeklyCapacitySlots: number = clinicData?.targets?.weeklyCapacitySlots ?? 40;
+  // Diary-derived utilisation capacity: working-hours window (clinic.ava.hours,
+  // shared with Ava's booking flow) split into slots of `targets.slotMinutes`
+  // (default 45). Replaces the old flat 40-slots/week assumption.
+  const slotMinutes: number = clinicData?.targets?.slotMinutes ?? 45;
+  const clinicHours = (clinicData?.ava as { hours?: { start?: string; end?: string } } | undefined)?.hours;
+  const slotsPerDay: number = slotsPerWorkingDay(clinicHours, slotMinutes);
   const targets = {
     followUpRate: clinicData?.targets?.followUpRate ?? 4.0,
     hepRate: clinicData?.targets?.hepRate ?? clinicData?.targets?.physitrackRate ?? 95,
@@ -442,7 +478,7 @@ export async function computeWeeklyMetricsForClinic(
         patients,
         reviews,
         sessionPricePence,
-        weeklyCapacitySlots,
+        slotsPerDay,
         weekCallFacts,
       );
       const docId = `${weekStart}_${cid}`;
