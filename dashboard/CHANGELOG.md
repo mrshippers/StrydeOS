@@ -1,5 +1,19 @@
 # StrydeOS Changelog
 
+## v0.13.0 — Module Data Integrity (25 Jun 2026)
+
+Numbers across Intelligence, Pulse and Clinicians were computed-but-wrong, not hardcoded. Traced every metric to source (see findings.md) and fixed the formulas, the at-risk model, and the surfaces.
+
+### Metrics
+- **Follow-up rate** now follows the canonical definition (follow-ups divided by initial assessments) instead of sessions divided by unique patients, which read "full/100%" for every clinician.
+- **Utilisation** now booked divided by available slots, with available learned from the actual diary (earliest-to-latest booked span over slot length) rather than a flat 40-slots/week assumption.
+- **Patients at risk** rebuilt as a cadence-relative, episode-aware model: overdue is measured against each patient's own rebooking rhythm, planned discharge is detected from the discharge appointment type, and never-seen imports are NEW, eliminating the stale old-Spires "259" bleed. Tunable via clinic.targets.{defaultRebookingDays,overdueFactor,churnFactor,atRiskMaxDays}.
+
+### Surfaces
+- **KPI Projection** now projects from the live metrics_weekly trend (sparkline + next-period forecast + vs-target) instead of rendering nothing when the kpis projection was empty.
+- **Clinicians tab** lists every active clinician with their full name and figures synced from metrics_weekly; clinicians awaiting their first computed week render a dash rather than misleading zeros.
+- Dashboard retention headline counts only the actionable AT_RISK bucket and requires real activity.
+
 ## v0.12.0 — Pricing Matrix Refresh & Build Stability (12 May 2026)
 
 ### Pricing Matrix Update
