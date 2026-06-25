@@ -25,7 +25,8 @@ import {
   FileText,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { LogoNav, MonolithMark } from "@/components/MonolithLogo";
+import { MonolithMark } from "@/components/MonolithLogo";
+import { EvidenceThreshold } from "@/components/EvidenceThreshold";
 
 const HelpPanel = dynamic(
   () => import("@/components/HelpPanel"),
@@ -485,7 +486,7 @@ export default function Sidebar() {
             }}
             className="group transition-all duration-200 hover:-translate-y-0.5"
           >
-            <LogoNav theme="dark" />
+            <EvidenceThreshold size={34} fontSize={17} gap={10} />
           </Link>
 
           {/* Notification bell */}
