@@ -15,7 +15,7 @@ import {
 } from "firebase/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { getFirebaseAuth } from "@/lib/firebase";
-import { AlertCircle, Loader2, ArrowRight, Check, Building2, Shield, Eye, EyeOff, X, Sparkles } from "lucide-react";
+import { AlertCircle, Loader2, ArrowRight, Check, Building2, Shield, Eye, EyeOff, X } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { StrydeOSLogo } from "@/components/MonolithLogo";
 import { trackCTAClick } from "@/lib/funnel-events";
@@ -25,6 +25,69 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import ForgotPasswordDialog from "@/components/ForgotPasswordDialog";
 
 const WHATS_NEW_KEY = "strydeos-whatsnew-jun26-seen";
+
+/** Build an N-point sparkle/star path centred at (cx,cy). */
+function sparklePath(cx: number, cy: number, outer: number, inner: number, points: number) {
+  const step = Math.PI / points;
+  let d = "";
+  for (let i = 0; i < points * 2; i++) {
+    const rad = i % 2 === 0 ? outer : inner;
+    const a = i * step - Math.PI / 2;
+    d += (i === 0 ? "M" : "L") + (cx + rad * Math.cos(a)).toFixed(2) + " " + (cy + rad * Math.sin(a)).toFixed(2);
+  }
+  return d + "Z";
+}
+
+/**
+ * High-fidelity "what's new" glyph: a brand-blue four-point sparkle that
+ * breathes and slow-rotates, ringed by two satellite sparkles twinkling out
+ * of phase over a soft glow. Honours prefers-reduced-motion (renders static).
+ */
+function WhatsNewGlyph({ size = 20 }: { size?: number }) {
+  const shouldReduce = useReducedMotion();
+  const c = size / 2;
+  const main = sparklePath(c, c, size * 0.42, size * 0.14, 4);
+  const sat1 = sparklePath(size * 0.79, size * 0.25, size * 0.13, size * 0.045, 4);
+  const sat2 = sparklePath(size * 0.21, size * 0.77, size * 0.1, size * 0.035, 4);
+  const co = { transformBox: "fill-box" as const, transformOrigin: "center" };
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none" aria-hidden>
+      <defs>
+        <radialGradient id="wn-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#4B8BF5" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#1C54F2" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="wn-star" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#8FB8FF" />
+          <stop offset="55%" stopColor="#4B8BF5" />
+          <stop offset="100%" stopColor="#2E6BFF" />
+        </linearGradient>
+      </defs>
+
+      <motion.circle
+        cx={c} cy={c} r={size * 0.46} fill="url(#wn-glow)" style={co}
+        animate={shouldReduce ? undefined : { opacity: [0.35, 0.7, 0.35], scale: [0.9, 1.08, 0.9] }}
+        transition={{ duration: 4.4, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.path
+        d={main} fill="url(#wn-star)" style={co}
+        animate={shouldReduce ? undefined : { rotate: [0, 18, 0], scale: [1, 1.12, 1] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.path
+        d={sat1} fill="#8FB8FF" style={co}
+        animate={shouldReduce ? undefined : { opacity: [0.2, 1, 0.2], scale: [0.6, 1, 0.6] }}
+        transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+      />
+      <motion.path
+        d={sat2} fill="#6FA4FF" style={co}
+        animate={shouldReduce ? undefined : { opacity: [0.15, 0.85, 0.15], scale: [0.5, 1, 0.5] }}
+        transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 1.3 }}
+      />
+    </svg>
+  );
+}
 
 function DarkModeUpdateBanner() {
   const [visible, setVisible] = useState(false);
@@ -72,7 +135,7 @@ function DarkModeUpdateBanner() {
                 boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
               }}
             >
-              <Sparkles size={17} style={{ color: "#4B8BF5" }} />
+              <WhatsNewGlyph size={20} />
             </div>
             <div className="mr-1">
               <p className="text-[13px] font-semibold text-white leading-tight">What&apos;s new in StrydeOS</p>
