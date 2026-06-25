@@ -9,8 +9,35 @@ import { describe, it, expect } from "vitest";
 import {
   computeRollingNpsOnly,
   computeRollingAverageStarRating,
+  computeRollingFollowUpRate,
 } from "../compute-kpis";
 import type { Review } from "@/types";
+
+// ─── computeRollingFollowUpRate ──────────────────────────────────────────────
+describe("computeRollingFollowUpRate", () => {
+  const wk = (daysAgo: number, followUps: number, initialAssessments: number) => ({
+    weekStart: new Date(Date.now() - daysAgo * 86400_000).toISOString().slice(0, 10),
+    followUps,
+    initialAssessments,
+  });
+
+  it("aggregates totals over the window, not per-week ratios", () => {
+    // 24 follow-ups ÷ 8 initial assessments = 3.0 across the window, even though
+    // one week alone had zero initial assessments (which would read 0 per-week).
+    const stats = [wk(5, 10, 0), wk(12, 8, 5), wk(40, 6, 3)];
+    expect(computeRollingFollowUpRate(stats, 90)).toBe(3);
+  });
+
+  it("returns null (no data) when the window has no initial assessments", () => {
+    expect(computeRollingFollowUpRate([wk(5, 10, 0), wk(12, 4, 0)], 90)).toBeNull();
+  });
+
+  it("excludes weeks outside the window", () => {
+    // The 200-day-old week is excluded; only 6 ÷ 3 = 2 remains.
+    const stats = [wk(10, 6, 3), wk(200, 100, 1)];
+    expect(computeRollingFollowUpRate(stats, 90)).toBe(2);
+  });
+});
 
 // Helper to build a Review stub
 function makeReview(

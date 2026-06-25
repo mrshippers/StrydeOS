@@ -222,12 +222,14 @@ export async function computeKPIs(
   const runStartedAt = new Date().toISOString();
   const dataQualityIssues: DataQualityIssue[] = [];
 
-  // Load last 8 "all" weekly stats — current + 7 prior for trend.
+  // Load last 14 "all" weekly stats — current + 13 prior. 14 weeks (~98 days)
+  // covers the rolling 90-day window used for follow-up rate and review KPIs,
+  // with the recent weeks driving the trend sparklines.
   const metricsSnap = await db
     .collection(`clinics/${clinicId}/metrics_weekly`)
     .where("clinicianId", "==", "all")
     .orderBy("weekStart", "desc")
-    .limit(8)
+    .limit(14)
     .get();
 
   if (metricsSnap.empty) {
@@ -270,7 +272,10 @@ export async function computeKPIs(
   // P0-10: NPS uses ONLY nps_sms 0-10 responses via computeRollingNpsOnly.
   // P0-11: Star sentiment uses ONLY non-nps_sms reviews via computeRollingAverageStarRating.
   const kpiValues: Record<KpiId, number | null> = {
-    "follow-up-rate": current.followUpRate ?? null,
+    // Rolling 90-day aggregate (CLAUDE.md), not the latest week — a single week
+    // with no initial assessments would otherwise read 0. Falls back to the
+    // current week's value only if the window somehow has no initial assessments.
+    "follow-up-rate": computeRollingFollowUpRate(allStats, 90) ?? current.followUpRate ?? null,
     "hep-compliance":
       (current.hepComplianceRate as number | undefined) ??
       (current.hepRate as number | undefined) ??
@@ -443,6 +448,32 @@ export function computeRollingNpsOnly(reviews: Review[], windowDays: number): nu
   }
 
   return Math.round(((promoters - detractors) / windowed.length) * 100);
+}
+
+/**
+ * Rolling follow-up rate (CLAUDE.md: follow-ups booked ÷ initial assessments,
+ * rolling window). Aggregates the TOTALS across the window rather than averaging
+ * per-week ratios — a single week often has zero initial assessments, which makes
+ * the weekly ratio degenerate to 0. Summing totals over ~90 days yields the stable,
+ * meaningful figure (e.g. Andrew's ~2.4). Returns null when the window has no
+ * initial assessments at all (no-data, not a false 0).
+ *
+ * Exported for unit testing.
+ */
+export function computeRollingFollowUpRate(
+  stats: { weekStart: string; followUps?: number; initialAssessments?: number }[],
+  windowDays: number,
+): number | null {
+  const cutoff = new Date(Date.now() - windowDays * 86400_000).toISOString().slice(0, 10);
+  const windowed = stats.filter((s) => s.weekStart >= cutoff);
+  let followUps = 0;
+  let initialAssessments = 0;
+  for (const s of windowed) {
+    followUps += s.followUps ?? 0;
+    initialAssessments += s.initialAssessments ?? 0;
+  }
+  if (initialAssessments === 0) return null;
+  return followUps / initialAssessments;
 }
 
 /**
