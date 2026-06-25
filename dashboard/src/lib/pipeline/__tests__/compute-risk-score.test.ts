@@ -39,15 +39,51 @@ describe("computeRiskScore", () => {
     }
   });
 
-  it("returns DISCHARGED when discharged=true", () => {
-    const result = computeRiskScore(baseInput({ discharged: true }));
+  it("returns DISCHARGED when the last appointment was a discharge (planned end of care)", () => {
+    const result = computeRiskScore(baseInput({
+      lastAppointmentType: "discharge",
+      nextSessionDate: null,
+    }));
     expect(result.lifecycleState).toBe("DISCHARGED");
   });
 
-  it("returns LAPSED when >14 days since last session and no future booking", () => {
+  it("returns DISCHARGED when course length reached with no follow-up booked", () => {
+    const result = computeRiskScore(baseInput({
+      sessionCount: 6,
+      courseLength: 6,
+      followUpBookedAtLastSession: false,
+      nextSessionDate: null,
+    }));
+    expect(result.lifecycleState).toBe("DISCHARGED");
+  });
+
+  it("stays ACTIVE within the patient's own rebooking cadence, not a flat 14 days", () => {
+    // 20 days since last visit, but this patient's expected interval is 21 days,
+    // so they are simply between normal visits — NOT at risk.
     const result = computeRiskScore(baseInput({
       lastSessionDate: "2026-03-20T10:00:00Z",
       nextSessionDate: null,
+      expectedIntervalDays: 21,
+    }));
+    expect(result.lifecycleState).toBe("ACTIVE");
+  });
+
+  it("returns AT_RISK when overdue versus the patient's own cadence", () => {
+    // Expected interval 14d, 30 days elapsed → past 14×1.5=21, within 14×3=42 → actionable drop-off.
+    const result = computeRiskScore(baseInput({
+      lastSessionDate: "2026-03-10T10:00:00Z",
+      nextSessionDate: null,
+      expectedIntervalDays: 14,
+    }));
+    expect(result.lifecycleState).toBe("AT_RISK");
+  });
+
+  it("returns LAPSED once past the actionable at-risk window", () => {
+    // Expected interval 14d, 60 days elapsed → beyond min(14×3, 90) → lapsed, not headline at-risk.
+    const result = computeRiskScore(baseInput({
+      lastSessionDate: "2026-02-08T10:00:00Z",
+      nextSessionDate: null,
+      expectedIntervalDays: 14,
     }));
     expect(result.lifecycleState).toBe("LAPSED");
   });

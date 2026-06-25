@@ -107,6 +107,43 @@ These resolve the "unclear in code" question for follow-up rate and utilisation.
 
 ---
 
+## "Patients at risk" — INVESTIGATION (the 259) + proposed definitions
+
+**Mechanism of the bleed (confirmed in code):**
+- `compute-patients.ts:80` skips patients with no `pmsExternalId`; for imported patients that DO have one but have **no appointments in the live `appointments` collection**, `appointments = []` →
+  - `lastSessionDate = undefined`, `sessionCount = 0`, no `nextSessionDate`.
+  - Discharge logic (`compute-patients.ts:104`) is gated on `lastSessionDate`, so a never-seen patient is **never discharged**.
+- `compute-risk-score.ts` then scores a zero-appointment patient ≈ `riskScore 55` (attendance defaults to 100, sentiment 50, static 70). 55 < 60 so NOT `AT_RISK`, but it falls through to **`LAPSED`** (`:177` — `daysSinceLast = Infinity > 14 && no future booking && !discharged`).
+- The dashboard retention count (`useOwnerSummary.ts:126`) and the continuity board count **both `AT_RISK` and `LAPSED`** with `!nextSessionDate && !discharged`. So every stale never-seen import lands in the 259.
+- **No gate exists** on (a) whether the patient was ever actually seen, (b) recency, or (c) whether the data came from a currently live/connected source.
+
+**Common core all candidate definitions share (kills the bleed):** must have been SEEN (`sessionCount ≥ 1` / `lastSessionDate` present), within a recency window, no future booking, not discharged, AND from a live source (`clinic.dataMode === 'live'` + patient has live PMS appointment activity).
+
+### REVISED MODEL (v2) — cadence-relative + episode-aware (after Jamal's clinical pushback)
+Flat 14d is wrong: rebooking cadence is condition-dependent. Harness confirmed what data exists:
+- **Planned-discharge signal EXISTS, unused:** appointmentType `"discharge"` is mapped from PMS (cliniko `classify-appointment-type.ts`, writeupp) but never consumed. Today `discharged` = only 30-day silence (can't tell finished-by-plan from ghosted).
+- **Per-patient cadence is DERIVABLE now:** `compute-patients.ts` already builds each patient's sorted completed appts → median gap = their personal rebooking interval. Not yet computed.
+- **No condition/diagnosis field** (except optional Heidi). Historical cadence is the honest proxy for "their ACTUAL condition".
+- Per-patient course length: clinic default `treatmentLength` (6) OR per-patient insurance `pre_auths.sessionsAuthorised` (stronger).
+
+**Expected interval (per patient):** median gap of completed sessions if ≥3 completed; else clinic median; else configurable default `targets.defaultRebookingDays` (21). Clamp [5,56] days.
+
+**State machine for a SEEN patient (sessionCount≥1) with NO future booking, live source:**
+1. `treatmentComplete` → DISCHARGED, NOT at risk. True if last appt type=`discharge`, OR (sessionCount ≥ effectiveCourseLength AND no followUp booked at last session). effectiveCourseLength = `pre_auths.sessionsAuthorised ?? treatmentLength`.
+2. `daysSinceLast ≤ expectedInterval × overdueFactor(1.5)` → within their own cadence, NOT at risk (the "between normal 3-week FUs" case Jamal raised).
+3. `expectedInterval×1.5 < daysSinceLast ≤ min(expectedInterval×churnFactor(3), 90d)` → **AT_RISK** (genuinely overdue vs their own rhythm, still actionable). riskScore kept as severity/sort within this bucket.
+4. beyond that → LAPSED/CHURNED (past actionable window, separate bucket, not the headline "at risk").
+- sessionCount===0 → NEW (never at risk) — this alone excludes the 259 zero-appointment imports.
+
+**Live-source gate (kills the bleed):** count only when `clinic.dataMode==='live'` AND patient has `lastSessionDate` (real PMS activity) AND within outer window. Module cards also gated on `integration_health` (disconnected → no cards).
+
+**Config knobs (clinic.targets, all optional w/ defaults):** `defaultRebookingDays=21`, `overdueFactor=1.5`, `churnFactor=3`, outer window `atRiskMaxDays=90`. Tunable without code.
+
+### Candidate definitions (SUPERSEDED by v2 above — kept for history)
+- **Option A — "Active treatment, drifting" (recommended):** seen ≥1 time, last seen ≤ 90 days ago, no future booking, not discharged, AND (`daysSinceLast > 14` OR `riskScore ≥ 60`), live source only. Excludes never-seen imports and truly-churned (>90d). Keeps the composite score as an escalation signal.
+- **Option B — "Risk score, gated":** keep `riskScore ≥ 60` exactly as-is, just add hard gates (`sessionCount ≥ 1`, `lastSessionDate ≤ 90d`, live source). Smallest change; LAPSED no longer counted as "at risk".
+- **Option C — "Simple operational rule":** ignore the composite score entirely. At-risk = seen ≥1, last seen 15–90 days ago, no future booking, not discharged, live source. Most transparent / easiest to explain to a clinic owner.
+
 ## OPEN QUESTIONS FOR USER (gating the fixes)
 1. **Patients at risk** — what is YOUR definition? (Current code: composite risk score ≥60, not discharged, no future booking.) And confirm: gate strictly to live/connected source so old-import patients with no recent activity are excluded.
 2. **"Live/connected" gate** — should I gate ALL module cards/numbers on `integration_health` status (render nothing when a source is down/never-connected), and treat the current Spires data as live or as sample (`dataMode`)? i.e. do you want me to run the seed purge / flip dataMode to live?

@@ -32,6 +32,23 @@
 | 2026-06-25 | `vitest run lib/metrics lib/intelligence lib/pipeline` | 304 passed (24 files) |
 | 2026-06-25 | `eslint compute-weekly.ts` | clean |
 
+### Bug 1 formulas committed (6eee166).
+
+### At-risk model v2 (cadence-relative) — engine DONE
+- Jamal pushed back: flat 14d is clinically wrong (cadence is condition-dependent); must distinguish planned discharge vs open-cadence vs drop-off. Used /feature-planning + harness.
+- Harness findings: appointmentType `"discharge"` is real+mapped but never consumed; per-patient cadence is derivable from completed-session gaps; no condition field (Heidi optional).
+- `compute-risk-score.ts`: added cadence inputs (expectedIntervalDays, lastAppointmentType, effectiveCourseLength, overdue/churn factors, atRiskMaxDays). New episode-aware lifecycle: sessionCount0→NEW (kills zero-appt imports), future booking→ACTIVE/RE_ENGAGED, planned discharge→DISCHARGED, within cadence→ACTIVE, overdue vs own rhythm→AT_RISK, past window→LAPSED/CHURNED. riskScore kept as severity.
+- `compute-patients.ts`: derive expectedInterval (median gap, ≥3 completed), capture appointmentType, redefine `discharged` = planned (discharge appt OR course-length+no-followup) NOT 30-day silence, load clinic.targets cadence knobs.
+- Tests rewritten + added (ACTIVE within cadence, AT_RISK overdue, LAPSED past window, DISCHARGED by plan). 78 pipeline tests pass. tsc clean.
+
+### Test results
+| When | Command | Result |
+|------|---------|--------|
+| 2026-06-25 | vitest compute-weekly | 28 passed |
+| 2026-06-25 | vitest metrics/intelligence/pipeline | 304 passed |
+| 2026-06-25 | vitest pipeline (after at-risk v2) | 78 passed |
+| 2026-06-25 | tsc --noEmit (changed files) | clean |
+
 ### Next
-- Commit Bug-1-formulas checkpoint.
-- Then: investigate the 259 at-risk cohort → propose 2-3 definitions (per user). Add live-source gating (integration_health) so disconnected sources render nothing + stale Spires patients drop out. Wire UI-triggered recompute to prove cross-module sync. Then Bugs 2-8.
+- Surfaces: useOwnerSummary + continuity to count AT_RISK (actionable) only, gated to live source (dataMode=live + integration_health). Disconnected → no cards.
+- Wire UI-triggered recompute to prove cross-module sync. Then Bugs 2-8.

@@ -6,7 +6,36 @@ import type { LifecycleState } from "@/types";
 
 const MAX_BATCH_SIZE = 500;
 const CHURN_RISK_DAYS = 14;
-const DISCHARGE_INACTIVE_DAYS = 30;
+
+/** Median of a numeric list (0 when empty). */
+function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+}
+
+/**
+ * A patient's expected days between visits, derived from the median gap of their
+ * own completed sessions. Needs >= 3 completed sessions (>= 2 gaps) to be trusted;
+ * otherwise returns null so the caller falls back to the clinic default. This is
+ * the condition-relative cadence that replaces the old flat 14-day rule.
+ */
+function expectedIntervalFromHistory(completedSortedIso: string[]): number | null {
+  if (completedSortedIso.length < 3) return null;
+  const gaps: number[] = [];
+  for (let i = 1; i < completedSortedIso.length; i++) {
+    const days =
+      (new Date(completedSortedIso[i]).getTime() -
+        new Date(completedSortedIso[i - 1]).getTime()) /
+      86_400_000;
+    if (days > 0) gaps.push(days);
+  }
+  if (gaps.length === 0) return null;
+  return median(gaps);
+}
 
 /**
  * Stage 5: Compute derived fields for each patient from their appointment history.
@@ -39,6 +68,16 @@ export async function computePatientFields(
       (pipelineSnap.data()?.defaultCourseLength as number) ??
       DEFAULT_TREATMENT_LENGTH;
 
+    // Cadence-relative at-risk config (clinic.targets) — all optional, sane defaults.
+    const clinicSnap = await db.collection("clinics").doc(clinicId).get();
+    const targets = (clinicSnap.data()?.targets as Record<string, number> | undefined) ?? {};
+    const cadenceConfig = {
+      defaultRebookingDays: targets.defaultRebookingDays ?? 21,
+      overdueFactor: targets.overdueFactor ?? 1.5,
+      churnFactor: targets.churnFactor ?? 3,
+      atRiskMaxDays: targets.atRiskMaxDays ?? 90,
+    };
+
     const patientsRef = db
       .collection("clinics")
       .doc(clinicId)
@@ -54,7 +93,7 @@ export async function computePatientFields(
     // Index appointments by patientId (using pmsExternalId stored as patientId in appointments)
     const apptsByPatient = new Map<
       string,
-      { dateTime: string; status: string; followUpBooked: boolean; isInitialAssessment: boolean }[]
+      { dateTime: string; status: string; followUpBooked: boolean; isInitialAssessment: boolean; appointmentType?: string }[]
     >();
     for (const doc of appointmentsSnap.docs) {
       const data = doc.data();
@@ -66,6 +105,7 @@ export async function computePatientFields(
         status: data.status as string,
         followUpBooked: (data.followUpBooked as boolean) ?? false,
         isInitialAssessment: (data.isInitialAssessment as boolean) ?? false,
+        appointmentType: data.appointmentType as string | undefined,
       });
     }
 
@@ -97,19 +137,31 @@ export async function computePatientFields(
       const nextSessionDate =
         future.length > 0 ? future[0].dateTime : undefined;
 
-      // Compute discharge and churn risk
-      let discharged = false;
-      let churnRisk = false;
+      // ── Risk score + lifecycle state ────────────────────────────────────────
+      const lastAppt = completed.length > 0 ? completed[completed.length - 1] : null;
 
+      // Expected rebooking interval for THIS patient (condition-relative cadence):
+      // median gap of their own completed sessions, else the clinic default.
+      const expectedIntervalDays =
+        expectedIntervalFromHistory(completed.map((a) => a.dateTime)) ??
+        cadenceConfig.defaultRebookingDays;
+
+      // Discharge BY PLAN (not mere inactivity): explicit discharge appointment, or
+      // reaching course length with no follow-up intended. The old 30-day-silence
+      // auto-discharge is gone — it conflated "course finished" with "ghosted", which
+      // is exactly the distinction we now make in computeRiskScore's lifecycle logic.
+      const discharged =
+        lastAppt?.appointmentType === "discharge" ||
+        (sessionCount >= treatmentLength && !(lastAppt?.followUpBooked ?? false));
+
+      // churnRisk kept as the coarse comms signal that gates the CHURNED state.
+      let churnRisk = false;
       if (lastSessionDate) {
         const daysSinceLastSession = Math.floor(
           (now.getTime() - new Date(lastSessionDate).getTime()) /
             (1000 * 60 * 60 * 24)
         );
-
-        if (daysSinceLastSession > DISCHARGE_INACTIVE_DAYS && !nextSessionDate) {
-          discharged = true;
-        } else if (
+        if (
           daysSinceLastSession > CHURN_RISK_DAYS &&
           !nextSessionDate &&
           !discharged
@@ -117,9 +169,6 @@ export async function computePatientFields(
           churnRisk = true;
         }
       }
-
-      // ── Risk score + lifecycle state ────────────────────────────────────────
-      const lastAppt = completed.length > 0 ? completed[completed.length - 1] : null;
       // First 3 SLOTS (all statuses sorted by dateTime) — used to detect early DNAs
       const firstThreeSlots = [...appointments]
         .sort((a, b) => a.dateTime.localeCompare(b.dateTime))
@@ -156,6 +205,13 @@ export async function computePatientFields(
         priorLifecycleState,
         lastSequenceSentAt,
         now,
+        // Cadence-relative at-risk model
+        expectedIntervalDays,
+        lastAppointmentType: lastAppt?.appointmentType ?? null,
+        effectiveCourseLength: treatmentLength,
+        overdueFactor: cadenceConfig.overdueFactor,
+        churnFactor: cadenceConfig.churnFactor,
+        atRiskMaxDays: cadenceConfig.atRiskMaxDays,
       });
 
       const update: Record<string, unknown> = {
