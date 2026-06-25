@@ -51,10 +51,10 @@ function metricRow(
 ): string {
   return `
     <tr>
-      <td style="padding:8px 0;font-size:13px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">${label}</td>
-      <td style="padding:8px 12px;font-size:14px;font-weight:700;color:#0B2545;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">${value}</td>
-      <td style="padding:8px 12px;font-size:12px;color:#5C6370;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">target: ${target}</td>
-      <td style="padding:8px 0;font-size:12px;color:#5C6370;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">${ukAvg}</td>
+      <td style="padding:8px 0;font-size:13px;color:#B7C6DE;font-family:'Outfit',Helvetica,Arial,sans-serif;">${label}</td>
+      <td style="padding:8px 12px;font-size:16px;font-weight:400;color:#FFFFFF;text-align:right;font-family:'DM Serif Display',Georgia,serif;">${value}</td>
+      <td style="padding:8px 12px;font-size:12px;color:#8FA3C2;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">target: ${target}</td>
+      <td style="padding:8px 0;font-size:12px;color:#8FA3C2;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">${ukAvg}</td>
     </tr>`;
 }
 
@@ -64,36 +64,36 @@ export function buildClinicianDigestEmail(data: ClinicianDigestData): string {
   const statsTable = `
     <table style="width:100%;border-collapse:collapse;margin:16px 0;">
       ${metricRow("Follow-up rate", fmtRate(stats.followUpRate), fmtRate(targets.followUpRate), "UK avg: 4.0\u20135.5")}
-      <tr><td colspan="4" style="padding:0;border-bottom:1px solid #F2F1EE;"></td></tr>
+      <tr><td colspan="4" style="padding:0;border-bottom:1px solid rgba(255,255,255,0.08);"></td></tr>
       ${metricRow("HEP compliance", fmtPct(stats.hepRate), fmtPct(targets.hepRate), "UK avg: 70\u201385%")}
-      <tr><td colspan="4" style="padding:0;border-bottom:1px solid #F2F1EE;"></td></tr>
+      <tr><td colspan="4" style="padding:0;border-bottom:1px solid rgba(255,255,255,0.08);"></td></tr>
       ${metricRow("Utilisation", fmtPct(stats.utilisationRate), fmtPct(targets.utilisationRate), "UK avg: ~72%")}
-      <tr><td colspan="4" style="padding:0;border-bottom:1px solid #F2F1EE;"></td></tr>
+      <tr><td colspan="4" style="padding:0;border-bottom:1px solid rgba(255,255,255,0.08);"></td></tr>
       ${metricRow("DNA rate", fmtPct(stats.dnaRate), `\u2264${fmtPct(targets.dnaRate)}`, "UK avg: \u22646%")}
     </table>`;
 
   const focusHtml = focusNote
-    ? `<div style="margin:16px 0;padding:14px 16px;border-radius:8px;background:#F0FDFA;border:1px solid rgba(8,145,178,0.2);">
-        <p style="margin:0;font-size:13px;font-weight:600;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">This week's focus</p>
-        <p style="margin:4px 0 0;font-size:13px;color:#5C6370;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(focusNote)}</p>
+    ? `<div style="margin:16px 0;padding:16px 18px;border-radius:12px;background:rgba(8,145,178,0.12);border:1px solid rgba(8,145,178,0.3);">
+        <p style="margin:0;font-size:13px;font-weight:600;color:#FFFFFF;font-family:'Outfit',Helvetica,Arial,sans-serif;">This week's focus</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#B7C6DE;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(focusNote)}</p>
       </div>`
     : patientsNeedingAction > 0
-      ? `<div style="margin:16px 0;padding:14px 16px;border-radius:8px;background:#F0FDFA;border:1px solid rgba(8,145,178,0.2);">
-          <p style="margin:0;font-size:13px;font-weight:600;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">This week's focus</p>
-          <p style="margin:4px 0 0;font-size:13px;color:#5C6370;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">${patientsNeedingAction} patient${patientsNeedingAction === 1 ? "" : "s"} in your caseload haven't rebooked.</p>
+      ? `<div style="margin:16px 0;padding:16px 18px;border-radius:12px;background:rgba(8,145,178,0.12);border:1px solid rgba(8,145,178,0.3);">
+          <p style="margin:0;font-size:13px;font-weight:600;color:#FFFFFF;font-family:'Outfit',Helvetica,Arial,sans-serif;">This week's focus</p>
+          <p style="margin:4px 0 0;font-size:13px;color:#B7C6DE;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">${patientsNeedingAction} patient${patientsNeedingAction === 1 ? "" : "s"} in your caseload haven't rebooked.</p>
         </div>`
       : "";
 
   const winHtml = winNote
-    ? `<div style="margin:16px 0;padding:14px 16px;border-radius:8px;background:#F0FDF4;border:1px solid rgba(5,150,105,0.2);">
-        <p style="margin:0;font-size:13px;color:#059669;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">\u2713 ${escHtml(winNote)}</p>
+    ? `<div style="margin:16px 0;padding:16px 18px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);">
+        <p style="margin:0;font-size:13px;color:#B7C6DE;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#34D399;margin-right:8px;vertical-align:middle;"></span>${escHtml(winNote)}</p>
       </div>`
     : "";
 
   const body = `
     <!-- Greeting -->
-    <p style="margin:0;font-size:15px;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">Hi ${escHtml(firstName)},</p>
-    <p style="margin:8px 0 0;font-size:13px;color:#5C6370;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">Here's how your week looked.</p>
+    <p style="margin:0;font-size:15px;color:#FFFFFF;font-family:'Outfit',Helvetica,Arial,sans-serif;">Hi ${escHtml(firstName)},</p>
+    <p style="margin:8px 0 0;font-size:13px;color:#B7C6DE;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">Here's how your week looked.</p>
 
     <!-- Stats -->
     ${statsTable}
@@ -120,6 +120,7 @@ export function buildClinicianDigestEmail(data: ClinicianDigestData): string {
       { label: "Notification preferences", href: `${APP_URL}/settings` },
     ],
     signature: "system",
+    theme: "dark",
   });
 }
 

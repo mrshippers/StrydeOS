@@ -7,8 +7,8 @@ import { wrapEmailLayout, escHtml, textFooter } from "./layout";
 
 export function buildInviteEmail(resetLink: string): string {
   const body = `
-    <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">Welcome to StrydeOS</h2>
-    <p style="margin:0 0 24px;font-size:14px;color:#5C6370;line-height:1.6;font-family:'Outfit',Helvetica,Arial,sans-serif;">
+    <h2 style="margin:0 0 8px;font-size:20px;font-weight:400;color:#FFFFFF;font-family:'DM Serif Display',Georgia,serif;">Welcome to StrydeOS</h2>
+    <p style="margin:0 0 24px;font-size:14px;color:#B7C6DE;line-height:1.6;font-family:'Outfit',Helvetica,Arial,sans-serif;">
       You've been invited to join your clinic on StrydeOS, the clinical
       operating system built for private physiotherapy practices.
     </p>
@@ -17,7 +17,7 @@ export function buildInviteEmail(resetLink: string): string {
         Set your password &amp; sign in
       </a>
     </div>
-    <p style="margin:0;font-size:12px;color:#9CA3AF;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">
+    <p style="margin:0;font-size:12px;color:#8FA3C2;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">
       This link expires in 1 hour. If you weren't expecting this email, you can safely ignore it.
     </p>`;
 
@@ -25,6 +25,7 @@ export function buildInviteEmail(resetLink: string): string {
     subtitle: "Clinician Invite",
     accentColor: "#1C54F2",
     signature: "system",
+    theme: "dark",
   });
 }
 
