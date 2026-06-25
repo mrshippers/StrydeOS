@@ -71,6 +71,11 @@ export interface Patient {
   referralSource?: ReferralSource;
   lastSessionDate?: string;
   nextSessionDate?: string;
+  /** dateTime of the patient's first-ever completed appointment. Stamped by the
+   *  pipeline from full appointment history and used as the STABLE anchor for
+   *  initial-assessment vs follow-up classification (ordinality), so the follow-up
+   *  rate no longer flips with the unstable per-sync appointmentType heuristic. */
+  firstAppointmentDate?: string;
   sessionCount: number;
   treatmentLength: number;
   discharged: boolean;

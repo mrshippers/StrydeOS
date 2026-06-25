@@ -130,6 +130,13 @@ export async function computePatientFields(
         .sort((a, b) => a.dateTime.localeCompare(b.dateTime));
 
       const sessionCount = completed.length;
+      // Stable ordinality anchor: the patient's first-ever completed appointment.
+      // `completed` is sorted ascending over the patient's FULL history (this stage
+      // loads the whole appointments collection), so completed[0] is the true first
+      // session = the initial assessment. Persisted so classification survives
+      // re-syncs instead of being re-derived from the flaky appointmentType field.
+      const firstAppointmentDate =
+        completed.length > 0 ? completed[0].dateTime : undefined;
       const lastSessionDate =
         completed.length > 0
           ? completed[completed.length - 1].dateTime
@@ -216,6 +223,7 @@ export async function computePatientFields(
 
       const update: Record<string, unknown> = {
         sessionCount,
+        firstAppointmentDate: firstAppointmentDate ?? null,
         lastSessionDate: lastSessionDate ?? null,
         nextSessionDate: nextSessionDate ?? null,
         discharged,

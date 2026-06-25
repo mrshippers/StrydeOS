@@ -57,35 +57,38 @@ describe("aggregateWeek", () => {
    * This test file assumes aggregateWeek is exported (currently it's not — that's the fix)
    */
 
-  it("should calculate followUpRate as follow-ups ÷ initial assessments (canonical)", () => {
-    // Given 1 initial assessment + 3 follow-ups (follow_up/review) completed
-    // Expected followUpRate = 3 / 1 = 3.0
+  it("should classify initial vs follow-up by ordinality (first appointment) not appointmentType", () => {
+    // Stable ordinality: the appointment whose dateTime === the patient's
+    // firstAppointmentDate is the initial assessment; every later completed visit
+    // is a follow-up. appointmentType is intentionally ignored here.
+    // 1 initial + 3 follow-ups → followUpRate = 3 / 1 = 3.0
     const appointments = [
-      mockAppointment({ appointmentType: "initial_assessment", patientId: "patient-1" }),
+      mockAppointment({ appointmentType: "follow_up", patientId: "patient-1", dateTime: "2026-03-16T10:00:00Z" }),
       mockAppointment({ appointmentType: "follow_up", patientId: "patient-1", dateTime: "2026-03-17T10:00:00Z" }),
-      mockAppointment({ appointmentType: "follow_up", patientId: "patient-2", dateTime: "2026-03-18T10:00:00Z" }),
-      mockAppointment({ appointmentType: "review", patientId: "patient-3", dateTime: "2026-03-19T10:00:00Z" }),
+      mockAppointment({ appointmentType: "initial_assessment", patientId: "patient-1", dateTime: "2026-03-18T10:00:00Z" }),
+      mockAppointment({ appointmentType: "review", patientId: "patient-1", dateTime: "2026-03-19T10:00:00Z" }),
     ];
-    const patients = [mockPatient()];
+    // First-ever completed session is 2026-03-16, so only that one is an initial.
+    const patients = [mockPatient({ firstAppointmentDate: "2026-03-16T10:00:00Z" })];
     const reviews = [];
     const targets = { followUpRate: 4.0, hepRate: 0.95 };
 
-    // When aggregating the week
     const result = aggregateWeek(appointments as any, "2026-03-16", "clinician-1", "Test Clinician", targets, patients, reviews);
 
-    // Then followUpRate should be follow-ups (3) ÷ initial assessments (1) = 3.0
+    expect(result.initialAssessments).toBe(1);
+    expect(result.followUps).toBe(3);
     expect(result.followUpRate).toBe(3.0);
   });
 
   it("should only count completed appointments in followUpRate", () => {
-    // Given 1 completed IA + 1 completed follow-up + 1 cancelled follow-up
-    // Expected: only completed count → followUps=1, IAs=1 → 1.0
+    // First-ever completed = 2026-03-16 (initial); 03-17 completed = follow-up;
+    // 03-18 cancelled = excluded. followUps(1) ÷ IAs(1) = 1.0
     const appointments = [
-      mockAppointment({ status: "completed", appointmentType: "initial_assessment", patientId: "patient-1" }),
-      mockAppointment({ status: "completed", appointmentType: "follow_up", patientId: "patient-1", dateTime: "2026-03-17T10:00:00Z" }),
-      mockAppointment({ status: "cancelled", appointmentType: "follow_up", patientId: "patient-1", dateTime: "2026-03-18T10:00:00Z" }),
+      mockAppointment({ status: "completed", patientId: "patient-1", dateTime: "2026-03-16T10:00:00Z" }),
+      mockAppointment({ status: "completed", patientId: "patient-1", dateTime: "2026-03-17T10:00:00Z" }),
+      mockAppointment({ status: "cancelled", patientId: "patient-1", dateTime: "2026-03-18T10:00:00Z" }),
     ];
-    const patients = [mockPatient()];
+    const patients = [mockPatient({ firstAppointmentDate: "2026-03-16T10:00:00Z" })];
     const reviews = [];
     const targets = { followUpRate: 4.0, hepRate: 0.95 };
 

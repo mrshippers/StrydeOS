@@ -153,8 +153,15 @@ export async function syncAppointments(
       const isFirstForPatient =
         patientFirstSeen.get(pms.patientExternalId) === pms.externalId;
 
+      // Classify off the resolved type NAME, not the PMS type ID. The adapters
+      // populate appointmentTypeName (e.g. "Initial Assessment") but the prior
+      // code passed pms.appointmentType (a Cliniko ID like "12345"), which never
+      // matched the name-keyed typeMap and so ALWAYS fell through to the unstable
+      // first-visit heuristic. (Follow-up-rate no longer depends on this — that is
+      // computed from stable ordinality in compute-weekly — but the stored
+      // appointmentType is used elsewhere, so classify it correctly.)
       const { appointmentType, isInitialAssessment } = classifyAppointmentType(
-        pms.appointmentType,
+        pms.appointmentTypeName ?? pms.appointmentType,
         typeMap,
         isFirstForPatient
       );
@@ -173,6 +180,7 @@ export async function syncAppointments(
         endTime: pms.endTime,
         status,
         appointmentType,
+        appointmentTypeName: pms.appointmentTypeName ?? null,
         isInitialAssessment,
         revenueAmountPence: pms.revenueAmountPence ?? options.sessionPricePence ?? 0,
         followUpBooked: false,

@@ -91,6 +91,9 @@ interface PatientLike {
   treatmentLength: number;
   discharged: boolean;
   insuranceFlag?: boolean;
+  /** dateTime of the patient's first-ever completed appointment (stable ordinality
+   *  anchor for initial-assessment vs follow-up classification). */
+  firstAppointmentDate?: string;
 }
 
 interface ReviewLike {
@@ -169,21 +172,28 @@ export function aggregateWeek(
   // DNA rate: DNAs ÷ (completed + DNAs) — excludes cancelled/no-show-rescheduled
   const attendedOrDna = total + dnaCount;
   const dnaRate = attendedOrDna > 0 ? dnaCount / attendedOrDna : 0;
-  const initialAssessments = completed.filter(
-    (a) => a.appointmentType === "initial_assessment"
-  ).length;
-  const followUps = completed.filter(
-    (a) => a.appointmentType === "follow_up" || a.appointmentType === "review"
-  ).length;
+  // Initial-assessment vs follow-up by STABLE ORDINALITY, not the per-sync
+  // appointmentType field (which flip-flops: sync-appointments passes the Cliniko
+  // type ID where a name is expected, so it falls back to a non-deterministic
+  // "first visit?" heuristic). A completed appointment is the initial assessment
+  // iff its dateTime equals the patient's persisted firstAppointmentDate (their
+  // first-ever completed session); every other completed appointment is a follow-up.
+  // This matches how the clinic works: cases aren't closed, so each subsequent
+  // visit is a follow-up. Stable across re-syncs and computable over any window.
+  const firstApptByPatient = new Map(
+    patients.map((p) => [p.id, p.firstAppointmentDate])
+  );
+  const initialAssessments = completed.filter((a) => {
+    const first = a.patientId ? firstApptByPatient.get(a.patientId) : undefined;
+    return first != null && a.dateTime === first;
+  }).length;
+  // Every completed appointment that is not the patient's first is a follow-up.
+  const followUps = total - initialAssessments;
 
-  // Follow-up rate (canonical, CLAUDE.md "KPI Metrics — Confirmed from Spires"):
-  // follow-ups booked ÷ initial assessments. followUps and initialAssessments are
-  // already counted above from appointmentType. The previous code divided total
-  // sessions by unique patients (sessions-per-patient), which read ~1.0 ("full")
-  // for every clinician whose patients were each seen once — the bug being fixed.
-  // Weeks with no initial assessment have an undefined ratio; we report 0 and rely
-  // on statisticallyRepresentative/caveatNote to flag low-volume weeks. The smooth
-  // rolling-90-day figure is computed in the KPI layer (compute-kpis).
+  // Follow-up rate (CLAUDE.md "KPI Metrics — Confirmed from Spires"): follow-ups ÷
+  // initial assessments. A week with no NEW patient (no initial assessment in the
+  // window) has an undefined per-week ratio → 0 here; the meaningful figure is the
+  // rolling window aggregate in the KPI layer (computeRollingFollowUpRate).
   const followUpRate = initialAssessments > 0 ? followUps / initialAssessments : 0;
 
   const hepRate = total > 0 ? withHep / total : 0;
@@ -401,6 +411,7 @@ export async function computeWeeklyMetricsForClinic(
       treatmentLength: data.treatmentLength ?? data.courseLength ?? 6,
       discharged: data.discharged ?? false,
       insuranceFlag: data.insuranceFlag ?? false,
+      firstAppointmentDate: data.firstAppointmentDate ?? undefined,
     };
   });
 
