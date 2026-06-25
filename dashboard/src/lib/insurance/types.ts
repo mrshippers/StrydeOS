@@ -11,7 +11,11 @@
 
 export type InsuranceSource = "form" | "voice" | "csv";
 
-export type InsuranceReviewStatus = "pending" | "approved" | "rejected";
+// "writing" is a transient claim state: a single approve transaction flips
+// pending → writing before touching the PMS, so concurrent/retried approves
+// can't both pass the guard and double-write. It reverts to pending if the PMS
+// write fails, or advances to approved on success.
+export type InsuranceReviewStatus = "pending" | "writing" | "approved" | "rejected";
 
 export type InsuranceAuditAction =
   | "captured"
@@ -58,6 +62,9 @@ export interface InsuranceRecord {
   consentAt?: string;
   consentVersion?: string;
   reviewStatus: InsuranceReviewStatus;
+  /** Set when an approve claims the record (pending → writing). Cleared/superseded on resolve. */
+  writeClaimedAt?: string;
+  writeClaimedBy?: string;
   audit: InsuranceAuditEntry[];
 
   // ─── Insurer-mismatch safety net (derived insurer is authoritative) ──────────
