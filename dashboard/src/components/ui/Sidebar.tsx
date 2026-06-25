@@ -96,7 +96,10 @@ function useAlerts() {
   const { rows: summaryRows } = useClinicianSummaryStats();
 
   const rows = useMemo(() => {
-    if (summaryRows.length > 0) return summaryRows;
+    // Only clinicians with a computed week generate alerts — zero-filled rows for
+    // clinicians awaiting their first sync must not raise false "0% follow-up" flags.
+    const withData = summaryRows.filter((r) => r.hasData !== false);
+    if (withData.length > 0) return withData;
     if (stats.length === 0) return [];
     const latest = stats[stats.length - 1];
     return [{ clinicianName: latest.clinicianName, stats: latest }];

@@ -11,6 +11,8 @@ interface ClinicianRow {
   clinicianName: string;
   stats: WeeklyStats;
   allWeeks?: WeeklyStats[];
+  /** False when the clinician has no computed week yet — render "—" not 0%. */
+  hasData?: boolean;
 }
 
 interface CliniciansTableProps {
@@ -244,11 +246,13 @@ function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
                   ? "warn"
                   : "ok";
 
+              const awaiting = row.hasData === false;
               const dangerCount = [fuStatus, dnaStatus, utilStatus, ccStatus].filter(s => s === "danger").length;
               const warnCount = [fuStatus, dnaStatus, utilStatus, ccStatus].filter(s => s === "warn").length;
-              const hasAlert = dangerCount >= 2 || (dangerCount >= 1 && warnCount >= 1);
+              const hasAlert = !awaiting && (dangerCount >= 2 || (dangerCount >= 1 && warnCount >= 1));
 
               const revenuePence = clinicianRevenue(row.stats);
+              const dash = <span className="text-muted/40">—</span>;
 
               return (
                 <tr
@@ -278,22 +282,22 @@ function CliniciansTable({ rows, onRowClick }: CliniciansTableProps) {
                     </div>
                   </td>
                   <td className="px-5 py-2 text-right tabular-nums">
-                    <RagBadge value={formatRate(row.stats.followUpRate)} status={fuStatus} />
+                    {awaiting ? dash : <RagBadge value={formatRate(row.stats.followUpRate)} status={fuStatus} />}
                   </td>
                   <td className="px-5 py-2 text-right tabular-nums">
-                    <RagBadge value={formatPercent(row.stats.treatmentCompletionRate)} status={ccStatus} />
+                    {awaiting ? dash : <RagBadge value={formatPercent(row.stats.treatmentCompletionRate)} status={ccStatus} />}
                   </td>
                   <td className="px-5 py-2 text-right tabular-nums">
-                    <RagBadge value={formatPercent(row.stats.utilisationRate)} status={utilStatus} />
+                    {awaiting ? dash : <RagBadge value={formatPercent(row.stats.utilisationRate)} status={utilStatus} />}
                   </td>
                   <td className="px-5 py-2 text-right tabular-nums">
-                    <RagBadge value={formatPercent(row.stats.dnaRate)} status={dnaStatus} />
+                    {awaiting ? dash : <RagBadge value={formatPercent(row.stats.dnaRate)} status={dnaStatus} />}
                   </td>
                   <td className="px-5 py-2 text-right text-[14px] font-semibold text-navy tabular-nums">
-                    {row.stats.appointmentsTotal}
+                    {awaiting ? dash : row.stats.appointmentsTotal}
                   </td>
                   <td className="px-5 py-2 text-right text-[14px] font-semibold text-navy tabular-nums">
-                    {formatRevenue(revenuePence)}
+                    {awaiting ? dash : formatRevenue(revenuePence)}
                   </td>
                   <td className="px-5 py-2 text-center">
                     <div className="flex justify-center">

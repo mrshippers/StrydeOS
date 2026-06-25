@@ -12,6 +12,34 @@ export interface ClinicianSummaryRow {
   clinicianId: string;
   clinicianName: string;
   stats: WeeklyStats;
+  /** False when the clinician has no metrics_weekly row yet (awaiting first sync).
+   *  Their `stats` are zero-filled so consumers can render "—" rather than a
+   *  misleading 0%, and the dashboard utilisation tile can filter them out.
+   *  Undefined (e.g. demo rows) is treated as "has data". */
+  hasData?: boolean;
+}
+
+/** Zero-filled stats for a clinician with no computed week yet, so every active
+ *  clinician can still be listed with their proper name. */
+function emptyStats(clinicianId: string, clinicianName: string): WeeklyStats {
+  return {
+    id: `empty_${clinicianId}`,
+    clinicianId,
+    clinicianName,
+    weekStart: "",
+    followUpRate: 0,
+    followUpTarget: 0,
+    hepComplianceRate: 0,
+    hepRate: 0,
+    hepTarget: 0,
+    utilisationRate: 0,
+    dnaRate: 0,
+    treatmentCompletionRate: 0,
+    revenuePerSessionPence: 0,
+    appointmentsTotal: 0,
+    initialAssessments: 0,
+    followUps: 0,
+  };
 }
 
 /**
@@ -69,13 +97,21 @@ export function useClinicianSummaryStats(): {
       resolvedCount++;
       if (resolvedCount < activeClinicians.length) return;
 
-      const built: ClinicianSummaryRow[] = activeClinicians
-        .filter((c: Clinician) => latestByClinicianId[c.id])
-        .map((c: Clinician) => ({
+      // Every active clinician is listed with their canonical full name from the
+      // clinicians collection (synced from the PMS), not the name snapshotted into
+      // metrics_weekly. Clinicians without a computed week yet still appear, with
+      // zero-filled stats + hasData=false so the UI shows "—" rather than dropping
+      // them — "show every clinician's full name".
+      const built: ClinicianSummaryRow[] = activeClinicians.map((c: Clinician) => {
+        const stats = latestByClinicianId[c.id];
+        const clinicianName = c.name || stats?.clinicianName || c.id;
+        return {
           clinicianId: c.id,
-          clinicianName: latestByClinicianId[c.id].clinicianName,
-          stats: latestByClinicianId[c.id],
-        }));
+          clinicianName,
+          stats: stats ?? emptyStats(c.id, clinicianName),
+          hasData: !!stats,
+        };
+      });
 
       setRows(built);
       setUsedDemo(false);

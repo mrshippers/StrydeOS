@@ -147,11 +147,13 @@ export function useOwnerSummary(period: OwnerSummaryPeriod = "30d"): OwnerSummar
     }))
     .sort((a, b) => b.daysSinceLastSession - a.daysSinceLastSession);
 
-  const clinicianUtilisation: ClinicianUtilisationRow[] = utilRows.map((r) => ({
-    clinicianId: r.clinicianId,
-    name: r.clinicianName,
-    utilisationRate: r.stats.utilisationRate,
-  }));
+  const clinicianUtilisation: ClinicianUtilisationRow[] = utilRows
+    .filter((r) => r.hasData !== false)
+    .map((r) => ({
+      clinicianId: r.clinicianId,
+      name: r.clinicianName,
+      utilisationRate: r.stats.utilisationRate,
+    }));
 
   const loading = !apptReady || !patientsReady || utilLoading;
 
