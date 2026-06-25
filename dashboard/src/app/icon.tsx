@@ -53,7 +53,7 @@ export default function Icon() {
         <rect width="100" height="100" rx="24" fill="none" stroke="url(#gBorder)" strokeWidth="1.2" />
 
         <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07" />
-        <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10" />
+
 
         <g clipPath="url(#cPillar)">
           <polyline

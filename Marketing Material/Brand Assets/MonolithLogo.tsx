@@ -128,8 +128,7 @@ export const MonolithMark: React.FC<MarkProps> = ({
 
       {/* Pillar body */}
       <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07" />
-      {/* Shadow in lower half */}
-      <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10" />
+
 
       {/* Three ascending chevrons (bottom→top, dimest→brightest) */}
       <g clipPath={`url(#${cPillar})`}>

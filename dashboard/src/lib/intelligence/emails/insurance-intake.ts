@@ -13,20 +13,20 @@ export function buildInsuranceIntakeEmail(opts: {
   const greeting = opts.patientName ? `Hi ${opts.patientName.split(" ")[0]},` : "Hello,";
 
   const body = `
-    <p style="margin:0 0 16px;font-size:15px;color:#0B2545;line-height:1.6;">${greeting}</p>
-    <p style="margin:0 0 16px;font-size:15px;color:#0B2545;line-height:1.6;">
+    <p style="margin:0 0 16px;font-size:15px;color:#FFFFFF;line-height:1.6;font-family:'Outfit',Helvetica,Arial,sans-serif;">${greeting}</p>
+    <p style="margin:0 0 16px;font-size:15px;color:#B7C6DE;line-height:1.6;font-family:'Outfit',Helvetica,Arial,sans-serif;">
       Ahead of your appointment at ${escapeHtml(opts.clinicName)}, please confirm your private insurance
       details using the secure link below. It takes under a minute, with no phone call and no photos of
       your card.
     </p>
-    <p style="margin:0 0 24px;font-size:15px;color:#0B2545;line-height:1.6;">
+    <p style="margin:0 0 24px;font-size:15px;color:#B7C6DE;line-height:1.6;font-family:'Outfit',Helvetica,Arial,sans-serif;">
       You will pick your insurer, add your policy number and address, and that is it. Your appointment can
       then be processed without delay.
     </p>
     <div style="text-align:center;margin:8px 0 8px;">
-      <a href="${escapeHtml(opts.url)}" style="display:inline-block;padding:14px 32px;border-radius:50px;background:#0891B2;color:#FFFFFF;font-size:15px;font-weight:600;text-decoration:none;">Confirm insurance details</a>
+      <a href="${escapeHtml(opts.url)}" style="display:inline-block;padding:14px 32px;border-radius:50px;background:#0891B2;color:#FFFFFF;font-size:15px;font-weight:600;text-decoration:none;font-family:'Outfit',Helvetica,Arial,sans-serif;">Confirm insurance details</a>
     </div>
-    <p style="margin:20px 0 0;font-size:12px;color:#6B7280;line-height:1.6;">
+    <p style="margin:20px 0 0;font-size:12px;color:#8FA3C2;line-height:1.6;font-family:'Outfit',Helvetica,Arial,sans-serif;">
       This link is personal to you and expires in 7 days. If you have already done this, you can ignore this email.
     </p>`;
 
@@ -36,6 +36,7 @@ export function buildInsuranceIntakeEmail(opts: {
     accentColor: "#0891B2",
     footerNote: "Sent by your clinic via StrydeOS",
     signature: false,
+    theme: "dark",
   });
 
   const text = [

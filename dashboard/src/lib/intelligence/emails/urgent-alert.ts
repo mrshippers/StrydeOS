@@ -1,33 +1,35 @@
 import type { InsightEvent } from "@/types/insight-events";
 import { wrapEmailLayout, escHtml, textFooter } from "./layout";
 
+// Severity accents on the dark v4.0 shell. Warm-red/amber emphasis, never a
+// light red banner.
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: "#E8913A",
-  warning: "#F59E0B",
-  positive: "#059669",
+  critical: "#FF8A8A",
+  warning: "#F5B544",
+  positive: "#2DD4BF",
 };
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://portal.strydeos.com";
 
 export function buildUrgentAlertEmail(event: InsightEvent, clinicName: string): string {
-  const sevColor = SEVERITY_COLORS[event.severity] ?? "#E8913A";
+  const sevColor = SEVERITY_COLORS[event.severity] ?? "#F59E0B";
 
   const body = `
     <!-- Severity indicator -->
-    <div style="margin-bottom:20px;padding:16px;border-radius:8px;border-left:4px solid ${sevColor};background:#FAFAFA;">
-      <p style="margin:0 0 8px 0;font-size:16px;font-weight:700;color:#0B2545;line-height:1.4;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(event.title)}</p>
-      <p style="margin:0;font-size:13px;color:#5C6370;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(event.ownerNarrative ?? event.description)}</p>
+    <div style="margin-bottom:20px;padding:16px;border-radius:12px;border-left:4px solid #F59E0B;border-top:1px solid rgba(255,255,255,0.07);border-right:1px solid rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.03);">
+      <p style="margin:0 0 8px 0;font-size:16px;font-weight:600;color:${sevColor};line-height:1.4;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(event.title)}</p>
+      <p style="margin:0;font-size:13px;color:#B7C6DE;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(event.ownerNarrative ?? event.description)}</p>
     </div>
 
     ${!event.ownerNarrative ? `
     <!-- Suggested action -->
-    <div style="margin-bottom:20px;padding:14px 16px;border-radius:8px;background:#F2F1EE;">
-      <p style="margin:0 0 4px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">WHAT TO DO</p>
-      <p style="margin:0;font-size:14px;font-weight:600;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(event.suggestedAction)}</p>
+    <div style="margin-bottom:20px;padding:14px 16px;border-radius:12px;background:rgba(139,92,246,0.18);">
+      <p style="margin:0 0 4px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6FA2F2;font-family:'Outfit',Helvetica,Arial,sans-serif;">WHAT TO DO</p>
+      <p style="margin:0;font-size:14px;font-weight:600;color:#C4B0F5;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(event.suggestedAction)}</p>
     </div>` : ""}
 
     ${event.revenueImpact ? `
-    <p style="margin:0 0 20px 0;font-size:13px;font-weight:600;color:#EF4444;font-family:'Outfit',Helvetica,Arial,sans-serif;">Estimated revenue impact: ~\u00A3${event.revenueImpact.toLocaleString()}</p>
+    <p style="margin:0 0 20px 0;font-size:13px;font-weight:600;color:#FF8A8A;font-family:'Outfit',Helvetica,Arial,sans-serif;">Estimated revenue impact: ~\u00A3${event.revenueImpact.toLocaleString()}</p>
     ` : ""}
 
     <!-- CTA -->
@@ -46,6 +48,7 @@ export function buildUrgentAlertEmail(event: InsightEvent, clinicName: string): 
       { label: "Unsubscribe", href: `${APP_URL}/settings?unsubscribe=urgent` },
     ],
     signature: "system",
+    theme: "dark",
   });
 }
 

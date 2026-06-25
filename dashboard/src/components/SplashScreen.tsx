@@ -515,7 +515,7 @@ export default function SplashScreen({ onComplete }: { onComplete?: () => void }
               {/* Pillar body */}
               <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity={0.07} />
               {/* Lower shadow */}
-              <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity={0.1} />
+
 
               {/* Three ascending chevrons */}
               <g clipPath="url(#sp-pc)">
