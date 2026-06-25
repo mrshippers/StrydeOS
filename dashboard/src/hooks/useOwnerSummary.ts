@@ -123,12 +123,19 @@ export function useOwnerSummary(period: OwnerSummaryPeriod = "30d"): OwnerSummar
   const todayTotal = period === "today" ? appointments.length : todayAppts.length;
   const todayDnas = (period === "today" ? appointments : todayAppts).filter((a) => a.status === "dna").length;
 
+  // Headline "patients at risk" = the actionable AT_RISK bucket only. The
+  // cadence-relative model (compute-risk-score.ts) reserves AT_RISK for patients
+  // who were actually seen (lastSessionDate present) and are overdue versus their
+  // own rebooking rhythm but still inside the chase window. LAPSED/CHURNED are
+  // past that window (a separate bucket), and never-seen imports are NEW — so the
+  // old "259" stale-Spires bleed can no longer land here.
   const alertPatients = patients
     .filter(
       (p) =>
         !p.discharged &&
-        (p.lifecycleState === "AT_RISK" || p.lifecycleState === "LAPSED") &&
-        !p.nextSessionDate
+        p.lifecycleState === "AT_RISK" &&
+        !p.nextSessionDate &&
+        !!p.lastSessionDate
     )
     .map((p): RetentionAlert => ({
       id: p.id,
