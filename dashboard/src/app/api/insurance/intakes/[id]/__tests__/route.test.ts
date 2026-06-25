@@ -90,6 +90,7 @@ function seedPendingIntake(overrides: Record<string, unknown> = {}) {
     source: "form",
     insurerName: "Bupa",
     policyNumber: "AB123456",
+    authorisationCode: "AUTH9",
     confidence: 1,
     capturedAt: "2026-06-08T09:30:00.000Z",
     capturedBy: "patient",
@@ -159,5 +160,20 @@ describe("PATCH /api/insurance/intakes/[id]", () => {
     seedPendingIntake();
     const res = await PATCH(req({ action: "frobnicate" }), ctx);
     expect(res.status).toBe(400);
+  });
+
+  it("returns 422 and does not write when a pre-auth insurer has no authorisation code", async () => {
+    seedPendingIntake({ insurerName: "Bupa", authorisationCode: "" });
+    const res = await PATCH(req({ action: "approve" }), ctx);
+    expect(res.status).toBe(422);
+    expect(mockWriteInsurance).not.toHaveBeenCalled();
+    expect(sets.some((s) => s.data.reviewStatus === "approved")).toBe(false);
+  });
+
+  it("allows a self-funding patient to be approved without an auth code", async () => {
+    seedPendingIntake({ insurerName: "Self-funding", authorisationCode: "" });
+    const res = await PATCH(req({ action: "approve" }), ctx);
+    expect(res.status).toBe(200);
+    expect(mockWriteInsurance).toHaveBeenCalledTimes(1);
   });
 });
