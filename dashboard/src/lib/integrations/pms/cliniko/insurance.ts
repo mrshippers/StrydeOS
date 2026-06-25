@@ -155,6 +155,26 @@ export function mergeInvoiceExtraInfo(existing: string | undefined, summary: str
   return preserved ? `${preserved}\n\n${block}` : block;
 }
 
+/**
+ * One-click deep link to Cliniko's "new invoice" screen for a patient, which
+ * pre-fills the staged insurance block (verified live: creating an invoice from
+ * the patient auto-loads invoice_extra_information). Cliniko's API cannot create
+ * invoices (POST /invoices is 404), so this link is how StrydeOS closes the loop:
+ * the clinician lands on a pre-filled invoice and just clicks Create.
+ *
+ * `webBaseUrl` is the clinic's Cliniko WEB host (e.g. https://acme.uk3.cliniko.com),
+ * which the API does not expose — it is stored on the PMS integration config.
+ * Returns null when it isn't configured, so callers degrade gracefully.
+ */
+export function clinikoInvoiceDeepLink(
+  webBaseUrl: string | undefined | null,
+  patientRef: string,
+): string | null {
+  const base = (webBaseUrl ?? "").trim().replace(/\/$/, "");
+  if (!base || !patientRef) return null;
+  return `${base}/invoices/new?patient_id=${encodeURIComponent(patientRef)}`;
+}
+
 /** Replace any full policy/auth value in an error string with its redacted form. */
 function redactError(err: unknown, record: InsuranceRecord): string {
   let msg = err instanceof Error ? err.message : String(err);
@@ -203,10 +223,14 @@ export async function writeInsuranceToCliniko(
     // `concession_type`, so we write the canonical insurer name there as well as
     // the human-readable summary into `invoice_extra_information`. Without this,
     // a write→read would lose the insurer (the summary string is not parsed back).
+    // NB: we deliberately do NOT write `concession_type`. Cliniko treats it as a
+    // controlled value and silently drops a free insurer name (verified on a live
+    // Spires patient: the PATCH succeeded but concession_type read back empty), so
+    // writing it was a no-op that gave false round-trip confidence. The insurer is
+    // carried in invoice_extra_information instead.
     const patch: Record<string, string> = {
       invoice_extra_information: mergeInvoiceExtraInfo(existingExtra, buildInsuranceSummary(record)),
     };
-    if (record.insurerName) patch.concession_type = record.insurerName;
     if (record.addressLine1) patch.address_1 = record.addressLine1;
     if (record.addressLine2) patch.address_2 = record.addressLine2;
     if (record.town) patch.city = record.town;

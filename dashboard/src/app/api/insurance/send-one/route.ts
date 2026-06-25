@@ -20,6 +20,7 @@ import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { testClinikoConnection } from "@/lib/integrations/pms/cliniko/client";
 import { createIntakeLink } from "@/lib/insurance/create-link";
 import { buildInsuranceIntakeSms } from "@/lib/insurance/sms";
+import { toE164UK } from "@/lib/insurance/phone";
 import { checkIntakeSuppression } from "@/lib/insurance/dedupe";
 import { buildInsuranceIntakeEmail } from "@/lib/intelligence/emails/insurance-intake";
 import { getResend } from "@/lib/resend";
@@ -90,33 +91,35 @@ async function handler(request: NextRequest) {
       nowMs: Date.now(),
     });
 
+    // Email — best-effort. A throw (missing Resend key, network) must NOT abort
+    // the request before SMS is even attempted, and must not be reported as sent.
     let emailed = false;
     if (patient.email) {
-      const { html, text } = buildInsuranceIntakeEmail({
-        patientName: [patient.firstName, patient.lastName].filter(Boolean).join(" ") || undefined,
-        clinicName: branding.clinicName,
-        url: link.url,
-      });
-      const { error } = await getResend().emails.send({
-        from: branding.emailFrom,
-        to: patient.email,
-        subject: "Confirm your insurance before your appointment",
-        html,
-        text,
-      });
-      emailed = !error;
+      try {
+        const { html, text } = buildInsuranceIntakeEmail({
+          patientName: [patient.firstName, patient.lastName].filter(Boolean).join(" ") || undefined,
+          clinicName: branding.clinicName,
+          url: link.url,
+        });
+        const { error } = await getResend().emails.send({
+          from: branding.emailFrom,
+          to: patient.email,
+          subject: "Confirm your insurance before your appointment",
+          html,
+          text,
+        });
+        emailed = !error;
+        if (error) console.error("[send-one] Resend send failed:", error);
+      } catch (e) {
+        emailed = false;
+        console.error("[send-one] Resend threw:", e instanceof Error ? e.message : e);
+      }
     }
 
-    // SMS — the patient's mobile is often the faster channel. Best-effort.
+    // SMS — the patient's mobile is often the faster channel. Best-effort, but a
+    // config failure is logged so a silently-dark Twilio is visible in ops.
     let texted = false;
-    const rawPhone = (patient.phone ?? "").replace(/[^\d+]/g, "");
-    const smsTo = rawPhone.startsWith("+")
-      ? rawPhone
-      : rawPhone.startsWith("0")
-        ? `+44${rawPhone.slice(1)}`
-        : rawPhone
-          ? `+${rawPhone}`
-          : "";
+    const smsTo = toE164UK(patient.phone) ?? "";
     if (smsTo) {
       try {
         await getTwilio().messages.create({
@@ -129,9 +132,22 @@ async function handler(request: NextRequest) {
           }),
         });
         texted = true;
-      } catch {
+      } catch (e) {
         texted = false;
+        console.error("[send-one] Twilio send failed:", e instanceof Error ? e.message : e);
       }
+    }
+
+    // Delivery gate: if NOTHING actually went out, the issued link must not count
+    // as a "recent send" (it would 409-suppress retries for 24h) and the response
+    // must not claim success. Roll the link back and surface the failure.
+    if (!emailed && !texted) {
+      await db.collection("clinics").doc(clinicId).collection("insurance_intake_links").doc(link.linkId).delete().catch(() => {});
+      await db.collection("intake_shortlinks").doc(link.slug).delete().catch(() => {});
+      return NextResponse.json(
+        { ok: false, error: "Nothing was delivered (no working email or SMS channel for this patient).", emailed, texted, email: patient.email ?? null },
+        { status: 502 },
+      );
     }
 
     await writeAuditLog(db, clinicId, {
