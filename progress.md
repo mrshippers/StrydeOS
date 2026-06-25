@@ -71,6 +71,15 @@ All test+tsc verified. findings.md complete.
   - utilisation diary-derived, trend 8→46→52→20% — no longer flat-wrong.
 - Found + fixed pre-existing units bug: clinic utilisation/dna targets stored percent-scaled (80 not 0.8) → false danger. Normalized in compute-kpis resolver (matches hep). 197 intelligence tests pass.
 
+### POST-DEPLOY: follow-up rate correction (honest)
+- First live recompute showed follow-up 1.0, then 0 — I over-claimed "1.0 real". Investigated: Spires data is mostly FUTURE scheduled (5 IA vs 95 FU over 14d, almost all status=scheduled). The per-week metric counts only COMPLETED appts, so weeks with no completed initial assessment make followUps/IA degenerate to 0.
+- Root: compute-kpis used the latest week's ratio. Fixed → rolling 90-day aggregate (sum FUs ÷ sum IAs, computeRollingFollowUpRate), per CLAUDE.md "weekly + rolling 90-day window"; returns null (no-data) not false 0; widened metrics load 8→14 weeks. 17 intelligence tests (3 new). Commit 9025d2c.
+- The ORIGINAL bug (sessions/patient ≈ "100% for everyone") IS fixed; this is the windowing refinement.
+
+### GIT INCIDENT (parallel session)
+- A concurrent Claude window checked out branch `fix/intake-deeplink-and-delivery-hardening` (insurance/intake work) in the shared working dir BETWEEN my commit+push, so 9025d2c landed on their branch not main, and their insurance/phone changes are uncommitted in the tree.
+- Recovered safely: verified 9025d2c contained only my 2 compute-kpis files on top of ebfe2cf, `git branch -f main 9025d2c` (main not checked out), pushed. Left their branch + uncommitted work untouched. DID NOT commit/stash/checkout their files.
+
 ### REMAINING (UI-heavy — best done with live numbers + visual context via CDP)
 - Bug 3 Intelligence step-up (after numbers verified)
 - Bug 5 Pulse: gate 4 cards on connected sources + collapse 6 "sources to connect" (follow-up listing already fixed via formula)

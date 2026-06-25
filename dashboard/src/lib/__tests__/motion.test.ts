@@ -3,7 +3,7 @@ import { DURATION, EASING, pillStyleFor } from "@/lib/motion";
 
 describe("motion re-exports", () => {
   it("re-exports canonical easing", () => {
-    expect(EASING).toBe("cubic-bezier(0.16, 1, 0.3, 1)");
+    expect(EASING).toBe("cubic-bezier(0.22, 1, 0.36, 1)");
   });
 
   it("re-exports DURATION map matching tokens", () => {
@@ -31,7 +31,7 @@ describe("pillStyleFor", () => {
   it("transition uses canonical easing and pill duration", () => {
     const s = pillStyleFor(1, 3);
     expect(s.transition).toBe(
-      "left 400ms cubic-bezier(0.16, 1, 0.3, 1)",
+      "left 400ms cubic-bezier(0.22, 1, 0.36, 1)",
     );
   });
 });

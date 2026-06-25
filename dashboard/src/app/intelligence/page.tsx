@@ -37,6 +37,8 @@ import type { OutcomeMeasureType, Patient } from "@/types";
 import { formatPence, formatPercent, formatWeekDate } from "@/lib/utils";
 import InsightFeed from "@/components/intelligence/InsightFeed";
 import KpiProjectionStrip from "@/components/intelligence/KpiProjectionStrip";
+import ClinicianCoachingCard, { CoachingPill } from "@/components/intelligence/ClinicianCoachingCard";
+import { deriveCoachingSignals, type CoachingSeverity } from "@/components/intelligence/clinician-coaching";
 import EventsActionedByPulseTile from "@/components/intelligence/EventsActionedByPulseTile";
 import PayerBreakdownChart from "@/components/intelligence/PayerBreakdownChart";
 import {
@@ -303,6 +305,23 @@ function MiniSparkline({ data: rawData, color, higherIsBetter }: { data: number[
       })}
     </svg>
   );
+}
+
+// Direction + magnitude for the summary StatCards, derived from a real weekly
+// series. Returns nothing when there are too few points to claim a trend, so
+// single-week clinics never show a fabricated arrow.
+function buildStatTrend(
+  series: number[],
+  higherIsBetter = true,
+): { trend?: "up" | "down" | "flat"; trendPercent?: number; sparklineData?: number[] } {
+  const data = series.filter((v) => Number.isFinite(v));
+  if (data.length < 2) return {};
+  const first = data[0];
+  const last = data[data.length - 1];
+  const trend: "up" | "down" | "flat" =
+    last === first ? "flat" : last > first === higherIsBetter ? "up" : "down";
+  const trendPercent = first !== 0 ? ((last - first) / Math.abs(first)) * 100 : undefined;
+  return { trend, trendPercent, sparklineData: data };
 }
 
 // ─── Value Tab ────────────────────────────────────────────────────────────────
@@ -799,6 +818,23 @@ export default function IntelligencePage() {
   const totalReferrals = referrals.reduce((s, r) => s + r.patientsReferred, 0);
   const totalConverted = referrals.reduce((s, r) => s + r.convertedToBooking, 0);
 
+  // Trend context for the summary cards — derived from the weekly stats series
+  // (`stats`) and existing projections. Gives each headline number a direction
+  // and meaning instead of a standalone figure. No new data sources.
+  const weeklyRevenueTrend = buildStatTrend(
+    stats.map((s) => (s.revenuePerSessionPence ?? 0) * (s.appointmentsTotal ?? 0)),
+    true,
+  );
+  const revPerSessionTrend = buildStatTrend(
+    stats.map((s) => s.revenuePerSessionPence ?? 0),
+    true,
+  );
+  const npsTrendData = npsKpi?.trend ? buildStatTrend(npsKpi.trend, true) : {};
+  const reviewVelocityTrend = buildStatTrend(
+    reviews.monthlyVelocity.map((m) => m.count),
+    true,
+  );
+
   const toggleClinician = useCallback((id: string) => {
     setExpandedClinician((prev) => (prev === id ? null : id));
   }, []);
@@ -878,11 +914,23 @@ export default function IntelligencePage() {
           value={formatPence(latestWeekRevenue)}
           unit={latest?.weekStart ? `w/c ${latest.weekStart}` : ""}
           status="neutral"
+          trend={weeklyRevenueTrend.trend}
+          trendPercent={weeklyRevenueTrend.trendPercent}
+          sparklineData={weeklyRevenueTrend.sparklineData}
+          insight={
+            weeklyRevenueTrend.trend && weeklyRevenueTrend.trend !== "flat"
+              ? `${weeklyRevenueTrend.trend === "up" ? "Up" : "Down"} vs ${stats.length}-week start`
+              : undefined
+          }
         />
         <StatCard
           label="Rev per Session"
           value={formatPence(avgRevPerSession)}
           status={avgRevPerSession >= 7500 ? "ok" : "warn"}
+          trend={revPerSessionTrend.trend}
+          trendPercent={revPerSessionTrend.trendPercent}
+          sparklineData={revPerSessionTrend.sparklineData}
+          insight={`£${(REFERENCE_TARGETS.revenuePerSessionPence / 100).toFixed(0)} UK reference`}
         />
         {(connections.nps || usedDemo) && (
           <StatCard
@@ -890,6 +938,8 @@ export default function IntelligencePage() {
             value={reputationDemoFallback && !usedDemo ? "—" : npsKpi ? npsScore : "—"}
             status={reputationDemoFallback && !usedDemo ? "neutral" : npsKpi ? (npsStatus === "ok" ? "ok" : npsStatus === "warn" ? "warn" : "danger") : "neutral"}
             insight={reputationDemoFallback && !usedDemo ? "No NPS data yet" : npsKpi ? "From nps_sms responses" : "Awaiting pipeline data"}
+            trend={npsKpi ? npsTrendData.trend : undefined}
+            sparklineData={npsKpi ? npsTrendData.sparklineData : undefined}
           />
         )}
         <StatCard
@@ -899,6 +949,8 @@ export default function IntelligencePage() {
           status={reputationDemoFallback && !usedDemo ? "neutral" : "ok"}
           insight={reputationDemoFallback && !usedDemo ? "Connect your Google Business Profile" : `${reviews.monthlyVelocity.length > 0 ? reviews.monthlyVelocity[reviews.monthlyVelocity.length - 1].count : 0} this month`}
           action={reputationDemoFallback && !usedDemo ? { label: "Connect in Settings", onClick: () => router.push("/settings#reviews") } : undefined}
+          trend={reputationDemoFallback && !usedDemo ? undefined : reviewVelocityTrend.trend}
+          sparklineData={reputationDemoFallback && !usedDemo ? undefined : reviewVelocityTrend.sparklineData}
         />
         <StatCard
           label="Referral Conv."
@@ -931,12 +983,22 @@ export default function IntelligencePage() {
               {visibleClinicianKpis.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-sm text-muted">
-                    Per-clinician performance data will appear once metrics are computed from appointment records.
+                    No clinician metrics for this period yet. Once a full week of appointments syncs from your PMS, each clinician&apos;s follow-up, utilisation, DNA and HEP trends appear here with coaching signals attached.
                   </td>
                 </tr>
               )}
               {visibleClinicianKpis.map((c) => {
                 const isExpanded = expandedClinician === c.clinicianId;
+                const coachingSignals = deriveCoachingSignals(c);
+                const topSev: CoachingSeverity | null =
+                  coachingSignals.length === 0
+                    ? null
+                    : coachingSignals.some((s) => s.severity === "critical")
+                      ? "critical"
+                      : coachingSignals.some((s) => s.severity === "watch")
+                        ? "watch"
+                        : "strong";
+                const toCoachCount = coachingSignals.filter((s) => s.severity !== "strong").length;
                 return (
                   <Fragment key={c.clinicianId}>
                     <tr
@@ -959,6 +1021,7 @@ export default function IntelligencePage() {
                             {c.clinicianName.slice(0, 2).toUpperCase()}
                           </div>
                           <span className="font-semibold text-navy">{c.clinicianName}</span>
+                          {topSev && <CoachingPill severity={topSev} count={toCoachCount} />}
                         </div>
                       </td>
                       <td className="py-4 px-4">
@@ -1016,6 +1079,10 @@ export default function IntelligencePage() {
                     {isExpanded && (
                       <tr key={`${c.clinicianId}-drill`} className="border-b border-border/50 bg-cloud-light/30">
                         <td colSpan={7} className="px-5 pb-5 pt-3">
+                          <div className="mb-4">
+                            <ClinicianCoachingCard clinicianName={c.clinicianName} signals={coachingSignals} />
+                          </div>
+                          <p className="text-[11px] font-semibold text-muted uppercase tracking-wide mb-2">Patient breakdown</p>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                               <p className="text-[11px] font-semibold text-blue uppercase tracking-wide mb-2 flex items-center gap-1">

@@ -5,6 +5,7 @@ import { X, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import type { LifecycleState, SequenceType } from "@/types";
 import type { UserPreferences } from "@/hooks/useUserPreferences";
+import { EASING_ARRAY } from "@/lib/motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 
 interface Props {
@@ -127,7 +128,7 @@ export const CustomisePanel: FC<Props> = ({ open, onClose, preferences, onUpdate
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.25, ease: EASING_ARRAY }}
             className="fixed right-0 top-0 bottom-0 z-50 w-80"
           >
           <GlassCard

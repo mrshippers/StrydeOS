@@ -17,6 +17,7 @@
 
 import Link from "next/link";
 import { useEventsActionedByPulse } from "@/hooks/useEventsActionedByPulse";
+import { useConnections } from "@/hooks/useConnections";
 import { brand } from "@/lib/brand";
 import { DURATION, EASING, useMorphValue } from "@/lib/motion";
 import { Zap, ArrowRight } from "lucide-react";
@@ -76,15 +77,20 @@ function Sparkline({ counts }: { counts: number[] }) {
 export default function EventsActionedByPulseTile() {
   const { count, recoveredPounds, revenueLabel, dailyCounts, breakdown, latest, loading } =
     useEventsActionedByPulse();
+  const { sources, loading: connectionsLoading } = useConnections();
 
   const morphRecovered = useMorphValue(recoveredPounds);
   const morphCount = useMorphValue(count);
   const valOpacity = morphRecovered.isAnimating ? 0 : 1;
   const valDur = morphRecovered.isAnimating ? DURATION.morphOut : DURATION.morphIn;
 
-  if (loading) return null;
+  if (loading || connectionsLoading) return null;
 
   const hasData = count > 0;
+  const anyConnected = sources.some((s) => s.connected);
+  // A fresh clinic with nothing connected and no actions has no live source to
+  // report on - render nothing rather than an empty tile.
+  if (!hasData && !anyConnected) return null;
   const showRevenue = revenueLabel !== "count-only";
 
   return (

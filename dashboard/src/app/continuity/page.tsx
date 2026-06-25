@@ -20,6 +20,8 @@ import { SequenceCard } from "@/components/pulse/SequenceCard";
 import { CustomisePanel } from "@/components/pulse/CustomisePanel";
 import { GlassCard } from "@/components/ui/GlassCard";
 import InsurancePanel from "@/components/insurance/InsurancePanel";
+import EnrichmentDrawer from "@/components/intelligence/EnrichmentDrawer";
+import { useConnections } from "@/hooks/useConnections";
 import { formatPercent, formatDaysAgo } from "@/lib/utils";
 import {
   Users,
@@ -79,7 +81,16 @@ function ContinuityPage() {
   const { sequences, toggleSequence, usingDefaults } = useSequences();
   const { user, firebaseUser } = useAuth();
   const { commsLog, commsStats, statsBySequence, totalAttributedRevenuePence, isDemo: commsIsDemo, error: commsError } = useCommsLog();
+  const { sources: connectionSources, loading: connectionsLoading } = useConnections();
   const { preferences, updatePreferences } = useUserPreferences();
+
+  // The Pulse Impact cards only mean something once their source is live:
+  // demo data, or real comms that have actually gone out. When nothing at all
+  // is connected (a fresh clinic) we draw no cards and surface a single compact
+  // connect cluster instead of misleading 0% rates.
+  const anyConnected = connectionSources.some((s) => s.connected);
+  const showImpactCards = commsIsDemo || commsStats.totalSent > 0;
+  const showConnectCTA = !showImpactCards && !anyConnected && !loading && !connectionsLoading;
   const [customiseOpen, setCustomiseOpen] = useState(false);
   const [patientSearch, setPatientSearch] = useState("");
   const patientMap = Object.fromEntries(patients.map((p) => [p.id, p]));
@@ -176,10 +187,10 @@ function ContinuityPage() {
         </GlassCard>
       )}
 
-      {/* Comms summary stats — only once messages have actually been sent.
-          Before that, rates would read a misleading red 0%; the setup banner
-          above communicates the empty state instead. */}
-      {(commsStats.totalSent > 0 || commsIsDemo) && (
+      {/* Comms summary stats — only once the source is live (real sends or
+          demo). Before that, rates would read a misleading red 0%; the setup
+          banner above communicates the empty state instead. */}
+      {showImpactCards && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Total Sent"
@@ -205,6 +216,9 @@ function ContinuityPage() {
           />
         </div>
       )}
+
+      {/* Nothing connected yet — one compact connect cluster instead of cards. */}
+      {showConnectCTA && <EnrichmentDrawer />}
 
       {/* View tabs */}
       <div className="flex items-center justify-between gap-3">

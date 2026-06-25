@@ -65,7 +65,7 @@ describe("tokens/shadows", () => {
 
 describe("tokens/motion", () => {
   it("easing matches the canonical cubic-bezier", () => {
-    expect(motion.easing).toBe("cubic-bezier(0.16, 1, 0.3, 1)");
+    expect(motion.easing).toBe("cubic-bezier(0.22, 1, 0.36, 1)");
   });
 
   it("duration map exposes the canonical milliseconds", () => {

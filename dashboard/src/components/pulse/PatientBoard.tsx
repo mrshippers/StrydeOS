@@ -15,6 +15,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import { daysSince } from "@/lib/utils";
 import { useInsightEvents } from "@/hooks/useInsightEvents";
 import { brand } from "@/lib/brand";
+import { EASING_ARRAY } from "@/lib/motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 
 // Hoisted styles to avoid re-creation per patient row per render
@@ -272,7 +273,7 @@ export const PatientBoard: FC<Props> = ({
                     initial={{ height: 0 }}
                     animate={{ height: "auto" }}
                     exit={{ height: 0 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.2, ease: EASING_ARRAY }}
                     className="overflow-hidden"
                   >
                     <div className="divide-y divide-gray-100">

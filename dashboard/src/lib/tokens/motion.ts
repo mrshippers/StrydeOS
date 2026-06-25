@@ -1,10 +1,17 @@
 /**
  * Motion tokens. Canonical easing + duration map + per-variant lift values.
  * All portal animations use these constants - no inline curves.
- * Easing lifted from website/ModulePricingBanner.jsx:103, :139, :150.
+ *
+ * One easing curve app-wide: the "PS5" ease the dashboard mount stagger uses
+ * (cubic-bezier(0.22, 1, 0.36, 1)). `easingArray` is the same curve in the
+ * 4-tuple form Motion's `ease` prop expects, so framer transitions and CSS
+ * `transition` strings stay on a single source of truth - no second system.
  */
+export const easingArray = [0.22, 1, 0.36, 1] as const;
+
 export const motion = {
-  easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+  easing: `cubic-bezier(${easingArray.join(", ")})`,
+  easingArray,
   duration: {
     mount: 500,
     hover: 300,

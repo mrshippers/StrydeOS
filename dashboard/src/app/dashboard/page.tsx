@@ -1,22 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useOwnerSummary, type OwnerSummaryPeriod } from "@/hooks/useOwnerSummary";
 import { useProgress } from "@/components/TopProgressBar";
 import ErrorBanner from "@/components/ui/ErrorBanner";
-import RevenueTile from "@/components/owner-summary/RevenueTile";
-import TodayTile from "@/components/owner-summary/TodayTile";
-import RetentionTile from "@/components/owner-summary/RetentionTile";
-import UtilisationTile from "@/components/owner-summary/UtilisationTile";
 import EventsActionedByPulseTile from "@/components/intelligence/EventsActionedByPulseTile";
-import InsightFeed from "@/components/intelligence/InsightFeed";
-import { GlassCard } from "@/components/ui/GlassCard";
-import Link from "next/link";
-import { Lightbulb, ArrowRight } from "lucide-react";
+import OwnerSummaryGrid from "@/components/dashboard/OwnerSummaryGrid";
+import InsightsActionCard from "@/components/dashboard/InsightsActionCard";
 import { brand } from "@/lib/brand";
 import { DURATION, EASING, useSlidingPill } from "@/lib/motion";
 import { getTimeGreeting } from "@/lib/greeting";
@@ -118,7 +111,6 @@ function useTickingGreeting(firstName?: string): string {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const { startLoading, stopLoading } = useProgress();
   const [period, setPeriod] = useState<Period>("30d");
 
@@ -187,67 +179,27 @@ export default function DashboardPage() {
       {/* Error state */}
       {error && <ErrorBanner message={error} />}
 
-      {/* Four-tile grid — 2x2 at lg, single row only on xl+ (avoids narrow Utilisation crush) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Link href="/intelligence" aria-label="Open Intelligence" className="group block rounded-[24px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple/40">
-          <RevenueTile
-            revenueMtdPence={revenueMtdPence}
-            periodLabel={periodConfig.revenueLabel}
-            loading={loading}
-          />
-        </Link>
-        <Link href="/continuity" aria-label="Open Pulse" className="group block rounded-[24px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40">
-          <TodayTile
-            todayTotal={todayTotal}
-            todayDnas={todayDnas}
-            periodLabel={periodConfig.appointmentLabel}
-            loading={loading}
-          />
-        </Link>
-        <Link href="/continuity" aria-label="Open Pulse retention" className="group block rounded-[24px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40">
-          <RetentionTile alerts={retentionAlerts} alertCount={retentionAlertCount} loading={loading} />
-        </Link>
-        <Link href="/receptionist" aria-label="Open Ava" className="group block rounded-[24px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40">
-          <UtilisationTile rows={clinicianUtilisation} loading={loading} />
-        </Link>
-      </div>
+      {/* Owner Summary — drag-reorderable four-tile grid, order persisted per user.
+          2x2 at sm, single row only on xl+ (avoids narrow Utilisation crush). */}
+      <OwnerSummaryGrid
+        revenueMtdPence={revenueMtdPence}
+        todayTotal={todayTotal}
+        todayDnas={todayDnas}
+        retentionAlerts={retentionAlerts}
+        retentionAlertCount={retentionAlertCount}
+        clinicianUtilisation={clinicianUtilisation}
+        loading={loading}
+        revenueLabel={periodConfig.revenueLabel}
+        appointmentLabel={periodConfig.appointmentLabel}
+      />
 
-      {/* Operational row: cross-module activity (left) + actionable insights (right) */}
+      {/* Operational row: cross-module activity (left) + compact actionable insights (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-1">
           <EventsActionedByPulseTile />
         </div>
         <div className="lg:col-span-2">
-          <GlassCard
-            variant="standard"
-            tint="intelligence"
-            className="p-5"
-            style={{ background: "var(--surface-tile)", minHeight: 220 }}
-            as="section"
-          >
-            <header className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-6 h-6 rounded-full inline-flex items-center justify-center"
-                  style={{ background: `${brand.purple}22`, color: brand.purple }}
-                >
-                  <Lightbulb size={12} />
-                </span>
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-navy/70 dark:text-white/55">
-                  Insights to action
-                </h2>
-              </div>
-              <Link
-                href="/intelligence"
-                className="flex items-center gap-1 text-[11.5px] font-semibold hover:opacity-100 opacity-75 transition-opacity"
-                style={{ color: brand.purple }}
-              >
-                Open Intelligence
-                <ArrowRight size={11} />
-              </Link>
-            </header>
-            <InsightFeed />
-          </GlassCard>
+          <InsightsActionCard />
         </div>
       </div>
 

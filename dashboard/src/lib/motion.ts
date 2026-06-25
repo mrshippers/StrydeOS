@@ -7,6 +7,14 @@ export const EASING = tokens.easing;
 export const DURATION = tokens.duration;
 
 /**
+ * The canonical easing in the 4-tuple form Motion's `ease` prop expects.
+ * Framer transitions must use this instead of an inline curve so every
+ * surface (mount stagger, height collapse, drawer slide) stays on the
+ * single PS5 curve - no parallel "scooting" animation.
+ */
+export const EASING_ARRAY = tokens.easingArray;
+
+/**
  * Flips to true after two animation frames. Single rAF can miss the
  * first paint frame in React 19, so a double rAF is required to make
  * the mount fade visible on every card.
