@@ -45,21 +45,33 @@ function getTimeSlot(dateTime: string): string {
 }
 
 /**
- * Number of bookable slots in a single working day, derived from the clinic's
- * working-hours window and the configured slot length. This is the same diary
- * model Ava uses to derive free slots for booking (no PMS exposes a free-slot
- * endpoint), so utilisation and Ava's availability agree on what a "slot" is.
- * Defaults: 09:00–18:00, 45-minute slots → 12 slots/day.
+ * Slots in a working day, LEARNED FROM THE DIARY. The working-day window is the
+ * span from the earliest appointment start to the latest appointment finish
+ * (start + slotMinutes) observed across the clinic's booked appointments, divided
+ * into slotMinutes-length slots. This reads real availability from the booking
+ * data instead of a manual hours config: a clinic that only ever books 09:00–17:00
+ * gets a ~10-slot day, so a day with 9 of those filled reads 90%. Returns 0 when
+ * there are no bookable appointments (utilisation then degrades to 0).
  */
-function slotsPerWorkingDay(
-  hours: { start?: string; end?: string } | undefined,
+function slotsPerWorkingDayFromDiary(
+  appointments: { dateTime: string; status: string }[],
   slotMinutes: number,
 ): number {
-  const [sH = 9, sM = 0] = (hours?.start ?? "09:00").split(":").map(Number);
-  const [eH = 18, eM = 0] = (hours?.end ?? "18:00").split(":").map(Number);
-  const windowMins = (eH * 60 + eM) - (sH * 60 + sM);
-  if (windowMins <= 0 || slotMinutes <= 0) return 0;
-  return Math.floor(windowMins / slotMinutes);
+  if (slotMinutes <= 0) return 0;
+  let minStart = Infinity;
+  let maxEnd = -Infinity;
+  for (const a of appointments) {
+    // Only slots that consume diary capacity define the window.
+    if (a.status !== "completed" && a.status !== "dna" && a.status !== "scheduled") {
+      continue;
+    }
+    const d = new Date(a.dateTime);
+    const startMins = d.getHours() * 60 + d.getMinutes();
+    if (startMins < minStart) minStart = startMins;
+    if (startMins + slotMinutes > maxEnd) maxEnd = startMins + slotMinutes;
+  }
+  if (!Number.isFinite(minStart) || maxEnd <= minStart) return 0;
+  return Math.max(1, Math.floor((maxEnd - minStart) / slotMinutes));
 }
 
 interface AppointmentLike {
@@ -351,12 +363,12 @@ export async function computeWeeklyMetricsForClinic(
   if (!clinicDoc.exists) return { written: 0 };
   const clinicData = clinicDoc.data();
   const sessionPricePence: number = clinicData?.sessionPricePence ?? 0;
-  // Diary-derived utilisation capacity: working-hours window (clinic.ava.hours,
-  // shared with Ava's booking flow) split into slots of `targets.slotMinutes`
-  // (default 45). Replaces the old flat 40-slots/week assumption.
+  // Utilisation capacity is READ FROM THE DIARY, not a config: the working-day
+  // window is learned from the actual span of booked appointment times (earliest
+  // start to latest finish observed for this clinic), split into `slotMinutes`
+  // slots. slotsPerDay is derived below once appointments are loaded. Replaces the
+  // old flat 40-slots/week assumption and avoids depending on a manual hours config.
   const slotMinutes: number = clinicData?.targets?.slotMinutes ?? 45;
-  const clinicHours = (clinicData?.ava as { hours?: { start?: string; end?: string } } | undefined)?.hours;
-  const slotsPerDay: number = slotsPerWorkingDay(clinicHours, slotMinutes);
   const targets = {
     followUpRate: clinicData?.targets?.followUpRate ?? 4.0,
     hepRate: clinicData?.targets?.hepRate ?? clinicData?.targets?.physitrackRate ?? 95,
@@ -435,6 +447,12 @@ export async function computeWeeklyMetricsForClinic(
     id: d.id,
     ...d.data(),
   })) as (Appointment & { patientId: string })[];
+
+  // Learn the clinic's working-day window from the diary itself and turn it into a
+  // slots-per-working-day count for utilisation (booked ÷ available). Empty leading/
+  // trailing capacity in the day is captured because the window spans the earliest
+  // start to the latest finish actually observed across the clinic's appointments.
+  const slotsPerDay: number = slotsPerWorkingDayFromDiary(appointments, slotMinutes);
 
   const metricsRef = clinicBase.collection(COLLECTION_METRICS_WEEKLY);
 
