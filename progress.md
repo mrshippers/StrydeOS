@@ -49,6 +49,23 @@
 | 2026-06-25 | vitest pipeline (after at-risk v2) | 78 passed |
 | 2026-06-25 | tsc --noEmit (changed files) | clean |
 
-### Next
-- Surfaces: useOwnerSummary + continuity to count AT_RISK (actionable) only, gated to live source (dataMode=live + integration_health). Disconnected → no cards.
-- Wire UI-triggered recompute to prove cross-module sync. Then Bugs 2-8.
+### CHECKPOINT — data-integrity core DONE + verified (7 commits)
+| Commit | Bug |
+|--------|-----|
+| 6eee166 | follow-up rate + utilisation canonical formulas |
+| 9383816 | cadence-relative at-risk model (kills 259 bleed) |
+| 8fc4d7c | retention headline counts actionable AT_RISK only |
+| a52f134 | utilisation capacity read from the diary |
+| c50ba13 | Bug 2: KPI Projection actually projects from metrics_weekly |
+| 886b0e1 | Bug 4: clinicians full names + synced figures |
+All test+tsc verified. findings.md complete.
+
+### BLOCKED ON DEPLOY (prod gate)
+- Fixes are CODE-complete but the live pipeline runs DEPLOYED code. To make 259→correct + utilisation→90% visible and prove cross-module sync, must deploy branch then recompute clinic-spires. Needs Jamal go-ahead (prod merge). The 06:00 cron would otherwise overwrite a premature recompute with old code.
+
+### REMAINING (UI-heavy — best done with live numbers + visual context via CDP)
+- Bug 3 Intelligence step-up (after numbers verified)
+- Bug 5 Pulse: gate 4 cards on connected sources + collapse 6 "sources to connect" (follow-up listing already fixed via formula)
+- Bug 6 swap Pulse scooting anim → dashboard PS5 anim (easing token lib/tokens/motion.ts)
+- Bug 7 notifications banner redesign + reposition off dashboard tab
+- Bug 8 dashboard drag-and-drop reorderable cards, persisted per user, graph-led

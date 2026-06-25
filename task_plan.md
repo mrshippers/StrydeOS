@@ -20,12 +20,11 @@ Data integrity FIRST, UX second across three modules (Intelligence, Pulse Impact
 ## Phases
 - [x] **P0 — Setup**: branch `fix/module-data-integrity` verified (even with main), planning files created, baseline clean.
 - [x] **P1 — Logic Harness (TRACE FIRST, no fixes)**: DONE. 5 parallel tracers + direct verification. findings.md written. Headline: numbers are broken-formula/stale/cached, NOT hardcoded. Awaiting user answers on 4 open questions before P2.
-- [ ] **P2 — Bug 1 Data/logic**: kill hardcoded values, fix broken logic, wire cross-module sync. (Blocks everything.)
-  - Worked examples to resolve: £7,050 revenue; 259 patients at risk (old Spires bleed); 22 active insights / £880k at risk; follow-up rate showing 100% for everyone; utilisation ≠ clinical-performance numbers.
-- [ ] **P3 — Bug 2 Intelligence KPI Projection tab**: actually project + analyse (Clinician Intelligence view already does this).
-- [ ] **P4 — Bug 3 Intelligence step-up**: raise the bar on what it surfaces once numbers are right.
-- [ ] **P5 — Bug 4 Clinicians tab**: show every clinician's FULL name, sync figures with other modules.
-- [ ] **P6 — Bug 5 Pulse Impact + Insights**: fix follow-up-rate listing; only render cards for live/connected sources (none connected → no four cards); collapse six "sources to connect" into compact attached boxes.
+- [x] **P2 — Bug 1 Data/logic**: DONE in code+tests (commits 6eee166, 9383816, 8fc4d7c, a52f134). Follow-up rate, utilisation (diary-derived), at-risk cadence model + headline. Cross-module sync confirmed shared via metrics_weekly; live recompute pending deploy.
+- [x] **P3 — Bug 2 Intelligence KPI Projection tab**: DONE (c50ba13) — projects from metrics_weekly trend, resilient when kpis/* empty.
+- [ ] **P4 — Bug 3 Intelligence step-up**: raise the bar (after numbers verified live).
+- [x] **P5 — Bug 4 Clinicians tab**: DONE (886b0e1) — every active clinician, full canonical name, synced figures, "—" for no-data.
+- [ ] **P6 — Bug 5 Pulse Impact + Insights**: follow-up listing FIXED via formula. REMAINING (needs live UI context): gate the four cards on connected sources, collapse six "sources to connect" into compact attached boxes.
 - [ ] **P7 — Bug 6 Animation**: swap Pulse old scooting animation for the PS5-style dashboard animation. One system.
 - [ ] **P8 — Bug 7 Notifications**: compact/clean "insights to action" banner (not full-width, not all-red on click); remove from dashboard tab; restore clinician cards position.
 - [ ] **P9 — Bug 8 Dashboard UX**: Slack-on-4K-TV / PS5-home feel; drag-and-drop reorderable cards, order persisted per user; graph-led; reference marketing hero visual language.
