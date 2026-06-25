@@ -114,12 +114,37 @@ async function handler(
       );
     }
 
+    // Atomic claim: flip pending → writing inside a transaction so two
+    // concurrent or retried approves cannot both pass the guard and both PATCH
+    // the PMS. The loser reads the already-claimed state and 409s. This mirrors
+    // the create()-based dedup claim on the WriteUpp webhook; the earlier
+    // status read above is advisory, this transaction is the authoritative gate.
+    const claim = await db.runTransaction(async (tx) => {
+      const fresh = await tx.get(intakeRef);
+      const data = fresh.data() as InsuranceRecord | undefined;
+      if (!data) return { ok: false as const, status: 404, error: "Intake not found" };
+      if (data.reviewStatus !== "pending") {
+        return { ok: false as const, status: 409, error: `Intake already ${data.reviewStatus}` };
+      }
+      tx.update(intakeRef, { reviewStatus: "writing", writeClaimedAt: now, writeClaimedBy: user.uid });
+      return { ok: true as const };
+    });
+    if (!claim.ok) {
+      return NextResponse.json({ error: claim.error }, { status: claim.status });
+    }
+
     const fieldMap = await adapter.discoverInsuranceFields();
     const result = await adapter.writeInsurance(record, fieldMap);
 
     if (!result.ok) {
+      // Release the claim so the intake is retryable rather than stuck in "writing".
       await intakeRef.set(
-        { audit: [...(record.audit ?? []), auditFor({ action: "write_failed", note: result.error })] },
+        {
+          reviewStatus: "pending",
+          writeClaimedAt: null,
+          writeClaimedBy: null,
+          audit: [...(record.audit ?? []), auditFor({ action: "write_failed", note: result.error })],
+        },
         { merge: true },
       );
       return NextResponse.json({ ok: false, error: result.error ?? "PMS write failed" }, { status: 502 });
@@ -135,6 +160,8 @@ async function handler(
       {
         reviewStatus: "approved",
         pmsInvoiceUrl,
+        writeClaimedAt: null,
+        writeClaimedBy: null,
         audit: [
           ...(record.audit ?? []),
           auditFor({ action: "approved" }),

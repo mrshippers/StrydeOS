@@ -18,6 +18,7 @@ const DASH_RE = /[–—]/g;
  * ASCII control characters: U+0000-U+001F (includes CR U+000D, LF U+000A, TAB U+0009)
  * and DEL U+007F. These must never appear in an RFC 5322 unstructured header value.
  */
+// eslint-disable-next-line no-control-regex -- intentional: strip ASCII control chars to block header injection
 const CONTROL_RE = /[\x00-\x1f\x7f]/g;
 
 /**

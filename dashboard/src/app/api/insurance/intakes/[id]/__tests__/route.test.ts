@@ -57,6 +57,7 @@ const sets: { path: string; data: Record<string, unknown>; merge?: boolean }[] =
 function docRef(path: string) {
   return {
     id: path.split("/").pop(),
+    path,
     collection: (name: string) => collRef(`${path}/${name}`),
     get: async () => ({ exists: seed[path] !== undefined, id: path.split("/").pop(), data: () => seed[path] }),
     set: async (data: Record<string, unknown>, opts?: { merge?: boolean }) => {
@@ -68,8 +69,24 @@ function docRef(path: string) {
 function collRef(path: string) {
   return { doc: (id: string) => docRef(`${path}/${id}`) };
 }
+
+// Minimal transaction shim: get() reads current seed, update() merges into it
+// and records the write — enough to exercise the pending → writing claim.
+type TxRef = { path: string; get: () => Promise<{ exists: boolean; data: () => unknown }> };
+const runTransaction = async <T>(fn: (tx: {
+  get: (ref: TxRef) => Promise<{ exists: boolean; data: () => unknown }>;
+  update: (ref: TxRef, data: Record<string, unknown>) => void;
+}) => Promise<T>): Promise<T> =>
+  fn({
+    get: (ref) => ref.get(),
+    update: (ref, data) => {
+      sets.push({ path: ref.path, data, merge: true });
+      seed[ref.path] = { ...(seed[ref.path] ?? {}), ...data };
+    },
+  });
+
 vi.mock("@/lib/firebase-admin", () => ({
-  getAdminDb: () => ({ collection: (name: string) => collRef(name) }),
+  getAdminDb: () => ({ collection: (name: string) => collRef(name), runTransaction }),
 }));
 
 import { PATCH } from "../route";
@@ -154,6 +171,37 @@ describe("PATCH /api/insurance/intakes/[id]", () => {
     const res = await PATCH(req({ action: "approve" }), ctx);
     expect(res.status).toBe(409);
     expect(mockWriteInsurance).not.toHaveBeenCalled();
+  });
+
+  it("is atomic: two concurrent approves write to the PMS only once", async () => {
+    seedPendingIntake();
+    // Hold the PMS write open until both requests have claimed, forcing a real race.
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    mockWriteInsurance.mockImplementation(async () => {
+      await gate;
+      return { ok: true, wroteCustomFields: true, wroteBillingInfo: true, usedFallback: false, onboardingTaskNeeded: false };
+    });
+
+    const a = PATCH(req({ action: "approve" }), ctx);
+    const b = PATCH(req({ action: "approve" }), ctx);
+    release();
+    const [ra, rb] = await Promise.all([a, b]);
+
+    const statuses = [ra.status, rb.status].sort();
+    expect(statuses).toEqual([200, 409]); // one wins, one is rejected by the claim
+    expect(mockWriteInsurance).toHaveBeenCalledTimes(1); // PMS touched exactly once
+  });
+
+  it("releases the claim back to pending when the PMS write fails (retryable)", async () => {
+    seedPendingIntake();
+    mockWriteInsurance.mockResolvedValue({
+      ok: false, wroteCustomFields: false, wroteBillingInfo: false,
+      usedFallback: false, onboardingTaskNeeded: false, error: "Cliniko 500",
+    });
+    const res = await PATCH(req({ action: "approve" }), ctx);
+    expect(res.status).toBe(502);
+    expect(seed["clinics/clinic-1/insurance_intakes/intake-1"]?.reviewStatus).toBe("pending");
   });
 
   it("rejects an unknown action", async () => {
