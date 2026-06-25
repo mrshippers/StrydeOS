@@ -186,16 +186,20 @@ export function resolveKpiTargetWithFlag(
       return { target: REFERENCE_TARGETS.hepRate, targetIsReference: true };
     }
     case "utilisation": {
-      const clinic = targets?.utilisationRate;
-      return clinic != null
-        ? { target: clinic, targetIsReference: false }
-        : { target: REFERENCE_TARGETS.utilisationRate, targetIsReference: true };
+      const raw = targets?.utilisationRate;
+      if (typeof raw === "number") {
+        // Normalise percent-scaled values (e.g. 80 stored as 80 not 0.80) so the
+        // fraction-based utilisation value is never compared against a 0–100 target.
+        return { target: raw > 1 ? raw / 100 : raw, targetIsReference: false };
+      }
+      return { target: REFERENCE_TARGETS.utilisationRate, targetIsReference: true };
     }
     case "dna-rate": {
-      const clinic = targets?.dnaRate;
-      return clinic != null
-        ? { target: clinic, targetIsReference: false }
-        : { target: REFERENCE_TARGETS.dnaRate, targetIsReference: true };
+      const raw = targets?.dnaRate;
+      if (typeof raw === "number") {
+        return { target: raw > 1 ? raw / 100 : raw, targetIsReference: false };
+      }
+      return { target: REFERENCE_TARGETS.dnaRate, targetIsReference: true };
     }
   }
 }

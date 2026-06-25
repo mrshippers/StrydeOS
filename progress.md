@@ -63,6 +63,14 @@ All test+tsc verified. findings.md complete.
 ### BLOCKED ON DEPLOY (prod gate)
 - Fixes are CODE-complete but the live pipeline runs DEPLOYED code. To make 259→correct + utilisation→90% visible and prove cross-module sync, must deploy branch then recompute clinic-spires. Needs Jamal go-ahead (prod merge). The 06:00 cron would otherwise overwrite a premature recompute with old code.
 
+### DEPLOYED + VERIFIED IN PRODUCTION (2026-06-25)
+- Merged to main, deployed (dpl_2LdBHQK9, portal.strydeos.com). First push auto-skipped (Vercel ignored-build-step: tip commit only touched root files, project root=dashboard/); fixed by a dashboard/ changelog commit 430641e.
+- Recompute /api/pipeline/run {clinicId:clinic-spires} ran (computedAt 17:04). VERIFIED via ops MCP:
+  - cohort: AT_RISK **1** (was 259); NEW 255 (the old zero-appointment imports, correctly excluded); ONBOARDING 228; RE_ENGAGED 16. **259 bleed killed.**
+  - follow-up-rate 1.0 (canonical ratio, real, danger vs target 4) — no longer "100% for everyone".
+  - utilisation diary-derived, trend 8→46→52→20% — no longer flat-wrong.
+- Found + fixed pre-existing units bug: clinic utilisation/dna targets stored percent-scaled (80 not 0.8) → false danger. Normalized in compute-kpis resolver (matches hep). 197 intelligence tests pass.
+
 ### REMAINING (UI-heavy — best done with live numbers + visual context via CDP)
 - Bug 3 Intelligence step-up (after numbers verified)
 - Bug 5 Pulse: gate 4 cards on connected sources + collapse 6 "sources to connect" (follow-up listing already fixed via formula)
