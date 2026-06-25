@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   mapInsuranceTemplates,
   buildInsuranceSummary,
+  mergeInvoiceExtraInfo,
   discoverClinikoInsuranceFields,
   writeInsuranceToCliniko,
   CLINIKO_FORM_TEMPLATES_KEY,
@@ -114,11 +115,72 @@ describe("mapInsuranceTemplates", () => {
 });
 
 describe("buildInsuranceSummary", () => {
-  it("includes insurer, scheme and policy", () => {
+  it("still includes insurer, scheme and policy value", () => {
     const s = buildInsuranceSummary(record());
     expect(s).toContain("Bupa");
     expect(s).toContain("Comprehensive");
     expect(s).toContain("AB123456");
+  });
+
+  it("uses Bupa-native field labels the clinic actually types on the invoice", () => {
+    const s = buildInsuranceSummary(
+      record({ insurerName: "Bupa", policyNumber: "0706547878", authorisationCode: "71206055" }),
+    );
+    expect(s).toContain("Membership number 0706547878");
+    expect(s).toContain("Pre-auth - 71206055");
+    expect(s).not.toContain("Policy:");
+    expect(s).not.toContain("Auth:");
+  });
+
+  it("uses generic labels for non-Bupa insurers", () => {
+    const s = buildInsuranceSummary(record({ insurerName: "AXA Health" }));
+    expect(s).toContain("Policy: AB123456");
+    expect(s).toContain("Auth: AUTH9");
+    expect(s).not.toContain("Membership number");
+  });
+
+  it("does not leak StrydeOS capture provenance onto the patient-facing field", () => {
+    const s = buildInsuranceSummary(record());
+    expect(s).not.toContain("captured via StrydeOS");
+    expect(s).not.toContain("StrydeOS");
+  });
+});
+
+describe("mergeInvoiceExtraInfo", () => {
+  it("wraps a fresh summary in StrydeOS markers when the field is empty", () => {
+    const out = mergeInvoiceExtraInfo(undefined, "Insurer: Bupa");
+    expect(out).toContain("Insurer: Bupa");
+    expect(out).toContain("[StrydeOS insurance]");
+  });
+
+  it("preserves a clinician's hand-typed note above the StrydeOS block", () => {
+    const out = mergeInvoiceExtraInfo("Patient prefers morning slots", "Insurer: Bupa");
+    expect(out).toContain("Patient prefers morning slots");
+    expect(out).toContain("Insurer: Bupa");
+    expect(out.indexOf("Patient prefers")).toBeLessThan(out.indexOf("Insurer: Bupa"));
+  });
+
+  it("replaces a prior StrydeOS block instead of stacking duplicates (idempotent)", () => {
+    const first = mergeInvoiceExtraInfo("hand note", "Insurer: Bupa OLD");
+    const second = mergeInvoiceExtraInfo(first, "Insurer: Bupa NEW");
+    expect(second).toContain("NEW");
+    expect(second).not.toContain("OLD");
+    expect(second).toContain("hand note");
+    expect(second.match(/\[StrydeOS insurance\]/g)).toHaveLength(1);
+  });
+
+  it("strips a legacy unmarked StrydeOS summary (old pipe format) on re-approval", () => {
+    const legacy =
+      "Insurer: Bupa | Policy: AB123456 | (captured via StrydeOS form, 2026-06-08T09:30:00.000Z)";
+    const out = mergeInvoiceExtraInfo(legacy, "Insurer: Bupa\nMembership number AB123456");
+    expect(out).not.toContain("captured via StrydeOS");
+    expect(out).toContain("Membership number AB123456");
+    expect((out.match(/Insurer: Bupa/g) ?? [])).toHaveLength(1);
+  });
+
+  it("keeps a clinician's own hand-typed Insurer line that has no StrydeOS tag", () => {
+    const out = mergeInvoiceExtraInfo("Insurer: AXA (per phone call)", "Insurer: Bupa");
+    expect(out).toContain("Insurer: AXA (per phone call)");
   });
 });
 
@@ -179,8 +241,8 @@ describe("writeInsuranceToCliniko", () => {
   beforeEach(() => { captured = []; });
   afterEach(() => vi.unstubAllGlobals());
 
-  it("PATCHes the patient's billing info with the insurance summary", async () => {
-    stubFetch(captured, () => ({}));
+  it("reads the patient first, then PATCHes the merged billing info", async () => {
+    stubFetch(captured, () => ({ invoice_extra_information: "" }));
     const res = await writeInsuranceToCliniko(config, record(), structuredMap);
 
     expect(res.ok).toBe(true);
@@ -188,23 +250,38 @@ describe("writeInsuranceToCliniko", () => {
     expect(res.usedFallback).toBe(false);
     expect(res.onboardingTaskNeeded).toBe(false);
 
-    expect(captured).toHaveLength(1);
-    expect(captured[0].method).toBe("PATCH");
-    expect(captured[0].url).toContain("/patients/p-42");
-    expect(captured[0].body).toContain("invoice_extra_information");
-    expect(captured[0].body).toContain("AB123456");
+    const get = captured.find((c) => c.method === "GET");
+    const patch = captured.find((c) => c.method === "PATCH");
+    expect(get?.url).toContain("/patients/p-42");
+    expect(patch?.url).toContain("/patients/p-42");
+    expect(patch?.body).toContain("invoice_extra_information");
+    expect(patch?.body).toContain("AB123456");
     // address is written back to the patient profile
-    expect(captured[0].body).toContain("post_code");
-    expect(captured[0].body).toContain("NW6 1AB");
-    expect(captured[0].body).toContain("address_1");
+    expect(patch?.body).toContain("post_code");
+    expect(patch?.body).toContain("NW6 1AB");
+    expect(patch?.body).toContain("address_1");
     // Round-trip alignment: insurer is written to concession_type (the field
     // getPatient reads back from), not only the summary string.
-    expect(captured[0].body).toContain("concession_type");
-    expect(JSON.parse(captured[0].body).concession_type).toBe("Bupa");
+    expect(patch?.body).toContain("concession_type");
+    expect(JSON.parse(patch!.body).concession_type).toBe("Bupa");
+  });
+
+  it("preserves the clinician's existing hand-typed invoice note", async () => {
+    stubFetch(captured, () => ({ invoice_extra_information: "BUPA IA agreed at £45" }));
+    await writeInsuranceToCliniko(config, record(), structuredMap);
+    const patch = captured.find((c) => c.method === "PATCH");
+    expect(JSON.parse(patch!.body).invoice_extra_information).toContain("BUPA IA agreed at £45");
+  });
+
+  it("maps county to the Cliniko state field", async () => {
+    stubFetch(captured, () => ({ invoice_extra_information: "" }));
+    await writeInsuranceToCliniko(config, record({ county: "Greater London" }), structuredMap);
+    const patch = captured.find((c) => c.method === "PATCH");
+    expect(JSON.parse(patch!.body).state).toBe("Greater London");
   });
 
   it("flags an onboarding task when no insurance form is configured (still writes the summary)", async () => {
-    stubFetch(captured, () => ({}));
+    stubFetch(captured, () => ({ invoice_extra_information: "" }));
     const res = await writeInsuranceToCliniko(config, record(), fallbackMap);
 
     expect(res.ok).toBe(true);
@@ -215,9 +292,14 @@ describe("writeInsuranceToCliniko", () => {
   });
 
   it("returns ok:false and never leaks the policy number on an API error", async () => {
-    vi.stubGlobal("fetch", async () =>
-      fakeResponse("Validation failed for value AB123456", { ok: false, status: 422 }),
-    );
+    // GET succeeds; the PATCH write fails — the error must still be redacted.
+    vi.stubGlobal("fetch", async (_url: string, options: RequestInit = {}) => {
+      const method = (options.method as string) ?? "GET";
+      if (method === "PATCH") {
+        return fakeResponse("Validation failed for value AB123456", { ok: false, status: 422 });
+      }
+      return fakeResponse({ invoice_extra_information: "" });
+    });
     const res = await writeInsuranceToCliniko(config, record(), structuredMap);
     expect(res.ok).toBe(false);
     expect(res.error).toBeDefined();

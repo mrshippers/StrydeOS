@@ -94,18 +94,65 @@ export function mapInsuranceTemplates(templates: ClinikoFormTemplate[]): Insuran
   return { ...EMPTY_MAP };
 }
 
-/** Human-readable summary written to the patient's billing / invoice extra info. */
+// Markers that fence the StrydeOS-generated block inside the patient's free-text
+// invoice info. They let us replace our own block on re-approval (idempotent)
+// while preserving anything the clinician typed by hand around it.
+export const STRYDE_BLOCK_START = "[StrydeOS insurance]";
+export const STRYDE_BLOCK_END = "[/StrydeOS insurance]";
+
+const BUPA_RE = /bupa/i;
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Human-readable summary written to the patient's billing / invoice extra info.
+ *
+ * Labels match what the clinic actually types on a Cliniko invoice: Bupa
+ * patients carry a "Membership number" and a "Pre-auth -" line (verified against
+ * a real Spires Bupa invoice, June 2026); other insurers use the generic
+ * Policy / Auth labels. Capture provenance is deliberately NOT included — it is
+ * recorded in the intake audit trail, never leaked onto the patient invoice.
+ */
 export function buildInsuranceSummary(record: InsuranceRecord): string {
-  const parts: string[] = [`Insurer: ${record.insurerName}`];
-  if (record.scheme) parts.push(`Scheme: ${record.scheme}`);
-  if (record.policyNumber) parts.push(`Policy: ${record.policyNumber}`);
-  if (record.authorisationCode) parts.push(`Auth: ${record.authorisationCode}`);
-  if (record.claimReference) parts.push(`Claim: ${record.claimReference}`);
-  if (record.excessPence !== undefined) {
-    parts.push(`Excess: £${(record.excessPence / 100).toFixed(2)}`);
+  const isBupa = BUPA_RE.test(record.insurerName ?? "");
+  const lines: string[] = [`Insurer: ${record.insurerName}`];
+  if (record.scheme) lines.push(`Scheme: ${record.scheme}`);
+  if (record.policyNumber) {
+    lines.push(isBupa ? `Membership number ${record.policyNumber}` : `Policy: ${record.policyNumber}`);
   }
-  parts.push(`(captured via StrydeOS ${record.source}, ${record.capturedAt})`);
-  return parts.join(" | ");
+  if (record.authorisationCode) {
+    lines.push(isBupa ? `Pre-auth - ${record.authorisationCode}` : `Auth: ${record.authorisationCode}`);
+  }
+  if (record.claimReference) lines.push(`Claim: ${record.claimReference}`);
+  if (record.excessPence !== undefined) {
+    lines.push(`Excess: £${(record.excessPence / 100).toFixed(2)}`);
+  }
+  return lines.join("\n");
+}
+
+/**
+ * Merge a fresh StrydeOS summary into the patient's existing invoice extra info
+ * without destroying a clinician's hand-typed note. Any prior StrydeOS block is
+ * stripped first (so re-approval replaces rather than stacks), and the new block
+ * is fenced with markers and appended below whatever the clinician kept.
+ */
+export function mergeInvoiceExtraInfo(existing: string | undefined, summary: string): string {
+  const block = `${STRYDE_BLOCK_START}\n${summary}\n${STRYDE_BLOCK_END}`;
+  const priorBlock = new RegExp(
+    `\\n*${escapeRegExp(STRYDE_BLOCK_START)}[\\s\\S]*?${escapeRegExp(STRYDE_BLOCK_END)}\\n*`,
+    "g",
+  );
+  const preserved = (existing ?? "")
+    .replace(priorBlock, "")
+    // Drop any legacy unmarked StrydeOS summary: the pre-marker writer tagged its
+    // single line with "(captured via StrydeOS ...)", a sentinel nothing else emits.
+    .split("\n")
+    .filter((line) => !line.includes("(captured via StrydeOS"))
+    .join("\n")
+    .trim();
+  return preserved ? `${preserved}\n\n${block}` : block;
 }
 
 /** Replace any full policy/auth value in an error string with its redacted form. */
@@ -138,23 +185,35 @@ export async function writeInsuranceToCliniko(
   const patientPath = `/patients/${encodeURIComponent(record.patientRef)}`;
   const usedFallback = fieldMap.fallbackToInvoiceExtraInfo;
 
-  // Patient profile patch: insurance summary + any confirmed address fields.
-  //
-  // Round-trip alignment: getPatient() reads the insurer back from
-  // `concession_type`, so we write the canonical insurer name there as well as
-  // the human-readable summary into `invoice_extra_information`. Without this,
-  // a write→read would lose the insurer (the summary string is not parsed back).
-  const patch: Record<string, string> = {
-    invoice_extra_information: buildInsuranceSummary(record),
-  };
-  if (record.insurerName) patch.concession_type = record.insurerName;
-  if (record.addressLine1) patch.address_1 = record.addressLine1;
-  if (record.addressLine2) patch.address_2 = record.addressLine2;
-  if (record.town) patch.city = record.town;
-  if (record.postcode) patch.post_code = record.postcode;
-  if (record.country) patch.country = record.country;
-
   try {
+    // Read the patient's current invoice info FIRST, so the write merges into
+    // (rather than blindly overwrites) whatever the clinician typed by hand.
+    // A read failure must not block the approval — fall back to writing fresh.
+    let existingExtra: string | undefined;
+    try {
+      const current = await clinikoFetch<{ invoice_extra_information?: string }>(config, patientPath);
+      existingExtra = current?.invoice_extra_information ?? undefined;
+    } catch {
+      existingExtra = undefined;
+    }
+
+    // Patient profile patch: merged insurance summary + any confirmed address.
+    //
+    // Round-trip alignment: getPatient() reads the insurer back from
+    // `concession_type`, so we write the canonical insurer name there as well as
+    // the human-readable summary into `invoice_extra_information`. Without this,
+    // a write→read would lose the insurer (the summary string is not parsed back).
+    const patch: Record<string, string> = {
+      invoice_extra_information: mergeInvoiceExtraInfo(existingExtra, buildInsuranceSummary(record)),
+    };
+    if (record.insurerName) patch.concession_type = record.insurerName;
+    if (record.addressLine1) patch.address_1 = record.addressLine1;
+    if (record.addressLine2) patch.address_2 = record.addressLine2;
+    if (record.town) patch.city = record.town;
+    if (record.county) patch.state = record.county;
+    if (record.postcode) patch.post_code = record.postcode;
+    if (record.country) patch.country = record.country;
+
     await clinikoFetch(config, patientPath, {
       method: "PATCH",
       body: JSON.stringify(patch),

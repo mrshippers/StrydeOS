@@ -19,6 +19,7 @@ import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
 import { isEncrypted, decryptCredential } from "@/lib/crypto/credentials";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { redactPolicyNumber } from "@/lib/insurance/redact";
+import { requiresPreAuthorisation } from "@/lib/insurance/insurers";
 import type { PMSIntegrationConfig } from "@/types/pms";
 import type { InsuranceAuditEntry, InsuranceRecord } from "@/lib/insurance/types";
 
@@ -85,6 +86,16 @@ async function handler(
     }
 
     // ── Approve → write to PMS ─────────────────────────────────────────────────
+    // A claimable insurer must carry a pre-authorisation code before the claim
+    // is written to the PMS / surfaced on an invoice. Self-funding patients are
+    // exempt. This is the gate that stops a Bupa pre-auth being approved blank.
+    if (requiresPreAuthorisation(record.insurerName) && !record.authorisationCode?.trim()) {
+      return NextResponse.json(
+        { error: `A pre-authorisation code is required before approving a ${record.insurerName} claim.` },
+        { status: 422 },
+      );
+    }
+
     const cfgSnap = await db
       .collection("clinics").doc(clinicId)
       .collection(INTEGRATIONS_PMS).doc(PMS_DOC_ID).get();

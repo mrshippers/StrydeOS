@@ -23,3 +23,18 @@ export const DEFAULT_UK_INSURERS: string[] = [
 export function resolveInsurerOptions(discovered: string[]): string[] {
   return discovered.length > 0 ? discovered : DEFAULT_UK_INSURERS;
 }
+
+/** Self-funding / self-pay patients — no insurer, so no pre-auth applies. */
+const SELF_FUNDING_RE = /self[\s-]?fund|self[\s-]?pay/i;
+
+/**
+ * Whether an approval for this insurer must carry a pre-authorisation code.
+ * Every named PMI insurer requires one before a claimable session is invoiced;
+ * a self-funding patient (or no insurer) does not. Used to gate the staff
+ * approve action so a claim is never written to the PMS without its auth code.
+ */
+export function requiresPreAuthorisation(insurerName: string): boolean {
+  const name = (insurerName ?? "").trim();
+  if (!name) return false;
+  return !SELF_FUNDING_RE.test(name);
+}
