@@ -3,6 +3,7 @@ import {
   mapInsuranceTemplates,
   buildInsuranceSummary,
   mergeInvoiceExtraInfo,
+  clinikoInvoiceDeepLink,
   discoverClinikoInsuranceFields,
   writeInsuranceToCliniko,
   CLINIKO_FORM_TEMPLATES_KEY,
@@ -184,6 +185,27 @@ describe("mergeInvoiceExtraInfo", () => {
   });
 });
 
+describe("clinikoInvoiceDeepLink", () => {
+  it("builds the create-invoice URL that pre-fills the staged block", () => {
+    const url = clinikoInvoiceDeepLink("https://spires-physiotherapy.uk3.cliniko.com", "p-42");
+    expect(url).toBe("https://spires-physiotherapy.uk3.cliniko.com/invoices/new?patient_id=p-42");
+  });
+
+  it("tolerates a trailing slash on the web base", () => {
+    const url = clinikoInvoiceDeepLink("https://x.uk3.cliniko.com/", "p-42");
+    expect(url).toBe("https://x.uk3.cliniko.com/invoices/new?patient_id=p-42");
+  });
+
+  it("returns null when no web base is configured (degrades gracefully)", () => {
+    expect(clinikoInvoiceDeepLink(undefined, "p-42")).toBeNull();
+    expect(clinikoInvoiceDeepLink("", "p-42")).toBeNull();
+  });
+
+  it("returns null without a patient ref", () => {
+    expect(clinikoInvoiceDeepLink("https://x.uk3.cliniko.com", "")).toBeNull();
+  });
+});
+
 // ─── HTTP helpers ──────────────────────────────────────────────────────────────
 
 function fakeResponse(body: unknown, init: { ok?: boolean; status?: number } = {}) {
@@ -260,10 +282,11 @@ describe("writeInsuranceToCliniko", () => {
     expect(patch?.body).toContain("post_code");
     expect(patch?.body).toContain("NW6 1AB");
     expect(patch?.body).toContain("address_1");
-    // Round-trip alignment: insurer is written to concession_type (the field
-    // getPatient reads back from), not only the summary string.
-    expect(patch?.body).toContain("concession_type");
-    expect(JSON.parse(patch!.body).concession_type).toBe("Bupa");
+    // concession_type is NOT written: Cliniko treats it as a controlled value and
+    // silently drops a free insurer name (verified on a live Spires patient — the
+    // PATCH "succeeded" but the field read back empty), so writing it is a no-op
+    // that gives false confidence. The insurer lives in invoice_extra_information.
+    expect(JSON.parse(patch!.body).concession_type).toBeUndefined();
   });
 
   it("preserves the clinician's existing hand-typed invoice note", async () => {

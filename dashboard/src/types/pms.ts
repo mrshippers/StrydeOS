@@ -124,6 +124,12 @@ export interface PMSIntegrationConfig {
   provider: PmsProvider;
   apiKey: string;
   baseUrl?: string;
+  /**
+   * The PMS WEB host (not the API host), e.g. https://acme.uk3.cliniko.com.
+   * Cliniko's API does not expose the account subdomain, so it is stored here to
+   * build one-click "create invoice in Cliniko" deep links. Optional.
+   */
+  webBaseUrl?: string;
   lastSyncAt?: string;
   lastSyncStatus?: "success" | "error";
   syncErrors?: string[];

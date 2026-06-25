@@ -20,6 +20,7 @@ import { isEncrypted, decryptCredential } from "@/lib/crypto/credentials";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { redactPolicyNumber } from "@/lib/insurance/redact";
 import { requiresPreAuthorisation } from "@/lib/insurance/insurers";
+import { clinikoInvoiceDeepLink } from "@/lib/integrations/pms/cliniko/insurance";
 import type { PMSIntegrationConfig } from "@/types/pms";
 import type { InsuranceAuditEntry, InsuranceRecord } from "@/lib/insurance/types";
 
@@ -124,9 +125,16 @@ async function handler(
       return NextResponse.json({ ok: false, error: result.error ?? "PMS write failed" }, { status: 502 });
     }
 
+    // One-click deep link to Cliniko's pre-filled new-invoice screen for this
+    // patient. Cliniko's API can't create invoices, so this is how staff close
+    // the loop. Null when the clinic's Cliniko web host isn't configured.
+    const pmsInvoiceUrl =
+      cfg.provider === "cliniko" ? clinikoInvoiceDeepLink(cfg.webBaseUrl, record.patientRef) : null;
+
     await intakeRef.set(
       {
         reviewStatus: "approved",
+        pmsInvoiceUrl,
         audit: [
           ...(record.audit ?? []),
           auditFor({ action: "approved" }),
@@ -163,7 +171,7 @@ async function handler(
       ip: extractIpFromRequest(request),
     });
 
-    return NextResponse.json({ ok: true, reviewStatus: "approved", result });
+    return NextResponse.json({ ok: true, reviewStatus: "approved", result, pmsInvoiceUrl });
   } catch (e) {
     return handleApiError(e);
   }

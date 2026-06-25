@@ -33,6 +33,8 @@ interface IntakeRow {
   readBackConfirmed?: boolean;
   capturedAt: string;
   reviewStatus: Status;
+  /** One-click link to the pre-filled Cliniko new-invoice screen (approved only). */
+  pmsInvoiceUrl?: string | null;
   /** Patient flagged a different insurer than the one derived from the booking. */
   insurerMismatch?: boolean;
   /** What the patient said their insurer is, when it differs from the authoritative one. */
@@ -238,9 +240,21 @@ export default function InsuranceReviewPage() {
                     </div>
                   )}
                   {row.reviewStatus !== "pending" && (
-                    <span className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-lg capitalize ${row.reviewStatus === "approved" ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
-                      {row.reviewStatus}
-                    </span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      {row.reviewStatus === "approved" && row.pmsInvoiceUrl && (
+                        <a
+                          href={row.pmsInvoiceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-medium px-2.5 py-1 rounded-lg bg-blue/10 text-blue hover:bg-blue/20 transition-colors"
+                        >
+                          Create invoice in Cliniko
+                        </a>
+                      )}
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-lg capitalize ${row.reviewStatus === "approved" ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
+                        {row.reviewStatus}
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
