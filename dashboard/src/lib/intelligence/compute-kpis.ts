@@ -268,14 +268,33 @@ export async function computeKPIs(
     (d) => ({ id: d.id, ...(d.data() as Omit<Review, "id">) })
   );
 
+  // Load patients for the per-patient follow-up rate (uses each patient's own
+  // appointment count from the PMS, not new-patient intake in the window).
+  const patientsSnap = await db.collection(`clinics/${clinicId}/patients`).get();
+  const patientsForFollowUp = patientsSnap.docs.map((d) => {
+    const data = d.data();
+    return {
+      sessionCount: (data.sessionCount as number | undefined) ?? 0,
+      lastSessionDate: (data.lastSessionDate as string | undefined) ?? null,
+    };
+  });
+
   // Compute each KPI value.
   // P0-10: NPS uses ONLY nps_sms 0-10 responses via computeRollingNpsOnly.
   // P0-11: Star sentiment uses ONLY non-nps_sms reviews via computeRollingAverageStarRating.
   const kpiValues: Record<KpiId, number | null> = {
-    // Rolling 90-day aggregate (CLAUDE.md), not the latest week — a single week
-    // with no initial assessments would otherwise read 0. Falls back to the
-    // current week's value only if the window somehow has no initial assessments.
-    "follow-up-rate": computeRollingFollowUpRate(allStats, 90) ?? current.followUpRate ?? null,
+    // Follow-up rate = average follow-up appointments per active patient, using
+    // each patient's own appointment count (sessionCount from the PMS) over the
+    // window. This is the stable, intake-independent measure the clinic wants:
+    // "for patients seen recently, how many follow-ups on average". It does NOT
+    // collapse to 0 when there are no brand-new patients in the window (the flaw
+    // of pairing follow-ups against same-window initial assessments). Defaults to
+    // the rolling aggregate / current week only if no patient data is available.
+    "follow-up-rate":
+      computePatientFollowUpRate(patientsForFollowUp, 90) ??
+      computeRollingFollowUpRate(allStats, 90) ??
+      current.followUpRate ??
+      null,
     "hep-compliance":
       (current.hepComplianceRate as number | undefined) ??
       (current.hepRate as number | undefined) ??
@@ -474,6 +493,33 @@ export function computeRollingFollowUpRate(
   }
   if (initialAssessments === 0) return null;
   return followUps / initialAssessments;
+}
+
+/**
+ * Follow-up rate as the AVERAGE number of follow-up appointments per active
+ * patient, over a window. Each patient's follow-ups = sessionCount - 1 (their
+ * first-ever completed session is the initial assessment; every later one is a
+ * follow-up — the clinic marks visits complete but does not close cases). A
+ * patient is "active" if their last session falls inside the window. This is the
+ * intake-independent measure the clinic asked for ("follow-ups over any
+ * computable period — 1/3/6 months") and uses the per-patient appointment count
+ * Cliniko exposes, so it stays meaningful even when no new patients started in
+ * the window. windowDays selects the period (30/90/180). Returns null when no
+ * patient has been seen in the window (no-data, not a false 0).
+ *
+ * Exported for unit testing.
+ */
+export function computePatientFollowUpRate(
+  patients: { sessionCount?: number; lastSessionDate?: string | null }[],
+  windowDays: number,
+): number | null {
+  const cutoff = new Date(Date.now() - windowDays * 86400_000).toISOString().slice(0, 10);
+  const active = patients.filter(
+    (p) => (p.sessionCount ?? 0) >= 1 && (p.lastSessionDate ?? "") >= cutoff,
+  );
+  if (active.length === 0) return null;
+  const totalFollowUps = active.reduce((sum, p) => sum + ((p.sessionCount ?? 0) - 1), 0);
+  return totalFollowUps / active.length;
 }
 
 /**

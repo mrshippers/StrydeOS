@@ -10,6 +10,7 @@ import {
   computeRollingNpsOnly,
   computeRollingAverageStarRating,
   computeRollingFollowUpRate,
+  computePatientFollowUpRate,
 } from "../compute-kpis";
 import type { Review } from "@/types";
 
@@ -36,6 +37,35 @@ describe("computeRollingFollowUpRate", () => {
     // The 200-day-old week is excluded; only 6 ÷ 3 = 2 remains.
     const stats = [wk(10, 6, 3), wk(200, 100, 1)];
     expect(computeRollingFollowUpRate(stats, 90)).toBe(2);
+  });
+});
+
+// ─── computePatientFollowUpRate ──────────────────────────────────────────────
+describe("computePatientFollowUpRate", () => {
+  const recent = new Date(Date.now() - 10 * 86400_000).toISOString().slice(0, 10);
+  const old = new Date(Date.now() - 200 * 86400_000).toISOString().slice(0, 10);
+
+  it("averages follow-ups (sessionCount-1) over patients active in the window", () => {
+    // sessions 3,2,1 → follow-ups 2,1,0 → mean = 1.0
+    const patients = [
+      { sessionCount: 3, lastSessionDate: recent },
+      { sessionCount: 2, lastSessionDate: recent },
+      { sessionCount: 1, lastSessionDate: recent },
+    ];
+    expect(computePatientFollowUpRate(patients, 90)).toBe(1);
+  });
+
+  it("excludes never-seen (sessionCount 0) and patients outside the window", () => {
+    const patients = [
+      { sessionCount: 5, lastSessionDate: recent }, // 4 follow-ups, counts
+      { sessionCount: 0, lastSessionDate: recent }, // never seen, excluded
+      { sessionCount: 9, lastSessionDate: old },    // stale, excluded
+    ];
+    expect(computePatientFollowUpRate(patients, 90)).toBe(4);
+  });
+
+  it("returns null when no patient was seen in the window", () => {
+    expect(computePatientFollowUpRate([{ sessionCount: 4, lastSessionDate: old }], 90)).toBeNull();
   });
 });
 
