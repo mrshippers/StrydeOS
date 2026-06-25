@@ -38,18 +38,18 @@ const OUTCOME_LABELS: Record<string, string> = {
 
 function outcomeColor(outcome: string): string {
   switch (outcome) {
-    case "booked": return "#10B981";
-    case "escalated": return "#EF4444";
-    case "follow_up_required": return "#F59E0B";
-    default: return "#6B7280";
+    case "booked": return "#2DD4BF";
+    case "escalated": return "#FF8A8A";
+    case "follow_up_required": return "#F5B544";
+    default: return "#8FA3C2";
   }
 }
 
 function chip(label: string, count: number, color: string): string {
   return `<td style="padding:0 6px;text-align:center;">
-    <div style="display:inline-block;min-width:60px;padding:10px 14px;border-radius:8px;background:${escHtml(color)}14;border:1px solid ${escHtml(color)}33;">
+    <div style="display:inline-block;min-width:60px;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);">
       <div style="font-size:22px;font-weight:700;color:${escHtml(color)};font-family:'Outfit',Helvetica,Arial,sans-serif;line-height:1;">${count}</div>
-      <div style="font-size:10px;font-weight:600;color:#6B7280;font-family:'Outfit',Helvetica,Arial,sans-serif;letter-spacing:0.06em;text-transform:uppercase;margin-top:4px;">${escHtml(label)}</div>
+      <div style="font-size:10px;font-weight:600;color:#8FA3C2;font-family:'Outfit',Helvetica,Arial,sans-serif;letter-spacing:0.06em;text-transform:uppercase;margin-top:4px;">${escHtml(label)}</div>
     </div>
   </td>`;
 }
@@ -61,11 +61,11 @@ function buildBody(data: AvaDigestData): string {
   const chipRow = `
     <table style="border-collapse:collapse;width:100%;margin:20px 0;">
       <tr>
-        ${chip("Booked", summary.booked, "#10B981")}
-        ${chip("Callbacks", summary.callbacks, "#F59E0B")}
-        ${chip("Escalated", summary.escalated, "#EF4444")}
-        ${chip("Info", summary.info, "#6B7280")}
-        ${chip("Voicemail", summary.voicemail, "#8B5CF6")}
+        ${chip("Booked", summary.booked, "#2DD4BF")}
+        ${chip("Callbacks", summary.callbacks, "#F5B544")}
+        ${chip("Escalated", summary.escalated, "#FF8A8A")}
+        ${chip("Info", summary.info, "#8FA3C2")}
+        ${chip("Voicemail", summary.voicemail, "#C4B0F5")}
       </tr>
     </table>`;
 
@@ -82,34 +82,34 @@ function buildBody(data: AvaDigestData): string {
     const outcomeLabel = OUTCOME_LABELS[c.outcome] ?? c.outcome;
     const color = outcomeColor(c.outcome);
     return `
-      <tr style="border-bottom:1px solid #F0EDE8;">
-        <td style="padding:8px 8px 8px 0;font-size:12px;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(callTime)}</td>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+        <td style="padding:8px 8px 8px 0;font-size:12px;color:#FFFFFF;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(callTime)}</td>
         <td style="padding:8px;font-size:12px;font-family:'Outfit',Helvetica,Arial,sans-serif;">
-          <span style="display:inline-block;padding:2px 8px;border-radius:50px;background:${escHtml(color)}14;color:${escHtml(color)};font-size:11px;font-weight:600;">${escHtml(outcomeLabel)}</span>
+          <span style="display:inline-block;padding:2px 8px;border-radius:50px;background:rgba(255,255,255,0.06);color:${escHtml(color)};font-size:11px;font-weight:600;">${escHtml(outcomeLabel)}</span>
         </td>
-        <td style="padding:8px;font-size:12px;color:#6B7280;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(maskedPhone)}</td>
-        <td style="padding:8px 0 8px 8px;font-size:12px;color:#6B7280;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(duration)}</td>
+        <td style="padding:8px;font-size:12px;color:#8FA3C2;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(maskedPhone)}</td>
+        <td style="padding:8px 0 8px 8px;font-size:12px;color:#8FA3C2;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(duration)}</td>
       </tr>`;
   }).join("");
 
   const callTable = calls.length > 0 ? `
-    <h3 style="margin:24px 0 12px;font-size:13px;font-weight:600;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;text-transform:uppercase;letter-spacing:0.06em;">Recent calls</h3>
+    <h3 style="margin:24px 0 12px;font-size:13px;font-weight:600;color:#FFFFFF;font-family:'Outfit',Helvetica,Arial,sans-serif;text-transform:uppercase;letter-spacing:0.06em;">Recent calls</h3>
     <table style="border-collapse:collapse;width:100%;">
       <thead>
-        <tr style="border-bottom:2px solid #E2DFDA;">
-          <th style="padding:6px 8px 6px 0;font-size:11px;color:#6B7280;font-weight:600;text-align:left;font-family:'Outfit',Helvetica,Arial,sans-serif;">Time</th>
-          <th style="padding:6px 8px;font-size:11px;color:#6B7280;font-weight:600;text-align:left;font-family:'Outfit',Helvetica,Arial,sans-serif;">Outcome</th>
-          <th style="padding:6px 8px;font-size:11px;color:#6B7280;font-weight:600;text-align:left;font-family:'Outfit',Helvetica,Arial,sans-serif;">Caller</th>
-          <th style="padding:6px 0 6px 8px;font-size:11px;color:#6B7280;font-weight:600;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">Duration</th>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+          <th style="padding:6px 8px 6px 0;font-size:11px;color:#8FA3C2;font-weight:600;text-align:left;font-family:'Outfit',Helvetica,Arial,sans-serif;">Time</th>
+          <th style="padding:6px 8px;font-size:11px;color:#8FA3C2;font-weight:600;text-align:left;font-family:'Outfit',Helvetica,Arial,sans-serif;">Outcome</th>
+          <th style="padding:6px 8px;font-size:11px;color:#8FA3C2;font-weight:600;text-align:left;font-family:'Outfit',Helvetica,Arial,sans-serif;">Caller</th>
+          <th style="padding:6px 0 6px 8px;font-size:11px;color:#8FA3C2;font-weight:600;text-align:right;font-family:'Outfit',Helvetica,Arial,sans-serif;">Duration</th>
         </tr>
       </thead>
       <tbody>${callRows}</tbody>
     </table>` : `
-    <p style="margin:20px 0;font-size:13px;color:#6B7280;font-family:'Outfit',Helvetica,Arial,sans-serif;">No calls recorded in this period.</p>`;
+    <p style="margin:20px 0;font-size:13px;color:#8FA3C2;font-family:'Outfit',Helvetica,Arial,sans-serif;">No calls recorded in this period.</p>`;
 
   return `
-    <p style="margin:0 0 4px;font-size:22px;font-weight:700;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(clinicName)}</p>
-    <p style="margin:0 0 16px;font-size:13px;color:#6B7280;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(dateRange)} &middot; ${summary.total} call${summary.total !== 1 ? "s" : ""} handled by Ava</p>
+    <p style="margin:0 0 4px;font-size:22px;font-weight:400;color:#FFFFFF;font-family:'DM Serif Display',Georgia,serif;">${escHtml(clinicName)}</p>
+    <p style="margin:0 0 16px;font-size:13px;color:#8FA3C2;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(dateRange)} &middot; ${summary.total} call${summary.total !== 1 ? "s" : ""} handled by Ava</p>
     ${chipRow}
     ${callTable}
     <div style="margin-top:28px;text-align:center;">
@@ -124,6 +124,7 @@ export function buildAvaDigestEmail(data: AvaDigestData): { html: string; text: 
     moduleLabel: "Ava",
     footerNote: "Powered by StrydeOS Ava",
     unsubscribeType: "ava_digest",
+    theme: "dark",
   });
 
   const { summary } = data;

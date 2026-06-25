@@ -11,10 +11,12 @@ interface DigestData {
   previousStats: Record<string, unknown> | null;
 }
 
+// Status-dot colours on the dark v4.0 shell. Attention reads warm; positive is
+// a tiny teal/green dot only (never a fill).
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: "#E8913A",
-  warning: "#F59E0B",
-  positive: "#059669",
+  critical: "#FF8A8A",
+  warning: "#F5B544",
+  positive: "#34D399",
 };
 
 function delta(current: number | undefined, previous: number | undefined): string {
@@ -44,22 +46,22 @@ export function buildStateOfClinicEmail(data: DigestData): string {
 
   const headlineEvent = topEvents[0];
   const headlineHtml = headlineEvent
-    ? `<p style="margin:0 0 8px 0;font-size:18px;font-weight:700;color:#0B2545;line-height:1.4;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(headlineEvent.title)}</p>`
-    : `<p style="margin:0 0 8px 0;font-size:18px;font-weight:700;color:#059669;line-height:1.4;font-family:'Outfit',Helvetica,Arial,sans-serif;">No alerts this week. Your metrics are within target across the board.</p>`;
+    ? `<p style="margin:0 0 8px 0;font-size:18px;font-weight:700;color:#FFFFFF;line-height:1.4;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(headlineEvent.title)}</p>`
+    : `<p style="margin:0 0 8px 0;font-size:18px;font-weight:700;color:#2DD4BF;line-height:1.4;font-family:'Outfit',Helvetica,Arial,sans-serif;">No alerts this week. Your metrics are within target across the board.</p>`;
 
   const eventsHtml = topEvents
     .map(
       (e) => `
-        <div style="margin-bottom:16px;padding:16px;border-radius:8px;border:1px solid #E2DFDA;background:#FFFFFF;">
+        <div style="margin-bottom:16px;padding:16px 18px;border-radius:12px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.03);">
           <div style="margin-bottom:8px;">
-            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${SEVERITY_COLORS[e.severity] ?? "#5C6370"};margin-right:8px;vertical-align:middle;"></span>
-            <span style="font-size:14px;font-weight:600;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;vertical-align:middle;">${escHtml(e.title)}</span>
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${SEVERITY_COLORS[e.severity] ?? "#8FA3C2"};margin-right:8px;vertical-align:middle;"></span>
+            <span style="font-size:14px;font-weight:600;color:#FFFFFF;font-family:'Outfit',Helvetica,Arial,sans-serif;vertical-align:middle;">${escHtml(e.title)}</span>
           </div>
-          <p style="margin:0 0 8px 0;font-size:13px;color:#5C6370;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(e.ownerNarrative ?? e.description)}</p>
-          ${!e.ownerNarrative ? `<div style="padding:10px 12px;border-radius:6px;background:#F2F1EE;">
-            <p style="margin:0;font-size:13px;font-weight:600;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">\u2192 ${escHtml(e.suggestedAction)}</p>
+          <p style="margin:0 0 8px 0;font-size:13px;color:#B7C6DE;line-height:1.5;font-family:'Outfit',Helvetica,Arial,sans-serif;">${escHtml(e.ownerNarrative ?? e.description)}</p>
+          ${!e.ownerNarrative ? `<div style="padding:10px 12px;border-radius:8px;background:rgba(139,92,246,0.18);">
+            <p style="margin:0;font-size:13px;font-weight:600;color:#C4B0F5;font-family:'Outfit',Helvetica,Arial,sans-serif;">\u2192 ${escHtml(e.suggestedAction)}</p>
           </div>` : ""}
-          ${e.revenueImpact ? `<p style="margin:8px 0 0 0;font-size:12px;font-weight:600;color:#EF4444;font-family:'Outfit',Helvetica,Arial,sans-serif;">Estimated impact: ~\u00A3${e.revenueImpact.toLocaleString()}</p>` : ""}
+          ${e.revenueImpact ? `<p style="margin:8px 0 0 0;font-size:12px;font-weight:600;color:#FF8A8A;font-family:'Outfit',Helvetica,Arial,sans-serif;">Estimated impact: ~\u00A3${e.revenueImpact.toLocaleString()}</p>` : ""}
         </div>`
     )
     .join("");
@@ -75,38 +77,38 @@ export function buildStateOfClinicEmail(data: DigestData): string {
 
   const body = `
     <!-- Headline -->
-    <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #E2DFDA;">
+    <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.08);">
       ${headlineHtml}
     </div>
 
     <!-- Top actions -->
     ${topEvents.length > 0 ? `
     <div style="margin-bottom:24px;">
-      <p style="margin:0 0 12px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">TOP ACTIONS THIS WEEK</p>
+      <p style="margin:0 0 12px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6FA2F2;font-family:'Outfit',Helvetica,Arial,sans-serif;">TOP ACTIONS THIS WEEK</p>
       ${eventsHtml}
     </div>
     ` : ""}
 
     <!-- Quick stats -->
     <div style="margin-bottom:16px;">
-      <p style="margin:0 0 12px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">QUICK STATS</p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      <p style="margin:0 0 12px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6FA2F2;font-family:'Outfit',Helvetica,Arial,sans-serif;">QUICK STATS</p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:8px 0;">
         <tr>
-          <td style="padding:12px;text-align:center;border:1px solid #E2DFDA;border-radius:6px;width:25%;">
-            <p style="margin:0;font-size:18px;font-weight:700;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">${fmtRate(curFollowUp)}</p>
-            <p style="margin:4px 0 0;font-size:11px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">Follow-up${delta(curFollowUp, prevFollowUp)}</p>
+          <td style="padding:14px 12px;text-align:center;border:1px solid rgba(255,255,255,0.07);border-radius:12px;background:rgba(255,255,255,0.03);width:25%;">
+            <p style="margin:0;font-size:22px;font-weight:400;color:#FFFFFF;font-family:'DM Serif Display',Georgia,serif;">${fmtRate(curFollowUp)}</p>
+            <p style="margin:4px 0 0;font-size:11px;color:#8FA3C2;font-family:'Outfit',Helvetica,Arial,sans-serif;">Follow-up${delta(curFollowUp, prevFollowUp)}</p>
           </td>
-          <td style="padding:12px;text-align:center;border:1px solid #E2DFDA;width:25%;">
-            <p style="margin:0;font-size:18px;font-weight:700;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">${fmtPct(curDna)}</p>
-            <p style="margin:4px 0 0;font-size:11px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">DNA Rate${delta(curDna, prevDna)}</p>
+          <td style="padding:14px 12px;text-align:center;border:1px solid rgba(255,255,255,0.07);border-radius:12px;background:rgba(255,255,255,0.03);width:25%;">
+            <p style="margin:0;font-size:22px;font-weight:400;color:#FFFFFF;font-family:'DM Serif Display',Georgia,serif;">${fmtPct(curDna)}</p>
+            <p style="margin:4px 0 0;font-size:11px;color:#8FA3C2;font-family:'Outfit',Helvetica,Arial,sans-serif;">DNA Rate${delta(curDna, prevDna)}</p>
           </td>
-          <td style="padding:12px;text-align:center;border:1px solid #E2DFDA;width:25%;">
-            <p style="margin:0;font-size:18px;font-weight:700;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">${fmtPct(curUtil)}</p>
-            <p style="margin:4px 0 0;font-size:11px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">Utilisation${delta(curUtil, prevUtil)}</p>
+          <td style="padding:14px 12px;text-align:center;border:1px solid rgba(255,255,255,0.07);border-radius:12px;background:rgba(255,255,255,0.03);width:25%;">
+            <p style="margin:0;font-size:22px;font-weight:400;color:#FFFFFF;font-family:'DM Serif Display',Georgia,serif;">${fmtPct(curUtil)}</p>
+            <p style="margin:4px 0 0;font-size:11px;color:#8FA3C2;font-family:'Outfit',Helvetica,Arial,sans-serif;">Utilisation${delta(curUtil, prevUtil)}</p>
           </td>
-          <td style="padding:12px;text-align:center;border:1px solid #E2DFDA;width:25%;">
-            <p style="margin:0;font-size:18px;font-weight:700;color:#0B2545;font-family:'Outfit',Helvetica,Arial,sans-serif;">${fmtPct(curCompletion)}</p>
-            <p style="margin:4px 0 0;font-size:11px;color:#5C6370;font-family:'Outfit',Helvetica,Arial,sans-serif;">Completion${delta(curCompletion, prevCompletion)}</p>
+          <td style="padding:14px 12px;text-align:center;border:1px solid rgba(255,255,255,0.07);border-radius:12px;background:rgba(255,255,255,0.03);width:25%;">
+            <p style="margin:0;font-size:22px;font-weight:400;color:#FFFFFF;font-family:'DM Serif Display',Georgia,serif;">${fmtPct(curCompletion)}</p>
+            <p style="margin:4px 0 0;font-size:11px;color:#8FA3C2;font-family:'Outfit',Helvetica,Arial,sans-serif;">Completion${delta(curCompletion, prevCompletion)}</p>
           </td>
         </tr>
       </table>
@@ -124,6 +126,7 @@ export function buildStateOfClinicEmail(data: DigestData): string {
     unsubscribeType: "digest",
     footerNote: "Powered by StrydeOS Intelligence",
     signature: false,
+    theme: "dark",
   });
 }
 
