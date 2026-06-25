@@ -58,7 +58,7 @@ const MonolithMark = ({ size = 34 }) => (
     <rect width="100" height="100" rx="24" fill="url(#pp-c)" />
     <rect width="100" height="100" rx="24" fill="url(#pp-r)" />
     <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07" />
-    <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.1" />
+
     <g clipPath="url(#pp-p)">
       <polyline
         points="32,80 46,72 60,80"

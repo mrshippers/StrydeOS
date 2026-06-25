@@ -62,7 +62,7 @@ export default function AppleIcon() {
         <path d="M 17 21 Q 50 12 83 21" stroke="url(#gRim)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
 
         <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity="0.07" />
-        <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity="0.10" />
+
 
         <g clipPath="url(#cPillar)">
           <polyline

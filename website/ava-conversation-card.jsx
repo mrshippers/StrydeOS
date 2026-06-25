@@ -108,7 +108,7 @@ function MonolithMark({ size = 44, glow = 0, playing, onClick }) {
         <rect width="100" height="100" rx="50" fill={`url(#${id}-r)`}/>
         <rect width="100" height="100" rx="50" fill="none" stroke={`url(#${id}-b)`} strokeWidth="1.2"/>
         <rect x="35" y="20" width="22" height="60" rx="5" fill="white" fillOpacity=".07"/>
-        <rect x="35" y="46" width="22" height="34" rx="5" fill="black" fillOpacity=".10"/>
+
         <g clipPath={`url(#${id}-p)`}>
           <polyline points="32,80 46,72 60,80" stroke="white" strokeOpacity=".20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
           <polyline points="32,72 46,64 60,72" stroke="white" strokeOpacity=".42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
