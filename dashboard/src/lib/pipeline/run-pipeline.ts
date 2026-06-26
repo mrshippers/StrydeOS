@@ -34,7 +34,7 @@ import { isEncrypted, decryptCredential } from "@/lib/crypto/credentials";
 export async function runPipeline(
   db: Firestore,
   clinicId: string,
-  options: { backfill?: boolean } = {}
+  options: { backfill?: boolean; backfillWeeks?: number } = {}
 ): Promise<PipelineResult> {
   const startedAt = new Date().toISOString();
   const stages: StageResult[] = [];
@@ -286,7 +286,9 @@ export async function runPipeline(
   // ── Stage 7: Compute Weekly Metrics ──────────────────────────────────────
   const metricsStart = Date.now();
   try {
-    const weeksBack = effectiveBackfill ? BACKFILL_WEEKS : INCREMENTAL_WEEKS + 2;
+    const weeksBack = effectiveBackfill
+      ? (options.backfillWeeks ?? BACKFILL_WEEKS)
+      : INCREMENTAL_WEEKS + 2;
     const { written } = await computeWeeklyMetricsForClinic(
       db,
       clinicId,

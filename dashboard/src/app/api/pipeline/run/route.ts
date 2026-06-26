@@ -70,6 +70,14 @@ async function executePipeline(request: NextRequest, isCronGet = false) {
   // backfill=true recomputes all historical weeks using the correct sessionPricePence
   // fallback — use this once after the revenue fix to repair old metrics_weekly docs.
   const backfill = body.backfill === true;
+  // Optional one-time override for the backfill window (in weeks). Lets a deep
+  // historical pull (e.g. full multi-year Cliniko history after a migration)
+  // run without permanently widening the cheap incremental default. Ignored
+  // unless backfill is also true. Clamped to a sane ceiling.
+  const backfillWeeks =
+    typeof body.backfillWeeks === "number" && body.backfillWeeks > 0
+      ? Math.min(Math.floor(body.backfillWeeks), 520)
+      : undefined;
   const ip = extractIpFromRequest(request);
 
   if (targetClinicId) {
@@ -77,7 +85,7 @@ async function executePipeline(request: NextRequest, isCronGet = false) {
       requireClinic({ uid: userId, email: userEmail, clinicId: userClinicId!, role: isSuperadmin ? "superadmin" : "owner" } as import("@/lib/auth-guard").VerifiedUser, targetClinicId);
     }
 
-    const result = await runPipeline(db, targetClinicId, { backfill });
+    const result = await runPipeline(db, targetClinicId, { backfill, backfillWeeks });
 
     await writeAuditLog(db, targetClinicId, {
       userId,
@@ -95,7 +103,7 @@ async function executePipeline(request: NextRequest, isCronGet = false) {
     if (!userClinicId) {
       return NextResponse.json({ error: "No clinic associated" }, { status: 400 });
     }
-    const result = await runPipeline(db, userClinicId, { backfill });
+    const result = await runPipeline(db, userClinicId, { backfill, backfillWeeks });
     return NextResponse.json(result);
   }
 

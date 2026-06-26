@@ -62,7 +62,7 @@ export async function syncAppointments(
   clinicId: string,
   adapter: PMSAdapter,
   clinicianMap: Map<string, string>,
-  options: { backfill?: boolean; sessionPricePence?: number }
+  options: { backfill?: boolean; backfillWeeks?: number; sessionPricePence?: number }
 ): Promise<StageResult & { patientExternalIds: Set<string> }> {
   const start = Date.now();
   const errors: string[] = [];
@@ -82,7 +82,13 @@ export async function syncAppointments(
       ...(pipelineConfig.appointmentTypeMap ?? {}),
     };
 
-    const weeks = options.backfill ? BACKFILL_WEEKS : INCREMENTAL_WEEKS;
+    // One-time deep backfills can override the default 26-week window (e.g. to
+    // pull a clinic's full multi-year Cliniko history after a PMS migration, so
+    // each patient's sessionCount reflects their true visit count rather than a
+    // truncated 6-month slice). Incremental syncs always stay at INCREMENTAL_WEEKS.
+    const weeks = options.backfill
+      ? (options.backfillWeeks ?? BACKFILL_WEEKS)
+      : INCREMENTAL_WEEKS;
 
     // For backfill (26 weeks), chunk into 4-week windows to respect PMS rate limits.
     // For incremental syncs, single request is fine.

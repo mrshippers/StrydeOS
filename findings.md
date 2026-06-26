@@ -21,6 +21,29 @@
 
 ---
 
+## FOLLOW-UP RATE 0.27 → 3.68 — RESOLVED (2026-06-26): the 26-week sync window, not a formula bug
+
+The follow-up rate read **0.27** not because the formula was wrong (it isn't — per-patient `avg(sessionCount-1)` is mathematically `follow-ups ÷ initial-assessments` when each patient has 1 IA) but because **`sessionCount` itself was truncated**.
+
+**Root cause traced to Cliniko directly (read-only API probe):**
+- Cliniko holds **28,217 appointments** (27,764 past, 453 future), **8,943 patients**, earliest visit **2018-06-25** — i.e. ~8 years of real history is in Cliniko, NOT only in the migration export files.
+- Our sync used `BACKFILL_WEEKS = 26` (`src/lib/pipeline/types.ts`) as the *maximum* lookback (daily cron runs `INCREMENTAL_WEEKS = 4`). So each patient's `sessionCount` only counted completed visits inside a ~6-month slice → mostly 0-1 completed sessions (the rest were future `scheduled` bookings) → follow-up rate collapsed to 0.27.
+- Live data before fix: 100-appt sample was ~99% future `scheduled`; cohort = 427 ONBOARDING / 314 NEW / **2 ACTIVE** — i.e. no patient appeared to have a real treatment history.
+
+**Fix (no formula change, no PMS-integration change):**
+1. Added a one-time `backfillWeeks` override (`runPipeline` → `syncAppointments` options, plus `POST /api/pipeline/run` body, clamped ≤520) so a deep historical pull can run without permanently widening the cheap 4-week incremental default.
+2. Ran a **comms-free** 52-week (1-year) backfill of APPOINTMENTS ONLY for clinic-spires (deliberately skipped `syncPatients` and `triggerCommsSequences` — no new dormant patients imported, no patient sends), then recomputed patients + weekly + KPIs.
+
+**Result (live, verified via weekly_summary):** follow-up-rate = **3.68** (target 4, warn) — matches the remembered ~3.4. Pulled 7,463 real appointments; `sessionCount` now a true distribution (105×1, 136×2-3, 119×4-6, 108×7-12, 19×13+); cohorts now realistic (116 ACTIVE, 108 DISCHARGED, 35 AT_RISK). Patient footprint unchanged at 754.
+
+**Durable:** the deep-history appointments persist in Firestore; the daily cron recomputes `sessionCount` from the full appointments collection, so the rate does not regress to 0.27.
+
+**Open / deferred:**
+- The follow-up trend sparkline still shows `[0,...]` (the per-week `metrics_weekly.followUpRate` is degenerate because almost no patient's *first-ever* visit lands in a given recent week). Headline value is correct; the mini-trend would need per-week patient snapshots. Cosmetic.
+- Full patient import (8,943 in Cliniko vs 754 tracked) NOT done — it would reshape the live clinic footprint ~12x and add long-dormant patients. Run `POST /api/pipeline/run {backfill:true, backfillWeeks:N}` (or the script pattern with `patients`) only if the fuller historical patient base is wanted.
+
+---
+
 ## Canonical KPI definitions (AUTHORITATIVE — from CLAUDE.md "KPI Metrics — Confirmed from Spires")
 1. **Follow-up rate** = follow-ups booked ÷ initial assessments (weekly + rolling 90-day). _(Andrew ~2.4)_
 2. **HEP compliance** = patients given a programme ÷ patients seen.
