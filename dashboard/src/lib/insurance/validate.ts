@@ -56,10 +56,9 @@ export function validateInsuranceSubmission(
   if (!(input.town ?? "").trim()) {
     errors.push("Town or city is required.");
   }
+  // Postcode is optional; validate the format only when one is supplied.
   const postcode = (input.postcode ?? "").trim();
-  if (!postcode) {
-    errors.push("Postcode is required.");
-  } else if (!UK_POSTCODE_RE.test(postcode)) {
+  if (postcode && !UK_POSTCODE_RE.test(postcode)) {
     errors.push("Please enter a valid UK postcode.");
   }
 

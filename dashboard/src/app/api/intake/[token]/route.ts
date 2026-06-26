@@ -64,10 +64,13 @@ async function getHandler(
     const { payload, link, db } = loaded;
 
     const clinicSnap = await db.collection("clinics").doc(payload.clinicId).get();
-    const clinicName = (clinicSnap.data()?.name as string | undefined) ?? "Your clinic";
+    const clinicData = clinicSnap.data();
+    const clinicName = (clinicData?.name as string | undefined) ?? "Your clinic";
+    const clinicLogoUrl = (clinicData?.brandConfig?.logo as string | undefined) ?? null;
 
     return NextResponse.json({
       clinicName,
+      clinicLogoUrl,
       insurerOptions: link.insurerOptions ?? [],
       // When the insurer was derived from the booked appointment type, the form
       // shows it read-only (the patient does not pick their insurer).

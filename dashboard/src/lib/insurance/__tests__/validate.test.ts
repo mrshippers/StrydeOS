@@ -93,10 +93,10 @@ describe("validateInsuranceSubmission", () => {
     expect(result.errors.some((e) => /town|city/i.test(e))).toBe(true);
   });
 
-  it("requires a postcode", () => {
+  it("allows an empty postcode (optional)", () => {
     const result = validateInsuranceSubmission(valid({ postcode: "" }));
-    expect(result.ok).toBe(false);
-    expect(result.errors.some((e) => /postcode/i.test(e))).toBe(true);
+    expect(result.ok).toBe(true);
+    expect(result.errors.some((e) => /postcode/i.test(e))).toBe(false);
   });
 
   it("rejects an invalid UK postcode", () => {

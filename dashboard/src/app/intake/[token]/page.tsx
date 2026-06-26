@@ -19,11 +19,23 @@ import { INSURERS } from "@/lib/insurance/appointment-classifier";
 
 interface IntakeMeta {
   clinicName: string;
+  /** Clinic's own logo (clinic.brandConfig.logo); falls back to a generic mark when unset. */
+  clinicLogoUrl: string | null;
   insurerOptions: string[];
   /** Insurer derived from the booked appointment type; when set the field locks. */
   derivedInsurer: string | null;
   status: "issued" | "submitted";
   consentVersion: string;
+}
+
+/** A selectable address returned by the getAddress.io proxy. */
+interface AddressOption {
+  line1: string;
+  line2: string;
+  town: string;
+  county: string;
+  postcode: string;
+  label: string;
 }
 
 type Phase = "loading" | "form" | "submitted" | "done" | "error";
@@ -42,7 +54,6 @@ export default function InsuranceIntakePage() {
   const [claimingMismatch, setClaimingMismatch] = useState(false);
   const [patientClaimedInsurer, setPatientClaimedInsurer] = useState("");
   const [policyNumber, setPolicyNumber] = useState("");
-  const [scheme, setScheme] = useState("");
   const [authorisationCode, setAuthorisationCode] = useState("");
   const [claimReference, setClaimReference] = useState("");
   const [excess, setExcess] = useState("");
@@ -56,10 +67,14 @@ export default function InsuranceIntakePage() {
   const [country, setCountry] = useState("United Kingdom");
   const [lookingUp, setLookingUp] = useState(false);
   const [lookupMsg, setLookupMsg] = useState("");
+  const [addressOptions, setAddressOptions] = useState<AddressOption[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
+  // Postcode -> full-address lookup via getAddress.io (server-proxied so the API
+  // key is never exposed to the public form). Returns selectable street addresses,
+  // unlike the old postcodes.io call which could only fill the broad area.
   async function lookupPostcode() {
     const pc = postcode.trim();
     if (!pc) {
@@ -68,24 +83,42 @@ export default function InsuranceIntakePage() {
     }
     setLookingUp(true);
     setLookupMsg("");
+    setAddressOptions([]);
     try {
-      const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`);
+      const res = await fetch(`/api/intake/${token}/address-lookup?postcode=${encodeURIComponent(pc)}`);
+      if (res.status === 503) {
+        setLookupMsg("Address lookup is not available right now — please type your address below.");
+        return;
+      }
       if (!res.ok) {
-        setLookupMsg("Postcode not found — please check it.");
+        setLookupMsg("Postcode not found — please check it, or type your address below.");
         return;
       }
       const data = await res.json();
-      const r = data.result ?? {};
-      setTown(r.admin_district || r.parish || town);
-      setCounty(r.admin_county || r.region || county);
-      setCountry(r.country || "United Kingdom");
-      setPostcode((r.postcode || pc).toUpperCase());
-      setLookupMsg("Area filled from your postcode — add your street below.");
+      const list: AddressOption[] = data.addresses ?? [];
+      if (list.length === 0) {
+        setLookupMsg("No addresses found for that postcode — please type yours below.");
+        return;
+      }
+      setAddressOptions(list);
+      if (data.postcode) setPostcode(String(data.postcode).toUpperCase());
+      setLookupMsg(`${list.length} ${list.length === 1 ? "address" : "addresses"} found — select yours.`);
     } catch {
       setLookupMsg("Could not look up that postcode.");
     } finally {
       setLookingUp(false);
     }
+  }
+
+  function selectAddress(idx: number) {
+    const a = addressOptions[idx];
+    if (!a) return;
+    setAddressLine1(a.line1);
+    setAddressLine2(a.line2);
+    setTown(a.town);
+    setCounty(a.county);
+    if (a.postcode) setPostcode(a.postcode.toUpperCase());
+    setCountry("United Kingdom");
   }
 
   useEffect(() => {
@@ -127,7 +160,6 @@ export default function InsuranceIntakePage() {
               ? patientClaimedInsurer
               : undefined,
           policyNumber,
-          scheme: scheme || undefined,
           authorisationCode: authorisationCode || undefined,
           claimReference: claimReference || undefined,
           excess: excess || undefined,
@@ -165,9 +197,17 @@ export default function InsuranceIntakePage() {
       <div className="w-full max-w-lg animate-fade-in">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-11 h-11 rounded-xl bg-blue/10 flex items-center justify-center">
-            <ShieldCheck size={22} className="text-blue" />
-          </div>
+          {meta?.clinicLogoUrl ? (
+            <img
+              src={meta.clinicLogoUrl}
+              alt={meta.clinicName}
+              className="h-11 w-auto max-w-[150px] object-contain"
+            />
+          ) : (
+            <div className="w-11 h-11 rounded-xl bg-blue/10 flex items-center justify-center">
+              <ShieldCheck size={22} className="text-blue" />
+            </div>
+          )}
           <div>
             <p className="text-xs font-semibold text-muted uppercase tracking-widest">Insurance details</p>
             <h1 className="font-display text-[26px] text-navy leading-tight">
@@ -303,12 +343,8 @@ export default function InsuranceIntakePage() {
               />
             </Field>
 
-            <Field label="Scheme or plan">
-              <input type="text" value={scheme} onChange={(e) => setScheme(e.target.value)} placeholder="Optional" className="form-input" />
-            </Field>
-
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Authorisation code">
+              <Field label="Pre-authorisation code">
                 <input type="text" value={authorisationCode} onChange={(e) => setAuthorisationCode(e.target.value)} placeholder="Optional" className="form-input font-mono" />
               </Field>
               <Field label="Claim reference">
@@ -326,13 +362,12 @@ export default function InsuranceIntakePage() {
                 <span className="text-sm font-semibold text-navy">Your address</span>
               </div>
 
-              <Field label="Postcode" required>
+              <Field label="Postcode">
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={postcode}
                     onChange={(e) => setPostcode(e.target.value)}
-                    required
                     placeholder="e.g. NW6 1AB"
                     className="form-input uppercase"
                   />
@@ -343,11 +378,28 @@ export default function InsuranceIntakePage() {
                     className="shrink-0 flex items-center gap-1.5 px-4 rounded-xl text-sm font-semibold text-blue border border-blue/20 bg-blue/5 hover:bg-blue/10 transition-colors disabled:opacity-50"
                   >
                     {lookingUp ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-                    Find
+                    Find address
                   </button>
                 </div>
               </Field>
               {lookupMsg && <p className="text-xs text-muted mt-1.5">{lookupMsg}</p>}
+
+              {addressOptions.length > 0 && (
+                <div className="mt-3">
+                  <Field label="Select your address">
+                    <select
+                      className="form-input"
+                      defaultValue=""
+                      onChange={(e) => { if (e.target.value !== "") selectAddress(Number(e.target.value)); }}
+                    >
+                      <option value="" disabled>Choose your address</option>
+                      {addressOptions.map((a, i) => (
+                        <option key={i} value={i}>{a.label}</option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+              )}
 
               <div className="mt-4 space-y-4">
                 <Field label="Address line 1" required>
