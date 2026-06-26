@@ -58,6 +58,12 @@ until real history is pulled. This is now the standard onboarding procedure:
   day one. `src/lib/pipeline/run-pipeline.ts`, `src/lib/pipeline/types.ts`.
 - Go deeper on demand: `POST /api/pipeline/run { backfill:true, backfillWeeks:N }`
   (clamped ≤520) — e.g. for a clinic with long treatment episodes.
+- The backfill **paces Cliniko gently** (~100 req/min, 8 retries via
+  `setClinikoPacing` in `cliniko/client.ts`, reset in a `finally`) so the full
+  first-sync patient import — thousands of `getPatient` calls — completes instead
+  of 429ing against the shared account limit (Ava/insurance run on the same key).
+  Incremental syncs keep the fast default. Validated: Spires 2,083-patient
+  import, 0×429 (was 25+ and abandoning patients at the steady-state rate).
 - **Comms are suppressed during ANY backfill** (`effectiveBackfill` gate on the
   trigger-comms stage) so surfacing dormant historical patients can never blast
   them with re-engagement on day one. Comms resume on normal incremental syncs,
