@@ -28,7 +28,10 @@ import {
   BACKFILL_WEEKS,
   INCREMENTAL_WEEKS,
   ONBOARDING_BACKFILL_WEEKS,
+  BACKFILL_CLINIKO_MIN_INTERVAL_MS,
+  BACKFILL_CLINIKO_MAX_RETRIES,
 } from "./types";
+import { setClinikoPacing, resetClinikoPacing } from "@/lib/integrations/pms/cliniko/client";
 import { logIntegrationHealth, cleanOldHealthLogs } from "./health-logger";
 import { isEncrypted, decryptCredential } from "@/lib/crypto/credentials";
 
@@ -137,27 +140,43 @@ export async function runPipeline(
     durationMs: 0,
   });
 
-  // ── Stage 2: Sync Appointments ───────────────────────────────────────────
-  const s2 = await syncAppointments(
-    db,
-    clinicId,
-    pmsAdapter,
-    clinicianMap,
-    { ...options, backfill: effectiveBackfill, backfillWeeks: effectiveBackfillWeeks, sessionPricePence }
-  );
-  stages.push(s2);
-  await logIntegrationHealth(db, clinicId, pmsConfig.provider, "pms", s2);
+  // ── Stage 2 + 3: Sync Appointments & Patients (Cliniko-heavy) ────────────
+  // Pace Cliniko gently for the duration of these two stages during a backfill.
+  // A full first-sync patient import fetches one record per patient and otherwise
+  // sustains a request rate that 429s — especially stacked on live Ava/insurance
+  // traffic sharing the same Cliniko account limit. Reset in finally so a throw
+  // can't leave a reused (Fluid Compute) process throttled for live traffic.
+  const paceBackfill = pmsConfig.provider === "cliniko" && effectiveBackfill;
+  if (paceBackfill) {
+    setClinikoPacing({
+      minIntervalMs: BACKFILL_CLINIKO_MIN_INTERVAL_MS,
+      maxRetries: BACKFILL_CLINIKO_MAX_RETRIES,
+    });
+  }
+  try {
+    const s2 = await syncAppointments(
+      db,
+      clinicId,
+      pmsAdapter,
+      clinicianMap,
+      { ...options, backfill: effectiveBackfill, backfillWeeks: effectiveBackfillWeeks, sessionPricePence }
+    );
+    stages.push(s2);
+    await logIntegrationHealth(db, clinicId, pmsConfig.provider, "pms", s2);
 
-  // ── Stage 3: Resolve Patients ────────────────────────────────────────────
-  const s3 = await syncPatients(
-    db,
-    clinicId,
-    pmsAdapter,
-    s2.patientExternalIds,
-    clinicianMap
-  );
-  stages.push(s3);
-  await logIntegrationHealth(db, clinicId, pmsConfig.provider, "pms", s3);
+    // ── Stage 3: Resolve Patients ──────────────────────────────────────────
+    const s3 = await syncPatients(
+      db,
+      clinicId,
+      pmsAdapter,
+      s2.patientExternalIds,
+      clinicianMap
+    );
+    stages.push(s3);
+    await logIntegrationHealth(db, clinicId, pmsConfig.provider, "pms", s3);
+  } finally {
+    if (paceBackfill) resetClinikoPacing();
+  }
 
   // ── Stage 4: Enrich HEP Data ────────────────────────────────────────────
   const hepSnap = await configBase.doc(HEP_DOC_ID).get();

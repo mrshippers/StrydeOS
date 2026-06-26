@@ -61,3 +61,10 @@ export const INCREMENTAL_WEEKS = 4; // ~28 days
 // *navigates* recent data. 52 weeks matches the 12-month navigational horizon
 // and was validated against Spires' full Cliniko history.
 export const ONBOARDING_BACKFILL_WEEKS = 52; // ~12 months — first-sync only
+// Cliniko request pacing DURING a backfill (gentler than steady state so a large
+// patient import does not 429 — see setClinikoPacing). The full first-sync import
+// can be thousands of getPatient calls; ~100 req/min leaves headroom under the
+// account limit for live Ava/insurance traffic, and extra retries ride out
+// collisions. One-time onboarding cost; incremental syncs keep the fast default.
+export const BACKFILL_CLINIKO_MIN_INTERVAL_MS = 600; // ~100 req/min
+export const BACKFILL_CLINIKO_MAX_RETRIES = 8;

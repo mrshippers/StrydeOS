@@ -28,11 +28,38 @@ const SHARD_PROBES = ["uk1", "uk2", "uk3", "au1", "au2", "us1"];
 //  2. Retry on 429/503 that honours Retry-After, else exponential backoff with
 //     jitter, capped at MAX_RETRIES.
 // Tunable via env without a redeploy of logic.
-const MIN_REQUEST_INTERVAL_MS = Number(
+let MIN_REQUEST_INTERVAL_MS = Number(
   process.env.CLINIKO_MIN_REQUEST_INTERVAL_MS ?? 350
 );
-const MAX_RETRIES = Number(process.env.CLINIKO_MAX_RETRIES ?? 4);
+let MAX_RETRIES = Number(process.env.CLINIKO_MAX_RETRIES ?? 4);
 const MAX_BACKOFF_MS = 16_000;
+
+// Steady-state defaults, restored by resetClinikoPacing().
+const DEFAULT_MIN_REQUEST_INTERVAL_MS = MIN_REQUEST_INTERVAL_MS;
+const DEFAULT_MAX_RETRIES = MAX_RETRIES;
+
+/**
+ * Temporarily pace Cliniko gentler than steady state. A large backfill (e.g. the
+ * full first-sync patient import for a self-onboarding clinic) fetches one record
+ * per patient; at the normal interval the sustained rate — stacked on top of any
+ * live traffic sharing the same Cliniko account limit (Ava, the insurance poll) —
+ * trips 429s. Call this before a backfill with a wider interval + more retries,
+ * then resetClinikoPacing() in a finally. Process-wide, matching the throttle.
+ */
+export function setClinikoPacing(opts: { minIntervalMs?: number; maxRetries?: number }): void {
+  if (typeof opts.minIntervalMs === "number" && opts.minIntervalMs > 0) {
+    MIN_REQUEST_INTERVAL_MS = opts.minIntervalMs;
+  }
+  if (typeof opts.maxRetries === "number" && opts.maxRetries >= 0) {
+    MAX_RETRIES = opts.maxRetries;
+  }
+}
+
+/** Restore the steady-state request pacing after a backfill. */
+export function resetClinikoPacing(): void {
+  MIN_REQUEST_INTERVAL_MS = DEFAULT_MIN_REQUEST_INTERVAL_MS;
+  MAX_RETRIES = DEFAULT_MAX_RETRIES;
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
