@@ -27,6 +27,7 @@ import {
   REVIEWS_DOC_ID,
   BACKFILL_WEEKS,
   INCREMENTAL_WEEKS,
+  ONBOARDING_BACKFILL_WEEKS,
 } from "./types";
 import { logIntegrationHealth, cleanOldHealthLogs } from "./health-logger";
 import { isEncrypted, decryptCredential } from "@/lib/crypto/credentials";
@@ -54,7 +55,15 @@ export async function runPipeline(
   const lastFullRunAt = pipelineData.lastFullRunAt as string | undefined;
   // Auto-backfill: first sync ever (no backfillCompleted flag) picks up full history,
   // not just the 4-week incremental window, so historical patients are not missed.
-  const effectiveBackfill = options.backfill || !(pipelineData.backfillCompleted as boolean | undefined);
+  // SOP for self-onboarding clinics: that first sync pulls a DEEP window
+  // (ONBOARDING_BACKFILL_WEEKS) so sessionCount/follow-up rate are correct from
+  // day one. An explicit backfillWeeks override wins; a manual backfill without
+  // one uses the shallower repair default.
+  const onboardingAutoBackfill = !(pipelineData.backfillCompleted as boolean | undefined);
+  const effectiveBackfill = options.backfill || onboardingAutoBackfill;
+  const effectiveBackfillWeeks =
+    options.backfillWeeks ??
+    (onboardingAutoBackfill ? ONBOARDING_BACKFILL_WEEKS : BACKFILL_WEEKS);
 
   // ── Load PMS config ──────────────────────────────────────────────────────
   const pmsSnap = await configBase.doc(PMS_DOC_ID).get();
@@ -134,7 +143,7 @@ export async function runPipeline(
     clinicId,
     pmsAdapter,
     clinicianMap,
-    { ...options, backfill: effectiveBackfill, sessionPricePence }
+    { ...options, backfill: effectiveBackfill, backfillWeeks: effectiveBackfillWeeks, sessionPricePence }
   );
   stages.push(s2);
   await logIntegrationHealth(db, clinicId, pmsConfig.provider, "pms", s2);
@@ -201,7 +210,19 @@ export async function runPipeline(
   // clinic can have Pulse on (board + manual Re-engage buttons) while the
   // pipeline never contacts patients on its own. Default off — opt in only.
   const commsStart = Date.now();
-  if (clinicData?.commsAutoSend !== true) {
+  // Never fire sequences during a backfill: a deep historical pull (esp. the
+  // first onboarding sync) surfaces long-dormant patients who would otherwise
+  // be evaluated for re-engagement and blasted on day one. Comms only run on
+  // normal incremental syncs, and only when the clinic has opted in.
+  if (effectiveBackfill) {
+    stages.push({
+      stage: "trigger-comms",
+      ok: true,
+      count: 0,
+      errors: ["Skipped during backfill — no historical re-engagement blast"],
+      durationMs: Date.now() - commsStart,
+    });
+  } else if (clinicData?.commsAutoSend !== true) {
     stages.push({
       stage: "trigger-comms",
       ok: true,
@@ -287,7 +308,7 @@ export async function runPipeline(
   const metricsStart = Date.now();
   try {
     const weeksBack = effectiveBackfill
-      ? (options.backfillWeeks ?? BACKFILL_WEEKS)
+      ? effectiveBackfillWeeks
       : INCREMENTAL_WEEKS + 2;
     const { written } = await computeWeeklyMetricsForClinic(
       db,

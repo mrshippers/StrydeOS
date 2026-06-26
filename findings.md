@@ -44,6 +44,42 @@ The follow-up rate read **0.27** not because the formula was wrong (it isn't —
 
 ---
 
+## SELF-ONBOARDING CLINIC SOP (2026-06-26) — deep backfill + logic harness
+
+Every clinic that connects a PMS migrates in with the same shape Spires had: lots
+of future bookings, almost no completed history inside a shallow window. So the
+follow-up rate (and utilisation, lifecycle cohorts, revenue trends) reads wrong
+until real history is pulled. This is now the standard onboarding procedure:
+
+**1. Deep first-sync backfill (AUTOMATIC, in code).**
+- First sync ever (no `backfillCompleted` flag) auto-runs a backfill of
+  `ONBOARDING_BACKFILL_WEEKS = 52` (12 months), not the old 26. Pulls each
+  patient's true visit history so `sessionCount` (→ follow-up rate) is right from
+  day one. `src/lib/pipeline/run-pipeline.ts`, `src/lib/pipeline/types.ts`.
+- Go deeper on demand: `POST /api/pipeline/run { backfill:true, backfillWeeks:N }`
+  (clamped ≤520) — e.g. for a clinic with long treatment episodes.
+- **Comms are suppressed during ANY backfill** (`effectiveBackfill` gate on the
+  trigger-comms stage) so surfacing dormant historical patients can never blast
+  them with re-engagement on day one. Comms resume on normal incremental syncs,
+  and only when `commsAutoSend` is opted in.
+
+**2. Logic harness (VERIFY before the clinic trusts the numbers).** Trace every
+headline number to source and confirm it is computed (not stale/truncated):
+- `weekly_summary` → all 6 KPIs present, follow-up rate in a clinically sane
+  band (~2–4, not 0.x or ∞), utilisation diary-derived (target a fraction not a
+  whole number), revenue-per-session = real £, dna a small fraction.
+- `pulse_cohort_summary` → a real lifecycle spread (ACTIVE + DISCHARGED present,
+  not 99% ONBOARDING/NEW — that signature means history is still truncated).
+- `appointments_list` → completed (not 99% future `scheduled`) history exists.
+- The pipeline also self-reports anomalies: `computeKPIs` writes
+  `DataQualityIssue`s + `computeState` — read those after each run.
+
+**Tripwire:** cohort = mostly NEW/ONBOARDING with ~0 ACTIVE/DISCHARGED, or
+follow-up rate < 1, means the backfill window was too shallow for that clinic —
+re-run with a larger `backfillWeeks`.
+
+---
+
 ## Canonical KPI definitions (AUTHORITATIVE — from CLAUDE.md "KPI Metrics — Confirmed from Spires")
 1. **Follow-up rate** = follow-ups booked ÷ initial assessments (weekly + rolling 90-day). _(Andrew ~2.4)_
 2. **HEP compliance** = patients given a programme ÷ patients seen.

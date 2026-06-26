@@ -52,5 +52,12 @@ export const PIPELINE_DOC_ID = "pipeline";
 export const REVIEWS_DOC_ID = "google_reviews";
 
 export const DEFAULT_TREATMENT_LENGTH = 6;
-export const BACKFILL_WEEKS = 26; // ~6 months — PBB: "You cannot navigate using data that is 12 months old"
+export const BACKFILL_WEEKS = 26; // ~6 months — manual repair backfill default
 export const INCREMENTAL_WEEKS = 4; // ~28 days
+// First-ever sync for a self-onboarding clinic pulls a DEEP window so each
+// patient's sessionCount reflects their true visit history, not a truncated
+// slice. A shallow first sync is what made the follow-up rate read 0.27 instead
+// of ~3.4 — sessionCount needs real history even though the dashboard only
+// *navigates* recent data. 52 weeks matches the 12-month navigational horizon
+// and was validated against Spires' full Cliniko history.
+export const ONBOARDING_BACKFILL_WEEKS = 52; // ~12 months — first-sync only
