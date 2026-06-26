@@ -5,6 +5,7 @@ import { checkRateLimitAsync } from "@/lib/rate-limit";
 import { runCSVImport } from "@/lib/csv-import/run-import";
 import type { CSVFileType } from "@/lib/csv-import/types";
 import { withRequestLog } from "@/lib/request-logger";
+import { logIntegrationHealth } from "@/lib/pipeline/health-logger";
 
 async function handler(request: NextRequest): Promise<NextResponse> {
   // Rate limit: 10 requests per IP per 60 seconds (bulk data import)
@@ -42,6 +43,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
 
     const csvText = await file.text();
     const db = getAdminDb();
+    const importStartedAt = Date.now();
 
     const result = await runCSVImport(db, {
       csvText,
@@ -51,6 +53,33 @@ async function handler(request: NextRequest): Promise<NextResponse> {
       importedBy: user.uid,
       schemaId,
     });
+
+    // Emit integration_health telemetry. The CSV-import pipeline is how WriteUpp
+    // clinics (e.g. Spires) actually ingest, but unlike the API-sync stages it
+    // wrote no health record — so a WriteUpp-on-CSV clinic was invisible to the
+    // health snapshot. Label by the clinic's configured PMS so it shows under
+    // the right provider. Best-effort: never block the import response on it.
+    try {
+      const clinicSnap = await db.collection("clinics").doc(clinicId).get();
+      const provider = (clinicSnap.data()?.pmsType as string | undefined) ?? "csv";
+      const ok = result.ok === true;
+      const written = ok && "written" in result ? result.written : 0;
+      const errs =
+        "errors" in result && Array.isArray(result.errors)
+          ? result.errors
+          : !ok && "error" in result && result.error
+            ? [result.error]
+            : [];
+      await logIntegrationHealth(db, clinicId, provider, "pms", {
+        stage: `csv-import:${fileType}`,
+        ok,
+        count: written,
+        errors: errs,
+        durationMs: Date.now() - importStartedAt,
+      });
+    } catch (healthErr) {
+      console.error("[pms/import-csv] health log failed", healthErr);
+    }
 
     if (!result.ok && "error" in result) {
       return NextResponse.json({ error: result.error }, { status: 400 });

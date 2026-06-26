@@ -1,0 +1,8 @@
+{
+  "_comment": "PMS capability tiers consumed by scripts/strydeOS_mcp.py get_pms_capability. Tiers: live_booking (full read+write API, Ava can book/reschedule), smart_capture (read-only sync — KPIs + intake, no API write-back), intelligent_triage (reserved — read+write + triage routing), unknown (not wired / stub). Keys are lowercased provider ids. Keep in sync with src/lib/integrations/pms and CLAUDE.md.",
+  "cliniko": "live_booking",
+  "writeupp": "smart_capture",
+  "halaxy": "smart_capture",
+  "powerdiary": "smart_capture",
+  "zanda": "smart_capture"
+}

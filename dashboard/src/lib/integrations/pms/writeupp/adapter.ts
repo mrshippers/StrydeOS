@@ -22,10 +22,19 @@ const READ_ONLY_MESSAGE =
   "WriteUpp Open API v1 is read-only — write operations are not supported. " +
   "Use WriteUpp Online Booking 2.0 / Client Portal for client-initiated changes.";
 
-/** Fetch an id→name lookup from a WriteUpp reference endpoint. */
+/**
+ * Fetch an id→name lookup from a WriteUpp reference endpoint.
+ *
+ * `strict` lookups rethrow on failure. Status resolution MUST be strict: a
+ * swallowed failure leaves an empty status map, which silently collapses every
+ * appointment to "scheduled" (the WRITEUPP_STATUS_MAP fallback), erasing DNA /
+ * cancellation / revenue KPIs with no error logged. Type names are non-critical
+ * and stay best-effort (a missing type just falls back to the raw value).
+ */
 async function fetchLookup(
   config: WriteUppConfig,
-  path: string
+  path: string,
+  opts: { strict?: boolean } = {}
 ): Promise<Map<string, string>> {
   const map = new Map<string, string>();
   try {
@@ -35,9 +44,9 @@ async function fetchLookup(
         map.set(String(row.id), row.name);
       }
     }
-  } catch {
-    // Lookups are best-effort: a missing status/type name falls back to the
-    // raw value in the mapper rather than failing the whole sync.
+  } catch (err) {
+    if (opts.strict) throw err;
+    // Best-effort: fall back to the raw value in the mapper rather than failing.
   }
   return map;
 }
@@ -54,8 +63,9 @@ export function createWriteUppAdapter(config: WriteUppConfig): PMSAdapter {
       const { clinicianExternalId, dateFrom, dateTo } = params;
 
       // Resolve status/type id→name lookups so canonical status mapping works.
+      // Status is strict (see fetchLookup) — types are best-effort.
       const [statusById, typeById] = await Promise.all([
-        fetchLookup(config, "/appointment-statuses"),
+        fetchLookup(config, "/appointment-statuses", { strict: true }),
         fetchLookup(config, "/appointment-types"),
       ]);
       const lookups: WriteUppLookups = { statusById, typeById };
@@ -70,6 +80,20 @@ export function createWriteUppAdapter(config: WriteUppConfig): PMSAdapter {
         `/appointments?${search.toString()}`,
         { resourceKey: "appointments" }
       );
+
+      // Fail loud rather than silently mislabel: if appointments reference
+      // status ids but the status lookup resolved nothing, every row would
+      // collapse to "scheduled". Abort so the sync stage records the error.
+      if (
+        statusById.size === 0 &&
+        rows.some((r) => r.status_id != null && r.status == null)
+      ) {
+        throw new Error(
+          "WriteUpp /appointment-statuses resolved no statuses while appointments " +
+            "reference status ids — refusing to map (would collapse all appointments " +
+            "to 'scheduled' and erase DNA/cancellation/revenue KPIs)."
+        );
+      }
 
       return rows.map((row) => mapWriteUppAppointment(row, lookups));
     },
