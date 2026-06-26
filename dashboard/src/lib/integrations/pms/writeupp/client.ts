@@ -19,7 +19,21 @@ const DEFAULT_BASE = "https://openapi.writeupp.com/v1";
 /** WriteUpp expects a User-Agent of the form "AppName (contact-email)". */
 const USER_AGENT = "StrydeOS (hello@strydeos.com)";
 
-const MAX_RETRIES_429 = 2;
+// ── Rate limiting + retry (parity with the Cliniko client) ─────────────────
+// WriteUpp caps each key at 200 req/min and returns 429 + Retry-After when
+// exceeded. The pipeline fans out (syncPatients runs getPatient concurrently,
+// getAppointments adds two lookup sweeps + pagination over a 26-week backfill),
+// so without pacing a single run bursts past the cap and fails the whole sync.
+// Two process-wide layers, shared by every writeUppFetch caller:
+//  1. A min-interval gate that spaces request *starts* (serialised through a
+//     promise chain so concurrent callers queue instead of bursting).
+//  2. Retry on 429/503 honouring Retry-After, else exponential backoff + jitter
+//     up to MAX_RETRIES, draining the body so the socket can be reused.
+const MIN_REQUEST_INTERVAL_MS = Number(
+  process.env.WRITEUPP_MIN_REQUEST_INTERVAL_MS ?? 350
+);
+const MAX_RETRIES = Number(process.env.WRITEUPP_MAX_RETRIES ?? 4);
+const MAX_BACKOFF_MS = 16_000;
 
 export interface WriteUppConfig {
   apiKey: string;
@@ -28,6 +42,33 @@ export interface WriteUppConfig {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+let lastRequestStartedAt = 0;
+let throttleChain: Promise<void> = Promise.resolve();
+
+/** Enforce a minimum gap between request starts, process-wide. */
+function throttle(): Promise<void> {
+  const next = throttleChain.then(async () => {
+    const elapsed = Date.now() - lastRequestStartedAt;
+    const wait = MIN_REQUEST_INTERVAL_MS - elapsed;
+    if (wait > 0) await sleep(wait);
+    lastRequestStartedAt = Date.now();
+  });
+  // Keep the chain alive even if a turn rejects, so one failure can't wedge it.
+  throttleChain = next.catch(() => {});
+  return next;
+}
+
+/** Parse a Retry-After header (delta-seconds or HTTP-date) into ms, or null. */
+function parseRetryAfter(res: Response): number | null {
+  const header = res.headers.get("Retry-After");
+  if (!header) return null;
+  const seconds = Number(header);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const when = Date.parse(header);
+  if (!Number.isNaN(when)) return Math.max(0, when - Date.now());
+  return null;
 }
 
 export async function writeUppFetch<T>(
@@ -40,7 +81,11 @@ export async function writeUppFetch<T>(
     ? path
     : `${base.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
 
+  // Every attempt passes through the throttle gate first so retries don't
+  // themselves stampede the API.
   for (let attempt = 0; ; attempt++) {
+    await throttle();
+
     const res = await fetch(url, {
       ...options,
       signal: options.signal ?? AbortSignal.timeout(20_000),
@@ -52,10 +97,18 @@ export async function writeUppFetch<T>(
       },
     });
 
-    // Honour the 200 req/min limit: back off on Retry-After, then retry.
-    if (res.status === 429 && attempt < MAX_RETRIES_429) {
-      const retryAfter = Number(res.headers.get("Retry-After")) || 2;
-      await sleep(Math.min(retryAfter, 30) * 1000);
+    // Transient — honour Retry-After (else exponential backoff + jitter) and
+    // retry rather than failing the whole sync. Covers 429 (rate limit) and
+    // 503 (upstream hiccup), matching the Cliniko client.
+    if ((res.status === 429 || res.status === 503) && attempt < MAX_RETRIES) {
+      const retryAfter = parseRetryAfter(res);
+      const backoff =
+        retryAfter ??
+        Math.min(MAX_BACKOFF_MS, 500 * 2 ** attempt) +
+          Math.floor(Math.random() * 250);
+      // Drain the body so the socket can be reused.
+      await res.text().catch(() => "");
+      await sleep(backoff);
       continue;
     }
 

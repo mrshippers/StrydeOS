@@ -25,7 +25,14 @@ const PMS_DOMAIN_ALLOWLIST = [
   "api.powerdiary.com",
 ];
 
-function validateBaseUrl(baseUrl: string | undefined): void {
+/**
+ * Reject a PMS baseUrl that isn't HTTPS on an allowlisted domain. Exported so
+ * the save-config boundary can validate before persisting — otherwise a bad
+ * baseUrl is stored silently and only throws later inside createPMSAdapter,
+ * breaking every subsequent sync instead of being rejected with a clear 400 at
+ * the point of entry. Throws on invalid input.
+ */
+export function validateBaseUrl(baseUrl: string | undefined): void {
   if (!baseUrl) return;
   let parsed: URL;
   try {

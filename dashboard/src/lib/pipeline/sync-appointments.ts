@@ -40,6 +40,28 @@ function classifyAppointmentType(
         isInitialAssessment: mapped === "initial_assessment",
       };
     }
+
+    // Substring classification (priority: discharge > follow_up > review >
+    // initial). Mirrors cliniko/classify-appointment-type.ts so compound or
+    // prefixed names ("Bupa Follow-up Review", "Discharge Appointment", "MSK
+    // Initial Assessment") classify correctly instead of falling through to the
+    // unstable first-visit heuristic. Without this, WriteUpp clinics — whose
+    // type names rarely match an exact map key — never flag discharges and
+    // mis-bucket reviews. Follow-up/review/discharge are checked before initial
+    // so "...Follow-up Review" can't mis-classify as an initial assessment.
+    const lower = normalized.toLowerCase();
+    if (/discharge|final session/.test(lower)) {
+      return { appointmentType: "discharge", isInitialAssessment: false };
+    }
+    if (/follow[\s-]?up|subsequent|treatment/.test(lower)) {
+      return { appointmentType: "follow_up", isInitialAssessment: false };
+    }
+    if (/review|progress/.test(lower)) {
+      return { appointmentType: "review", isInitialAssessment: false };
+    }
+    if (/initial|assessment|new patient|consultation/.test(lower)) {
+      return { appointmentType: "initial_assessment", isInitialAssessment: true };
+    }
   }
 
   // Heuristic fallback: first appointment for this patient → IA
@@ -103,11 +125,24 @@ export async function syncAppointments(
         chunkEnd.setDate(chunkEnd.getDate() - i * CHUNK_WEEKS * 7);
         const chunkStart = new Date(chunkEnd);
         chunkStart.setDate(chunkStart.getDate() - chunkWeeks * 7);
-        const chunk = await adapter.getAppointments({
-          dateFrom: chunkStart.toISOString().split("T")[0],
-          dateTo: chunkEnd.toISOString().split("T")[0],
-        });
-        pmsAppointments = pmsAppointments.concat(chunk);
+        const chunkFrom = chunkStart.toISOString().split("T")[0];
+        const chunkTo = chunkEnd.toISOString().split("T")[0];
+        // Per-chunk checkpoint: a transient failure on one window must not
+        // discard the chunks already fetched. Record the error and keep going —
+        // the surviving chunks still get written, and a non-empty errors[]
+        // marks the stage ok:false so the partial run is visible.
+        try {
+          const chunk = await adapter.getAppointments({
+            dateFrom: chunkFrom,
+            dateTo: chunkTo,
+          });
+          pmsAppointments = pmsAppointments.concat(chunk);
+        } catch (chunkErr) {
+          errors.push(
+            `backfill chunk ${i + 1}/${totalChunks} (${chunkFrom}..${chunkTo}) failed: ` +
+              (chunkErr instanceof Error ? chunkErr.message : String(chunkErr))
+          );
+        }
       }
     } else {
       const { dateFrom, dateTo } = getDateRange(weeks);

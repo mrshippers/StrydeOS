@@ -8,14 +8,21 @@ export const inputSchema = z.object({
 
 export type Input = z.infer<typeof inputSchema>;
 
+// Field names MUST match what health-logger.ts actually writes:
+//   { provider, providerType, stage, ok, count, errors, durationMs, timestamp }
+// The previous reader ordered by `recordedAt` and mapped `integration`/`status`
+// — fields the writer never produces — so .orderBy() excluded every doc and the
+// query always returned empty (the "ZERO entries for clinic-spires" symptom).
 interface HealthRow {
   id: string;
-  integration: string | null;
-  status: string | null;
-  lastSuccess: string | null;
-  lastError: string | null;
-  message: string | null;
-  recordedAt: string | null;
+  provider: string | null;
+  providerType: string | null;
+  stage: string | null;
+  ok: boolean | null;
+  count: number | null;
+  errors: string[];
+  durationMs: number | null;
+  timestamp: string | null;
 }
 
 interface Data {
@@ -28,7 +35,7 @@ interface Data {
 export async function run(ctx: ToolContext, input: Input): Promise<ToolResult<Data>> {
   const snap = await ctx.db
     .collection(`clinics/${ctx.clinicId}/integration_health`)
-    .orderBy("recordedAt", "desc")
+    .orderBy("timestamp", "desc")
     .limit(input.limit)
     .get();
 
@@ -36,22 +43,24 @@ export async function run(ctx: ToolContext, input: Input): Promise<ToolResult<Da
     const x = d.data() as Record<string, unknown>;
     return {
       id: d.id,
-      integration: (x.integration as string | undefined) ?? null,
-      status: (x.status as string | undefined) ?? null,
-      lastSuccess: (x.lastSuccess as string | undefined) ?? null,
-      lastError: (x.lastError as string | undefined) ?? null,
-      message: (x.message as string | undefined) ?? null,
-      recordedAt: (x.recordedAt as string | undefined) ?? null,
+      provider: (x.provider as string | undefined) ?? null,
+      providerType: (x.providerType as string | undefined) ?? null,
+      stage: (x.stage as string | undefined) ?? null,
+      ok: typeof x.ok === "boolean" ? x.ok : null,
+      count: typeof x.count === "number" ? x.count : null,
+      errors: Array.isArray(x.errors) ? (x.errors as string[]) : [],
+      durationMs: typeof x.durationMs === "number" ? x.durationMs : null,
+      timestamp: (x.timestamp as string | undefined) ?? null,
     };
   });
 
   const statusBreakdown: Record<string, number> = {};
   for (const row of entries) {
-    const k = row.status ?? "unknown";
+    const k = row.ok === true ? "ok" : row.ok === false ? "error" : "unknown";
     statusBreakdown[k] = (statusBreakdown[k] ?? 0) + 1;
   }
 
-  const errored = entries.filter((e) => e.status && e.status !== "ok" && e.status !== "healthy").length;
+  const errored = entries.filter((e) => e.ok === false).length;
   const summary =
     entries.length === 0
       ? "No integration_health entries found. Pipeline may not be writing health records yet."

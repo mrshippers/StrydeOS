@@ -6,6 +6,7 @@ import type { PmsProvider } from "@/types";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
 import { withRequestLog } from "@/lib/request-logger";
 import { encryptCredential } from "@/lib/crypto/credentials";
+import { validateBaseUrl } from "@/lib/integrations/pms/factory";
 
 const INTEGRATIONS_PMS = "integrations_config";
 const PMS_DOC_ID = "pms";
@@ -35,6 +36,18 @@ async function handler(request: NextRequest) {
     const baseUrl = body.baseUrl as string | undefined;
     if (!apiKey?.trim()) {
       return NextResponse.json({ error: "API key is required" }, { status: 400 });
+    }
+
+    // Enforce the SSRF allowlist at the save boundary so a bad/internal-host
+    // baseUrl is rejected with a clear 400 here, not stored silently and then
+    // thrown one layer down inside createPMSAdapter on every later sync.
+    try {
+      validateBaseUrl(baseUrl);
+    } catch (e) {
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "Invalid PMS baseUrl" },
+        { status: 400 }
+      );
     }
 
     const db = getAdminDb();

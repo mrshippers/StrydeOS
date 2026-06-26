@@ -96,7 +96,16 @@ export function mapWriteUppAppointment(
     "Confirmed";
   const canonicalStatus = WRITEUPP_STATUS_MAP[statusName] ?? "scheduled";
 
+  // PMSAppointment contract (types/pms.ts): appointmentType = provider ID,
+  // appointmentTypeName = resolved human name. Keep the ID in appointmentType
+  // and the name in appointmentTypeName so the canonical name field is
+  // populated for WriteUpp clinics (it drives classification + the insurance
+  // intake gate) instead of being dropped to null — matching Cliniko.
   const appointmentType =
+    row.appointment_type_id != null
+      ? String(row.appointment_type_id)
+      : firstString(row.appointment_type);
+  const appointmentTypeName =
     (row.appointment_type_id != null ? lookups.typeById?.get(String(row.appointment_type_id)) : undefined) ??
     firstString(row.appointment_type);
 
@@ -108,6 +117,7 @@ export function mapWriteUppAppointment(
     endTime: end,
     status: canonicalStatus,
     appointmentType,
+    appointmentTypeName,
     notes: typeof row.notes === "string" ? row.notes : undefined,
     revenueAmountPence,
   };
