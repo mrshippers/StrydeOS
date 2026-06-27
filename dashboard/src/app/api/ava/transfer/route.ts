@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as crypto from "crypto";
 import { transferCallToReception } from "@/lib/ava/transfer-call";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { verifyElevenLabsSignature, isWebhookSecretConfigured } from "@/lib/ava/verify-signature";
 import { withRequestLog } from "@/lib/request-logger";
 
 export const runtime = "nodejs";
@@ -20,15 +20,25 @@ async function handler(req: NextRequest) {
   try {
     const rawBody = await req.text();
 
-    // Verify ElevenLabs webhook signature — fail closed
-    if (!isWebhookSecretConfigured()) {
+    // This route receives the ElevenLabs `transfer_to_reception` TOOL call.
+    // Tool webhooks authenticate with `Authorization: Bearer <secret>` (HMAC
+    // signatures are only sent on conversation-event webhooks), so verify Bearer
+    // with a constant-time compare, matching /api/ava/tools. Fail closed.
+    const secret = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
+    if (!secret) {
       return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });
     }
-
-    const sig = req.headers.get("elevenlabs-signature");
-    const valid = await verifyElevenLabsSignature(rawBody, sig);
-    if (!valid) {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    const authHeader = req.headers.get("authorization");
+    const presented = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice("Bearer ".length)
+      : "";
+    const presentedBuf = Buffer.from(presented);
+    const expectedBuf = Buffer.from(secret);
+    if (
+      presentedBuf.length !== expectedBuf.length ||
+      !crypto.timingSafeEqual(presentedBuf, expectedBuf)
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = JSON.parse(rawBody);

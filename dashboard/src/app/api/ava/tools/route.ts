@@ -298,9 +298,15 @@ async function handleBookAppointment(
     }
   }
 
-  // Write to PMS
+  // ── Step 1: the PMS write — the ONLY step we must never duplicate ───────────
+  // Isolate createAppointment in its own try. A failure HERE means nothing was
+  // booked: release the claim so a genuine retry can book, log, and return a
+  // graceful script. Post-write bookkeeping (Step 2) must NOT share this catch,
+  // or a booked appointment gets misreported as a failure AND the released claim
+  // lets the ElevenLabs retry create a SECOND appointment.
+  let pmsResult: Awaited<ReturnType<typeof adapter.createAppointment>>;
   try {
-    const pmsResult = await adapter.createAppointment({
+    pmsResult = await adapter.createAppointment({
       patientExternalId,
       clinicianExternalId,
       dateTime: dt.toISOString(),
@@ -308,11 +314,58 @@ async function handleBookAppointment(
       appointmentType,
       notes: "[Booked by Ava — AI receptionist]",
     });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (claimKey) {
+      await releaseBooking(db, clinicId, claimKey);
+    }
+    if (conversationId) {
+      const now = new Date().toISOString();
+      await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("call_log")
+        .doc(conversationId)
+        .set(
+          {
+            toolCalls: FieldValue.arrayUnion({
+              tool: "book_appointment",
+              input: { firstName, lastName, phone: normalizedPhone, slotDatetime },
+              error: message,
+              timestamp: now,
+            }),
+          },
+          { merge: true },
+        )
+        .catch(() => {});
+    }
+    return "I'm having a bit of trouble with the booking system right now. Let me take your details and have someone from the team confirm your appointment within the hour.";
+  }
 
+  // ── Step 2: the booking is REAL and authoritative ───────────────────────────
+  // Everything below is best-effort bookkeeping. It must never turn a successful
+  // booking into a reported failure, and must never release the claim (a released
+  // claim + a real booking = a double-book on the next retry).
+  const now = new Date().toISOString();
+  const firestoreDocId = pmsResult.externalId ?? db.collection("_").doc().id;
+
+  const dateStr = dt.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  const timeStr = dt.toLocaleTimeString("en-GB", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  const opener = isReturningPatient
+    ? "Welcome back — I've got you booked in"
+    : "All sorted — I've set you up and booked you in";
+  const confirmation = `${opener} for ${dateStr} at ${timeStr} with ${resolvedClinicianName}. That's a ${durationMinutes}-minute ${appointmentType === "initial_assessment" ? "initial assessment" : "follow-up"}. You'll receive a confirmation text shortly.`;
+
+  try {
     // Mirror to Firestore
-    const now = new Date().toISOString();
-    const firestoreDocId = pmsResult.externalId ?? db.collection("_").doc().id;
-
     await clinicRef.collection("appointments").doc(firestoreDocId).set(
       {
         patientId: patientExternalId,
@@ -367,6 +420,14 @@ async function handleBookAppointment(
         .doc(conversationId)
         .set(
           {
+            // Durable top-level marker for the post-call webhook
+            // (/api/webhooks/elevenlabs). The real PMS appointment id is created
+            // HERE on the live path; the webhook reads it straight off `existing`
+            // to (a) emit appointmentExternalId on the Intelligence call_fact and
+            // (b) lock the "booked" outcome so the LLM summary classifier can't
+            // downgrade a genuine booking. The toolCalls array is an opaque audit
+            // log; this field is the cheap, readable signal.
+            bookingExternalId: pmsResult.externalId ?? firestoreDocId,
             toolCalls: FieldValue.arrayUnion({
               tool: "book_appointment",
               input: { firstName, lastName, phone: normalizedPhone, slotDatetime, clinicianName },
@@ -377,62 +438,32 @@ async function handleBookAppointment(
           { merge: true },
         );
     }
+  } catch (err) {
+    // The appointment IS booked — never report failure here. Log and carry on.
+    console.error(
+      `[ava/tools] booking succeeded (PMS ${pmsResult.externalId ?? firestoreDocId}) but post-write bookkeeping failed for ${clinicId}:`,
+      err instanceof Error ? err.message : String(err),
+    );
+  }
 
-    // Format speakable confirmation
-    const dateStr = dt.toLocaleDateString("en-GB", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    });
-    const timeStr = dt.toLocaleTimeString("en-GB", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    const opener = isReturningPatient
-      ? "Welcome back — I've got you booked in"
-      : "All sorted — I've set you up and booked you in";
-    const confirmation = `${opener} for ${dateStr} at ${timeStr} with ${resolvedClinicianName}. That's a ${durationMinutes}-minute ${appointmentType === "initial_assessment" ? "initial assessment" : "follow-up"}. You'll receive a confirmation text shortly.`;
-
-    // Settle the idempotency claim with the confirmation so a duplicate retry
-    // replays this exact line instead of booking a second appointment.
-    if (claimKey) {
+  // Settle the idempotency claim with the confirmation so a duplicate retry
+  // replays this exact line instead of booking a second appointment. Best-effort:
+  // even if this throws, the claim doc already exists, so the retry still cannot
+  // double-book — it just won't get the polished replay line.
+  if (claimKey) {
+    try {
       await settleBooking(db, clinicId, claimKey, confirmation, {
         bookingId: pmsResult.externalId ?? firestoreDocId,
         path: "ts",
       });
+    } catch (err) {
+      console.error(
+        `[ava/tools] booking succeeded but settling the idempotency claim failed for ${clinicId}:`,
+        err instanceof Error ? err.message : String(err),
+      );
     }
-    return confirmation;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    // PMS write failed — release the claim so a genuine retry can book rather
-    // than being permanently blocked by a dead claim.
-    if (claimKey) {
-      await releaseBooking(db, clinicId, claimKey);
-    }
-    // Log the failure but give Ava a graceful script
-    if (conversationId) {
-      const now = new Date().toISOString();
-      await db
-        .collection("clinics")
-        .doc(clinicId)
-        .collection("call_log")
-        .doc(conversationId)
-        .set(
-          {
-            toolCalls: FieldValue.arrayUnion({
-              tool: "book_appointment",
-              input: { firstName, lastName, phone: normalizedPhone, slotDatetime },
-              error: message,
-              timestamp: now,
-            }),
-          },
-          { merge: true },
-        );
-    }
-    return "I'm having a bit of trouble with the booking system right now. Let me take your details and have someone from the team confirm your appointment within the hour.";
   }
+  return confirmation;
 }
 
 async function handleUpdateBooking(
@@ -567,10 +598,14 @@ async function handleUpdateBooking(
     const durationMinutes = 45;
     const endTime = new Date(dt.getTime() + durationMinutes * 60_000).toISOString();
 
+    // ── Saga: book the NEW slot BEFORE cancelling the OLD one ──────────────────
+    // Cancelling first then failing to create leaves the patient with NO
+    // appointment and no rollback. Creating first means a create failure leaves
+    // the original booking untouched, and a cancel failure after the create
+    // leaves a (clearable) duplicate rather than nothing — always the safer side.
+    let pmsResult: Awaited<ReturnType<typeof adapter.createAppointment>>;
     try {
-      await adapter.updateAppointmentStatus(bookingId, "cancelled");
-
-      const pmsResult = await adapter.createAppointment({
+      pmsResult = await adapter.createAppointment({
         patientExternalId,
         clinicianExternalId,
         dateTime: dt.toISOString(),
@@ -578,41 +613,56 @@ async function handleUpdateBooking(
         appointmentType,
         notes: "[Rescheduled by Ava — AI receptionist]",
       });
+    } catch {
+      // New slot could not be created — the original appointment is intact.
+      return "I'm having a bit of trouble rescheduling right now. Let me take a note and have someone sort this for you within the hour.";
+    }
 
-      const now = new Date().toISOString();
+    const now = new Date().toISOString();
+    const newDocId = pmsResult.externalId ?? db.collection("_").doc().id;
+
+    // New appointment is secured — mirror it to Firestore first so the record
+    // exists regardless of how the old-slot cancel below resolves.
+    await db
+      .collection("clinics").doc(clinicId).collection("appointments").doc(newDocId)
+      .set({
+        patientId: patientExternalId,
+        clinicianId: clinicianExternalId,
+        dateTime: dt.toISOString(),
+        endTime,
+        status: "scheduled",
+        appointmentType,
+        isInitialAssessment: appointmentType === "initial_assessment",
+        hepAssigned: false,
+        revenueAmountPence: 0,
+        followUpBooked: false,
+        source: "strydeos_receptionist",
+        pmsExternalId: pmsResult.externalId,
+        pmsWriteStatus: "success",
+        bookedBy: "ava",
+        rescheduledFromId: bookingId,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+    // Release the OLD slot. If this throws the patient still HAS the new
+    // appointment, so log best-effort and still confirm rather than reporting a
+    // failure that already half-succeeded.
+    try {
+      await adapter.updateAppointmentStatus(bookingId, "cancelled");
       await db
         .collection("clinics").doc(clinicId).collection("appointments").doc(bookingId)
         .update({ status: "cancelled", updatedAt: now });
-
-      const newDocId = pmsResult.externalId ?? db.collection("_").doc().id;
-      await db
-        .collection("clinics").doc(clinicId).collection("appointments").doc(newDocId)
-        .set({
-          patientId: patientExternalId,
-          clinicianId: clinicianExternalId,
-          dateTime: dt.toISOString(),
-          endTime,
-          status: "scheduled",
-          appointmentType,
-          isInitialAssessment: appointmentType === "initial_assessment",
-          hepAssigned: false,
-          revenueAmountPence: 0,
-          followUpBooked: false,
-          source: "strydeos_receptionist",
-          pmsExternalId: pmsResult.externalId,
-          pmsWriteStatus: "success",
-          bookedBy: "ava",
-          rescheduledFromId: bookingId,
-          createdAt: now,
-          updatedAt: now,
-        });
-
-      const dateStr = dt.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-      const timeStr = dt.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
-      return `Done — I've moved your appointment to ${dateStr} at ${timeStr} with ${clinicianName}. You'll receive a confirmation text shortly.`;
-    } catch {
-      return "I'm having a bit of trouble rescheduling right now. Let me take a note and have someone sort this for you within the hour.";
+    } catch (err) {
+      console.error(
+        `[ava/tools] reschedule: new appt ${newDocId} created but cancelling old ${bookingId} failed for ${clinicId}:`,
+        err instanceof Error ? err.message : String(err),
+      );
     }
+
+    const dateStr = dt.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+    const timeStr = dt.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+    return `Done — I've moved your appointment to ${dateStr} at ${timeStr} with ${clinicianName}. You'll receive a confirmation text shortly.`;
   }
 
   return "Would you like to cancel or reschedule the appointment?";
@@ -833,6 +883,25 @@ async function handler(req: NextRequest) {
             bookingId: engineResult.booking_id ?? null,
             path: "engine",
           });
+        }
+        // Durable booking marker for the post-call webhook — mirror the TS path
+        // (handleBookAppointment) on the PRODUCTION engine path. Without this a
+        // live booking made by the Python engine would have no bookingExternalId
+        // on call_log, so the webhook could neither lock the "booked" outcome nor
+        // emit appointmentExternalId on the Intelligence call_fact.
+        if (isBooking && engineResult.booking_id && conversation_id) {
+          await db
+            .collection("clinics")
+            .doc(clinicId)
+            .collection("call_log")
+            .doc(conversation_id)
+            .set({ bookingExternalId: engineResult.booking_id }, { merge: true })
+            .catch((err) => {
+              console.error(
+                `[ava/tools] engine booking marker write failed for ${clinicId}:`,
+                err instanceof Error ? err.message : String(err),
+              );
+            });
         }
         return NextResponse.json({ response: engineResult.result }, { status: 200 });
       }

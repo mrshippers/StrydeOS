@@ -167,7 +167,10 @@ async function handler(req: NextRequest) {
             outcome = "follow_up_required";
             break;
           case "transfer_call":
-            outcome = "transferred";
+            // A red-flag handoff sets metadata.escalate — it is a clinical
+            // escalation, not a routine reception transfer, so it must raise the
+            // critical insight + escalation SMS rather than a quiet "transferred".
+            outcome = graphMetadata.escalate ? "escalated" : "transferred";
             break;
           case "relay_message":
             outcome = "follow_up_required";
@@ -191,6 +194,35 @@ async function handler(req: NextRequest) {
         else if (summary.includes("cancel")) outcome = "follow_up_required";
         else if (!payload.transcript) outcome = "voicemail";
         else if (summary.includes("escalat") || summary.includes("urgent")) outcome = "escalated";
+      }
+
+      // ─── Live-call outcome guard (never downgrade a terminal outcome) ───────
+      // callRef points at the SAME call_log doc that the live-call transfer
+      // handler (transfer-call.ts) writes during a warm transfer:
+      //   { transferredAt, transferredTo, transferReason, outcome: "transferred" }
+      // That live write is the authoritative outcome. The post-call summary
+      // classifier above must NOT clobber it (a real transfer or escalation
+      // being re-labelled "resolved"/"booked"/etc by the LLM summary). If the
+      // doc already carries a terminal live-call marker, keep it and let the
+      // rest of the pipeline (SMS / insight / call_facts) follow the preserved
+      // value.
+      const existing: FirebaseFirestore.DocumentData = (await callRef.get()).data() ?? {};
+      const existingOutcome = typeof existing.outcome === "string" ? existing.outcome : null;
+      const liveBookingExternalId =
+        typeof existing.bookingExternalId === "string" && existing.bookingExternalId.trim()
+          ? existing.bookingExternalId
+          : null;
+      if (existingOutcome === "transferred" || existingOutcome === "escalated") {
+        outcome = existingOutcome;
+      } else if (existing.transferredAt) {
+        outcome = "transferred";
+      } else if (liveBookingExternalId) {
+        // The live booking tool (/api/ava/tools) created a real PMS appointment
+        // during the call. That is an authoritative terminal outcome — the LLM
+        // summary classifier must not bury it as resolved/follow_up just because
+        // the closing chit-chat didn't say "booked". A genuine booking also means
+        // the patient is owed the booking-acknowledgement SMS, not a callback.
+        outcome = "booked";
       }
 
       await callRef.update({
@@ -224,27 +256,51 @@ async function handler(req: NextRequest) {
         return NextResponse.json({ ok: true, deduplicated: true }, { status: 200 });
       }
 
-      // Booking acknowledgement SMS to patient
-      if (outcome === "booked" && payload.caller_phone) {
-        sendBookingAcknowledgement({
-          clinicId,
-          callerPhone: payload.caller_phone,
-          conversationId,
-        }).catch((err) => { console.error("[sendBookingAcknowledgement] Failed:", err instanceof Error ? err.message : String(err)); });
-      }
+      // ─── Critical SMS side effects (durable, exactly-once) ──────────────────
+      // The dedup claim above is committed BEFORE these sends. If a send threw
+      // (or the serverless function froze mid-send) while the claim stood, the
+      // patient/owner notification would be lost forever AND an ElevenLabs
+      // retry would be dedup-blocked. So we AWAIT the sends inside the claimed
+      // section and, on a thrown send error, RELEASE the claim before bubbling
+      // to the outer catch -> 500 -> ElevenLabs retries (which can then
+      // re-attempt cleanly). The call_log/call_facts/insight writes stay
+      // idempotent (set/merge), so a retry re-running them is harmless.
+      try {
+        // Booking acknowledgement SMS to patient.
+        if (outcome === "booked" && payload.caller_phone) {
+          await sendBookingAcknowledgement({
+            clinicId,
+            callerPhone: payload.caller_phone,
+            conversationId,
+          });
+        }
 
-      // Fire-and-forget SMS notification for escalated / callback calls
-      if (outcome === "follow_up_required" || outcome === "escalated") {
-        sendCallbackNotification({
-          clinicId,
-          callerPhone: payload.caller_phone ?? null,
-          callbackType: (graphMetadata.callbackType as string) ?? "general",
-          reason:
-            (graphMetadata.reason as string) ??
-            payload.reason_for_call ??
-            null,
-          conversationId,
-        }).catch((err) => { console.error("[sendCallbackNotification] Failed:", err instanceof Error ? err.message : String(err)); });
+        // SMS notification for escalated / callback calls.
+        if (outcome === "follow_up_required" || outcome === "escalated") {
+          await sendCallbackNotification({
+            clinicId,
+            callerPhone: payload.caller_phone ?? null,
+            callbackType: (graphMetadata.callbackType as string) ?? "general",
+            reason:
+              (graphMetadata.reason as string) ??
+              payload.reason_for_call ??
+              null,
+            conversationId,
+          });
+        }
+      } catch (err) {
+        // A send failed. Release the dedup claim so the at-least-once retry is
+        // not blocked, then rethrow so the outer catch returns 500 and
+        // ElevenLabs re-delivers. Best-effort release: if the delete itself
+        // fails, the retry still 500s and the cleanup cron reclaims the doc.
+        await db
+          .collection("clinics")
+          .doc(clinicId)
+          .collection("_ava_processed_events")
+          .doc(`${conversationId}__${payload.event}`)
+          .delete()
+          .catch(() => {});
+        throw err;
       }
 
       // ─── Cross-module bus: emit InsightEvent for Pulse / Intelligence ───────
@@ -360,9 +416,16 @@ async function handler(req: NextRequest) {
           durationSeconds: payload.call_duration ?? 0,
           outcome: outcome as AvaCallOutcome,
           booked: outcome === "booked",
-          ...(graphMetadata.bookingId
-            ? { appointmentExternalId: String(graphMetadata.bookingId) }
-            : {}),
+          // Prefer the durable PMS id the live booking tool stamped on the
+          // call_log doc; fall back to graph metadata. Without this the
+          // appointmentExternalId was NEVER populated (no graph node sets
+          // bookingId), so Intelligence couldn't join a voice booking to its PMS
+          // record for booking-conversion KPIs.
+          ...(liveBookingExternalId
+            ? { appointmentExternalId: liveBookingExternalId }
+            : graphMetadata.bookingId
+              ? { appointmentExternalId: String(graphMetadata.bookingId) }
+              : {}),
           pmsType,
           transferred: outcome === "transferred",
           escalated: outcome === "escalated",

@@ -155,22 +155,36 @@ export async function transferCallToReception(
       method: "POST",
     });
 
-    // 5. Log the transfer in Firestore
+    // 5. Log the transfer in Firestore.
+    //    The redirect above is the AUTHORITATIVE success point — the caller is
+    //    now being warm-transferred to reception. This call_log write is
+    //    best-effort audit only, so a failure here must NOT flip a genuinely
+    //    successful transfer into a reported failure (which would make the
+    //    ElevenLabs agent tell the caller it failed and offer a callback,
+    //    contradicting reality). Swallow + log any write error.
     if (req.conversationId) {
-      await db
-        .collection("clinics")
-        .doc(req.clinicId)
-        .collection("call_log")
-        .doc(req.conversationId)
-        .set(
-          {
-            transferredAt: new Date().toISOString(),
-            transferredTo: receptionPhone,
-            transferReason: req.reason,
-            outcome: "transferred",
-          },
-          { merge: true }
+      try {
+        await db
+          .collection("clinics")
+          .doc(req.clinicId)
+          .collection("call_log")
+          .doc(req.conversationId)
+          .set(
+            {
+              transferredAt: new Date().toISOString(),
+              transferredTo: receptionPhone,
+              transferReason: req.reason,
+              outcome: "transferred",
+            },
+            { merge: true }
+          );
+      } catch (logError) {
+        const logMessage =
+          logError instanceof Error ? logError.message : "Unknown call_log write error";
+        console.error(
+          `[transfer-call] redirect succeeded but call_log write failed for clinic=${req.clinicId} conversation=${req.conversationId}: ${logMessage}`
         );
+      }
     }
 
     return { success: true };
