@@ -18,6 +18,7 @@
  */
 
 import * as crypto from "crypto";
+import * as Sentry from "@sentry/nextjs";
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
@@ -976,6 +977,10 @@ async function handleSendInsuranceLink(
     return "Perfect, I've just texted you a secure link to confirm your insurance details before your appointment. It only takes a minute.";
   } catch (err) {
     console.error("[ava/tools] send_insurance_intake_link failed:", err instanceof Error ? err.message : String(err));
+    // Surface to monitoring, matching the notify-callback senders — a clinical
+    // pre-auth SMS failure must not die as a passive console line while the
+    // caller is told "the team will follow up".
+    Sentry.captureException(err);
     // Roll the link back so the cooldown does not suppress a genuine retry, then
     // record the failed send. Best-effort: the apology must still reach the caller.
     if (createdLink) {
@@ -1156,10 +1161,21 @@ async function handler(req: NextRequest) {
         // Non-claimed timeout → fall through to the TS handler below.
       } else if (engineResult !== null) {
         if (claimedHere && claimKey) {
-          await settleBooking(db, clinicId, claimKey, engineResult.result, {
-            bookingId: engineResult.booking_id ?? null,
-            path: "engine",
-          });
+          // Best-effort, mirroring the TS paths' guarded settle: a settle throw
+          // must NEVER turn a committed engine booking/reschedule into a reported
+          // failure or skip the durable marker below. The claim stays "pending"
+          // (no double-book on retry; the cleanup cron reclaims it).
+          try {
+            await settleBooking(db, clinicId, claimKey, engineResult.result, {
+              bookingId: engineResult.booking_id ?? null,
+              path: "engine",
+            });
+          } catch (err) {
+            console.error(
+              `[ava/tools] engine booking committed but settling the claim failed for ${clinicId}:`,
+              err instanceof Error ? err.message : String(err),
+            );
+          }
         }
         // Durable booking marker for the post-call webhook — mirror the TS path
         // (handleBookAppointment) on the PRODUCTION engine path. ALWAYS write it

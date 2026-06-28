@@ -26,7 +26,7 @@ const TOOLS_SECRET = "test_tools_secret";
 const CONV_ID = "conv_engine_1";
 const ENGINE_BOOKING_ID = "ENG_appt_42";
 
-function makeDb() {
+function makeDb(opts: { failClaimSet?: boolean } = {}) {
   const callLogSets: Record<string, unknown>[] = [];
   const callLogDocRef = {
     get: vi.fn().mockResolvedValue({ data: () => ({}) }),
@@ -44,7 +44,12 @@ function makeDb() {
       claimStore.set(key, d);
     }),
     get: vi.fn(async () => ({ data: () => claimStore.get(key) })),
-    set: vi.fn(async (d: Record<string, unknown>) => { claimStore.set(key, { ...(claimStore.get(key) ?? {}), ...d }); }),
+    // settleBooking writes via .set — optionally simulate a transient Firestore
+    // throw AFTER the engine already committed the booking.
+    set: vi.fn(async (d: Record<string, unknown>) => {
+      if (opts.failClaimSet) throw new Error("firestore unavailable");
+      claimStore.set(key, { ...(claimStore.get(key) ?? {}), ...d });
+    }),
     delete: vi.fn(async () => claimStore.delete(key)),
   });
   const claimRefs = new Map<string, ReturnType<typeof claimDocRef>>();
@@ -166,6 +171,38 @@ describe("POST /api/ava/tools — engine booking writes the durable call_log mar
     const res = await POST(rescheduleRequest());
     expect(res.status).toBe(200);
 
+    const marker = callLogSets.find(
+      (d) => (d as Record<string, unknown>).bookingExternalId === ENGINE_BOOKING_ID,
+    );
+    expect(marker).toBeDefined();
+  });
+
+  it("does NOT report a committed engine booking as a failure when settleBooking throws, and still writes the marker", async () => {
+    // Third-order gap (harness re-run MEDIUM): the engine-path settleBooking was
+    // the one post-commit step left unguarded. A transient Firestore throw on the
+    // claim .set must NOT propagate to the outer catch (which returns the generic
+    // "trouble" line and skips the durable marker) — the engine has already
+    // committed the booking, so the caller must hear the success and the webhook
+    // must still get its marker.
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    const { db, callLogSets } = makeDb({ failClaimSet: true });
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const { proxyToEngine } = await import("@/lib/ava/engine-proxy");
+    vi.mocked(proxyToEngine).mockResolvedValue({
+      result: "All booked in for Wednesday at 2pm.",
+      booking_id: ENGINE_BOOKING_ID,
+    } as never);
+
+    const { POST } = await import("../route");
+    const res = await POST(bookingRequest());
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    // The committed booking is confirmed, NOT reported as a failure.
+    expect(data.response).toBe("All booked in for Wednesday at 2pm.");
+    expect(data.response).not.toMatch(/trouble|something went wrong/i);
+    // The durable marker is still written despite the settle failure.
     const marker = callLogSets.find(
       (d) => (d as Record<string, unknown>).bookingExternalId === ENGINE_BOOKING_ID,
     );

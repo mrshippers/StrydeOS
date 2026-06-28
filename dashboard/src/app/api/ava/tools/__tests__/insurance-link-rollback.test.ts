@@ -22,6 +22,7 @@ vi.mock("@/lib/twilio", () => ({
   getSmsSender: vi.fn(() => "StrydeOS"),
 }));
 vi.mock("@/lib/insurance/create-link", () => ({ createIntakeLink: vi.fn() }));
+vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
 const AGENT_ID = "agent_spires_001";
 const CLINIC_ID = "clinic-spires";
@@ -171,6 +172,10 @@ describe("POST /api/ava/tools — insurance link rolls back on a failed send (ha
     const failed = commsAdds.find((d) => d.outcome === "send_failed");
     expect(failed).toBeDefined();
     expect(failed).toMatchObject({ channel: "sms", outcome: "send_failed" });
+
+    // The failure must reach monitoring, not just console.error.
+    const Sentry = await import("@sentry/nextjs");
+    expect(vi.mocked(Sentry.captureException)).toHaveBeenCalled();
   });
 
   it("happy path: issues the link, sends, writes a pending comms_log row, and keeps the cooldown", async () => {
