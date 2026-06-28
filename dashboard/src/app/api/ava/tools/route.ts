@@ -22,7 +22,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
-import { createIntakeLink } from "@/lib/insurance/create-link";
+import { createIntakeLink, type IntakeLinkResult } from "@/lib/insurance/create-link";
 import { buildInsuranceIntakeSms } from "@/lib/insurance/sms";
 import { checkIntakeSuppression } from "@/lib/insurance/dedupe";
 import { getTwilio } from "@/lib/twilio";
@@ -859,6 +859,47 @@ function parseFutureDate(input: string): Date {
 }
 
 /**
+ * Twilio status-callback URL for a clinic. `/api/webhooks/twilio` scopes the
+ * comms_log lookup by clinicId and matches the row by twilioSid.
+ */
+function avaStatusCallbackUrl(clinicId: string): string {
+  const base = (
+    process.env.APP_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "https://portal.strydeos.com"
+  ).replace(/\/$/, "");
+  return `${base}/api/webhooks/twilio?clinicId=${encodeURIComponent(clinicId)}`;
+}
+
+/**
+ * Write a comms_log row for an Ava SMS send, scoped under the clinic exactly as
+ * /api/comms/send does — `pending` on a successful enqueue (with twilioSid),
+ * `send_failed` on a throw. Best-effort: a log-write failure must not change the
+ * caller-facing outcome.
+ */
+async function writeAvaSmsLog(
+  db: ReturnType<typeof getAdminDb>,
+  clinicId: string,
+  entry: { to: string; outcome: "pending" | "send_failed"; kind: string; twilioSid?: string; error?: string },
+): Promise<void> {
+  const ts = new Date().toISOString();
+  await db
+    .collection("clinics").doc(clinicId).collection("comms_log")
+    .add({
+      clinicId,
+      channel: "sms",
+      to: entry.to,
+      outcome: entry.outcome,
+      source: entry.kind,
+      sentAt: ts,
+      createdAt: ts,
+      ...(entry.twilioSid ? { twilioSid: entry.twilioSid } : {}),
+      ...(entry.error ? { error: entry.error } : {}),
+    })
+    .catch(() => {});
+}
+
+/**
  * Ava mid-call action: generate a secure insurance-intake link and text it to
  * the patient so they can confirm insurance + pre-authorisation before their
  * appointment. Reuses the same link + delivery path as the staff failsafe, so
@@ -884,8 +925,13 @@ async function handleSendInsuranceLink(
   if (!smsTo) {
     return "I can send you a secure link to confirm your insurance, but I don't have a mobile number for you. What's the best number to text?";
   }
+  const db = getAdminDb();
+  // Track the just-minted link so a failed text can roll it back. The 24h
+  // cooldown keys on the link's createdAt regardless of status, so a lingering
+  // link from a failed send would lock the patient out of Ava re-offers AND the
+  // 09:00 insurance cron for 24h. createdLink is only set once the link exists.
+  let createdLink: IntakeLinkResult | null = null;
   try {
-    const db = getAdminDb();
     const supp = await checkIntakeSuppression(db, clinicId, patientRef, Date.now());
     if (supp.suppress) {
       return supp.reason === "already_submitted"
@@ -893,20 +939,42 @@ async function handleSendInsuranceLink(
         : "I've already sent you a secure link very recently - please check your texts. I won't send another just yet so your phone doesn't get cluttered.";
     }
     const branding = await getClinicBranding(db, clinicId);
-    const link = await createIntakeLink(db, clinicId, {
+    createdLink = await createIntakeLink(db, clinicId, {
       patientRef,
       insurerOptions: [],
       createdBy: "ava",
       nowMs: Date.now(),
     });
-    await getTwilio().messages.create({
+    const msg = await getTwilio().messages.create({
       from: branding.smsSender,
       to: smsTo,
-      body: buildInsuranceIntakeSms({ link: link.shortUrl, clinicName: branding.clinicName }),
+      body: buildInsuranceIntakeSms({ link: createdLink.shortUrl, clinicName: branding.clinicName }),
+      statusCallback: avaStatusCallbackUrl(clinicId),
+    });
+    await writeAvaSmsLog(db, clinicId, {
+      to: smsTo,
+      outcome: "pending",
+      kind: "ava_insurance_link",
+      twilioSid: msg.sid,
     });
     return "Perfect, I've just texted you a secure link to confirm your insurance details before your appointment. It only takes a minute.";
   } catch (err) {
     console.error("[ava/tools] send_insurance_intake_link failed:", err instanceof Error ? err.message : String(err));
+    // Roll the link back so the cooldown does not suppress a genuine retry, then
+    // record the failed send. Best-effort: the apology must still reach the caller.
+    if (createdLink) {
+      await db
+        .collection("clinics").doc(clinicId).collection("insurance_intake_links")
+        .doc(createdLink.linkId)
+        .delete()
+        .catch(() => {});
+    }
+    await writeAvaSmsLog(db, clinicId, {
+      to: smsTo,
+      outcome: "send_failed",
+      kind: "ava_insurance_link",
+      error: err instanceof Error ? err.message : String(err),
+    });
     return "I tried to text you the insurance link but something went wrong on our side. The team will follow up.";
   }
 }
