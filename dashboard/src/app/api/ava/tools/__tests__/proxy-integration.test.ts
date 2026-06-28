@@ -24,9 +24,13 @@ vi.mock("@/lib/integrations/pms/factory", () => ({
   createPMSAdapter: vi.fn(),
 }));
 
-vi.mock("@/lib/ava/engine-proxy", () => ({
-  proxyToEngine: vi.fn(),
-}));
+// Partial mock — keep the real ENGINE_TIMEOUT sentinel + claim primitives the
+// route imports, and stub only proxyToEngine. A full module replacement now
+// trips vitest's "No ENGINE_TIMEOUT export is defined" guard.
+vi.mock("@/lib/ava/engine-proxy", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/ava/engine-proxy")>("@/lib/ava/engine-proxy");
+  return { ...actual, proxyToEngine: vi.fn() };
+});
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

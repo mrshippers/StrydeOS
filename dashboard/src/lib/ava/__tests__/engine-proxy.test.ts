@@ -6,7 +6,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { proxyToEngine } from "@/lib/ava/engine-proxy";
+import {
+  proxyToEngine,
+  ENGINE_TIMEOUT,
+  normalizePhoneE164,
+  bookingClaimKey,
+} from "@/lib/ava/engine-proxy";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -143,12 +148,65 @@ describe("proxyToEngine — fallback path", () => {
     expect(result).toBeNull();
   });
 
-  it("returns null when fetch aborts (timeout)", async () => {
+  it("returns null when fetch aborts (generic AbortError, not the timeout)", async () => {
     mockFetch.mockRejectedValue(new DOMException("The operation was aborted", "AbortError"));
 
     const result = await proxyToEngine(ENGINE_URL, BASE_PAYLOAD);
 
     expect(result).toBeNull();
+  });
+});
+
+describe("proxyToEngine — uncertain timeout sentinel", () => {
+  it("returns ENGINE_TIMEOUT (not null) when AbortSignal.timeout fires (TimeoutError)", async () => {
+    // AbortSignal.timeout() rejects fetch with a DOMException named "TimeoutError".
+    // That is the UNCERTAIN case — the engine may have already committed the
+    // booking — so it must be distinguishable from a hard failure.
+    mockFetch.mockRejectedValue(new DOMException("The operation timed out", "TimeoutError"));
+
+    const result = await proxyToEngine(ENGINE_URL, BASE_PAYLOAD);
+
+    expect(result).toBe(ENGINE_TIMEOUT);
+    expect(result).not.toBeNull();
+  });
+
+  it("still returns null for a non-200 response (hard failure, engine did not act)", async () => {
+    mockFetch.mockResolvedValue(makeErrorResponse(500));
+
+    const result = await proxyToEngine(ENGINE_URL, BASE_PAYLOAD);
+
+    expect(result).toBeNull();
+  });
+});
+
+describe("normalizePhoneE164 — shared engine/TS claim-key normalisation", () => {
+  it("converts a UK national 0-prefixed number to E.164", () => {
+    expect(normalizePhoneE164("07700900123")).toBe("+447700900123");
+  });
+
+  it("leaves an already-E.164 number unchanged", () => {
+    expect(normalizePhoneE164("+447700900123")).toBe("+447700900123");
+  });
+
+  it("trims whitespace before normalising", () => {
+    expect(normalizePhoneE164("  07700900123  ")).toBe("+447700900123");
+  });
+
+  it("produces the SAME booking claim key for 07... and +44... forms of one number", () => {
+    // The engine path and TS path must derive an identical claim key for the
+    // same caller, or a national-format number cannot dedup against E.164.
+    const engineKey = bookingClaimKey({
+      conversationId: "conv_1",
+      slot: "2099-07-01T14:00:00.000Z",
+      callerPhone: normalizePhoneE164("07700900123"),
+    });
+    const tsKey = bookingClaimKey({
+      conversationId: "conv_1",
+      slot: "2099-07-01T14:00:00.000Z",
+      callerPhone: normalizePhoneE164("+447700900123"),
+    });
+    expect(engineKey).not.toBeNull();
+    expect(engineKey).toBe(tsKey);
   });
 });
 

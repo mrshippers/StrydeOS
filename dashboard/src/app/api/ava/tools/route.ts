@@ -33,6 +33,8 @@ const TOOLS_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
 import { withRequestLog } from "@/lib/request-logger";
 import {
   proxyToEngine,
+  ENGINE_TIMEOUT,
+  normalizePhoneE164,
   bookingClaimKey,
   claimBooking,
   settleBooking,
@@ -185,12 +187,9 @@ async function handleBookAppointment(
   const durationMinutes = 45;
   const endTime = new Date(dt.getTime() + durationMinutes * 60_000).toISOString();
 
-  // Normalise phone to E.164
-  const normalizedPhone = phone.startsWith("0")
-    ? `+44${phone.slice(1)}`
-    : phone.startsWith("+")
-      ? phone
-      : `+${phone}`;
+  // Normalise phone to E.164 — shared with the engine path so both derive the
+  // SAME booking claim key for one caller (a 0... and its +44... form collapse).
+  const normalizedPhone = normalizePhoneE164(phone);
 
   // ── Parallel Firestore reads ──────────────────────────────────────────────
   // Clinician resolution and patient cache lookup are independent. Run them
@@ -296,6 +295,44 @@ async function handleBookAppointment(
         "I've got that booking going through for you now — you'll receive a confirmation text shortly."
       );
     }
+  }
+
+  // ── Slot re-validation (TOCTOU guard) ──────────────────────────────────────
+  // The slot offered at check_availability time may have been taken in the gap
+  // by a DIFFERENT caller or a direct PMS booking. The idempotency claim only
+  // dedups THIS caller, so re-query the diary for the clinician and confirm the
+  // exact slot is still free before writing. One extra read on the critical path
+  // is acceptable; on a read failure we proceed rather than block a genuine
+  // caller. We pull a 7-day window so the same read also yields real alternatives.
+  const revalWindowTo = new Date(dt.getTime() + 7 * 24 * 60 * 60 * 1000);
+  let upcomingAppointments: { dateTime: string; endTime?: string }[] = [];
+  try {
+    upcomingAppointments = await adapter.getAppointments({
+      clinicianExternalId,
+      dateFrom: dt.toISOString(),
+      dateTo: revalWindowTo.toISOString(),
+    });
+  } catch {
+    upcomingAppointments = [];
+  }
+  if (slotOverlaps(upcomingAppointments, dt, new Date(endTime).getTime(), durationMinutes)) {
+    // Slot gone — never write. Release the claim so a later attempt at a
+    // DIFFERENT slot can proceed, and offer the next free slots if we have them.
+    if (claimKey) {
+      await releaseBooking(db, clinicId, claimKey);
+    }
+    const alternatives = computeFreeSlots(upcomingAppointments, dt, revalWindowTo)
+      .filter((s) => s.getTime() !== dt.getTime())
+      .slice(0, 2);
+    if (alternatives.length > 0) {
+      const altStrings = alternatives.map((slot) => {
+        const dayStr = slot.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+        const timeStr = slot.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+        return `${dayStr} at ${timeStr}`;
+      });
+      return `I'm so sorry — that slot has just been taken. I do still have ${altStrings.join(", or ")}. Would either of those work?`;
+    }
+    return "I'm so sorry — that slot has just been taken. What other day or time would suit you? I'll get you booked straight in.";
   }
 
   // ── Step 1: the PMS write — the ONLY step we must never duplicate ───────────
@@ -598,6 +635,25 @@ async function handleUpdateBooking(
     const durationMinutes = 45;
     const endTime = new Date(dt.getTime() + durationMinutes * 60_000).toISOString();
 
+    // ── Slot re-validation (TOCTOU guard) ────────────────────────────────────
+    // Re-check the target slot is still free before creating the replacement, so
+    // a slot taken since we offered it is not double-booked. On a read failure
+    // proceed (the saga still creates-before-cancel, the safer side). If taken,
+    // do NOT create and leave the existing appointment exactly as it is.
+    let rescheduleConflicts: { dateTime: string; endTime?: string }[] = [];
+    try {
+      rescheduleConflicts = await adapter.getAppointments({
+        clinicianExternalId,
+        dateFrom: dt.toISOString(),
+        dateTo: new Date(dt.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+      });
+    } catch {
+      rescheduleConflicts = [];
+    }
+    if (slotOverlaps(rescheduleConflicts, dt, new Date(endTime).getTime(), durationMinutes)) {
+      return "I'm so sorry — that slot has just been taken, so I've left your current appointment as it is. What other day or time would suit you?";
+    }
+
     // ── Saga: book the NEW slot BEFORE cancelling the OLD one ──────────────────
     // Cancelling first then failing to create leaves the patient with NO
     // appointment and no rollback. Creating first means a create failure leaves
@@ -669,6 +725,28 @@ async function handleUpdateBooking(
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * Re-validate a target slot against the live diary immediately before a write.
+ * Returns true when an existing appointment overlaps [dt, slotEndMs) for the
+ * clinician — i.e. the slot was taken in the gap since check_availability
+ * offered it. Falls back to a 45-minute block when an appointment has no
+ * endTime. Unparseable rows are ignored rather than treated as a conflict.
+ */
+function slotOverlaps(
+  appointments: { dateTime: string; endTime?: string }[],
+  dt: Date,
+  slotEndMs: number,
+  durationMinutes: number,
+): boolean {
+  const startMs = dt.getTime();
+  return appointments.some((a) => {
+    const aStart = new Date(a.dateTime).getTime();
+    if (isNaN(aStart)) return false;
+    const aEnd = a.endTime ? new Date(a.endTime).getTime() : aStart + durationMinutes * 60_000;
+    return startMs < aEnd && aStart < slotEndMs;
+  });
+}
 
 /**
  * Parse a natural-language day reference into a future Date.
@@ -844,8 +922,11 @@ async function handler(req: NextRequest) {
         ? bookingClaimKey({
             conversationId: conversation_id ?? "",
             slot: (toolInput.slot_datetime as string) ?? "",
-            callerPhone:
-              ((toolInput.patient_phone as string) ?? caller_phone ?? "").trim(),
+            // Normalise with the SAME helper the TS path uses, so a national
+            // 0... number and its +44... form share one claim key across paths.
+            callerPhone: normalizePhoneE164(
+              (toolInput.patient_phone as string) ?? caller_phone ?? "",
+            ),
           })
         : null;
 
@@ -877,7 +958,24 @@ async function handler(req: NextRequest) {
         base_url: pmsConfig.baseUrl ?? "",
       });
 
-      if (engineResult !== null) {
+      if (engineResult === ENGINE_TIMEOUT) {
+        // UNCERTAIN — the abort timer fired but the engine MAY already have
+        // committed the booking. For a booking we claimed, do NOT release the
+        // claim and do NOT fall through to a TS create: a guaranteed-safe holding
+        // line beats a guaranteed double-book. Leave the claim pending so a
+        // genuine retry still dedups, and tell the caller it's in progress. A
+        // non-booking tool is side-effect-free, so it safely retries on TS below.
+        if (isBooking && claimedHere) {
+          return NextResponse.json(
+            {
+              response:
+                "I've got that booking going through for you now — you'll receive a confirmation text shortly.",
+            },
+            { status: 200 },
+          );
+        }
+        // Non-booking timeout → fall through to the TS handler below.
+      } else if (engineResult !== null) {
         if (claimedHere && claimKey) {
           await settleBooking(db, clinicId, claimKey, engineResult.result, {
             bookingId: engineResult.booking_id ?? null,
@@ -885,17 +983,21 @@ async function handler(req: NextRequest) {
           });
         }
         // Durable booking marker for the post-call webhook — mirror the TS path
-        // (handleBookAppointment) on the PRODUCTION engine path. Without this a
-        // live booking made by the Python engine would have no bookingExternalId
-        // on call_log, so the webhook could neither lock the "booked" outcome nor
-        // emit appointmentExternalId on the Intelligence call_fact.
-        if (isBooking && engineResult.booking_id && conversation_id) {
+        // (handleBookAppointment) on the PRODUCTION engine path. ALWAYS write it
+        // on a successful engine booking, with a stable fallback when booking_id
+        // is empty/absent (cliniko.py coalesces a missing id to ""). Without a
+        // marker the webhook could neither lock the "booked" outcome nor emit
+        // appointmentExternalId on the Intelligence call_fact.
+        if (isBooking && conversation_id) {
           await db
             .collection("clinics")
             .doc(clinicId)
             .collection("call_log")
             .doc(conversation_id)
-            .set({ bookingExternalId: engineResult.booking_id }, { merge: true })
+            .set(
+              { bookingExternalId: engineResult.booking_id || `engine_${conversation_id}` },
+              { merge: true },
+            )
             .catch((err) => {
               console.error(
                 `[ava/tools] engine booking marker write failed for ${clinicId}:`,
@@ -904,14 +1006,15 @@ async function handler(req: NextRequest) {
             });
         }
         return NextResponse.json({ response: engineResult.result }, { status: 200 });
+      } else {
+        // null — HARD failure: the engine definitely did not act. Release our
+        // claim so the TS fallback below can re-claim and book; otherwise the
+        // dead claim would block the only path that can still serve this caller.
+        if (claimedHere && claimKey) {
+          await releaseBooking(db, clinicId, claimKey);
+        }
       }
-      // Engine returned null (timeout/down/error). Release our claim so the TS
-      // fallback below can re-claim and book — otherwise the dead claim would
-      // block the only path that can still serve this caller.
-      if (claimedHere && claimKey) {
-        await releaseBooking(db, clinicId, claimKey);
-      }
-      // null → fall through to TypeScript PMS handlers below
+      // ENGINE_TIMEOUT (non-booking) or null → fall through to TS handlers below.
     }
 
     const adapter = createPMSAdapter(pmsConfig);
