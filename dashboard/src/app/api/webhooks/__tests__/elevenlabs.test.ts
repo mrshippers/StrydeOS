@@ -459,6 +459,111 @@ describe("POST /api/webhooks/elevenlabs — conversation.ended", () => {
     expect(vi.mocked(sendCallbackNotification)).toHaveBeenCalledTimes(1);
   });
 
+  // ─── DEFECT 4: a confirmed live cancel must classify as follow_up_required ─────
+  it("classifies a live cancel (cancelledAt, no bookingExternalId) as follow_up_required, not resolved, so Pulse chases the freed slot", async () => {
+    const { db, docs } = makeFakeDb();
+
+    await db.collection("clinics").doc("clinic-spires").set({
+      name: "Spires Physiotherapy",
+      ava: { agent_id: "agent-abc" },
+    });
+
+    // The live cancel tool (/api/ava/tools) stamped a cancel marker on the SAME
+    // call_log doc during the call. There is no bookingExternalId — a pure cancel.
+    await db
+      .collection("clinics")
+      .doc("clinic-spires")
+      .collection("call_log")
+      .doc("conv-cancel")
+      .set({ cancelledAt: new Date().toISOString(), cancellationExternalId: "appt_old_1" });
+
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    // The summary classifier would call this resolved (end_call). The durable
+    // cancel marker must override that to follow_up_required.
+    const { processCallerInput } = await import("@/lib/ava/graph");
+    vi.mocked(processCallerInput).mockResolvedValueOnce({
+      action: "end_call",
+      metadata: {},
+    } as never);
+
+    const req = makeRequest({
+      event: "conversation.ended",
+      conversation_id: "conv-cancel",
+      agent_id: "agent-abc",
+      summary: "ok great, thanks, bye",
+      caller_phone: "+447700900010",
+      call_duration: 20,
+      reason_for_call: "cancel",
+      timestamp: Math.floor(Date.now() / 1000),
+    });
+
+    const { POST } = await import("../elevenlabs/route");
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    const callLog = docs.get("clinics/clinic-spires/call_log/conv-cancel");
+    expect(callLog?.data.outcome).toBe("follow_up_required");
+
+    // A freed slot must raise the callback insight so Pulse can chase it.
+    expect(
+      docs.get("clinics/clinic-spires/insight_events/ava-conv-cancel-AVA_CALLBACK_REQUESTED"),
+    ).toBeDefined();
+  });
+
+  // ─── DEFECT 4 guard: bookingExternalId still wins over a cancel marker ─────────
+  it("classifies booked when bookingExternalId is present even if a cancelledAt marker also exists (reschedule never downgrades)", async () => {
+    const { db, docs } = makeFakeDb();
+
+    await db.collection("clinics").doc("clinic-spires").set({
+      name: "Spires Physiotherapy",
+      ava: { agent_id: "agent-abc" },
+    });
+
+    // A booking id present AND a cancel marker present: the booking must win, the
+    // new cancel branch must not interfere with the established booked outcome.
+    await db
+      .collection("clinics")
+      .doc("clinic-spires")
+      .collection("call_log")
+      .doc("conv-both")
+      .set({ bookingExternalId: "appt_new_1", cancelledAt: new Date().toISOString() });
+
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const { processCallerInput } = await import("@/lib/ava/graph");
+    vi.mocked(processCallerInput).mockResolvedValueOnce({
+      action: "end_call",
+      metadata: {},
+    } as never);
+
+    const req = makeRequest({
+      event: "conversation.ended",
+      conversation_id: "conv-both",
+      agent_id: "agent-abc",
+      summary: "ok great, thanks, bye",
+      caller_phone: "+447700900011",
+      call_duration: 30,
+      reason_for_call: "reschedule",
+      timestamp: Math.floor(Date.now() / 1000),
+    });
+
+    const { POST } = await import("../elevenlabs/route");
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    const callLog = docs.get("clinics/clinic-spires/call_log/conv-both");
+    expect(callLog?.data.outcome).toBe("booked");
+    expect(
+      docs.get("clinics/clinic-spires/insight_events/ava-conv-both-AVA_CALL_BOOKED"),
+    ).toBeDefined();
+    expect(
+      docs.get("clinics/clinic-spires/insight_events/ava-conv-both-AVA_CALLBACK_REQUESTED"),
+    ).toBeUndefined();
+  });
+
   // ─── DEFECT 2: SMS notification durability ────────────────────────────────────
   it("does NOT finalise the dedup claim when the callback SMS send rejects, so an ElevenLabs retry can re-attempt", async () => {
     const { db, docs } = makeFakeDb();

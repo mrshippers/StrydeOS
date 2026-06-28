@@ -196,12 +196,30 @@ function makeRescheduleDb() {
     }),
   };
   const pmsConfigDoc = { data: vi.fn().mockReturnValue({ provider: "writeupp", apiKey: "wukey" }) };
+  // Booking idempotency claim store — the reschedule path claims BEFORE the
+  // slot revalidation, so the mock must support create()/get()/set()/delete().
+  const claimStore = new Map<string, Record<string, unknown>>();
+  const claimDocRef = (key: string) => ({
+    create: vi.fn(async (d: Record<string, unknown>) => {
+      if (claimStore.has(key)) throw Object.assign(new Error("ALREADY_EXISTS"), { code: 6 });
+      claimStore.set(key, d);
+    }),
+    get: vi.fn(async () => ({ data: () => claimStore.get(key) })),
+    set: vi.fn(async (d: Record<string, unknown>) => { claimStore.set(key, { ...(claimStore.get(key) ?? {}), ...d }); }),
+    delete: vi.fn(async () => claimStore.delete(key)),
+  });
+  const claimRefs = new Map<string, ReturnType<typeof claimDocRef>>();
+  const claimsColRef = { doc: vi.fn((key: string) => {
+    if (!claimRefs.has(key)) claimRefs.set(key, claimDocRef(key));
+    return claimRefs.get(key)!;
+  }) };
   const clinicDocRef = {
     collection: vi.fn((name: string) => {
       if (name === "integrations_config")
         return { doc: vi.fn().mockReturnValue({ get: vi.fn().mockResolvedValue(pmsConfigDoc) }) };
       if (name === "clinicians") return cliniciansColRef;
       if (name === "appointments") return apptColRef;
+      if (name === "_ava_booking_claims") return claimsColRef;
       return { doc: vi.fn().mockReturnValue({ set: vi.fn(), update: vi.fn(), get: vi.fn() }) };
     }),
   };

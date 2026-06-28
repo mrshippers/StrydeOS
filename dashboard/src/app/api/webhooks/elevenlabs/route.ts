@@ -212,6 +212,10 @@ async function handler(req: NextRequest) {
         typeof existing.bookingExternalId === "string" && existing.bookingExternalId.trim()
           ? existing.bookingExternalId
           : null;
+      const liveCancelledAt =
+        typeof existing.cancelledAt === "string" && existing.cancelledAt.trim()
+          ? existing.cancelledAt
+          : null;
       if (existingOutcome === "transferred" || existingOutcome === "escalated") {
         outcome = existingOutcome;
       } else if (existing.transferredAt) {
@@ -222,7 +226,15 @@ async function handler(req: NextRequest) {
         // summary classifier must not bury it as resolved/follow_up just because
         // the closing chit-chat didn't say "booked". A genuine booking also means
         // the patient is owed the booking-acknowledgement SMS, not a callback.
+        // A reschedule writes bookingExternalId too, so it correctly lands here.
         outcome = "booked";
+      } else if (liveCancelledAt) {
+        // The live cancel tool freed a slot during the call. A happy-path cancel
+        // leaves graphAction="continue", which would otherwise resolve the call
+        // silently. Lift it to follow_up_required so it raises
+        // AVA_CALLBACK_REQUESTED and Pulse chases the freed slot. (A reschedule
+        // never reaches here — it sets bookingExternalId above.)
+        outcome = "follow_up_required";
       }
 
       await callRef.update({
