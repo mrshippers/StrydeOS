@@ -80,7 +80,7 @@ interface FakeQueryRef {
   get: () => Promise<{ empty: boolean; docs: { id: string; data: () => Record<string, unknown> }[] }>;
 }
 
-function makeFakeDb() {
+function makeFakeDb(hooks?: { failSet?: (path: string) => boolean }) {
   const docs = new Map<string, FakeDocRecord>();
 
   const makeDocRef = (path: string): FakeDocRef => {
@@ -90,6 +90,10 @@ function makeFakeDb() {
       id,
       path,
       set: async (data, opts) => {
+        // Inject a transient write failure on a targeted path (e.g. an
+        // insight_events or call_facts doc) so durability behaviour can be
+        // exercised without touching the call_log / dedup-claim writes.
+        if (hooks?.failSet?.(path)) throw new Error(`firestore unavailable: ${path}`);
         const existing = docs.get(path)?.data ?? {};
         const merged = opts?.merge ? { ...existing, ...data } : data;
         docs.set(path, { ref: makeDocRef(path), data: merged });
@@ -774,5 +778,159 @@ describe("POST /api/webhooks/elevenlabs — conversation.ended", () => {
     expect(metadata.flagsFound).toEqual(["chest pain", "radiating to arm"]);
     // The structured array must NOT be interpolated into the free-text description.
     expect(String(insight?.data.description)).not.toContain("chest pain");
+  });
+
+  // ─── FIX 3: insight_events / call_facts durability ────────────────────────────
+  // The dedup claim is committed BEFORE the side effects, so a swallowed
+  // insight_events or call_facts write permanently dropped the AVA insight /
+  // Intelligence call_fact while the claim blocked any redelivery. The writes are
+  // reordered to run BEFORE the SMS (idempotent set/merge on deterministic ids)
+  // and given the same release-claim-and-rethrow treatment the SMS block has, so
+  // an earlier-write failure 500s and the retry re-runs them then sends the SMS
+  // exactly once.
+  it("releases the dedup claim and 500s when the insight_events write throws, so ElevenLabs redelivers", async () => {
+    const { db, docs } = makeFakeDb({ failSet: (path) => path.includes("/insight_events/") });
+
+    await db.collection("clinics").doc("clinic-spires").set({
+      name: "Spires Physiotherapy",
+      ava: { agent_id: "agent-abc" },
+    });
+
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const { sendCallbackNotification } = await import("@/lib/ava/notify-callback");
+
+    const req = makeRequest({
+      event: "conversation.ended",
+      conversation_id: "conv-insight-fail",
+      agent_id: "agent-abc",
+      summary: "I need someone to call me back",
+      caller_phone: "+447700900020",
+      call_duration: 25,
+      reason_for_call: "callback",
+      timestamp: Math.floor(Date.now() / 1000),
+    });
+
+    const { POST } = await import("../elevenlabs/route");
+    const res = await POST(req);
+
+    // Transient failure -> 500 so ElevenLabs retries the whole webhook.
+    expect(res.status).toBe(500);
+    // The dedup claim must NOT survive, else the retry is blocked and the insight
+    // is lost forever.
+    expect(
+      docs.get("clinics/clinic-spires/_ava_processed_events/conv-insight-fail__conversation.ended"),
+    ).toBeUndefined();
+    // The SMS runs LAST, so a failed insight write must not have texted anyone.
+    expect(vi.mocked(sendCallbackNotification)).not.toHaveBeenCalled();
+  });
+
+  it("releases the dedup claim and 500s when the call_facts write throws, so ElevenLabs redelivers", async () => {
+    const { db, docs } = makeFakeDb({ failSet: (path) => path.includes("/call_facts/") });
+
+    await db.collection("clinics").doc("clinic-spires").set({
+      name: "Spires Physiotherapy",
+      ava: { agent_id: "agent-abc" },
+    });
+
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const { sendCallbackNotification } = await import("@/lib/ava/notify-callback");
+
+    const req = makeRequest({
+      event: "conversation.ended",
+      conversation_id: "conv-fact-fail",
+      agent_id: "agent-abc",
+      summary: "I need someone to call me back",
+      caller_phone: "+447700900021",
+      call_duration: 25,
+      reason_for_call: "callback",
+      timestamp: Math.floor(Date.now() / 1000),
+    });
+
+    const { POST } = await import("../elevenlabs/route");
+    const res = await POST(req);
+
+    expect(res.status).toBe(500);
+    expect(
+      docs.get("clinics/clinic-spires/_ava_processed_events/conv-fact-fail__conversation.ended"),
+    ).toBeUndefined();
+    // SMS is the last side effect, so a call_facts failure must precede it.
+    expect(vi.mocked(sendCallbackNotification)).not.toHaveBeenCalled();
+  });
+
+  it("on the happy path fires the callback SMS exactly once AND writes the insight + the call_fact", async () => {
+    const { db, docs } = makeFakeDb();
+
+    await db.collection("clinics").doc("clinic-spires").set({
+      name: "Spires Physiotherapy",
+      ava: { agent_id: "agent-abc" },
+    });
+
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const { sendCallbackNotification } = await import("@/lib/ava/notify-callback");
+
+    const req = makeRequest({
+      event: "conversation.ended",
+      conversation_id: "conv-happy-order",
+      agent_id: "agent-abc",
+      summary: "I need someone to call me back",
+      caller_phone: "+447700900022",
+      call_duration: 25,
+      reason_for_call: "callback",
+      timestamp: Math.floor(Date.now() / 1000),
+    });
+
+    const { POST } = await import("../elevenlabs/route");
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    // Insight + fact both persisted...
+    expect(
+      docs.get("clinics/clinic-spires/insight_events/ava-conv-happy-order-AVA_CALLBACK_REQUESTED"),
+    ).toBeDefined();
+    expect(docs.get("clinics/clinic-spires/call_facts/ava-fact-conv-happy-order")).toBeDefined();
+    // ...and the SMS fired exactly once.
+    expect(vi.mocked(sendCallbackNotification)).toHaveBeenCalledTimes(1);
+  });
+
+  it("dedup-blocks a redelivery after a successful run, firing no second SMS", async () => {
+    const { db } = makeFakeDb();
+
+    await db.collection("clinics").doc("clinic-spires").set({
+      name: "Spires Physiotherapy",
+      ava: { agent_id: "agent-abc" },
+    });
+
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const { sendCallbackNotification } = await import("@/lib/ava/notify-callback");
+    const { POST } = await import("../elevenlabs/route");
+
+    const body = {
+      event: "conversation.ended",
+      conversation_id: "conv-redeliver",
+      agent_id: "agent-abc",
+      summary: "I need someone to call me back",
+      caller_phone: "+447700900023",
+      call_duration: 25,
+      reason_for_call: "callback",
+      timestamp: Math.floor(Date.now() / 1000),
+    };
+
+    const res1 = await POST(makeRequest(body));
+    expect(res1.status).toBe(200);
+    expect(vi.mocked(sendCallbackNotification)).toHaveBeenCalledTimes(1);
+
+    // Redelivery after success: dedup-blocked, no second SMS.
+    const res2 = await POST(makeRequest(body));
+    expect(res2.status).toBe(200);
+    expect((await res2.json()).deduplicated).toBe(true);
+    expect(vi.mocked(sendCallbackNotification)).toHaveBeenCalledTimes(1);
   });
 });

@@ -95,6 +95,25 @@ function bookingRequest() {
   });
 }
 
+function rescheduleRequest() {
+  return new NextRequest("http://localhost/api/ava/tools", {
+    method: "POST",
+    body: JSON.stringify({
+      agent_id: AGENT_ID,
+      conversation_id: CONV_ID,
+      caller_phone: "+447700900123",
+      tool_name: "update_booking",
+      parameters: {
+        action: "reschedule",
+        booking_id: "appt_old_99",
+        new_datetime: "2099-07-02T10:00:00.000Z",
+        patient_phone: "+447700900123",
+      },
+    }),
+    headers: { "Content-Type": "application/json", authorization: `Bearer ${TOOLS_SECRET}` },
+  });
+}
+
 describe("POST /api/ava/tools — engine booking writes the durable call_log marker", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -120,6 +139,31 @@ describe("POST /api/ava/tools — engine booking writes the durable call_log mar
 
     const { POST } = await import("../route");
     const res = await POST(bookingRequest());
+    expect(res.status).toBe(200);
+
+    const marker = callLogSets.find(
+      (d) => (d as Record<string, unknown>).bookingExternalId === ENGINE_BOOKING_ID,
+    );
+    expect(marker).toBeDefined();
+  });
+
+  it("stamps bookingExternalId on call_log when the engine RESCHEDULES successfully", async () => {
+    // Second-order gap (harness re-run HIGH): an engine-routed update_booking
+    // reschedule creates a NEW appointment (its claim is even settled), but the
+    // durable marker write was gated on book_appointment only, so the post-call
+    // webhook could not lock the outcome for engine reschedules.
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    const { db, callLogSets } = makeDb();
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const { proxyToEngine } = await import("@/lib/ava/engine-proxy");
+    vi.mocked(proxyToEngine).mockResolvedValue({
+      result: "Done, I've moved your appointment to Thursday at 10am.",
+      booking_id: ENGINE_BOOKING_ID,
+    } as never);
+
+    const { POST } = await import("../route");
+    const res = await POST(rescheduleRequest());
     expect(res.status).toBe(200);
 
     const marker = callLogSets.find(

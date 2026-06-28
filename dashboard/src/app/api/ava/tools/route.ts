@@ -725,39 +725,55 @@ async function handleUpdateBooking(
     const now = new Date().toISOString();
     const newDocId = pmsResult.externalId ?? db.collection("_").doc().id;
 
-    // New appointment is secured — mirror it to Firestore first so the record
-    // exists regardless of how the old-slot cancel below resolves.
-    await db
-      .collection("clinics").doc(clinicId).collection("appointments").doc(newDocId)
-      .set({
-        patientId: patientExternalId,
-        clinicianId: clinicianExternalId,
-        dateTime: dt.toISOString(),
-        endTime,
-        status: "scheduled",
-        appointmentType,
-        isInitialAssessment: appointmentType === "initial_assessment",
-        hepAssigned: false,
-        revenueAmountPence: 0,
-        followUpBooked: false,
-        source: "strydeos_receptionist",
-        pmsExternalId: pmsResult.externalId,
-        pmsWriteStatus: "success",
-        bookedBy: "ava",
-        rescheduledFromId: bookingId,
-        createdAt: now,
-        updatedAt: now,
-      });
-
-    // Durable booking marker for the post-call webhook — same field the book path
-    // writes. A reschedule produces a real new appointment, so the webhook must
-    // lock "booked" (not follow_up via the cancel marker) and surface the new PMS
-    // id on the Intelligence call_fact. Best-effort merge.
-    if (conversationId) {
+    // ── Step 2: the reschedule is REAL and authoritative ────────────────────────
+    // Once createAppointment has succeeded the move is committed. Everything below
+    // is best-effort bookkeeping and must NEVER turn a successful reschedule into a
+    // reported failure, skip the old-slot cancel, or skip the claim settle (a
+    // 'pending' claim + a real new appointment = a double-book on retry). Mirror
+    // handleBookAppointment's Step 2: wrap the new-appointment Firestore mirror and
+    // the durable booking marker in a best-effort try/catch (log, do NOT rethrow),
+    // then ALWAYS attempt the old-slot cancel and the settle below.
+    try {
+      // New appointment is secured — mirror it to Firestore so the record exists
+      // regardless of how the old-slot cancel below resolves.
       await db
-        .collection("clinics").doc(clinicId).collection("call_log").doc(conversationId)
-        .set({ bookingExternalId: pmsResult.externalId ?? newDocId }, { merge: true })
-        .catch(() => {});
+        .collection("clinics").doc(clinicId).collection("appointments").doc(newDocId)
+        .set({
+          patientId: patientExternalId,
+          clinicianId: clinicianExternalId,
+          dateTime: dt.toISOString(),
+          endTime,
+          status: "scheduled",
+          appointmentType,
+          isInitialAssessment: appointmentType === "initial_assessment",
+          hepAssigned: false,
+          revenueAmountPence: 0,
+          followUpBooked: false,
+          source: "strydeos_receptionist",
+          pmsExternalId: pmsResult.externalId,
+          pmsWriteStatus: "success",
+          bookedBy: "ava",
+          rescheduledFromId: bookingId,
+          createdAt: now,
+          updatedAt: now,
+        });
+
+      // Durable booking marker for the post-call webhook — same field the book path
+      // writes. A reschedule produces a real new appointment, so the webhook must
+      // lock "booked" (not follow_up via the cancel marker) and surface the new PMS
+      // id on the Intelligence call_fact.
+      if (conversationId) {
+        await db
+          .collection("clinics").doc(clinicId).collection("call_log").doc(conversationId)
+          .set({ bookingExternalId: pmsResult.externalId ?? newDocId }, { merge: true });
+      }
+    } catch (err) {
+      // The new appointment IS created — never report failure here. Log and carry
+      // on to the old-slot cancel and the claim settle below.
+      console.error(
+        `[ava/tools] reschedule: new appt ${newDocId} created but post-write bookkeeping failed for ${clinicId}:`,
+        err instanceof Error ? err.message : String(err),
+      );
     }
 
     // Release the OLD slot. If this throws the patient still HAS the new
@@ -1147,11 +1163,13 @@ async function handler(req: NextRequest) {
         }
         // Durable booking marker for the post-call webhook — mirror the TS path
         // (handleBookAppointment) on the PRODUCTION engine path. ALWAYS write it
-        // on a successful engine booking, with a stable fallback when booking_id
-        // is empty/absent (cliniko.py coalesces a missing id to ""). Without a
-        // marker the webhook could neither lock the "booked" outcome nor emit
-        // appointmentExternalId on the Intelligence call_fact.
-        if (isBooking && conversation_id) {
+        // on a successful engine booking OR reschedule, with a stable fallback when
+        // booking_id is empty/absent (cliniko.py coalesces a missing id to ""). A
+        // reschedule routed through the engine creates a NEW appointment (its claim
+        // is even settled), so without this marker the webhook could neither lock
+        // the "booked" outcome nor emit appointmentExternalId on the Intelligence
+        // call_fact for engine reschedules.
+        if ((isBooking || isReschedule) && conversation_id) {
           await db
             .collection("clinics")
             .doc(clinicId)

@@ -108,7 +108,8 @@ function formatSmsBody(notification: CallbackNotification): string {
 /**
  * Send an SMS booking acknowledgement to the patient.
  * Sent immediately after a call ends with outcome "booked".
- * Fire-and-forget: do NOT await.
+ * Callers MUST await: on a send failure this re-throws (see file header) so the
+ * webhook releases its dedup claim and triggers an ElevenLabs redelivery.
  */
 export async function sendBookingAcknowledgement(params: {
   clinicId: string;
@@ -163,7 +164,8 @@ export async function sendBookingAcknowledgement(params: {
 
 /**
  * Send an SMS notification for a callback request.
- * This is fire-and-forget — wrap the call in a void promise, do NOT await.
+ * Callers MUST await: on a send failure this re-throws (see file header) so the
+ * webhook releases its dedup claim and triggers an ElevenLabs redelivery.
  */
 export async function sendCallbackNotification(
   notification: CallbackNotification
