@@ -837,7 +837,16 @@ export function humanHandoffNode(
         action: "transfer_call",
         message:
           "Some of what you've described needs to be looked at urgently. If you feel this is an emergency, please hang up and call 999 or go straight to A&E. Otherwise stay on the line and I'll get someone from the clinic to help you right away.",
-        metadata: { escalate: true, flagsFound: state.flagsFound ?? [] },
+        // callbackType/reason classify this as a clinician escalation so the
+        // post-call webhook raises a SPECIFIC AVA_CALL_ESCALATED insight rather
+        // than the generic default; flagsFound carries the detected red-flag
+        // terms through to Pulse/Intelligence.
+        metadata: {
+          escalate: true,
+          callbackType: "clinician",
+          reason: "red_flag",
+          flagsFound: state.flagsFound ?? [],
+        },
       },
     };
   }

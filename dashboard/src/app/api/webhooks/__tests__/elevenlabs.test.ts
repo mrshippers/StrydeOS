@@ -612,4 +612,167 @@ describe("POST /api/webhooks/elevenlabs — conversation.ended", () => {
     expect(docs.get(claimPath)).toBeDefined();
     expect(vi.mocked(sendCallbackNotification)).toHaveBeenCalledTimes(2);
   });
+
+  // ─── FIX 2: escalated must override a prior live "transferred" outcome ─────────
+  it("upgrades a doc already marked transferred (transferredAt + outcome=transferred) to escalated when the post-call graph flags escalate, firing the critical insight and escalation SMS", async () => {
+    const { db, docs } = makeFakeDb();
+
+    await db.collection("clinics").doc("clinic-spires").set({
+      name: "Spires Physiotherapy",
+      ava: { agent_id: "agent-abc" },
+    });
+
+    // A red-flag warm transfer (transfer-call.ts) wrote {transferredAt, outcome:
+    // "transferred"} to the SAME call_log doc DURING the call. The post-call graph
+    // then resolves the call as an escalation — escalated is strictly higher than
+    // transferred and MUST win, or the clinical red flag is buried as a routine
+    // transfer (no AVA_CALL_ESCALATED insight, no escalation SMS).
+    await db
+      .collection("clinics")
+      .doc("clinic-spires")
+      .collection("call_log")
+      .doc("conv-tx-escalate")
+      .set({
+        transferredAt: new Date().toISOString(),
+        transferredTo: "+447700900500",
+        outcome: "transferred",
+      });
+
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const { processCallerInput } = await import("@/lib/ava/graph");
+    vi.mocked(processCallerInput).mockResolvedValueOnce({
+      action: "transfer_call",
+      message: "Some of what you've described needs urgent attention.",
+      metadata: { escalate: true, callbackType: "clinician", reason: "red_flag", flagsFound: ["chest pain"] },
+    } as never);
+
+    const { sendCallbackNotification } = await import("@/lib/ava/notify-callback");
+
+    const req = makeRequest({
+      event: "conversation.ended",
+      conversation_id: "conv-tx-escalate",
+      agent_id: "agent-abc",
+      summary: "caller reported chest pain mid-call, warm transferred",
+      caller_phone: "+447700900012",
+      call_duration: 55,
+      reason_for_call: "clinical",
+      timestamp: Math.floor(Date.now() / 1000),
+    });
+
+    const { POST } = await import("../elevenlabs/route");
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    // escalated wins over the prior transferred marker.
+    const callLog = docs.get("clinics/clinic-spires/call_log/conv-tx-escalate");
+    expect(callLog?.data.outcome).toBe("escalated");
+
+    // Critical insight fires (not buried as a transfer with no insight).
+    expect(
+      docs.get("clinics/clinic-spires/insight_events/ava-conv-tx-escalate-AVA_CALL_ESCALATED"),
+    ).toBeDefined();
+    // And it must NOT be quietly recorded as a plain transfer.
+    expect(
+      docs.get("clinics/clinic-spires/insight_events/ava-conv-tx-escalate-AVA_CALLBACK_REQUESTED"),
+    ).toBeUndefined();
+
+    // Real-time escalation SMS fires.
+    expect(vi.mocked(sendCallbackNotification)).toHaveBeenCalledTimes(1);
+  });
+
+  // ─── FIX 2 regression: an existing escalated outcome is never downgraded ───────
+  it("never downgrades an existing escalated outcome even if the post-call graph returns a plain transfer", async () => {
+    const { db, docs } = makeFakeDb();
+
+    await db.collection("clinics").doc("clinic-spires").set({
+      name: "Spires Physiotherapy",
+      ava: { agent_id: "agent-abc" },
+    });
+
+    await db
+      .collection("clinics")
+      .doc("clinic-spires")
+      .collection("call_log")
+      .doc("conv-already-esc")
+      .set({ outcome: "escalated" });
+
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    // A plain reception transfer (no escalate marker) must not pull escalated down.
+    const { processCallerInput } = await import("@/lib/ava/graph");
+    vi.mocked(processCallerInput).mockResolvedValueOnce({
+      action: "transfer_call",
+      metadata: {},
+    } as never);
+
+    const req = makeRequest({
+      event: "conversation.ended",
+      conversation_id: "conv-already-esc",
+      agent_id: "agent-abc",
+      summary: "transferred to reception",
+      caller_phone: "+447700900013",
+      call_duration: 35,
+      reason_for_call: "general",
+      timestamp: Math.floor(Date.now() / 1000),
+    });
+
+    const { POST } = await import("../elevenlabs/route");
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    const callLog = docs.get("clinics/clinic-spires/call_log/conv-already-esc");
+    expect(callLog?.data.outcome).toBe("escalated");
+  });
+
+  // ─── FIX 11: red-flag detail (flagsFound) threaded into the escalation insight ─
+  it("carries flagsFound from graphMetadata into the AVA_CALL_ESCALATED insight metadata as a structured array", async () => {
+    const { db, docs } = makeFakeDb();
+
+    await db.collection("clinics").doc("clinic-spires").set({
+      name: "Spires Physiotherapy",
+      ava: { agent_id: "agent-abc" },
+    });
+
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const { processCallerInput } = await import("@/lib/ava/graph");
+    vi.mocked(processCallerInput).mockResolvedValueOnce({
+      action: "transfer_call",
+      message: "Some of what you've described needs urgent attention.",
+      metadata: {
+        escalate: true,
+        callbackType: "clinician",
+        reason: "red_flag",
+        flagsFound: ["chest pain", "radiating to arm"],
+      },
+    } as never);
+
+    const req = makeRequest({
+      event: "conversation.ended",
+      conversation_id: "conv-flags",
+      agent_id: "agent-abc",
+      summary: "caller reported chest pain radiating to the arm",
+      caller_phone: "+447700900014",
+      call_duration: 42,
+      reason_for_call: "clinical",
+      timestamp: Math.floor(Date.now() / 1000),
+    });
+
+    const { POST } = await import("../elevenlabs/route");
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    const insight = docs.get(
+      "clinics/clinic-spires/insight_events/ava-conv-flags-AVA_CALL_ESCALATED",
+    );
+    expect(insight).toBeDefined();
+    const metadata = insight?.data.metadata as Record<string, unknown>;
+    expect(metadata.flagsFound).toEqual(["chest pain", "radiating to arm"]);
+    // The structured array must NOT be interpolated into the free-text description.
+    expect(String(insight?.data.description)).not.toContain("chest pain");
+  });
 });

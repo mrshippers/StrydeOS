@@ -216,9 +216,20 @@ async function handler(req: NextRequest) {
         typeof existing.cancelledAt === "string" && existing.cancelledAt.trim()
           ? existing.cancelledAt
           : null;
-      if (existingOutcome === "transferred" || existingOutcome === "escalated") {
-        outcome = existingOutcome;
-      } else if (existing.transferredAt) {
+      // Escalation precedence: `escalated` is the strictly-higher clinical
+      // outcome and must win over a prior live `transferred` marker. A red-flag
+      // warm transfer (transfer-call.ts) writes { transferredAt, outcome:
+      // "transferred" } DURING the call; the post-call graph then resolves the
+      // same call as an escalation (transfer_call + metadata.escalate). Capture
+      // that escalation BEFORE the guard so the ordering only ever blocks
+      // escalated -> (lesser), never (lesser) -> escalated — otherwise the
+      // critical AVA_CALL_ESCALATED insight + escalation SMS (both gate on
+      // outcome === "escalated") never fire and a clinical red flag is logged as
+      // a routine transfer.
+      const computedEscalation = graphMetadata.escalate === true || outcome === "escalated";
+      if (computedEscalation || existingOutcome === "escalated") {
+        outcome = "escalated";
+      } else if (existingOutcome === "transferred" || existing.transferredAt) {
         outcome = "transferred";
       } else if (liveBookingExternalId) {
         // The live booking tool (/api/ava/tools) created a real PMS appointment
@@ -366,12 +377,22 @@ async function handler(req: NextRequest) {
           // interpolated substring). The number lives in metadata.callerPhone.
           const description = title;
 
+          // Red-flag detail from the graph (structured array, NOT interpolated
+          // into `description`) so Pulse/Intelligence can surface the specific
+          // trigger on an escalation. Omitted when the graph supplies none.
+          const flagsFound = Array.isArray(graphMetadata.flagsFound)
+            ? (graphMetadata.flagsFound as unknown[]).filter(
+                (f): f is string => typeof f === "string",
+              )
+            : null;
+
           const metadata: AvaInsightEventMetadata = {
             conversationId,
             callerPhone,
             callbackType,
             reason,
             callDurationSeconds,
+            ...(flagsFound && flagsFound.length > 0 ? { flagsFound } : {}),
           };
 
           const deterministicId = `ava-${conversationId}-${avaEventType}`;
