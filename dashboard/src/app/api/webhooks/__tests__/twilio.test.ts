@@ -154,6 +154,30 @@ describe("POST /api/webhooks/twilio", () => {
     expect(updateImpl).not.toHaveBeenCalled();
   });
 
+  it("warns (observable) when a terminal status matches no comms_log entry, still returns 200", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { db, updateImpl } = makeDb(null); // empty snap
+    const { getAdminDb } = await import("@/lib/firebase-admin");
+    vi.mocked(getAdminDb).mockReturnValue(db as never);
+
+    const req = await makeRequest({ MessageSid: "SM-NOMATCH", MessageStatus: "failed" });
+    const { POST } = await import("../twilio/route");
+    const res = await POST(req);
+
+    expect(res.status).toBe(200);
+    expect(updateImpl).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    const [msg, ctx] = warnSpy.mock.calls[0];
+    expect(String(msg)).toContain("Twilio webhook");
+    expect(ctx).toMatchObject({
+      messageSid: "SM-NOMATCH",
+      messageStatus: "failed",
+      outcome: "send_failed",
+    });
+
+    warnSpy.mockRestore();
+  });
+
   it("returns 400 when clinicId is missing from query params", async () => {
     const req = new NextRequest("http://localhost/api/webhooks/twilio", {
       method: "POST",

@@ -18,11 +18,12 @@
  */
 
 import * as crypto from "crypto";
+import * as Sentry from "@sentry/nextjs";
 import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
-import { createIntakeLink } from "@/lib/insurance/create-link";
+import { createIntakeLink, type IntakeLinkResult } from "@/lib/insurance/create-link";
 import { buildInsuranceIntakeSms } from "@/lib/insurance/sms";
 import { checkIntakeSuppression } from "@/lib/insurance/dedupe";
 import { getTwilio } from "@/lib/twilio";
@@ -33,6 +34,8 @@ const TOOLS_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET ?? "";
 import { withRequestLog } from "@/lib/request-logger";
 import {
   proxyToEngine,
+  ENGINE_TIMEOUT,
+  normalizePhoneE164,
   bookingClaimKey,
   claimBooking,
   settleBooking,
@@ -185,12 +188,9 @@ async function handleBookAppointment(
   const durationMinutes = 45;
   const endTime = new Date(dt.getTime() + durationMinutes * 60_000).toISOString();
 
-  // Normalise phone to E.164
-  const normalizedPhone = phone.startsWith("0")
-    ? `+44${phone.slice(1)}`
-    : phone.startsWith("+")
-      ? phone
-      : `+${phone}`;
+  // Normalise phone to E.164 — shared with the engine path so both derive the
+  // SAME booking claim key for one caller (a 0... and its +44... form collapse).
+  const normalizedPhone = normalizePhoneE164(phone);
 
   // ── Parallel Firestore reads ──────────────────────────────────────────────
   // Clinician resolution and patient cache lookup are independent. Run them
@@ -298,9 +298,53 @@ async function handleBookAppointment(
     }
   }
 
-  // Write to PMS
+  // ── Slot re-validation (TOCTOU guard) ──────────────────────────────────────
+  // The slot offered at check_availability time may have been taken in the gap
+  // by a DIFFERENT caller or a direct PMS booking. The idempotency claim only
+  // dedups THIS caller, so re-query the diary for the clinician and confirm the
+  // exact slot is still free before writing. One extra read on the critical path
+  // is acceptable; on a read failure we proceed rather than block a genuine
+  // caller. We pull a 7-day window so the same read also yields real alternatives.
+  const revalWindowTo = new Date(dt.getTime() + 7 * 24 * 60 * 60 * 1000);
+  let upcomingAppointments: { dateTime: string; endTime?: string }[] = [];
   try {
-    const pmsResult = await adapter.createAppointment({
+    upcomingAppointments = await adapter.getAppointments({
+      clinicianExternalId,
+      dateFrom: dt.toISOString(),
+      dateTo: revalWindowTo.toISOString(),
+    });
+  } catch {
+    upcomingAppointments = [];
+  }
+  if (slotOverlaps(upcomingAppointments, dt, new Date(endTime).getTime(), durationMinutes)) {
+    // Slot gone — never write. Release the claim so a later attempt at a
+    // DIFFERENT slot can proceed, and offer the next free slots if we have them.
+    if (claimKey) {
+      await releaseBooking(db, clinicId, claimKey);
+    }
+    const alternatives = computeFreeSlots(upcomingAppointments, dt, revalWindowTo)
+      .filter((s) => s.getTime() !== dt.getTime())
+      .slice(0, 2);
+    if (alternatives.length > 0) {
+      const altStrings = alternatives.map((slot) => {
+        const dayStr = slot.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+        const timeStr = slot.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+        return `${dayStr} at ${timeStr}`;
+      });
+      return `I'm so sorry — that slot has just been taken. I do still have ${altStrings.join(", or ")}. Would either of those work?`;
+    }
+    return "I'm so sorry — that slot has just been taken. What other day or time would suit you? I'll get you booked straight in.";
+  }
+
+  // ── Step 1: the PMS write — the ONLY step we must never duplicate ───────────
+  // Isolate createAppointment in its own try. A failure HERE means nothing was
+  // booked: release the claim so a genuine retry can book, log, and return a
+  // graceful script. Post-write bookkeeping (Step 2) must NOT share this catch,
+  // or a booked appointment gets misreported as a failure AND the released claim
+  // lets the ElevenLabs retry create a SECOND appointment.
+  let pmsResult: Awaited<ReturnType<typeof adapter.createAppointment>>;
+  try {
+    pmsResult = await adapter.createAppointment({
       patientExternalId,
       clinicianExternalId,
       dateTime: dt.toISOString(),
@@ -308,11 +352,58 @@ async function handleBookAppointment(
       appointmentType,
       notes: "[Booked by Ava — AI receptionist]",
     });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (claimKey) {
+      await releaseBooking(db, clinicId, claimKey);
+    }
+    if (conversationId) {
+      const now = new Date().toISOString();
+      await db
+        .collection("clinics")
+        .doc(clinicId)
+        .collection("call_log")
+        .doc(conversationId)
+        .set(
+          {
+            toolCalls: FieldValue.arrayUnion({
+              tool: "book_appointment",
+              input: { firstName, lastName, phone: normalizedPhone, slotDatetime },
+              error: message,
+              timestamp: now,
+            }),
+          },
+          { merge: true },
+        )
+        .catch(() => {});
+    }
+    return "I'm having a bit of trouble with the booking system right now. Let me take your details and have someone from the team confirm your appointment within the hour.";
+  }
 
+  // ── Step 2: the booking is REAL and authoritative ───────────────────────────
+  // Everything below is best-effort bookkeeping. It must never turn a successful
+  // booking into a reported failure, and must never release the claim (a released
+  // claim + a real booking = a double-book on the next retry).
+  const now = new Date().toISOString();
+  const firestoreDocId = pmsResult.externalId ?? db.collection("_").doc().id;
+
+  const dateStr = dt.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  const timeStr = dt.toLocaleTimeString("en-GB", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  const opener = isReturningPatient
+    ? "Welcome back — I've got you booked in"
+    : "All sorted — I've set you up and booked you in";
+  const confirmation = `${opener} for ${dateStr} at ${timeStr} with ${resolvedClinicianName}. That's a ${durationMinutes}-minute ${appointmentType === "initial_assessment" ? "initial assessment" : "follow-up"}. You'll receive a confirmation text shortly.`;
+
+  try {
     // Mirror to Firestore
-    const now = new Date().toISOString();
-    const firestoreDocId = pmsResult.externalId ?? db.collection("_").doc().id;
-
     await clinicRef.collection("appointments").doc(firestoreDocId).set(
       {
         patientId: patientExternalId,
@@ -367,6 +458,14 @@ async function handleBookAppointment(
         .doc(conversationId)
         .set(
           {
+            // Durable top-level marker for the post-call webhook
+            // (/api/webhooks/elevenlabs). The real PMS appointment id is created
+            // HERE on the live path; the webhook reads it straight off `existing`
+            // to (a) emit appointmentExternalId on the Intelligence call_fact and
+            // (b) lock the "booked" outcome so the LLM summary classifier can't
+            // downgrade a genuine booking. The toolCalls array is an opaque audit
+            // log; this field is the cheap, readable signal.
+            bookingExternalId: pmsResult.externalId ?? firestoreDocId,
             toolCalls: FieldValue.arrayUnion({
               tool: "book_appointment",
               input: { firstName, lastName, phone: normalizedPhone, slotDatetime, clinicianName },
@@ -377,68 +476,40 @@ async function handleBookAppointment(
           { merge: true },
         );
     }
+  } catch (err) {
+    // The appointment IS booked — never report failure here. Log and carry on.
+    console.error(
+      `[ava/tools] booking succeeded (PMS ${pmsResult.externalId ?? firestoreDocId}) but post-write bookkeeping failed for ${clinicId}:`,
+      err instanceof Error ? err.message : String(err),
+    );
+  }
 
-    // Format speakable confirmation
-    const dateStr = dt.toLocaleDateString("en-GB", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    });
-    const timeStr = dt.toLocaleTimeString("en-GB", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    const opener = isReturningPatient
-      ? "Welcome back — I've got you booked in"
-      : "All sorted — I've set you up and booked you in";
-    const confirmation = `${opener} for ${dateStr} at ${timeStr} with ${resolvedClinicianName}. That's a ${durationMinutes}-minute ${appointmentType === "initial_assessment" ? "initial assessment" : "follow-up"}. You'll receive a confirmation text shortly.`;
-
-    // Settle the idempotency claim with the confirmation so a duplicate retry
-    // replays this exact line instead of booking a second appointment.
-    if (claimKey) {
+  // Settle the idempotency claim with the confirmation so a duplicate retry
+  // replays this exact line instead of booking a second appointment. Best-effort:
+  // even if this throws, the claim doc already exists, so the retry still cannot
+  // double-book — it just won't get the polished replay line.
+  if (claimKey) {
+    try {
       await settleBooking(db, clinicId, claimKey, confirmation, {
         bookingId: pmsResult.externalId ?? firestoreDocId,
         path: "ts",
       });
+    } catch (err) {
+      console.error(
+        `[ava/tools] booking succeeded but settling the idempotency claim failed for ${clinicId}:`,
+        err instanceof Error ? err.message : String(err),
+      );
     }
-    return confirmation;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    // PMS write failed — release the claim so a genuine retry can book rather
-    // than being permanently blocked by a dead claim.
-    if (claimKey) {
-      await releaseBooking(db, clinicId, claimKey);
-    }
-    // Log the failure but give Ava a graceful script
-    if (conversationId) {
-      const now = new Date().toISOString();
-      await db
-        .collection("clinics")
-        .doc(clinicId)
-        .collection("call_log")
-        .doc(conversationId)
-        .set(
-          {
-            toolCalls: FieldValue.arrayUnion({
-              tool: "book_appointment",
-              input: { firstName, lastName, phone: normalizedPhone, slotDatetime },
-              error: message,
-              timestamp: now,
-            }),
-          },
-          { merge: true },
-        );
-    }
-    return "I'm having a bit of trouble with the booking system right now. Let me take your details and have someone from the team confirm your appointment within the hour.";
   }
+  return confirmation;
 }
 
 async function handleUpdateBooking(
   adapter: ReturnType<typeof createPMSAdapter>,
   input: Record<string, unknown>,
   clinicId: string,
+  conversationId: string,
+  callerPhone: string,
   hoursConfig?: HoursConfig,
 ): Promise<string> {
   const action = (input.action as string)?.toLowerCase();
@@ -451,13 +522,26 @@ async function handleUpdateBooking(
   if (action === "cancel") {
     try {
       await adapter.updateAppointmentStatus(bookingId, "cancelled");
+      const cancelledAt = new Date().toISOString();
       try {
         const db = getAdminDb();
         await db.collection("clinics").doc(clinicId).collection("appointments").doc(bookingId).update({
           status: "cancelled",
-          updatedAt: new Date().toISOString(),
+          updatedAt: cancelledAt,
         });
       } catch { /* best-effort Firestore mirror */ }
+      // Durable cancel marker for the post-call webhook. A happy-path cancel
+      // leaves graphAction="continue" → the webhook would otherwise classify the
+      // call "resolved" and Pulse never chases the freed slot. This marker lets
+      // the webhook lift the outcome to "follow_up_required". Best-effort merge —
+      // a marker failure must not turn a real cancel into a reported failure.
+      if (conversationId) {
+        try {
+          await getAdminDb()
+            .collection("clinics").doc(clinicId).collection("call_log").doc(conversationId)
+            .set({ cancelledAt, cancellationExternalId: bookingId }, { merge: true });
+        } catch { /* best-effort marker */ }
+      }
       return "That appointment has been cancelled. Would you like to rebook for another time?";
     } catch {
       return "I'm having trouble cancelling that booking right now. Let me take a note and have someone sort it out for you today.";
@@ -567,10 +651,62 @@ async function handleUpdateBooking(
     const durationMinutes = 45;
     const endTime = new Date(dt.getTime() + durationMinutes * 60_000).toISOString();
 
-    try {
-      await adapter.updateAppointmentStatus(bookingId, "cancelled");
+    // ── Reschedule idempotency claim ──────────────────────────────────────────
+    // Mirror the book path: atomically claim BEFORE the PMS write so a retried
+    // webhook can't create a SECOND appointment on the new slot (the old one is
+    // already cancelled by the first attempt, so a retry could not even undo it).
+    // Key on the NEW slot + the appointment being moved (bookingId folded into the
+    // conversation portion) so two different reschedules in one call don't collide,
+    // and so the engine and TS paths derive the SAME key for one move. The caller
+    // matches the engine path's `patient_phone ?? caller_phone` so the keys agree.
+    const normalizedCaller = normalizePhoneE164((input.patient_phone as string) ?? callerPhone ?? "");
+    const rescheduleClaimKey = bookingClaimKey({
+      conversationId: `${conversationId}:${bookingId}`,
+      slot: dt.toISOString(),
+      callerPhone: normalizedCaller,
+    });
+    if (rescheduleClaimKey) {
+      const claim = await claimBooking(db, clinicId, rescheduleClaimKey);
+      if (!claim.claimed) {
+        return (
+          claim.priorResult ??
+          "I've got that change going through for you now — you'll receive a confirmation text shortly."
+        );
+      }
+    }
 
-      const pmsResult = await adapter.createAppointment({
+    // ── Slot re-validation (TOCTOU guard) ────────────────────────────────────
+    // Re-check the target slot is still free before creating the replacement, so
+    // a slot taken since we offered it is not double-booked. On a read failure
+    // proceed (the saga still creates-before-cancel, the safer side). If taken,
+    // do NOT create and leave the existing appointment exactly as it is.
+    let rescheduleConflicts: { dateTime: string; endTime?: string }[] = [];
+    try {
+      rescheduleConflicts = await adapter.getAppointments({
+        clinicianExternalId,
+        dateFrom: dt.toISOString(),
+        dateTo: new Date(dt.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+      });
+    } catch {
+      rescheduleConflicts = [];
+    }
+    if (slotOverlaps(rescheduleConflicts, dt, new Date(endTime).getTime(), durationMinutes)) {
+      // Slot gone — never write. Release the claim so a later attempt at a
+      // DIFFERENT slot can proceed, and leave the original appointment intact.
+      if (rescheduleClaimKey) {
+        await releaseBooking(db, clinicId, rescheduleClaimKey);
+      }
+      return "I'm so sorry — that slot has just been taken, so I've left your current appointment as it is. What other day or time would suit you?";
+    }
+
+    // ── Saga: book the NEW slot BEFORE cancelling the OLD one ──────────────────
+    // Cancelling first then failing to create leaves the patient with NO
+    // appointment and no rollback. Creating first means a create failure leaves
+    // the original booking untouched, and a cancel failure after the create
+    // leaves a (clearable) duplicate rather than nothing — always the safer side.
+    let pmsResult: Awaited<ReturnType<typeof adapter.createAppointment>>;
+    try {
+      pmsResult = await adapter.createAppointment({
         patientExternalId,
         clinicianExternalId,
         dateTime: dt.toISOString(),
@@ -578,13 +714,29 @@ async function handleUpdateBooking(
         appointmentType,
         notes: "[Rescheduled by Ava — AI receptionist]",
       });
+    } catch {
+      // New slot could not be created — the original appointment is intact.
+      // Release the claim so a genuine retry can rebook rather than be blocked.
+      if (rescheduleClaimKey) {
+        await releaseBooking(db, clinicId, rescheduleClaimKey);
+      }
+      return "I'm having a bit of trouble rescheduling right now. Let me take a note and have someone sort this for you within the hour.";
+    }
 
-      const now = new Date().toISOString();
-      await db
-        .collection("clinics").doc(clinicId).collection("appointments").doc(bookingId)
-        .update({ status: "cancelled", updatedAt: now });
+    const now = new Date().toISOString();
+    const newDocId = pmsResult.externalId ?? db.collection("_").doc().id;
 
-      const newDocId = pmsResult.externalId ?? db.collection("_").doc().id;
+    // ── Step 2: the reschedule is REAL and authoritative ────────────────────────
+    // Once createAppointment has succeeded the move is committed. Everything below
+    // is best-effort bookkeeping and must NEVER turn a successful reschedule into a
+    // reported failure, skip the old-slot cancel, or skip the claim settle (a
+    // 'pending' claim + a real new appointment = a double-book on retry). Mirror
+    // handleBookAppointment's Step 2: wrap the new-appointment Firestore mirror and
+    // the durable booking marker in a best-effort try/catch (log, do NOT rethrow),
+    // then ALWAYS attempt the old-slot cancel and the settle below.
+    try {
+      // New appointment is secured — mirror it to Firestore so the record exists
+      // regardless of how the old-slot cancel below resolves.
       await db
         .collection("clinics").doc(clinicId).collection("appointments").doc(newDocId)
         .set({
@@ -607,18 +759,89 @@ async function handleUpdateBooking(
           updatedAt: now,
         });
 
-      const dateStr = dt.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-      const timeStr = dt.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
-      return `Done — I've moved your appointment to ${dateStr} at ${timeStr} with ${clinicianName}. You'll receive a confirmation text shortly.`;
-    } catch {
-      return "I'm having a bit of trouble rescheduling right now. Let me take a note and have someone sort this for you within the hour.";
+      // Durable booking marker for the post-call webhook — same field the book path
+      // writes. A reschedule produces a real new appointment, so the webhook must
+      // lock "booked" (not follow_up via the cancel marker) and surface the new PMS
+      // id on the Intelligence call_fact.
+      if (conversationId) {
+        await db
+          .collection("clinics").doc(clinicId).collection("call_log").doc(conversationId)
+          .set({ bookingExternalId: pmsResult.externalId ?? newDocId }, { merge: true });
+      }
+    } catch (err) {
+      // The new appointment IS created — never report failure here. Log and carry
+      // on to the old-slot cancel and the claim settle below.
+      console.error(
+        `[ava/tools] reschedule: new appt ${newDocId} created but post-write bookkeeping failed for ${clinicId}:`,
+        err instanceof Error ? err.message : String(err),
+      );
     }
+
+    // Release the OLD slot. If this throws the patient still HAS the new
+    // appointment, so log best-effort and still confirm rather than reporting a
+    // failure that already half-succeeded.
+    try {
+      await adapter.updateAppointmentStatus(bookingId, "cancelled");
+      await db
+        .collection("clinics").doc(clinicId).collection("appointments").doc(bookingId)
+        .update({ status: "cancelled", updatedAt: now });
+    } catch (err) {
+      console.error(
+        `[ava/tools] reschedule: new appt ${newDocId} created but cancelling old ${bookingId} failed for ${clinicId}:`,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+
+    const dateStr = dt.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+    const timeStr = dt.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+    const confirmation = `Done — I've moved your appointment to ${dateStr} at ${timeStr} with ${clinicianName}. You'll receive a confirmation text shortly.`;
+
+    // Settle the claim with the confirmation so a duplicate retry replays this
+    // exact line instead of rescheduling again. Best-effort: the claim doc already
+    // exists, so even a settle failure still blocks a double-book.
+    if (rescheduleClaimKey) {
+      try {
+        await settleBooking(db, clinicId, rescheduleClaimKey, confirmation, {
+          bookingId: pmsResult.externalId ?? newDocId,
+          path: "ts",
+        });
+      } catch (err) {
+        console.error(
+          `[ava/tools] reschedule succeeded but settling the idempotency claim failed for ${clinicId}:`,
+          err instanceof Error ? err.message : String(err),
+        );
+      }
+    }
+
+    return confirmation;
   }
 
   return "Would you like to cancel or reschedule the appointment?";
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * Re-validate a target slot against the live diary immediately before a write.
+ * Returns true when an existing appointment overlaps [dt, slotEndMs) for the
+ * clinician — i.e. the slot was taken in the gap since check_availability
+ * offered it. Falls back to a 45-minute block when an appointment has no
+ * endTime. Unparseable rows are ignored rather than treated as a conflict.
+ */
+function slotOverlaps(
+  appointments: { dateTime: string; endTime?: string }[],
+  dt: Date,
+  slotEndMs: number,
+  durationMinutes: number,
+): boolean {
+  const startMs = dt.getTime();
+  return appointments.some((a) => {
+    const aStart = new Date(a.dateTime).getTime();
+    if (isNaN(aStart)) return false;
+    const aEnd = a.endTime ? new Date(a.endTime).getTime() : aStart + durationMinutes * 60_000;
+    return startMs < aEnd && aStart < slotEndMs;
+  });
+}
 
 /**
  * Parse a natural-language day reference into a future Date.
@@ -653,6 +876,47 @@ function parseFutureDate(input: string): Date {
 }
 
 /**
+ * Twilio status-callback URL for a clinic. `/api/webhooks/twilio` scopes the
+ * comms_log lookup by clinicId and matches the row by twilioSid.
+ */
+function avaStatusCallbackUrl(clinicId: string): string {
+  const base = (
+    process.env.APP_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "https://portal.strydeos.com"
+  ).replace(/\/$/, "");
+  return `${base}/api/webhooks/twilio?clinicId=${encodeURIComponent(clinicId)}`;
+}
+
+/**
+ * Write a comms_log row for an Ava SMS send, scoped under the clinic exactly as
+ * /api/comms/send does — `pending` on a successful enqueue (with twilioSid),
+ * `send_failed` on a throw. Best-effort: a log-write failure must not change the
+ * caller-facing outcome.
+ */
+async function writeAvaSmsLog(
+  db: ReturnType<typeof getAdminDb>,
+  clinicId: string,
+  entry: { to: string; outcome: "pending" | "send_failed"; kind: string; twilioSid?: string; error?: string },
+): Promise<void> {
+  const ts = new Date().toISOString();
+  await db
+    .collection("clinics").doc(clinicId).collection("comms_log")
+    .add({
+      clinicId,
+      channel: "sms",
+      to: entry.to,
+      outcome: entry.outcome,
+      source: entry.kind,
+      sentAt: ts,
+      createdAt: ts,
+      ...(entry.twilioSid ? { twilioSid: entry.twilioSid } : {}),
+      ...(entry.error ? { error: entry.error } : {}),
+    })
+    .catch(() => {});
+}
+
+/**
  * Ava mid-call action: generate a secure insurance-intake link and text it to
  * the patient so they can confirm insurance + pre-authorisation before their
  * appointment. Reuses the same link + delivery path as the staff failsafe, so
@@ -678,8 +942,13 @@ async function handleSendInsuranceLink(
   if (!smsTo) {
     return "I can send you a secure link to confirm your insurance, but I don't have a mobile number for you. What's the best number to text?";
   }
+  const db = getAdminDb();
+  // Track the just-minted link so a failed text can roll it back. The 24h
+  // cooldown keys on the link's createdAt regardless of status, so a lingering
+  // link from a failed send would lock the patient out of Ava re-offers AND the
+  // 09:00 insurance cron for 24h. createdLink is only set once the link exists.
+  let createdLink: IntakeLinkResult | null = null;
   try {
-    const db = getAdminDb();
     const supp = await checkIntakeSuppression(db, clinicId, patientRef, Date.now());
     if (supp.suppress) {
       return supp.reason === "already_submitted"
@@ -687,20 +956,46 @@ async function handleSendInsuranceLink(
         : "I've already sent you a secure link very recently - please check your texts. I won't send another just yet so your phone doesn't get cluttered.";
     }
     const branding = await getClinicBranding(db, clinicId);
-    const link = await createIntakeLink(db, clinicId, {
+    createdLink = await createIntakeLink(db, clinicId, {
       patientRef,
       insurerOptions: [],
       createdBy: "ava",
       nowMs: Date.now(),
     });
-    await getTwilio().messages.create({
+    const msg = await getTwilio().messages.create({
       from: branding.smsSender,
       to: smsTo,
-      body: buildInsuranceIntakeSms({ link: link.shortUrl, clinicName: branding.clinicName }),
+      body: buildInsuranceIntakeSms({ link: createdLink.shortUrl, clinicName: branding.clinicName }),
+      statusCallback: avaStatusCallbackUrl(clinicId),
+    });
+    await writeAvaSmsLog(db, clinicId, {
+      to: smsTo,
+      outcome: "pending",
+      kind: "ava_insurance_link",
+      twilioSid: msg.sid,
     });
     return "Perfect, I've just texted you a secure link to confirm your insurance details before your appointment. It only takes a minute.";
   } catch (err) {
     console.error("[ava/tools] send_insurance_intake_link failed:", err instanceof Error ? err.message : String(err));
+    // Surface to monitoring, matching the notify-callback senders — a clinical
+    // pre-auth SMS failure must not die as a passive console line while the
+    // caller is told "the team will follow up".
+    Sentry.captureException(err);
+    // Roll the link back so the cooldown does not suppress a genuine retry, then
+    // record the failed send. Best-effort: the apology must still reach the caller.
+    if (createdLink) {
+      await db
+        .collection("clinics").doc(clinicId).collection("insurance_intake_links")
+        .doc(createdLink.linkId)
+        .delete()
+        .catch(() => {});
+    }
+    await writeAvaSmsLog(db, clinicId, {
+      to: smsTo,
+      outcome: "send_failed",
+      kind: "ava_insurance_link",
+      error: err instanceof Error ? err.message : String(err),
+    });
     return "I tried to text you the insurance link but something went wrong on our side. The team will follow up.";
   }
 }
@@ -790,14 +1085,33 @@ async function handler(req: NextRequest) {
       // appointment. Claim the same key the TS-fallback path uses BEFORE the
       // engine writes; if the claim is already taken, replay the prior result.
       const isBooking = tool_name === "book_appointment";
+      // A reschedule also creates a NEW appointment, so it needs the same claim
+      // (a retried update_booking would otherwise double-book the new slot). A
+      // cancel is idempotent and needs no claim.
+      const isReschedule =
+        tool_name === "update_booking" &&
+        (toolInput.action as string)?.toLowerCase() === "reschedule";
       const claimKey = isBooking
         ? bookingClaimKey({
             conversationId: conversation_id ?? "",
             slot: (toolInput.slot_datetime as string) ?? "",
-            callerPhone:
-              ((toolInput.patient_phone as string) ?? caller_phone ?? "").trim(),
+            // Normalise with the SAME helper the TS path uses, so a national
+            // 0... number and its +44... form share one claim key across paths.
+            callerPhone: normalizePhoneE164(
+              (toolInput.patient_phone as string) ?? caller_phone ?? "",
+            ),
           })
-        : null;
+        : isReschedule
+          ? bookingClaimKey({
+              // Key on the NEW datetime + the appointment being moved, matching
+              // the TS handleUpdateBooking key exactly so engine and TS dedup as one.
+              conversationId: `${conversation_id ?? ""}:${(toolInput.booking_id as string) ?? ""}`,
+              slot: (toolInput.new_datetime as string) ?? "",
+              callerPhone: normalizePhoneE164(
+                (toolInput.patient_phone as string) ?? caller_phone ?? "",
+              ),
+            })
+          : null;
 
       let claimedHere = false;
       if (claimKey) {
@@ -827,22 +1141,77 @@ async function handler(req: NextRequest) {
         base_url: pmsConfig.baseUrl ?? "",
       });
 
-      if (engineResult !== null) {
+      if (engineResult === ENGINE_TIMEOUT) {
+        // UNCERTAIN — the abort timer fired but the engine MAY already have
+        // committed the write. For a booking OR reschedule we claimed, do NOT
+        // release the claim and do NOT fall through to a TS create: a
+        // guaranteed-safe holding line beats a guaranteed double-book. Leave the
+        // claim pending so a genuine retry still dedups, and tell the caller it's
+        // in progress. A non-claimed tool (cancel / availability) is safe to retry
+        // on TS below.
+        if (claimedHere) {
+          return NextResponse.json(
+            {
+              response:
+                "I've got that change going through for you now — you'll receive a confirmation text shortly.",
+            },
+            { status: 200 },
+          );
+        }
+        // Non-claimed timeout → fall through to the TS handler below.
+      } else if (engineResult !== null) {
         if (claimedHere && claimKey) {
-          await settleBooking(db, clinicId, claimKey, engineResult.result, {
-            bookingId: engineResult.booking_id ?? null,
-            path: "engine",
-          });
+          // Best-effort, mirroring the TS paths' guarded settle: a settle throw
+          // must NEVER turn a committed engine booking/reschedule into a reported
+          // failure or skip the durable marker below. The claim stays "pending"
+          // (no double-book on retry; the cleanup cron reclaims it).
+          try {
+            await settleBooking(db, clinicId, claimKey, engineResult.result, {
+              bookingId: engineResult.booking_id ?? null,
+              path: "engine",
+            });
+          } catch (err) {
+            console.error(
+              `[ava/tools] engine booking committed but settling the claim failed for ${clinicId}:`,
+              err instanceof Error ? err.message : String(err),
+            );
+          }
+        }
+        // Durable booking marker for the post-call webhook — mirror the TS path
+        // (handleBookAppointment) on the PRODUCTION engine path. ALWAYS write it
+        // on a successful engine booking OR reschedule, with a stable fallback when
+        // booking_id is empty/absent (cliniko.py coalesces a missing id to ""). A
+        // reschedule routed through the engine creates a NEW appointment (its claim
+        // is even settled), so without this marker the webhook could neither lock
+        // the "booked" outcome nor emit appointmentExternalId on the Intelligence
+        // call_fact for engine reschedules.
+        if ((isBooking || isReschedule) && conversation_id) {
+          await db
+            .collection("clinics")
+            .doc(clinicId)
+            .collection("call_log")
+            .doc(conversation_id)
+            .set(
+              { bookingExternalId: engineResult.booking_id || `engine_${conversation_id}` },
+              { merge: true },
+            )
+            .catch((err) => {
+              console.error(
+                `[ava/tools] engine booking marker write failed for ${clinicId}:`,
+                err instanceof Error ? err.message : String(err),
+              );
+            });
         }
         return NextResponse.json({ response: engineResult.result }, { status: 200 });
+      } else {
+        // null — HARD failure: the engine definitely did not act. Release our
+        // claim so the TS fallback below can re-claim and book; otherwise the
+        // dead claim would block the only path that can still serve this caller.
+        if (claimedHere && claimKey) {
+          await releaseBooking(db, clinicId, claimKey);
+        }
       }
-      // Engine returned null (timeout/down/error). Release our claim so the TS
-      // fallback below can re-claim and book — otherwise the dead claim would
-      // block the only path that can still serve this caller.
-      if (claimedHere && claimKey) {
-        await releaseBooking(db, clinicId, claimKey);
-      }
-      // null → fall through to TypeScript PMS handlers below
+      // ENGINE_TIMEOUT (non-booking) or null → fall through to TS handlers below.
     }
 
     const adapter = createPMSAdapter(pmsConfig);
@@ -873,6 +1242,8 @@ async function handler(req: NextRequest) {
           adapter,
           toolInput,
           clinicId,
+          conversation_id ?? "",
+          caller_phone ?? "",
           (clinicData?.ava as Record<string, unknown>)?.hours as HoursConfig | undefined,
         );
         break;

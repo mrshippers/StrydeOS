@@ -570,6 +570,12 @@ export interface AvaInsightEventMetadata {
   reason: string | null;
   /** Call duration in seconds from ElevenLabs; null when not reported. */
   callDurationSeconds: number | null;
+  /**
+   * Clinical red-flag terms detected on the call (e.g. "chest pain"). Present
+   * only on red-flag escalations so Pulse/Intelligence can surface the specific
+   * trigger; omitted otherwise.
+   */
+  flagsFound?: string[];
 }
 
 // ─── §8b Ava → Intelligence fact stream ──────────────────────────────────────

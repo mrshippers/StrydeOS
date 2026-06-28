@@ -118,3 +118,34 @@ describe("transferCallToReception — heuristic fallback (no SID)", () => {
     expect(updateMock).not.toHaveBeenCalled();
   });
 });
+
+describe("transferCallToReception — audit-log write must not flip a successful transfer", () => {
+  // The Twilio redirect is the authoritative success point: once it returns, the
+  // caller IS being warm-transferred to reception. The subsequent Firestore
+  // call_log write is best-effort audit only. If that write throws AFTER the
+  // redirect succeeded, the function must STILL report success — otherwise
+  // ElevenLabs tells a caller (who is already being transferred) that it failed
+  // and offers a callback, contradicting reality.
+  it("returns success when the redirect succeeds but the call_log write rejects", async () => {
+    callLogSet.mockRejectedValueOnce(new Error("Firestore call_log write failed"));
+
+    const result = await transferCallToReception({ ...baseReq, callSid: "CA_redirect_ok" });
+
+    // The redirect actually happened — the transfer is real and in flight.
+    expect(callsCallable).toHaveBeenCalledWith("CA_redirect_ok");
+    expect(updateMock).toHaveBeenCalledOnce();
+    // A best-effort audit-log failure must NOT be reported as a transfer failure.
+    expect(result.success).toBe(true);
+  });
+
+  it("still reports failure when the Twilio redirect itself fails", async () => {
+    updateMock.mockRejectedValueOnce(new Error("Twilio redirect failed"));
+
+    const result = await transferCallToReception({ ...baseReq, callSid: "CA_redirect_fail" });
+
+    // A genuine redirect failure means the caller is NOT being transferred —
+    // this must still surface as a failure so the agent offers the callback.
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Twilio redirect failed");
+  });
+});

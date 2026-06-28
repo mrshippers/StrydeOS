@@ -42,9 +42,12 @@ vi.mock("../telegram", () => ({
 import {
   evaluateGuardrailRouting,
   redFlagDetectorNode,
+  assertsAppointmentAvailability,
+  guardResponseAvailability,
   type AvaIntent,
   type AvaAction,
   type CallMeta,
+  type AvaResponse,
 } from "../graph";
 
 const TEST_META: CallMeta = {
@@ -202,6 +205,41 @@ describe("Ava guardrails — GDPR Block (offline)", () => {
   });
 });
 
+// ─── Clinical advice boundary — Ava must never give medical advice ────────────
+
+describe("Ava guardrails — Clinical Advice Boundary (offline)", () => {
+  // Each is the caller asking Ava for a clinical opinion / diagnosis / treatment.
+  // The deterministic gate MUST catch these so a medical-advice answer can never
+  // depend solely on the (untested-in-CI, paid) LLM classifier.
+  const cases: Array<[string, string]> = [
+    ["what do you think is wrong", "What do you think is wrong with my knee?"],
+    ["should I take painkillers", "Should I take ibuprofen for my back pain?"],
+    ["is it serious", "Is my shoulder pain serious?"],
+    ["do you think I've torn it", "Do you think I've torn something in my calf?"],
+    ["what stretches should I do", "What stretches should I do for my sciatica?"],
+    ["do I need a scan", "Do I need an x-ray for this ankle?"],
+    ["what's causing it", "Can you tell me what's causing my headaches?"],
+  ];
+
+  it.each(cases)("routes %s to clinical_boundary", (_desc, input) => {
+    const { flags, route } = evaluateGuardrailRouting(input);
+    expect(flags.clinicalAdviceSought).toBe(true);
+    expect(route).toBe("clinical_boundary");
+  });
+
+  // Describing a body part to BOOK is not advice-seeking — must not trip the gate.
+  const notAdvice: Array<[string, string]> = [
+    ["plain booking naming a body part", "I'd like to book a first appointment for my lower back"],
+    ["sports massage booking", "Can I book a sports massage for my shoulder?"],
+    ["cancellation", "I need to cancel my appointment on Thursday please"],
+  ];
+
+  it.each(notAdvice)("does NOT trip clinical advice for %s", (_desc, input) => {
+    const { flags } = evaluateGuardrailRouting(input);
+    expect(flags.clinicalAdviceSought).toBe(false);
+  });
+});
+
 // ─── Negative controls — routine calls must NOT trip a hard gate ──────────────
 
 describe("Ava guardrails — Safe inputs do NOT trip hard gates (offline)", () => {
@@ -260,5 +298,91 @@ describe("redFlagDetectorNode — clinical red-flag scan (offline)", () => {
     const result = await redFlagDetectorNode(makeState("I'd like to book an appointment please"));
     expect(result.redFlag).toBe(false);
     expect(result.flagsFound).toEqual([]);
+  });
+});
+
+// ─── No Hallucinated Availability ───────────────────────────────────────────
+//
+// Ava must NEVER state a specific appointment time as bookable or booked unless
+// it was verified against the PMS. The guardrail gate protects the INPUT side;
+// this protects the OUTPUT side. assertsAppointmentAvailability() is the
+// deterministic detector for fabricated-availability copy — a concrete clock
+// time presented in an appointment-offer/confirmation context. Asking the
+// caller about their preference ("what day works for you?") is NOT an assertion
+// and must not trip, or Ava could never run a booking conversation.
+
+describe("Ava — No Hallucinated Availability detector (offline)", () => {
+  const fabricated: Array<[string, string]> = [
+    ["booked at a clock time", "Yes, I've got you booked in for Tuesday at 3pm."],
+    ["offers a morning slot", "I can offer you 9am tomorrow."],
+    ["names a free slot", "We have a 2:30pm slot free on Friday."],
+    ["o'clock confirmation", "You're booked in for 10 o'clock on Monday."],
+    ["got a slot free today", "I've got a 4pm free today."],
+    ["pencil you in", "Let me pencil you in for 11:15am."],
+  ];
+
+  it.each(fabricated)("flags fabricated availability — %s", (_desc, message) => {
+    expect(assertsAppointmentAvailability(message)).toBe(true);
+  });
+
+  const safe: Array<[string, string]> = [
+    ["new-booking preference ask", "Lovely — let's get you booked in. Are you self-funding, or coming through a health insurer?"],
+    ["returning preference ask", "Of course — let me find you a slot. Do you have a preference for which physio you see, or is it more about finding a day that works?"],
+    ["cancellation recovery ask", "Of course — no problem at all. Shall I find you another slot while we're on the phone?"],
+    ["day preference question", "What day works best for you?"],
+    ["opening hours, no offer", "We're open until 6pm Monday to Friday."],
+    ["empty message", ""],
+  ];
+
+  it.each(safe)("does NOT flag safe copy — %s", (_desc, message) => {
+    expect(assertsAppointmentAvailability(message)).toBe(false);
+  });
+});
+
+// ─── Availability guard (output boundary) ───────────────────────────────────
+//
+// guardResponseAvailability() is the live backstop applied to every response
+// leaving processCallerInput(). The graph has no PMS slot verification yet, so
+// ANY stated time is unverified by definition — the guard must replace a
+// fabricated-slot response with a safe, no-time holding response that hands the
+// caller to a confirmed follow-up, while leaving safe responses untouched.
+
+describe("Ava — availability guard neutralises fabricated slots (offline)", () => {
+  const fabricated: AvaResponse = {
+    action: "continue",
+    message: "Yes, I've got you booked in for Tuesday at 3pm.",
+    metadata: { flow: "booking_flow" },
+  };
+
+  it("rewrites a fabricated-slot response so it no longer asserts availability", () => {
+    const guarded = guardResponseAvailability(fabricated);
+    expect(assertsAppointmentAvailability(guarded.message)).toBe(false);
+  });
+
+  it("hands a fabricated-slot response to a confirmed follow-up", () => {
+    const guarded = guardResponseAvailability(fabricated);
+    expect(guarded.action).toBe("callback_request");
+    expect(guarded.metadata?.availabilityGuardTriggered).toBe(true);
+    expect(guarded.metadata?.suppressedMessage).toBe(fabricated.message);
+  });
+
+  it("is idempotent — guarding an already-safe response changes nothing", () => {
+    const guardedOnce = guardResponseAvailability(fabricated);
+    const guardedTwice = guardResponseAvailability(guardedOnce);
+    expect(guardedTwice.message).toBe(guardedOnce.message);
+    expect(assertsAppointmentAvailability(guardedTwice.message)).toBe(false);
+  });
+
+  const safeResponses: Array<[string, AvaResponse]> = [
+    ["preference ask", { action: "continue", message: "What day works best for you?" }],
+    ["booking opener", { action: "continue", message: "Lovely — let's get you booked in. Are you self-funding, or coming through a health insurer?", metadata: { flow: "booking_flow" } }],
+    ["emergency escalation", { action: "escalate_999", message: "Please call 999 or get to A&E as soon as you can." }],
+  ];
+
+  it.each(safeResponses)("passes safe response through unchanged — %s", (_desc, response) => {
+    const guarded = guardResponseAvailability(response);
+    expect(guarded.message).toBe(response.message);
+    expect(guarded.action).toBe(response.action);
+    expect(guarded.metadata?.availabilityGuardTriggered).toBeUndefined();
   });
 });

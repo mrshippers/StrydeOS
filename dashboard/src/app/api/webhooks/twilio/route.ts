@@ -110,6 +110,16 @@ async function handler(request: NextRequest) {
 
   if (!snap.empty) {
     await snap.docs[0].ref.update({ outcome });
+  } else {
+    // No comms_log record matched this MessageSid. A terminal delivery
+    // callback we cannot tie to a sent message is otherwise invisible, so
+    // emit a structured, greppable warning. Still return 200 — a 5xx here
+    // makes Twilio retry-storm and won't conjure a matching record.
+    console.warn("[Twilio webhook] no comms_log match for status callback", {
+      messageSid,
+      messageStatus,
+      outcome,
+    });
   }
 
   return new NextResponse(null, { status: 200 });

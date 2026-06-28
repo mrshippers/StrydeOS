@@ -1,14 +1,21 @@
 /**
  * Proxy helper — forwards Ava tool calls to the Python execution engine.
  *
- * Returns the engine result on success, null on any failure (timeout, network
- * error, non-200 response). Null signals the caller to fall back to the
- * TypeScript PMS adapters.
+ * Returns the engine result on success. On failure it distinguishes two cases:
+ *   - null            — a HARD failure (non-200, connection refused, JSON error,
+ *                       generic abort). The engine definitely did not act, so the
+ *                       caller may safely release any booking claim and fall back
+ *                       to the TypeScript PMS adapters.
+ *   - ENGINE_TIMEOUT  — the live-call abort timer fired. This is UNCERTAIN: the
+ *                       engine may already have committed the PMS booking before
+ *                       we stopped waiting. The caller must NOT release-and-retry
+ *                       a booking, or it risks double-booking a slow-but-
+ *                       successful engine.
  *
  * Also exposes the booking idempotency primitives (claimBooking / settleBooking
- * / releaseBooking) shared by both the engine path and the TS-fallback path so a
- * retried webhook, or a slow-engine-then-TS-fallback race, cannot double-book a
- * real patient.
+ * / releaseBooking) and the shared E.164 phone normaliser (normalizePhoneE164)
+ * so both the engine path and the TS-fallback path derive an identical booking
+ * claim key and cannot double-book a real patient.
  */
 
 import * as crypto from "crypto";
@@ -32,8 +39,32 @@ export interface EngineResult {
 
 // Live phone-call path — ElevenLabs holds the conversation turn open while we
 // wait. 3s is the upper bound before the caller hears uncomfortable dead air.
-// Slow engines fall through to the TS PMS adapters via null return.
+// A hard failure falls through to the TS PMS adapters (null); a timeout is
+// uncertain and is signalled distinctly (ENGINE_TIMEOUT) so a booking is held
+// rather than retried into a double-book.
 const DEFAULT_TIMEOUT_MS = 3_000;
+
+/**
+ * Distinct sentinel for "the engine did not answer in time, but it MAY already
+ * have committed the booking". Distinguishes an uncertain timeout from a hard
+ * failure (null) so the booking caller can hold the claim instead of releasing
+ * it and letting the TS fallback create a second appointment.
+ */
+export const ENGINE_TIMEOUT = Symbol("engine_timeout");
+
+/**
+ * Normalise a phone number to E.164 (UK default) so the engine path and the TS
+ * path derive an identical booking claim key for the same caller. A national
+ * `0...` number and its `+44...` form must collapse to one key, or they cannot
+ * dedup against each other. Returns "" for empty input.
+ */
+export function normalizePhoneE164(raw: string): string {
+  const phone = (raw ?? "").trim();
+  if (!phone) return "";
+  if (phone.startsWith("0")) return `+44${phone.slice(1)}`;
+  if (phone.startsWith("+")) return phone;
+  return `+${phone}`;
+}
 
 // Module-level cache — IdTokenClient reuses the token until expiry (~1hr)
 let _idTokenClient: IdTokenClient | null = null;
@@ -78,7 +109,7 @@ export async function proxyToEngine(
   engineUrl: string,
   payload: EnginePayload,
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
-): Promise<EngineResult | null> {
+): Promise<EngineResult | typeof ENGINE_TIMEOUT | null> {
   try {
     const url = `${engineUrl}/api/tools/execute?clinic_id=${encodeURIComponent(payload.clinic_id)}`;
     const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -94,9 +125,20 @@ export async function proxyToEngine(
       signal: AbortSignal.timeout(timeoutMs),
     });
 
+    // Non-200 is a HARD failure — the engine ran but rejected/erred, so it did
+    // not commit. Null lets the caller release the claim and fall back.
     if (!response.ok) return null;
     return (await response.json()) as EngineResult;
-  } catch {
+  } catch (err) {
+    // AbortSignal.timeout() firing rejects fetch with a DOMException whose name
+    // is "TimeoutError". That is the UNCERTAIN case: the engine may have already
+    // committed the booking before we gave up. Signal it distinctly so a booking
+    // is held, not released-and-retried (which would double-book). Every other
+    // error (connection refused, JSON parse, a generic AbortError) is a hard
+    // failure where the engine did not act → null.
+    if ((err as { name?: string } | null)?.name === "TimeoutError") {
+      return ENGINE_TIMEOUT;
+    }
     return null;
   }
 }

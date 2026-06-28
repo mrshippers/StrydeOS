@@ -163,8 +163,7 @@ export type AvaAction =
   | "escalate_999"     // Emergency — direct to 999
   | "callback_request" // Arrange clinician/back-office callback
   | "transfer_call"    // Warm-transfer to reception/Moneypenny
-  | "end_call"         // Politely end the call
-  | "waitlist_add";    // Add to priority waitlist
+  | "end_call";        // Politely end the call
 
 export interface AvaResponse {
   action: AvaAction;
@@ -187,73 +186,10 @@ const StructuredIntakeSchema = z.object({
   appointment_type: z.string(),
 });
 
-// ─── Intent Classifier (Router Node) ────────────────────────────────────────
-
-const ROUTER_PROMPT = `You are an intent classifier for a UK physiotherapy clinic receptionist.
-Given the caller's input, classify their intent into EXACTLY ONE of these categories:
-
-- booking_new: Wants to book a first appointment / initial assessment
-- booking_returning: Returning patient wanting a follow-up
-- cancellation: Wants to cancel an appointment
-- reschedule: Wants to move their appointment
-- insurance_query: Asking about insurance coverage, pre-auth, claim codes, excess payments
-- clinical_question: Asking for medical/clinical advice, diagnosis, treatment recommendations
-- emergency: Describing symptoms matching red flags (cauda equina, chest pain, stroke, fracture, thunderclap headache)
-- mental_health_crisis: Mentions self-harm, suicidal thoughts, severe distress
-- message_relay: Wants to leave a message for their clinician / pass on an update
-- complaint: Unhappy about service, billing dispute
-- gp_referral: Healthcare professional referring a patient
-- third_party_booking: Someone booking on behalf of another person
-- gdpr_request: Asking about another patient's details
-- solicitor_sales: Solicitor, sales call, marketing
-- faq: General questions (location, parking, pricing, what to bring, opening hours)
-- unknown: Cannot determine intent
-
-RED FLAG KEYWORDS (always classify as "emergency"):
-- saddle numbness, bladder control, bowel control, both legs weak
-- worst headache of my life, thunderclap, sudden severe headache
-- chest pain, arm pain, jaw pain, can't breathe
-- car accident, fall, fracture, bone sticking out, deformity
-- face drooping, can't lift arm, slurred speech
-
-INSURANCE KEYWORDS (always classify as "insurance_query"):
-- pre-authorisation, pre-auth, excess, cover, coverage, claim, policy number
-- how much will insurance pay, what's covered, authorisation code
-
-Respond with ONLY the intent label, nothing else.`;
-
-async function routerNode(
-  state: typeof AvaState.State
-): Promise<Partial<typeof AvaState.State>> {
-  const model = new ChatAnthropic({
-    model: "claude-haiku-4-5",
-    temperature: 0,
-    maxTokens: 20,
-  });
-
-  const result = await model.invoke([
-    new SystemMessage(ROUTER_PROMPT),
-    new HumanMessage(state.callerInput),
-  ]);
-
-  const raw = (result.content as string).trim().toLowerCase().replace(/[^a-z_]/g, "");
-  const intent = isValidIntent(raw) ? raw : "unknown";
-
-  return { intent: intent as AvaIntent, currentNode: "router" };
-}
-
-function isValidIntent(s: string): s is AvaIntent {
-  const valid: AvaIntent[] = [
-    // Original 16-class set
-    "booking_new", "booking_returning", "cancellation", "reschedule",
-    "insurance_query", "clinical_question", "emergency", "mental_health_crisis",
-    "message_relay", "complaint", "gp_referral", "third_party_booking",
-    "gdpr_request", "solicitor_sales", "faq", "unknown",
-    // 5-class intentRouter set
-    "booking", "cancel", "enquiry", "clinical_triage",
-  ];
-  return valid.includes(s as AvaIntent);
-}
+// The legacy 16-class router (routerNode/ROUTER_PROMPT/isValidIntent) was removed
+// 2026-06-26 when the graph was reconciled onto the 5-class intent_router spine.
+// It classified an intent that intent_router immediately overwrote — a redundant
+// LLM call per request — and it is no longer wired into buildAvaGraph().
 
 // ─── Guardrail Gate ─────────────────────────────────────────────────────────
 // This runs AFTER routing and BEFORE any action node.
@@ -374,6 +310,26 @@ export function guardrailGate(
     flags.gdprBlock = true;
   }
 
+  // Clinical advice sought — caller asking Ava for an opinion, diagnosis, or
+  // treatment recommendation. Ava must NEVER give medical advice; this is the
+  // deterministic backstop so a medical answer can't depend solely on the LLM
+  // classifier. Patterns are advice-VERB shaped (ask/should/diagnose), so
+  // simply naming a body part to book ("book for my lower back") does NOT trip.
+  const clinicalAdvicePatterns = [
+    /do\s*you\s*think/,                                                  // "do you think I've torn it"
+    /what\s*do\s*you\s*(think|reckon|suggest|recommend)/,                // "what do you think is wrong"
+    /should\s*i\s*(take|use|try|do|get|see|rest|ice|stretch|apply|stop)/, // "should I take ibuprofen"
+    /\bis\s*(my|this|it|that|the)\b.{0,40}\b(serious|broken|sprained|torn|fractured|dislocated|infected|normal|dangerous)\b/, // "is my shoulder pain serious"
+    /do\s*i\s*need\s*(an?\s*|the\s*)?(x.?ray|scan|mri|ultrasound|surgery|operation|injection|referral|antibiotics?|treatment)\b/, // "do I need an x-ray"
+    /what(?:'?s|\s*is)\s*causing/,                                        // "what's causing my headaches"
+    /what\s*(painkiller|medication|tablets?|exercises?|stretches?|treatment)/, // "what painkiller should I take"
+    /\b(diagnose|diagnosis)\b/,
+  ];
+
+  if (clinicalAdvicePatterns.some((p) => p.test(lower))) {
+    flags.clinicalAdviceSought = true;
+  }
+
   return {
     guardrails: {
       emergencyDetected: flags.emergencyDetected ?? false,
@@ -483,7 +439,12 @@ function excessPaymentNode(
  * Ava continues the booking flow but asks for pre-authorisation details.
  * This avoids the insurance hard-block for legitimate booking enquiries.
  */
-function insuranceBookingNode(
+// ─── Preserved action nodes (not on the live spine) ─────────────────────────
+// These were built for the retired 16-class router. The 5-class intent_router
+// does not route to them yet, so they are not wired into buildAvaGraph(). They
+// are exported (not deleted) so the response copy survives and they are ready to
+// wire when intent routing is extended.
+export function insuranceBookingNode(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
   const isNew = state.intent === "booking_new" || state.intent === "third_party_booking";
@@ -535,7 +496,7 @@ function gdprBlockNode(
   };
 }
 
-function messageRelayNode(
+export function messageRelayNode(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
   // Patient is calling with an update for their clinician
@@ -555,7 +516,7 @@ function messageRelayNode(
   };
 }
 
-function bookingNode(
+export function bookingNode(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
   const isNew = state.intent === "booking_new";
@@ -575,7 +536,7 @@ function bookingNode(
   };
 }
 
-function cancellationNode(
+export function cancellationNode(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
   return {
@@ -588,7 +549,7 @@ function cancellationNode(
   };
 }
 
-function complaintNode(
+export function complaintNode(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
   return {
@@ -601,7 +562,7 @@ function complaintNode(
   };
 }
 
-function gpReferralNode(
+export function gpReferralNode(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
   return {
@@ -617,7 +578,7 @@ function gpReferralNode(
   };
 }
 
-function faqNode(
+export function faqNode(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
   // FAQ responses are handled by the ElevenLabs knowledge base.
@@ -632,7 +593,7 @@ function faqNode(
   };
 }
 
-function solicitorSalesNode(
+export function solicitorSalesNode(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
   const clinicEmail = state.callMeta.clinicEmail || "our email address";
@@ -646,7 +607,7 @@ function solicitorSalesNode(
   };
 }
 
-function fallbackNode(
+export function fallbackNode(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
   return {
@@ -862,6 +823,33 @@ export async function structuredIntakeNode(
 export function humanHandoffNode(
   state: typeof AvaState.State
 ): Partial<typeof AvaState.State> {
+  // Clinical red flag: this is NOT a routine transfer. Surface explicit
+  // emergency safety-netting in the spoken copy AND carry an `escalate` marker
+  // so the post-call webhook raises the critical AVA_CALL_ESCALATED insight and
+  // fires the real-time escalation SMS (a red flag must never be logged as a
+  // plain "transferred" call). Wording is deliberately conservative: the
+  // red-flag list spans true 999 emergencies and urgent-GP presentations, so it
+  // signposts emergency care without telling every caller to dial 999.
+  if (state.redFlag) {
+    return {
+      currentNode: "human_handoff",
+      response: {
+        action: "transfer_call",
+        message:
+          "Some of what you've described needs to be looked at urgently. If you feel this is an emergency, please hang up and call 999 or go straight to A&E. Otherwise stay on the line and I'll get someone from the clinic to help you right away.",
+        // callbackType/reason classify this as a clinician escalation so the
+        // post-call webhook raises a SPECIFIC AVA_CALL_ESCALATED insight rather
+        // than the generic default; flagsFound carries the detected red-flag
+        // terms through to Pulse/Intelligence.
+        metadata: {
+          escalate: true,
+          callbackType: "clinician",
+          reason: "red_flag",
+          flagsFound: state.flagsFound ?? [],
+        },
+      },
+    };
+  }
   return {
     currentNode: "human_handoff",
     response: {
@@ -871,9 +859,33 @@ export function humanHandoffNode(
   };
 }
 
-/** Routing after redFlagDetectorNode: true → human_handoff, false → intent_router */
+/** Routing after redFlagDetectorNode: true → human_handoff, false → guardrail_gate */
 function routeAfterRedFlag(state: typeof AvaState.State): string {
-  return state.redFlag ? "human_handoff" : "intent_router";
+  return state.redFlag ? "human_handoff" : "guardrail_gate";
+}
+
+/**
+ * Live-graph routing after the deterministic guardrail gate. Diverts ONLY on a
+ * hard-stop safety flag (emergency / mental-health crisis / excess / insurance /
+ * GDPR / clinical-advice) to the matching action node; every other call
+ * continues to the LLM intent router. This is the reconciliation that makes the
+ * safety gates reachable at runtime without the intent path short-circuiting.
+ *
+ * Distinct from routeAfterGuardrails (which ALSO does intent-based routing and
+ * is retained for the offline evaluateGuardrailRouting seam + its test suite):
+ * this one runs BEFORE intent classification, so it must only act on the
+ * pattern-matched safety flags and otherwise hand off to intent_router.
+ */
+export function routeAfterGuardrailGate(state: typeof AvaState.State): string {
+  const g = state.guardrails;
+  if (g.emergencyDetected) return "emergency";
+  if (g.mentalHealthCrisis) return "mental_health";
+  if (g.excessPaymentQuery) return "excess_payment";
+  if (g.excessFaq) return "excess_faq";
+  if (g.insuranceQuery) return "insurance_gate";
+  if (g.gdprBlock) return "gdpr_block";
+  if (g.clinicalAdviceSought) return "clinical_boundary";
+  return "intent_router";
 }
 
 /** Routing after intentRouterNode */
@@ -923,6 +935,12 @@ export function routeAfterGuardrails(
   }
 
   if (g.gdprBlock) return "gdpr_block";
+
+  // Clinical advice — deterministic deflection to the clinical boundary node.
+  // Checked after the emergency / mental-health / insurance / GDPR hard gates
+  // (those take priority) but before LLM-intent routing, so Ava never answers a
+  // medical question even if the classifier mislabels it.
+  if (g.clinicalAdviceSought) return "clinical_boundary";
 
   // Intent-based routing
   switch (state.intent) {
@@ -999,108 +1017,119 @@ export function evaluateGuardrailRouting(
   return { flags, route };
 }
 
+// ─── No hallucinated availability (output-side backstop) ────────────────────
+//
+// The guardrail gate protects Ava's INPUT side. This protects the OUTPUT side:
+// Ava must never state a specific appointment time as bookable or booked unless
+// it was verified against the PMS. assertsAppointmentAvailability() is the
+// deterministic detector for fabricated-availability copy so any node message,
+// or a future LLM-backed message, can be checked before it reaches the caller.
+//
+// An assertion = a concrete clock time (e.g. "3pm", "2:30pm", "10 o'clock")
+// presented in an appointment offer/confirmation context (booked / slot / free /
+// available / offer / pencil you in / we have). Asking the caller about their
+// preference ("what day works for you?") names no time and must NOT trip, or Ava
+// could never run a booking conversation.
+
+const CLOCK_TIME_RE = /(\b\d{1,2}(?::\d{2})?\s*[ap]\.?m\.?\b)|(\b\d{1,2}\s*o'?clock\b)/i;
+const APPOINTMENT_OFFER_RE = /\b(book(?:ed|ing)?|slot|free|available|offer(?:ed|ing)?|pencil(?:ed|led)?|got\s*(?:you|a)|come\s*in|see\s*you|we\s*have)\b/i;
+
+/**
+ * Returns true when a message asserts a specific appointment slot as
+ * bookable/booked — a concrete clock time in an offer/confirmation context.
+ * Pure, LLM-free; safe to run in CI and inline before any response is sent.
+ */
+export function assertsAppointmentAvailability(message: string): boolean {
+  if (!message) return false;
+  return CLOCK_TIME_RE.test(message) && APPOINTMENT_OFFER_RE.test(message);
+}
+
+/**
+ * Output-boundary backstop. The graph has no PMS slot verification yet, so any
+ * stated time is unverified by definition. If a response asserts availability,
+ * replace it with a safe, no-time holding response that hands the caller to a
+ * confirmed follow-up; the original message is preserved in metadata for
+ * observability. Safe responses pass through unchanged. Idempotent — the
+ * replacement message itself never asserts availability.
+ */
+export function guardResponseAvailability(response: AvaResponse): AvaResponse {
+  if (!assertsAppointmentAvailability(response.message)) return response;
+  return {
+    action: "callback_request",
+    message:
+      "I'd rather not give you a time I can't confirm. Let me have the team check the diary and lock it in properly. Can I take your name and number so we can confirm your slot?",
+    metadata: {
+      ...(response.metadata ?? {}),
+      availabilityGuardTriggered: true,
+      suppressedMessage: response.message,
+      callbackType: (response.metadata?.callbackType as string) ?? "booking_confirmation",
+      reason: "unverified_availability",
+    },
+  };
+}
+
 // ─── Build Graph ────────────────────────────────────────────────────────────
 
 export function buildAvaGraph() {
+  // Live routing spine (reconciled 2026-06-26):
+  //   START -> red_flag_detector
+  //     red flag      -> human_handoff (immediate human transfer)
+  //     otherwise     -> guardrail_gate (deterministic hard-stop pre-filter)
+  //   guardrail_gate
+  //     safety flag   -> matching action node (emergency / mental_health /
+  //                      insurance_gate / excess_* / clinical_boundary / gdpr_block)
+  //     otherwise     -> intent_router (LLM 5-class) -> structured_intake | human_handoff | END
+  //
+  // The guardrail gate now runs INSIDE the compiled graph (previously it was
+  // added but had no inbound edge, so it + every action node were unreachable
+  // and graph.compile() threw UNREACHABLE_NODE). The deterministic safety gates
+  // run BEFORE the LLM classifier, so a 999/crisis/GDPR/insurance call can never
+  // depend on the model. The legacy 16-class router is dropped (intent_router
+  // supersedes it; this also removes a redundant LLM call per request).
   const graph = new StateGraph(AvaState)
-    // ── Tier 1: Red-flag safety scan — runs first on every call ──
     .addNode("red_flag_detector", redFlagDetectorNode)
-
-    // ── Tier 1: 16-class intent classifier ──
-    .addNode("router", routerNode)
-
-    // ── Tier 2: 5-class intent router (primary routing layer) ──
-    .addNode("intent_router", intentRouterNode)
-
-    // ── Tier 2: Structured clinical intake (booking/cancel paths) ──
-    .addNode("structured_intake", structuredIntakeNode)
-
-    // ── Tier 2: Human warm-transfer (red flag or clinical_triage/unknown) ──
-    .addNode("human_handoff", humanHandoffNode)
-
-    // Guardrail gate: pattern-match for hard stops (preserved, reachable when needed)
     .addNode("guardrail_gate", guardrailGate)
-
-    // Action nodes
+    .addNode("intent_router", intentRouterNode)
+    .addNode("structured_intake", structuredIntakeNode)
+    .addNode("human_handoff", humanHandoffNode)
+    // Hard-stop safety action nodes (reachable via guardrail_gate)
     .addNode("emergency", emergencyNode)
     .addNode("mental_health", mentalHealthNode)
     .addNode("insurance_gate", insuranceGateNode)
     .addNode("excess_faq", excessFaqNode)
     .addNode("excess_payment", excessPaymentNode)
-    .addNode("insurance_booking", insuranceBookingNode)
     .addNode("clinical_boundary", clinicalBoundaryNode)
     .addNode("gdpr_block", gdprBlockNode)
-    .addNode("message_relay", messageRelayNode)
-    .addNode("booking", bookingNode)
-    .addNode("cancellation", cancellationNode)
-    .addNode("complaint", complaintNode)
-    .addNode("gp_referral", gpReferralNode)
-    .addNode("faq", faqNode)
-    .addNode("solicitor_sales", solicitorSalesNode)
-    .addNode("fallback", fallbackNode)
 
-    // ── Entry: red-flag scan first ──
     .addEdge(START, "red_flag_detector")
-
-    // ── After red-flag scan: immediate escalate or continue to 16-class router ──
     .addConditionalEdges("red_flag_detector", routeAfterRedFlag, [
       "human_handoff",
-      "router",
+      "guardrail_gate",
     ])
-
-    // ── After 16-class router: hand off to 5-class intent_router ──
-    .addEdge("router", "intent_router")
-
-    // ── After 5-class intent_router: intake, human handoff, or end ──
-    .addConditionalEdges("intent_router", routeAfterIntentRouter, [
-      "structured_intake",
-      "human_handoff",
-      END,
-    ])
-
-    // ── Structured intake terminates (slot selection wired when fetchSlots is added) ──
-    .addEdge("structured_intake", END)
-
-    // ── Human handoff terminates ──
-    .addEdge("human_handoff", END)
-
-    // guardrail_gate and action nodes preserved — reachable if routing is extended
-    .addConditionalEdges("guardrail_gate", routeAfterGuardrails, [
+    .addConditionalEdges("guardrail_gate", routeAfterGuardrailGate, [
       "emergency",
       "mental_health",
       "insurance_gate",
       "excess_faq",
       "excess_payment",
-      "insurance_booking",
       "clinical_boundary",
       "gdpr_block",
-      "message_relay",
-      "booking",
-      "cancellation",
-      "complaint",
-      "gp_referral",
-      "faq",
-      "solicitor_sales",
-      "fallback",
+      "intent_router",
     ])
-
-    // All action nodes terminate
+    .addConditionalEdges("intent_router", routeAfterIntentRouter, [
+      "structured_intake",
+      "human_handoff",
+      END,
+    ])
+    .addEdge("structured_intake", END)
+    .addEdge("human_handoff", END)
     .addEdge("emergency", END)
     .addEdge("mental_health", END)
     .addEdge("insurance_gate", END)
     .addEdge("excess_faq", END)
     .addEdge("excess_payment", END)
-    .addEdge("insurance_booking", END)
     .addEdge("clinical_boundary", END)
-    .addEdge("gdpr_block", END)
-    .addEdge("message_relay", END)
-    .addEdge("booking", END)
-    .addEdge("cancellation", END)
-    .addEdge("complaint", END)
-    .addEdge("gp_referral", END)
-    .addEdge("faq", END)
-    .addEdge("solicitor_sales", END)
-    .addEdge("fallback", END);
+    .addEdge("gdpr_block", END);
 
   return graph.compile();
 }
@@ -1118,5 +1147,6 @@ export async function processCallerInput(
     callMeta,
   });
 
-  return result.response;
+  // Output-boundary backstop: never let a response assert an unverified slot.
+  return guardResponseAvailability(result.response);
 }

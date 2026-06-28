@@ -42,14 +42,17 @@ export interface AvaAgentConfig {
 // ─── Tool creation ────────────────────────────────────────────────────────────
 
 /**
- * Creates the 4 Ava webhook tools in ElevenLabs and returns their IDs.
- * Tools are scoped to the ElevenLabs account — safe to call per-clinic.
+ * Builds the Ava webhook tool definitions for a given app URL.
+ *
+ * Exported so the exact request-body contract (the fields ElevenLabs POSTs to
+ * each webhook) can be unit-tested without hitting the network. The transfer
+ * tool MUST carry `call_sid` — see note on that property below.
  */
-export async function createAvaTools(appUrl: string, apiKey: string): Promise<string[]> {
+export function buildAvaToolDefs(appUrl: string) {
   const toolsUrl = `${appUrl}/api/ava/tools`;
   const transferUrl = `${appUrl}/api/ava/transfer`;
 
-  const toolDefs = [
+  return [
     {
       name: "check_availability",
       description: "Check clinician availability for a given day or week. Use this BEFORE booking to find open slots. Returns available times that you should read back to the caller.",
@@ -139,17 +142,38 @@ export async function createAvaTools(appUrl: string, apiKey: string): Promise<st
       api_schema: {
         url: transferUrl,
         method: "POST" as const,
+        request_headers: {
+          Authorization: `Bearer ${process.env.ELEVENLABS_WEBHOOK_SECRET ?? ""}`,
+        },
         request_body_schema: {
           type: "object",
           required: [],
           properties: {
             reason: { type: "string", description: "Brief reason for the transfer (optional)." },
+            // Twilio Call SID for the live call. ElevenLabs populates this from
+            // the `system__call_sid` system dynamic variable — NOT from the LLM.
+            // Threading it through is the only concurrency-safe way for the
+            // transfer route to pick the right call (a withheld-CLI caller can't
+            // be matched by phone number). The field name MUST stay `call_sid`
+            // to match what /api/ava/transfer reads (body.call_sid).
+            call_sid: {
+              type: "string",
+              description: "Twilio Call SID of the live call, sourced from the system__call_sid dynamic variable. Used to select the correct call under concurrency.",
+              dynamic_variable: "system__call_sid",
+            },
           },
         },
       },
     },
   ];
+}
 
+/**
+ * Creates the 4 Ava webhook tools in ElevenLabs and returns their IDs.
+ * Tools are scoped to the ElevenLabs account — safe to call per-clinic.
+ */
+export async function createAvaTools(appUrl: string, apiKey: string): Promise<string[]> {
+  const toolDefs = buildAvaToolDefs(appUrl);
   const toolIds: string[] = [];
 
   for (const tool of toolDefs) {

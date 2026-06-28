@@ -332,4 +332,28 @@ describe("humanHandoffNode — human escalation", () => {
     const result = humanHandoffNode(makeState("anything"));
     expect(result.currentNode).toBe("human_handoff");
   });
+
+  // FIX 11: a red-flag handoff must carry structured escalation detail so the
+  // post-call webhook can raise a SPECIFIC clinician escalation insight, not a
+  // generic one.
+  it("tags a red-flag handoff with escalate, callbackType clinician, reason red_flag, and the flagsFound", () => {
+    const result = humanHandoffNode(
+      makeState("I have chest pain radiating to arm", {
+        redFlag: true,
+        flagsFound: ["chest pain", "radiating to arm"],
+      }),
+    );
+    expect(result.response?.action).toBe("transfer_call");
+    const metadata = result.response?.metadata as Record<string, unknown>;
+    expect(metadata.escalate).toBe(true);
+    expect(metadata.callbackType).toBe("clinician");
+    expect(metadata.reason).toBe("red_flag");
+    expect(metadata.flagsFound).toEqual(["chest pain", "radiating to arm"]);
+  });
+
+  // The non-red-flag (generic) handoff must NOT carry escalation metadata.
+  it("does not tag a generic (non-red-flag) handoff with escalation metadata", () => {
+    const result = humanHandoffNode(makeState("an admin question I can't handle"));
+    expect(result.response?.metadata).toBeUndefined();
+  });
 });
