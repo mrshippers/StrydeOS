@@ -198,11 +198,15 @@ export default function InsuranceIntakePage() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           {meta?.clinicLogoUrl ? (
-            <img
-              src={meta.clinicLogoUrl}
-              alt={meta.clinicName}
-              className="h-11 w-auto max-w-[150px] object-contain"
-            />
+            // White chip keeps any clinic's logo legible on both light and dark
+            // themes (clinic logos are usually dark wordmarks on transparent).
+            <div className="rounded-xl bg-white p-2.5 ring-1 ring-black/5 shadow-sm flex items-center justify-center shrink-0">
+              <img
+                src={meta.clinicLogoUrl}
+                alt={meta.clinicName}
+                className="h-9 w-auto max-w-[140px] object-contain"
+              />
+            </div>
           ) : (
             <div className="w-11 h-11 rounded-xl bg-blue/10 flex items-center justify-center">
               <ShieldCheck size={22} className="text-blue" />
