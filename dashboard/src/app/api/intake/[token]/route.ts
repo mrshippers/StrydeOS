@@ -20,7 +20,8 @@ import { validateInsuranceSubmission } from "@/lib/insurance/validate";
 import { normaliseFormSubmission } from "@/lib/insurance/normalise";
 import { evaluateInsurerClaim } from "@/lib/insurance/appointment-classifier";
 import { redactRecordForLog } from "@/lib/insurance/redact";
-import type { RawFormSubmission } from "@/lib/insurance/types";
+import { stageIntakeToPms } from "@/lib/insurance/stage-to-pms";
+import type { RawFormSubmission, InsuranceRecord, InsuranceAuditEntry } from "@/lib/insurance/types";
 
 const INTAKE_LINKS = "insurance_intake_links";
 const INTAKES = "insurance_intakes";
@@ -140,12 +141,61 @@ async function postHandler(
     const intakeRef = db
       .collection("clinics").doc(payload.clinicId)
       .collection(INTAKES).doc();
-    await intakeRef.set({ ...record, linkId: payload.linkId, appointmentId: link.appointmentId ?? null });
+    const stored: InsuranceRecord = {
+      ...record,
+      id: intakeRef.id,
+      appointmentId: link.appointmentId ?? null,
+    };
+    await intakeRef.set({ ...stored, linkId: payload.linkId });
 
     await ref.set(
       { status: "submitted", submittedAt: record.capturedAt, intakeId: intakeRef.id },
       { merge: true },
     );
+
+    // Auto-stage: write straight to the PMS so StrydeOS stays invisible — no
+    // human approval gate. It is the patient's own data and fully reversible in
+    // the PMS, so a manual gate is pure friction. A miss (no PMS configured, or a
+    // transient write error) leaves the record pending in the staff queue rather
+    // than losing it; auto-stage must NEVER fail the patient's submission.
+    try {
+      const stage = await stageIntakeToPms(db, payload.clinicId, stored);
+      const auto = (entry: Omit<InsuranceAuditEntry, "at" | "actor">): InsuranceAuditEntry => ({
+        at: new Date().toISOString(),
+        actor: "auto",
+        ...entry,
+      });
+      if (stage.ok) {
+        await intakeRef.set(
+          {
+            reviewStatus: "approved",
+            pmsInvoiceUrl: stage.pmsInvoiceUrl,
+            audit: [...(stored.audit ?? []), auto({
+              action: "written",
+              note: stage.usedFallback
+                ? "auto-staged insurance summary to patient billing info (no structured insurance form configured)"
+                : "auto-staged insurance summary to patient billing info",
+            })],
+          },
+          { merge: true },
+        );
+        if (stage.onboardingTaskNeeded) {
+          await db.collection("clinics").doc(payload.clinicId).set(
+            { onboarding: { insuranceFieldsNeeded: true } },
+            { merge: true },
+          );
+        }
+      } else if (!stage.noPms) {
+        // PMS configured but the write failed: keep pending for staff retry, log why.
+        await intakeRef.set(
+          { audit: [...(stored.audit ?? []), auto({ action: "write_failed", note: stage.error })] },
+          { merge: true },
+        );
+      }
+      // stage.noPms => leave pending silently; the clinic resolves it in the queue.
+    } catch {
+      // Never break the patient's submission on an auto-stage error.
+    }
 
     // Audit without PHI — policy number is redacted before anything is logged.
     const safe = redactRecordForLog(record);

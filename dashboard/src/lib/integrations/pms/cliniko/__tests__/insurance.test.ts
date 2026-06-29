@@ -4,6 +4,7 @@ import {
   buildInsuranceSummary,
   mergeInvoiceExtraInfo,
   clinikoInvoiceDeepLink,
+  resolveClinikoAttendeeId,
   discoverClinikoInsuranceFields,
   writeInsuranceToCliniko,
   CLINIKO_FORM_TEMPLATES_KEY,
@@ -186,23 +187,56 @@ describe("mergeInvoiceExtraInfo", () => {
 });
 
 describe("clinikoInvoiceDeepLink", () => {
-  it("builds the create-invoice URL that pre-fills the staged block", () => {
-    const url = clinikoInvoiceDeepLink("https://spires-physiotherapy.uk3.cliniko.com", "p-42");
+  it("builds the patient-scoped create-invoice URL that pre-fills the staged block", () => {
+    const url = clinikoInvoiceDeepLink("https://spires-physiotherapy.uk3.cliniko.com", { patientRef: "p-42" });
     expect(url).toBe("https://spires-physiotherapy.uk3.cliniko.com/invoices/new?patient_id=p-42");
   });
 
+  it("prefers the attendee-scoped URL (pins business + appointment) when an attendee id is known", () => {
+    const url = clinikoInvoiceDeepLink("https://x.uk3.cliniko.com", { patientRef: "p-42", attendeeId: "a-7" });
+    expect(url).toBe("https://x.uk3.cliniko.com/invoices/new?attendee_id=a-7");
+  });
+
   it("tolerates a trailing slash on the web base", () => {
-    const url = clinikoInvoiceDeepLink("https://x.uk3.cliniko.com/", "p-42");
+    const url = clinikoInvoiceDeepLink("https://x.uk3.cliniko.com/", { patientRef: "p-42" });
     expect(url).toBe("https://x.uk3.cliniko.com/invoices/new?patient_id=p-42");
   });
 
   it("returns null when no web base is configured (degrades gracefully)", () => {
-    expect(clinikoInvoiceDeepLink(undefined, "p-42")).toBeNull();
-    expect(clinikoInvoiceDeepLink("", "p-42")).toBeNull();
+    expect(clinikoInvoiceDeepLink(undefined, { patientRef: "p-42" })).toBeNull();
+    expect(clinikoInvoiceDeepLink("", { patientRef: "p-42" })).toBeNull();
   });
 
-  it("returns null without a patient ref", () => {
-    expect(clinikoInvoiceDeepLink("https://x.uk3.cliniko.com", "")).toBeNull();
+  it("returns null without a patient ref or attendee id", () => {
+    expect(clinikoInvoiceDeepLink("https://x.uk3.cliniko.com", {})).toBeNull();
+    expect(clinikoInvoiceDeepLink("https://x.uk3.cliniko.com", { patientRef: "" })).toBeNull();
+  });
+});
+
+describe("resolveClinikoAttendeeId", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("returns the first attendee id for an appointment", async () => {
+    const captured: Captured[] = [];
+    stubFetch(captured, () => ({ attendees: [{ id: 99887766 }, { id: 1 }] }));
+    const id = await resolveClinikoAttendeeId(config, "appt-1");
+    expect(id).toBe("99887766");
+    expect(captured[0].url).toContain("/individual_appointments/appt-1/attendees");
+    expect(captured[0].method).toBe("GET");
+  });
+
+  it("returns null without an appointment id (makes no API call)", async () => {
+    const captured: Captured[] = [];
+    stubFetch(captured, () => ({ attendees: [] }));
+    expect(await resolveClinikoAttendeeId(config, null)).toBeNull();
+    expect(captured).toHaveLength(0);
+  });
+
+  it("returns null (never throws) when there are no attendees or the API errors", async () => {
+    stubFetch([], () => ({ attendees: [] }));
+    expect(await resolveClinikoAttendeeId(config, "appt-1")).toBeNull();
+    vi.stubGlobal("fetch", async () => fakeResponse({ error: "boom" }, { ok: false, status: 500 }));
+    expect(await resolveClinikoAttendeeId(config, "appt-1")).toBeNull();
   });
 });
 

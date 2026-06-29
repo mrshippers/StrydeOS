@@ -156,11 +156,26 @@ export function mergeInvoiceExtraInfo(existing: string | undefined, summary: str
 }
 
 /**
- * One-click deep link to Cliniko's "new invoice" screen for a patient, which
- * pre-fills the staged insurance block (verified live: creating an invoice from
- * the patient auto-loads invoice_extra_information). Cliniko's API cannot create
- * invoices (POST /invoices is 404), so this link is how StrydeOS closes the loop:
- * the clinician lands on a pre-filled invoice and just clicks Create.
+ * One-click deep link to Cliniko's "new invoice" screen, which pre-fills the
+ * staged insurance block. Cliniko's API cannot create invoices (POST /invoices
+ * is unsupported — verified read-only against the live API + canonical docs,
+ * June 2026), so this link is how StrydeOS closes the loop: the clinician lands
+ * on a pre-filled invoice and just clicks Create.
+ *
+ * Two scopes, by preference (both verified live on Spires uk3):
+ *  - `attendeeId` → `?attendee_id=` opens the appointment-scoped invoice: Cliniko
+ *    inherits the correct BUSINESS (location), practitioner and appointment from
+ *    that attendance, and snapshots the patient's invoice_extra_information. This
+ *    is the only scope that pins the right location — the `business_id` query
+ *    param is ignored, so a patient-only link defaults to the account's first
+ *    business (e.g. the wrong site for a multi-location clinic).
+ *  - `patientRef` → `?patient_id=` opens a patient-scoped invoice: patient,
+ *    address and the insurance block pre-fill, but the business defaults and no
+ *    appointment/fee is loaded. Used only when no appointment is known.
+ *
+ * NB: the session FEE line auto-loads only if the clinic has related a billable
+ * item to the appointment type in Cliniko (Settings → Appointment types). That
+ * is clinic-side config; this link cannot supply it.
  *
  * `webBaseUrl` is the clinic's Cliniko WEB host (e.g. https://acme.uk3.cliniko.com),
  * which the API does not expose — it is stored on the PMS integration config.
@@ -168,11 +183,42 @@ export function mergeInvoiceExtraInfo(existing: string | undefined, summary: str
  */
 export function clinikoInvoiceDeepLink(
   webBaseUrl: string | undefined | null,
-  patientRef: string,
+  target: { patientRef?: string | null; attendeeId?: string | null },
 ): string | null {
   const base = (webBaseUrl ?? "").trim().replace(/\/$/, "");
-  if (!base || !patientRef) return null;
-  return `${base}/invoices/new?patient_id=${encodeURIComponent(patientRef)}`;
+  if (!base) return null;
+  if (target.attendeeId) {
+    return `${base}/invoices/new?attendee_id=${encodeURIComponent(target.attendeeId)}`;
+  }
+  if (target.patientRef) {
+    return `${base}/invoices/new?patient_id=${encodeURIComponent(target.patientRef)}`;
+  }
+  return null;
+}
+
+/**
+ * Resolve the Cliniko attendee id for a captured intake's appointment so the
+ * approval can build the appointment-scoped invoice deep link (correct business
+ * + practitioner + appointment). An individual appointment has one attendee per
+ * patient; we take the first. Returns null on any miss (no appointment id, no
+ * attendee, or an API error) so the caller falls back to the patient-scoped link
+ * — never block an approval on this best-effort enrichment.
+ */
+export async function resolveClinikoAttendeeId(
+  config: ClinikoConfig,
+  appointmentId: string | null | undefined,
+): Promise<string | null> {
+  if (!appointmentId) return null;
+  try {
+    const res = await clinikoFetch<{ attendees?: Array<{ id?: string | number }> }>(
+      config,
+      `/individual_appointments/${encodeURIComponent(appointmentId)}/attendees`,
+    );
+    const id = res?.attendees?.[0]?.id;
+    return id != null ? String(id) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Replace any full policy/auth value in an error string with its redacted form. */

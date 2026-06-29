@@ -20,7 +20,7 @@ import { isEncrypted, decryptCredential } from "@/lib/crypto/credentials";
 import { createPMSAdapter } from "@/lib/integrations/pms/factory";
 import { redactPolicyNumber } from "@/lib/insurance/redact";
 import { requiresPreAuthorisation } from "@/lib/insurance/insurers";
-import { clinikoInvoiceDeepLink } from "@/lib/integrations/pms/cliniko/insurance";
+import { clinikoInvoiceDeepLink, resolveClinikoAttendeeId } from "@/lib/integrations/pms/cliniko/insurance";
 import type { PMSIntegrationConfig } from "@/types/pms";
 import type { InsuranceAuditEntry, InsuranceRecord } from "@/lib/insurance/types";
 
@@ -150,11 +150,24 @@ async function handler(
       return NextResponse.json({ ok: false, error: result.error ?? "PMS write failed" }, { status: 502 });
     }
 
-    // One-click deep link to Cliniko's pre-filled new-invoice screen for this
-    // patient. Cliniko's API can't create invoices, so this is how staff close
-    // the loop. Null when the clinic's Cliniko web host isn't configured.
-    const pmsInvoiceUrl =
-      cfg.provider === "cliniko" ? clinikoInvoiceDeepLink(cfg.webBaseUrl, record.patientRef) : null;
+    // One-click deep link to Cliniko's pre-filled new-invoice screen. Cliniko's
+    // API can't create invoices, so this is how staff close the loop. We prefer
+    // the appointment-scoped link (resolve the attendee for the booked
+    // appointment) so Cliniko inherits the correct business + practitioner +
+    // appointment; we fall back to the patient-scoped link when no appointment is
+    // known or the attendee can't be resolved. Null when the clinic's Cliniko web
+    // host isn't configured. Best-effort: never block an approval on this.
+    let pmsInvoiceUrl: string | null = null;
+    if (cfg.provider === "cliniko") {
+      const attendeeId = await resolveClinikoAttendeeId(
+        { apiKey: cfg.apiKey, baseUrl: cfg.baseUrl },
+        record.appointmentId,
+      );
+      pmsInvoiceUrl = clinikoInvoiceDeepLink(cfg.webBaseUrl, {
+        patientRef: record.patientRef,
+        attendeeId,
+      });
+    }
 
     await intakeRef.set(
       {

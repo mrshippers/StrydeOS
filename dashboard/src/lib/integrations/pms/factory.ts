@@ -48,6 +48,35 @@ export function validateBaseUrl(baseUrl: string | undefined): void {
   }
 }
 
+/** Allowed PMS WEB hosts (the logged-in app, not the API) for invoice deep links. */
+const PMS_WEB_DOMAIN_ALLOWLIST = ["cliniko.com", "writeupp.com", "halaxy.com", "powerdiary.com"];
+
+/**
+ * Reject a PMS webBaseUrl (the clinic's logged-in web host, e.g.
+ * https://acme.uk3.cliniko.com) that isn't HTTPS on an allowlisted vendor
+ * domain. Distinct from validateBaseUrl, which guards the API host — the web
+ * host is a different subdomain set (per-account, not per-shard). Normalises by
+ * stripping any trailing slash. Returns the cleaned value, or undefined when not
+ * supplied. Throws on invalid input so save-config rejects at the boundary.
+ */
+export function validateWebBaseUrl(webBaseUrl: string | undefined): string | undefined {
+  const raw = webBaseUrl?.trim();
+  if (!raw) return undefined;
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error(`Invalid PMS webBaseUrl: ${raw}`);
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error(`PMS webBaseUrl must use HTTPS: ${raw}`);
+  }
+  if (!PMS_WEB_DOMAIN_ALLOWLIST.some((d) => parsed.hostname === d || parsed.hostname.endsWith(`.${d}`))) {
+    throw new Error(`PMS webBaseUrl domain not in allowlist: ${parsed.hostname}`);
+  }
+  return `${parsed.origin}${parsed.pathname}`.replace(/\/$/, "");
+}
+
 /**
  * Validates a PMS appointment has the minimum required fields.
  * Filters out appointments with empty IDs that would create ghost data downstream.

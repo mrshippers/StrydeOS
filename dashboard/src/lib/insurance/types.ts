@@ -42,6 +42,13 @@ export interface InsuranceRecord {
   /** PMS patient external id. */
   patientRef: string;
   source: InsuranceSource;
+  /**
+   * PMS external id of the booked appointment this intake was sent for, copied
+   * from the intake link at submission. Drives the appointment-scoped invoice
+   * deep link on approval (correct business + practitioner + appointment). Null
+   * for captures with no associated booking (e.g. ad-hoc/voice).
+   */
+  appointmentId?: string | null;
   insurerName: string;
   scheme?: string;
   /** Policy or membership number. Redacted to last 4 in all logs. */

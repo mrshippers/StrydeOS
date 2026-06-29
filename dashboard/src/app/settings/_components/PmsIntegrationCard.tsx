@@ -64,6 +64,10 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
 
   const [pmsProvider, setPmsProvider] = useState<string>("");
   const [pmsApiKey, setPmsApiKey] = useState("");
+  // Cliniko's logged-in web host (e.g. https://acme.uk3.cliniko.com). The API
+  // doesn't expose the account subdomain, so the clinic supplies it once to power
+  // the one-click "create invoice in Cliniko" deep link on insurance approvals.
+  const [pmsWebBaseUrl, setPmsWebBaseUrl] = useState("");
   const [sessionPrice, setSessionPrice] = useState("");
   const [pmsConnected, setPmsConnected] = useState(false);
   const [pmsTesting, setPmsTesting] = useState(false);
@@ -144,7 +148,14 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
       const saveRes = await fetch(`/api/pms/save-config`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ provider: pmsProvider, apiKey: pmsApiKey.trim(), baseUrl: testData.resolvedBase }),
+        body: JSON.stringify({
+          provider: pmsProvider,
+          apiKey: pmsApiKey.trim(),
+          baseUrl: testData.resolvedBase,
+          ...(pmsProvider === "cliniko" && pmsWebBaseUrl.trim()
+            ? { webBaseUrl: pmsWebBaseUrl.trim() }
+            : {}),
+        }),
       });
       if (!saveRes.ok) {
         toast("Connection verified but save failed. Try again.", "error");
@@ -470,6 +481,21 @@ export default function PmsIntegrationCard({ cp }: PmsIntegrationCardProps) {
                     className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
                   />
                 </div>
+                {pmsProvider === "cliniko" && (
+                  <div className="mt-3">
+                    <label className="block text-xs font-semibold text-muted uppercase tracking-wide mb-1.5">
+                      Cliniko web address <span className="normal-case font-normal text-muted/70">— for one-click invoice creation</span>
+                    </label>
+                    <input
+                      type="url"
+                      value={pmsWebBaseUrl}
+                      onChange={(e) => setPmsWebBaseUrl(e.target.value)}
+                      placeholder="https://your-clinic.uk3.cliniko.com"
+                      className="w-full px-3 py-2.5 rounded-[var(--radius-inner)] border border-border bg-cloud-light text-sm text-navy focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue/20 transition-colors"
+                    />
+                    <p className="text-[11px] text-muted mt-1.5">The address you log into Cliniko at. Lets staff create an approved insurance invoice in one click.</p>
+                  </div>
+                )}
                 <button
                   onClick={handleTestPms}
                   disabled={!pmsApiKey.trim() || pmsTesting}

@@ -6,7 +6,7 @@ import type { PmsProvider } from "@/types";
 import { writeAuditLog, extractIpFromRequest } from "@/lib/audit-log";
 import { withRequestLog } from "@/lib/request-logger";
 import { encryptCredential } from "@/lib/crypto/credentials";
-import { validateBaseUrl } from "@/lib/integrations/pms/factory";
+import { validateBaseUrl, validateWebBaseUrl } from "@/lib/integrations/pms/factory";
 
 const INTEGRATIONS_PMS = "integrations_config";
 const PMS_DOC_ID = "pms";
@@ -41,8 +41,14 @@ async function handler(request: NextRequest) {
     // Enforce the SSRF allowlist at the save boundary so a bad/internal-host
     // baseUrl is rejected with a clear 400 here, not stored silently and then
     // thrown one layer down inside createPMSAdapter on every later sync.
+    let webBaseUrl: string | undefined;
     try {
       validateBaseUrl(baseUrl);
+      // The clinic's logged-in web host (e.g. https://acme.uk3.cliniko.com).
+      // Cliniko's API doesn't expose it, so the clinic supplies it once here to
+      // power the one-click "create invoice in Cliniko" deep link. Validated +
+      // normalised (trailing slash stripped) against the vendor web-host allowlist.
+      webBaseUrl = validateWebBaseUrl(body.webBaseUrl as string | undefined);
     } catch (e) {
       return NextResponse.json(
         { error: e instanceof Error ? e.message : "Invalid PMS baseUrl" },
@@ -65,6 +71,7 @@ async function handler(request: NextRequest) {
           provider,
           apiKey: encryptedApiKey,
           ...(baseUrl ? { baseUrl } : {}),
+          ...(webBaseUrl ? { webBaseUrl } : {}),
           connectedAt: now,
           lastSyncAt: null,
           lastSyncStatus: null,
