@@ -134,7 +134,7 @@ export default function DashboardShowcase() {
             transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)",
           }}>
             <div>
-              <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.25)", marginBottom: 4 }}>TGT Physiotherapy · London</div>
+              <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.25)", marginBottom: 4 }}>TGT Physiotherapy</div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <MonolithMark size={18} />
                 <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 15, color: "#fff" }}>Stryde<span style={{ color: T.blueGlow }}>OS</span> Dashboard</span>
