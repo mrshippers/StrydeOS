@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import AvaShowcase from "../ava-conversation-card";
+import RoiCalculator from "./roi-calculator";
 import BrightnessStackToggle from "./BrightnessStackToggle";
 import ChangelogMap from "./ChangelogMap";
 
@@ -2324,101 +2325,6 @@ const Results = () => {
   );
 };
 
-/* ─── ROI Calculator ─────────────────────────────────────────────────────────── */
-const ROICalc = ({ darkMode }) => {
-  const [sessions, setSessions] = useState(40);
-  const [dna, setDna] = useState(8);
-  const [fee, setFee] = useState(65);
-  const [missedCalls, setMissedCalls] = useState(20);
-  const [dropout, setDropout] = useState(20);
-
-  const dnaLoss = Math.round(sessions * (dna / 100) * fee * 52);
-  const callLoss = Math.round(sessions * (missedCalls / 100) * fee * 0.4 * 52);
-  const dropLoss = Math.round(sessions * (dropout / 100) * fee * 1.2 * 52);
-  const total = dnaLoss + callLoss + dropLoss;
-
-  const bgAlt  = darkMode ? C.navy    : C.cream;
-  const bgCard = darkMode ? "rgba(255,255,255,0.04)" : "white";
-  const bdr    = darkMode ? "rgba(255,255,255,0.07)" : C.border;
-  const muted  = darkMode ? "rgba(255,255,255,0.45)" : C.muted;
-  const head   = darkMode ? "white"   : C.navy;
-
-  return (
-    <section style={{ padding: "100px 24px", background: bgAlt, transition: "background 0.3s ease" }}>
-      <div style={{ maxWidth: 920, margin: "0 auto" }}>
-        <AnimIn>
-        <div style={{ textAlign: "center", marginBottom: 52 }}>
-          <div className="section-chip">ROI Calculator</div>
-          <h2 className="serif section-h2" style={{ fontSize: 44, color: head, fontWeight: 400, lineHeight: 1.1 }}>
-            What's inefficiency actually costing you?
-          </h2>
-          <p style={{ color: muted, marginTop: 14, fontSize: 16, lineHeight: 1.7 }}>
-            Dial in your clinic's numbers. The losses are probably larger than you think.
-          </p>
-        </div>
-        </AnimIn>
-
-        <AnimIn delay={150}>
-        <div style={{ background: bgCard, borderRadius: 24, overflow: "hidden", boxShadow: darkMode ? `0 24px 60px ${C.navy}60` : "0 24px 60px rgba(11,37,69,0.07)", border: darkMode ? `1px solid ${bdr}` : "none", transition: "background 0.3s ease" }}>
-          <div className="roi-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
-            {/* Controls */}
-            <div style={{ padding: 40, borderRight: `1px solid ${bdr}` }}>
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: head, marginBottom: 30 }}>Your clinic</h3>
-              {[
-                { label: "Weekly patient sessions", val: sessions, set: setSessions, min: 20, max: 200, step: 5, disp: `${sessions}` },
-                { label: "DNA / no-show rate", val: dna, set: setDna, min: 2, max: 30, step: 1, disp: `${dna}%` },
-                { label: "Average fee per session", val: fee, set: setFee, min: 40, max: 200, step: 5, disp: `£${fee}` },
-                { label: "Missed inbound call rate", val: missedCalls, set: setMissedCalls, min: 5, max: 70, step: 1, disp: `${missedCalls}%` },
-                { label: "Patient drop-off rate (pre-discharge)", val: dropout, set: setDropout, min: 5, max: 60, step: 1, disp: `${dropout}%` },
-              ].map(({ label, val, set, min, max, step, disp }) => (
-                <div key={label} style={{ marginBottom: 26 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                    <label style={{ fontSize: 13, color: muted, fontWeight: 500 }}>{label}</label>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: C.blue, background: `${C.blue}10`, padding: "2px 12px", borderRadius: 8 }}>{disp}</div>
-                  </div>
-                  <input type="range" min={min} max={max} step={step} value={val} onChange={e => set(Number(e.target.value))} />
-                </div>
-              ))}
-            </div>
-
-            {/* Results */}
-            <div style={{ padding: 40, background: `linear-gradient(145deg, ${C.navy}, ${C.navyMid})`, position: "relative", overflow: "hidden" }}>
-              <RadialGlow color={C.blue} size={400} opacity={0.18} style={{ top: -100, right: -100 }} />
-              <div style={{ position: "relative", zIndex: 1 }}>
-                <h3 style={{ fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 28 }}>Annual revenue at risk</h3>
-
-                {[
-                  { label: "No-shows & cancellations", val: dnaLoss },
-                  { label: "Missed booking calls", val: callLoss },
-                  { label: "Early patient drop-off", val: dropLoss },
-                ].map(({ label, val }) => (
-                  <div key={label} style={{ marginBottom: 18, paddingBottom: 18, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginBottom: 4 }}>{label}</div>
-                    <div className="serif" style={{ fontSize: 30, color: "white" }}>£{val.toLocaleString()}</div>
-                  </div>
-                ))}
-
-                <div style={{ background: `${C.blue}25`, borderRadius: 16, padding: 20, border: `1px solid ${C.blue}40`, marginTop: 8, marginBottom: 24 }}>
-                  <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, marginBottom: 6 }}>Total annual revenue at risk</div>
-                  <div className="serif" style={{ fontSize: 46, color: "white", lineHeight: 1 }}>£{total.toLocaleString()}</div>
-                  <div style={{ marginTop: 10, color: "#34D399", fontSize: 12, fontWeight: 600 }}>
-                    Pays for itself in under 3 weeks
-                  </div>
-                </div>
-
-                <a href="https://portal.strydeos.com/trial" className="btn-primary" style={{ width: "100%", justifyContent: "center", borderRadius: 14 }}>
-                  Start free trial →
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        </AnimIn>
-      </div>
-    </section>
-  );
-};
-
 /* ─── Pricing ────────────────────────────────────────────────────────────────── */
 const PRICING_DATA_MONTHLY = {
   solo:   { Intelligence: 69,  Ava: 99,  Pulse: 79,  full: 199 },
@@ -3408,7 +3314,7 @@ export default function App() {
       <Integrations darkMode={darkMode} />
       <Products darkMode={darkMode} />
       <Results />
-      <ROICalc darkMode={darkMode} />
+      <RoiCalculator embedded darkMode={darkMode} />
       <Pricing darkMode={darkMode} />
       <WhyUs darkMode={darkMode} />
       <CtaSection />

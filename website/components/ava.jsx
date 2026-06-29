@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { CookieBanner } from "./strydeOS-website.jsx";
 import HeroCarousel from "./HeroCarousel.jsx";
+import AvaCallSample from "./ava-call-sample.jsx";
 import ModulePricingBanner from "./ModulePricingBanner.jsx";
 import BrightnessStackToggle from "./BrightnessStackToggle";
 
@@ -295,6 +296,9 @@ export default function AvaPage() {
             ))}
           </div>
         </section>
+
+        {/* ── SAMPLE CALL ── */}
+        <AvaCallSample darkMode={darkMode} />
 
         {/* ── PRICING ── */}
         <section style={{
