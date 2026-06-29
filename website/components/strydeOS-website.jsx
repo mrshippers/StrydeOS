@@ -1941,7 +1941,7 @@ const Products = ({ darkMode }) => {
       color: C.blue,
       eyebrow: "Ava",
       headline: "Never miss a patient again.",
-      body: "After hours, at lunch, mid-treatment — the calls you can't pick up are the ones that cost you. The caller rarely leaves a voicemail. They dial the next clinic on Google.\n\nAva answers every call, books straight into your diary, recovers cancellations before the slot goes cold, and triages new enquiries — around the clock.",
+      body: "After hours, at lunch, mid-treatment. The calls you can't pick up are the ones that cost you. The caller rarely leaves a voicemail. They dial the next clinic on Google.\n\nAva answers every call, books straight into your diary, recovers cancellations before the slot goes cold, and triages new enquiries, around the clock.",
       proof: "A call-handling service runs £400 to £800 a month and still sends your evening callers to voicemail. Ava answers every call, books it, and texts the confirmation. From £99, no lock-in.",
       tagline: "Your front desk. Without the overhead.",
       cta: "Start with Ava",
