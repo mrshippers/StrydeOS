@@ -24,8 +24,11 @@ import { createIntakeLink } from "@/lib/insurance/create-link";
 import { selectAppointmentsForIntake } from "@/lib/insurance/auto-send";
 import { evaluateIntakeSuppression, type IntakeLinkLike } from "@/lib/insurance/dedupe";
 import { buildInsuranceIntakeEmail } from "@/lib/intelligence/emails/insurance-intake";
+import { buildInsuranceIntakeSms } from "@/lib/insurance/sms";
+import { toE164UK } from "@/lib/insurance/phone";
 import { brandingFromClinicData } from "@/lib/comms/clinic-branding";
 import { getResend } from "@/lib/resend";
+import { getTwilio } from "@/lib/twilio";
 import { writeAuditLog } from "@/lib/audit-log";
 import type { PMSIntegrationConfig } from "@/types/pms";
 import type { InsuranceFieldMap } from "@/lib/insurance/types";
@@ -44,7 +47,8 @@ interface ClinicResult {
   skipped?: string;
   candidates?: number;
   sent?: number;
-  noEmail?: number;
+  noContact?: number;
+  failed?: number;
   suppressed?: number;
   errors?: string[];
 }
@@ -102,13 +106,17 @@ async function processClinic(
     })),
     linked,
     { nowMs: now, windowDays: WINDOW_DAYS },
-  ).slice(0, MAX_SENDS_PER_CLINIC);
+  )
+    // Serve the most imminent appointments first, so the per-run cap never starves
+    // a patient whose appointment is sooner than one further out in the window.
+    .sort((a, b) => Date.parse(a.dateTime) - Date.parse(b.dateTime))
+    .slice(0, MAX_SENDS_PER_CLINIC);
 
   let fieldMap: InsuranceFieldMap | null = null;
   try { fieldMap = adapter.discoverInsuranceFields ? await adapter.discoverInsuranceFields() : null; } catch { fieldMap = null; }
 
   const branding = brandingFromClinicData(clinicData);
-  let sent = 0, noEmail = 0, suppressed = 0;
+  let sent = 0, noContact = 0, failed = 0, suppressed = 0;
   const errors: string[] = [];
 
   for (const c of candidates) {
@@ -119,7 +127,10 @@ async function processClinic(
       if (supp.suppress) { suppressed++; continue; }
 
       const patient = await adapter.getPatient(c.patientRef);
-      if (!patient.email) { noEmail++; continue; }
+      const smsTo = toE164UK(patient.phone) ?? "";
+      // No working channel at all (no email AND no mobile) — do not mint a link
+      // we can't deliver; it would only strand the patient under dedup.
+      if (!patient.email && !smsTo) { noContact++; continue; }
 
       const link = await createIntakeLink(db, clinicId, {
         patientRef: c.patientRef,
@@ -130,37 +141,75 @@ async function processClinic(
         createdBy: "auto-send",
         nowMs: Date.now(),
       });
-
       const name = [patient.firstName, patient.lastName].filter(Boolean).join(" ");
-      const { html, text } = buildInsuranceIntakeEmail({
-        patientName: name || undefined,
-        clinicName: branding.clinicName,
-        url: link.url,
-      });
 
-      const { error } = await getResend().emails.send({
-        from: branding.emailFrom,
-        to: patient.email,
-        subject: "Confirm your insurance before your appointment",
-        html,
-        text,
-      });
-      if (error) { errors.push(typeof error === "string" ? error : (error.message ?? "send failed")); continue; }
+      // Email — best-effort; a failure must not abort the SMS attempt.
+      let emailed = false;
+      if (patient.email) {
+        try {
+          const { html, text } = buildInsuranceIntakeEmail({
+            patientName: name || undefined,
+            clinicName: branding.clinicName,
+            url: link.url,
+          });
+          const { error } = await getResend().emails.send({
+            from: branding.emailFrom,
+            to: patient.email,
+            subject: "Confirm your insurance before your appointment",
+            html,
+            text,
+          });
+          emailed = !error;
+          if (error) errors.push(typeof error === "string" ? error : (error.message ?? "email send failed"));
+        } catch (e) {
+          errors.push(`email: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      }
+
+      // SMS — often the faster channel, and the ONLY one for phone-only patients
+      // (UK private physio skews heavily to mobile). Mirrors the manual send-one.
+      let texted = false;
+      if (smsTo) {
+        try {
+          await getTwilio().messages.create({
+            from: branding.smsSender,
+            to: smsTo,
+            body: buildInsuranceIntakeSms({
+              patientName: name || undefined,
+              link: link.shortUrl,
+              clinicName: branding.clinicName,
+            }),
+          });
+          texted = true;
+        } catch (e) {
+          errors.push(`sms: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      }
+
+      // Delivery gate: if NOTHING went out, the issued link must not linger — it
+      // would dedup-suppress this patient for the cooldown and strand them. Delete
+      // it so the next run retries cleanly (the send-one path does the same).
+      if (!emailed && !texted) {
+        await db.collection("clinics").doc(clinicId).collection(INTAKE_LINKS).doc(link.linkId).delete().catch(() => {});
+        await db.collection("intake_shortlinks").doc(link.slug).delete().catch(() => {});
+        failed++;
+        continue;
+      }
       sent++;
     } catch (e) {
       errors.push(e instanceof Error ? e.message : String(e));
     }
   }
 
-  if (sent > 0) {
+  if (sent > 0 || failed > 0) {
     await writeAuditLog(db, clinicId, {
       userId: "system", userEmail: "",
       action: "write", resource: "insurance_intake_autosend",
-      metadata: { sent, noEmail, suppressed, candidates: candidates.length },
+      metadata: { sent, noContact, failed, suppressed, candidates: candidates.length },
     });
   }
 
-  return { clinicId, ok: true, candidates: candidates.length, sent, noEmail, suppressed, errors: errors.length ? errors : undefined };
+  return { clinicId, ok: true, candidates: candidates.length, sent, noContact, failed, suppressed, errors: errors.length ? errors : undefined };
 }
 
 async function handler(request: NextRequest) {

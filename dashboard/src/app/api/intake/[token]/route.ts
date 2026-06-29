@@ -21,6 +21,7 @@ import { normaliseFormSubmission } from "@/lib/insurance/normalise";
 import { evaluateInsurerClaim } from "@/lib/insurance/appointment-classifier";
 import { redactRecordForLog } from "@/lib/insurance/redact";
 import { stageIntakeToPms } from "@/lib/insurance/stage-to-pms";
+import { requiresPreAuthorisation } from "@/lib/insurance/insurers";
 import type { RawFormSubmission, InsuranceRecord, InsuranceAuditEntry } from "@/lib/insurance/types";
 
 const INTAKE_LINKS = "insurance_intake_links";
@@ -146,55 +147,92 @@ async function postHandler(
       id: intakeRef.id,
       appointmentId: link.appointmentId ?? null,
     };
+
+    // Atomic claim: flip the link issued → submitted inside a transaction so two
+    // concurrent submits on the same token cannot both create an intake and both
+    // write to the PMS. The status read above is advisory; this is the gate.
+    const claim = await db.runTransaction(async (tx) => {
+      const fresh = await tx.get(ref);
+      const data = fresh.data() as LinkDoc | undefined;
+      if (!data) return { ok: false as const, status: 404, error: "Invalid or expired link" };
+      if (data.status === "submitted") {
+        return { ok: false as const, status: 409, error: "This form has already been submitted." };
+      }
+      tx.set(ref, { status: "submitted", submittedAt: record.capturedAt, intakeId: intakeRef.id }, { merge: true });
+      return { ok: true as const };
+    });
+    if (!claim.ok) return NextResponse.json({ error: claim.error }, { status: claim.status });
+
     await intakeRef.set({ ...stored, linkId: payload.linkId });
 
-    await ref.set(
-      { status: "submitted", submittedAt: record.capturedAt, intakeId: intakeRef.id },
-      { merge: true },
-    );
+    const auto = (entry: Omit<InsuranceAuditEntry, "at" | "actor">): InsuranceAuditEntry => ({
+      at: new Date().toISOString(),
+      actor: "auto",
+      ...entry,
+    });
 
-    // Auto-stage: write straight to the PMS so StrydeOS stays invisible — no
-    // human approval gate. It is the patient's own data and fully reversible in
-    // the PMS, so a manual gate is pure friction. A miss (no PMS configured, or a
-    // transient write error) leaves the record pending in the staff queue rather
-    // than losing it; auto-stage must NEVER fail the patient's submission.
-    try {
-      const stage = await stageIntakeToPms(db, payload.clinicId, stored);
-      const auto = (entry: Omit<InsuranceAuditEntry, "at" | "actor">): InsuranceAuditEntry => ({
-        at: new Date().toISOString(),
-        actor: "auto",
-        ...entry,
-      });
-      if (stage.ok) {
-        await intakeRef.set(
-          {
-            reviewStatus: "approved",
-            pmsInvoiceUrl: stage.pmsInvoiceUrl,
-            audit: [...(stored.audit ?? []), auto({
-              action: "written",
-              note: stage.usedFallback
-                ? "auto-staged insurance summary to patient billing info (no structured insurance form configured)"
-                : "auto-staged insurance summary to patient billing info",
-            })],
-          },
-          { merge: true },
-        );
-        if (stage.onboardingTaskNeeded) {
-          await db.collection("clinics").doc(payload.clinicId).set(
-            { onboarding: { insuranceFieldsNeeded: true } },
+    if (stored.insurerMismatch) {
+      // The patient flagged a DIFFERENT insurer than their booked appointment
+      // type. Never auto-write a mismatch (it would bill the wrong insurer) —
+      // hold it pending for staff to arbitrate. This mirrors the manual path's
+      // safety net, which auto-stage must not bypass.
+      await intakeRef.set(
+        { audit: [...(stored.audit ?? []), auto({
+          action: "held",
+          note: `held for review: patient flagged ${stored.claimedInsurer ?? "a different insurer"}, not auto-written`,
+        })] },
+        { merge: true },
+      );
+    } else {
+      // Auto-stage: write straight to the PMS so StrydeOS stays invisible — no
+      // human approval gate. The patient's own data, fully reversible in the PMS.
+      // A miss (no PMS configured, or a transient write error) leaves the record
+      // pending for the staff queue; auto-stage must NEVER fail the submission.
+      try {
+        const stage = await stageIntakeToPms(db, payload.clinicId, stored);
+        if (stage.ok) {
+          // Missing pre-auth does NOT block (clinic policy: optional — the patient
+          // may not have it yet). Flag the record so the end-of-day incomplete
+          // digest chases the claim before it is billed.
+          const missingPreAuth =
+            requiresPreAuthorisation(stored.insurerName) && !stored.authorisationCode?.trim();
+          await intakeRef.set(
+            {
+              reviewStatus: "approved",
+              pmsInvoiceUrl: stage.pmsInvoiceUrl,
+              ...(missingPreAuth ? { incomplete: true, incompleteReason: "missing pre-authorisation" } : {}),
+              audit: [
+                ...(stored.audit ?? []),
+                auto({
+                  action: "written",
+                  note: stage.usedFallback
+                    ? "auto-staged insurance summary to patient billing info (no structured insurance form configured)"
+                    : "auto-staged insurance summary to patient billing info",
+                }),
+                ...(missingPreAuth
+                  ? [auto({ action: "held", note: "claim incomplete: pre-authorisation code missing" })]
+                  : []),
+              ],
+            },
+            { merge: true },
+          );
+          if (stage.onboardingTaskNeeded) {
+            await db.collection("clinics").doc(payload.clinicId).set(
+              { onboarding: { insuranceFieldsNeeded: true } },
+              { merge: true },
+            );
+          }
+        } else if (!stage.noPms) {
+          // PMS configured but the write failed: keep pending for staff retry, log why.
+          await intakeRef.set(
+            { audit: [...(stored.audit ?? []), auto({ action: "write_failed", note: stage.error })] },
             { merge: true },
           );
         }
-      } else if (!stage.noPms) {
-        // PMS configured but the write failed: keep pending for staff retry, log why.
-        await intakeRef.set(
-          { audit: [...(stored.audit ?? []), auto({ action: "write_failed", note: stage.error })] },
-          { merge: true },
-        );
+        // stage.noPms => leave pending silently; the clinic resolves it in the queue.
+      } catch {
+        // Never break the patient's submission on an auto-stage error.
       }
-      // stage.noPms => leave pending silently; the clinic resolves it in the queue.
-    } catch {
-      // Never break the patient's submission on an auto-stage error.
     }
 
     // Audit without PHI — policy number is redacted before anything is logged.

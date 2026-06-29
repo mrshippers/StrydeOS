@@ -46,8 +46,19 @@ function docRef(path: string) {
 function collRef(path: string) {
   return { doc: (id?: string) => docRef(`${path}/${id ?? `auto-${++autoCounter}`}`) };
 }
+type DocRef = ReturnType<typeof docRef>;
 vi.mock("@/lib/firebase-admin", () => ({
-  getAdminDb: () => ({ collection: (name: string) => collRef(name) }),
+  getAdminDb: () => ({
+    collection: (name: string) => collRef(name),
+    runTransaction: async (fn: (tx: {
+      get: (ref: DocRef) => Promise<unknown>;
+      set: (ref: DocRef, data: Record<string, unknown>, opts?: { merge?: boolean }) => void;
+    }) => unknown) =>
+      fn({
+        get: (ref) => ref.get(),
+        set: (ref, data, opts) => { void ref.set(data, opts); },
+      }),
+  }),
 }));
 
 import { POST } from "../route";

@@ -22,7 +22,8 @@ export type InsuranceAuditAction =
   | "approved"
   | "rejected"
   | "written"
-  | "write_failed";
+  | "write_failed"
+  | "held";
 
 export interface InsuranceAuditEntry {
   at: string; // ISO timestamp
@@ -69,6 +70,14 @@ export interface InsuranceRecord {
   consentAt?: string;
   consentVersion?: string;
   reviewStatus: InsuranceReviewStatus;
+  /**
+   * Set when the record was auto-staged to the PMS but a required field is still
+   * missing (e.g. a claimable insurer with no pre-authorisation code). It does
+   * NOT block the write (clinic policy: pre-auth is optional, the patient may not
+   * have it yet) — it flags the claim for the end-of-day incomplete digest.
+   */
+  incomplete?: boolean;
+  incompleteReason?: string;
   /** Set when an approve claims the record (pending → writing). Cleared/superseded on resolve. */
   writeClaimedAt?: string;
   writeClaimedBy?: string;
