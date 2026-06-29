@@ -26,7 +26,7 @@ const PRICING = {
 
 /* ── Model assumptions (conservative, disclosed) ── */
 const WEEKS_PER_MONTH = 4.33;
-const AVA_RECOVERY = 0.85; // share of currently-missed calls Ava actually answers/recovers
+const AVA_RECOVERY = 0.70; // share of currently-missed calls Ava actually answers/recovers (conservative)
 
 const gbp = (n) => "£" + Math.round(n).toLocaleString("en-GB");
 
@@ -51,9 +51,9 @@ function Field({ label, hint, value, suffix, min, max, step, onChange }) {
 
 export default function RoiCalculator() {
   const [calls, setCalls] = useState(40);        // inbound calls / week
-  const [missedPct, setMissedPct] = useState(30); // % missed
-  const [convPct, setConvPct] = useState(50);    // answered new enquiry -> booked patient
-  const [value, setValue] = useState(260);       // avg patient value
+  const [missedPct, setMissedPct] = useState(22); // % missed
+  const [convPct, setConvPct] = useState(45);    // answered new enquiry -> booked patient
+  const [value, setValue] = useState(70);        // avg value of a new-patient booking
   const [serviceSpend, setServiceSpend] = useState(0); // call-handling spend you'd cancel
   const [tier, setTier] = useState("studio");
 
@@ -99,7 +99,7 @@ export default function RoiCalculator() {
             <Field label="Inbound calls a week" hint="New enquiries plus existing patients" value={calls} suffix="" min={5} max={200} onChange={setCalls} />
             <Field label="Calls you miss" hint="After hours, lunch, already on the line" value={missedPct} suffix="%" min={0} max={80} onChange={setMissedPct} />
             <Field label="Enquiries that convert" hint="Of answered new-patient calls, share that book in" value={convPct} suffix="%" min={10} max={90} onChange={setConvPct} />
-            <Field label="Average patient value" hint="Lifetime value across their course of care" value={value} suffix="£" min={80} max={800} step={10} onChange={setValue} />
+            <Field label="Average new-patient value" hint="A first appointment fee, kept conservative" value={value} suffix="£" min={40} max={250} step={5} onChange={setValue} />
             <Field label="Answering service you'd cancel" hint="Monthly spend Ava replaces (set 0 if none)" value={serviceSpend} suffix="£" min={0} max={1000} step={10} onChange={setServiceSpend} />
 
             {/* Tier */}

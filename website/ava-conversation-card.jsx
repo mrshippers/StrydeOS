@@ -734,11 +734,11 @@ export default function AvaShowcase() {
                 fontFamily: "'DM Serif Display', serif",
                 fontSize: 24, color: B.ink, lineHeight: 1, marginBottom: 2,
                 letterSpacing: "-0.01em",
-              }}>12</div>
+              }}>24/7</div>
               <div style={{
                 fontSize: 9, fontWeight: 500, color: B.mutedSoft,
                 textTransform: "uppercase", letterSpacing: "0.06em",
-              }}>Calls today</div>
+              }}>Always on</div>
             </div>
           </div>
 
@@ -785,6 +785,24 @@ export default function AvaShowcase() {
               width={440}
               height={44}
             />
+          </div>
+
+          {/* ——— Capability strip — mirrors the live Ava booking graph ——— */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexWrap: "wrap", gap: "4px 8px", marginTop: 16, position: "relative",
+          }}>
+            {["Checks your live diary", "Offers a real slot", "Books it in", "Texts confirmation"].map((step, i, arr) => (
+              <span key={step} style={{ display: "inline-flex", alignItems: "center", gap: "4px 8px" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: B.blueGlow, flexShrink: 0 }} />
+                  <span style={{ fontSize: 10.5, fontWeight: 500, color: B.muted, letterSpacing: "0.005em", whiteSpace: "nowrap" }}>{step}</span>
+                </span>
+                {i < arr.length - 1 && (
+                  <span style={{ fontSize: 11, color: B.borderSoft, margin: "0 2px" }} aria-hidden="true">{"›"}</span>
+                )}
+              </span>
+            ))}
           </div>
 
           {/* ——— Try Ava — primary call-to-action ——— */}
