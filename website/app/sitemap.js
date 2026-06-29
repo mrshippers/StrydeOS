@@ -6,6 +6,7 @@ export default function sitemap() {
     { path: '/ava', priority: 0.9, changeFrequency: 'monthly' },
     { path: '/pulse', priority: 0.9, changeFrequency: 'monthly' },
     { path: '/intelligence', priority: 0.9, changeFrequency: 'monthly' },
+    { path: '/roi-calculator', priority: 0.85, changeFrequency: 'monthly' },
     { path: '/case-studies', priority: 0.8, changeFrequency: 'monthly' },
     { path: '/contact', priority: 0.7, changeFrequency: 'monthly' },
     { path: '/faq', priority: 0.6, changeFrequency: 'monthly' },

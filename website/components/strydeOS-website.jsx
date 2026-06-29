@@ -400,6 +400,7 @@ const Nav = ({ darkMode, setDarkMode }) => {
     { label: "Navigate", items: [
       { name: "Products", href: "#products" },
       { name: "How it works", href: "#how-it-works" },
+      { name: "ROI calculator", href: "/roi-calculator" },
       { name: "Pricing", href: "#pricing" },
       { name: "About", href: "#about" },
     ]},
