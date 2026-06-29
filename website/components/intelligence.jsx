@@ -13,7 +13,7 @@ export default function IntelligencePage() {
       headline="Know how your clinic actually performs."
       body={`Revenue tells you what happened, not why. Intelligence surfaces the drivers behind it in real time.
 
-Track follow-up conversion, revenue per clinician hour, DNA recovery rate, and utilisation against rebooking patterns — automatically and per clinician.
+Track follow-up conversion, revenue per clinician hour, DNA recovery rate, and utilisation against rebooking patterns - automatically and per clinician.
 
 Not to manage people. To understand where your clinic is thriving and where it isn't. The best-run clinics already know these numbers.`}
       howItWorks={[

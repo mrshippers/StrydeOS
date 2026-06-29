@@ -1,7 +1,7 @@
 export const metadata = {
   metadataBase: new URL('https://strydeos.com'),
   title: {
-    default: 'StrydeOS — The Clinic OS for Private Practice',
+    default: 'StrydeOS - The Clinic OS for Private Practice',
     template: '%s | StrydeOS',
   },
   description:
@@ -24,7 +24,7 @@ export const metadata = {
     locale: 'en_GB',
     url: 'https://strydeos.com',
     siteName: 'StrydeOS',
-    title: 'StrydeOS — The Clinic OS for Private Practice',
+    title: 'StrydeOS - The Clinic OS for Private Practice',
     description:
       'Clinical performance tracking for private physiotherapy practices. Surface the gaps. Coach the clinicians. Grow the clinic.',
     images: [
@@ -32,13 +32,13 @@ export const metadata = {
         url: '/brand/og-card.png',
         width: 1200,
         height: 630,
-        alt: 'StrydeOS — The Clinic OS for private practice.',
+        alt: 'StrydeOS - The Clinic OS for private practice.',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'StrydeOS — The Clinic OS for Private Practice',
+    title: 'StrydeOS - The Clinic OS for Private Practice',
     description:
       'Clinical performance tracking for private physiotherapy practices.',
     images: ['/brand/og-card.png'],

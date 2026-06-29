@@ -13,11 +13,11 @@ const C = {
 
 const msgs = [
   { who: "p", text: "Hi, I\u2019d like to book an appointment for my lower back." },
-  { who: "a", text: "Of course \u2014 I can help with that. Are mornings or afternoons better for you?" },
+  { who: "a", text: "Of course - I can help with that. Are mornings or afternoons better for you?" },
   { who: "p", text: "Mornings, ideally Thursday or Friday." },
   { who: "a", text: "I have Thursday at 9:15am with Dr. Reeves. Shall I book that and send you a confirmation text?" },
   { who: "p", text: "Yes please." },
-  { who: "a", text: "Done \u2014 you\u2019re booked in. You\u2019ll get a text shortly. Is there anything else I can help with?" },
+  { who: "a", text: "Done - you\u2019re booked in. You\u2019ll get a text shortly. Is there anything else I can help with?" },
 ];
 
 export default function HeroCarousel() {
@@ -30,7 +30,7 @@ export default function HeroCarousel() {
 
   return (
     <div style={{ width: "100%", maxWidth: 400 }}>
-      {/* Card container — fixed aspect */}
+      {/* Card container - fixed aspect */}
       <div style={{
         position: "relative",
         width: "100%",
@@ -133,7 +133,7 @@ export default function HeroCarousel() {
               <div style={{ padding: "0 14px 12px", display: "flex", flexDirection: "column", gap: 7 }}>
                 {[
                   { n: "Physiotherapy", t: "MSK clinic specialising in back pain, neck pain, sports injuries, post-surgical rehab. All appointments 45 minutes." },
-                  { n: "Online Consultations", t: "Video consultations \u2014 same length (45 min), same price. Ideal for follow-ups or patients who can\u2019t travel." },
+                  { n: "Online Consultations", t: "Video consultations - same length (45 min), same price. Ideal for follow-ups or patients who can\u2019t travel." },
                 ].map((e, i) => (
                   <div key={i} style={{ background: C.cloudLight, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 13px" }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginBottom: 2 }}>{e.n}</div>

@@ -11,9 +11,9 @@ export default function PulsePage() {
       name="Pulse"
       color={C_TEAL}
       headline="Keep patients in care, longer."
-      body={`The drop-off between session two and session three is where most clinics leak the most revenue. Patients disengage — not because the treatment isn't working, but because nobody stayed in touch.
+      body={`The drop-off between session two and session three is where most clinics leak the most revenue. Patients disengage - not because the treatment isn't working, but because nobody stayed in touch.
 
-Pulse automates every touchpoint between sessions — and adapts based on clinical context. When a patient has psychosocial flags or complex multi-region presentations, Pulse adjusts its tone and timing automatically. No manual triage. No one-size-fits-all sequences.`}
+Pulse automates every touchpoint between sessions - and adapts based on clinical context. When a patient has psychosocial flags or complex multi-region presentations, Pulse adjusts its tone and timing automatically. No manual triage. No one-size-fits-all sequences.`}
       howItWorks={[
         "Monitors treatment journey milestones",
         "Reads clinical complexity signals from session notes",
@@ -27,7 +27,7 @@ Pulse automates every touchpoint between sessions — and adapts based on clinic
       ]}
       features={[
         "Complexity-aware rebooking prompts",
-        "Psychosocial flag detection — gentler outreach for anxious patients",
+        "Psychosocial flag detection - gentler outreach for anxious patients",
         "Discharge-aware sequences that know when to stop",
         "Clinical enrichment from Heidi session notes",
         "Post-discharge check-ins",

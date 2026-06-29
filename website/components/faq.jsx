@@ -134,7 +134,7 @@ const FaqNav = () => {
     }}>
       <div style={{ maxWidth: 1160, margin: "0 auto", display: "flex", alignItems: "center", height: 70 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Monolith mark — hover opens dropdown */}
+          {/* Monolith mark - hover opens dropdown */}
           <div
             style={{ position: "relative" }}
             onMouseEnter={openDropdown}
@@ -222,7 +222,7 @@ const FaqNav = () => {
             </div>
           </div>
 
-          {/* StrydeOS wordmark — links home */}
+          {/* StrydeOS wordmark - links home */}
           <a
             href="/"
             style={{
@@ -262,23 +262,23 @@ const FAQ_CATEGORIES = [
     items: [
       {
         q: "What data does StrydeOS actually need from my PMS?",
-        a: "We pull appointment data, clinician schedules, and patient contact preferences \u2014 nothing clinical. Your PMS stays your system of record. StrydeOS reads from it; we never write back or modify anything. Most integrations take under 10 minutes to connect.",
+        a: "We pull appointment data, clinician schedules, and patient contact preferences - nothing clinical. Your PMS stays your system of record. StrydeOS reads from it; we never write back or modify anything. Most integrations take under 10 minutes to connect.",
       },
       {
         q: "Will this replace my practice management system?",
-        a: "No \u2014 and that\u2019s by design. StrydeOS sits above your PMS, the same way macOS sits above your apps. We connect to your existing tools (Cliniko, WriteUpp, and more) and surface the performance insights they can\u2019t. You keep everything you already use.",
+        a: "No - and that\u2019s by design. StrydeOS sits above your PMS, the same way macOS sits above your apps. We connect to your existing tools (Cliniko, WriteUpp, and more) and surface the performance insights they can\u2019t. You keep everything you already use.",
       },
       {
         q: "What\u2019s the onboarding process like?",
-        a: "We start with a free Clinical Performance Audit \u2014 a 20-minute call where we review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks using your existing PMS data. If there\u2019s a fit, onboarding takes less than a day. Most clinics are live within hours of connecting their PMS.",
+        a: "We start with a free Clinical Performance Audit - a 20-minute call where we review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks using your existing PMS data. If there\u2019s a fit, onboarding takes less than a day. Most clinics are live within hours of connecting their PMS.",
       },
       {
         q: "Is there a contract or lock-in?",
-        a: "No lock-in. Monthly rolling billing, cancel any time. We\u2019d rather earn your continued use than trap you into it. Your data stays yours \u2014 if you leave, we delete everything.",
+        a: "No lock-in. Monthly rolling billing, cancel any time. We\u2019d rather earn your continued use than trap you into it. Your data stays yours - if you leave, we delete everything.",
       },
       {
         q: "How is my data protected?",
-        a: "All data is encrypted in transit and at rest on UK-hosted infrastructure. We\u2019re GDPR-compliant, and we\u2019ll sign a Data Processing Agreement before any patient-adjacent data flows through the platform. No data is sold or shared \u2014 ever.",
+        a: "All data is encrypted in transit and at rest on UK-hosted infrastructure. We\u2019re GDPR-compliant, and we\u2019ll sign a Data Processing Agreement before any patient-adjacent data flows through the platform. No data is sold or shared - ever.",
       },
     ],
   },
@@ -293,15 +293,15 @@ const FAQ_CATEGORIES = [
     items: [
       {
         q: "Can I see my own performance data?",
-        a: "Yes. Every clinician gets a personal dashboard showing their follow-up rate, HEP compliance, programme assignment rate, and patient feedback scores. It\u2019s designed to help you improve \u2014 not to micromanage. Think of it as a mirror, not a report card.",
+        a: "Yes. Every clinician gets a personal dashboard showing their follow-up rate, HEP compliance, programme assignment rate, and patient feedback scores. It\u2019s designed to help you improve - not to micromanage. Think of it as a mirror, not a report card.",
       },
       {
         q: "Does Ava sound robotic to patients?",
-        a: "No. Ava uses cloned voice technology trained on real human speech patterns. She handles greetings, bookings, and triage with natural conversation flow. Patients regularly don\u2019t realise they\u2019re speaking with an AI receptionist \u2014 that\u2019s the benchmark we hold ourselves to.",
+        a: "No. Ava uses cloned voice technology trained on real human speech patterns. She handles greetings, bookings, and triage with natural conversation flow. Patients regularly don\u2019t realise they\u2019re speaking with an AI receptionist - that\u2019s the benchmark we hold ourselves to.",
       },
       {
         q: "What if a patient needs to speak to a real person?",
-        a: "Ava detects when a patient needs human support \u2014 clinical queries, distressed callers, or complex requests \u2014 and routes them to your team immediately. She\u2019s a first responder, not a gatekeeper. Emergency calls are always escalated instantly.",
+        a: "Ava detects when a patient needs human support - clinical queries, distressed callers, or complex requests - and routes them to your team immediately. She\u2019s a first responder, not a gatekeeper. Emergency calls are always escalated instantly.",
       },
     ],
   },
@@ -321,11 +321,11 @@ const FAQ_CATEGORIES = [
       },
       {
         q: "Can I white-label StrydeOS for my clinic group?",
-        a: "Not yet \u2014 but it\u2019s on the roadmap. Multi-site clinic groups are a natural fit for StrydeOS. If you\u2019re running 3+ locations and want to explore this, reach out and we\u2019ll scope it together.",
+        a: "Not yet - but it\u2019s on the roadmap. Multi-site clinic groups are a natural fit for StrydeOS. If you\u2019re running 3+ locations and want to explore this, reach out and we\u2019ll scope it together.",
       },
       {
         q: "How does pricing work for larger teams?",
-        a: "Each module \u2014 Intelligence, Ava, and Pulse \u2014 prices independently, so you only pay for what you use. The Full Stack bundle saves roughly 20% versus buying separately. Volume pricing for clinic groups is available on request.",
+        a: "Each module - Intelligence, Ava, and Pulse - prices independently, so you only pay for what you use. The Full Stack bundle saves roughly 20% versus buying separately. Volume pricing for clinic groups is available on request.",
       },
       {
         q: "Is there an API I can build on?",
@@ -669,7 +669,7 @@ export default function FAQPage() {
             maxWidth: 480, margin: "0 auto 36px",
             animation: "fadeUp 0.6s ease 0.3s both",
           }}>
-            Everything you need to know about Intelligence, Ava, and Pulse — from data and integrations to getting started.
+            Everything you need to know about Intelligence, Ava, and Pulse - from data and integrations to getting started.
           </p>
 
           <SearchBar value={searchQuery} onChange={setSearchQuery} />

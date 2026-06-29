@@ -231,7 +231,7 @@ export default function CaseStudiesPage() {
                 The clinic had no per-clinician performance visibility. Follow-up rates, HEP assignment, DNA patterns, and utilisation were invisible at the individual level.
               </p>
               <p style={{ fontSize: 17, color: txt, lineHeight: 1.8, marginTop: 16 }}>
-                The clinic was running on instinct — not data. Management conversations were based on impressions rather than evidence, and underperformance went undetected.
+                The clinic was running on instinct - not data. Management conversations were based on impressions rather than evidence, and underperformance went undetected.
               </p>
             </div>
 
@@ -246,7 +246,7 @@ export default function CaseStudiesPage() {
                 letterSpacing: "0.04em",
               }}>Key finding:</div>
               <p style={{ fontSize: 15, color: txt, lineHeight: 1.7 }}>
-                One clinician's follow-up rate was <strong style={{ color: head }}>1.90</strong> — well below the clinic target of <strong style={{ color: head }}>2.9</strong>.
+                One clinician's follow-up rate was <strong style={{ color: head }}>1.90</strong> - well below the clinic target of <strong style={{ color: head }}>2.9</strong>.
               </p>
               <p style={{ fontSize: 13, color: muted, lineHeight: 1.7, marginTop: 10 }}>
                 Without per-clinician tracking, this gap was invisible to clinic management.
@@ -271,7 +271,7 @@ export default function CaseStudiesPage() {
             StrydeOS Intelligence was deployed to surface clinician-level KPIs from the clinic's existing PMS appointment data. Weekly dashboards tracked follow-up rate, HEP compliance, utilisation, and DNA rate per clinician.
           </p>
           <p style={{ fontSize: 17, color: txt, lineHeight: 1.8, maxWidth: 680, marginTop: 16 }}>
-            Data was reviewed in weekly team check-ins to support targeted coaching — not blame.
+            Data was reviewed in weekly team check-ins to support targeted coaching - not blame.
           </p>
         </div>
       </section>
@@ -282,7 +282,7 @@ export default function CaseStudiesPage() {
           <div style={{
             fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase",
             color: C.blue, marginBottom: 12,
-          }}>Results — 6-Week Clinician Trajectory</div>
+          }}>Results - 6-Week Clinician Trajectory</div>
 
           <div className="cs-metric-grid" style={{
             display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginTop: 32,

@@ -23,7 +23,7 @@ const faqLd = {
       "name": "What data does StrydeOS actually need from my PMS?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "We pull appointment data, clinician schedules, and patient contact preferences — nothing clinical. Your PMS stays your system of record. StrydeOS reads from it; we never write back or modify anything. Most integrations take under 10 minutes to connect."
+        "text": "We pull appointment data, clinician schedules, and patient contact preferences - nothing clinical. Your PMS stays your system of record. StrydeOS reads from it; we never write back or modify anything. Most integrations take under 10 minutes to connect."
       }
     },
     {
@@ -31,7 +31,7 @@ const faqLd = {
       "name": "Will this replace my practice management system?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No — and that’s by design. StrydeOS sits above your PMS, the same way macOS sits above your apps. We connect to your existing tools (Cliniko, WriteUpp, and more) and surface the performance insights they can’t. You keep everything you already use."
+        "text": "No - and that’s by design. StrydeOS sits above your PMS, the same way macOS sits above your apps. We connect to your existing tools (Cliniko, WriteUpp, and more) and surface the performance insights they can’t. You keep everything you already use."
       }
     },
     {
@@ -39,7 +39,7 @@ const faqLd = {
       "name": "What’s the onboarding process like?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "We start with a free Clinical Performance Audit — a 20-minute call where we review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks using your existing PMS data. If there’s a fit, onboarding takes less than a day. Most clinics are live within hours of connecting their PMS."
+        "text": "We start with a free Clinical Performance Audit - a 20-minute call where we review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks using your existing PMS data. If there’s a fit, onboarding takes less than a day. Most clinics are live within hours of connecting their PMS."
       }
     },
     {
@@ -47,7 +47,7 @@ const faqLd = {
       "name": "Is there a contract or lock-in?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No lock-in. Monthly rolling billing, cancel any time. We’d rather earn your continued use than trap you into it. Your data stays yours — if you leave, we delete everything."
+        "text": "No lock-in. Monthly rolling billing, cancel any time. We’d rather earn your continued use than trap you into it. Your data stays yours - if you leave, we delete everything."
       }
     },
     {
@@ -55,7 +55,7 @@ const faqLd = {
       "name": "How is my data protected?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "All data is encrypted in transit and at rest on UK-hosted infrastructure. We’re GDPR-compliant, and we’ll sign a Data Processing Agreement before any patient-adjacent data flows through the platform. No data is sold or shared — ever."
+        "text": "All data is encrypted in transit and at rest on UK-hosted infrastructure. We’re GDPR-compliant, and we’ll sign a Data Processing Agreement before any patient-adjacent data flows through the platform. No data is sold or shared - ever."
       }
     },
     {
@@ -63,7 +63,7 @@ const faqLd = {
       "name": "Can I see my own performance data?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Every clinician gets a personal dashboard showing their follow-up rate, HEP compliance, programme assignment rate, and patient feedback scores. It’s designed to help you improve — not to micromanage. Think of it as a mirror, not a report card."
+        "text": "Yes. Every clinician gets a personal dashboard showing their follow-up rate, HEP compliance, programme assignment rate, and patient feedback scores. It’s designed to help you improve - not to micromanage. Think of it as a mirror, not a report card."
       }
     },
     {
@@ -71,7 +71,7 @@ const faqLd = {
       "name": "Does Ava sound robotic to patients?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. Ava uses cloned voice technology trained on real human speech patterns. She handles greetings, bookings, and triage with natural conversation flow. Patients regularly don’t realise they’re speaking with an AI receptionist — that’s the benchmark we hold ourselves to."
+        "text": "No. Ava uses cloned voice technology trained on real human speech patterns. She handles greetings, bookings, and triage with natural conversation flow. Patients regularly don’t realise they’re speaking with an AI receptionist - that’s the benchmark we hold ourselves to."
       }
     },
     {
@@ -79,7 +79,7 @@ const faqLd = {
       "name": "What if a patient needs to speak to a real person?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Ava detects when a patient needs human support — clinical queries, distressed callers, or complex requests — and routes them to your team immediately. She’s a first responder, not a gatekeeper. Emergency calls are always escalated instantly."
+        "text": "Ava detects when a patient needs human support - clinical queries, distressed callers, or complex requests - and routes them to your team immediately. She’s a first responder, not a gatekeeper. Emergency calls are always escalated instantly."
       }
     },
     {
@@ -95,7 +95,7 @@ const faqLd = {
       "name": "Can I white-label StrydeOS for my clinic group?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Not yet — but it’s on the roadmap. Multi-site clinic groups are a natural fit for StrydeOS. If you’re running 3+ locations and want to explore this, reach out and we’ll scope it together."
+        "text": "Not yet - but it’s on the roadmap. Multi-site clinic groups are a natural fit for StrydeOS. If you’re running 3+ locations and want to explore this, reach out and we’ll scope it together."
       }
     },
     {
@@ -103,7 +103,7 @@ const faqLd = {
       "name": "How does pricing work for larger teams?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Each module — Intelligence, Ava, and Pulse — prices independently, so you only pay for what you use. The Full Stack bundle saves roughly 20% versus buying separately. Volume pricing for clinic groups is available on request."
+        "text": "Each module - Intelligence, Ava, and Pulse - prices independently, so you only pay for what you use. The Full Stack bundle saves roughly 20% versus buying separately. Volume pricing for clinic groups is available on request."
       }
     },
     {

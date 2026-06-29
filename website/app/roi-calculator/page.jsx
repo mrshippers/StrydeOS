@@ -1,7 +1,7 @@
 import RoiCalculator from '../../components/roi-calculator';
 
 export const metadata = {
-  title: 'ROI Calculator — What missed calls cost your clinic | StrydeOS',
+  title: 'ROI Calculator - What missed calls cost your clinic | StrydeOS',
   description:
     'See what unanswered calls are costing your physio clinic, and what Ava recovers every month. Free, instant, no sign-up.',
   alternates: { canonical: '/roi-calculator' },
@@ -14,7 +14,7 @@ export const metadata = {
   },
 };
 
-/* Crawlable Q&A — also emitted as FAQPage schema below so it can win rich results. */
+/* Crawlable Q&A - also emitted as FAQPage schema below so it can win rich results. */
 const FAQ = [
   {
     q: 'How much do missed calls cost a physiotherapy clinic?',
@@ -55,7 +55,7 @@ export default function Page() {
     <>
       <RoiCalculator />
 
-      {/* Indexable explainer + FAQ — gives the page real crawlable text to rank on */}
+      {/* Indexable explainer + FAQ - gives the page real crawlable text to rank on */}
       <section style={{ background: C.cream, fontFamily: "'Outfit',sans-serif", color: C.ink, padding: '8px 24px 96px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
           <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 56 }}>

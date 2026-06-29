@@ -10,7 +10,7 @@ const B = {
   muted: "#8A8780", mutedSoft: "#A8A49E", ink: "#2C2A26",
 };
 
-// ——— Speech envelope —————————————————————————————————————————————————————————
+// --- Speech envelope ---------------------------------------------------------
 const SPEECH = [
   [0.00,0.03],[0.03,0.75],[0.08,0.88],[0.13,0.12],
   [0.18,0.06],
@@ -34,7 +34,7 @@ function envelope(t) {
   return 0.03;
 }
 
-// ——— Downsample float32 PCM to target sample rate ————————————————————————————
+// --- Downsample float32 PCM to target sample rate ----------------------------
 function downsample(buffer, inRate, outRate) {
   if (inRate === outRate) return buffer;
   const ratio = inRate / outRate;
@@ -49,7 +49,7 @@ function downsample(buffer, inRate, outRate) {
   return out;
 }
 
-// ——— Monolith Mark (FIX #1: hover scale) —————————————————————————————————————
+// --- Monolith Mark (FIX #1: hover scale) -------------------------------------
 function MonolithMark({ size = 44, glow = 0, playing, onClick }) {
   const id = useRef(`m-${Math.random().toString(36).slice(2, 8)}`).current;
   const [hovered, setHovered] = useState(false);
@@ -121,7 +121,7 @@ function MonolithMark({ size = 44, glow = 0, playing, onClick }) {
   );
 }
 
-// ——— PS4 Cinematic Waveform (FIX #5: ref-based progress) —————————————————————
+// --- PS4 Cinematic Waveform (FIX #5: ref-based progress) ---------------------
 function Wave({ playingRef, progressRef, width = 420, height = 52 }) {
   const canvasRef = useRef(null);
   const frame = useRef(0);
@@ -225,7 +225,7 @@ function Wave({ playingRef, progressRef, width = 420, height = 52 }) {
   return <canvas ref={canvasRef} style={{ width, height, display: "block" }} />;
 }
 
-// ——— Mini Waveform (FIX #2: lightweight SVG, no canvas) ——————————————————————
+// --- Mini Waveform (FIX #2: lightweight SVG, no canvas) ----------------------
 function MiniWave({ playing }) {
   const bars = [0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 0.45, 0.75, 0.55, 0.85, 0.5, 0.7];
   return (
@@ -245,7 +245,7 @@ function MiniWave({ playing }) {
   );
 }
 
-// ——— Pill ————————————————————————————————————————————————————————————————————
+// --- Pill --------------------------------------------------------------------
 const PILL_VARIANTS = {
   default:    { bg: "rgba(0,0,0,0.02)",     color: B.mutedSoft, border: B.borderSoft,      dot: B.mutedSoft, pulse: false },
   accent:     { bg: "rgba(28,84,242,0.04)", color: B.blue,      border: "rgba(28,84,242,0.07)", dot: null,         pulse: false },
@@ -290,7 +290,7 @@ function statusPillFor(connectionState, errorMsg) {
   }
 }
 
-// ——— Main ————————————————————————————————————————————————————————————————————
+// --- Main --------------------------------------------------------------------
 const MAX_ACTIVATIONS = 2; // hard cap per page load to prevent API abuse
 
 export default function AvaShowcase() {
@@ -379,14 +379,14 @@ export default function AvaShowcase() {
       return;
     }
 
-    // Hard activation cap (per page load) — prevents button-mashing bleeding API credits
+    // Hard activation cap (per page load) - prevents button-mashing bleeding API credits
     if (activations >= MAX_ACTIVATIONS) {
       setConnectionState("error");
       setErrorMsg("Demo limit reached. Refresh to try again.");
       return;
     }
 
-    // Feature detection — surface support gaps as inline state instead of dropping into try/catch
+    // Feature detection - surface support gaps as inline state instead of dropping into try/catch
     if (typeof window === "undefined" ||
         typeof window.WebSocket === "undefined" ||
         !navigator.mediaDevices?.getUserMedia ||
@@ -417,13 +417,13 @@ export default function AvaShowcase() {
         await audioContext.resume();
       }
 
-      // Connect WebSocket — ScriptProcessor below streams user audio; MediaRecorder was redundant and caused double-mic bugs
+      // Connect WebSocket - ScriptProcessor below streams user audio; MediaRecorder was redundant and caused double-mic bugs
       const ws = new WebSocket(
         "wss://api.elevenlabs.io/v1/convai/conversation?agent_id=agent_6301kp6cxhx4e3vt35a2vbd9m8wq"
       );
       wsRef.current = ws;
 
-      // Connection timeout failsafe — surface as inline error, don't alert()
+      // Connection timeout failsafe - surface as inline error, don't alert()
       const connectionTimeout = setTimeout(() => {
         console.error("[Ava] WebSocket timeout. readyState=", ws.readyState);
         setConnectionState("error");
@@ -436,14 +436,14 @@ export default function AvaShowcase() {
 
         // REQUIRED handshake. ElevenLabs ConvAI does NOT start the session until the
         // client sends conversation_initiation_client_data. Without it the socket opens,
-        // the server emits conversation_initiation_metadata, then sits idle forever —
+        // the server emits conversation_initiation_metadata, then sits idle forever -
         // no greeting, no responses (the "connected but silent" bug). Verified by
         // headless repro: omit it → 0 audio chunks; send it → Ava greets in ~900ms.
         ws.send(JSON.stringify({ type: "conversation_initiation_client_data" }));
 
         // No client-side keepalive: the server sends its own ping events (we reply
         // with a matching pong below). Emitting an unsolicited {type:"ping"} is
-        // off-protocol and can make ElevenLabs drop the socket — only ever respond.
+        // off-protocol and can make ElevenLabs drop the socket - only ever respond.
 
         setPlaying(true);
         setConnectionState("connected");
@@ -501,7 +501,7 @@ export default function AvaShowcase() {
             }
           }
 
-          // Agent interrupted (user spoke over it) — dump queued audio so the new response
+          // Agent interrupted (user spoke over it) - dump queued audio so the new response
           // doesn't layer over the tail of the old one. ElevenLabs sends this for ConvAI.
           if (data.type === "interruption") {
             clearAgentAudio();
@@ -526,7 +526,7 @@ export default function AvaShowcase() {
       ws.onerror = (event) => {
         clearTimeout(connectionTimeout);
         console.error("[Ava] WebSocket error (readyState=" + ws.readyState + "):", event);
-        // Don't alert — set inline state. onclose will follow and fully tear down.
+        // Don't alert - set inline state. onclose will follow and fully tear down.
         setConnectionState("error");
         setErrorMsg("Voice service error. Try again in a moment.");
       };
@@ -542,7 +542,7 @@ export default function AvaShowcase() {
       const audioContext_ = audioContextRef.current;
       const source = audioContext_.createMediaStreamSource(stream);
       const processor = audioContext_.createScriptProcessor(4096, 1, 1);
-      // Silenced sink — connecting to destination routes the user's own mic back to their speakers,
+      // Silenced sink - connecting to destination routes the user's own mic back to their speakers,
       // which makes them hear themselves on top of the agent. A muted GainNode keeps onaudioprocess
       // firing without bleeding mic audio to the output.
       const micSink = audioContext_.createGain();
@@ -651,7 +651,7 @@ export default function AvaShowcase() {
           }}
         >
 
-          {/* ——— PS5 Glass layers ——— */}
+          {/* --- PS5 Glass layers --- */}
 
           {/* Layer 1: Top catch-light */}
           <div style={{
@@ -707,7 +707,7 @@ export default function AvaShowcase() {
             pointerEvents: "none",
           }} />
 
-          {/* ——— Avatar + Name ——— */}
+          {/* --- Avatar + Name --- */}
           <div style={{
             display: "flex", alignItems: "center", gap: 14, marginBottom: 18,
             position: "relative",
@@ -742,7 +742,7 @@ export default function AvaShowcase() {
             </div>
           </div>
 
-          {/* ——— Pills — status reflects real WebSocket state ——— */}
+          {/* --- Pills - status reflects real WebSocket state --- */}
           {(() => {
             const status = statusPillFor(connectionState, errorMsg);
             return (
@@ -758,7 +758,7 @@ export default function AvaShowcase() {
             );
           })()}
 
-          {/* ——— Waveform Bar ——— */}
+          {/* --- Waveform Bar --- */}
           <div style={{
             padding: "8px 14px",
             borderRadius: 16,
@@ -787,7 +787,7 @@ export default function AvaShowcase() {
             />
           </div>
 
-          {/* ——— Capability strip — mirrors the live Ava booking graph ——— */}
+          {/* --- Capability strip - mirrors the live Ava booking graph --- */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             flexWrap: "wrap", gap: "4px 8px", marginTop: 16, position: "relative",
@@ -805,7 +805,7 @@ export default function AvaShowcase() {
             ))}
           </div>
 
-          {/* ——— Try Ava — primary call-to-action ——— */}
+          {/* --- Try Ava - primary call-to-action --- */}
           {(() => {
             const isLive = playing;
             const isConnecting = connectionState === "connecting";
@@ -848,7 +848,7 @@ export default function AvaShowcase() {
                 <button
                   onClick={toggle}
                   disabled={limitReached}
-                  aria-label={isLive ? "End call with Ava" : "Talk to Ava — live voice demo"}
+                  aria-label={isLive ? "End call with Ava" : "Talk to Ava - live voice demo"}
                   style={{
                     width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
                     padding: "13px 20px", borderRadius: 14,
@@ -869,7 +869,7 @@ export default function AvaShowcase() {
                   {isLive ? (
                     <>
                       <MiniWave playing />
-                      <span style={{ fontSize: 10.5, color: B.mutedSoft, letterSpacing: "0.02em" }}>Listening — just start talking</span>
+                      <span style={{ fontSize: 10.5, color: B.mutedSoft, letterSpacing: "0.02em" }}>Listening - just start talking</span>
                     </>
                   ) : (
                     <span style={{ fontSize: 10.5, color: B.mutedSoft, letterSpacing: "0.02em", fontVariantNumeric: "tabular-nums" }}>

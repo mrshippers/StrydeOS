@@ -4,14 +4,14 @@ import { useState, useEffect } from "react";
  * BrightnessStackToggle
  *
  * A Stripe-inspired dark mode toggle for StrydeOS.
- * Four horizontal bars with ascending opacity — the stack inverts
+ * Four horizontal bars with ascending opacity - the stack inverts
  * direction when toggled, and the bars animate width to feel alive.
  *
  * Props:
- *   size       — icon bounding box in px (default: 32)
- *   isDark     — controlled mode (optional, uses system pref if omitted)
- *   onToggle   — callback receiving the new isDark boolean
- *   className  — extra classes on the outer button
+ *   size       - icon bounding box in px (default: 32)
+ *   isDark     - controlled mode (optional, uses system pref if omitted)
+ *   onToggle   - callback receiving the new isDark boolean
+ *   className  - extra classes on the outer button
  *
  * Drop into your header next to the existing nav icons.
  */
@@ -22,7 +22,7 @@ export default function BrightnessStackToggle({
   onToggle,
   className = "",
 }) {
-  // — State ———————————————————————————————————————————————
+  // - State -----------------------------------------------
   const [internalDark, setInternalDark] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -44,7 +44,7 @@ export default function BrightnessStackToggle({
     onToggle?.(next);
   };
 
-  // — Layout math ————————————————————————————————————————
+  // - Layout math ----------------------------------------
   const padding = size * 0.18;
   const innerW = size - padding * 2;
   const innerH = size - padding * 2;
@@ -65,7 +65,7 @@ export default function BrightnessStackToggle({
   const opacities = isDark ? darkOpacities : lightOpacities;
   const widths = isDark ? darkWidths : lightWidths;
 
-  // — Transition —————————————————————————————————————————
+  // - Transition -----------------------------------------
   const t = "0.4s cubic-bezier(0.4, 0, 0.2, 1)";
   const fg = "#4B8BF5";
 

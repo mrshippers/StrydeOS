@@ -19,7 +19,7 @@ const hexToRgba = (hex, alpha) => {
   return `rgba(${r},${g},${b},${alpha})`;
 };
 
-/* ── Monolith Mark (canonical — unique IDs per instance) ── */
+/* ── Monolith Mark (canonical - unique IDs per instance) ── */
 let _mmId = 0;
 const _uid = (p) => `${p}-${++_mmId}`;
 
@@ -294,7 +294,7 @@ export default function ModulePage({ id, name, color, headline, body, howItWorks
                     <div key={mod} style={{ textAlign: "center", fontSize: 14 }}>
                       {f[mod]
                         ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3 3 5-5" stroke={C.success} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        : <span style={{ color: darkMode ? "rgba(255,255,255,0.15)" : "#d0cdc7" }}>—</span>
+                        : <span style={{ color: darkMode ? "rgba(255,255,255,0.15)" : "#d0cdc7" }}>-</span>
                       }
                     </div>
                   ))}

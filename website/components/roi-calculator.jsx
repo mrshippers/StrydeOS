@@ -233,7 +233,7 @@ export default function RoiCalculator({ embedded = false, darkMode = false }) {
                 }}>Set Ava up now <span style={{ fontSize: 15 }}>{"→"}</span></a>
               </div>
 
-              {/* Email this breakdown — capture leads who aren't ready to trial today */}
+              {/* Email this breakdown - capture leads who aren't ready to trial today */}
               <div style={{ marginTop: 22, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.10)" }}>
                 {leadState === "sent" ? (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13.5, color: "#6EE7B7", fontWeight: 500, padding: "6px 0" }}>
@@ -283,7 +283,7 @@ export default function RoiCalculator({ embedded = false, darkMode = false }) {
 
         {/* Assumptions */}
         <p style={{ fontSize: 12.5, color: mutedCol, textAlign: "center", maxWidth: 680, margin: "32px auto 0", lineHeight: 1.6 }}>
-          Conservative model. Assumes Ava answers {Math.round(AVA_RECOVERY * 100)}% of the calls you currently miss (the rest hang up before any receptionist could pick up), at your own conversion rate. Figures are an estimate to size the opportunity, not a guarantee. No setup fee, no lock-in, cancel any time.
+          Conservative model. Assumes Ava answers {Math.round(AVA_RECOVERY * 100)}% of the calls you currently miss (the rest hang up before any receptionist could pick up), at your own conversion rate. Figures are an estimate to size the opportunity, not a guarantee. A one-time £195 Ava setup applies, waived on Full Stack. No lock-in, cancel any time.
         </p>
       </div>
 

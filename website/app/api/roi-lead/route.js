@@ -84,7 +84,7 @@ export async function POST(req) {
   const notify = process.env.NOTIFY_EMAIL || "jamal@strydeos.com";
 
   if (!key) {
-    console.error("[roi-lead] RESEND_API_KEY missing — lead not captured:", email);
+    console.error("[roi-lead] RESEND_API_KEY missing - lead not captured:", email);
     return Response.json({ ok: false, error: "mailer unavailable" }, { status: 500 });
   }
 

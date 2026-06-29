@@ -90,8 +90,8 @@ export default function ContactPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Opens mailto as fallback — no backend needed
-    const subject = encodeURIComponent(`Contact from ${formState.name} — ${formState.clinic || "Clinic enquiry"}`);
+    // Opens mailto as fallback - no backend needed
+    const subject = encodeURIComponent(`Contact from ${formState.name} - ${formState.clinic || "Clinic enquiry"}`);
     const body = encodeURIComponent(`Name: ${formState.name}\nEmail: ${formState.email}\nClinic: ${formState.clinic}\n\n${formState.message}`);
     window.location.href = `mailto:hello@strydeos.com?subject=${subject}&body=${body}`;
     setSubmitted(true);
@@ -205,7 +205,7 @@ export default function ContactPage() {
             fontSize: 16, color: "rgba(255,255,255,0.45)", lineHeight: 1.7,
             maxWidth: 480, margin: "0 auto",
           }}>
-            Whether you're exploring Intelligence, Ava, or the full stack — we start with your numbers and work from there.
+            Whether you're exploring Intelligence, Ava, or the full stack - we start with your numbers and work from there.
           </p>
         </div>
       </section>
@@ -229,7 +229,7 @@ export default function ContactPage() {
             </h2>
 
             <p style={{ fontSize: 15, color: muted, lineHeight: 1.8, marginBottom: 40 }}>
-              Book a free Clinical Performance Audit. We'll review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks — using your existing PMS data.
+              Book a free Clinical Performance Audit. We'll review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks - using your existing PMS data.
             </p>
 
             {/* Direct links */}
@@ -378,7 +378,7 @@ export default function ContactPage() {
                       fontFamily: "'Outfit',sans-serif", resize: "vertical",
                       transition: "border-color 0.2s, box-shadow 0.2s",
                     }}
-                    placeholder="Tell us about your practice — team size, PMS, what you're looking for..."
+                    placeholder="Tell us about your practice - team size, PMS, what you're looking for..."
                   />
                 </div>
 

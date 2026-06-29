@@ -13,10 +13,10 @@ const C = {
   cloudDark:   "#E8E6E0",
   cream:       "#FAF9F7",
 
-  // Brand blues — canonical values
+  // Brand blues - canonical values
   navy:        "#0B2545",
   navyMid:     "#132D5E",
-  blue:        "#1C54F2",      // Royal Blue — PRIMARY
+  blue:        "#1C54F2",      // Royal Blue - PRIMARY
   blueBright:  "#2E6BFF",
   blueGlow:    "#4B8BF5",
   teal:        "#0891B2",      // Pulse module accent
@@ -85,7 +85,7 @@ const globalStyles = `
 
   .animate-float { animation: float 4s ease-in-out infinite; }
 
-  /* Grid layout classes — base (desktop) values here, mobile overrides in @media below */
+  /* Grid layout classes - base (desktop) values here, mobile overrides in @media below */
   .pillar-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
   .stats-bar     { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; }
   .product-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: center; }
@@ -194,7 +194,7 @@ const globalStyles = `
     .hero-h1          { font-size: clamp(32px, 8vw, 60px) !important; }
     .section-h2       { font-size: clamp(26px, 6vw, 44px) !important; }
 
-    /* Section padding reduction — all sections get tighter mobile spacing */
+    /* Section padding reduction - all sections get tighter mobile spacing */
     section            { padding-left: 16px !important; padding-right: 16px !important; }
     .hero-section      { padding-top: 100px !important; padding-bottom: 48px !important; }
 
@@ -424,7 +424,7 @@ const Nav = ({ darkMode, setDarkMode }) => {
         {/* ── Logo area: split into Monolith (dropdown) + Wordmark (scroll-to-top) ── */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
 
-          {/* Monolith mark — hover opens dropdown */}
+          {/* Monolith mark - hover opens dropdown */}
           <div
             style={{ position: "relative" }}
             onMouseEnter={openDropdown}
@@ -515,7 +515,7 @@ const Nav = ({ darkMode, setDarkMode }) => {
             </div>
           </div>
 
-          {/* StrydeOS wordmark — click scrolls to top */}
+          {/* StrydeOS wordmark - click scrolls to top */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             style={{
@@ -553,7 +553,7 @@ const Nav = ({ darkMode, setDarkMode }) => {
           <a href="https://portal.strydeos.com/login" className="btn-primary" style={{ padding: "10px 22px", fontSize: 14 }}>
             Log In
           </a>
-          {/* Hamburger — hidden on desktop, shown on mobile */}
+          {/* Hamburger - hidden on desktop, shown on mobile */}
           <button
             className="nav-burger"
             onClick={() => setMobileOpen(o => !o)}
@@ -636,7 +636,7 @@ const WaveCard = ({ without, withLabel, beforePath, afterPath, glowColor, idx })
 
       {/* Waveform SVG */}
       <div style={{ position: "relative", height: 56, marginBottom: 14 }}>
-        {/* Before waveform — chaotic/flat */}
+        {/* Before waveform - chaotic/flat */}
         <svg
           viewBox="0 0 120 50"
           style={{
@@ -659,7 +659,7 @@ const WaveCard = ({ without, withLabel, beforePath, afterPath, glowColor, idx })
           ))}
         </svg>
 
-        {/* After waveform — clean, ascending */}
+        {/* After waveform - clean, ascending */}
         <svg
           viewBox="0 0 120 50"
           style={{
@@ -1060,7 +1060,7 @@ const Hero = ({ darkMode }) => {
             </div>
           </div>
 
-          {/* Right — Compact dashboard showcase */}
+          {/* Right - Compact dashboard showcase */}
           <div style={{ animation: "fadeUp 0.8s 0.2s ease both" }}>
             <HeroDashboard />
           </div>
@@ -1075,7 +1075,7 @@ const Hero = ({ darkMode }) => {
 
 /* ─── Holistic Section ──────────────────────────────────────────────────────── */
 /* ─── Module-tinted Monolith mark ────────────────────────────────────────── */
-/* Canonical gradient stops — must match monolith.svg / monolith-pulse.svg / monolith-intelligence.svg */
+/* Canonical gradient stops - must match monolith.svg / monolith-pulse.svg / monolith-intelligence.svg */
 const MONOLITH_PALETTES = {
   [C.blue]:   { contFrom: "#2E6BFF", contTo: "#091D3E", radFrom: "#6AABFF", radTo: "#1C54F2", bdrFrom: "#7ABBFF", bdrTo: "#1C54F2" },
   [C.teal]:   { contFrom: "#0CC0E0", contTo: "#053B47", radFrom: "#22D3EE", radTo: "#0891B2", bdrFrom: "#34D9F0", bdrTo: "#0891B2" },
@@ -1189,13 +1189,13 @@ const HolisticSection = ({ darkMode }) => {
             <span style={{ fontStyle: "italic", color: italic }}>It's operational.</span>
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.8, color: muted, marginBottom: 20 }}>
-            The highest-revenue private practices don't guess at follow-up rates. They don't lose patients between sessions. They don't miss calls during treatment hours. They built the systems to catch what falls through the cracks — without adding headcount.
+            The highest-revenue private practices don't guess at follow-up rates. They don't lose patients between sessions. They don't miss calls during treatment hours. They built the systems to catch what falls through the cracks - without adding headcount.
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.8, color: muted, marginBottom: 32 }}>
             Most physios are brilliant clinicians. But nobody taught them how to build the operational layer that turns good clinical work into a growing business. That's the gap.
           </p>
           <p style={{ fontSize: 16, lineHeight: 1.8, color: txt, fontWeight: 500 }}>
-            StrydeOS closes it — so you can focus on the clinical side, knowing the business side is handled.
+            StrydeOS closes it - so you can focus on the clinical side, knowing the business side is handled.
           </p>
         </div>
         </AnimIn>
@@ -1420,7 +1420,7 @@ const Integrations = ({ darkMode }) => {
           Our pitch isn't "switch to StrydeOS."
         </h2>
         <p style={{ fontSize: 16, color: muted, maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>
-          Appointments, note taking, billing — your PMS owns this layer. StrydeOS sits above that. Whatever you're already running, we simply connect and enrich it, not replace it.
+          Appointments, note taking, billing - your PMS owns this layer. StrydeOS sits above that. Whatever you're already running, we simply connect and enrich it, not replace it.
         </p>
       </div>
       </AnimIn>
@@ -1444,7 +1444,7 @@ const Integrations = ({ darkMode }) => {
           position: "relative", zIndex: 2,
         }}>
 
-          {/* LEFT — Editorial */}
+          {/* LEFT - Editorial */}
           <div className="arch-editorial" style={{
             padding: "48px 44px 44px",
             borderRight: "1px solid rgba(255,255,255,0.05)",
@@ -1493,13 +1493,13 @@ const Integrations = ({ darkMode }) => {
             </div>
           </div>
 
-          {/* RIGHT — Flow diagram */}
+          {/* RIGHT - Flow diagram */}
           <div className="arch-flow" style={{
             padding: "40px 44px",
             display: "flex", flexDirection: "column", justifyContent: "center",
           }}>
 
-            {/* TIER 1 — Your tools */}
+            {/* TIER 1 - Your tools */}
             <div>
               <div style={{
                 fontSize: 9, fontWeight: 700, letterSpacing: "0.14em",
@@ -1528,14 +1528,14 @@ const Integrations = ({ darkMode }) => {
               </div>
             </div>
 
-            {/* CONNECTOR — diagonal dots converging */}
+            {/* CONNECTOR - diagonal dots converging */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               <ArchDiagonalDots direction="right" color={C.blueGlow} />
               <ArchPulseDots color={C.teal} count={3} />
               <ArchDiagonalDots direction="left" color={C.blueGlow} />
             </div>
 
-            {/* MONOLITH BALL — centred */}
+            {/* MONOLITH BALL - centred */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "center",
               gap: 12, padding: "2px 0",
@@ -1545,12 +1545,12 @@ const Integrations = ({ darkMode }) => {
               <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${C.blue}18, transparent)` }} />
             </div>
 
-            {/* CONNECTOR — single stream down */}
+            {/* CONNECTOR - single stream down */}
             <div style={{ display: "flex", justifyContent: "center" }}>
               <ArchPulseDots color={C.blueGlow} count={2} />
             </div>
 
-            {/* TIER 2 — StrydeOS modules */}
+            {/* TIER 2 - StrydeOS modules */}
             <div>
               <div style={{
                 display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8,
@@ -1583,14 +1583,14 @@ const Integrations = ({ darkMode }) => {
               </div>
             </div>
 
-            {/* CONNECTOR — fan out */}
+            {/* CONNECTOR - fan out */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               <ArchPulseDots color={C.success} />
               <ArchPulseDots color={C.teal} />
               <ArchPulseDots color={C.blueGlow} />
             </div>
 
-            {/* TIER 3 — Outcomes */}
+            {/* TIER 3 - Outcomes */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               <div style={{
                 background: "rgba(255,255,255,0.03)",
@@ -1646,7 +1646,7 @@ const Integrations = ({ darkMode }) => {
           },
           {
             q: "Will my team need retraining?",
-            a: "They keep using the same PMS they always have. StrydeOS runs quietly in the background — your staff only notice the results.",
+            a: "They keep using the same PMS they always have. StrydeOS runs quietly in the background - your staff only notice the results.",
             icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.blue} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 20v-1a7 7 0 0114 0v1"/></svg>,
           },
           {
@@ -1957,13 +1957,13 @@ const Products = ({ darkMode }) => {
       color: C.teal,
       eyebrow: "Pulse",
       headline: "Keep patients in care, longer.",
-      body: "The drop-off between session two and session three is where most clinics leak the most revenue. Patients disengage — not because the treatment isn't working, but because nobody stayed in touch.\n\nPulse automates every touchpoint between sessions — and adapts based on clinical context. When a patient has psychosocial flags or complex multi-region presentations, Pulse adjusts its tone and timing automatically. No manual triage. No one-size-fits-all sequences.",
-      proof: "The clinics getting this right aren't doing it by hand. They've systematised it — and it shows in their completion rates and referral volume.",
+      body: "The drop-off between session two and session three is where most clinics leak the most revenue. Patients disengage - not because the treatment isn't working, but because nobody stayed in touch.\n\nPulse automates every touchpoint between sessions - and adapts based on clinical context. When a patient has psychosocial flags or complex multi-region presentations, Pulse adjusts its tone and timing automatically. No manual triage. No one-size-fits-all sequences.",
+      proof: "The clinics getting this right aren't doing it by hand. They've systematised it - and it shows in their completion rates and referral volume.",
       tagline: "Clinically aware. Automatically adaptive. Built for retention.",
       cta: "Start with Pulse",
       howItWorks: ["Monitors treatment journey milestones", "Reads clinical complexity signals from session notes", "Adapts follow-up timing and tone to each patient", "Suppresses prompts when patients are nearing discharge"],
       keyBenefits: ["Better treatment completion", "Higher follow-up conversion", "Fewer wasted messages on discharge-ready patients"],
-      bullets: ["Automated post-session reminders", "Complexity-aware rebooking prompts", "Psychosocial flag detection — gentler outreach for anxious patients", "Discharge-aware sequences that know when to stop", "Post-discharge check-ins", "Clinical enrichment from Heidi session notes"],
+      bullets: ["Automated post-session reminders", "Complexity-aware rebooking prompts", "Psychosocial flag detection - gentler outreach for anxious patients", "Discharge-aware sequences that know when to stop", "Post-discharge check-ins", "Clinical enrichment from Heidi session notes"],
       visual: <PulseShowcase />,
     },
     {
@@ -1973,7 +1973,7 @@ const Products = ({ darkMode }) => {
       color: "#8B5CF6",
       eyebrow: "Intelligence",
       headline: "Know how your clinic actually performs.",
-      body: "Revenue tells you what happened, not why. Intelligence surfaces the drivers behind it in real time.\n\nTrack cost per acquisition, follow-up conversion, revenue per clinician hour, DNA recovery rate, and utilisation against rebooking patterns — automatically and per clinician.",
+      body: "Revenue tells you what happened, not why. Intelligence surfaces the drivers behind it in real time.\n\nTrack cost per acquisition, follow-up conversion, revenue per clinician hour, DNA recovery rate, and utilisation against rebooking patterns - automatically and per clinician.",
       proof: "Not to manage people. To understand where your clinic is thriving and where it isn't. The best-run clinics already know these numbers.",
       tagline: "Real-time. Actionable. Built for practice owners, not analysts.",
       cta: "Start with Intelligence",
@@ -2086,7 +2086,7 @@ const Products = ({ darkMode }) => {
           ))}
         </div>
 
-        {/* Panel — premium glass slab (gloss over the whole component) */}
+        {/* Panel - premium glass slab (gloss over the whole component) */}
         <div key={active} style={{ position: "relative", animation: "fadeIn 0.4s ease" }}>
           {/* base glass surface */}
           <div aria-hidden style={{
@@ -2216,10 +2216,10 @@ const caseStudies = [
   {
     tag: "Case Study · TBSport Therapy",
     headline: <>Solo clinician.{" "}<span style={{ fontStyle: "italic", color: C.blueGlow }}>Every call answered.</span></>,
-    quote: "I was losing enquiries every time I was in session. Ava means I never miss a new patient call now — and the patients actually prefer it.",
+    quote: "I was losing enquiries every time I was in session. Ava means I never miss a new patient call now - and the patients actually prefer it.",
     author: "Tammy, Solo Clinician, TBSport Therapy",
     grid: [
-      { before: "Missed calls in session: ~40%", after: "Zero missed — Ava handles all" },
+      { before: "Missed calls in session: ~40%", after: "Zero missed - Ava handles all" },
       { before: "Patient satisfaction: unknown", after: "NPS 72 (first 8 weeks)" },
       { before: "Admin time per day: 90 min", after: "Under 20 min" },
       { before: "New patient conversion: ~50%", after: "Estimated 65%+ from first touchpoint" },
@@ -2290,7 +2290,7 @@ const Results = () => {
             <blockquote style={{ borderLeft: `3px solid ${C.blue}`, paddingLeft: 18, color: "rgba(255,255,255,0.6)", fontStyle: "italic", fontSize: 15, lineHeight: 1.65 }}>
               "{cs.quote}"
               <div style={{ fontStyle: "normal", marginTop: 10, fontSize: 12, color: "rgba(255,255,255,0.6)", fontWeight: 500 }}>
-                — {cs.author}
+                - {cs.author}
               </div>
             </blockquote>
           </div>
@@ -2721,7 +2721,7 @@ That perspective shapes every part of the product.`,
       color: "#8B5CF6",
       body: `Every product we've built traces back to the same question: does this help patients complete their course of treatment?
 
-Ava answers the phone so the patient gets booked. Pulse sends the reminder so they come back. Intelligence flags the clinician whose follow-up rate is slipping — before it becomes a pattern. The patient never sees StrydeOS. But they feel it.
+Ava answers the phone so the patient gets booked. Pulse sends the reminder so they come back. Intelligence flags the clinician whose follow-up rate is slipping - before it becomes a pattern. The patient never sees StrydeOS. But they feel it.
 
 We're not a marketing tool. We're not a retention gimmick. We're infrastructure for better clinical outcomes.`,
     },
@@ -2729,7 +2729,7 @@ We're not a marketing tool. We're not a retention gimmick. We're infrastructure 
       n: "03",
       title: "We don't hide behind the dashboard.",
       color: C.teal,
-      body: `You won't find us selling you a flashy interface full of metrics that don't move your business. Every number in Intelligence is there because it changes a decision — follow-up rate, HEP compliance, DNA rate, revenue per session. Nothing else.
+      body: `You won't find us selling you a flashy interface full of metrics that don't move your business. Every number in Intelligence is there because it changes a decision - follow-up rate, HEP compliance, DNA rate, revenue per session. Nothing else.
 
 If a feature doesn't make your practice run better, we won't build it. If a metric doesn't help you act, it doesn't make the cut. We'd rather show you four numbers that matter than forty that don't.`,
     },
@@ -2737,7 +2737,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
       n: "04",
       title: "We're in this with you, not just in your invoice.",
       color: C.blue,
-      body: `A clinic only gets value from software that fits the way it already works — so we focus on the practical detail, the setup, and the signals worth acting on.`,
+      body: `A clinic only gets value from software that fits the way it already works - so we focus on the practical detail, the setup, and the signals worth acting on.`,
     },
   ];
 
@@ -2819,7 +2819,7 @@ If a feature doesn't make your practice run better, we won't build it. If a metr
             { stat: "100%", label: "of features built on real clinical workflows" },
             { stat: "5 days", label: "average from signed to live" },
             { stat: "Zero", label: "metrics included unless they drive decisions" },
-            { stat: "Always", label: "a human on the other end — not a ticket system" },
+            { stat: "Always", label: "a human on the other end - not a ticket system" },
           ].map(({ stat, label }) => (
             <div key={label} className="stat-item" style={{ padding: "36px 0 0", paddingRight: 32 }}>
               <div className="serif stat-value" style={{ fontSize: 36, color: head, marginBottom: 8 }}>{stat}</div>
@@ -2958,14 +2958,14 @@ const FAQ = ({ darkMode }) => {
 
   const groups = [
     { label: "For Clinic Owners", items: [
-      { q: "What data does StrydeOS actually need from my PMS?", a: "Read-only access to appointment, patient, and session data. We never modify your PMS records. Currently live with Cliniko, WriteUpp, Halaxy, and Zanda — with PPS, TM3, and more on the roadmap." },
-      { q: "Will this replace my practice management system?", a: "No. StrydeOS sits above your PMS, not instead of it. Think of it as the performance layer — your PMS handles bookings and notes, we handle insight and automation." },
+      { q: "What data does StrydeOS actually need from my PMS?", a: "Read-only access to appointment, patient, and session data. We never modify your PMS records. Currently live with Cliniko, WriteUpp, Halaxy, and Zanda - with PPS, TM3, and more on the roadmap." },
+      { q: "Will this replace my practice management system?", a: "No. StrydeOS sits above your PMS, not instead of it. Think of it as the performance layer - your PMS handles bookings and notes, we handle insight and automation." },
       { q: "What's the onboarding process like?", a: "Most clinics are live within 5 working days. We handle the integration, configure your KPI targets, and walk you through the dashboard before you go live." },
       { q: "Is there a contract or lock-in?", a: "No. Monthly billing, cancel anytime. We'd rather earn your business each month than lock you in." },
       { q: "How is my data protected?", a: "All data is encrypted in transit and at rest. UK-hosted infrastructure. GDPR compliant. We hold a DPA (Data Processing Agreement) with every client." },
     ]},
     { label: "For Clinicians", items: [
-      { q: "Can I see my own performance data?", a: "Yes. Each clinician gets their own dashboard view showing follow-up rate, course completion, utilisation, and HEP compliance — framed as coaching data, not surveillance." },
+      { q: "Can I see my own performance data?", a: "Yes. Each clinician gets their own dashboard view showing follow-up rate, course completion, utilisation, and HEP compliance - framed as coaching data, not surveillance." },
       { q: "Does Ava sound robotic to patients?", a: "No. Ava uses natural language processing to hold natural-sounding conversations. Patients frequently don't realise they're speaking with an AI receptionist." },
       { q: "What if a patient needs to speak to a real person?", a: "Ava detects urgent or complex requests and routes them to your nominated on-call clinician or reception team immediately." },
     ]},
@@ -3051,7 +3051,7 @@ const FAQ = ({ darkMode }) => {
 };
 
 /* ─── Changelog ─────────────────────────────────────────────────────────────── */
-/* Changelog section — now a U-Bahn map, implemented in ChangelogMap.jsx */
+/* Changelog section - now a U-Bahn map, implemented in ChangelogMap.jsx */
 
 /* ─── CTA ──────────────────────────────────────────────────────────────────── */
 const CtaSection = () => (
@@ -3070,10 +3070,10 @@ const CtaSection = () => (
       </h2>
 
       <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 16, lineHeight: 1.7, marginBottom: 18 }}>
-        Book a free 20-minute Clinical Performance Audit. We'll review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks — using your existing systems.
+        Book a free 20-minute Clinical Performance Audit. We'll review your follow-up rate, HEP compliance, utilisation, and DNA rate against benchmarks - using your existing systems.
       </p>
       <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, lineHeight: 1.65, marginBottom: 40, fontStyle: "italic" }}>
-        No switching required. StrydeOS connects to your existing PMS stack via API or bespoke integration. Pick the product that solves your biggest problem right now — and build from there.
+        No switching required. StrydeOS connects to your existing PMS stack via API or bespoke integration. Pick the product that solves your biggest problem right now - and build from there.
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>

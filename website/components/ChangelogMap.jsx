@@ -9,7 +9,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useId, useCallback } from
    Four lines, one hub: Ava / Intelligence / Platform / Pulse.
    Shipped stations sit on rings 1–5; roadmap stations sit on ring 6
    with dashed connectors.
-   Self-contained — no dependencies on strydeOS-website.jsx.
+   Self-contained - no dependencies on strydeOS-website.jsx.
 ───────────────────────────────────────────────────────────────────────── */
 
 /* ─── Brand tokens (mirrors brand.ts) ─────────────────────────────────── */
@@ -45,7 +45,7 @@ const CAT_LABELS = {
 /* ─── Geometry ────────────────────────────────────────────────────────── */
 const VIEWBOX = 880;
 const CX = 440, CY = 440, LOGO_R = 50;
-// 6 rings — ring 6 is the roadmap ring, dashed
+// 6 rings - ring 6 is the roadmap ring, dashed
 const RINGS = [0, 95, 155, 220, 285, 350, 412];
 
 function polar(ring, deg) {
@@ -99,7 +99,7 @@ const STATIONS_RAW = [
   { id:'v146',  v:'v1.4.6', date:'12 May', cat:'platform', title:'Pricing refresh',         desc:'Clinic tier rebalanced. Intelligence £149, Ava £199, Pulse £149. Setup fee Ava-only, never on Full Stack. Maths in every brief verifiable by an owner.', ring:5, angle:165 },
   { id:'v147',  v:'v1.4.7', date:'23 Jun', cat:'platform', title:'Data-protection controls', desc:'GDPR Article 17 clinic-level erasure with a 30-day grace, a 72-hour UK breach-notification runbook, and 12-month audit-log retention. Responsible disclosure published at /.well-known/security.txt.', ring:5, angle:200 },
 
-  // ── PULSE (230°–310°) — existing 4 + 2 new ───────────────────────
+  // ── PULSE (230°–310°) - existing 4 + 2 new ───────────────────────
   { id:'v112',  v:'v1.1.2', date:'18 Feb', cat:'pulse', title:'Opt-outs honoured',    desc:'Patient communication preferences enforced across every sequence.',                   ring:2, angle:270 },
   { id:'v122p', v:'v1.2.2', date:'19 Mar', cat:'pulse', title:'Review prompts',       desc:'Automated Google review requests timed to peak satisfaction. 4.8★ without asking.',  ring:3, angle:290 },
   { id:'v130p', v:'v1.3.0', date:'1 Apr',  cat:'pulse', title:'Retention engine',     desc:'Rebooking sequences, dropout detection, win-back campaigns. All in one module.',      ring:3, angle:250 },
@@ -132,7 +132,7 @@ const LINES_RAW = [
   { cat:'intel', ids:['EDGE:75', 'v113', 'v124i', 'v131', 'v133i'], delay:0.3 },
   { cat:'intel', ids:['v133i',   'r150i'], delay:0.4, roadmap:true },
 
-  // Platform — three arms converging on the logo
+  // Platform - three arms converging on the logo
   { cat:'platform', ids:['v090', 'v091', 'v092', 'EDGE:200'], delay:0.5 },
   { cat:'platform', ids:['EDGE:168', 'v101', 'v111', 'v122', 'v124', 'v144'], delay:0.55 },
   { cat:'platform', ids:['EDGE:205', 'v102', 'v120', 'v121', 'v123', 'v146', 'v147'], delay:0.65 },
@@ -340,7 +340,7 @@ export default function ChangelogMap({ darkMode = false }) {
     applyHighlight(pinned);
   }, [pinned, applyHighlight]);
 
-  // Set --cl-len on line paths before first paint — prevents animation jitter
+  // Set --cl-len on line paths before first paint - prevents animation jitter
   useLayoutEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
@@ -555,7 +555,7 @@ export default function ChangelogMap({ darkMode = false }) {
                 );
               })}
 
-              {/* Lines — 4 layers: glow / main / glass / specular */}
+              {/* Lines - 4 layers: glow / main / glass / specular */}
               {PATHS.map(line => (
                 <g
                   key={line.key}
@@ -726,7 +726,7 @@ const ScopedStyles = ({ darkMode }) => {
       letter-spacing: 0.08em; text-transform: uppercase;
       cursor: pointer; color: var(--cl-text-dim);
       transition: color 0.2s;
-      /* button reset — keeps the control visually identical to the old div */
+      /* button reset - keeps the control visually identical to the old div */
       background: none; border: 0; padding: 0; margin: 0;
       font-family: inherit; line-height: inherit;
     }
@@ -791,7 +791,7 @@ const ScopedStyles = ({ darkMode }) => {
     .cl-ring-roadmap { stroke-dasharray: 2 6; }
     .cl-sector-div { stroke: var(--cl-sector-stroke); stroke-width: 1; stroke-dasharray: 4 6; }
 
-    /* Lines — 4 layers */
+    /* Lines - 4 layers */
     .cl-line-glow {
       stroke-width: 14; stroke-opacity: 0.1;
       stroke-linecap: round; stroke-linejoin: round;
@@ -829,7 +829,7 @@ const ScopedStyles = ({ darkMode }) => {
       100% { stroke-opacity: 0.18; stroke-width: 20; }
     }
 
-    /* Roadmap line overrides — dashed, faded, no glass/glow */
+    /* Roadmap line overrides - dashed, faded, no glass/glow */
     .cl-line-roadmap .cl-line-main {
       stroke-dasharray: 6 5;
       stroke-dashoffset: 0;
@@ -842,7 +842,7 @@ const ScopedStyles = ({ darkMode }) => {
     .cl-line-roadmap .cl-line-glow { display: none; }
     @keyframes cl-fade-line { to { stroke-opacity: 0.45; } }
 
-    /* Highlight state — dim all, emphasise matching */
+    /* Highlight state - dim all, emphasise matching */
     .cl-map-viewport[class*="cl-hl-"] .cl-line-main     { stroke-opacity: 0.1 !important; }
     .cl-map-viewport[class*="cl-hl-"] .cl-line-glow     { stroke-opacity: 0.01 !important; }
     .cl-map-viewport[class*="cl-hl-"] .cl-line-glass    { stroke-opacity: 0.03 !important; }
@@ -1023,7 +1023,7 @@ const ScopedStyles = ({ darkMode }) => {
       100% { transform: translateY(-220px) translateX(40px); opacity: 0; }
     }
 
-    /* Pulse trails rendered into pulse-group by JS — inherit currentColor isn't needed */
+    /* Pulse trails rendered into pulse-group by JS - inherit currentColor isn't needed */
     .cl-pulse-group circle { pointer-events: none; }
 
     /* ─── Responsive ─── */
@@ -1048,7 +1048,7 @@ const ScopedStyles = ({ darkMode }) => {
       .cl-pop-meta { gap: 4px; }
     }
     @media (hover: none) {
-      /* Disable 3D tilt on touch — reset any inline transform */
+      /* Disable 3D tilt on touch - reset any inline transform */
       .cl-map-viewport { transform: none !important; }
     }
     @media (prefers-reduced-motion: reduce) {
