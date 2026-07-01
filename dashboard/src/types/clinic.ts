@@ -183,6 +183,14 @@ export interface ClinicProfile {
    * empty, the route falls back to legacy behaviour (allow-all + warning).
    */
   allowedInboundSenders?: string[];
+  /**
+   * Optional per-clinician scope for the insurance-intake auto-send. When set to
+   * one or more PMS practitioner ids, the daily `/api/insurance/poll-and-send`
+   * cron only messages THOSE clinicians' patients (used to pilot the flow on a
+   * single clinician before clinic-wide rollout). Empty/undefined = every
+   * clinician, the historic behaviour. Gated first by `featureFlags.insuranceIntake`.
+   */
+  insuranceIntakePractitionerIds?: string[];
   featureFlags: FeatureFlags;
   targets: ClinicTargets;
   brandConfig: BrandConfig;

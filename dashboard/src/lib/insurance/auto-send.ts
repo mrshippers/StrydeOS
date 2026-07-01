@@ -21,6 +21,8 @@ export interface IntakeAppointment {
   status?: string;
   /** Human-readable appointment-type name; gates intake + derives the insurer. */
   appointmentTypeName?: string;
+  /** PMS practitioner id for the booked clinician; used for per-clinician scoping. */
+  clinicianExternalId?: string;
 }
 
 export interface IntakeCandidate {
@@ -36,9 +38,13 @@ const SKIP_STATUSES = new Set(["cancelled", "dna", "late_cancel"]);
 export function selectAppointmentsForIntake(
   appointments: IntakeAppointment[],
   alreadyLinkedApptIds: Set<string>,
-  opts: { nowMs: number; windowDays: number },
+  opts: { nowMs: number; windowDays: number; allowedPractitionerIds?: string[] },
 ): IntakeCandidate[] {
   const horizon = opts.nowMs + opts.windowDays * 24 * 60 * 60 * 1000;
+  // Per-clinician scope. When non-empty, ONLY these practitioners' appointments
+  // get an intake (used to pilot the auto-send on a single clinician before
+  // rolling it out clinic-wide). Empty/absent = every practitioner (unchanged).
+  const scopedPractitioners = new Set((opts.allowedPractitionerIds ?? []).filter(Boolean));
   const seenPatients = new Set<string>();
   const out: IntakeCandidate[] = [];
 
@@ -46,6 +52,12 @@ export function selectAppointmentsForIntake(
     if (!a.externalId || !a.patientExternalId || !a.dateTime) continue;
     if (a.status && SKIP_STATUSES.has(a.status)) continue;
     if (alreadyLinkedApptIds.has(a.externalId)) continue;
+
+    // Scope gate: fail safe — an appointment with no practitioner id is skipped
+    // when a scope is set, never sent to the whole clinic by default.
+    if (scopedPractitioners.size > 0 && !(a.clinicianExternalId && scopedPractitioners.has(a.clinicianExternalId))) {
+      continue;
+    }
 
     // Gate: only insurance appointment types get an intake. Derive the insurer
     // from the type name; non-insurance / unknown types are skipped entirely.

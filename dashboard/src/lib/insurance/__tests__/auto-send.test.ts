@@ -81,3 +81,39 @@ describe("selectAppointmentsForIntake", () => {
     expect(out).toEqual([{ appointmentId: "ok", patientRef: "p9", dateTime: inDays(1), insurer: "Bupa" }]);
   });
 });
+
+describe("selectAppointmentsForIntake — practitioner scope (allow-list)", () => {
+  const base = { nowMs: NOW, windowDays: 3 };
+
+  it("restricts to allow-listed practitioners when a scope is set", () => {
+    const mine = appt({ externalId: "a1", patientExternalId: "p1", clinicianExternalId: "prac-me" });
+    const theirs = appt({ externalId: "a2", patientExternalId: "p2", clinicianExternalId: "prac-other" });
+    const out = selectAppointmentsForIntake([mine, theirs], new Set(), {
+      ...base,
+      allowedPractitionerIds: ["prac-me"],
+    });
+    expect(out).toEqual([{ appointmentId: "a1", patientRef: "p1", dateTime: inDays(1), insurer: "Bupa" }]);
+  });
+
+  it("sends for every practitioner when no allow-list is set (unchanged behaviour)", () => {
+    const mine = appt({ externalId: "a1", patientExternalId: "p1", clinicianExternalId: "prac-me" });
+    const theirs = appt({ externalId: "a2", patientExternalId: "p2", clinicianExternalId: "prac-other" });
+    const out = selectAppointmentsForIntake([mine, theirs], new Set(), base);
+    expect(out.map((c) => c.appointmentId).sort()).toEqual(["a1", "a2"]);
+  });
+
+  it("treats an empty allow-list as no restriction", () => {
+    const mine = appt({ externalId: "a1", patientExternalId: "p1", clinicianExternalId: "prac-me" });
+    const out = selectAppointmentsForIntake([mine], new Set(), { ...base, allowedPractitionerIds: [] });
+    expect(out).toHaveLength(1);
+  });
+
+  it("fails safe: an appointment with no practitioner id is skipped when a scope is set", () => {
+    const noPrac = appt({ externalId: "a1", patientExternalId: "p1", clinicianExternalId: undefined });
+    const out = selectAppointmentsForIntake([noPrac], new Set(), {
+      ...base,
+      allowedPractitionerIds: ["prac-me"],
+    });
+    expect(out).toEqual([]);
+  });
+});
