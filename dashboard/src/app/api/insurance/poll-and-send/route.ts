@@ -61,6 +61,12 @@ async function processClinic(
   const flags = (clinicData.featureFlags ?? {}) as { insuranceIntake?: boolean };
   if (!flags.insuranceIntake) return { clinicId, ok: true, skipped: "intake not enabled" };
 
+  // Optional per-clinician scope: when set, ONLY these PMS practitioner ids get
+  // an auto-send (pilot the flow on one clinician before clinic-wide rollout).
+  const allowedPractitionerIds = Array.isArray(clinicData.insuranceIntakePractitionerIds)
+    ? (clinicData.insuranceIntakePractitionerIds as unknown[]).map(String).filter(Boolean)
+    : undefined;
+
   const cfgSnap = await db.collection("clinics").doc(clinicId).collection(INTEGRATIONS_PMS).doc(PMS_DOC_ID).get();
   const cfg = cfgSnap.data() as PMSIntegrationConfig | undefined;
   if (!cfg?.apiKey?.trim() || cfg.provider !== "cliniko") {
@@ -103,9 +109,10 @@ async function processClinic(
       dateTime: a.dateTime,
       status: a.status,
       appointmentTypeName: a.appointmentTypeName,
+      clinicianExternalId: a.clinicianExternalId,
     })),
     linked,
-    { nowMs: now, windowDays: WINDOW_DAYS },
+    { nowMs: now, windowDays: WINDOW_DAYS, allowedPractitionerIds },
   )
     // Serve the most imminent appointments first, so the per-run cap never starves
     // a patient whose appointment is sooner than one further out in the window.
