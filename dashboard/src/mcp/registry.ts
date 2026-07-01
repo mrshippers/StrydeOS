@@ -14,6 +14,7 @@ import * as cohortSummary from "./tools/pulse/cohort-summary";
 import * as reengagementQueue from "./tools/pulse/reengagement-queue";
 import * as integrationsHealth from "./tools/ops/integrations-health";
 import * as reviewsList from "./tools/ops/reviews-list";
+import * as insuranceIntakesList from "./tools/insurance/intakes-list";
 
 // Every tool module exposes a Zod object schema (`z.object({...}).strict()`) and
 // a `run` function. Typing `inputSchema` as a ZodObject (not a bare ZodType)
@@ -142,6 +143,17 @@ export const TOOLS: readonly ToolDefinition[] = [
     description:
       "Returns the most recent reviews (Google, Trustpilot, NPS SMS) for the clinic with rating, platform breakdown, and average rating.",
     module: reviewsList as unknown as ToolModule,
+    requiredRoles: OWNER_ADMIN_SUPERADMIN,
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  },
+
+  // ── Insurance / intake ────────────────────────────────────────────────
+  {
+    name: "insurance_intakes_list",
+    title: "List insurance intakes",
+    description:
+      "Returns recent patient insurance intakes (clinics/{id}/insurance_intakes) within a capturedAt window, with a summary (totals, by-insurer, needs-action / incomplete / mismatch counts) and per-intake rows sorted needs-action first. Policy numbers are redacted to last 4. PHI gate — owner/admin/superadmin only.",
+    module: insuranceIntakesList as unknown as ToolModule,
     requiredRoles: OWNER_ADMIN_SUPERADMIN,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },

@@ -2,8 +2,16 @@ import { describe, it, expect } from "vitest";
 import { TOOLS } from "../registry";
 
 describe("stryde-ops MCP registry", () => {
-  it("registers exactly the planned 11 tools", () => {
-    expect(TOOLS).toHaveLength(11);
+  it("registers exactly the planned 12 tools", () => {
+    expect(TOOLS).toHaveLength(12);
+  });
+
+  it("insurance_intakes_list is PHI-gated to owner/admin/superadmin", () => {
+    const t = TOOLS.find((x) => x.name === "insurance_intakes_list");
+    expect(t).toBeDefined();
+    expect([...t!.requiredRoles].sort()).toEqual(["admin", "owner", "superadmin"]);
+    expect(t!.requiredRoles).not.toContain("clinician");
+    expect(t!.annotations.readOnlyHint).toBe(true);
   });
 
   it("has unique tool names", () => {
