@@ -23,7 +23,9 @@ jobs:
       - uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: claude-sonnet-4-20250514
+          # claude-sonnet-4-20250514 was retired and 404s; claude-sonnet-5 is the
+          # current Sonnet. Update this when the model line rots again.
+          model: claude-sonnet-5
           timeout_minutes: 10
           direct_prompt: |
             Review this PR diff against the StrydeOS code review checklist below.
