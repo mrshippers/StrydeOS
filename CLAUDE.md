@@ -92,7 +92,7 @@ Module-boundary check runs as part of pre-commit. Don't bypass with `--no-verify
 
 Three MCP servers live in this repo (see `dashboard/src/mcp/README.md`):
 
-1. **`stryde-ops`** (`dashboard/src/mcp/`, TypeScript) — inbound, founder-local. 11 tools over clinic data + Ava control. Two transports share one registry: **stdio** (`npm run mcp:stdio`, for Claude Code) and **HTTP** at `portal.strydeos.com/api/mcp` (claude.ai custom integration). ⚠ The HTTP transport scopes to `CLINIC_ID` (default **`clinic-spires`** — the real Spires Firestore doc id, NOT `spires`; see "Canonical clinic id" under Architecture → Data) + `MCP_ROLE=superadmin` — **anyone holding `MCP_BEARER_SECRET` has founder-equivalent access**. Per-clinic scoping + full OAuth is Phase D (deferred); OAuth client_credentials + Authorization Code/PKCE endpoints exist for the claude.ai flow.
+1. **`stryde-ops`** (`dashboard/src/mcp/`, TypeScript) — inbound, founder-local. 12 tools over clinic data + Ava control. Two transports share one registry: **stdio** (`npm run mcp:stdio`, for Claude Code) and **HTTP** at `portal.strydeos.com/api/mcp` (claude.ai custom integration). ⚠ The HTTP transport scopes to `CLINIC_ID` (default **`clinic-spires`** — the real Spires Firestore doc id, NOT `spires`; see "Canonical clinic id" under Architecture → Data) + `MCP_ROLE=superadmin` — **anyone holding `MCP_BEARER_SECRET` has founder-equivalent access**. Per-clinic scoping + full OAuth is Phase D (deferred); OAuth client_credentials + Authorization Code/PKCE endpoints exist for the claude.ai flow.
 2. **`ava-pms-tools`** (`ava_graph/mcp_server.py`, Python FastMCP) — outbound; Ava's live-call PMS booking tools (cliniko / writeupp / tm3 / jane).
 3. **`strydeOS`** (`scripts/strydeOS_mcp.py`, Python FastMCP) — reference server for marketing/sales drafting: `get_pricing_tiers`, `get_pilot_metrics`, `get_pms_capability`. Treat as the canonical machine-readable pricing/capability source — keep it in sync with this file.
 
@@ -131,7 +131,7 @@ A patient insurance + address intake surface added in commits `9dea070` / `f80b4
 - Public token-gated form at `/intake/[token]` (postcodes.io address lookup) → staff review queue at `/compliance/insurance` → staff-approved write back to the PMS (Cliniko writes insurance summary + confirmed address to the patient profile).
 - PMS-agnostic core in `dashboard/src/lib/insurance/`; Cliniko is the only wired PMS today.
 - Daily cron `/api/insurance/poll-and-send` (09:00) polls Cliniko upcoming bookings, windows/dedupes, and emails patients a secure intake link.
-- Gated by `featureFlags.insuranceIntake`. Collections: `insurance_intake_links`, `pre_auths`.
+- Gated by `featureFlags.insuranceIntake`. Collections: `insurance_intake_links`, `insurance_intakes`, `intake_shortlinks`, `pre_auths`.
 
 ---
 
@@ -159,7 +159,7 @@ StrydeOS is built and validated at Spires first.
 - **Primary:** Firebase
 - **Auth:** Firebase Auth
 - **Database:** Firestore (`europe-west2` region — London)
-- **Collections (core):** `clinics`, `users`, `clinicians`, `appointments`, `patients`, `metrics_weekly`, `reviews`, `insight_events`, `comms_log`, `audit_logs`, `sequence_definitions`, `insurance_intake_links`, `pre_auths` (~30 total referenced in code; `physitrack_programs` is no longer used). All `clinicId`-partitioned.
+- **Collections (core):** `clinics`, `users`, `clinicians`, `appointments`, `patients`, `metrics_weekly`, `reviews`, `insight_events`, `comms_log`, `audit_logs`, `sequence_definitions`, `insurance_intake_links`, `insurance_intakes`, `pre_auths` (~30 total referenced in code; `physitrack_programs` is no longer used). All `clinicId`-partitioned, plus the top-level `intake_shortlinks` (slug → intake-link lookup, NOT `clinicId`-partitioned).
 - **Hosting:** Vercel / Firebase Hosting
 
 ### Automation & Integrations
