@@ -5,7 +5,7 @@ TypeScript MCP server exposing read + control tools over StrydeOS clinic data an
 - **stdio** for Claude Code on your laptop
 - **HTTP** at `/api/mcp` on portal.strydeos.com for claude.ai
 
-11 tools. See [MCP_PHASE_A_PLAN.md](../../docs/MCP_PHASE_A_PLAN.md) for the architecture decision and Phase C roadmap. See [NOTES.md](./NOTES.md) for the cut/keep/add list.
+12 tools. See [MCP_PHASE_A_PLAN.md](../../docs/MCP_PHASE_A_PLAN.md) for the architecture decision and Phase C roadmap. See [NOTES.md](./NOTES.md) for the cut/keep/add list.
 
 ## Run locally
 
@@ -92,6 +92,7 @@ If they 401/500, the issue is Firebase admin creds in `dashboard/.env.local`, no
 | `pulse_reengagement_queue` | owner+ | read |
 | `integrations_health_snapshot` | owner+ | read |
 | `reviews_list` | owner+ | read |
+| `insurance_intakes_list` | owner+ | read (PHI) |
 
 ## Layout
 
